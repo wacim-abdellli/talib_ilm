@@ -1,0 +1,181 @@
+{
+  "program": {
+    "id": "talib_al_ilm_mutun",
+    "title": "برنامج متون طالب العلم",
+    "version": "1.0.0",
+    "levels": [
+      {
+        "id": "lvl_00_foundation",
+        "order": 0,
+        "title": "المرحلة التمهيدية",
+        "description": "تأسيس العقيدة والتوحيد",
+        "books": [
+          {
+            "id": "bk_usul_thalatha",
+            "title": "الأصول الثلاثة",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_qawaid_arba",
+            "title": "القواعد الأربع",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_nawaqid_islam",
+            "title": "نواقض الإسلام",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_kashf_shubuhat",
+            "title": "كشف الشبهات",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_fadl_islam",
+            "title": "فضل الإسلام",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          }
+        ]
+      },
+      {
+        "id": "lvl_01_core",
+        "order": 1,
+        "title": "المرحلة الأولى",
+        "description": "ضبط أصول العلوم الشرعية",
+        "books": [
+          {
+            "id": "bk_kitab_tawhid",
+            "title": "كتاب التوحيد",
+            "author": "محمد بن عبد الوهاب",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_wasitiyya",
+            "title": "العقيدة الواسطية",
+            "author": "ابن تيمية",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_nawawi_40",
+            "title": "الأربعون النووية",
+            "author": "النووي",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_umdah_ahkam",
+            "title": "عمدة الأحكام",
+            "author": "عبد الغني المقدسي",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_umdah_fiqh",
+            "title": "عمدة الفقه",
+            "author": "ابن قدامة",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          }
+        ]
+      },
+      {
+        "id": "lvl_02_expansion",
+        "order": 2,
+        "title": "المرحلة الثانية",
+        "description": "التوسّع وبناء الملكة",
+        "books": [
+          {
+            "id": "bk_waraqat",
+            "title": "الورقات",
+            "author": "إمام الحرمين الجويني",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_nukhbat_fikr",
+            "title": "نخبة الفكر",
+            "author": "ابن حجر العسقلاني",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_tafsir_juz_amma",
+            "title": "تفسير جزء عم",
+            "author": "عبد الرحمن السعدي",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          },
+          {
+            "id": "bk_tahawiyya",
+            "title": "العقيدة الطحاوية",
+            "author": "أبو جعفر الطحاوي",
+            "resources": {
+              "text_pdf": null,
+              "sharh_pdf": null,
+              "video_playlist": null
+            }
+          }
+        ]
+      },
+      {
+        "id": "lvl_03_mastery",
+        "order": 3,
+        "title": "المرحلة الثالثة",
+        "description": "التمكّن والتأصيل",
+        "hidden": true,
+        "books": []
+      }
+    ]
+  }
+}
