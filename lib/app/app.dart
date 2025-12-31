@@ -1,6 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'theme/app_theme.dart';
+import '../shared/navigation/app_shell.dart';
 
 class TalibIlmApp extends StatelessWidget {
   const TalibIlmApp({super.key});
@@ -12,29 +14,18 @@ class TalibIlmApp extends StatelessWidget {
       title: 'طالب العلم',
       theme: AppTheme.light(),
       locale: const Locale('ar'),
-      supportedLocales: const [
-        Locale('ar'),
-        Locale('en'),
+      supportedLocales: const [Locale('ar'), Locale('en')],
+
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
-      localizationsDelegates: const [
-        DefaultMaterialLocalizations.delegate,
-        DefaultWidgetsLocalizations.delegate,
-        DefaultCupertinoLocalizations.delegate,
-      ],
-      home: const Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          body: Center(
-            child: Text(
-              'طالب العلم',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 26,
-              ),
-            ),
-          ),
-        ),
-      ),
+
+      builder: (context, child) {
+        return Directionality(textDirection: TextDirection.rtl, child: child!);
+      },
+      home: const AppShell(),
     );
   }
 }
