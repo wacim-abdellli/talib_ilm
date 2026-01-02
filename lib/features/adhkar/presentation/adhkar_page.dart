@@ -76,7 +76,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.05,
+              childAspectRatio: 0.92,
             ),
             itemBuilder: (context, index) {
               final category = categories[index];
@@ -274,12 +274,26 @@ class _CategoryTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(title, style: AppText.heading),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: AppText.caption.copyWith(
-              color: AppColors.textSecondary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppText.heading,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: AppText.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],

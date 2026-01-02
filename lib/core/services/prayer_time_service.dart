@@ -13,7 +13,7 @@ class PrayerTimeService {
         now = now ?? DateTime.now;
 
   Future<PrayerTimesDay> getPrayerTimesDay({DateTime? date}) async {
-    final current = date ?? now();
+    final current = (date ?? now()).toLocal();
     final location = await _locationService.getLocation();
 
     final coordinates = Coordinates(location.latitude, location.longitude);
@@ -31,7 +31,10 @@ class PrayerTimeService {
       'العشاء': times.isha,
     };
 
-    final nextPrayer = _nextPrayerName(prayers, current);
+    final reference = date == null
+        ? current
+        : DateTime(current.year, current.month, current.day);
+    final nextPrayer = _nextPrayerName(prayers, reference);
 
     return PrayerTimesDay(
       city: location.city,

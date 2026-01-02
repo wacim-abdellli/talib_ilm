@@ -176,7 +176,6 @@ class _HomePageState extends State<HomePage> {
           children: [
             _HomeGreeting(
               greeting: _greetingText(),
-              subtitle: _greetingSubtitle(),
             ),
             const SizedBox(height: 16),
             FutureBuilder<Hadith>(
@@ -250,13 +249,6 @@ class _HomePageState extends State<HomePage> {
 
   String _greetingText() {
     return 'السلام عليكم';
-  }
-
-  String _greetingSubtitle() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 18) return 'نهار مبارك';
-    return 'مساء الخير';
   }
 
   Widget _buildNextPrayerCard(
@@ -341,11 +333,8 @@ class _HomePageState extends State<HomePage> {
 
 class _HomeGreeting extends StatelessWidget {
   final String greeting;
-  final String subtitle;
-
   const _HomeGreeting({
     required this.greeting,
-    required this.subtitle,
   });
 
   @override
@@ -358,10 +347,6 @@ class _HomeGreeting extends StatelessWidget {
           style: AppText.headingXL.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
-        Text(
-          subtitle,
-          style: AppText.bodyMuted.copyWith(color: AppColors.textSecondary),
-        ),
       ],
     );
   }

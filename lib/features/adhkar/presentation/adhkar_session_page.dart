@@ -37,9 +37,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   int _count = 0;
   bool _loading = true;
   bool _ritualLocked = false;
-  bool _advanceScheduled = false;
   final bool _autoResetRitual = true;
-  static const Color _progressGold = Color(0xFFD6B15D);
 
   @override
   void initState() {
@@ -79,7 +77,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       await _sessionService.clearCompletion(widget.category);
       await _sessionService.saveState(
         widget.category,
-        const AdhkarSessionState(index: 0, count: 0),
+        const AdhkarSessionState(index: 0, count: 1),
       );
     }
 
@@ -88,10 +86,11 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final maxIndex = items.length;
     final initialIndex =
         (needsReset || autoReset) ? 0 : state.index.clamp(0, maxIndex);
-    var initialCount = 0;
+    var initialCount = 1;
     if (!(needsReset || autoReset) && initialIndex < items.length) {
       final repeat = _repeatFor(items, initialIndex);
-      initialCount = state.count.clamp(0, repeat);
+      final stored = state.count <= 0 ? 1 : state.count;
+      initialCount = stored.clamp(1, repeat);
     }
 
     setState(() {
@@ -122,27 +121,39 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   void _handleTap() {
-    if (_loading || _ritualLocked || _advanceScheduled) return;
+    if (_loading || _ritualLocked) return;
     if (_index >= _items.length) return;
 
     HapticFeedback.selectionClick();
 
     final repeat = _repeatFor(_items, _index);
-    final nextCount = (_count + 1).clamp(0, repeat);
+    final current = _count <= 0 ? 1 : _count;
 
+    if (current >= repeat) {
+      _advanceToNext();
+      return;
+    }
+
+    final nextCount = current + 1;
     if (nextCount >= repeat) {
-      setState(() => _count = repeat);
-      _saveState();
-      _advanceScheduled = true;
-      Future.delayed(const Duration(milliseconds: 160), () {
-        if (!mounted) return;
-        _advanceScheduled = false;
-        _advanceToNext();
-      });
+      _advanceToNext();
       return;
     }
 
     setState(() => _count = nextCount);
+    _saveState();
+  }
+
+  void _handleStepBack() {
+    if (_loading || _ritualLocked) return;
+    if (_index >= _items.length) return;
+
+    HapticFeedback.selectionClick();
+
+    final current = _count <= 0 ? 1 : _count;
+    if (current <= 1) return;
+
+    setState(() => _count = current - 1);
     _saveState();
   }
 
@@ -153,7 +164,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
     setState(() {
       _index += 1;
-      _count = 0;
+      _count = 1;
     });
     _animateToIndex(_index);
     _saveState();
@@ -211,7 +222,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         );
     final currentItem = _items[_index];
     final repeat = _repeatFor(_items, _index);
-    final progress = repeat <= 1 ? 1.0 : _count / repeat;
+    final displayCount = _count <= 0 ? 1 : _count;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,42 +306,63 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            _ProgressRing(
-              progress: progress,
-              label: '${_count.clamp(0, repeat)} / $repeat',
-              color: _progressGold,
+        if (currentItem.countDescription.isNotEmpty || repeat > 1)
+          Text(
+            currentItem.countDescription.isNotEmpty
+                ? 'العدد: ${currentItem.countDescription}'
+                : 'العدد المطلوب: $repeat',
+            style: AppText.caption.copyWith(color: secondary),
+          ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (currentItem.countDescription.isNotEmpty || repeat > 1)
-                    Text(
-                      currentItem.countDescription.isNotEmpty
-                          ? 'العدد: ${currentItem.countDescription}'
-                          : 'العدد المطلوب: $repeat',
-                      style: AppText.caption.copyWith(color: secondary),
+                  _StepArrow(
+                    icon: Icons.chevron_left,
+                    enabled: displayCount > 1,
+                    onTap: _handleStepBack,
+                  ),
+                  const SizedBox(width: 12),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: Text(
+                      '$displayCount / $repeat',
+                      key: ValueKey('$displayCount-$repeat'),
+                      style: AppText.heading.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  _StepArrow(
+                    icon: Icons.chevron_right,
+                    enabled: !(_index >= _items.length - 1 &&
+                        displayCount >= repeat),
+                    onTap: _handleTap,
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: _handleTap,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
           ),
-          child: const Text('+1'),
         ),
       ],
     );
@@ -363,7 +395,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Future<void> _resetSession() async {
     setState(() {
       _index = 0;
-      _count = 0;
+      _count = 1;
       _ritualLocked = false;
     });
     _jumpToIndex(0);
@@ -376,7 +408,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
     _sessionService.saveState(
       widget.category,
-      const AdhkarSessionState(index: 0, count: 0),
+      const AdhkarSessionState(index: 0, count: 1),
     );
   }
 
@@ -520,7 +552,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     if (_loading || _ritualLocked || index == _index) return;
     setState(() {
       _index = index;
-      _count = 0;
+      _count = 1;
     });
     _saveState();
   }
@@ -619,39 +651,27 @@ class _DetailSection {
   });
 }
 
-class _ProgressRing extends StatelessWidget {
-  final double progress;
-  final String label;
-  final Color color;
+class _StepArrow extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
 
-  const _ProgressRing({
-    required this.progress,
-    required this.label,
-    required this.color,
+  const _StepArrow({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: progress.clamp(0, 1),
-            strokeWidth: 4,
-            backgroundColor: AppColors.textPrimary.withValues(alpha: 0.08),
-            valueColor: AlwaysStoppedAnimation(color),
-          ),
-          Text(
-            label,
-            style: AppText.caption.copyWith(color: secondary),
-          ),
-        ],
+    final color =
+        enabled ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5);
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: enabled ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, color: color),
       ),
     );
   }

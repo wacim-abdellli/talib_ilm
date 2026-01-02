@@ -17,10 +17,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primary,
       fontFamily: 'Vazirmatn',
-      splashFactory: InkSparkle.splashFactory,
-      splashColor: AppColors.primaryAlt.withValues(alpha: 0.14),
-      highlightColor: AppColors.primaryAlt.withValues(alpha: 0.08),
-      hoverColor: AppColors.primaryAlt.withValues(alpha: 0.06),
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: AppColors.primaryAlt.withValues(alpha: 0.06),
+      hoverColor: AppColors.primaryAlt.withValues(alpha: 0.04),
+      focusColor: AppColors.primaryAlt.withValues(alpha: 0.06),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.primaryAlt,
@@ -58,7 +59,7 @@ class AppTheme {
           foregroundColor:
               const WidgetStatePropertyAll(AppColors.textPrimary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.14),
+            AppColors.primaryAlt.withValues(alpha: 0.08),
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
@@ -92,7 +93,7 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.18),
+            AppColors.primaryAlt.withValues(alpha: 0.1),
           ),
           animationDuration: AppUi.animationFast,
         ),
@@ -128,7 +129,7 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.18),
+            AppColors.primaryAlt.withValues(alpha: 0.1),
           ),
           animationDuration: AppUi.animationFast,
         ),
@@ -147,7 +148,7 @@ class AppTheme {
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.12),
+            AppColors.primaryAlt.withValues(alpha: 0.08),
           ),
           animationDuration: AppUi.animationFast,
         ),
@@ -169,7 +170,7 @@ class AppTheme {
             BorderSide(color: AppColors.primaryAlt.withValues(alpha: 0.6)),
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.12),
+            AppColors.primaryAlt.withValues(alpha: 0.08),
           ),
           animationDuration: AppUi.animationFast,
         ),

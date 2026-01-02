@@ -50,24 +50,19 @@ class _PressableCardState extends State<PressableCard> {
     return MouseRegion(
       onEnter: (_) => _setHovered(true),
       onExit: (_) => _setHovered(false),
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 140),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
         curve: Curves.easeOutCubic,
-        scale: active ? 0.985 : 1,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOutCubic,
-          decoration: widget.decoration.copyWith(boxShadow: shadow),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: widget.borderRadius,
-              onTap: widget.onTap,
-              onHighlightChanged: _setPressed,
-              child: Padding(
-                padding: widget.padding,
-                child: widget.child,
-              ),
+        decoration: widget.decoration.copyWith(boxShadow: shadow),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: widget.borderRadius,
+            onTap: widget.onTap,
+            onHighlightChanged: _setPressed,
+            child: Padding(
+              padding: widget.padding,
+              child: widget.child,
             ),
           ),
         ),

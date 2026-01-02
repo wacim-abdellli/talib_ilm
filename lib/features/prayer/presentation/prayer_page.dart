@@ -13,6 +13,7 @@ import 'widgets/prayer_header.dart';
 import 'widgets/prayer_time_tile.dart';
 import 'qibla_page.dart';
 import '../../../shared/widgets/app_overflow_menu.dart';
+import 'location_settings_sheet.dart';
 
 class PrayerPage extends StatefulWidget {
   const PrayerPage({super.key});
@@ -25,19 +26,14 @@ class _PrayerPageState extends State<PrayerPage> {
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
   final PrayerScheduleService _prayerScheduleService =
       PrayerScheduleService();
-  late final Future<PrayerTimesDay> _prayerFuture;
+  late Future<PrayerTimesDay> _prayerFuture;
   PrayerCountdownController? _countdownController;
   PrayerTimesDay? _cachedDay;
 
   @override
   void initState() {
     super.initState();
-    _prayerFuture = _prayerTimeService.getPrayerTimesDay();
-    _prayerFuture.then((day) async {
-      if (!mounted) return;
-      _ensureCountdown(day);
-      await _prayerScheduleService.refreshSchedulesIfNeeded(day: day);
-    });
+    _loadPrayer();
   }
 
   @override
@@ -52,7 +48,20 @@ class _PrayerPageState extends State<PrayerPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('الصلاة', style: AppText.headingXL),
-        actions: const [AppOverflowMenu()],
+        actions: [
+          AppOverflowMenu(
+            extraItems: [
+              AppMenuItem(
+                label: 'إعدادات الموقع',
+                icon: Icons.my_location_outlined,
+                onTap: () {
+                  Navigator.pop(context);
+                  Future.microtask(() => _openLocationSettings(context));
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       body: FutureBuilder<PrayerTimesDay>(
         future: _prayerFuture,
@@ -204,6 +213,29 @@ class _PrayerPageState extends State<PrayerPage> {
       day: day,
       prayerTimeService: _prayerTimeService,
     )..start();
+  }
+
+  void _loadPrayer() {
+    _prayerFuture = _prayerTimeService.getPrayerTimesDay();
+    _prayerFuture.then((day) async {
+      if (!mounted) return;
+      _ensureCountdown(day);
+      await _prayerScheduleService.refreshSchedulesIfNeeded(day: day);
+    });
+  }
+
+  void _reloadPrayer() {
+    setState(_loadPrayer);
+  }
+
+  void _openLocationSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => LocationSettingsSheet(onSaved: _reloadPrayer),
+    );
   }
 
   void _openAfterPrayer(BuildContext context, String prayerName) {
