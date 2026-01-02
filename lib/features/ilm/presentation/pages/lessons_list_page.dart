@@ -7,6 +7,7 @@ import 'package:talib_ilm/features/ilm/data/models/lesson_model.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../shared/widgets/video_player_page.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 
 class LessonsListPage extends StatefulWidget {
   final String bookId;
@@ -123,7 +124,10 @@ class _LessonsListPageState extends State<LessonsListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.bookTitle, style: AppText.headingXL)),
+      appBar: AppBar(
+        title: Text(widget.bookTitle, style: AppText.headingXL),
+        leading: const AppBackButton(),
+      ),
       body: ListView.separated(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),

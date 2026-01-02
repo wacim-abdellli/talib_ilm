@@ -3,6 +3,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../shared/widgets/app_overflow_menu.dart';
 import '../../../shared/widgets/pressable_card.dart';
+import '../../../shared/widgets/app_back_button.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -41,6 +42,7 @@ class MorePage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('المزيد', style: AppText.headingXL),
+        leading: const AppBackButton(),
         actions: const [AppOverflowMenu()],
       ),
       body: ListView.separated(

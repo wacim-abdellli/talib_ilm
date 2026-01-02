@@ -5,8 +5,8 @@ import '../../../app/theme/app_text.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../core/utils/prayer_countdown.dart';
-import '../../adhkar/data/adhkar_models.dart';
-import '../../adhkar/presentation/adhkar_session_page.dart';
+import '../../adhkar/presentation/after_prayer_athkar_page.dart';
+import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
 import 'models/prayer_time.dart';
 import 'widgets/prayer_header.dart';
@@ -90,10 +90,9 @@ class _PrayerPageState extends State<PrayerPage> {
               ...times.map(
                 (item) => PrayerTimeTile(
                   item: item,
-                  onBeforeAdhkar: () =>
-                      _openAdhkar(context, AdhkarCategory.beforePrayer),
+                  onBeforeAdhkar: () => _openDuas(context),
                   onAfterAdhkar: () =>
-                      _openAdhkar(context, AdhkarCategory.afterPrayer),
+                      _openAfterPrayer(context, item.name),
                 ),
               ),
             ],
@@ -207,11 +206,20 @@ class _PrayerPageState extends State<PrayerPage> {
     )..start();
   }
 
-  void _openAdhkar(BuildContext context, AdhkarCategory category) {
+  void _openAfterPrayer(BuildContext context, String prayerName) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AdhkarSessionPage(category: category),
+        builder: (_) => AfterPrayerAthkarPage(prayerName: prayerName),
+      ),
+    );
+  }
+
+  void _openDuas(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DuasMiscPage(),
       ),
     );
   }

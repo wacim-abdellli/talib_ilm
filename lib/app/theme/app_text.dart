@@ -38,4 +38,25 @@ class AppText {
     height: 1.6,
     color: AppColors.textSecondary,
   );
+
+  static const TextStyle athkarTitle = TextStyle(
+    fontFamily: 'Amiri',
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    height: 2.0,
+  );
+
+  static const TextStyle athkarBody = TextStyle(
+    fontFamily: 'Amiri',
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    height: 2.0,
+  );
+
+  static const TextStyle athkarCounter = TextStyle(
+    fontFamily: 'Vazirmatn',
+    fontSize: 48,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+  );
 }

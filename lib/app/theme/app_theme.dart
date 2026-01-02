@@ -17,6 +17,10 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primary,
       fontFamily: 'Vazirmatn',
+      splashFactory: InkSparkle.splashFactory,
+      splashColor: AppColors.primaryAlt.withValues(alpha: 0.14),
+      highlightColor: AppColors.primaryAlt.withValues(alpha: 0.08),
+      hoverColor: AppColors.primaryAlt.withValues(alpha: 0.06),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.primaryAlt,
@@ -30,6 +34,9 @@ class AppTheme {
         foregroundColor: AppColors.textPrimary,
         centerTitle: true,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        actionsIconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       textTheme: const TextTheme(
         titleLarge: AppText.headingXL,
@@ -46,6 +53,20 @@ class AppTheme {
       ),
       dividerColor: const Color(0xFF252836),
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          foregroundColor:
+              const WidgetStatePropertyAll(AppColors.textPrimary),
+          overlayColor: WidgetStatePropertyAll(
+            AppColors.primaryAlt.withValues(alpha: 0.14),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppUi.radiusSM),
+            ),
+          ),
+        ),
+      ),
       tabBarTheme: TabBarThemeData(
         labelColor: AppColors.textPrimary,
         unselectedLabelColor: AppColors.textSecondary,
@@ -80,12 +101,16 @@ class AppTheme {
         backgroundColor: AppColors.background,
         selectedItemColor: AppColors.primaryAlt,
         unselectedItemColor: AppColors.textSecondary,
+        selectedIconTheme: const IconThemeData(size: 24),
+        unselectedIconTheme: const IconThemeData(size: 22),
         selectedLabelStyle: AppText.caption.copyWith(
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: AppText.caption,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(

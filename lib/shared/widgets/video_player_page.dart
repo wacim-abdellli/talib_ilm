@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../app/theme/app_text.dart';
+import 'app_back_button.dart';
 
 class VideoPlayerPage extends StatefulWidget {
   final String title;
@@ -59,14 +60,14 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _finish();
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.title, style: AppText.headingXL),
-          leading: BackButton(onPressed: _finish),
+          leading: AppBackButton(onTap: _finish),
         ),
         body: supported
             ? YoutubePlayer(

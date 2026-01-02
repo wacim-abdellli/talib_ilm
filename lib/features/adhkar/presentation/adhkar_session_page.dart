@@ -1,52 +1,117 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../core/services/adhkar_session_service.dart';
+import '../../../core/services/prayer_time_service.dart';
+import '../../../shared/widgets/app_back_button.dart';
 import '../data/adhkar_models.dart';
+import '../data/adhkar_service.dart';
 
 class AdhkarSessionPage extends StatefulWidget {
   final AdhkarCategory category;
+  final String? titleOverride;
+  final String? contextLabel;
 
-  const AdhkarSessionPage({super.key, required this.category});
+  const AdhkarSessionPage({
+    super.key,
+    required this.category,
+    this.titleOverride,
+    this.contextLabel,
+  });
 
   @override
   State<AdhkarSessionPage> createState() => _AdhkarSessionPageState();
 }
 
 class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
+  final AthkarService _athkarService = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
+  final PrayerTimeService _prayerTimeService = PrayerTimeService();
 
-  late final List<DhikrItem> _items;
   late final PageController _pageController;
+  List<AthkarItem> _items = const [];
+  String? _categoryTitle;
   int _index = 0;
   int _count = 0;
   bool _loading = true;
+  bool _ritualLocked = false;
+  bool _advanceScheduled = false;
+  final bool _autoResetRitual = true;
+  static const Color _progressGold = Color(0xFFD6B15D);
 
   @override
   void initState() {
     super.initState();
-    _items = _itemsFor(widget.category);
     _pageController = PageController();
-    _loadState();
+    _loadItems();
   }
 
-  Future<void> _loadState() async {
+  Future<void> _loadItems() async {
+    final catalog = await _athkarService.loadCatalog();
+    final categoryId = _catalogIdFor(widget.category);
+    final categoryData = catalog.byId(categoryId);
+    final items = categoryData?.items ?? const <AthkarItem>[];
+
     final state = await _sessionService.loadState(widget.category);
+    final ritual = _isRitual(widget.category);
+    final completion = ritual
+        ? await _sessionService.loadCompletion(widget.category)
+        : null;
+    DateTime? windowStart;
+    if (ritual) {
+      windowStart = await _windowStart(widget.category);
+    }
+
+    final needsReset = ritual &&
+        windowStart != null &&
+        completion != null &&
+        completion.isBefore(windowStart);
+    final locked = ritual &&
+        completion != null &&
+        windowStart != null &&
+        (completion.isAfter(windowStart) ||
+            completion.isAtSameMomentAs(windowStart));
+    final autoReset = _autoResetRitual && locked;
+
+    if (needsReset || autoReset) {
+      await _sessionService.clearCompletion(widget.category);
+      await _sessionService.saveState(
+        widget.category,
+        const AdhkarSessionState(index: 0, count: 0),
+      );
+    }
+
     if (!mounted) return;
+
+    final maxIndex = items.length;
+    final initialIndex =
+        (needsReset || autoReset) ? 0 : state.index.clamp(0, maxIndex);
+    var initialCount = 0;
+    if (!(needsReset || autoReset) && initialIndex < items.length) {
+      final repeat = _repeatFor(items, initialIndex);
+      initialCount = state.count.clamp(0, repeat);
+    }
+
     setState(() {
-      _index = state.index.clamp(0, _items.length);
-      _count = state.count.clamp(0, _currentRepeat());
+      _items = items;
+      _categoryTitle = categoryData?.title;
+      _index = initialIndex;
+      _count = initialCount;
+      _ritualLocked = locked && !_autoResetRitual;
       _loading = false;
     });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _jumpToIndex(_index);
     });
   }
 
-  int _currentRepeat() {
-    if (_index >= _items.length) return 1;
-    return _items[_index].repeat;
+  int _repeatFor(List<AthkarItem> items, int index) {
+    if (index >= items.length) return 1;
+    final target = items[index].target;
+    return target <= 0 ? 1 : target;
   }
 
   Future<void> _saveState() async {
@@ -57,66 +122,78 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   void _handleTap() {
-    if (_loading || _index >= _items.length) return;
+    if (_loading || _ritualLocked || _advanceScheduled) return;
+    if (_index >= _items.length) return;
 
     HapticFeedback.selectionClick();
 
-    final repeat = _items[_index].repeat;
-    final nextCount = _count + 1;
+    final repeat = _repeatFor(_items, _index);
+    final nextCount = (_count + 1).clamp(0, repeat);
 
     if (nextCount >= repeat) {
-      _index += 1;
-      _count = 0;
-      if (_index >= _items.length) {
-        HapticFeedback.mediumImpact();
-      } else {
-        _animateToIndex(_index);
-      }
-    } else {
-      _count = nextCount;
+      setState(() => _count = repeat);
+      _saveState();
+      _advanceScheduled = true;
+      Future.delayed(const Duration(milliseconds: 160), () {
+        if (!mounted) return;
+        _advanceScheduled = false;
+        _advanceToNext();
+      });
+      return;
     }
 
-    setState(() {});
+    setState(() => _count = nextCount);
     _saveState();
   }
 
-  void _handleUndo() {
-    if (_loading) return;
-    if (_index == 0 && _count == 0) return;
-
-    if (_count > 0) {
-      _count -= 1;
-    } else if (_index > 0) {
-      _index -= 1;
-      final repeat = _items[_index].repeat;
-      _count = repeat > 0 ? repeat - 1 : 0;
-      _animateToIndex(_index);
+  void _advanceToNext() {
+    if (_index + 1 >= _items.length) {
+      _handleCompletion();
+      return;
     }
-
-    setState(() {});
+    setState(() {
+      _index += 1;
+      _count = 0;
+    });
+    _animateToIndex(_index);
     _saveState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.titleOverride ?? _categoryTitle ?? widget.category.label;
+    final progressText = (!_loading && _items.isNotEmpty)
+        ? '${_index + 1} / ${_items.length}'
+        : '';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.category.label, style: AppText.headingXL),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title, style: AppText.headingXL),
+            if (progressText.isNotEmpty)
+              Text(
+                progressText,
+                style: AppText.caption.copyWith(color: AppColors.textSecondary),
+              ),
+          ],
+        ),
+        leading: const AppBackButton(),
+        actions: [
+          IconButton(
+            tooltip: 'الخيارات',
+            icon: const Icon(Icons.more_horiz),
+            onPressed: _openActionsSheet,
+          ),
+        ],
       ),
       body: _loading
           ? const SizedBox.shrink()
-          : GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _handleTap,
-              onLongPress: _handleUndo,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                  child: _index >= _items.length
-                      ? _buildCompletion()
-                      : _buildSession(),
-                ),
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                child: _items.isEmpty ? _buildEmpty() : _buildSession(),
               ),
             ),
     );
@@ -132,99 +209,151 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final secondary = Theme.of(context).colorScheme.onSurface.withValues(
           alpha: 0.6,
         );
-    final currentItem = _index < _items.length ? _items[_index] : null;
-    final repeat = currentItem?.repeat ?? 1;
+    final currentItem = _items[_index];
+    final repeat = _repeatFor(_items, _index);
     final progress = repeat <= 1 ? 1.0 : _count / repeat;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.contextLabel != null) ...[
+          Text(
+            widget.contextLabel!,
+            style: AppText.caption.copyWith(color: secondary),
+          ),
+          const SizedBox(height: 8),
+        ],
         Text(
           widget.category.label,
           style: AppText.bodyMuted.copyWith(color: secondary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _items.length,
-            onPageChanged: _handlePageChange,
-            reverse: Directionality.of(context) == TextDirection.rtl,
-            itemBuilder: (context, index) {
-              final item = _items[index];
-              return Center(
-                child: Text(
-                  item.text,
-                  textAlign: TextAlign.center,
-                  style: AppText.headingXL.copyWith(
-                    height: 1.9,
-                  ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: AppColors.textPrimary.withValues(alpha: 0.06),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
                 ),
-              );
-            },
+              ],
+            ),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _items.length,
+              onPageChanged: _handlePageChange,
+              reverse: Directionality.of(context) == TextDirection.rtl,
+              itemBuilder: (context, index) {
+                final item = _items[index];
+                return InkWell(
+                  onTap: _handleTap,
+                  onLongPress: () => _openDetailsSheet(item),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item.arabic,
+                                    textAlign: TextAlign.center,
+                                    style: AppText.athkarBody.copyWith(
+                                      color: AppColors.textPrimary.withValues(
+                                        alpha: 0.92,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         ),
-        if (currentItem?.reference != null &&
-            currentItem!.reference!.isNotEmpty) ...[
-          Text(
-            currentItem.reference!,
-            style: AppText.caption.copyWith(color: secondary),
-          ),
-          const SizedBox(height: 12),
-        ],
+        const SizedBox(height: 12),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'الذكر ${_index + 1} من ${_items.length}',
-              style: AppText.caption.copyWith(color: secondary),
-            ),
             _ProgressRing(
               progress: progress,
-              label: repeat > 1 ? '${_count + 1}/$repeat' : '1/1',
+              label: '${_count.clamp(0, repeat)} / $repeat',
+              color: _progressGold,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (currentItem.countDescription.isNotEmpty || repeat > 1)
+                    Text(
+                      currentItem.countDescription.isNotEmpty
+                          ? 'العدد: ${currentItem.countDescription}'
+                          : 'العدد المطلوب: $repeat',
+                      style: AppText.caption.copyWith(color: secondary),
+                    ),
+                ],
+              ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _handleTap,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textPrimary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          child: const Text('+1'),
         ),
       ],
     );
   }
 
-  Widget _buildCompletion() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
-      tween: Tween<double>(begin: 0.92, end: 1),
-      builder: (context, scale, child) {
-        return Transform.scale(scale: scale, child: child);
-      },
+  Widget _buildEmpty() {
+    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        );
+    return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 320),
-            opacity: 1,
-            child: Text('أحسنت', style: AppText.headingXL),
-          ),
+          Text('لا توجد أذكار متاحة', style: AppText.heading),
           const SizedBox(height: 8),
           Text(
-            'بارك الله فيك',
-            style: AppText.body.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            'أضف أذكارًا من البيانات لاحقًا',
+            style: AppText.body.copyWith(color: secondary),
           ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            children: [
-              FilledButton(
-                onPressed: _resetSession,
-                child: const Text('إعادة'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('رجوع'),
-              ),
-            ],
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('رجوع'),
           ),
         ],
       ),
@@ -235,13 +364,160 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     setState(() {
       _index = 0;
       _count = 0;
+      _ritualLocked = false;
     });
     _jumpToIndex(0);
     await _saveState();
   }
 
+  void _handleCompletion() {
+    if (_isRitual(widget.category)) {
+      _sessionService.saveCompletion(widget.category, DateTime.now());
+    }
+    _sessionService.saveState(
+      widget.category,
+      const AdhkarSessionState(index: 0, count: 0),
+    );
+  }
+
+  void _openActionsSheet() {
+    if (_items.isEmpty) return;
+    final item = _items[_index];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('إعادة العد'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _resetSession();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star_outline),
+                title: const Text('عرض الفضل'),
+                enabled: item.fadl.isNotEmpty,
+                onTap: item.fadl.isEmpty
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        _showTextSheet('الفضل', item.fadl);
+                      },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('عرض المصدر'),
+                enabled: item.source.isNotEmpty,
+                onTap: item.source.isEmpty
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        _showTextSheet('المصدر', item.source);
+                      },
+              ),
+              ListTile(
+                leading: const Icon(Icons.copy_outlined),
+                title: const Text('نسخ النص'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Clipboard.setData(ClipboardData(text: item.arabic));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم النسخ'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined),
+                title: const Text('مشاركة'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Share.share(item.arabic);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDetailsSheet(AthkarItem item) {
+    if (item.meaning.isEmpty && item.transliteration.isEmpty) return;
+    final sections = <_DetailSection>[
+      if (item.transliteration.isNotEmpty)
+        _DetailSection(title: 'النطق', content: item.transliteration),
+      if (item.meaning.isNotEmpty)
+        _DetailSection(title: 'المعنى', content: item.meaning),
+    ];
+    _showDetailSections('التفاصيل', sections);
+  }
+
+  void _showTextSheet(String title, String content) {
+    _showDetailSections(title, [
+      _DetailSection(title: title, content: content),
+    ]);
+  }
+
+  void _showDetailSections(String title, List<_DetailSection> sections) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppText.heading),
+                const SizedBox(height: 12),
+                ...sections.map(
+                  (section) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(section.title, style: AppText.caption),
+                        const SizedBox(height: 6),
+                        Text(
+                          section.content,
+                          style: AppText.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _handlePageChange(int index) {
-    if (_loading || index == _index) return;
+    if (_loading || _ritualLocked || index == _index) return;
     setState(() {
       _index = index;
       _count = 0;
@@ -251,12 +527,14 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   void _jumpToIndex(int index) {
     if (!_pageController.hasClients || _items.isEmpty) return;
+    if (index >= _items.length) return;
     final target = index.clamp(0, _items.length - 1);
     _pageController.jumpToPage(target);
   }
 
   void _animateToIndex(int index) {
     if (!_pageController.hasClients || _items.isEmpty) return;
+    if (index >= _items.length) return;
     final target = index.clamp(0, _items.length - 1);
     _pageController.animateToPage(
       target,
@@ -265,52 +543,92 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     );
   }
 
-  List<DhikrItem> _itemsFor(AdhkarCategory category) {
+  String _catalogIdFor(AdhkarCategory category) {
     switch (category) {
       case AdhkarCategory.morning:
-        return const [
-          DhikrItem(text: 'أصبحنا وأصبح الملك لله والحمد لله', repeat: 1),
-          DhikrItem(text: 'سبحان الله وبحمده', repeat: 100),
-          DhikrItem(text: 'لا إله إلا الله وحده لا شريك له', repeat: 10),
-          DhikrItem(text: 'رضيت بالله ربًا وبالإسلام دينًا', repeat: 3),
-        ];
+        return 'morning';
       case AdhkarCategory.evening:
-        return const [
-          DhikrItem(text: 'أمسينا وأمسى الملك لله والحمد لله', repeat: 1),
-          DhikrItem(text: 'سبحان الله وبحمده', repeat: 100),
-          DhikrItem(text: 'لا إله إلا الله وحده لا شريك له', repeat: 10),
-          DhikrItem(text: 'حسبي الله لا إله إلا هو', repeat: 7),
-        ];
-      case AdhkarCategory.beforePrayer:
-        return const [
-          DhikrItem(text: 'اللهم اجعلني من التوابين واجعلني من المتطهرين'),
-          DhikrItem(text: 'أشهد أن لا إله إلا الله وحده لا شريك له'),
-          DhikrItem(text: 'اللهم افتح لي أبواب رحمتك'),
-        ];
+        return 'evening';
       case AdhkarCategory.afterPrayer:
-        return const [
-          DhikrItem(text: 'أستغفر الله', repeat: 3),
-          DhikrItem(text: 'اللهم أنت السلام ومنك السلام'),
-          DhikrItem(text: 'سبحان الله', repeat: 33),
-          DhikrItem(text: 'الحمد لله', repeat: 33),
-          DhikrItem(text: 'الله أكبر', repeat: 34),
-        ];
+        return 'after_prayer';
+      case AdhkarCategory.beforePrayer:
+        return 'before_prayer';
       case AdhkarCategory.general:
-        return const [
-          DhikrItem(text: 'سبحان الله'),
-          DhikrItem(text: 'الحمد لله'),
-          DhikrItem(text: 'لا إله إلا الله'),
-          DhikrItem(text: 'الله أكبر'),
-        ];
+        return 'general';
+      case AdhkarCategory.tasbeeh:
+        return 'tasbeeh';
+      case AdhkarCategory.istighfar:
+        return 'istighfar';
+      case AdhkarCategory.duas:
+        return 'duas';
     }
   }
+
+  bool _isRitual(AdhkarCategory category) {
+    return category == AdhkarCategory.morning ||
+        category == AdhkarCategory.evening ||
+        category == AdhkarCategory.afterPrayer;
+  }
+
+  Future<DateTime?> _windowStart(AdhkarCategory category) async {
+    try {
+      final now = DateTime.now();
+      final key = _ritualResetKey(category);
+      if (key == null) return null;
+
+      final today = await _prayerTimeService.getPrayerTimesDay(date: now);
+      DateTime? boundary = today.prayers[key];
+      if (boundary == null) return DateTime(now.year, now.month, now.day);
+
+      if (now.isBefore(boundary)) {
+        final yesterday = now.subtract(const Duration(days: 1));
+        final previous =
+            await _prayerTimeService.getPrayerTimesDay(date: yesterday);
+        boundary = previous.prayers[key] ??
+            boundary.subtract(const Duration(days: 1));
+      }
+      return boundary;
+    } catch (_) {
+      final now = DateTime.now();
+      return DateTime(now.year, now.month, now.day);
+    }
+  }
+
+  String? _ritualResetKey(AdhkarCategory category) {
+    switch (category) {
+      case AdhkarCategory.morning:
+        return 'الفجر';
+      case AdhkarCategory.evening:
+        return 'المغرب';
+      case AdhkarCategory.afterPrayer:
+        return 'الفجر';
+      default:
+        return null;
+    }
+  }
+
+}
+
+class _DetailSection {
+  final String title;
+  final String content;
+
+  const _DetailSection({
+    required this.title,
+    required this.content,
+  });
 }
 
 class _ProgressRing extends StatelessWidget {
   final double progress;
   final String label;
+  final Color color;
 
-  const _ProgressRing({required this.progress, required this.label});
+  const _ProgressRing({
+    required this.progress,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -318,8 +636,8 @@ class _ProgressRing extends StatelessWidget {
           alpha: 0.6,
         );
     return SizedBox(
-      width: 42,
-      height: 42,
+      width: 44,
+      height: 44,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -327,7 +645,7 @@ class _ProgressRing extends StatelessWidget {
             value: progress.clamp(0, 1),
             strokeWidth: 4,
             backgroundColor: AppColors.textPrimary.withValues(alpha: 0.08),
-            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation(color),
           ),
           Text(
             label,

@@ -9,6 +9,7 @@ import '../../../../shared/navigation/fade_page_route.dart';
 import '../widgets/book_card.dart';
 import 'book_view_page.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 
 class LevelBooksPage extends StatefulWidget {
   final IlmLevel level;
@@ -62,7 +63,10 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(widget.level.title, style: AppText.headingXL)),
+      appBar: AppBar(
+        title: Text(widget.level.title, style: AppText.headingXL),
+        leading: const AppBackButton(),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

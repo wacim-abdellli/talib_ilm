@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_text.dart';
+import 'app_back_button.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String assetPath;
@@ -98,7 +99,10 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: widget.showAppBar
-          ? AppBar(title: Text(widget.title, style: AppText.headingXL))
+          ? AppBar(
+              title: Text(widget.title, style: AppText.headingXL),
+              leading: const AppBackButton(),
+            )
           : null,
       body: Stack(
         children: [

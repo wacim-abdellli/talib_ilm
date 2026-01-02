@@ -17,12 +17,12 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    IlmPage(),
+  final List<Widget> _pages = [
+    const HomePage(),
+    const IlmPage(),
     AdhkarPage(),
-    PrayerPage(),
-    LibraryPage(),
+    const PrayerPage(),
+    const LibraryPage(),
   ];
 
   @override
@@ -53,15 +53,15 @@ class _AppShellState extends State<AppShell> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
+            icon: Icon(Icons.home),
             label: 'الرئيسية',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
+            icon: Icon(Icons.auto_stories),
             label: 'العلم',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
+            icon: Icon(Icons.self_improvement),
             label: 'الأذكار',
           ),
           BottomNavigationBarItem(
@@ -69,7 +69,7 @@ class _AppShellState extends State<AppShell> {
             label: 'الصلاة',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_library_outlined),
+            icon: Icon(Icons.local_library),
             label: 'المكتبة',
           ),
         ],

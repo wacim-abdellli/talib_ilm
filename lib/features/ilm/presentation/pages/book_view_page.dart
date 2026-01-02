@@ -16,6 +16,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
 import 'lessons_list_page.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 
 class BookViewPage extends StatefulWidget {
   final IlmBook book;
@@ -285,6 +286,7 @@ class _BookViewPageState extends State<BookViewPage>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(widget.book.title, style: AppText.headingXL),
+        leading: const AppBackButton(),
         bottom: TabBar(
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,

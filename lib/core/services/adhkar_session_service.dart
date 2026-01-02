@@ -14,6 +14,7 @@ class AdhkarSessionState {
 
 class AdhkarSessionService {
   static const _prefix = 'adhkar_session_';
+  static const _completionPrefix = 'adhkar_completion_';
 
   Future<AdhkarSessionState> loadState(AdhkarCategory category) async {
     final prefs = await SharedPreferences.getInstance();
@@ -31,7 +32,34 @@ class AdhkarSessionService {
     await prefs.setInt(_key(category, 'count'), state.count);
   }
 
+  Future<DateTime?> loadCompletion(AdhkarCategory category) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_completionKey(category));
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> saveCompletion(
+    AdhkarCategory category,
+    DateTime completion,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _completionKey(category),
+      completion.toIso8601String(),
+    );
+  }
+
+  Future<void> clearCompletion(AdhkarCategory category) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_completionKey(category));
+  }
+
   String _key(AdhkarCategory category, String field) {
     return '$_prefix${category.id}_$field';
+  }
+
+  String _completionKey(AdhkarCategory category) {
+    return '$_completionPrefix${category.id}';
   }
 }

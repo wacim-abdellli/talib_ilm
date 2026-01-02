@@ -327,7 +327,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openAdhkar(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: const AdhkarPage()));
+    Navigator.push(context, buildFadeRoute(page: AdhkarPage()));
   }
 
   void _openLibrary(BuildContext context) {
