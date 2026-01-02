@@ -12,7 +12,7 @@ class TalibIlmApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'طالب العلم',
-      theme: AppTheme.light(),
+      theme: AppTheme.dark(),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar'), Locale('en')],
 

@@ -15,9 +15,24 @@
             "title": "الأصول الثلاثة",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": "https://youtube.com/playlist?list=PLjfRdgn0RDMqtsB1bYAtdvXVC61FLEE1-&si=HQ7gVVvIYgrjEFcF",
+              "shuruh": [
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "ibn_uthaymeen",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "ibn_baz",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "salah_al_shaikh",
+                  "scholar": "الشيخ صالح بن عبد العزيز آل الشيخ"
+                }
+              ]
             }
           },
           {
@@ -25,9 +40,8 @@
             "title": "القواعد الأربع",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -35,9 +49,8 @@
             "title": "نواقض الإسلام",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -45,9 +58,8 @@
             "title": "كشف الشبهات",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -55,9 +67,8 @@
             "title": "فضل الإسلام",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           }
         ]
@@ -73,9 +84,8 @@
             "title": "كتاب التوحيد",
             "author": "محمد بن عبد الوهاب",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -83,9 +93,8 @@
             "title": "العقيدة الواسطية",
             "author": "ابن تيمية",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -93,9 +102,8 @@
             "title": "الأربعون النووية",
             "author": "النووي",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -103,9 +111,8 @@
             "title": "عمدة الأحكام",
             "author": "عبد الغني المقدسي",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -113,9 +120,8 @@
             "title": "عمدة الفقه",
             "author": "ابن قدامة",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           }
         ]
@@ -131,9 +137,8 @@
             "title": "الورقات",
             "author": "إمام الحرمين الجويني",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -141,9 +146,8 @@
             "title": "نخبة الفكر",
             "author": "ابن حجر العسقلاني",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -151,9 +155,8 @@
             "title": "تفسير جزء عم",
             "author": "عبد الرحمن السعدي",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           },
           {
@@ -161,9 +164,8 @@
             "title": "العقيدة الطحاوية",
             "author": "أبو جعفر الطحاوي",
             "resources": {
-              "text_pdf": null,
-              "sharh_pdf": null,
-              "video_playlist": null
+              "video_playlist": null,
+              "shuruh": []
             }
           }
         ]

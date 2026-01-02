@@ -2,33 +2,40 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppText {
-  /// UI text
-  static const TextStyle ui = TextStyle(
+  static const TextStyle headingXL = TextStyle(
     fontFamily: 'Vazirmatn',
-    color: AppColors.textPrimary,
-    fontSize: 14,
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    height: 1.6,
   );
 
-  /// Headings
   static const TextStyle heading = TextStyle(
     fontFamily: 'Vazirmatn',
-    color: AppColors.textPrimary,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    height: 1.6,
   );
 
-  /// Reading text
-  static const TextStyle reading = TextStyle(
-    fontFamily: 'Amiri',
-    color: AppColors.textPrimary,
-    fontSize: 18,
-    height: 1.9,
-  );
-
-  /// Secondary / muted text
-  static const TextStyle secondary = TextStyle(
+  static const TextStyle body = TextStyle(
     fontFamily: 'Vazirmatn',
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.7,
+  );
+
+  static const TextStyle bodyMuted = TextStyle(
+    fontFamily: 'Vazirmatn',
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.7,
     color: AppColors.textSecondary,
-    fontSize: 13,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontFamily: 'Vazirmatn',
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.6,
+    color: AppColors.textSecondary,
   );
 }

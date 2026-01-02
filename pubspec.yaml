@@ -7,10 +7,19 @@ environment:
 
 
 dependencies:
-  path_provider: ^2.1.2 
-  youtube_player_flutter: ^9.1.2
+  shared_preferences: ^2.2.2
+  youtube_player_flutter: ^9.1.1
   flutter_inappwebview: ^6.0.0
-  flutter_pdfview: ^1.3.2
+  syncfusion_flutter_pdfviewer: ^32.1.21
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  adhan: ^2.0.0+1
+  hijri: ^3.0.0
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.2
+  flutter_timezone: ^1.0.8
+  just_audio: ^0.9.38
+  share_plus: ^10.0.2
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -18,6 +27,7 @@ dependencies:
 
  
   cupertino_icons: ^1.0.8
+  window_size: ^0.1.0
 
 dev_dependencies:
   flutter_test:
@@ -33,9 +43,12 @@ flutter:
   assets:
     - assets/data/mutun_program.json
     - assets/data/
+    - assets/audio/
     - assets/images/
     - assets/icons/
-    - assets/pdfs/mutun/bk_usul_thalatha.pdf
+    - assets/pdfs/mutun/
+    - assets/pdfs/shuruh/bk_usul_thalatha/
+
 
   fonts:
   - family: Amiri
@@ -47,4 +60,3 @@ flutter:
     fonts:
       - asset: assets/fonts/Vazirmatn-Regular.ttf
       - asset: assets/fonts/Vazirmatn-Bold.ttf
-
