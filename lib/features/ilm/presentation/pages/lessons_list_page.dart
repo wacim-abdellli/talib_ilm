@@ -6,8 +6,12 @@ import 'package:talib_ilm/features/ilm/data/models/progress_models.dart';
 import 'package:talib_ilm/features/ilm/data/models/lesson_model.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/video_player_page.dart';
-import '../../../../shared/widgets/app_back_button.dart';
+import '../../../../shared/widgets/primary_app_bar.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../core/models/favorite_item.dart';
 
 class LessonsListPage extends StatefulWidget {
   final String bookId;
@@ -29,8 +33,10 @@ class _LessonsListPageState extends State<LessonsListPage>
     with SingleTickerProviderStateMixin {
   final ProgressService _progressService = ProgressService();
   final LastActivityService _lastActivityService = LastActivityService();
+  final FavoritesService _favoritesService = FavoritesService();
   final ScrollController _scrollController = ScrollController();
   int _completedLessons = 0;
+  Set<String> _favoriteLessonIds = {};
   late final AnimationController _pulseController;
 
   @override
@@ -41,6 +47,7 @@ class _LessonsListPageState extends State<LessonsListPage>
       duration: const Duration(milliseconds: 1100),
     )..repeat(reverse: true);
     _loadProgress();
+    _loadFavorites();
     _lastActivityService.setLastTab(
       widget.bookId,
       LastActivityService.tabLessons,
@@ -103,16 +110,16 @@ class _LessonsListPageState extends State<LessonsListPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 1500),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check, color: Colors.white, size: 18),
+              const Icon(Icons.check, color: AppColors.textPrimary, size: 18),
               const SizedBox(width: 8),
               Text(
                 'تم حفظ التقدم',
-                style: AppText.body.copyWith(color: Colors.white),
+                style: AppText.body.copyWith(color: AppColors.textPrimary),
               ),
             ],
           ),
@@ -121,18 +128,48 @@ class _LessonsListPageState extends State<LessonsListPage>
     }
   }
 
+  Future<void> _loadFavorites() async {
+    final ids = await _favoritesService.getIdsByType(FavoriteType.lesson);
+    if (!mounted) return;
+    setState(() => _favoriteLessonIds = ids);
+  }
+
+  String _favoriteId(Lesson lesson) {
+    return '${widget.bookId}:${lesson.index}';
+  }
+
+  Future<void> _toggleFavorite(Lesson lesson) async {
+    final id = _favoriteId(lesson);
+    final saved = await _favoritesService.toggle(
+      FavoriteItem(
+        type: FavoriteType.lesson,
+        id: id,
+        title: lesson.title,
+        subtitle: widget.bookTitle,
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      if (saved) {
+        _favoriteLessonIds.add(id);
+      } else {
+        _favoriteLessonIds.remove(id);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.bookTitle, style: AppText.headingXL),
-        leading: const AppBackButton(),
+      appBar: PrimaryAppBar(
+        title: widget.bookTitle,
+        showBack: true,
       ),
       body: ListView.separated(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
         itemCount: widget.lessons.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 8),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final lesson = widget.lessons[index];
           final done = index < _completedLessons;
@@ -143,17 +180,11 @@ class _LessonsListPageState extends State<LessonsListPage>
           return AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isCurrent
-                  ? AppColors.primaryAlt.withValues(alpha: 0.12)
-                  : AppColors.surface,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isCurrent
-                    ? AppColors.primaryAlt.withValues(alpha: 0.35)
-                    : AppColors.textPrimary.withValues(alpha: 0.06),
-              ),
+              boxShadow: AppUi.cardShadow,
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -165,8 +196,8 @@ class _LessonsListPageState extends State<LessonsListPage>
                 if (!context.mounted) return;
                 final watched = await Navigator.push<bool>(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => VideoPlayerPage(
+                  buildFadeRoute(
+                    page: VideoPlayerPage(
                       title: lesson.title,
                       videoId: lesson.videoId,
                     ),
@@ -206,6 +237,19 @@ class _LessonsListPageState extends State<LessonsListPage>
                       ],
                     ),
                   ),
+                  IconButton(
+                    tooltip: 'المفضلة',
+                    onPressed: () => _toggleFavorite(lesson),
+                    icon: Icon(
+                      _favoriteLessonIds.contains(_favoriteId(lesson))
+                          ? Icons.star
+                          : Icons.star_border,
+                      color: _favoriteLessonIds.contains(_favoriteId(lesson))
+                          ? AppColors.primary
+                          : AppColors.textMuted,
+                      size: 18,
+                    ),
+                  ),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -213,13 +257,13 @@ class _LessonsListPageState extends State<LessonsListPage>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryAlt.withValues(alpha: 0.2),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
                         'التالي',
                         style: AppText.caption.copyWith(
-                          color: AppColors.primaryAlt,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -249,7 +293,7 @@ class _LessonIcon extends StatelessWidget {
     if (done) {
       return Icon(
         Icons.check_circle,
-        color: AppColors.success,
+        color: AppColors.primary,
         size: 24,
       );
     }
@@ -263,7 +307,7 @@ class _LessonIcon extends StatelessWidget {
         },
         child: Icon(
           Icons.play_circle_fill,
-          color: AppColors.primaryAlt,
+          color: AppColors.primary,
           size: 28,
         ),
       );
@@ -271,7 +315,7 @@ class _LessonIcon extends StatelessWidget {
 
     return Icon(
       Icons.play_circle_outline,
-      color: AppColors.textSecondary,
+      color: AppColors.textMuted,
       size: 24,
     );
   }

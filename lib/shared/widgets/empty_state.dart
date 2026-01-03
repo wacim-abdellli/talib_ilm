@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_text.dart';
+import '../../app/theme/app_ui.dart';
+import 'pressable_scale.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;
@@ -20,18 +22,14 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.7,
-        );
+    const secondary = AppColors.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.textPrimary.withValues(alpha: 0.08),
-        ),
+        boxShadow: AppUi.cardShadow,
       ),
       child: Column(
         children: [
@@ -47,9 +45,12 @@ class EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          FilledButton(
-            onPressed: onAction,
-            child: Text(actionLabel),
+          PressableScale(
+            enabled: onAction != null,
+            child: FilledButton(
+              onPressed: onAction,
+              child: Text(actionLabel),
+            ),
           ),
         ],
       ),
@@ -64,7 +65,6 @@ class _Illustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glow = AppColors.primary.withValues(alpha: 0.2);
     return SizedBox(
       width: 88,
       height: 88,
@@ -77,30 +77,6 @@ class _Illustration extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.textPrimary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-          Positioned(
-            top: 12,
-            right: 14,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: glow,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 16,
-            left: 16,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: glow.withValues(alpha: 0.7),
-                shape: BoxShape.circle,
-              ),
             ),
           ),
           Container(

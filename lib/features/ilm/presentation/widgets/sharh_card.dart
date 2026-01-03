@@ -24,22 +24,15 @@ class SharhCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badge = _badgeText();
-    final highlight = isLastRead;
-    final borderColor = highlight
-        ? AppColors.primaryAlt.withValues(alpha: 0.5)
-        : AppColors.textPrimary.withValues(alpha: 0.06);
-    final background = highlight
-        ? AppColors.primaryAlt.withValues(alpha: 0.08)
-        : AppColors.surface;
+    final background = AppColors.surface;
 
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       borderRadius: BorderRadius.circular(16),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +50,7 @@ class SharhCard extends StatelessWidget {
                 if (difficulty != null)
                   _Badge(
                     text: difficulty!,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textMuted,
                   ),
               ],
             ),

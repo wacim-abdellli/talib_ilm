@@ -51,24 +51,24 @@ class ProgressPill extends StatelessWidget {
         return _Config(
           label: 'مكتمل',
           icon: Icons.check,
-          foreground: AppColors.success,
-          background: AppColors.success.withValues(alpha: 0.12),
+          foreground: AppColors.primary,
+          background: AppColors.primary.withValues(alpha: 0.12),
         );
 
       case BookProgressStatus.inProgress:
         return _Config(
           label: 'قيد التقدم',
           icon: Icons.play_arrow,
-          foreground: AppColors.primaryAlt,
-          background: AppColors.primaryAlt.withValues(alpha: 0.12),
+          foreground: AppColors.primary,
+          background: AppColors.primary.withValues(alpha: 0.12),
         );
 
       case BookProgressStatus.notStarted:
         return _Config(
           label: 'لم يبدأ',
           icon: Icons.circle_outlined,
-          foreground: AppColors.textSecondary,
-          background: AppColors.textSecondary.withValues(alpha: 0.12),
+          foreground: AppColors.textMuted,
+          background: AppColors.textMuted.withValues(alpha: 0.12),
         );
     }
   }

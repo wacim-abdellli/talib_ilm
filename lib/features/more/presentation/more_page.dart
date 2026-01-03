@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
-import '../../../shared/widgets/app_overflow_menu.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/app_back_button.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -40,27 +39,23 @@ class MorePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('المزيد', style: AppText.headingXL),
-        leading: const AppBackButton(),
-        actions: const [AppOverflowMenu()],
+      appBar: PrimaryAppBar(
+        title: 'المزيد',
+        showBack: true,
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: sections.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           final section = sections[index];
           return PressableCard(
             onTap: section.onTap,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             borderRadius: BorderRadius.circular(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.textPrimary.withValues(alpha: 0.06),
-              ),
             ),
             child: Row(
               children: [
@@ -79,7 +74,6 @@ class MorePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_left, color: AppColors.textSecondary),
               ],
             ),
           );

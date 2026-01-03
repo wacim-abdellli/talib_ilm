@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
-import '../../../shared/widgets/app_back_button.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 
 class QiblaPage extends StatelessWidget {
   const QiblaPage({super.key});
@@ -10,9 +10,9 @@ class QiblaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('اتجاه القبلة', style: AppText.headingXL),
-        leading: const AppBackButton(),
+      appBar: const PrimaryAppBar(
+        title: 'اتجاه القبلة',
+        showBack: true,
       ),
       body: const Center(
         child: Text(

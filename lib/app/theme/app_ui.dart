@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'app_colors.dart';
+
 class AppUi {
   static const double radiusSM = 10;
   static const double radiusMD = 16;
@@ -9,4 +12,12 @@ class AppUi {
 
   static const Duration animationFast = Duration(milliseconds: 160);
   static const Duration animationNormal = Duration(milliseconds: 240);
+
+  static List<BoxShadow> get cardShadow => [
+        BoxShadow(
+          color: AppColors.background.withValues(alpha: 0.28),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ];
 }

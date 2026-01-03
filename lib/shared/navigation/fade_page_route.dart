@@ -12,10 +12,16 @@ PageRouteBuilder<T> buildFadeRoute<T>({
       final curved = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOut,
+        reverseCurve: Curves.easeIn,
       );
+      final offsetTween =
+          Tween<Offset>(begin: const Offset(0, 0.03), end: Offset.zero);
       return FadeTransition(
         opacity: curved,
-        child: child,
+        child: SlideTransition(
+          position: curved.drive(offsetTween),
+          child: child,
+        ),
       );
     },
   );

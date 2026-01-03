@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_text.dart';
-import '../../features/library/presentation/library_page.dart';
+import '../../features/favorites/presentation/favorites_page.dart';
 import '../../features/more/presentation/more_page.dart';
+import '../navigation/fade_page_route.dart';
 
 class AppMenuItem {
   final String label;
@@ -24,7 +25,7 @@ class AppOverflowMenu extends StatelessWidget {
     super.key,
     this.items = const [],
     this.extraItems = const [],
-    this.includeDefaults = true,
+    this.includeDefaults = false,
   });
 
   @override
@@ -36,7 +37,7 @@ class AppOverflowMenu extends StatelessWidget {
     ];
 
     return IconButton(
-      icon: const Icon(Icons.more_horiz),
+      icon: const Icon(Icons.menu),
       onPressed: () => _showSheet(context, menuItems),
     );
   }
@@ -44,22 +45,14 @@ class AppOverflowMenu extends StatelessWidget {
   List<AppMenuItem> _defaultItems(BuildContext context) {
     return [
       AppMenuItem(
-        label: 'المكتبة',
-        icon: Icons.local_library_outlined,
+        label: 'المفضلة',
+        icon: Icons.star_outline,
         onTap: () {
           Navigator.pop(context);
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const LibraryPage()),
+            buildFadeRoute(page: const FavoritesPage()),
           );
-        },
-      ),
-      AppMenuItem(
-        label: 'التنزيلات',
-        icon: Icons.download_outlined,
-        onTap: () {
-          Navigator.pop(context);
-          _showInfo(context, 'قسم التنزيلات سيضاف قريبًا.');
         },
       ),
       AppMenuItem(
@@ -69,7 +62,7 @@ class AppOverflowMenu extends StatelessWidget {
           Navigator.pop(context);
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const MorePage()),
+            buildFadeRoute(page: const MorePage()),
           );
         },
       ),
@@ -112,15 +105,6 @@ class AppOverflowMenu extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  void _showInfo(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: AppText.body),
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 

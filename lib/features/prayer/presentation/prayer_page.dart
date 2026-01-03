@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../core/utils/prayer_countdown.dart';
+import '../../../shared/navigation/fade_page_route.dart';
 import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
@@ -14,6 +16,8 @@ import 'widgets/prayer_time_tile.dart';
 import 'qibla_page.dart';
 import '../../../shared/widgets/app_overflow_menu.dart';
 import 'location_settings_sheet.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/app_drawer.dart';
 
 class PrayerPage extends StatefulWidget {
   const PrayerPage({super.key});
@@ -46,10 +50,13 @@ class _PrayerPageState extends State<PrayerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('الصلاة', style: AppText.headingXL),
+      drawer: const AppDrawer(),
+      appBar: PrimaryAppBar(
+        title: 'الصلاة',
+        showMenu: true,
         actions: [
           AppOverflowMenu(
+            includeDefaults: false,
             extraItems: [
               AppMenuItem(
                 label: 'إعدادات الموقع',
@@ -241,27 +248,21 @@ class _PrayerPageState extends State<PrayerPage> {
   void _openAfterPrayer(BuildContext context, String prayerName) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => AfterPrayerAthkarPage(prayerName: prayerName),
-      ),
+      buildFadeRoute(page: AfterPrayerAthkarPage(prayerName: prayerName)),
     );
   }
 
   void _openDuas(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DuasMiscPage(),
-      ),
+      buildFadeRoute(page: DuasMiscPage()),
     );
   }
 
   void _openQibla(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const QiblaPage(),
-      ),
+      buildFadeRoute(page: const QiblaPage()),
     );
   }
 
@@ -301,18 +302,14 @@ class _CurrentPrayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
+        boxShadow: AppUi.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
-import '../../../shared/widgets/app_back_button.dart';
+import '../../../app/theme/app_ui.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
+import '../../../core/services/favorites_service.dart';
+import '../../../core/models/favorite_item.dart';
 
 class DuasMiscPage extends StatelessWidget {
   DuasMiscPage({super.key});
@@ -14,9 +17,9 @@ class DuasMiscPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('أدعية وأذكار', style: AppText.headingXL),
-        leading: const AppBackButton(),
+      appBar: const PrimaryAppBar(
+        title: 'أدعية وأذكار',
+        showBack: true,
       ),
       body: FutureBuilder<AthkarCatalog>(
         future: _service.loadCatalog(),
@@ -45,43 +48,97 @@ class DuasMiscPage extends StatelessWidget {
   }
 }
 
-class _DuaCard extends StatelessWidget {
+class _DuaCard extends StatefulWidget {
   final AthkarItem item;
 
   const _DuaCard({required this.item});
 
   @override
+  State<_DuaCard> createState() => _DuaCardState();
+}
+
+class _DuaCardState extends State<_DuaCard> {
+  final FavoritesService _favoritesService = FavoritesService();
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final saved = await _favoritesService.isFavorite(
+      FavoriteType.dua,
+      _favoriteId(),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final saved = await _favoritesService.toggle(
+      FavoriteItem(
+        type: FavoriteType.dua,
+        id: _favoriteId(),
+        title: widget.item.arabic,
+        subtitle: widget.item.source,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
+  String _favoriteId() {
+    return widget.item.id.isNotEmpty ? widget.item.id : widget.item.arabic;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.textPrimary.withValues(alpha: 0.06),
-        ),
+        boxShadow: AppUi.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            item.arabic,
-            style: AppText.athkarBody.copyWith(color: AppColors.textPrimary),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.item.arabic,
+                  style:
+                      AppText.athkarBody.copyWith(color: AppColors.textPrimary),
+                ),
+              ),
+              IconButton(
+                tooltip: 'المفضلة',
+                onPressed: _toggleFavorite,
+                icon: Icon(
+                  _isFavorite ? Icons.star : Icons.star_border,
+                  color: _isFavorite
+                      ? AppColors.primary
+                      : AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
-          if (item.transliteration.isNotEmpty) ...[
+          if (widget.item.transliteration.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              item.transliteration,
+              widget.item.transliteration,
               style: AppText.body.copyWith(color: secondary),
             ),
           ],
-          if (item.meaning.isNotEmpty) ...[
+          if (widget.item.meaning.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              item.meaning,
+              widget.item.meaning,
               style: AppText.body.copyWith(color: secondary),
             ),
           ],

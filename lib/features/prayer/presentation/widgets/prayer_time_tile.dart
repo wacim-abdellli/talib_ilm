@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../models/prayer_time.dart';
 
 class PrayerTimeTile extends StatelessWidget {
@@ -20,50 +21,31 @@ class PrayerTimeTile extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final primary = colors.onSurface;
     final secondary = colors.onSurface.withValues(alpha: 0.6);
-    final icon = _iconFor(item.name);
     final isNext = item.isNext;
     final isCurrent = item.isCurrent;
     final statusColor = isNext
-        ? AppColors.primaryAlt
+        ? AppColors.secondary
         : isCurrent
-            ? AppColors.success
-            : AppColors.textSecondary;
-    final backgroundGradient = LinearGradient(
-      colors: [
-        _tint(statusColor, isNext || isCurrent ? 0.18 : 0.04),
-        _tint(AppColors.surface, 0.0),
-      ],
-      begin: Alignment.centerRight,
-      end: Alignment.centerLeft,
-    );
-    final borderColor = isNext || isCurrent
-        ? statusColor.withValues(alpha: 0.35)
-        : AppColors.textPrimary.withValues(alpha: 0.06);
-
+            ? AppColors.secondary
+            : AppColors.textMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        gradient: backgroundGradient,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        boxShadow: AppUi.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: statusColor,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   item.name,
                   style: AppText.body.copyWith(
-                    color: primary,
+                    color: isNext || isCurrent ? statusColor : primary,
                     fontWeight:
                         isNext || isCurrent ? FontWeight.w700 : FontWeight.w400,
                   ),
@@ -107,22 +89,6 @@ class PrayerTimeTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _iconFor(String name) {
-    switch (name) {
-      case 'الفجر':
-        return Icons.wb_twilight_outlined;
-      case 'الظهر':
-        return Icons.wb_sunny_outlined;
-      case 'العصر':
-        return Icons.wb_sunny_outlined;
-      case 'المغرب':
-        return Icons.wb_twilight_outlined;
-      case 'العشاء':
-        return Icons.nights_stay_outlined;
-    }
-    return Icons.access_time;
   }
 }
 
@@ -174,8 +140,4 @@ class _StatusBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-Color _tint(Color color, double amount) {
-  return Color.lerp(AppColors.surface, color, amount) ?? color;
 }

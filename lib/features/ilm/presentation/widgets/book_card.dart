@@ -5,8 +5,10 @@ import '../../data/models/mutun_models.dart';
 import '../../../../shared/widgets/progress_pill.dart';
 import '../../data/models/progress_models.dart';
 import '../../../../shared/widgets/pressable_card.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../core/models/favorite_item.dart';
 
-class BookCard extends StatelessWidget {
+class BookCard extends StatefulWidget {
   final IlmBook book;
   final BookProgress progress;
   final VoidCallback onTap;
@@ -19,23 +21,59 @@ class BookCard extends StatelessWidget {
   });
 
   @override
+  State<BookCard> createState() => _BookCardState();
+}
+
+class _BookCardState extends State<BookCard> {
+  final FavoritesService _favoritesService = FavoritesService();
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final saved = await _favoritesService.isFavorite(
+      FavoriteType.book,
+      widget.book.id,
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final saved = await _favoritesService.toggle(
+      FavoriteItem(
+        type: FavoriteType.book,
+        id: widget.book.id,
+        title: widget.book.title,
+        subtitle: widget.book.author,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = progress.status;
-    final percent = _progressValue(progress);
+    final status = widget.progress.status;
+    final percent = _progressValue(widget.progress);
     final statusLabel = switch (status) {
       BookProgressStatus.completed => 'مكتمل',
       BookProgressStatus.inProgress => 'قيد التقدم',
       _ => 'جديد',
     };
     final color = switch (status) {
-      BookProgressStatus.completed => AppColors.success,
+      BookProgressStatus.completed => AppColors.primary,
       BookProgressStatus.inProgress => AppColors.primary,
-      _ => AppColors.textSecondary,
+      _ => AppColors.textMuted,
     };
 
     return PressableCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      onTap: widget.onTap,
+      padding: const EdgeInsets.all(18),
       borderRadius: BorderRadius.circular(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -53,29 +91,40 @@ class BookCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      book.title,
-                      style: AppText.heading
-                          .copyWith(fontWeight: FontWeight.w700),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.book.title,
+                            style: AppText.heading
+                                .copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'المفضلة',
+                          onPressed: _toggleFavorite,
+                          icon: Icon(
+                            _isFavorite ? Icons.star : Icons.star_border,
+                            color: _isFavorite
+                                ? AppColors.primary
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
-                    Text(book.author, style: AppText.bodyMuted),
+                    Text(widget.book.author, style: AppText.bodyMuted),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        ProgressPill(progress: progress),
+                        ProgressPill(progress: widget.progress),
                         const Spacer(),
                         Text(
                           statusLabel,
                           style: AppText.caption.copyWith(color: color),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.chevron_left,
-                          size: 18,
-                          color: AppColors.textSecondary,
                         ),
                       ],
                     ),
@@ -125,7 +174,7 @@ class _ProgressRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: value.clamp(0, 1),
               strokeWidth: 5,
-              backgroundColor: AppColors.textSecondary.withValues(alpha: 0.15),
+              backgroundColor: AppColors.textMuted.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),

@@ -4,8 +4,10 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/progress_service.dart';
+import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/app_overflow_menu.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/app_drawer.dart';
 import '../data/models/mutun_models.dart';
 import '../data/models/progress_models.dart';
 
@@ -58,9 +60,10 @@ class _IlmPageState extends State<IlmPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('العلم', style: AppText.headingXL),
-        actions: const [AppOverflowMenu()],
+      drawer: const AppDrawer(),
+      appBar: PrimaryAppBar(
+        title: 'العلم',
+        showMenu: true,
       ),
       body: FutureBuilder<_IlmOverview>(
         future: _loadOverview(),
@@ -106,9 +109,7 @@ class _IlmPageState extends State<IlmPage> {
                 onOpen: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => LevelBooksPage(level: level),
-                    ),
+                    buildFadeRoute(page: LevelBooksPage(level: level)),
                   );
                 },
               );
@@ -142,17 +143,8 @@ class _LevelCard extends StatelessWidget {
     final completion = progress.total == 0
         ? 0.0
         : progress.completed / progress.total;
-    final gradient = LinearGradient(
-      colors: [
-        _tint(AppColors.primary, 0.1),
-        _tint(AppColors.primaryAlt, 0.06),
-      ],
-      begin: Alignment.centerRight,
-      end: Alignment.centerLeft,
-    );
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Stack(
         children: [
           PressableCard(
@@ -164,11 +156,8 @@ class _LevelCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             borderRadius: BorderRadius.circular(16),
             decoration: BoxDecoration(
-              gradient: gradient,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.textPrimary.withValues(alpha: 0.06),
-              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,13 +169,13 @@ class _LevelCard extends StatelessWidget {
                     if (locked)
                       _StatusPill(
                         label: 'مغلق',
-                        color: AppColors.textSecondary,
+                        color: AppColors.textMuted,
                         icon: Icons.lock_outline,
                       ),
                     if (!locked && progress.completed > 0)
                       _StatusPill(
                         label: 'مكتمل ${progress.completed}',
-                        color: AppColors.success,
+                        color: AppColors.primary,
                         icon: Icons.check,
                       ),
                     if (!locked && progress.inProgress > 0) ...[
@@ -269,7 +258,7 @@ class _LevelCard extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: AppColors.background.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -277,10 +266,6 @@ class _LevelCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Color _tint(Color color, double amount) {
-    return Color.lerp(AppColors.surface, color, amount) ?? color;
   }
 }
 

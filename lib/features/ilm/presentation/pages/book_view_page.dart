@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:talib_ilm/core/services/last_sharh_service.dart';
 import 'package:talib_ilm/core/services/last_activity_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/sharh_card.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../data/models/lesson_model.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -16,7 +17,10 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
 import 'lessons_list_page.dart';
-import '../../../../shared/widgets/app_back_button.dart';
+import '../../../../shared/widgets/primary_app_bar.dart';
+import '../../../../shared/widgets/app_overflow_menu.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../core/models/favorite_item.dart';
 
 class BookViewPage extends StatefulWidget {
   final IlmBook book;
@@ -41,6 +45,7 @@ class _BookViewPageState extends State<BookViewPage>
   final ProgressService _progressService = ProgressService();
   final LastSharhService _lastSharhService = LastSharhService();
   final LastActivityService _lastActivityService = LastActivityService();
+  final FavoritesService _favoritesService = FavoritesService();
   String? _lastSharhFile;
   Sharh? _lastSharh;
   PdfPageInfo? _lastSharhPage;
@@ -50,6 +55,7 @@ class _BookViewPageState extends State<BookViewPage>
   late final Future<int> _mutunInitialPage;
   bool _mutunActivityMarked = false;
   bool _isBookCompleted = false;
+  bool _isFavorite = false;
   late final TabController _tabController;
   int _lastTabIndex = 0;
   bool _didAutoOpen = false;
@@ -77,6 +83,7 @@ class _BookViewPageState extends State<BookViewPage>
     );
     _markStartedIfNeeded();
     _loadLastSharh();
+    _loadFavorite();
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoOpen());
   }
 
@@ -112,6 +119,28 @@ class _BookViewPageState extends State<BookViewPage>
     });
   }
 
+  Future<void> _loadFavorite() async {
+    final saved = await _favoritesService.isFavorite(
+      FavoriteType.book,
+      widget.book.id,
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final saved = await _favoritesService.toggle(
+      FavoriteItem(
+        type: FavoriteType.book,
+        id: widget.book.id,
+        title: widget.book.title,
+        subtitle: widget.book.author,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
+  }
+
   Future<void> _markStartedIfNeeded() async {
     final existing = await _progressService.getProgress(widget.book.id);
 
@@ -127,6 +156,21 @@ class _BookViewPageState extends State<BookViewPage>
     } else {
       _isBookCompleted = existing.status == BookProgressStatus.completed;
     }
+  }
+
+  Future<void> _resetProgress() async {
+    await _progressService.saveProgress(
+      BookProgress(
+        bookId: widget.book.id,
+        status: BookProgressStatus.notStarted,
+        completedLessons: 0,
+        totalLessons: 0,
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _isBookCompleted = false;
+    });
   }
 
   void _handleTabChange() {
@@ -263,16 +307,16 @@ class _BookViewPageState extends State<BookViewPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(milliseconds: 1500),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         content: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check, color: Colors.white, size: 18),
+            const Icon(Icons.check, color: AppColors.textPrimary, size: 18),
             const SizedBox(width: 8),
             Text(
               'تم حفظ التقدم',
-              style: AppText.body.copyWith(color: Colors.white),
+              style: AppText.body.copyWith(color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -284,18 +328,46 @@ class _BookViewPageState extends State<BookViewPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(widget.book.title, style: AppText.headingXL),
-        leading: const AppBackButton(),
+      appBar: PrimaryAppBar(
+        title: widget.book.title,
+        showBack: true,
+        actions: [
+          AppOverflowMenu(
+            includeDefaults: false,
+            items: [
+              AppMenuItem(
+                label: _isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
+                icon: _isFavorite ? Icons.star : Icons.star_border,
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleFavorite();
+                },
+              ),
+              AppMenuItem(
+                label: 'مشاركة',
+                icon: Icons.share_outlined,
+                onTap: () {
+                  Navigator.pop(context);
+                  Share.share(widget.book.title);
+                },
+              ),
+              AppMenuItem(
+                label: 'إعادة تعيين التقدم',
+                icon: Icons.refresh_outlined,
+                onTap: () {
+                  Navigator.pop(context);
+                  _resetProgress();
+                },
+              ),
+            ],
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.35),
-            ),
           ),
           labelColor: AppColors.textPrimary,
           unselectedLabelColor:
@@ -352,7 +424,7 @@ class _BookViewPageState extends State<BookViewPage>
 
             widget.book.shuruh.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     child: EmptyState(
                       icon: Icons.menu_book_outlined,
                       title: 'لا توجد شروح متاحة بعد',
@@ -375,7 +447,7 @@ class _BookViewPageState extends State<BookViewPage>
                       if (_lastSharh != null) const SizedBox(height: 12),
                       Expanded(
                         child: ListView.separated(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(18),
                           itemCount: widget.book.shuruh.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
@@ -398,7 +470,7 @@ class _BookViewPageState extends State<BookViewPage>
 
             widget.book.playlistId == null
                 ? Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     child: EmptyState(
                       icon: Icons.ondemand_video_outlined,
                       title: 'لا توجد دروس متاحة بعد',
@@ -450,14 +522,11 @@ class _ContinueSharhCard extends StatelessWidget {
 
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       borderRadius: BorderRadius.circular(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-        ),
       ),
       child: Row(
         children: [
@@ -475,13 +544,12 @@ class _ContinueSharhCard extends StatelessWidget {
                 Text(
                   pageLabel,
                   style: AppText.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textMuted,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_left, color: AppColors.textSecondary),
         ],
       ),
     );

@@ -12,8 +12,6 @@ import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/models/sharh_model.dart';
 import '../../ilm/presentation/ilm_page.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
-import '../../adhkar/presentation/adhkar_page.dart';
-import '../../library/presentation/library_page.dart';
 import '../domain/models/hadith.dart';
 import '../domain/services/hadith_service.dart';
 import '../presentation/widgets/hadith_of_the_day_card.dart';
@@ -21,10 +19,17 @@ import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/prayer_page.dart';
 import '../../prayer/presentation/widgets/next_prayer_card.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/app_overflow_menu.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/pressable_scale.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool isActive;
+
+  const HomePage({
+    super.key,
+    this.isActive = true,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -37,7 +42,7 @@ class _HomePageState extends State<HomePage> {
   final HadithService _hadithService = HadithService();
   final ProgressService _progressService = ProgressService();
 
-  late final Future<_ContinueData?> _continueFuture;
+  late Future<_ContinueData?> _continueFuture;
   late final Future<PrayerTimesDay> _prayerFuture;
   late final Future<Hadith> _hadithFuture;
   PrayerCountdownController? _countdownController;
@@ -52,7 +57,15 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       _ensureCountdown(day);
     });
-    _hadithFuture = _hadithService.getHadithOfTheDay();
+    _hadithFuture = _hadithService.getRandomHadith();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _refreshStats();
+    }
   }
 
   @override
@@ -148,100 +161,42 @@ class _HomePageState extends State<HomePage> {
         page: BookViewPage(
           book: data.book,
           initialTabIndex: tabIndex,
-          autoOpenSharhFile:
-              data.tab == LastActivityService.tabSharh ? data.sharhFile : null,
+          autoOpenSharhFile: data.tab == LastActivityService.tabSharh
+              ? data.sharhFile
+              : null,
           openLessonsOnStart: data.tab == LastActivityService.tabLessons,
         ),
       ),
     );
+    if (!mounted) return;
+    _refreshStats();
+  }
+
+  void _refreshStats() {
+    setState(() {
+      _continueFuture = _loadContinueData();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'الرئيسية',
-          style: AppText.headingXL.copyWith(color: AppColors.textPrimary),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        actions: const [AppOverflowMenu()],
-      ),
+      drawer: const AppDrawer(),
+      appBar: const PrimaryAppBar(title: 'الرئيسية', showMenu: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            _HomeGreeting(
-              greeting: _greetingText(),
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<Hadith>(
-              future: _hadithFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const SizedBox.shrink();
-                }
+            _HomeGreeting(greeting: _greetingText()),
+            const SizedBox(height: 20),
 
-                final data = snapshot.data;
-                if (data == null || data.text.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+            _buildHadithSection(),
+            const SizedBox(height: 20),
+            _buildMainCard(context),
+            const SizedBox(height: 28),
+          ],            
 
-                return HadithOfTheDayCard(initialHadith: data);
-              },
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<PrayerTimesDay>(
-              future: _prayerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const NextPrayerCardPlaceholder();
-                }
-
-                if (!snapshot.hasData) {
-                  return const SizedBox.shrink();
-                }
-
-                final data = snapshot.data!;
-                _ensureCountdown(data);
-                return _buildNextPrayerCard(context, data);
-              },
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<_ContinueData?>(
-              future: _continueFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final data = snapshot.data;
-                return _ContinueLearningCard(
-                  data: data,
-                  onTap: data == null
-                      ? () => _openIlm(context)
-                      : () => _continueLearning(context, data),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            _QuickAccessSection(
-              onOpenIlm: () => _openIlm(context),
-              onOpenAdhkar: () => _openAdhkar(context),
-              onOpenLibrary: () => _openLibrary(context),
-            ),
-          ],
         ),
       ),
     );
@@ -250,11 +205,7 @@ class _HomePageState extends State<HomePage> {
   String _greetingText() {
     return 'السلام عليكم';
   }
-
-  Widget _buildNextPrayerCard(
-    BuildContext context,
-    PrayerTimesDay day,
-  ) {
+  Widget _buildNextPrayerCard(BuildContext context, PrayerTimesDay day) {
     final controller = _countdownController;
     if (controller == null) {
       return NextPrayerCard(
@@ -293,8 +244,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _ensureCountdown(PrayerTimesDay day) {
-    if (_cachedPrayerDay?.date == day.date &&
-        _countdownController != null) {
+    if (_cachedPrayerDay?.date == day.date && _countdownController != null) {
       return;
     }
 
@@ -318,24 +268,75 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(context, buildFadeRoute(page: const IlmPage()));
   }
 
-  void _openAdhkar(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: AdhkarPage()));
-  }
-
-  void _openLibrary(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: const LibraryPage()));
-  }
-
   void _openPrayer(BuildContext context) {
     Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
+  }
+
+  Widget _buildMainCard(BuildContext context) {
+    return FutureBuilder<_ContinueData?>(
+      future: _continueFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const NextPrayerCardPlaceholder();
+        }
+
+        final data = snapshot.data;
+        if (data != null) {
+          return _ContinueLearningCard(
+            data: data,
+            onTap: () => _continueLearning(context, data),
+          );
+        }
+
+        return FutureBuilder<PrayerTimesDay>(
+          future: _prayerFuture,
+          builder: (context, prayerSnapshot) {
+            if (prayerSnapshot.connectionState == ConnectionState.waiting) {
+              return const NextPrayerCardPlaceholder();
+            }
+
+            if (!prayerSnapshot.hasData) {
+              return _ContinueLearningCard(
+                data: null,
+                onTap: () => _openIlm(context),
+              );
+            }
+
+            final data = prayerSnapshot.data!;
+            _ensureCountdown(data);
+            return _buildNextPrayerCard(context, data);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHadithSection() {
+    return FutureBuilder<Hadith>(
+      future: _hadithFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        final data = snapshot.data;
+        if (data == null || data.text.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return HadithOfTheDayCard(
+          initialHadith: data,
+          onReload: (current) =>
+              _hadithService.getRandomHadith(exclude: current),
+        );
+      },
+    );
   }
 }
 
 class _HomeGreeting extends StatelessWidget {
   final String greeting;
-  const _HomeGreeting({
-    required this.greeting,
-  });
+  const _HomeGreeting({required this.greeting});
 
   @override
   Widget build(BuildContext context) {
@@ -352,102 +353,11 @@ class _HomeGreeting extends StatelessWidget {
   }
 }
 
-class _QuickAccessSection extends StatelessWidget {
-  final VoidCallback onOpenIlm;
-  final VoidCallback onOpenAdhkar;
-  final VoidCallback onOpenLibrary;
-
-  const _QuickAccessSection({
-    required this.onOpenIlm,
-    required this.onOpenAdhkar,
-    required this.onOpenLibrary,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'وصول سريع',
-          style: AppText.heading.copyWith(color: AppColors.textPrimary),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickAccessTile(
-                icon: Icons.menu_book_outlined,
-                label: 'العلم',
-                onTap: onOpenIlm,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickAccessTile(
-                icon: Icons.favorite_border,
-                label: 'الأذكار',
-                onTap: onOpenAdhkar,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickAccessTile(
-                icon: Icons.local_library_outlined,
-                label: 'المكتبة',
-                onTap: onOpenLibrary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _QuickAccessTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickAccessTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      borderRadius: BorderRadius.circular(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.textPrimary.withValues(alpha: 0.8)),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: AppText.body.copyWith(color: AppColors.textPrimary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ContinueLearningCard extends StatelessWidget {
   final _ContinueData? data;
   final VoidCallback? onTap;
 
-  const _ContinueLearningCard({
-    required this.data,
-    required this.onTap,
-  });
+  const _ContinueLearningCard({required this.data, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -473,10 +383,7 @@ class _ContinueLearningCard extends StatelessWidget {
             const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerRight,
-              child: _ContinueButton(
-                label: 'ابدأ الآن',
-                onTap: onTap,
-              ),
+              child: _ContinueButton(label: 'ابدأ الآن', onTap: onTap),
             ),
           ],
         ),
@@ -498,14 +405,13 @@ class _ContinueLearningCard extends StatelessWidget {
     }
 
     final progressPercent = content.progressPercent;
-    final progressValue =
-        progressPercent == null ? 0.0 : progressPercent / 100;
+    final progressValue = progressPercent == null ? 0.0 : progressPercent / 100;
 
     final pageInfo = content.page == null
         ? null
         : content.total == null || content.total == 0
-            ? 'آخر صفحة: ${content.page}'
-            : 'آخر صفحة: ${content.page} / ${content.total}';
+        ? 'آخر صفحة: ${content.page}'
+        : 'آخر صفحة: ${content.page} / ${content.total}';
 
     return _HeroCard(
       onTap: onTap,
@@ -553,8 +459,9 @@ class _ContinueLearningCard extends StatelessWidget {
                 return LinearProgressIndicator(
                   value: value,
                   minHeight: 6,
-                  backgroundColor:
-                      AppColors.textPrimary.withValues(alpha: 0.08),
+                  backgroundColor: AppColors.textPrimary.withValues(
+                    alpha: 0.08,
+                  ),
                   valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                 );
               },
@@ -579,10 +486,7 @@ class _ContinueLearningCard extends StatelessWidget {
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
-            child: _ContinueButton(
-              label: 'متابعة',
-              onTap: onTap,
-            ),
+            child: _ContinueButton(label: 'متابعة', onTap: onTap),
           ),
         ],
       ),
@@ -602,7 +506,7 @@ class _HeroCard extends StatelessWidget {
       width: double.infinity,
       child: PressableCard(
         onTap: onTap,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         borderRadius: BorderRadius.circular(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -622,9 +526,9 @@ class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: onTap,
-      child: Text(label),
+    return PressableScale(
+      enabled: onTap != null,
+      child: FilledButton(onPressed: onTap, child: Text(label)),
     );
   }
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
-import '../../../shared/widgets/app_back_button.dart';
+import '../../../app/theme/app_ui.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -195,9 +196,9 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('تسبيح واستغفار', style: AppText.headingXL),
-        leading: const AppBackButton(),
+      appBar: PrimaryAppBar(
+        title: 'تسبيح واستغفار',
+        showBack: true,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -216,7 +217,7 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
                       ? 'سبحان الله'
                       : _tasbeehItems[_tasbeehIndex].arabic,
                   count: _tasbeehCount,
-                  accent: const Color(0xFF4CC9A6),
+                  accent: AppColors.primary,
                   target: _tasbeehTarget,
                   onTap: _increment,
                   onReset: _reset,
@@ -228,7 +229,7 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
                       ? 'أستغفر الله'
                       : _istighfarItems[_istighfarIndex].arabic,
                   count: _istighfarCount,
-                  accent: const Color(0xFF67B3E6),
+                  accent: AppColors.primary,
                   target: _istighfarTarget,
                   onTap: _increment,
                   onReset: _reset,
@@ -264,9 +265,7 @@ class _CounterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -283,9 +282,7 @@ class _CounterCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: accent.withValues(alpha: 0.25),
-                  ),
+                  boxShadow: AppUi.cardShadow,
                 ),
                 child: Center(
                   child: Text(

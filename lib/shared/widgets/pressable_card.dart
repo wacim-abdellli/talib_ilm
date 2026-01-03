@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_ui.dart';
+import 'pressable_scale.dart';
 
-class PressableCard extends StatefulWidget {
+class PressableCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
   final BoxDecoration decoration;
@@ -17,52 +20,21 @@ class PressableCard extends StatefulWidget {
   });
 
   @override
-  State<PressableCard> createState() => _PressableCardState();
-}
-
-class _PressableCardState extends State<PressableCard> {
-  bool _pressed = false;
-  bool _hovered = false;
-
-  void _setPressed(bool value) {
-    if (_pressed == value) return;
-    setState(() => _pressed = value);
-  }
-
-  void _setHovered(bool value) {
-    if (_hovered == value) return;
-    setState(() => _hovered = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final active = _pressed || _hovered;
-    final shadow = active
-        ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ]
-        : const <BoxShadow>[];
-
-    return MouseRegion(
-      onEnter: (_) => _setHovered(true),
-      onExit: (_) => _setHovered(false),
+    return PressableScale(
+      enabled: onTap != null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOutCubic,
-        decoration: widget.decoration.copyWith(boxShadow: shadow),
+        decoration: decoration.copyWith(boxShadow: AppUi.cardShadow),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.surface.withValues(alpha: 0),
           child: InkWell(
-            borderRadius: widget.borderRadius,
-            onTap: widget.onTap,
-            onHighlightChanged: _setPressed,
+            borderRadius: borderRadius,
+            onTap: onTap,
             child: Padding(
-              padding: widget.padding,
-              child: widget.child,
+              padding: padding,
+              child: child,
             ),
           ),
         ),

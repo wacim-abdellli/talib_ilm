@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhkar_session_service.dart';
-import '../../../core/services/prayer_time_service.dart';
-import '../../../shared/widgets/app_back_button.dart';
+import '../../../shared/widgets/pressable_scale.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../core/services/favorites_service.dart';
+import '../../../core/models/favorite_item.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -28,16 +31,17 @@ class AdhkarSessionPage extends StatefulWidget {
 class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   final AthkarService _athkarService = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
-  final PrayerTimeService _prayerTimeService = PrayerTimeService();
+  final FavoritesService _favoritesService = FavoritesService();
 
   late final PageController _pageController;
   List<AthkarItem> _items = const [];
+  Map<String, int> _counts = {};
   String? _categoryTitle;
   int _index = 0;
   int _count = 0;
   bool _loading = true;
   bool _ritualLocked = false;
-  final bool _autoResetRitual = true;
+  bool _isFavorite = false;
 
   @override
   void initState() {
@@ -53,54 +57,31 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final items = categoryData?.items ?? const <AthkarItem>[];
 
     final state = await _sessionService.loadState(widget.category);
-    final ritual = _isRitual(widget.category);
-    final completion = ritual
-        ? await _sessionService.loadCompletion(widget.category)
-        : null;
-    DateTime? windowStart;
-    if (ritual) {
-      windowStart = await _windowStart(widget.category);
-    }
-
-    final needsReset = ritual &&
-        windowStart != null &&
-        completion != null &&
-        completion.isBefore(windowStart);
-    final locked = ritual &&
-        completion != null &&
-        windowStart != null &&
-        (completion.isAfter(windowStart) ||
-            completion.isAtSameMomentAs(windowStart));
-    final autoReset = _autoResetRitual && locked;
-
-    if (needsReset || autoReset) {
-      await _sessionService.clearCompletion(widget.category);
-      await _sessionService.saveState(
-        widget.category,
-        const AdhkarSessionState(index: 0, count: 1),
-      );
-    }
+    final counts = await _sessionService.loadCounts(widget.category);
 
     if (!mounted) return;
 
     final maxIndex = items.length;
     final initialIndex =
-        (needsReset || autoReset) ? 0 : state.index.clamp(0, maxIndex);
-    var initialCount = 1;
-    if (!(needsReset || autoReset) && initialIndex < items.length) {
-      final repeat = _repeatFor(items, initialIndex);
-      final stored = state.count <= 0 ? 1 : state.count;
-      initialCount = stored.clamp(1, repeat);
+        maxIndex == 0 ? 0 : state.index.clamp(0, maxIndex - 1);
+    if (items.isNotEmpty) {
+      final currentKey = _favoriteIdFor(items[initialIndex]);
+      counts[currentKey] = 0;
     }
 
     setState(() {
       _items = items;
+      _counts = counts;
       _categoryTitle = categoryData?.title;
       _index = initialIndex;
-      _count = initialCount;
-      _ritualLocked = locked && !_autoResetRitual;
+      _count = 0;
+      _ritualLocked = false;
       _loading = false;
     });
+
+    if (_items.isNotEmpty) {
+      _loadFavoriteFor(_items[_index]);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _jumpToIndex(_index);
@@ -120,6 +101,10 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     );
   }
 
+  Future<void> _saveCounts() async {
+    await _sessionService.saveCounts(widget.category, _counts);
+  }
+
   void _handleTap() {
     if (_loading || _ritualLocked) return;
     if (_index >= _items.length) return;
@@ -127,77 +112,45 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     HapticFeedback.selectionClick();
 
     final repeat = _repeatFor(_items, _index);
-    final current = _count <= 0 ? 1 : _count;
-
-    if (current >= repeat) {
-      _advanceToNext();
-      return;
-    }
+    final current = _count;
+    if (repeat > 0 && current >= repeat) return;
 
     final nextCount = current + 1;
-    if (nextCount >= repeat) {
-      _advanceToNext();
-      return;
-    }
+    final item = _items[_index];
+    final key = _favoriteIdFor(item);
 
-    setState(() => _count = nextCount);
-    _saveState();
-  }
-
-  void _handleStepBack() {
-    if (_loading || _ritualLocked) return;
-    if (_index >= _items.length) return;
-
-    HapticFeedback.selectionClick();
-
-    final current = _count <= 0 ? 1 : _count;
-    if (current <= 1) return;
-
-    setState(() => _count = current - 1);
-    _saveState();
-  }
-
-  void _advanceToNext() {
-    if (_index + 1 >= _items.length) {
-      _handleCompletion();
-      return;
-    }
     setState(() {
-      _index += 1;
-      _count = 1;
+      _count = nextCount;
+      _counts[key] = nextCount;
     });
-    _animateToIndex(_index);
+    _saveCounts();
     _saveState();
+
+    if (repeat > 0 && nextCount >= repeat && _index + 1 < _items.length) {
+      _goNext();
+    }
+  }
+
+  void _goPrev() {
+    if (_loading || _ritualLocked) return;
+    if (_index <= 0) return;
+    _applyIndex(_index - 1, animate: true);
+  }
+
+  void _goNext() {
+    if (_loading || _ritualLocked) return;
+    if (_index + 1 >= _items.length) return;
+    _applyIndex(_index + 1, animate: true);
   }
 
   @override
   Widget build(BuildContext context) {
     final title = widget.titleOverride ?? _categoryTitle ?? widget.category.label;
-    final progressText = (!_loading && _items.isNotEmpty)
-        ? '${_index + 1} / ${_items.length}'
-        : '';
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title, style: AppText.headingXL),
-            if (progressText.isNotEmpty)
-              Text(
-                progressText,
-                style: AppText.caption.copyWith(color: AppColors.textSecondary),
-              ),
-          ],
-        ),
-        leading: const AppBackButton(),
-        actions: [
-          IconButton(
-            tooltip: 'الخيارات',
-            icon: const Icon(Icons.more_horiz),
-            onPressed: _openActionsSheet,
-          ),
-        ],
+      appBar: PrimaryAppBar(
+        title: title,
+        showBack: true,
       ),
       body: _loading
           ? const SizedBox.shrink()
@@ -217,161 +170,134 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   Widget _buildSession() {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
-    final currentItem = _items[_index];
+    const secondary = AppColors.textSecondary;
     final repeat = _repeatFor(_items, _index);
-    final displayCount = _count <= 0 ? 1 : _count;
+    final displayCount = _count < 0 ? 0 : _count;
+    final item = _items[_index];
+    final showSource = item.source.isNotEmpty;
+    final showFadl = item.fadl.isNotEmpty;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (widget.contextLabel != null) ...[
-          Text(
-            widget.contextLabel!,
-            style: AppText.caption.copyWith(color: secondary),
-          ),
-          const SizedBox(height: 8),
-        ],
-        Text(
-          widget.category.label,
-          style: AppText.bodyMuted.copyWith(color: secondary),
-        ),
-        const SizedBox(height: 16),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: AppColors.textPrimary.withValues(alpha: 0.06),
+          child: Center(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: AppUi.cardShadow,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _items.length,
-              onPageChanged: _handlePageChange,
-              reverse: Directionality.of(context) == TextDirection.rtl,
-              itemBuilder: (context, index) {
-                final item = _items[index];
-                return InkWell(
-                  onTap: _handleTap,
-                  onLongPress: () => _openDetailsSheet(item),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const ClampingScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _items.length,
+                onPageChanged: _handlePageChange,
+                reverse: Directionality.of(context) == TextDirection.rtl,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return InkWell(
+                    onTap: _handleTap,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 520),
+                                  child: Text(
                                     item.arabic,
                                     textAlign: TextAlign.center,
-                                    style: AppText.athkarBody.copyWith(
+                                    style: AppText.dhikrText.copyWith(
                                       color: AppColors.textPrimary.withValues(
                                         alpha: 0.92,
                                       ),
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (currentItem.countDescription.isNotEmpty || repeat > 1)
-          Text(
-            currentItem.countDescription.isNotEmpty
-                ? 'العدد: ${currentItem.countDescription}'
-                : 'العدد المطلوب: $repeat',
-            style: AppText.caption.copyWith(color: secondary),
-          ),
-        const SizedBox(height: 16),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _StepArrow(
-                    icon: Icons.chevron_left,
-                    enabled: displayCount > 1,
-                    onTap: _handleStepBack,
-                  ),
-                  const SizedBox(width: 12),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: Text(
-                      '$displayCount / $repeat',
-                      key: ValueKey('$displayCount-$repeat'),
-                      style: AppText.heading.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  _StepArrow(
-                    icon: Icons.chevron_right,
-                    enabled: !(_index >= _items.length - 1 &&
-                        displayCount >= repeat),
-                    onTap: _handleTap,
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'التكرار: $displayCount / $repeat',
+          style: AppText.caption.copyWith(color: secondary),
+        ),
+        const SizedBox(height: 12),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _StepArrow(
+                icon: Icons.chevron_left,
+                enabled: _index > 0,
+                onTap: _goPrev,
+              ),
+              const SizedBox(width: 16),
+              Text(
+                '${_index + 1} / ${_items.length}',
+                style: AppText.caption.copyWith(color: secondary),
+              ),
+              const SizedBox(width: 16),
+              _StepArrow(
+                icon: Icons.chevron_right,
+                enabled: _index < _items.length - 1,
+                onTap: _goNext,
+              ),
+            ],
+          ),
+        ),
+        if (showSource || showFadl) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            children: [
+              if (showSource)
+                _ActionLink(
+                  label: 'المصدر',
+                  onTap: () => _showTextSheet('المصدر', item.source),
+                ),
+              if (showFadl)
+                _ActionLink(
+                  label: 'الفضل',
+                  onTap: () => _showTextSheet('الفضل', item.fadl),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 8),
+        _ActionLink(
+          label: 'الخيارات',
+          onTap: _openActionsSheet,
         ),
       ],
     );
   }
 
   Widget _buildEmpty() {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -395,26 +321,20 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Future<void> _resetSession() async {
     setState(() {
       _index = 0;
-      _count = 1;
+      _count = 0;
       _ritualLocked = false;
+      _counts = {};
     });
     _jumpToIndex(0);
     await _saveState();
-  }
-
-  void _handleCompletion() {
-    if (_isRitual(widget.category)) {
-      _sessionService.saveCompletion(widget.category, DateTime.now());
-    }
-    _sessionService.saveState(
-      widget.category,
-      const AdhkarSessionState(index: 0, count: 1),
-    );
+    await _saveCounts();
   }
 
   void _openActionsSheet() {
     if (_items.isEmpty) return;
     final item = _items[_index];
+    final hasDetails =
+        item.meaning.isNotEmpty || item.transliteration.isNotEmpty;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -428,6 +348,27 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
+                leading: Icon(
+                  _isFavorite ? Icons.star : Icons.star_border,
+                ),
+                title: Text(
+                  _isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleFavorite();
+                },
+              ),
+              if (hasDetails)
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('التفاصيل'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openDetailsSheet(item);
+                  },
+                ),
+              ListTile(
                 leading: const Icon(Icons.refresh),
                 title: const Text('إعادة العد'),
                 onTap: () {
@@ -436,39 +377,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.star_outline),
-                title: const Text('عرض الفضل'),
-                enabled: item.fadl.isNotEmpty,
-                onTap: item.fadl.isEmpty
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        _showTextSheet('الفضل', item.fadl);
-                      },
-              ),
-              ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('عرض المصدر'),
-                enabled: item.source.isNotEmpty,
-                onTap: item.source.isEmpty
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        _showTextSheet('المصدر', item.source);
-                      },
-              ),
-              ListTile(
                 leading: const Icon(Icons.copy_outlined),
                 title: const Text('نسخ النص'),
                 onTap: () {
                   Navigator.pop(context);
                   Clipboard.setData(ClipboardData(text: item.arabic));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم النسخ'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  _showSnackBar('تم النسخ');
                 },
               ),
               ListTile(
@@ -498,6 +412,31 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     _showDetailSections('التفاصيل', sections);
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(message, style: AppText.body),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        duration: const Duration(seconds: 2),
+        showCloseIcon: true,
+        closeIconColor: AppColors.textMuted,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
   void _showTextSheet(String title, String content) {
     _showDetailSections(title, [
       _DetailSection(title: title, content: content),
@@ -505,6 +444,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   void _showDetailSections(String title, List<_DetailSection> sections) {
+    final combined = sections.map((s) => s.content).join('\n\n');
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -520,7 +460,26 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppText.heading),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(title, style: AppText.heading),
+                    ),
+                    IconButton(
+                      tooltip: 'نسخ',
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: combined));
+                        _showSnackBar('تم النسخ');
+                      },
+                      icon: const Icon(Icons.copy_outlined),
+                    ),
+                    IconButton(
+                      tooltip: 'إغلاق',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 ...sections.map(
                   (section) => Padding(
@@ -533,7 +492,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         Text(
                           section.content,
                           style: AppText.body.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -550,11 +509,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   void _handlePageChange(int index) {
     if (_loading || _ritualLocked || index == _index) return;
-    setState(() {
-      _index = index;
-      _count = 1;
-    });
-    _saveState();
+    _applyIndex(index, animate: false);
   }
 
   void _jumpToIndex(int index) {
@@ -570,9 +525,26 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final target = index.clamp(0, _items.length - 1);
     _pageController.animateToPage(
       target,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
     );
+  }
+
+  void _applyIndex(int index, {required bool animate}) {
+    if (_loading || _ritualLocked) return;
+    if (index < 0 || index >= _items.length) return;
+    final key = _favoriteIdFor(_items[index]);
+    setState(() {
+      _index = index;
+      _count = 0;
+      _counts[key] = 0;
+    });
+    if (animate) {
+      _animateToIndex(index);
+    }
+    _saveState();
+    _saveCounts();
+    _loadFavoriteFor(_items[index]);
   }
 
   String _catalogIdFor(AdhkarCategory category) {
@@ -596,47 +568,33 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
   }
 
-  bool _isRitual(AdhkarCategory category) {
-    return category == AdhkarCategory.morning ||
-        category == AdhkarCategory.evening ||
-        category == AdhkarCategory.afterPrayer;
+  String _favoriteIdFor(AthkarItem item) {
+    if (item.id.isNotEmpty) return item.id;
+    return item.arabic;
   }
 
-  Future<DateTime?> _windowStart(AdhkarCategory category) async {
-    try {
-      final now = DateTime.now();
-      final key = _ritualResetKey(category);
-      if (key == null) return null;
-
-      final today = await _prayerTimeService.getPrayerTimesDay(date: now);
-      DateTime? boundary = today.prayers[key];
-      if (boundary == null) return DateTime(now.year, now.month, now.day);
-
-      if (now.isBefore(boundary)) {
-        final yesterday = now.subtract(const Duration(days: 1));
-        final previous =
-            await _prayerTimeService.getPrayerTimesDay(date: yesterday);
-        boundary = previous.prayers[key] ??
-            boundary.subtract(const Duration(days: 1));
-      }
-      return boundary;
-    } catch (_) {
-      final now = DateTime.now();
-      return DateTime(now.year, now.month, now.day);
-    }
+  Future<void> _loadFavoriteFor(AthkarItem item) async {
+    final saved = await _favoritesService.isFavorite(
+      FavoriteType.dhikr,
+      _favoriteIdFor(item),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
   }
 
-  String? _ritualResetKey(AdhkarCategory category) {
-    switch (category) {
-      case AdhkarCategory.morning:
-        return 'الفجر';
-      case AdhkarCategory.evening:
-        return 'المغرب';
-      case AdhkarCategory.afterPrayer:
-        return 'الفجر';
-      default:
-        return null;
-    }
+  Future<void> _toggleFavorite() async {
+    if (_items.isEmpty || _index >= _items.length) return;
+    final item = _items[_index];
+    final saved = await _favoritesService.toggle(
+      FavoriteItem(
+        type: FavoriteType.dhikr,
+        id: _favoriteIdFor(item),
+        title: item.arabic,
+        subtitle: item.source,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = saved);
   }
 
 }
@@ -664,14 +622,43 @@ class _StepArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        enabled ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5);
+    final color = enabled
+        ? AppColors.textSecondary
+        : AppColors.textMuted.withValues(alpha: 0.5);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: enabled ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: Icon(icon, color: color),
+      ),
+    );
+  }
+}
+
+class _ActionLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionLink({
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          label,
+          style: AppText.caption.copyWith(color: AppColors.textSecondary),
+        ),
       ),
     );
   }

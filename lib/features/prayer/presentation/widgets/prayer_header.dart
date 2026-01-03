@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 
 class PrayerHeader extends StatelessWidget {
@@ -15,9 +16,7 @@ class PrayerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

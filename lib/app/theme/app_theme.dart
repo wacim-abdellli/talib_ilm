@@ -19,29 +19,32 @@ class AppTheme {
       fontFamily: 'Vazirmatn',
       splashFactory: NoSplash.splashFactory,
       splashColor: Colors.transparent,
-      highlightColor: AppColors.primaryAlt.withValues(alpha: 0.06),
-      hoverColor: AppColors.primaryAlt.withValues(alpha: 0.04),
-      focusColor: AppColors.primaryAlt.withValues(alpha: 0.06),
+      highlightColor: AppColors.primary.withValues(alpha: 0.06),
+      hoverColor: AppColors.primary.withValues(alpha: 0.04),
+      focusColor: AppColors.primary.withValues(alpha: 0.06),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        secondary: AppColors.primaryAlt,
+        secondary: AppColors.secondary,
         surface: AppColors.surface,
+        background: AppColors.background,
         onPrimary: AppColors.textPrimary,
         onSecondary: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
+        onBackground: AppColors.textPrimary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         centerTitle: true,
         elevation: 0,
+        shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        actionsIconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: AppColors.textSecondary),
+        actionsIconTheme: IconThemeData(color: AppColors.textSecondary),
       ),
       textTheme: const TextTheme(
-        titleLarge: AppText.headingXL,
-        titleMedium: AppText.heading,
+        titleLarge: AppText.headlineLarge,
+        titleMedium: AppText.sectionTitle,
         bodyMedium: AppText.body,
         bodyLarge: AppText.body,
         labelLarge: AppText.body,
@@ -52,14 +55,14 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
       ),
-      dividerColor: const Color(0xFF252836),
+      dividerColor: AppColors.divider,
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
           foregroundColor:
-              const WidgetStatePropertyAll(AppColors.textPrimary),
+              const WidgetStatePropertyAll(AppColors.textSecondary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.08),
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
@@ -70,8 +73,8 @@ class AppTheme {
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: AppColors.textPrimary,
-        unselectedLabelColor: AppColors.textSecondary,
-        indicatorColor: AppColors.primaryAlt,
+        unselectedLabelColor: AppColors.textMuted,
+        indicatorColor: AppColors.primary,
         labelStyle: AppText.body.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppText.body.copyWith(
           fontWeight: FontWeight.w500,
@@ -93,21 +96,19 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.1),
+            AppColors.primary.withValues(alpha: 0.1),
           ),
           animationDuration: AppUi.animationFast,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.background,
-        selectedItemColor: AppColors.primaryAlt,
-        unselectedItemColor: AppColors.textSecondary,
-        selectedIconTheme: const IconThemeData(size: 24),
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textMuted,
+        selectedIconTheme: const IconThemeData(size: 22),
         unselectedIconTheme: const IconThemeData(size: 22),
-        selectedLabelStyle: AppText.caption.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: AppText.caption,
+        selectedLabelStyle: AppText.navigationLabel,
+        unselectedLabelStyle: AppText.navigationLabel,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         showSelectedLabels: true,
@@ -129,7 +130,7 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.1),
+            AppColors.primary.withValues(alpha: 0.1),
           ),
           animationDuration: AppUi.animationFast,
         ),
@@ -143,12 +144,12 @@ class AppTheme {
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           foregroundColor:
-              const WidgetStatePropertyAll(AppColors.primaryAlt),
+              const WidgetStatePropertyAll(AppColors.primary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.08),
           ),
           animationDuration: AppUi.animationFast,
         ),
@@ -162,28 +163,57 @@ class AppTheme {
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           foregroundColor:
-              const WidgetStatePropertyAll(AppColors.primaryAlt),
+              const WidgetStatePropertyAll(AppColors.primary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
           side: WidgetStatePropertyAll(
-            BorderSide(color: AppColors.primaryAlt.withValues(alpha: 0.6)),
+            BorderSide(color: AppColors.primary.withValues(alpha: 0.6)),
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primaryAlt.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.08),
           ),
           animationDuration: AppUi.animationFast,
         ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.fuchsia: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: _SlideFadePageTransitionsBuilder(),
+          TargetPlatform.iOS: _SlideFadePageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _SlideFadePageTransitionsBuilder(),
+          TargetPlatform.linux: _SlideFadePageTransitionsBuilder(),
+          TargetPlatform.macOS: _SlideFadePageTransitionsBuilder(),
+          TargetPlatform.windows: _SlideFadePageTransitionsBuilder(),
         },
+      ),
+    );
+  }
+}
+
+class _SlideFadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SlideFadePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (route.isFirst) return child;
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0, 0.75, curve: Curves.easeOut),
+      reverseCurve: const Interval(0, 0.75, curve: Curves.easeIn),
+    );
+    final offsetTween =
+        Tween<Offset>(begin: const Offset(0, 0.03), end: Offset.zero);
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: curved.drive(offsetTween),
+        child: child,
       ),
     );
   }

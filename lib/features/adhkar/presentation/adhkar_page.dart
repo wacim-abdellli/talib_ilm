@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
-import '../../../shared/widgets/app_overflow_menu.dart';
 import '../../../shared/widgets/pressable_card.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/navigation/fade_page_route.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 import 'adhkar_session_page.dart';
@@ -40,9 +42,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('الأذكار', style: AppText.headingXL),
-        actions: const [AppOverflowMenu()],
+      drawer: const AppDrawer(),
+      appBar: PrimaryAppBar(
+        title: 'الأذكار',
+        showMenu: true,
       ),
       body: FutureBuilder<AthkarCatalog>(
         future: _future,
@@ -74,8 +77,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
             itemCount: categories.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
               childAspectRatio: 0.92,
             ),
             itemBuilder: (context, index) {
@@ -83,7 +86,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
               final meta = _metaFor(category.id) ??
                   const _CategoryMeta(
                     icon: Icons.menu_book_outlined,
-                    accent: AppColors.primaryAlt,
+                    accent: AppColors.primary,
                   );
               return _CategoryTile(
                 title: category.title,
@@ -105,41 +108,41 @@ class _AdhkarPageState extends State<AdhkarPage> {
       case 'morning':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const MorningAthkarPage()),
+          buildFadeRoute(page: const MorningAthkarPage()),
         );
         return;
       case 'evening':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const EveningAthkarPage()),
+          buildFadeRoute(page: const EveningAthkarPage()),
         );
         return;
       case 'after_prayer':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AfterPrayerAthkarPage()),
+          buildFadeRoute(page: const AfterPrayerAthkarPage()),
         );
         return;
       case 'tasbeeh':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const TasbeehIstighfarPage(initialTabIndex: 0),
+          buildFadeRoute(
+            page: const TasbeehIstighfarPage(initialTabIndex: 0),
           ),
         );
         return;
       case 'istighfar':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const TasbeehIstighfarPage(initialTabIndex: 1),
+          buildFadeRoute(
+            page: const TasbeehIstighfarPage(initialTabIndex: 1),
           ),
         );
         return;
       case 'duas':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => DuasMiscPage()),
+          buildFadeRoute(page: DuasMiscPage()),
         );
         return;
     }
@@ -148,8 +151,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
     if (parsed == null) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => AdhkarSessionPage(
+      buildFadeRoute(
+        page: AdhkarSessionPage(
           category: parsed,
           titleOverride: category.title,
         ),
@@ -162,32 +165,32 @@ class _AdhkarPageState extends State<AdhkarPage> {
       case 'morning':
         return const _CategoryMeta(
           icon: Icons.wb_sunny_outlined,
-          accent: Color(0xFFFFC857),
+          accent: AppColors.primary,
         );
       case 'evening':
         return const _CategoryMeta(
           icon: Icons.nights_stay_outlined,
-          accent: Color(0xFF5A7DE7),
+          accent: AppColors.primary,
         );
       case 'after_prayer':
         return const _CategoryMeta(
           icon: Icons.auto_awesome_outlined,
-          accent: Color(0xFFB388EB),
+          accent: AppColors.primary,
         );
       case 'tasbeeh':
         return const _CategoryMeta(
           icon: Icons.circle_outlined,
-          accent: Color(0xFF4CC9A6),
+          accent: AppColors.primary,
         );
       case 'istighfar':
         return const _CategoryMeta(
           icon: Icons.refresh,
-          accent: Color(0xFF67B3E6),
+          accent: AppColors.primary,
         );
       case 'duas':
         return const _CategoryMeta(
           icon: Icons.menu_book_outlined,
-          accent: Color(0xFFB388EB),
+          accent: AppColors.primary,
         );
     }
     return null;
@@ -238,25 +241,13 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradient = LinearGradient(
-      colors: [
-        accent.withValues(alpha: 0.22),
-        AppColors.surface,
-      ],
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
-    );
-
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       borderRadius: BorderRadius.circular(18),
       decoration: BoxDecoration(
-        gradient: gradient,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.25),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +279,7 @@ class _CategoryTile extends StatelessWidget {
                 Text(
                   subtitle,
                   style: AppText.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textMuted,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -315,9 +306,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondary = Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        );
+    const secondary = AppColors.textSecondary;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),

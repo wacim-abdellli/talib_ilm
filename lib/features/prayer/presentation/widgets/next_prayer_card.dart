@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../data/models/prayer_models.dart';
 
 class NextPrayerCard extends StatelessWidget {
@@ -21,77 +22,46 @@ class NextPrayerCard extends StatelessWidget {
     final primary = colors.onSurface;
     final secondary = colors.onSurface.withValues(alpha: 0.7);
     final radius = BorderRadius.circular(22);
-    final innerGradient = LinearGradient(
-      colors: [
-        _tint(AppColors.primary, 0.28),
-        _tint(AppColors.primaryAlt, 0.24),
-      ],
-      begin: Alignment.centerRight,
-      end: Alignment.centerLeft,
-    );
 
     return InkWell(
       borderRadius: radius,
       onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
+          color: AppColors.surface,
           borderRadius: radius,
-          gradient: AppColors.primaryGradient,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
+          boxShadow: AppUi.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'الصلاة القادمة',
+              style: AppText.body.copyWith(color: secondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              prayer.prayer.labelAr,
+              style: AppText.headingXL.copyWith(
+                color: primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _formatTime(prayer.time),
+              style: AppText.body.copyWith(color: secondary),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              countdownText ?? 'بعد ${prayer.minutesRemaining} دقيقة',
+              style: AppText.caption.copyWith(color: secondary),
             ),
           ],
         ),
-        child: Container(
-          margin: const EdgeInsets.all(1.5),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: innerGradient,
-            borderRadius: radius,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.mosque, color: secondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'الصلاة القادمة',
-                    style: AppText.body.copyWith(color: secondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                prayer.prayer.labelAr,
-                style: AppText.headingXL.copyWith(
-                  color: primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _formatTime(prayer.time),
-                style: AppText.body.copyWith(color: secondary),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                countdownText ?? 'بعد ${prayer.minutesRemaining} دقيقة',
-                style: AppText.caption.copyWith(color: secondary),
-              ),
-            ],
-          ),
-        ),
       ),
     );
-  }
-
-  Color _tint(Color color, double amount) {
-    return Color.lerp(AppColors.background, color, amount) ?? color;
   }
 
   String _formatTime(DateTime time) {
@@ -108,7 +78,7 @@ class NextPrayerCardPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(16),
