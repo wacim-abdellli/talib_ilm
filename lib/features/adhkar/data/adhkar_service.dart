@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'adhkar_models.dart';
+import '../../../app/constants/app_assets.dart';
+import '../../../app/constants/app_strings.dart';
 
 class AthkarService {
   Future<AthkarCatalog>? _cache;
@@ -21,7 +23,7 @@ class AthkarService {
   }
 
   Future<AthkarCatalog> _loadFromAssets() async {
-    final raw = await rootBundle.loadString('assets/data/adhkar.json');
+    final raw = await rootBundle.loadString(AppAssets.adhkarData);
     final decoded = jsonDecode(raw);
     List<AthkarCategoryData> categories;
 
@@ -81,14 +83,14 @@ class AthkarService {
     return [
       AthkarCategoryData(
         id: 'morning',
-        title: 'أذكار الصباح',
-        subtitle: 'بداية هادئة لليوم',
+        title: AppStrings.adhkarMorning,
+        subtitle: AppStrings.adhkarMorningSubtitle,
         items: morningItems,
       ),
       AthkarCategoryData(
         id: 'evening',
-        title: 'أذكار المساء',
-        subtitle: 'ختام مطمئن للمساء',
+        title: AppStrings.adhkarEvening,
+        subtitle: AppStrings.adhkarEveningSubtitle,
         items: eveningItems,
       ),
     ];
@@ -99,8 +101,8 @@ class AthkarService {
       categories: [
         AthkarCategoryData(
           id: 'morning',
-          title: 'أذكار الصباح',
-          subtitle: 'بداية هادئة لليوم',
+          title: AppStrings.adhkarMorning,
+          subtitle: AppStrings.adhkarMorningSubtitle,
           items: [
             _fallbackItem(
               id: 'morning_1',
@@ -127,8 +129,8 @@ class AthkarService {
         ),
         AthkarCategoryData(
           id: 'evening',
-          title: 'أذكار المساء',
-          subtitle: 'ختام مطمئن للمساء',
+          title: AppStrings.adhkarEvening,
+          subtitle: AppStrings.adhkarEveningSubtitle,
           items: [
             _fallbackItem(
               id: 'evening_1',
@@ -155,8 +157,8 @@ class AthkarService {
         ),
         AthkarCategoryData(
           id: 'after_prayer',
-          title: 'أذكار بعد الصلاة',
-          subtitle: 'ذكر بعد التسليم',
+          title: AppStrings.adhkarAfterPrayer,
+          subtitle: AppStrings.adhkarAfterPrayerSubtitle,
           items: [
             _fallbackItem(
               id: 'after_1',
@@ -190,8 +192,8 @@ class AthkarService {
         ),
         AthkarCategoryData(
           id: 'tasbeeh',
-          title: 'تسبيح',
-          subtitle: 'عدّ حر بدون قيود',
+          title: AppStrings.tasbeehTab,
+          subtitle: AppStrings.adhkarFreeCountSubtitle,
           items: [
             _fallbackItem(
               id: 'tasbeeh_1',
@@ -218,8 +220,8 @@ class AthkarService {
         ),
         AthkarCategoryData(
           id: 'istighfar',
-          title: 'استغفار',
-          subtitle: 'عدّ حر بدون قيود',
+          title: AppStrings.istighfarTab,
+          subtitle: AppStrings.adhkarFreeCountSubtitle,
           items: [
             _fallbackItem(
               id: 'istighfar_1',
@@ -239,8 +241,8 @@ class AthkarService {
         ),
         AthkarCategoryData(
           id: 'duas',
-          title: 'أدعية وأذكار',
-          subtitle: 'قراءة هادئة بدون عدّ',
+          title: AppStrings.duasTitle,
+          subtitle: AppStrings.adhkarDuasSubtitle,
           items: [
             _fallbackItem(
               id: 'dua_1',

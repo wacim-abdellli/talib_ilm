@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../app/constants/app_strings.dart';
 
 class LocationResult {
   final double latitude;
@@ -18,7 +19,7 @@ class LocationResult {
 }
 
 class LocationService {
-  static const _defaultCity = 'مكة المكرمة';
+  static const _defaultCity = AppStrings.locationDefaultCity;
   static const _defaultLat = 21.3891;
   static const _defaultLon = 39.8579;
 
@@ -106,7 +107,8 @@ class LocationService {
     final lat = prefs.getDouble(_keyManualLat);
     final lon = prefs.getDouble(_keyManualLon);
     if (lat == null || lon == null) return null;
-    final city = prefs.getString(_keyManualCity) ?? 'الموقع اليدوي';
+    final city =
+        prefs.getString(_keyManualCity) ?? AppStrings.locationManualDefault;
     return LocationResult(latitude: lat, longitude: lon, city: city);
   }
 
@@ -177,7 +179,7 @@ class LocationService {
       final longitude = (lonRaw as num).toDouble();
       final city = (cityRaw is String && cityRaw.trim().isNotEmpty)
           ? cityRaw.trim()
-          : 'الموقع الحالي';
+          : AppStrings.locationCurrent;
 
       return LocationResult(
         latitude: latitude,
@@ -205,7 +207,7 @@ class LocationService {
     }
 
     if (city == _defaultCity && (position.latitude != _defaultLat)) {
-      city = 'الموقع الحالي';
+      city = AppStrings.locationCurrent;
     }
 
     return LocationResult(

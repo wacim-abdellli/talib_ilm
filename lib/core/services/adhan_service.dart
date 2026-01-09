@@ -1,4 +1,5 @@
 import 'package:just_audio/just_audio.dart';
+import '../../app/constants/app_assets.dart';
 
 import 'adhan_settings_service.dart';
 
@@ -29,9 +30,9 @@ class AdhanService {
   String _assetFor(AdhanSound sound) {
     switch (sound) {
       case AdhanSound.makkah:
-        return 'assets/audio/adhan_makkah.mp3';
+        return AppAssets.adhanMakkah;
       case AdhanSound.madinah:
-        return 'assets/audio/adhan_madinah.mp3';
+        return AppAssets.adhanMadinah;
     }
   }
 }

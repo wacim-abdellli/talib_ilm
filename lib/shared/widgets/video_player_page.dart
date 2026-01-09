@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_text.dart';
 import 'primary_app_bar.dart';
 
@@ -65,7 +66,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         _finish();
       },
       child: Scaffold(
-        appBar: PrimaryAppBar(
+        appBar: UnifiedAppBar(
           title: widget.title,
           showBack: true,
           onLeadingTap: _finish,
@@ -75,9 +76,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                 controller: _controller,
                 showVideoProgressIndicator: true,
               )
-            : const Center(
+            : Center(
                 child: Text(
-                  'تشغيل الفيديو غير مدعوم على Linux\nسيعمل على Android و iOS',
+                  AppStrings.videoUnsupported,
                   textAlign: TextAlign.center,
                   style: AppText.body,
                 ),

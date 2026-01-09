@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -18,45 +19,43 @@ class NextPrayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final primary = colors.onSurface;
-    final secondary = colors.onSurface.withValues(alpha: 0.7);
-    final radius = BorderRadius.circular(22);
+    final radius = BorderRadius.circular(AppUi.radiusXL);
 
     return InkWell(
       borderRadius: radius,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: AppUi.cardPadding,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceElevated,
           borderRadius: radius,
-          boxShadow: AppUi.cardShadow,
+          border: Border.all(
+            color: AppColors.stroke,
+            width: AppUi.dividerThickness,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'الصلاة القادمة',
-              style: AppText.body.copyWith(color: secondary),
+              AppStrings.prayerNext,
+              style: AppText.headingXL,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppUi.gapXSPlus),
             Text(
               prayer.prayer.labelAr,
-              style: AppText.headingXL.copyWith(
-                color: primary,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppText.heading,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppUi.gapSM),
             Text(
               _formatTime(prayer.time),
-              style: AppText.body.copyWith(color: secondary),
+              style: AppText.body,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppUi.gapSM),
             Text(
-              countdownText ?? 'بعد ${prayer.minutesRemaining} دقيقة',
-              style: AppText.caption.copyWith(color: secondary),
+              countdownText ??
+                  AppStrings.prayerInMinutes(prayer.minutesRemaining),
+              style: AppText.caption,
             ),
           ],
         ),
@@ -76,21 +75,20 @@ class NextPrayerCardPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          _SkeletonLine(width: 140),
-          SizedBox(height: 8),
-          _SkeletonLine(width: 180),
-          SizedBox(height: 8),
-          _SkeletonLine(width: 110),
+          _SkeletonLine(width: AppUi.skeletonLineMedium),
+          SizedBox(height: AppUi.gapSM),
+          _SkeletonLine(width: AppUi.skeletonLineLong),
+          SizedBox(height: AppUi.gapSM),
+          _SkeletonLine(width: AppUi.skeletonLineShort),
         ],
       ),
     );
@@ -104,15 +102,14 @@ class _SkeletonLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final lineColor = colors.onSurface.withValues(alpha: 0.08);
+    final lineColor = AppColors.stroke;
 
     return Container(
       width: width,
-      height: 12,
+      height: AppUi.gapMD,
       decoration: BoxDecoration(
         color: lineColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppUi.radiusXS),
       ),
     );
   }

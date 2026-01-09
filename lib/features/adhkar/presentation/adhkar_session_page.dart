@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../../../shared/widgets/pressable_scale.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
-import '../../../core/services/favorites_service.dart';
-import '../../../core/models/favorite_item.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -31,7 +30,6 @@ class AdhkarSessionPage extends StatefulWidget {
 class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   final AthkarService _athkarService = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
-  final FavoritesService _favoritesService = FavoritesService();
 
   late final PageController _pageController;
   List<AthkarItem> _items = const [];
@@ -41,7 +39,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   int _count = 0;
   bool _loading = true;
   bool _ritualLocked = false;
-  bool _isFavorite = false;
 
   @override
   void initState() {
@@ -51,37 +48,32 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   Future<void> _loadItems() async {
+    await _clearPersistedSession();
     final catalog = await _athkarService.loadCatalog();
     final categoryId = _catalogIdFor(widget.category);
     final categoryData = catalog.byId(categoryId);
     final items = categoryData?.items ?? const <AthkarItem>[];
 
-    final state = await _sessionService.loadState(widget.category);
-    final counts = await _sessionService.loadCounts(widget.category);
-
     if (!mounted) return;
 
     final maxIndex = items.length;
-    final initialIndex =
-        maxIndex == 0 ? 0 : state.index.clamp(0, maxIndex - 1);
-    if (items.isNotEmpty) {
-      final currentKey = _favoriteIdFor(items[initialIndex]);
-      counts[currentKey] = 0;
-    }
+    final initialIndex = maxIndex == 0 ? 0 : 0;
+    final initialKey =
+        items.isNotEmpty ? _favoriteIdFor(items[initialIndex]) : null;
+    const savedCount = 0;
 
     setState(() {
       _items = items;
-      _counts = counts;
+      _counts = {};
       _categoryTitle = categoryData?.title;
       _index = initialIndex;
-      _count = 0;
+      _count = savedCount < 0 ? 0 : savedCount;
       _ritualLocked = false;
       _loading = false;
+      if (initialKey != null) {
+        _counts.putIfAbsent(initialKey, () => _count);
+      }
     });
-
-    if (_items.isNotEmpty) {
-      _loadFavoriteFor(_items[_index]);
-    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _jumpToIndex(_index);
@@ -95,14 +87,11 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   Future<void> _saveState() async {
-    await _sessionService.saveState(
-      widget.category,
-      AdhkarSessionState(index: _index, count: _count),
-    );
+    return;
   }
 
   Future<void> _saveCounts() async {
-    await _sessionService.saveCounts(widget.category, _counts);
+    return;
   }
 
   void _handleTap() {
@@ -127,6 +116,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     _saveState();
 
     if (repeat > 0 && nextCount >= repeat && _index + 1 < _items.length) {
+      HapticFeedback.lightImpact();
       _goNext();
     }
   }
@@ -148,7 +138,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final title = widget.titleOverride ?? _categoryTitle ?? widget.category.label;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: PrimaryAppBar(
+      appBar: UnifiedAppBar(
         title: title,
         showBack: true,
       ),
@@ -156,7 +146,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
           ? const SizedBox.shrink()
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                padding: AppUi.screenPaddingTopLarge,
                 child: _items.isEmpty ? _buildEmpty() : _buildSession(),
               ),
             ),
@@ -165,41 +155,50 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   @override
   void dispose() {
+    _index = 0;
+    _count = 0;
+    _counts = {};
     _pageController.dispose();
     super.dispose();
   }
 
   Widget _buildSession() {
-    const secondary = AppColors.textSecondary;
-    final repeat = _repeatFor(_items, _index);
-    final displayCount = _count < 0 ? 0 : _count;
     final item = _items[_index];
     final showSource = item.source.isNotEmpty;
     final showFadl = item.fadl.isNotEmpty;
+    final repeat = _repeatFor(_items, _index);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Center(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: AppUi.cardShadow,
-              ),
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _items.length,
-                onPageChanged: _handlePageChange,
-                reverse: Directionality.of(context) == TextDirection.rtl,
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return InkWell(
-                    onTap: _handleTap,
-                    child: LayoutBuilder(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _handleTap,
+              child: Container(
+                width: double.infinity,
+                padding: AppUi.cardPadding.copyWith(
+                  top: AppUi.gapXL,
+                  bottom: AppUi.gapXL,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(AppUi.radiusXXL),
+                  border: Border.all(
+                    color: AppColors.stroke,
+                    width: AppUi.dividerThickness,
+                  ),
+                  boxShadow: AppUi.cardShadow,
+                ),
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _items.length,
+                  onPageChanged: _handlePageChange,
+                  reverse: Directionality.of(context) == TextDirection.rtl,
+                  itemBuilder: (context, index) {
+                    final item = _items[index];
+                    return LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
                           physics: const ClampingScrollPhysics(),
@@ -210,20 +209,18 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                             child: Center(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
+                                  horizontal: AppUi.gapMD,
+                                  vertical: AppUi.gapSMPlus,
                                 ),
                                 child: ConstrainedBox(
                                   constraints:
-                                      const BoxConstraints(maxWidth: 520),
+                                      const BoxConstraints(
+                                        maxWidth: AppUi.maxContentWidth,
+                                      ),
                                   child: Text(
                                     item.arabic,
                                     textAlign: TextAlign.center,
-                                    style: AppText.dhikrText.copyWith(
-                                      color: AppColors.textPrimary.withValues(
-                                        alpha: 0.92,
-                                      ),
-                                    ),
+                                    style: AppText.body,
                                   ),
                                 ),
                               ),
@@ -231,19 +228,44 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                           ),
                         );
                       },
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          'التكرار: $displayCount / $repeat',
-          style: AppText.caption.copyWith(color: secondary),
+        const SizedBox(height: AppUi.gapSM),
+        Center(
+          child: Text(
+            '$_count / $repeat',
+            style: AppText.caption,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppUi.gapSM),
+        if (showSource || showFadl) ...[
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppUi.gapMD,
+            runSpacing: AppUi.gapSM,
+            children: [
+              if (showSource)
+                _ActionLink(
+                  label: AppStrings.adhkarSource,
+                  onTap: () =>
+                      _showTextSheet(AppStrings.adhkarSource, item.source),
+                ),
+              if (showFadl)
+                _ActionLink(
+                  label: AppStrings.adhkarVirtue,
+                  onTap: () =>
+                      _showTextSheet(AppStrings.adhkarVirtue, item.fadl),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppUi.gapMD),
+        ],
+        const SizedBox(height: AppUi.gapSM),
         Directionality(
           textDirection: TextDirection.ltr,
           child: Row(
@@ -254,12 +276,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 enabled: _index > 0,
                 onTap: _goPrev,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppUi.gapLG),
               Text(
                 '${_index + 1} / ${_items.length}',
-                style: AppText.caption.copyWith(color: secondary),
+                style: AppText.caption,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppUi.gapLG),
               _StepArrow(
                 icon: Icons.chevron_right,
                 enabled: _index < _items.length - 1,
@@ -268,148 +290,18 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
             ],
           ),
         ),
-        if (showSource || showFadl) ...[
-          const SizedBox(height: 10),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            children: [
-              if (showSource)
-                _ActionLink(
-                  label: 'المصدر',
-                  onTap: () => _showTextSheet('المصدر', item.source),
-                ),
-              if (showFadl)
-                _ActionLink(
-                  label: 'الفضل',
-                  onTap: () => _showTextSheet('الفضل', item.fadl),
-                ),
-            ],
-          ),
-        ],
-        const SizedBox(height: 8),
-        _ActionLink(
-          label: 'الخيارات',
-          onTap: _openActionsSheet,
-        ),
       ],
     );
   }
 
   Widget _buildEmpty() {
-    const secondary = AppColors.textSecondary;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('لا توجد أذكار متاحة', style: AppText.heading),
-          const SizedBox(height: 8),
-          Text(
-            'أضف أذكارًا من البيانات لاحقًا',
-            style: AppText.body.copyWith(color: secondary),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('رجوع'),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.menu_book_outlined,
+      title: AppStrings.adhkarSessionEmptyTitle,
+      message: AppStrings.adhkarSessionEmptyMessage,
+      actionLabel: AppStrings.actionBack,
+      onAction: () => Navigator.pop(context),
     );
-  }
-
-  Future<void> _resetSession() async {
-    setState(() {
-      _index = 0;
-      _count = 0;
-      _ritualLocked = false;
-      _counts = {};
-    });
-    _jumpToIndex(0);
-    await _saveState();
-    await _saveCounts();
-  }
-
-  void _openActionsSheet() {
-    if (_items.isEmpty) return;
-    final item = _items[_index];
-    final hasDetails =
-        item.meaning.isNotEmpty || item.transliteration.isNotEmpty;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(
-                  _isFavorite ? Icons.star : Icons.star_border,
-                ),
-                title: Text(
-                  _isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _toggleFavorite();
-                },
-              ),
-              if (hasDetails)
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('التفاصيل'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _openDetailsSheet(item);
-                  },
-                ),
-              ListTile(
-                leading: const Icon(Icons.refresh),
-                title: const Text('إعادة العد'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _resetSession();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.copy_outlined),
-                title: const Text('نسخ النص'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Clipboard.setData(ClipboardData(text: item.arabic));
-                  _showSnackBar('تم النسخ');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.share_outlined),
-                title: const Text('مشاركة'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Share.share(item.arabic);
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _openDetailsSheet(AthkarItem item) {
-    if (item.meaning.isEmpty && item.transliteration.isEmpty) return;
-    final sections = <_DetailSection>[
-      if (item.transliteration.isNotEmpty)
-        _DetailSection(title: 'النطق', content: item.transliteration),
-      if (item.meaning.isNotEmpty)
-        _DetailSection(title: 'المعنى', content: item.meaning),
-    ];
-    _showDetailSections('التفاصيل', sections);
   }
 
   void _showSnackBar(String message) {
@@ -419,19 +311,24 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         content: Row(
           children: [
             Icon(Icons.check_circle, color: AppColors.primary),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppUi.gapSM),
             Expanded(
               child: Text(message, style: AppText.body),
             ),
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.fromLTRB(
+          AppUi.paddingMD,
+          0,
+          AppUi.paddingMD,
+          AppUi.paddingMD,
+        ),
+        duration: AppUi.snackDurationLong,
         showCloseIcon: true,
         closeIconColor: AppColors.textMuted,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
         ),
       ),
     );
@@ -447,15 +344,22 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final combined = sections.map((s) => s.content).join('\n\n');
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppUi.radiusLG),
+        ),
       ),
       builder: (context) {
         return SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            padding: const EdgeInsets.fromLTRB(
+              AppUi.paddingMD,
+              AppUi.gapMD,
+              AppUi.paddingMD,
+              AppUi.paddingMD,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,34 +370,32 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                       child: Text(title, style: AppText.heading),
                     ),
                     IconButton(
-                      tooltip: 'نسخ',
+                      tooltip: AppStrings.actionCopy,
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: combined));
-                        _showSnackBar('تم النسخ');
+                        _showSnackBar(AppStrings.copyDone);
                       },
                       icon: const Icon(Icons.copy_outlined),
                     ),
                     IconButton(
-                      tooltip: 'إغلاق',
+                      tooltip: AppStrings.actionClose,
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppUi.gapMD),
                 ...sections.map(
                   (section) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: AppUi.gapMD),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(section.title, style: AppText.caption),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppUi.gapXSPlus),
                         Text(
                           section.content,
-                          style: AppText.body.copyWith(
-                            color: AppColors.textMuted,
-                          ),
+                          style: AppText.bodyMuted,
                         ),
                       ],
                     ),
@@ -525,7 +427,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final target = index.clamp(0, _items.length - 1);
     _pageController.animateToPage(
       target,
-      duration: const Duration(milliseconds: 200),
+      duration: AppUi.animationQuick,
       curve: Curves.easeOut,
     );
   }
@@ -534,17 +436,17 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     if (_loading || _ritualLocked) return;
     if (index < 0 || index >= _items.length) return;
     final key = _favoriteIdFor(_items[index]);
+    final restored = _counts[key] ?? 0;
     setState(() {
       _index = index;
-      _count = 0;
-      _counts[key] = 0;
+      _count = restored < 0 ? 0 : restored;
+      _counts.putIfAbsent(key, () => _count);
     });
     if (animate) {
       _animateToIndex(index);
     }
     _saveState();
     _saveCounts();
-    _loadFavoriteFor(_items[index]);
   }
 
   String _catalogIdFor(AdhkarCategory category) {
@@ -573,28 +475,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     return item.arabic;
   }
 
-  Future<void> _loadFavoriteFor(AthkarItem item) async {
-    final saved = await _favoritesService.isFavorite(
-      FavoriteType.dhikr,
-      _favoriteIdFor(item),
-    );
-    if (!mounted) return;
-    setState(() => _isFavorite = saved);
-  }
-
-  Future<void> _toggleFavorite() async {
-    if (_items.isEmpty || _index >= _items.length) return;
-    final item = _items[_index];
-    final saved = await _favoritesService.toggle(
-      FavoriteItem(
-        type: FavoriteType.dhikr,
-        id: _favoriteIdFor(item),
-        title: item.arabic,
-        subtitle: item.source,
-      ),
-    );
-    if (!mounted) return;
-    setState(() => _isFavorite = saved);
+  Future<void> _clearPersistedSession() async {
+    await _sessionService.clearState(widget.category);
+    await _sessionService.saveCounts(widget.category, const {});
   }
 
 }
@@ -624,12 +507,12 @@ class _StepArrow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = enabled
         ? AppColors.textSecondary
-        : AppColors.textMuted.withValues(alpha: 0.5);
+        : AppColors.textMuted;
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppUi.radiusCard),
       onTap: enabled ? onTap : null,
       child: Padding(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(AppUi.gapXSPlus),
         child: Icon(icon, color: color),
       ),
     );
@@ -651,13 +534,16 @@ class _ActionLink extends StatelessWidget {
       child: TextButton(
         onPressed: onTap,
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          minimumSize: const Size(0, 32),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppUi.gapSMPlus,
+            vertical: AppUi.gapXSPlus,
+          ),
+          minimumSize: const Size(0, AppUi.tapTargetMin),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: Text(
           label,
-          style: AppText.caption.copyWith(color: AppColors.textSecondary),
+          style: AppText.caption,
         ),
       ),
     );

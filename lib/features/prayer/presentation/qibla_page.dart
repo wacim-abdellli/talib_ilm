@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 
 class QiblaPage extends StatelessWidget {
@@ -10,13 +11,13 @@ class QiblaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const PrimaryAppBar(
-        title: 'اتجاه القبلة',
+      appBar: const UnifiedAppBar(
+        title: AppStrings.qiblaTitle,
         showBack: true,
       ),
-      body: const Center(
+      body: Center(
         child: Text(
-          'بوصلة القبلة ستضاف قريبًا',
+          AppStrings.qiblaComingSoon,
           style: AppText.body,
         ),
       ),

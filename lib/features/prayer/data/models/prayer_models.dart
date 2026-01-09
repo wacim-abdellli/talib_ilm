@@ -1,3 +1,5 @@
+import 'package:talib_ilm/app/constants/app_strings.dart';
+
 enum Prayer {
   fajr,
   dhuhr,
@@ -10,15 +12,15 @@ extension PrayerLabels on Prayer {
   String get labelAr {
     switch (this) {
       case Prayer.fajr:
-        return 'الفجر';
+        return AppStrings.prayerFajr;
       case Prayer.dhuhr:
-        return 'الظهر';
+        return AppStrings.prayerDhuhr;
       case Prayer.asr:
-        return 'العصر';
+        return AppStrings.prayerAsr;
       case Prayer.maghrib:
-        return 'المغرب';
+        return AppStrings.prayerMaghrib;
       case Prayer.isha:
-        return 'العشاء';
+        return AppStrings.prayerIsha;
     }
   }
 }
@@ -51,15 +53,15 @@ class PrayerTimesDay {
 
 Prayer? prayerFromLabel(String label) {
   switch (label) {
-    case 'الفجر':
+    case AppStrings.prayerFajr:
       return Prayer.fajr;
-    case 'الظهر':
+    case AppStrings.prayerDhuhr:
       return Prayer.dhuhr;
-    case 'العصر':
+    case AppStrings.prayerAsr:
       return Prayer.asr;
-    case 'المغرب':
+    case AppStrings.prayerMaghrib:
       return Prayer.maghrib;
-    case 'العشاء':
+    case AppStrings.prayerIsha:
       return Prayer.isha;
   }
   return null;

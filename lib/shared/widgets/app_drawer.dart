@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_text.dart';
+import '../../app/theme/app_ui.dart';
 import '../navigation/app_shell.dart';
 import '../../features/favorites/presentation/favorites_page.dart';
 import '../../features/more/presentation/more_page.dart';
@@ -11,41 +13,44 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width * 0.78;
+    final width =
+        MediaQuery.of(context).size.width * AppUi.drawerWidthFactor;
     return SizedBox(
       width: width,
       child: Drawer(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.surfaceElevated,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+          borderRadius: BorderRadius.horizontal(
+            left: Radius.circular(AppUi.radiusLG),
+          ),
         ),
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: AppUi.screenPadding,
             children: [
             Center(
               child: Container(
-                width: 36,
-                height: 4,
+                width: AppUi.handleWidth,
+                height: AppUi.handleHeight,
                 decoration: BoxDecoration(
                   color: AppColors.textMuted.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppUi.radiusPill),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppUi.gapMD),
             _DrawerItem(
-              label: 'الرئيسية',
+              label: AppStrings.navHome,
               icon: Icons.home_outlined,
               onTap: () => _goShell(context, 2),
             ),
             _DrawerItem(
-              label: 'المكتبة',
+              label: AppStrings.navLibrary,
               icon: Icons.local_library_outlined,
               onTap: () => _goShell(context, 4),
             ),
             _DrawerItem(
-              label: 'المفضلة',
+              label: AppStrings.navFavorites,
               icon: Icons.star_outline,
               onTap: () {
                 Navigator.pop(context);
@@ -56,7 +61,7 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
-              label: 'الإعدادات',
+              label: AppStrings.navSettings,
               icon: Icons.settings_outlined,
               onTap: () {
                 Navigator.pop(context);
@@ -67,7 +72,7 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
-              label: 'حول التطبيق',
+              label: AppStrings.navAbout,
               icon: Icons.info_outline,
               onTap: () {
                 Navigator.pop(context);
@@ -93,10 +98,10 @@ class AppDrawer extends StatelessWidget {
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'طالب العلم',
-      applicationVersion: '1.0.0',
-      children: const [
-        Text('تطبيق هادئ لخدمة طالب العلم.', style: AppText.body),
+      applicationName: AppStrings.appName,
+      applicationVersion: AppStrings.appVersion,
+      children: [
+        Text(AppStrings.appTagline, style: AppText.body),
       ],
     );
   }

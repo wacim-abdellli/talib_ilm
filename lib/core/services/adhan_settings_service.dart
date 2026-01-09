@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../app/constants/app_strings.dart';
 
 enum AdhanSound {
   makkah,
@@ -43,13 +44,7 @@ class AdhanSettingsService {
   static const _keySilent = 'adhan_silent';
   static const _keyPrayerPrefix = 'adhan_prayer_';
 
-  static const List<String> prayerNames = [
-    'الفجر',
-    'الظهر',
-    'العصر',
-    'المغرب',
-    'العشاء',
-  ];
+  static const List<String> prayerNames = AppStrings.prayerOrder;
 
   Future<AdhanSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();

@@ -1,3 +1,5 @@
+import '../../../app/constants/app_strings.dart';
+
 enum AdhkarCategory {
   morning,
   evening,
@@ -13,21 +15,21 @@ extension AdhkarCategoryLabel on AdhkarCategory {
   String get label {
     switch (this) {
       case AdhkarCategory.morning:
-        return 'أذكار الصباح';
+        return AppStrings.adhkarMorning;
       case AdhkarCategory.evening:
-        return 'أذكار المساء';
+        return AppStrings.adhkarEvening;
       case AdhkarCategory.afterPrayer:
-        return 'أذكار بعد الصلاة';
+        return AppStrings.adhkarAfterPrayer;
       case AdhkarCategory.beforePrayer:
-        return 'أذكار قبل الصلاة';
+        return AppStrings.adhkarBeforePrayer;
       case AdhkarCategory.general:
-        return 'أذكار متنوعة';
+        return AppStrings.adhkarGeneral;
       case AdhkarCategory.tasbeeh:
-        return 'تسبيح';
+        return AppStrings.tasbeehTab;
       case AdhkarCategory.istighfar:
-        return 'استغفار';
+        return AppStrings.istighfarTab;
       case AdhkarCategory.duas:
-        return 'أدعية وأذكار';
+        return AppStrings.duasTitle;
     }
   }
 

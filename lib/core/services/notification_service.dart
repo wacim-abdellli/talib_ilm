@@ -3,6 +3,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../app/constants/app_strings.dart';
 import 'adhan_settings_service.dart';
 
 class NotificationService {
@@ -23,7 +24,9 @@ class NotificationService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    final linux = LinuxInitializationSettings(defaultActionName: 'Open');
+    final linux = const LinuxInitializationSettings(
+      defaultActionName: AppStrings.notificationDefaultAction,
+    );
 
     final settings = InitializationSettings(
       android: android,
@@ -121,8 +124,8 @@ class NotificationService {
     if (!playSound) {
       return const AndroidNotificationDetails(
         'prayer_times_silent',
-        'Prayer Times',
-        channelDescription: 'Prayer time reminders',
+        AppStrings.notificationChannelName,
+        channelDescription: AppStrings.notificationChannelDescription,
         importance: Importance.high,
         priority: Priority.high,
         playSound: false,
@@ -132,8 +135,8 @@ class NotificationService {
     final soundName = _soundName(sound);
     return AndroidNotificationDetails(
       'prayer_times_$soundName',
-      'Prayer Times',
-      channelDescription: 'Prayer time reminders',
+      AppStrings.notificationChannelName,
+      channelDescription: AppStrings.notificationChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
       sound: RawResourceAndroidNotificationSound(soundName),

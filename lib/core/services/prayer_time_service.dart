@@ -1,4 +1,5 @@
 import 'package:adhan/adhan.dart';
+import '../../app/constants/app_strings.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import 'location_service.dart';
 
@@ -24,11 +25,11 @@ class PrayerTimeService {
     final times = PrayerTimes(coordinates, dateComponents, params);
 
     final prayers = <String, DateTime>{
-      'الفجر': times.fajr,
-      'الظهر': times.dhuhr,
-      'العصر': times.asr,
-      'المغرب': times.maghrib,
-      'العشاء': times.isha,
+      AppStrings.prayerFajr: times.fajr,
+      AppStrings.prayerDhuhr: times.dhuhr,
+      AppStrings.prayerAsr: times.asr,
+      AppStrings.prayerMaghrib: times.maghrib,
+      AppStrings.prayerIsha: times.isha,
     };
 
     final reference = date == null

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/pressable_scale.dart';
+import '../../app/constants/app_strings.dart';
+import '../../app/theme/app_ui.dart';
 
 import '../../features/home/presentation/home_page.dart';
 import '../../features/prayer/presentation/prayer_page.dart';
@@ -46,8 +48,8 @@ class _AppShellState extends State<AppShell> {
           final active = index == _currentIndex;
           return AnimatedOpacity(
             opacity: active ? 1 : 0,
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
+            duration: AppUi.animationNormal,
+            curve: Curves.easeOut,
             child: IgnorePointer(
               ignoring: !active,
               child: pages[index],
@@ -58,8 +60,6 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
         onTap: (index) {
           HapticFeedback.selectionClick();
           setState(() {
@@ -68,24 +68,24 @@ class _AppShellState extends State<AppShell> {
         },
         items: [
           BottomNavigationBarItem(
-            icon: _navIcon(Icons.auto_stories),
-            label: 'العلم',
+            icon: _navIcon(Icons.auto_stories_outlined),
+            label: AppStrings.navIlm,
           ),
           BottomNavigationBarItem(
-            icon: _navIcon(Icons.self_improvement),
-            label: 'الأذكار',
+            icon: _navIcon(Icons.self_improvement_outlined),
+            label: AppStrings.navAdhkar,
           ),
           BottomNavigationBarItem(
-            icon: _navIcon(Icons.home),
-            label: 'الرئيسية',
+            icon: _navIcon(Icons.home_outlined),
+            label: AppStrings.navHome,
           ),
           BottomNavigationBarItem(
-            icon: _navIcon(Icons.access_time),
-            label: 'الصلاة',
+            icon: _navIcon(Icons.access_time_outlined),
+            label: AppStrings.navPrayer,
           ),
           BottomNavigationBarItem(
-            icon: _navIcon(Icons.local_library),
-            label: 'المكتبة',
+            icon: _navIcon(Icons.local_library_outlined),
+            label: AppStrings.navLibrary,
           ),
         ],
       ),

@@ -4,14 +4,13 @@ import 'package:talib_ilm/core/services/progress_service.dart';
 import 'package:talib_ilm/core/services/last_activity_service.dart';
 import 'package:talib_ilm/features/ilm/data/models/progress_models.dart';
 import 'package:talib_ilm/features/ilm/data/models/lesson_model.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/video_player_page.dart';
 import '../../../../shared/widgets/primary_app_bar.dart';
-import '../../../../core/services/favorites_service.dart';
-import '../../../../core/models/favorite_item.dart';
 
 class LessonsListPage extends StatefulWidget {
   final String bookId;
@@ -29,25 +28,16 @@ class LessonsListPage extends StatefulWidget {
   State<LessonsListPage> createState() => _LessonsListPageState();
 }
 
-class _LessonsListPageState extends State<LessonsListPage>
-    with SingleTickerProviderStateMixin {
+class _LessonsListPageState extends State<LessonsListPage> {
   final ProgressService _progressService = ProgressService();
   final LastActivityService _lastActivityService = LastActivityService();
-  final FavoritesService _favoritesService = FavoritesService();
   final ScrollController _scrollController = ScrollController();
   int _completedLessons = 0;
-  Set<String> _favoriteLessonIds = {};
-  late final AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
     _loadProgress();
-    _loadFavorites();
     _lastActivityService.setLastTab(
       widget.bookId,
       LastActivityService.tabLessons,
@@ -56,7 +46,6 @@ class _LessonsListPageState extends State<LessonsListPage>
 
   @override
   void dispose() {
-    _pulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -73,11 +62,11 @@ class _LessonsListPageState extends State<LessonsListPage>
     if (!_scrollController.hasClients) return;
     final currentIndex = _currentIndex();
     if (currentIndex == null) return;
-    final target = (currentIndex * 96).toDouble();
+    final target = (currentIndex * AppUi.lessonScrollExtent).toDouble();
     _scrollController.animateTo(
       target,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
+      duration: AppUi.animationScroll,
+      curve: Curves.easeOut,
     );
   }
 
@@ -109,16 +98,20 @@ class _LessonsListPageState extends State<LessonsListPage>
       HapticFeedback.selectionClick();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(milliseconds: 1500),
+          duration: AppUi.snackDuration,
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check, color: AppColors.textPrimary, size: 18),
-              const SizedBox(width: 8),
+              const Icon(
+                Icons.check,
+                color: AppColors.textPrimary,
+                size: AppUi.iconSizeSM,
+              ),
+              const SizedBox(width: AppUi.gapSM),
               Text(
-                'تم حفظ التقدم',
+                AppStrings.lessonProgressSaved,
                 style: AppText.body.copyWith(color: AppColors.textPrimary),
               ),
             ],
@@ -128,48 +121,19 @@ class _LessonsListPageState extends State<LessonsListPage>
     }
   }
 
-  Future<void> _loadFavorites() async {
-    final ids = await _favoritesService.getIdsByType(FavoriteType.lesson);
-    if (!mounted) return;
-    setState(() => _favoriteLessonIds = ids);
-  }
-
-  String _favoriteId(Lesson lesson) {
-    return '${widget.bookId}:${lesson.index}';
-  }
-
-  Future<void> _toggleFavorite(Lesson lesson) async {
-    final id = _favoriteId(lesson);
-    final saved = await _favoritesService.toggle(
-      FavoriteItem(
-        type: FavoriteType.lesson,
-        id: id,
-        title: lesson.title,
-        subtitle: widget.bookTitle,
-      ),
-    );
-    if (!mounted) return;
-    setState(() {
-      if (saved) {
-        _favoriteLessonIds.add(id);
-      } else {
-        _favoriteLessonIds.remove(id);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PrimaryAppBar(
+      appBar: UnifiedAppBar(
         title: widget.bookTitle,
         showBack: true,
       ),
       body: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
+        padding: AppUi.screenPaddingCompact,
         itemCount: widget.lessons.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppUi.gapMD),
         itemBuilder: (context, index) {
           final lesson = widget.lessons[index];
           final done = index < _completedLessons;
@@ -178,16 +142,19 @@ class _LessonsListPageState extends State<LessonsListPage>
                   index == _completedLessons;
 
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            duration: AppUi.animationMedium,
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppUi.gapSMPlus,
+              vertical: AppUi.gapMD,
+            ),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(AppUi.radiusMD),
               boxShadow: AppUi.cardShadow,
             ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppUi.radiusMD),
               onTap: () async {
                 await _lastActivityService.setLastTab(
                   widget.bookId,
@@ -213,55 +180,41 @@ class _LessonsListPageState extends State<LessonsListPage>
                   _LessonIcon(
                     done: done,
                     isCurrent: isCurrent,
-                    pulse: _pulseController,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppUi.gapMD),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'الدرس ${index + 1}',
+                          AppStrings.lessonTitle(index),
                           style: AppText.caption.copyWith(
                             color: AppColors.textPrimary
                                 .withValues(alpha: 0.7),
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppUi.gapXXS),
                         Text(lesson.title, style: AppText.heading),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppUi.gapXS),
                         Text(
-                          '⏱ ${lesson.durationMinutes} دقيقة',
+                          AppStrings.lessonDuration(lesson.durationMinutes),
                           style: AppText.bodyMuted,
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'المفضلة',
-                    onPressed: () => _toggleFavorite(lesson),
-                    icon: Icon(
-                      _favoriteLessonIds.contains(_favoriteId(lesson))
-                          ? Icons.star
-                          : Icons.star_border,
-                      color: _favoriteLessonIds.contains(_favoriteId(lesson))
-                          ? AppColors.primary
-                          : AppColors.textMuted,
-                      size: 18,
-                    ),
-                  ),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: AppUi.gapSMPlus,
+                        vertical: AppUi.gapXS,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppUi.radiusPill),
                       ),
                       child: Text(
-                        'التالي',
+                        AppStrings.lessonNext,
                         style: AppText.caption.copyWith(
                           color: AppColors.primary,
                         ),
@@ -280,12 +233,10 @@ class _LessonsListPageState extends State<LessonsListPage>
 class _LessonIcon extends StatelessWidget {
   final bool done;
   final bool isCurrent;
-  final Animation<double> pulse;
 
   const _LessonIcon({
     required this.done,
     required this.isCurrent,
-    required this.pulse,
   });
 
   @override
@@ -294,29 +245,22 @@ class _LessonIcon extends StatelessWidget {
       return Icon(
         Icons.check_circle,
         color: AppColors.primary,
-        size: 24,
+        size: AppUi.iconSizeLG,
       );
     }
 
     if (isCurrent) {
-      return AnimatedBuilder(
-        animation: pulse,
-        builder: (context, child) {
-          final scale = 0.95 + (pulse.value * 0.1);
-          return Transform.scale(scale: scale, child: child);
-        },
-        child: Icon(
-          Icons.play_circle_fill,
-          color: AppColors.primary,
-          size: 28,
-        ),
+      return Icon(
+        Icons.play_circle_fill,
+        color: AppColors.primary,
+        size: AppUi.iconSizeXL,
       );
     }
 
     return Icon(
       Icons.play_circle_outline,
       color: AppColors.textMuted,
-      size: 24,
+      size: AppUi.iconSizeLG,
     );
   }
 }

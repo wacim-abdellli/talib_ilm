@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 
@@ -50,7 +52,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     if (_loading || _settings == null) {
-      return const SizedBox(height: 240);
+      return const SizedBox(height: AppUi.sheetPlaceholderHeight);
     }
 
     final settings = _settings!;
@@ -59,29 +61,32 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
         .length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: AppUi.screenPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('إعدادات الأذان', style: AppText.heading),
-          const SizedBox(height: 6),
+          Text(AppStrings.adhanSettingsTitle, style: AppText.heading),
+          const SizedBox(height: AppUi.gapXSPlus),
           Text(
-            'مفعّل $enabledCount من ${AdhanSettingsService.prayerNames.length}',
+            AppStrings.adhanEnabledCount(
+              enabledCount,
+              AdhanSettingsService.prayerNames.length,
+            ),
             style: AppText.caption,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('تفعيل الأذان', style: AppText.body),
+            title: Text(AppStrings.adhanEnableToggle, style: AppText.body),
             value: settings.enabled,
             onChanged: (value) {
               _save(settings.copyWith(enabled: value));
             },
           ),
-          const SizedBox(height: 8),
-          Text('تفعيل لكل صلاة', style: AppText.bodyMuted),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
+          Text(AppStrings.adhanPerPrayer, style: AppText.bodyMuted),
+          const SizedBox(height: AppUi.gapSM),
           ...AdhanSettingsService.prayerNames.map((name) {
             final enabled = settings.isPrayerEnabled(name);
             return SwitchListTile(
@@ -95,9 +100,9 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               },
             );
           }),
-          const SizedBox(height: 8),
-          Text('اختيار الأذان', style: AppText.bodyMuted),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
+          Text(AppStrings.adhanSelect, style: AppText.bodyMuted),
+          const SizedBox(height: AppUi.gapSM),
           RadioGroup<AdhanSound>(
             groupValue: settings.sound,
             onChanged: (value) {
@@ -105,37 +110,37 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               _save(settings.copyWith(sound: value));
             },
             child: Column(
-              children: const [
+              children: [
                 RadioListTile<AdhanSound>(
                   contentPadding: EdgeInsets.zero,
-                  title: Text('مكة', style: AppText.body),
+                  title: Text(AppStrings.adhanMakkah, style: AppText.body),
                   value: AdhanSound.makkah,
                 ),
                 RadioListTile<AdhanSound>(
                   contentPadding: EdgeInsets.zero,
-                  title: Text('المدينة', style: AppText.body),
+                  title: Text(AppStrings.adhanMadinah, style: AppText.body),
                   value: AdhanSound.madinah,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('إشعارات صامتة فقط', style: AppText.body),
+            title: Text(AppStrings.adhanSilentOnly, style: AppText.body),
             value: settings.silentNotifications,
             onChanged: (value) {
               _save(settings.copyWith(silentNotifications: value));
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () async {
                 await _adhanService.test(settings.sound);
               },
-              child: const Text('تشغيل الأذان للتجربة'),
+              child: const Text(AppStrings.adhanTest),
             ),
           ),
         ],

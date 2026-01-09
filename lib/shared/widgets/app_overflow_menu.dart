@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_text.dart';
+import '../../app/theme/app_ui.dart';
 import '../../features/favorites/presentation/favorites_page.dart';
-import '../../features/more/presentation/more_page.dart';
 import '../navigation/fade_page_route.dart';
 
 class AppMenuItem {
@@ -17,24 +18,13 @@ class AppMenuItem {
 }
 
 class AppOverflowMenu extends StatelessWidget {
-  final List<AppMenuItem> items;
-  final List<AppMenuItem> extraItems;
-  final bool includeDefaults;
-
   const AppOverflowMenu({
     super.key,
-    this.items = const [],
-    this.extraItems = const [],
-    this.includeDefaults = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final menuItems = <AppMenuItem>[
-      if (includeDefaults) ..._defaultItems(context),
-      ...items,
-      ...extraItems,
-    ];
+    final menuItems = _defaultItems(context);
 
     return IconButton(
       icon: const Icon(Icons.menu),
@@ -45,7 +35,7 @@ class AppOverflowMenu extends StatelessWidget {
   List<AppMenuItem> _defaultItems(BuildContext context) {
     return [
       AppMenuItem(
-        label: 'المفضلة',
+        label: AppStrings.navFavorites,
         icon: Icons.star_outline,
         onTap: () {
           Navigator.pop(context);
@@ -56,18 +46,15 @@ class AppOverflowMenu extends StatelessWidget {
         },
       ),
       AppMenuItem(
-        label: 'الإعدادات',
-        icon: Icons.settings_outlined,
+        label: AppStrings.moreThemeTitle,
+        icon: Icons.palette_outlined,
         onTap: () {
           Navigator.pop(context);
-          Navigator.push(
-            context,
-            buildFadeRoute(page: const MorePage()),
-          );
+          _showAppearance(context);
         },
       ),
       AppMenuItem(
-        label: 'عن التطبيق',
+        label: AppStrings.navAbout,
         icon: Icons.info_outline,
         onTap: () {
           Navigator.pop(context);
@@ -81,14 +68,21 @@ class AppOverflowMenu extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppUi.radiusMD),
+        ),
       ),
       builder: (context) {
         final colors = Theme.of(context).colorScheme;
         return SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              AppUi.paddingMD,
+              AppUi.gapMD,
+              AppUi.paddingMD,
+              AppUi.paddingMD,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: items
@@ -111,11 +105,68 @@ class AppOverflowMenu extends StatelessWidget {
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'طالب العلم',
-      applicationVersion: '1.0.0',
-      children: const [
-        Text('تطبيق هادئ لخدمة طالب العلم.', style: AppText.body),
+      applicationName: AppStrings.appName,
+      applicationVersion: AppStrings.appVersion,
+      children: [
+        Text(AppStrings.appTagline, style: AppText.body),
       ],
+    );
+  }
+
+  void _showAppearance(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppUi.radiusMD),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppUi.paddingMD,
+              AppUi.gapMD,
+              AppUi.paddingMD,
+              AppUi.paddingMD,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.palette_outlined,
+                        color:
+                            Theme.of(context).colorScheme.onSurface),
+                    const SizedBox(width: AppUi.gapSM),
+                    Text(AppStrings.moreThemeTitle,
+                        style: AppText.heading),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: AppStrings.actionClose,
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppUi.gapSM),
+                Text(
+                  AppStrings.moreThemeInfo,
+                  style: AppText.body.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: AppUi.gapMD),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

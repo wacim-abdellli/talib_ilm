@@ -1,72 +1,69 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_radius.dart';
+import 'app_spacing.dart';
 import 'app_text.dart';
-import 'app_ui.dart';
+import 'app_text_styles.dart';
 
 class AppTheme {
   static ThemeData dark() {
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppUi.radiusMD),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     );
-    final textStyle = AppText.body.copyWith(fontWeight: FontWeight.w600);
-    const minSize = Size(0, 44);
+    final textStyle =
+        AppTextStyles.body.copyWith(fontWeight: FontWeight.w600);
+    const minSize = Size(0, AppSpacing.buttonMinHeight);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primary,
-      fontFamily: 'Vazirmatn',
+      fontFamily: AppTextStyles.fontFamily,
       splashFactory: NoSplash.splashFactory,
-      splashColor: Colors.transparent,
-      highlightColor: AppColors.primary.withValues(alpha: 0.06),
-      hoverColor: AppColors.primary.withValues(alpha: 0.04),
-      focusColor: AppColors.primary.withValues(alpha: 0.06),
+      splashColor: AppColors.clear,
+      highlightColor: AppColors.clear,
+      hoverColor: AppColors.overlay,
+      focusColor: AppColors.clear,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.surface,
-        background: AppColors.background,
+        secondary: AppColors.accent,
+        surface: AppColors.surfaceElevated,
         onPrimary: AppColors.textPrimary,
         onSecondary: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         centerTitle: true,
         elevation: 0,
-        shadowColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: IconThemeData(color: AppColors.textSecondary),
-        actionsIconTheme: IconThemeData(color: AppColors.textSecondary),
+        shadowColor: AppColors.clear,
+        surfaceTintColor: AppColors.clear,
+        iconTheme: const IconThemeData(color: AppColors.textSecondary),
+        actionsIconTheme: const IconThemeData(color: AppColors.textSecondary),
       ),
-      textTheme: const TextTheme(
-        titleLarge: AppText.headlineLarge,
-        titleMedium: AppText.sectionTitle,
-        bodyMedium: AppText.body,
-        bodyLarge: AppText.body,
-        labelLarge: AppText.body,
-        labelMedium: AppText.caption,
-      ),
+      textTheme: AppTextStyles.textTheme,
       cardTheme: const CardThemeData(
-        color: AppColors.surface,
+        color: AppColors.surfaceElevated,
         elevation: 0,
         margin: EdgeInsets.zero,
       ),
       dividerColor: AppColors.divider,
-      iconTheme: const IconThemeData(color: AppColors.textSecondary),
+      iconTheme: const IconThemeData(
+        color: AppColors.textSecondary,
+        size: AppSpacing.iconMD,
+      ),
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
           foregroundColor:
               const WidgetStatePropertyAll(AppColors.textSecondary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.clear,
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppUi.radiusSM),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
         ),
@@ -83,9 +80,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(minSize),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          ),
+          padding: const WidgetStatePropertyAll(AppSpacing.buttonPadding),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           backgroundColor: const WidgetStatePropertyAll(AppColors.primary),
@@ -96,17 +91,17 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primary.withValues(alpha: 0.1),
+            AppColors.clear,
           ),
-          animationDuration: AppUi.animationFast,
+          animationDuration: AppSpacing.animFast,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.background,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textMuted,
-        selectedIconTheme: const IconThemeData(size: 22),
-        unselectedIconTheme: const IconThemeData(size: 22),
+        selectedIconTheme: const IconThemeData(size: AppSpacing.iconMD),
+        unselectedIconTheme: const IconThemeData(size: AppSpacing.iconMD),
         selectedLabelStyle: AppText.navigationLabel,
         unselectedLabelStyle: AppText.navigationLabel,
         type: BottomNavigationBarType.fixed,
@@ -117,9 +112,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(minSize),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          ),
+          padding: const WidgetStatePropertyAll(AppSpacing.buttonPadding),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           backgroundColor: const WidgetStatePropertyAll(AppColors.primary),
@@ -130,17 +123,16 @@ class AppTheme {
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primary.withValues(alpha: 0.1),
+            AppColors.clear,
           ),
-          animationDuration: AppUi.animationFast,
+          animationDuration: AppSpacing.animFast,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(minSize),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
+          padding:
+              const WidgetStatePropertyAll(AppSpacing.buttonPaddingCompact),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           foregroundColor:
@@ -149,17 +141,16 @@ class AppTheme {
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.clear,
           ),
-          animationDuration: AppUi.animationFast,
+          animationDuration: AppSpacing.animFast,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(minSize),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
+          padding:
+              const WidgetStatePropertyAll(AppSpacing.buttonPaddingCompact),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           foregroundColor:
@@ -171,9 +162,9 @@ class AppTheme {
             BorderSide(color: AppColors.primary.withValues(alpha: 0.6)),
           ),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.clear,
           ),
-          animationDuration: AppUi.animationFast,
+          animationDuration: AppSpacing.animFast,
         ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -204,11 +195,14 @@ class _SlideFadePageTransitionsBuilder extends PageTransitionsBuilder {
     if (route.isFirst) return child;
     final curved = CurvedAnimation(
       parent: animation,
-      curve: const Interval(0, 0.75, curve: Curves.easeOut),
-      reverseCurve: const Interval(0, 0.75, curve: Curves.easeIn),
+      curve: Interval(0, AppSpacing.transitionCurveEnd, curve: Curves.easeOut),
+      reverseCurve:
+          Interval(0, AppSpacing.transitionCurveEnd, curve: Curves.easeOut),
     );
-    final offsetTween =
-        Tween<Offset>(begin: const Offset(0, 0.03), end: Offset.zero);
+    final offsetTween = Tween<Offset>(
+      begin: Offset(0, AppSpacing.routeSlideOffset),
+      end: Offset.zero,
+    );
     return FadeTransition(
       opacity: curved,
       child: SlideTransition(

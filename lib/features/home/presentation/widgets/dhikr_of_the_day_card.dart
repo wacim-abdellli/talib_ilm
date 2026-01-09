@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -25,29 +26,29 @@ class _DhikrOfTheDayCardState extends State<DhikrOfTheDayCard> {
     final showToggle = text.length > 140;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
         boxShadow: AppUi.cardShadow,
       ),
       child: Align(
         alignment: Alignment.center,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: AppUi.maxContentWidth),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'ذكر اليوم',
+                AppStrings.homeDhikrTitle,
                 style: AppText.caption.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppUi.gapSM),
               AnimatedSize(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
+                duration: AppUi.animationNormal,
+                curve: Curves.easeOut,
                 alignment: Alignment.topCenter,
                 child: GestureDetector(
                   onTap: showToggle
@@ -61,17 +62,18 @@ class _DhikrOfTheDayCardState extends State<DhikrOfTheDayCard> {
                         _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
                     style: AppText.body.copyWith(
                       color: AppColors.textPrimary,
-                      height: 1.9,
                     ),
                   ),
                 ),
               ),
-              if (showToggle) ...[
-                const SizedBox(height: 6),
+                if (showToggle) ...[
+                const SizedBox(height: AppUi.gapXSPlus),
                 TextButton(
                   onPressed: () => setState(() => _expanded = !_expanded),
                   child: Text(
-                    _expanded ? 'عرض أقل' : 'قراءة كاملة',
+                    _expanded
+                        ? AppStrings.actionShowLess
+                        : AppStrings.actionReadFull,
                     style: AppText.caption.copyWith(
                       color: AppColors.primary,
                     ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_text.dart';
+import '../../app/theme/app_ui.dart';
+import 'app_overflow_menu.dart';
 
 class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -22,7 +25,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingIcon,
     this.onLeadingTap,
     this.onMenuTap,
-    this.height = 64,
+    this.height = AppUi.appBarHeight,
     this.bottom,
   });
 
@@ -36,9 +39,9 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: height,
       elevation: 0,
       backgroundColor: AppColors.background,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.clear,
       automaticallyImplyLeading: false,
-      titleSpacing: 8,
+      titleSpacing: AppUi.gapSM,
       centerTitle: true,
       leading: _buildLeading(context),
       title: Text(
@@ -49,26 +52,28 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: actions,
       bottom: _buildBottomDivider(),
-      shadowColor: Colors.transparent,
+      shadowColor: AppColors.clear,
     );
   }
 
   PreferredSizeWidget _buildBottomDivider() {
     final divider = Container(
-      height: 0.8,
+      height: AppUi.dividerThickness,
       color: AppColors.textMuted.withValues(alpha: 0.12),
     );
 
     final bottomWidget = bottom;
     if (bottomWidget == null) {
       return PreferredSize(
-        preferredSize: const Size.fromHeight(1),
+        preferredSize: const Size.fromHeight(AppUi.dividerThickness),
         child: divider,
       );
     }
 
     return PreferredSize(
-      preferredSize: Size.fromHeight(bottomWidget.preferredSize.height + 1),
+      preferredSize: Size.fromHeight(
+        bottomWidget.preferredSize.height + AppUi.dividerThickness,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -82,15 +87,14 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget? _buildLeading(BuildContext context) {
     if (!showBack && !showMenu && leadingIcon == null) return null;
     if (showMenu && !showBack && leadingIcon == null) {
-      return Builder(
-        builder: (context) {
-          return IconButton(
-            tooltip: 'القائمة',
-            onPressed: onMenuTap ?? () => Scaffold.maybeOf(context)?.openDrawer(),
-            icon: const Icon(Icons.menu),
-          );
-        },
-      );
+      if (onMenuTap != null) {
+        return IconButton(
+          tooltip: AppStrings.tooltipMenu,
+          onPressed: onMenuTap,
+          icon: const Icon(Icons.menu),
+        );
+      }
+      return const AppOverflowMenu();
     }
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final icon = leadingIcon ??
@@ -99,9 +103,24 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
             : Icons.arrow_back_ios_new_rounded);
     final tap = onLeadingTap ?? () => Navigator.maybePop(context);
     return IconButton(
-      tooltip: 'رجوع',
+      tooltip: AppStrings.tooltipBack,
       onPressed: tap,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: AppUi.iconSizeSM),
     );
   }
+}
+
+class UnifiedAppBar extends PrimaryAppBar {
+  const UnifiedAppBar({
+    super.key,
+    required super.title,
+    super.actions,
+    super.showBack,
+    super.showMenu,
+    super.leadingIcon,
+    super.onLeadingTap,
+    super.onMenuTap,
+    super.height,
+    super.bottom,
+  });
 }

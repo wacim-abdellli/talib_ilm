@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:talib_ilm/features/ilm/presentation/pages/level_books_page.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/pressable_card.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../data/models/mutun_models.dart';
 import '../data/models/progress_models.dart';
 
@@ -28,6 +31,10 @@ class _IlmPageState extends State<IlmPage> {
     final levels = program.levels
       ..sort((a, b) => a.order.compareTo(b.order));
     return _IlmOverview(levels: levels, progressMap: progressMap);
+  }
+
+  void _reload() {
+    setState(() {});
   }
 
   _LevelProgress _levelProgress(
@@ -61,8 +68,8 @@ class _IlmPageState extends State<IlmPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: PrimaryAppBar(
-        title: 'العلم',
+      appBar: UnifiedAppBar(
+        title: AppStrings.ilmTitle,
         showMenu: true,
       ),
       body: FutureBuilder<_IlmOverview>(
@@ -73,8 +80,12 @@ class _IlmPageState extends State<IlmPage> {
           }
 
           if (!snapshot.hasData) {
-            return const Center(
-              child: Text('فشل تحميل المنهج', style: AppText.body),
+            return EmptyState(
+              icon: Icons.menu_book_outlined,
+              title: AppStrings.ilmLoadErrorTitle,
+              message: AppStrings.ilmLoadErrorMessage,
+              actionLabel: AppStrings.actionRetry,
+              onAction: _reload,
             );
           }
 
@@ -84,7 +95,7 @@ class _IlmPageState extends State<IlmPage> {
           var previousCompleted = true;
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: AppUi.screenPadding,
             itemCount: levels.length,
             itemBuilder: (context, index) {
               final level = levels[index];
@@ -144,7 +155,7 @@ class _LevelCard extends StatelessWidget {
         ? 0.0
         : progress.completed / progress.total;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppUi.gapXL),
       child: Stack(
         children: [
           PressableCard(
@@ -153,46 +164,46 @@ class _LevelCard extends StatelessWidget {
                 : () {
                     onToggle();
                   },
-            padding: const EdgeInsets.all(16),
-            borderRadius: BorderRadius.circular(16),
+            padding: AppUi.cardPadding,
+            borderRadius: BorderRadius.circular(AppUi.radiusMD),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(AppUi.radiusMD),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    _ChapterPill(label: 'المستوى ${level.order}'),
-                    const SizedBox(width: 8),
+                    _ChapterPill(label: AppStrings.levelLabel(level.order)),
+                    const SizedBox(width: AppUi.gapSM),
                     if (locked)
                       _StatusPill(
-                        label: 'مغلق',
+                        label: AppStrings.levelClosed,
                         color: AppColors.textMuted,
                         icon: Icons.lock_outline,
                       ),
                     if (!locked && progress.completed > 0)
                       _StatusPill(
-                        label: 'مكتمل ${progress.completed}',
+                        label: AppStrings.levelCompleted(progress.completed),
                         color: AppColors.primary,
                         icon: Icons.check,
                       ),
                     if (!locked && progress.inProgress > 0) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppUi.gapSM),
                       _StatusPill(
-                        label: 'قيد التقدم ${progress.inProgress}',
+                        label: AppStrings.levelInProgress(progress.inProgress),
                         color: AppColors.primary,
                         icon: Icons.play_arrow,
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppUi.gapMD),
                 Text(level.title, style: AppText.heading),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppUi.gapSM),
                 AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 220),
+                  duration: AppUi.animationMedium,
                   crossFadeState: expanded
                       ? CrossFadeState.showSecond
                       : CrossFadeState.showFirst,
@@ -203,24 +214,23 @@ class _LevelCard extends StatelessWidget {
                   ),
                 ),
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
+                  duration: AppUi.animationMedium,
+                  curve: Curves.easeOut,
                   child: expanded
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 12),
+                            const SizedBox(height: AppUi.gapLG),
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(AppUi.radiusPill),
                               child: TweenAnimationBuilder<double>(
                                 tween: Tween<double>(end: completion),
-                                duration:
-                                    const Duration(milliseconds: 360),
-                                curve: Curves.easeOutCubic,
+                                duration: AppUi.animationSlow,
+                                curve: Curves.easeOut,
                                 builder: (context, value, child) {
                                   return LinearProgressIndicator(
                                     value: value,
-                                    minHeight: 6,
+                                    minHeight: AppUi.progressBarHeight,
                                     backgroundColor: AppColors.textPrimary
                                         .withValues(alpha: 0.08),
                                     valueColor:
@@ -230,21 +240,24 @@ class _LevelCard extends StatelessWidget {
                                 },
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppUi.gapMD),
                             Text(
-                              '${progress.completed} من ${progress.total} كتب',
+                              AppStrings.levelProgress(
+                                progress.completed,
+                                progress.total,
+                              ),
                               style: AppText.caption.copyWith(
                                 color: AppColors.textPrimary
                                     .withValues(alpha: 0.7),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppUi.gapMD),
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton.icon(
                                 onPressed: onOpen,
                                 icon: const Icon(Icons.menu_book_outlined),
-                                label: const Text('عرض الكتب'),
+                                label: const Text(AppStrings.viewBooks),
                               ),
                             ),
                           ],
@@ -259,7 +272,7 @@ class _LevelCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.background.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppUi.radiusMD),
                 ),
               ),
             ),
@@ -295,17 +308,20 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppUi.gapSMPlus,
+        vertical: AppUi.gapXS,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppUi.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
+            Icon(icon, size: AppUi.iconSizeXS, color: color),
+            const SizedBox(width: AppUi.gapXSPlus),
           ],
           Text(
             label,
@@ -327,10 +343,13 @@ class _ChapterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppUi.gapSMPlus,
+        vertical: AppUi.gapXS,
+      ),
       decoration: BoxDecoration(
         color: AppColors.textPrimary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppUi.radiusPill),
       ),
       child: Text(
         label,

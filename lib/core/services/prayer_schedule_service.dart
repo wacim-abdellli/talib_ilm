@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import 'adhan_settings_service.dart';
 import 'notification_service.dart';
+import '../../app/constants/app_strings.dart';
 import 'prayer_time_service.dart';
 
 class PrayerScheduleService {
@@ -74,8 +75,8 @@ class PrayerScheduleService {
       if (entry.value.isAfter(now)) {
         await _notificationService.scheduleNotification(
           id: id,
-          title: 'حان وقت الصلاة',
-          body: 'حان الآن وقت صلاة ${entry.key}',
+          title: AppStrings.prayerNotificationTitle,
+          body: AppStrings.prayerNotificationBody(entry.key),
           scheduledTime: entry.value,
           playSound: playSound,
           sound: sound,

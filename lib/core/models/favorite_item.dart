@@ -9,21 +9,6 @@ enum FavoriteType {
 extension FavoriteTypeX on FavoriteType {
   String get id => name;
 
-  String get labelAr {
-    switch (this) {
-      case FavoriteType.hadith:
-        return 'الأحاديث';
-      case FavoriteType.dhikr:
-        return 'الأذكار';
-      case FavoriteType.dua:
-        return 'الأدعية';
-      case FavoriteType.lesson:
-        return 'الدروس';
-      case FavoriteType.book:
-        return 'الكتب';
-    }
-  }
-
   static FavoriteType? fromId(String id) {
     for (final value in FavoriteType.values) {
       if (value.name == id) return value;

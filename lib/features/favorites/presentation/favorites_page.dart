@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/empty_state.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -33,8 +35,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const PrimaryAppBar(
-        title: 'المفضلة',
+      appBar: const UnifiedAppBar(
+        title: AppStrings.favoritesTitle,
         showBack: true,
       ),
       body: FutureBuilder<List<FavoriteItem>>(
@@ -45,7 +47,16 @@ class _FavoritesPageState extends State<FavoritesPage> {
           }
           final items = snapshot.data ?? const [];
           if (items.isEmpty) {
-            return _EmptyFavorites(onReload: _reload);
+            return Padding(
+              padding: AppUi.screenPadding,
+              child: EmptyState(
+                icon: Icons.star_border,
+                title: AppStrings.favoritesEmptyTitle,
+                message: AppStrings.favoritesEmptyMessage,
+                actionLabel: AppStrings.actionUpdate,
+                onAction: _reload,
+              ),
+            );
           }
 
           final grouped = <FavoriteType, List<FavoriteItem>>{};
@@ -54,13 +65,13 @@ class _FavoritesPageState extends State<FavoritesPage> {
           }
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: AppUi.screenPadding,
             children: FavoriteType.values
                 .where(grouped.containsKey)
                 .map((type) {
                   final list = grouped[type]!;
                   return _Section(
-                    title: type.labelAr,
+                    title: _labelFor(type),
                     items: list,
                     onRemove: (item) async {
                       await _service.remove(item.type, item.id);
@@ -89,19 +100,24 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(AppUi.radiusMD);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppText.heading),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppUi.gapMD),
         ...items.map(
           (item) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: AppUi.gapMD),
+            padding: AppUi.cardPadding,
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: AppUi.cardShadow,
+              borderRadius: radius,
+              border: Border.all(
+                color: AppColors.stroke,
+                width: AppUi.dividerThickness,
+              ),
             ),
             child: Row(
               children: [
@@ -111,58 +127,38 @@ class _Section extends StatelessWidget {
                     children: [
                       Text(item.title, style: AppText.body),
                       if (item.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppUi.gapXSPlus),
                         Text(item.subtitle, style: AppText.caption),
                       ],
                     ],
                   ),
                 ),
                 IconButton(
-                  tooltip: 'إزالة من المفضلة',
+                  tooltip: AppStrings.favoritesRemoveTooltip,
                   onPressed: () => onRemove(item),
-                  icon: const Icon(Icons.star, color: AppColors.primary),
+                  icon: Icon(Icons.star, color: AppColors.textMuted),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppUi.gapXL),
       ],
     );
   }
 }
 
-class _EmptyFavorites extends StatelessWidget {
-  final VoidCallback onReload;
-
-  const _EmptyFavorites({required this.onReload});
-
-  @override
-  Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.star_border, size: 40, color: AppColors.primary),
-            const SizedBox(height: 12),
-            Text('لا توجد عناصر مفضلة', style: AppText.heading),
-            const SizedBox(height: 6),
-            Text(
-              'اضغط على النجمة لحفظ العناصر المهمة.',
-              style: AppText.body.copyWith(color: secondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: onReload,
-              child: const Text('تحديث'),
-            ),
-          ],
-        ),
-      ),
-    );
+String _labelFor(FavoriteType type) {
+  switch (type) {
+    case FavoriteType.hadith:
+      return AppStrings.favoriteTypeHadith;
+    case FavoriteType.dhikr:
+      return AppStrings.favoriteTypeDhikr;
+    case FavoriteType.dua:
+      return AppStrings.favoriteTypeDua;
+    case FavoriteType.lesson:
+      return AppStrings.favoriteTypeLesson;
+    case FavoriteType.book:
+      return AppStrings.favoriteTypeBook;
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/location_service.dart';
 
 class LocationSettingsSheet extends StatefulWidget {
@@ -52,11 +54,11 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     final lat = double.tryParse(_latController.text.trim());
     final lon = double.tryParse(_lonController.text.trim());
     if (lat == null || lon == null) {
-      _showMessage('أدخل خط العرض وخط الطول بشكل صحيح.');
+      _showMessage(AppStrings.locationInvalidMessage);
       return;
     }
     final city = _cityController.text.trim().isEmpty
-        ? 'الموقع اليدوي'
+        ? AppStrings.locationManualDefault
         : _cityController.text.trim();
     await _locationService.setManualLocation(
       LocationResult(latitude: lat, longitude: lon, city: city),
@@ -83,35 +85,38 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const SizedBox(height: 240);
+      return const SizedBox(height: AppUi.sheetPlaceholderHeight);
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: AppUi.screenPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('إعدادات الموقع', style: AppText.heading),
-          const SizedBox(height: 8),
+          Text(AppStrings.locationSettingsTitle, style: AppText.heading),
+          const SizedBox(height: AppUi.gapSM),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('استخدام موقع يدوي', style: AppText.body),
+            title: Text(
+              AppStrings.locationManualToggle,
+              style: AppText.body,
+            ),
             value: _manualEnabled,
             onChanged: (value) {
               setState(() => _manualEnabled = value);
             },
           ),
           if (_manualEnabled) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppUi.gapSM),
             TextField(
               controller: _cityController,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
-                labelText: 'المدينة (اختياري)',
+                labelText: AppStrings.locationManualCityLabel,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppUi.gapMD),
             TextField(
               controller: _latController,
               textInputAction: TextInputAction.next,
@@ -121,10 +126,10 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                 FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
               ],
               decoration: const InputDecoration(
-                labelText: 'خط العرض (Latitude)',
+                labelText: AppStrings.locationLatitudeLabel,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppUi.gapMD),
             TextField(
               controller: _lonController,
               textInputAction: TextInputAction.done,
@@ -134,24 +139,24 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                 FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
               ],
               decoration: const InputDecoration(
-                labelText: 'خط الطول (Longitude)',
+                labelText: AppStrings.locationLongitudeLabel,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppUi.gapLG),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton(
                 onPressed: _save,
-                child: const Text('حفظ الموقع'),
+                child: const Text(AppStrings.locationSave),
               ),
             ),
           ] else ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppUi.gapMD),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
                 onPressed: _clearManual,
-                child: const Text('العودة للموقع التلقائي'),
+                child: const Text(AppStrings.locationBackToAuto),
               ),
             ),
           ],

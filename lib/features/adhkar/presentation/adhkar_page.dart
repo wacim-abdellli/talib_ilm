@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/pressable_card.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 import 'adhkar_session_page.dart';
@@ -43,8 +46,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: PrimaryAppBar(
-        title: 'الأذكار',
+      appBar: UnifiedAppBar(
+        title: AppStrings.adhkarTitle,
         showMenu: true,
       ),
       body: FutureBuilder<AthkarCatalog>(
@@ -55,31 +58,35 @@ class _AdhkarPageState extends State<AdhkarPage> {
           }
 
           if (snapshot.hasError) {
-            return _EmptyState(
-              title: 'تعذر تحميل الأذكار',
-              subtitle: 'تحقق من ملف البيانات ثم أعد المحاولة',
-              onRetry: _reload,
+            return EmptyState(
+              icon: Icons.error_outline,
+              title: AppStrings.adhkarLoadErrorTitle,
+              message: AppStrings.adhkarLoadErrorMessage,
+              actionLabel: AppStrings.actionRetry,
+              onAction: _reload,
             );
           }
 
           final categories = snapshot.data?.categories ?? [];
 
           if (categories.isEmpty) {
-            return _EmptyState(
-              title: 'لا توجد أذكار متاحة',
-              subtitle: 'أضف بيانات الأذكار ثم أعد المحاولة',
-              onRetry: _reload,
+            return EmptyState(
+              icon: Icons.menu_book_outlined,
+              title: AppStrings.adhkarEmptyTitle,
+              message: AppStrings.adhkarEmptyMessage,
+              actionLabel: AppStrings.actionRetry,
+              onAction: _reload,
             );
           }
 
           return GridView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: AppUi.screenPaddingCompact,
             itemCount: categories.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.92,
+              crossAxisSpacing: AppUi.gapLG,
+              mainAxisSpacing: AppUi.gapLG,
+              childAspectRatio: AppUi.gridAspect,
             ),
             itemBuilder: (context, index) {
               final category = categories[index];
@@ -184,7 +191,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
         );
       case 'istighfar':
         return const _CategoryMeta(
-          icon: Icons.refresh,
+          icon: Icons.refresh_outlined,
           accent: AppColors.primary,
         );
       case 'duas':
@@ -243,28 +250,28 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(18),
-      borderRadius: BorderRadius.circular(18),
+      padding: AppUi.cardPadding,
+      borderRadius: BorderRadius.circular(AppUi.radiusCard),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusCard),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: AppUi.iconBoxSize,
+            height: AppUi.iconBoxSize,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
             ),
             child: Icon(
               icon,
               color: AppColors.textPrimary.withValues(alpha: 0.85),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +282,7 @@ class _CategoryTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppUi.gapXSPlus),
                 Text(
                   subtitle,
                   style: AppText.caption.copyWith(
@@ -288,45 +295,6 @@ class _CategoryTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final VoidCallback onRetry;
-
-  const _EmptyState({
-    required this.title,
-    required this.subtitle,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title, style: AppText.heading),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: AppText.body.copyWith(color: secondary),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('إعادة المحاولة'),
-            ),
-          ],
-        ),
       ),
     );
   }

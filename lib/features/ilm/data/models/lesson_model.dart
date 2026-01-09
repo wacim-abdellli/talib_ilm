@@ -1,3 +1,5 @@
+import 'package:talib_ilm/app/constants/app_strings.dart';
+
 class Lesson {
   final int index;
   final String title;
@@ -20,7 +22,7 @@ class Lesson {
       count,
       (i) => Lesson(
         index: i,
-        title: 'الدرس ${i + 1}',
+        title: AppStrings.lessonTitle(i),
         videoId: playlistId, // TEMP (same video)
         durationMinutes: 15 + (i % 5) * 5,
       ),

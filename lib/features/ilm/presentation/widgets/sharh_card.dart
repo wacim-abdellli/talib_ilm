@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/pressable_card.dart';
 
 class SharhCard extends StatelessWidget {
@@ -24,34 +26,34 @@ class SharhCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badge = _badgeText();
-    final background = AppColors.surface;
+    final radius = BorderRadius.circular(AppUi.radiusMD);
 
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(18),
-      borderRadius: BorderRadius.circular(16),
+      padding: AppUi.cardPadding,
+      borderRadius: radius,
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: radius,
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppText.heading),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppUi.gapSM),
           Text(scholar, style: AppText.bodyMuted),
           if (badge != null || difficulty != null) ...[
-            const SizedBox(height: 12),
-            Row(
+            const SizedBox(height: AppUi.gapSM),
+            Wrap(
+              spacing: AppUi.gapSM,
+              runSpacing: AppUi.gapXS,
               children: [
                 if (badge != null) _Badge(text: badge),
-                if (badge != null && difficulty != null)
-                  const SizedBox(width: 8),
-                if (difficulty != null)
-                  _Badge(
-                    text: difficulty!,
-                    color: AppColors.textMuted,
-                  ),
+                if (difficulty != null) _Badge(text: difficulty!),
               ],
             ),
           ],
@@ -61,32 +63,35 @@ class SharhCard extends StatelessWidget {
   }
 
   String? _badgeText() {
-    if (isLastRead) return 'آخر شرح قُرئ';
-    if (recommended) return 'مقترح';
+    if (isLastRead) return AppStrings.lastReadSharhBadge;
+    if (recommended) return AppStrings.recommendedBadge;
     return null;
   }
 }
 
 class _Badge extends StatelessWidget {
   final String text;
-  final Color color;
 
-  const _Badge({
-    required this.text,
-    this.color = AppColors.primary,
-  });
+  const _Badge({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppUi.gapSMPlus,
+        vertical: AppUi.gapXS,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusPill),
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
       ),
       child: Text(
         text,
-        style: AppText.caption.copyWith(color: color),
+        style: AppText.caption,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),

@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:talib_ilm/core/services/last_sharh_service.dart';
 import 'package:talib_ilm/core/services/last_activity_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/sharh_card.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../data/models/lesson_model.dart';
 
+import '../../../../app/constants/app_assets.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/sharh_model.dart';
@@ -18,7 +20,6 @@ import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
 import 'lessons_list_page.dart';
 import '../../../../shared/widgets/primary_app_bar.dart';
-import '../../../../shared/widgets/app_overflow_menu.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/models/favorite_item.dart';
 
@@ -63,7 +64,7 @@ class _BookViewPageState extends State<BookViewPage>
   @override
   void initState() {
     super.initState();
-    _mutunPdfPath = 'assets/pdfs/mutun/${widget.book.id}.pdf';
+    _mutunPdfPath = AppAssets.mutunPdf(widget.book.id);
     _mutunPdfKey = _lastActivityService.pdfKeyForMutn(widget.book.id);
     _mutunInitialPage = _lastActivityService
         .getPdfPage(_mutunPdfKey)
@@ -218,8 +219,7 @@ class _BookViewPageState extends State<BookViewPage>
     await _lastSharhService.save(widget.book.id, sharh.file);
     await _lastActivityService.setLastSharh(widget.book.id, sharh.file);
 
-    final pdfPath =
-        'assets/pdfs/shuruh/${widget.book.id}/${sharh.file}.pdf';
+    final pdfPath = AppAssets.sharhPdf(widget.book.id, sharh.file);
     final pdfKey =
         _lastActivityService.pdfKeyForSharh(widget.book.id, sharh.file);
     final initialPage = await _lastActivityService
@@ -236,10 +236,12 @@ class _BookViewPageState extends State<BookViewPage>
           assetPath: pdfPath,
           initialPage: initialPage,
           onPageChanged: (page, total) {
+            if (total <= 0) return;
+            final safeTotal = total < page ? page : total;
             _lastActivityService.savePdfPage(
               key: pdfKey,
               page: page,
-              total: total,
+              total: safeTotal,
             );
           },
         ),
@@ -306,16 +308,20 @@ class _BookViewPageState extends State<BookViewPage>
     HapticFeedback.selectionClick();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(milliseconds: 1500),
+        duration: AppUi.snackDuration,
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         content: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check, color: AppColors.textPrimary, size: 18),
-            const SizedBox(width: 8),
+            const Icon(
+              Icons.check,
+              color: AppColors.textPrimary,
+              size: AppUi.iconSizeSM,
+            ),
+            const SizedBox(width: AppUi.gapSM),
             Text(
-              'تم حفظ التقدم',
+              AppStrings.bookProgressSaved,
               style: AppText.body.copyWith(color: AppColors.textPrimary),
             ),
           ],
@@ -328,38 +334,21 @@ class _BookViewPageState extends State<BookViewPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: PrimaryAppBar(
+      appBar: UnifiedAppBar(
         title: widget.book.title,
         showBack: true,
         actions: [
-          AppOverflowMenu(
-            includeDefaults: false,
-            items: [
-              AppMenuItem(
-                label: _isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
-                icon: _isFavorite ? Icons.star : Icons.star_border,
-                onTap: () {
-                  Navigator.pop(context);
-                  _toggleFavorite();
-                },
-              ),
-              AppMenuItem(
-                label: 'مشاركة',
-                icon: Icons.share_outlined,
-                onTap: () {
-                  Navigator.pop(context);
-                  Share.share(widget.book.title);
-                },
-              ),
-              AppMenuItem(
-                label: 'إعادة تعيين التقدم',
-                icon: Icons.refresh_outlined,
-                onTap: () {
-                  Navigator.pop(context);
-                  _resetProgress();
-                },
-              ),
-            ],
+          IconButton(
+            tooltip: _isFavorite
+                ? AppStrings.bookFavoriteRemove
+                : AppStrings.bookFavoriteAdd,
+            onPressed: _toggleFavorite,
+            icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
+          ),
+          IconButton(
+            tooltip: AppStrings.bookResetProgress,
+            onPressed: _resetProgress,
+            icon: const Icon(Icons.refresh_outlined),
           ),
         ],
         bottom: TabBar(
@@ -367,7 +356,7 @@ class _BookViewPageState extends State<BookViewPage>
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
           ),
           labelColor: AppColors.textPrimary,
           unselectedLabelColor:
@@ -376,13 +365,13 @@ class _BookViewPageState extends State<BookViewPage>
           unselectedLabelStyle:
               AppText.body.copyWith(fontWeight: FontWeight.w500),
           indicatorPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
+            horizontal: AppUi.gapMD,
+            vertical: AppUi.gapXSPlus,
           ),
           tabs: const [
-            Tab(text: 'المتن'),
-            Tab(text: 'الشرح'),
-            Tab(text: 'الدروس'),
+            Tab(text: AppStrings.bookMutnTab),
+            Tab(text: AppStrings.bookSharhTab),
+            Tab(text: AppStrings.bookLessonsTab),
           ],
         ),
       ),
@@ -399,15 +388,17 @@ class _BookViewPageState extends State<BookViewPage>
               }
 
               return PdfViewerPage(
-                title: 'المتن',
+                title: AppStrings.bookMutnTitle,
                 assetPath: _mutunPdfPath,
                 showAppBar: false,
                 initialPage: snapshot.data!,
                 onPageChanged: (page, total) {
+                  if (total <= 0) return;
+                  final safeTotal = total < page ? page : total;
                   _lastActivityService.savePdfPage(
                     key: _mutunPdfKey,
                     page: page,
-                    total: total,
+                    total: safeTotal,
                   );
                   if (!_mutunActivityMarked) {
                     _mutunActivityMarked = true;
@@ -416,7 +407,7 @@ class _BookViewPageState extends State<BookViewPage>
                       LastActivityService.tabMutn,
                     );
                   }
-                  _updateProgressFromPdf(page, total);
+                  _updateProgressFromPdf(page, safeTotal);
                 },
               );
             },
@@ -424,12 +415,12 @@ class _BookViewPageState extends State<BookViewPage>
 
             widget.book.shuruh.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.all(18),
+                    padding: AppUi.cardPadding,
                     child: EmptyState(
                       icon: Icons.menu_book_outlined,
-                      title: 'لا توجد شروح متاحة بعد',
-                      message: 'ابدأ بالمتن وسنضيف الشروح قريبًا بإذن الله.',
-                      actionLabel: 'عرض المتن',
+                      title: AppStrings.bookSharhEmptyTitle,
+                      message: AppStrings.bookSharhEmptyMessage,
+                      actionLabel: AppStrings.bookSharhEmptyAction,
                       onAction: _goToMutn,
                     ),
                   )
@@ -437,20 +428,26 @@ class _BookViewPageState extends State<BookViewPage>
                     children: [
                       if (_lastSharh != null)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppUi.paddingMD,
+                            AppUi.paddingMD,
+                            AppUi.paddingMD,
+                            0,
+                          ),
                           child: _ContinueSharhCard(
                             sharh: _lastSharh!,
                             pageInfo: _lastSharhPage,
                             onTap: () => _openSharhPdf(_lastSharh!),
                           ),
                         ),
-                      if (_lastSharh != null) const SizedBox(height: 12),
+                      if (_lastSharh != null)
+                        const SizedBox(height: AppUi.gapMD),
                       Expanded(
                         child: ListView.separated(
-                          padding: const EdgeInsets.all(18),
+                          padding: AppUi.cardPadding,
                           itemCount: widget.book.shuruh.length,
                           separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppUi.gapMD),
                           itemBuilder: (context, index) {
                             final sharh = widget.book.shuruh[index];
 
@@ -470,19 +467,22 @@ class _BookViewPageState extends State<BookViewPage>
 
             widget.book.playlistId == null
                 ? Padding(
-                    padding: const EdgeInsets.all(18),
+                    padding: AppUi.cardPadding,
                     child: EmptyState(
                       icon: Icons.ondemand_video_outlined,
-                      title: 'لا توجد دروس متاحة بعد',
-                      message: 'ابدأ بالمتن وسنضيف الدروس قريبًا بإذن الله.',
-                      actionLabel: 'العودة للمتن',
+                      title: AppStrings.bookLessonsEmptyTitle,
+                      message: AppStrings.bookLessonsEmptyMessage,
+                      actionLabel: AppStrings.bookLessonsEmptyAction,
                       onAction: _goToMutn,
                     ),
                   )
                 : Center(
                     child: FilledButton(
                       onPressed: _openLessonsList,
-                      child: const Text('عرض الدروس', style: AppText.body),
+                      child: Text(
+                        AppStrings.bookShowLessons,
+                        style: AppText.body,
+                      ),
                     ),
                   ),
         ],
@@ -491,9 +491,9 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   String _difficultyLabel(int index) {
-    if (index == 0) return 'مبتدئ';
-    if (index == 1) return 'متوسط';
-    return 'متقدم';
+    if (index == 0) return AppStrings.difficultyBeginner;
+    if (index == 1) return AppStrings.difficultyIntermediate;
+    return AppStrings.difficultyAdvanced;
   }
 }
 
@@ -514,24 +514,34 @@ class _ContinueSharhCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rawPage = pageInfo?.page;
+    final rawTotal = pageInfo?.total ?? 0;
+    final safeTotal =
+        rawPage != null && rawTotal > 0 && rawTotal < rawPage
+            ? rawPage
+            : (rawTotal > 0 ? rawTotal : null);
+    final safePage = rawPage != null && safeTotal != null
+        ? rawPage.clamp(1, safeTotal)
+        : rawPage;
     final pageLabel = pageInfo == null
-        ? 'متابعة الشرح'
-        : pageInfo!.total > 0
-            ? 'آخر صفحة: ${pageInfo!.page} / ${pageInfo!.total}'
-            : 'آخر صفحة: ${pageInfo!.page}';
+        ? AppStrings.continueSharh
+        : AppStrings.lastPage(
+            safePage ?? 1,
+            safeTotal,
+          );
 
     return PressableCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(18),
-      borderRadius: BorderRadius.circular(16),
+      padding: AppUi.cardPadding,
+      borderRadius: BorderRadius.circular(AppUi.radiusMD),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
       ),
       child: Row(
         children: [
           Icon(Icons.history, color: AppColors.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppUi.gapMD),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,7 +550,7 @@ class _ContinueSharhCard extends StatelessWidget {
                   sharh.title,
                   style: AppText.heading,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppUi.gapXSPlus),
                 Text(
                   pageLabel,
                   style: AppText.caption.copyWith(

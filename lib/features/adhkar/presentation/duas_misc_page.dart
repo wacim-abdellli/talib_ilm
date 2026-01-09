@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
-import '../../../core/services/favorites_service.dart';
-import '../../../core/models/favorite_item.dart';
 
 class DuasMiscPage extends StatelessWidget {
   DuasMiscPage({super.key});
@@ -17,8 +17,8 @@ class DuasMiscPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const PrimaryAppBar(
-        title: 'أدعية وأذكار',
+      appBar: const UnifiedAppBar(
+        title: AppStrings.duasTitle,
         showBack: true,
       ),
       body: FutureBuilder<AthkarCatalog>(
@@ -30,13 +30,20 @@ class DuasMiscPage extends StatelessWidget {
 
           final items = snapshot.data?.byId('duas')?.items ?? const [];
           if (items.isEmpty) {
-            return const SizedBox.shrink();
+            return EmptyState(
+              icon: Icons.menu_book_outlined,
+              title: AppStrings.duasEmptyTitle,
+              message: AppStrings.duasEmptyMessage,
+              actionLabel: AppStrings.actionBack,
+              onAction: () => Navigator.pop(context),
+            );
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: AppUi.screenPadding,
             itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: AppUi.gapMD),
             itemBuilder: (context, index) {
               final item = items[index];
               return _DuaCard(item: item);
@@ -48,59 +55,19 @@ class DuasMiscPage extends StatelessWidget {
   }
 }
 
-class _DuaCard extends StatefulWidget {
+class _DuaCard extends StatelessWidget {
   final AthkarItem item;
 
   const _DuaCard({required this.item});
 
   @override
-  State<_DuaCard> createState() => _DuaCardState();
-}
-
-class _DuaCardState extends State<_DuaCard> {
-  final FavoritesService _favoritesService = FavoritesService();
-  bool _isFavorite = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFavorite();
-  }
-
-  Future<void> _loadFavorite() async {
-    final saved = await _favoritesService.isFavorite(
-      FavoriteType.dua,
-      _favoriteId(),
-    );
-    if (!mounted) return;
-    setState(() => _isFavorite = saved);
-  }
-
-  Future<void> _toggleFavorite() async {
-    final saved = await _favoritesService.toggle(
-      FavoriteItem(
-        type: FavoriteType.dua,
-        id: _favoriteId(),
-        title: widget.item.arabic,
-        subtitle: widget.item.source,
-      ),
-    );
-    if (!mounted) return;
-    setState(() => _isFavorite = saved);
-  }
-
-  String _favoriteId() {
-    return widget.item.id.isNotEmpty ? widget.item.id : widget.item.arabic;
-  }
-
-  @override
   Widget build(BuildContext context) {
     const secondary = AppColors.textSecondary;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
         boxShadow: AppUi.cardShadow,
       ),
       child: Column(
@@ -111,34 +78,24 @@ class _DuaCardState extends State<_DuaCard> {
             children: [
               Expanded(
                 child: Text(
-                  widget.item.arabic,
+                  item.arabic,
                   style:
                       AppText.athkarBody.copyWith(color: AppColors.textPrimary),
                 ),
               ),
-              IconButton(
-                tooltip: 'المفضلة',
-                onPressed: _toggleFavorite,
-                icon: Icon(
-                  _isFavorite ? Icons.star : Icons.star_border,
-                  color: _isFavorite
-                      ? AppColors.primary
-                      : AppColors.textMuted,
-                ),
-              ),
             ],
           ),
-          if (widget.item.transliteration.isNotEmpty) ...[
-            const SizedBox(height: 8),
+          if (item.transliteration.isNotEmpty) ...[
+            const SizedBox(height: AppUi.gapSM),
             Text(
-              widget.item.transliteration,
+              item.transliteration,
               style: AppText.body.copyWith(color: secondary),
             ),
           ],
-          if (widget.item.meaning.isNotEmpty) ...[
-            const SizedBox(height: 8),
+          if (item.meaning.isNotEmpty) ...[
+            const SizedBox(height: AppUi.gapSM),
             Text(
-              widget.item.meaning,
+              item.meaning,
               style: AppText.body.copyWith(color: secondary),
             ),
           ],

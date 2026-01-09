@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
@@ -109,7 +110,7 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
               return ListTile(
                 title: Text(options[index].arabic, style: AppText.athkarTitle),
                 trailing: index == currentIndex
-                    ? const Icon(Icons.check, size: 18)
+                    ? const Icon(Icons.check, size: AppUi.iconSizeSM)
                     : null,
                 onTap: () => Navigator.pop(context, index),
               );
@@ -144,28 +145,28 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('تحديد الهدف', style: AppText.heading),
+          title: Text(AppStrings.targetTitle, style: AppText.heading),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(hintText: 'مثال: 33'),
+            decoration: const InputDecoration(hintText: AppStrings.targetHint),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
+              child: const Text(AppStrings.targetCancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 0),
-              child: const Text('بدون هدف'),
+              child: const Text(AppStrings.targetNoGoal),
             ),
             FilledButton(
               onPressed: () {
                 final value = int.tryParse(controller.text);
                 Navigator.pop(context, value);
               },
-              child: const Text('حفظ'),
+              child: const Text(AppStrings.targetSave),
             ),
           ],
         );
@@ -186,7 +187,7 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
     if (target == null || count != target) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('تم إكمال الهدف'),
+        content: Text(AppStrings.targetCompleted),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -196,14 +197,14 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: PrimaryAppBar(
-        title: 'تسبيح واستغفار',
+      appBar: UnifiedAppBar(
+        title: AppStrings.tasbeehTitle,
         showBack: true,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'تسبيح'),
-            Tab(text: 'استغفار'),
+            Tab(text: AppStrings.tasbeehTab),
+            Tab(text: AppStrings.istighfarTab),
           ],
         ),
       ),
@@ -214,10 +215,9 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
               children: [
                 _CounterCard(
                   label: _tasbeehItems.isEmpty
-                      ? 'سبحان الله'
+                      ? AppStrings.tasbeehDefault
                       : _tasbeehItems[_tasbeehIndex].arabic,
                   count: _tasbeehCount,
-                  accent: AppColors.primary,
                   target: _tasbeehTarget,
                   onTap: _increment,
                   onReset: _reset,
@@ -226,10 +226,9 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
                 ),
                 _CounterCard(
                   label: _istighfarItems.isEmpty
-                      ? 'أستغفر الله'
+                      ? AppStrings.istighfarDefault
                       : _istighfarItems[_istighfarIndex].arabic,
                   count: _istighfarCount,
-                  accent: AppColors.primary,
                   target: _istighfarTarget,
                   onTap: _increment,
                   onReset: _reset,
@@ -246,7 +245,6 @@ class _CounterCard extends StatelessWidget {
   final String label;
   final int count;
   final int? target;
-  final Color accent;
   final VoidCallback onTap;
   final VoidCallback onReset;
   final VoidCallback onChangeDhikr;
@@ -256,7 +254,6 @@ class _CounterCard extends StatelessWidget {
     required this.label,
     required this.count,
     required this.target,
-    required this.accent,
     required this.onTap,
     required this.onReset,
     required this.onChangeDhikr,
@@ -270,18 +267,18 @@ class _CounterCard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        padding: AppUi.screenPaddingTopLarge,
         child: Column(
           children: [
             Text(label, style: AppText.athkarTitle.copyWith(color: secondary)),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppUi.gapLG),
             Expanded(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppUi.paddingLG),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(AppUi.radiusLG),
                   boxShadow: AppUi.cardShadow,
                 ),
                 child: Center(
@@ -294,42 +291,42 @@ class _CounterCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppUi.gapLG),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     target == null
-                        ? 'اضغط للعد • بدون هدف'
-                        : 'الهدف: $target',
+                        ? AppStrings.tapToCountNoTarget
+                        : AppStrings.targetLabel(target!),
                     style: AppText.caption.copyWith(color: secondary),
                   ),
                 ),
                 TextButton(
                   onPressed: onChangeDhikr,
-                  child: const Text('تغيير الذكر'),
+                  child: const Text(AppStrings.changeDhikr),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppUi.gapSM),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     target == null
-                        ? 'يمكنك تحديد هدف حسب رغبتك'
-                        : 'التقدم: $count / $target',
+                        ? AppStrings.targetHintMessage
+                        : AppStrings.progressLabel(count, target!),
                     style: AppText.caption.copyWith(color: secondary),
                   ),
                 ),
                 TextButton(
                   onPressed: onSetTarget,
-                  child: const Text('تحديد الهدف'),
+                  child: const Text(AppStrings.setTarget),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppUi.gapXSPlus),
                 TextButton(
                   onPressed: onReset,
-                  child: const Text('إعادة'),
+                  child: const Text(AppStrings.reset),
                 ),
               ],
             ),

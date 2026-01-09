@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
+import '../../../../app/constants/app_assets.dart';
 import '../models/hadith.dart';
 
 class HadithService {
@@ -52,7 +53,7 @@ class HadithService {
   }
 
   Future<List<Hadith>> _loadFromAssets() async {
-    final raw = await rootBundle.loadString('assets/data/hadith.json');
+    final raw = await rootBundle.loadString(AppAssets.hadithData);
     final decoded = jsonDecode(raw);
     if (decoded is! List) return [];
 

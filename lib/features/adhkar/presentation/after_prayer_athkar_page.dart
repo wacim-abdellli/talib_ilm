@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import 'adhkar_session_page.dart';
 import '../data/adhkar_models.dart';
 
@@ -9,8 +10,7 @@ class AfterPrayerAthkarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contextLabel =
-        prayerName == null ? 'بعد الصلاة' : 'بعد صلاة $prayerName';
+    final contextLabel = AppStrings.afterPrayerTitle(prayerName);
     return AdhkarSessionPage(
       category: AdhkarCategory.afterPrayer,
       contextLabel: contextLabel,

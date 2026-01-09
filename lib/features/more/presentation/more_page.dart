@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/pressable_card.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 
@@ -11,73 +13,49 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final sections = <_MoreSection>[
       _MoreSection(
-        title: 'الإعدادات',
-        subtitle: 'إعدادات عامة للتطبيق.',
+        title: AppStrings.moreGeneralTitle,
+        subtitle: AppStrings.moreGeneralSubtitle,
         icon: Icons.settings_outlined,
-        onTap: () => _showInfo(context, 'سيتم توسيع الإعدادات قريبًا.'),
+        onTap: () => _showInfo(context, AppStrings.moreGeneralInfo),
       ),
       _MoreSection(
-        title: 'المظهر',
-        subtitle: 'الوضع الداكن والخيارات المستقبلية.',
+        title: AppStrings.moreThemeTitle,
+        subtitle: AppStrings.moreThemeSubtitle,
         icon: Icons.color_lens_outlined,
-        onTap: () => _showInfo(context, 'تغيير المظهر قيد الإعداد.'),
+        onTap: () => _showInfo(context, AppStrings.moreThemeInfo),
       ),
       _MoreSection(
-        title: 'اللغة',
-        subtitle: 'إدارة اللغة والترجمة لاحقًا.',
+        title: AppStrings.moreLanguageTitle,
+        subtitle: AppStrings.moreLanguageSubtitle,
         icon: Icons.language_outlined,
-        onTap: () => _showInfo(context, 'إدارة اللغة ستتوفر قريبًا.'),
+        onTap: () => _showInfo(context, AppStrings.moreLanguageInfo),
       ),
       _MoreSection(
-        title: 'النسخ الاحتياطي والاستعادة',
-        subtitle: 'حفظ التقدم واستعادته بسهولة.',
+        title: AppStrings.moreBackupTitle,
+        subtitle: AppStrings.moreBackupSubtitle,
         icon: Icons.backup_outlined,
-        onTap: () =>
-            _showInfo(context, 'النسخ الاحتياطي قيد الإعداد حاليًا.'),
+        onTap: () => _showInfo(context, AppStrings.moreBackupInfo),
       ),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: PrimaryAppBar(
-        title: 'المزيد',
+      appBar: UnifiedAppBar(
+        title: AppStrings.moreSectionTitle,
         showBack: true,
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: sections.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final section = sections[index];
-          return PressableCard(
-            onTap: section.onTap,
-            padding: const EdgeInsets.all(18),
-            borderRadius: BorderRadius.circular(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  section.icon,
-                  color: AppColors.textPrimary.withValues(alpha: 0.8),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(section.title, style: AppText.heading),
-                      const SizedBox(height: 4),
-                      Text(section.subtitle, style: AppText.bodyMuted),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+      body: ListView(
+        padding: AppUi.screenPadding,
+        children: [
+          const SizedBox(height: AppUi.gapSM),
+          _MoreSectionCard(section: sections[0]),
+          const SizedBox(height: AppUi.gapMD),
+          _MoreSectionCard(section: sections[1]),
+          const SizedBox(height: AppUi.gapMD),
+          _MoreSectionCard(section: sections[2]),
+          const SizedBox(height: AppUi.gapMD),
+          _MoreSectionCard(section: sections[3]),
+        ],
       ),
     );
   }
@@ -104,4 +82,60 @@ class _MoreSection {
     required this.icon,
     required this.onTap,
   });
+}
+
+class _MoreSectionCard extends StatelessWidget {
+  final _MoreSection section;
+
+  const _MoreSectionCard({required this.section});
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(AppUi.radiusMD);
+
+    return PressableCard(
+      onTap: section.onTap,
+      padding: AppUi.cardPadding,
+      borderRadius: radius,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: radius,
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: AppUi.iconBoxSize,
+            height: AppUi.iconBoxSize,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: radius,
+              border: Border.all(
+                color: AppColors.stroke,
+                width: AppUi.dividerThickness,
+              ),
+            ),
+            child: Icon(
+              section.icon,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(width: AppUi.gapMD),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(section.title, style: AppText.heading),
+                const SizedBox(height: AppUi.gapXS),
+                Text(section.subtitle, style: AppText.bodyMuted),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_spacing.dart';
 import 'pressable_scale.dart';
 
 class PressableCard extends StatelessWidget {
@@ -24,17 +25,25 @@ class PressableCard extends StatelessWidget {
     return PressableScale(
       enabled: onTap != null,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        decoration: decoration.copyWith(boxShadow: AppUi.cardShadow),
+        duration: AppSpacing.animQuick,
+        curve: Curves.easeOut,
+        decoration: decoration.copyWith(boxShadow: AppShadows.card),
         child: Material(
-          color: AppColors.surface.withValues(alpha: 0),
+          color: AppColors.surfaceElevated.withValues(alpha: 0),
           child: InkWell(
             borderRadius: borderRadius,
+            splashColor: AppColors.clear,
+            highlightColor: AppColors.clear,
+            overlayColor: WidgetStatePropertyAll(AppColors.clear),
             onTap: onTap,
-            child: Padding(
-              padding: padding,
-              child: child,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: AppUi.buttonMinHeight,
+              ),
+              child: Padding(
+                padding: padding,
+                child: child,
+              ),
             ),
           ),
         ),

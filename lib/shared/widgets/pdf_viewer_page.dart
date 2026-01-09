@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_text.dart';
+import '../../app/theme/app_ui.dart';
 import 'primary_app_bar.dart';
 
 class PdfViewerPage extends StatefulWidget {
@@ -53,7 +55,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('الانتقال لصفحة', style: AppText.heading),
+          title: Text(AppStrings.pdfJumpTitle, style: AppText.heading),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -64,25 +66,25 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               Navigator.pop(context, parsed);
             },
             decoration: InputDecoration(
-              hintText: '1 - $_totalPages',
+              hintText: AppStrings.pageRangeHint(_totalPages),
               hintStyle: AppText.caption,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء', style: AppText.body),
+              child: Text(AppStrings.pdfJumpCancel, style: AppText.body),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 1),
-              child: const Text('البداية', style: AppText.body),
+              child: Text(AppStrings.pdfJumpStart, style: AppText.body),
             ),
             TextButton(
               onPressed: () {
                 final value = int.tryParse(controller.text);
                 Navigator.pop(context, value);
               },
-              child: const Text('انتقال', style: AppText.body),
+              child: Text(AppStrings.pdfJumpGo, style: AppText.body),
             ),
           ],
         );
@@ -99,7 +101,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: widget.showAppBar
-          ? PrimaryAppBar(
+          ? UnifiedAppBar(
               title: widget.title,
               showBack: true,
             )
@@ -153,29 +155,29 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             ),
           if (_totalPages > 0)
             Positioned(
-              right: 12,
-              bottom: 12,
+              right: AppUi.gapMD,
+              bottom: AppUi.gapMD,
               child: SafeArea(
                 top: false,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
+                  duration: AppUi.animationMedium,
+                  curve: Curves.easeOut,
                   decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(999),
+                    color: AppColors.surfaceElevated.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(AppUi.radiusPill),
                   ),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppUi.radiusPill),
                     onTap: _showJumpDialog,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: AppUi.gapMD,
+                        vertical: AppUi.gapSM,
                       ),
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 160),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeOutCubic,
+                        duration: AppUi.animationFast,
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeOut,
                         transitionBuilder: (child, animation) {
                           return FadeTransition(
                             opacity: animation,
@@ -183,7 +185,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                           );
                         },
                         child: Text(
-                          '$_currentPage / $_totalPages',
+                          AppStrings.pageCounter(_currentPage, _totalPages),
                           key: ValueKey('$_currentPage-$_totalPages'),
                           style: AppText.caption,
                         ),

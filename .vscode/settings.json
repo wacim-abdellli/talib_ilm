@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/wacim/talib_ilm/linux"
+    "cmake.sourceDirectory": "/home/wacim/talib_ilm/linux",
+    "CodeGPT.apiKey": "OpenAI"
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/app_ui.dart';
 
 class PrayerHeader extends StatelessWidget {
   final String city;
@@ -16,19 +16,17 @@ class PrayerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           city,
-          style: AppText.heading.copyWith(fontWeight: FontWeight.w500),
+          style: AppText.body,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppUi.gapXS),
         Text(
           '$dayLabel • $hijriDate',
-          style: AppText.body.copyWith(color: secondary),
+          style: AppText.caption,
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
@@ -14,10 +15,10 @@ import 'models/prayer_time.dart';
 import 'widgets/prayer_header.dart';
 import 'widgets/prayer_time_tile.dart';
 import 'qibla_page.dart';
-import '../../../shared/widgets/app_overflow_menu.dart';
 import 'location_settings_sheet.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/empty_state.dart';
 
 class PrayerPage extends StatefulWidget {
   const PrayerPage({super.key});
@@ -51,22 +52,17 @@ class _PrayerPageState extends State<PrayerPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: PrimaryAppBar(
-        title: 'الصلاة',
+      appBar: UnifiedAppBar(
+        title: AppStrings.prayerTitle,
         showMenu: true,
         actions: [
-          AppOverflowMenu(
-            includeDefaults: false,
-            extraItems: [
-              AppMenuItem(
-                label: 'إعدادات الموقع',
-                icon: Icons.my_location_outlined,
-                onTap: () {
-                  Navigator.pop(context);
-                  Future.microtask(() => _openLocationSettings(context));
-                },
-              ),
-            ],
+          IconButton(
+            tooltip: AppStrings.prayerLocationSettings,
+            onPressed: () {
+              if (!mounted) return;
+              _openLocationSettings(context);
+            },
+            icon: const Icon(Icons.my_location_outlined),
           ),
         ],
       ),
@@ -78,7 +74,13 @@ class _PrayerPageState extends State<PrayerPage> {
           }
 
           if (!snapshot.hasData) {
-            return const SizedBox.shrink();
+            return EmptyState(
+              icon: Icons.access_time,
+              title: AppStrings.prayerLoadErrorTitle,
+              message: AppStrings.prayerLoadErrorMessage,
+              actionLabel: AppStrings.actionRetry,
+              onAction: _reloadPrayer,
+            );
           }
 
           final data = snapshot.data!;
@@ -89,20 +91,20 @@ class _PrayerPageState extends State<PrayerPage> {
           final hijriDate = _formatHijriDate(data.date);
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: AppUi.screenPadding,
             children: [
               PrayerHeader(
                 city: data.city,
-                dayLabel: 'اليوم',
+                dayLabel: AppStrings.prayerDayLabel,
                 hijriDate: hijriDate,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppUi.gapXL),
               _buildCurrentPrayerCard(
                 data: data,
                 currentName: currentName,
                 nextName: nextName,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppUi.gapXL),
               ...times.map(
                 (item) => PrayerTimeTile(
                   item: item,
@@ -125,7 +127,8 @@ class _PrayerPageState extends State<PrayerPage> {
   }) {
     final controller = _countdownController;
     final label = currentName ?? nextName ?? data.nextPrayer;
-    final subtitle = currentName == null ? 'الصلاة القادمة' : 'الصلاة الحالية';
+    final subtitle =
+        currentName == null ? AppStrings.prayerNext : AppStrings.prayerCurrent;
 
     if (controller == null) {
       final nextTime = data.prayers[data.nextPrayer] ?? DateTime.now();
@@ -156,7 +159,7 @@ class _PrayerPageState extends State<PrayerPage> {
     String? nextName,
     String? currentName,
   ) {
-    const order = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+    const order = AppStrings.prayerOrder;
     return order
         .where(day.prayers.containsKey)
         .map(
@@ -188,7 +191,7 @@ class _PrayerPageState extends State<PrayerPage> {
     Map<String, DateTime> prayers,
     String? nextName,
   ) {
-    const order = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+    const order = AppStrings.prayerOrder;
     if (prayers.isEmpty) return null;
 
     if (nextName == null) {
@@ -239,7 +242,9 @@ class _PrayerPageState extends State<PrayerPage> {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppUi.radiusMD),
+        ),
       ),
       builder: (_) => LocationSettingsSheet(onSaved: _reloadPrayer),
     );
@@ -305,33 +310,33 @@ class _CurrentPrayerCard extends StatelessWidget {
     const secondary = AppColors.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusLG),
         boxShadow: AppUi.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(subtitle, style: AppText.caption.copyWith(color: secondary)),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
           Text(
             title,
             style: AppText.headingXL.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
           Text(
-            'متبقي: $countdown',
+            AppStrings.prayerRemaining(countdown),
             style: AppText.body.copyWith(color: secondary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: onQiblaTap,
               icon: const Icon(Icons.explore_outlined),
-              label: const Text('اتجاه القبلة'),
+              label: const Text(AppStrings.qiblaTitle),
             ),
           ),
         ],

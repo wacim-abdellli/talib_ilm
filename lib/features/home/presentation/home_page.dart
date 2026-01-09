@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:talib_ilm/features/home/presentation/widgets/home_section_card.dart';
+import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/last_activity_service.dart';
 import '../../../core/services/last_sharh_service.dart';
@@ -26,10 +29,7 @@ import '../../../shared/widgets/pressable_scale.dart';
 class HomePage extends StatefulWidget {
   final bool isActive;
 
-  const HomePage({
-    super.key,
-    this.isActive = true,
-  });
+  const HomePage({super.key, this.isActive = true});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -101,10 +101,14 @@ class _HomePageState extends State<HomePage> {
     }
 
     int? progressPercent;
-    if (lastActivity.page != null &&
-        lastActivity.total != null &&
-        lastActivity.total! > 0) {
-      final value = (lastActivity.page! / lastActivity.total!) * 100;
+    int? safePage = lastActivity.page;
+    int? safeTotal = lastActivity.total;
+    if (safePage != null && safeTotal != null && safeTotal > 0) {
+      final normalizedTotal = safeTotal < safePage ? safePage : safeTotal;
+      final normalizedPage = safePage.clamp(1, normalizedTotal);
+      safePage = normalizedPage;
+      safeTotal = normalizedTotal;
+      final value = (normalizedPage / normalizedTotal) * 100;
       progressPercent = value.clamp(0, 100).round();
     } else {
       final progress = await _progressService.getProgress(book.id);
@@ -118,8 +122,8 @@ class _HomePageState extends State<HomePage> {
       tab: tab,
       sharhFile: sharhFile,
       sharh: sharh,
-      page: lastActivity.page,
-      total: lastActivity.total,
+      page: safePage,
+      total: safeTotal,
       progressPercent: progressPercent,
     );
   }
@@ -183,28 +187,32 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: const PrimaryAppBar(title: 'الرئيسية', showMenu: true),
+      appBar: const UnifiedAppBar(title: AppStrings.navHome, showMenu: true),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: AppUi.screenPadding,
           children: [
-            _HomeGreeting(greeting: _greetingText()),
-            const SizedBox(height: 20),
+            _buildGreetingSection(),
+
+            const SizedBox(height: AppUi.gapXXL),
+
+            _buildHeroSection(context),
+
+            const SizedBox(height: AppUi.gapXXXL),
+
+            _buildContinueSection(context),
+
+            const SizedBox(height: AppUi.gapXL),
 
             _buildHadithSection(),
-            const SizedBox(height: 20),
-            _buildMainCard(context),
-            const SizedBox(height: 28),
-          ],            
 
+            const SizedBox(height: AppUi.gapXL),
+          ],
         ),
       ),
     );
   }
 
-  String _greetingText() {
-    return 'السلام عليكم';
-  }
   Widget _buildNextPrayerCard(BuildContext context, PrayerTimesDay day) {
     final controller = _countdownController;
     if (controller == null) {
@@ -226,7 +234,9 @@ class _HomePageState extends State<HomePage> {
         return NextPrayerCard(
           prayer: nextPrayer,
           onTap: () => _openPrayer(context),
-          countdownText: 'متبقي ${_formatCountdown(state.remaining)}',
+          countdownText: AppStrings.prayerRemainingShort(
+            _formatCountdown(state.remaining),
+          ),
         );
       },
     );
@@ -272,40 +282,39 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
   }
 
-  Widget _buildMainCard(BuildContext context) {
-    return FutureBuilder<_ContinueData?>(
-      future: _continueFuture,
+  Widget _buildHeroSection(BuildContext context) {
+    return FutureBuilder<PrayerTimesDay>(
+      future: _prayerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const NextPrayerCardPlaceholder();
         }
 
-        final data = snapshot.data;
-        if (data != null) {
-          return _ContinueLearningCard(
-            data: data,
-            onTap: () => _continueLearning(context, data),
-          );
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
         }
 
-        return FutureBuilder<PrayerTimesDay>(
-          future: _prayerFuture,
-          builder: (context, prayerSnapshot) {
-            if (prayerSnapshot.connectionState == ConnectionState.waiting) {
-              return const NextPrayerCardPlaceholder();
-            }
+        final day = snapshot.data!;
+        _ensureCountdown(day);
+        return _buildNextPrayerCard(context, day);
+      },
+    );
+  }
 
-            if (!prayerSnapshot.hasData) {
-              return _ContinueLearningCard(
-                data: null,
-                onTap: () => _openIlm(context),
-              );
-            }
+  Widget _buildContinueSection(BuildContext context) {
+    return FutureBuilder<_ContinueData?>(
+      future: _continueFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
 
-            final data = prayerSnapshot.data!;
-            _ensureCountdown(data);
-            return _buildNextPrayerCard(context, data);
-          },
+        final data = snapshot.data;
+        return HomeSectionCard(
+          onTap: data == null
+              ? () => _openIlm(context)
+              : () => _continueLearning(context, data),
+          child: _ContinueLearningCard(data: data, onTap: null),
         );
       },
     );
@@ -332,11 +341,25 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
+  Widget _buildGreetingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.greeting,
+          style: AppText.headingXL.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-class _HomeGreeting extends StatelessWidget {
+class HomeGreeting extends StatelessWidget {
   final String greeting;
-  const _HomeGreeting({required this.greeting});
+  const HomeGreeting({super.key, required this.greeting});
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +370,7 @@ class _HomeGreeting extends StatelessWidget {
           greeting,
           style: AppText.headingXL.copyWith(color: AppColors.textPrimary),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppUi.gapSM),
       ],
     );
   }
@@ -370,20 +393,23 @@ class _ContinueLearningCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ابدأ التعلّم',
+              AppStrings.homeStartLearningTitle,
               style: AppText.heading.copyWith(color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppUi.gapSM),
             Text(
-              'ابدأ بالمتن المناسب وسنكمل معك خطوة بخطوة.',
+              AppStrings.homeStartLearningMessage,
               style: AppText.body.copyWith(
                 color: AppColors.textPrimary.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppUi.gapLG),
             Align(
               alignment: Alignment.centerRight,
-              child: _ContinueButton(label: 'ابدأ الآن', onTap: onTap),
+              child: _ContinueButton(
+                label: AppStrings.actionStartNow,
+                onTap: onTap,
+              ),
             ),
           ],
         ),
@@ -391,17 +417,17 @@ class _ContinueLearningCard extends StatelessWidget {
     }
 
     final tabLabel = switch (content.tab) {
-      LastActivityService.tabSharh => 'الشرح',
-      LastActivityService.tabLessons => 'الدروس',
-      _ => 'المتن',
+      LastActivityService.tabSharh => AppStrings.continueTabSharh,
+      LastActivityService.tabLessons => AppStrings.continueTabLessons,
+      _ => AppStrings.continueTabMutn,
     };
 
-    String subtitle = 'آخر قراءة: $tabLabel';
+    String subtitle = AppStrings.lastRead(tabLabel);
     if (content.tab == LastActivityService.tabLessons) {
-      subtitle = 'آخر نشاط: الدروس';
+      subtitle = AppStrings.lastActivityLessons;
     } else if (content.tab == LastActivityService.tabSharh &&
         content.sharh != null) {
-      subtitle = 'آخر قراءة: الشرح — ${content.sharh!.title}';
+      subtitle = AppStrings.lastReadSharh(content.sharh!.title);
     }
 
     final progressPercent = content.progressPercent;
@@ -409,38 +435,59 @@ class _ContinueLearningCard extends StatelessWidget {
 
     final pageInfo = content.page == null
         ? null
-        : content.total == null || content.total == 0
-        ? 'آخر صفحة: ${content.page}'
-        : 'آخر صفحة: ${content.page} / ${content.total}';
+        : AppStrings.lastPage(content.page!, content.total);
 
     return _HeroCard(
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            content.book.title,
-            style: AppText.headingXL.copyWith(color: AppColors.textPrimary),
+          Row(
+            children: [
+              Icon(
+                Icons.menu_book_rounded,
+                size: AppUi.iconSizeSM,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: AppUi.gapSM),
+              Expanded(
+                child: Text(
+                  content.book.title,
+                  style: AppText.headingXL.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
           Text(
-            'القسم: $tabLabel',
+            AppStrings.sectionValue(tabLabel),
             style: AppText.body.copyWith(
               color: AppColors.textPrimary.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           Row(
             children: [
+              Icon(
+                Icons.trending_up_rounded,
+                size: AppUi.iconSizeXS,
+                color: AppColors.textMuted,
+              ),
+              const SizedBox(width: AppUi.gapXS),
               Text(
-                'التقدم',
+                AppStrings.homeProgressLabel,
                 style: AppText.caption.copyWith(
                   color: AppColors.textPrimary.withValues(alpha: 0.7),
                 ),
               ),
               const Spacer(),
               Text(
-                progressPercent == null ? '—' : '$progressPercent%',
+                progressPercent == null
+                    ? AppStrings.progressUnknown
+                    : AppStrings.percentLabel(progressPercent),
                 style: AppText.caption.copyWith(
                   color: AppColors.textPrimary.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
@@ -448,26 +495,19 @@ class _ContinueLearningCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapSM),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(end: progressValue),
-              duration: const Duration(milliseconds: 360),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                return LinearProgressIndicator(
-                  value: value,
-                  minHeight: 6,
-                  backgroundColor: AppColors.textPrimary.withValues(
-                    alpha: 0.08,
-                  ),
-                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                );
-              },
+            borderRadius: BorderRadius.circular(AppUi.radiusPill),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: AppUi.progressBarHeight,
+              backgroundColor: AppColors.textPrimary.withValues(
+                alpha: 0.08,
+              ),
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapMD),
           Text(
             subtitle,
             style: AppText.body.copyWith(
@@ -475,7 +515,7 @@ class _ContinueLearningCard extends StatelessWidget {
             ),
           ),
           if (pageInfo != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppUi.gapSM),
             Text(
               pageInfo,
               style: AppText.caption.copyWith(
@@ -483,10 +523,13 @@ class _ContinueLearningCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppUi.gapLG),
           Align(
             alignment: Alignment.centerRight,
-            child: _ContinueButton(label: 'متابعة', onTap: onTap),
+            child: _ContinueButton(
+              label: AppStrings.actionContinue,
+              onTap: onTap,
+            ),
           ),
         ],
       ),
@@ -506,11 +549,11 @@ class _HeroCard extends StatelessWidget {
       width: double.infinity,
       child: PressableCard(
         onTap: onTap,
-        padding: const EdgeInsets.all(18),
-        borderRadius: BorderRadius.circular(16),
+        padding: AppUi.cardPadding,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(AppUi.radiusMD),
         ),
         child: child,
       ),
@@ -528,7 +571,11 @@ class _ContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PressableScale(
       enabled: onTap != null,
-      child: FilledButton(onPressed: onTap, child: Text(label)),
+      child: FilledButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.play_arrow_rounded, size: AppUi.iconSizeMD),
+        label: Text(label),
+      ),
     );
   }
 }

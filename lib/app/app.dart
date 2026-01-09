@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'theme/app_theme.dart';
+import 'constants/app_strings.dart';
+import 'theme/app_ui.dart';
 import '../shared/navigation/app_shell.dart';
 import '../shared/widgets/app_scroll_behavior.dart';
 
@@ -12,7 +14,7 @@ class TalibIlmApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'طالب العلم',
+      title: AppStrings.appName,
       theme: AppTheme.dark(),
       scrollBehavior: const AppScrollBehavior(),
       locale: const Locale('ar'),
@@ -27,8 +29,9 @@ class TalibIlmApp extends StatelessWidget {
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
         final shortestSide = mediaQuery.size.shortestSide;
-        final sizeScale =
-            (shortestSide / 360).clamp(0.95, 1.2).toDouble();
+        final sizeScale = (shortestSide / AppUi.textScaleBaseWidth)
+            .clamp(AppUi.textScaleMin, AppUi.textScaleMax)
+            .toDouble();
         final baseScale = mediaQuery.textScaler.scale(1.0);
         final scaled = TextScaler.linear(baseScale * sizeScale);
 

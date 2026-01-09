@@ -22,29 +22,33 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
-
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AppUi.cardPadding.copyWith(
+        top: AppUi.gapXL,
+        bottom: AppUi.gapXL,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
         boxShadow: AppUi.cardShadow,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _Illustration(icon: icon),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapLG),
           Text(title, style: AppText.heading),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppUi.gapSM),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: AppText.body.copyWith(
-              color: secondary,
-            ),
+            style: AppText.bodyMuted,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppUi.gapLG),
           PressableScale(
             enabled: onAction != null,
             child: FilledButton(
@@ -66,29 +70,37 @@ class _Illustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 88,
-      height: 88,
+      width: AppUi.emptyIllustrationSize,
+      height: AppUi.emptyIllustrationSize,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            width: 88,
-            height: 88,
+            width: AppUi.emptyIllustrationSize,
+            height: AppUi.emptyIllustrationSize,
             decoration: BoxDecoration(
-              color: AppColors.textPrimary.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(24),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppUi.radiusXXL),
+              border: Border.all(
+                color: AppColors.stroke,
+                width: AppUi.dividerThickness,
+              ),
             ),
           ),
           Container(
-            width: 46,
-            height: 46,
+            width: AppUi.emptyIllustrationInnerSize,
+            height: AppUi.emptyIllustrationInnerSize,
             decoration: BoxDecoration(
-              color: AppColors.textPrimary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
+              border: Border.all(
+                color: AppColors.stroke,
+                width: AppUi.dividerThickness,
+              ),
             ),
             child: Icon(
               icon,
-              color: AppColors.textPrimary.withValues(alpha: 0.7),
+              color: AppColors.textMuted,
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -18,23 +19,26 @@ class PrayerTimeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final primary = colors.onSurface;
-    final secondary = colors.onSurface.withValues(alpha: 0.6);
     final isNext = item.isNext;
     final isCurrent = item.isCurrent;
-    final statusColor = isNext
-        ? AppColors.secondary
-        : isCurrent
-            ? AppColors.secondary
-            : AppColors.textMuted;
+    final showStatus = isNext || isCurrent;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppUi.gapMD,
+        vertical: AppUi.gapSM,
+      ),
+      margin: const EdgeInsets.only(bottom: AppUi.gapSM),
       decoration: BoxDecoration(
+        // 🔑 Normal surface only (no elevation)
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppUi.cardShadow,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
+
+        // Subtle structure without depth
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,44 +48,33 @@ class PrayerTimeTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
-                  style: AppText.body.copyWith(
-                    color: isNext || isCurrent ? statusColor : primary,
-                    fontWeight:
-                        isNext || isCurrent ? FontWeight.w700 : FontWeight.w400,
-                  ),
+                  style: AppText.body,
                 ),
               ),
-              if (isCurrent)
+              if (showStatus) ...[
                 _StatusBadge(
-                  label: 'الحالية',
-                  color: statusColor,
-                )
-              else if (isNext)
-                _StatusBadge(
-                  label: 'القادمة',
-                  color: statusColor,
+                  label: isCurrent
+                      ? AppStrings.prayerCurrentBadge
+                      : AppStrings.prayerNextBadge,
                 ),
-              const SizedBox(width: 8),
+                const SizedBox(width: AppUi.gapSM),
+              ],
               Text(
                 item.time,
-                style: AppText.body.copyWith(
-                  color: isNext || isCurrent ? primary : secondary,
-                  fontWeight:
-                      isNext || isCurrent ? FontWeight.w600 : FontWeight.w400,
-                ),
+                style: AppText.bodyMuted,
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppUi.gapXS),
           Row(
             children: [
               _AdhkarLink(
-                label: 'أذكار قبل الصلاة',
+                label: AppStrings.beforePrayerDhikr,
                 onTap: onBeforeAdhkar,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppUi.gapMD),
               _AdhkarLink(
-                label: 'أذكار بعد الصلاة',
+                label: AppStrings.afterPrayerDhikr,
                 onTap: onAfterAdhkar,
               ),
             ],
@@ -103,17 +96,17 @@ class _AdhkarLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppUi.radiusXS),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppUi.gapXS,
+          vertical: AppUi.gapXXS,
+        ),
         child: Text(
           label,
-          style: AppText.caption.copyWith(
-            color: colors.onSurface.withValues(alpha: 0.6),
-          ),
+          style: AppText.caption,
         ),
       ),
     );
@@ -122,21 +115,27 @@ class _AdhkarLink extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String label;
-  final Color color;
 
-  const _StatusBadge({required this.label, required this.color});
+  const _StatusBadge({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppUi.gapSM,
+        vertical: AppUi.gapXXSPlus,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppUi.radiusPill),
+        border: Border.all(
+          color: AppColors.stroke,
+          width: AppUi.dividerThickness,
+        ),
       ),
       child: Text(
         label,
-        style: AppText.caption.copyWith(color: color),
+        style: AppText.caption,
       ),
     );
   }
