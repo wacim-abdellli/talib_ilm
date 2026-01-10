@@ -33,7 +33,7 @@ class SharhCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: AppColors.surfaceGradient,
         borderRadius: radius,
         border: Border.all(
           color: AppColors.stroke,

@@ -28,7 +28,7 @@ class EmptyState extends StatelessWidget {
         bottom: AppUi.gapXL,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
         border: Border.all(
           color: AppColors.stroke,

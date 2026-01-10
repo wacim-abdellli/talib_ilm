@@ -34,14 +34,17 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: const UnifiedAppBar(
         title: AppStrings.favoritesTitle,
         showBack: true,
       ),
-      body: FutureBuilder<List<FavoriteItem>>(
-        future: _future,
-        builder: (context, snapshot) {
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: FutureBuilder<List<FavoriteItem>>(
+          future: _future,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -81,7 +84,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 })
                 .toList(),
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -112,7 +116,7 @@ class _Section extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: AppUi.gapMD),
             padding: AppUi.cardPadding,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              gradient: AppColors.surfaceGradient,
               borderRadius: radius,
               border: Border.all(
                 color: AppColors.stroke,

@@ -10,15 +10,19 @@ class QiblaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: const UnifiedAppBar(
         title: AppStrings.qiblaTitle,
         showBack: true,
       ),
-      body: Center(
-        child: Text(
-          AppStrings.qiblaComingSoon,
-          style: AppText.body,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: Center(
+          child: Text(
+            AppStrings.qiblaComingSoon,
+            style: AppText.body,
+          ),
         ),
       ),
     );

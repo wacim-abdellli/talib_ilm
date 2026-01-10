@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
@@ -117,7 +118,11 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
     if (repeat > 0 && nextCount >= repeat && _index + 1 < _items.length) {
       HapticFeedback.lightImpact();
-      _goNext();
+      const ringCompleteDelay = Duration(milliseconds: 360);
+      Future.delayed(ringCompleteDelay, () {
+        if (!mounted) return;
+        _goNext();
+      });
     }
   }
 
@@ -137,19 +142,23 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Widget build(BuildContext context) {
     final title = widget.titleOverride ?? _categoryTitle ?? widget.category.label;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: UnifiedAppBar(
         title: title,
         showBack: true,
       ),
-      body: _loading
-          ? const SizedBox.shrink()
-          : SafeArea(
-              child: Padding(
-                padding: AppUi.screenPaddingTopLarge,
-                child: _items.isEmpty ? _buildEmpty() : _buildSession(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: _loading
+            ? const SizedBox.shrink()
+            : SafeArea(
+                child: Padding(
+                  padding: AppUi.screenPaddingTopLarge,
+                  child: _items.isEmpty ? _buildEmpty() : _buildSession(),
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -168,129 +177,148 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final showFadl = item.fadl.isNotEmpty;
     final repeat = _repeatFor(_items, _index);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Center(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _handleTap,
-              child: Container(
-                width: double.infinity,
-                padding: AppUi.cardPadding.copyWith(
-                  top: AppUi.gapXL,
-                  bottom: AppUi.gapXL,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(AppUi.radiusXXL),
-                  border: Border.all(
-                    color: AppColors.stroke,
-                    width: AppUi.dividerThickness,
-                  ),
-                  boxShadow: AppUi.cardShadow,
-                ),
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _items.length,
-                  onPageChanged: _handlePageChange,
-                  reverse: Directionality.of(context) == TextDirection.rtl,
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          physics: const ClampingScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight,
-                            ),
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppUi.gapMD,
-                                  vertical: AppUi.gapSMPlus,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxHeight = constraints.maxHeight;
+        final isCompact = maxHeight < 620;
+        final cardPaddingVertical = isCompact ? AppUi.gapLG : AppUi.gapXXL;
+        final contentGap = isCompact ? AppUi.gapSM : AppUi.gapLG;
+        final sectionGap = isCompact ? AppUi.gapSM : AppUi.gapMD;
+        final groupGap = isCompact ? AppUi.gapMD : AppUi.gapLG;
+        final ringSize =
+            math.min(72.0, math.max(56.0, maxHeight * 0.12));
+        final ringStroke = isCompact ? 6.0 : 7.0;
+        final textPaddingVertical =
+            isCompact ? AppUi.gapSMPlus : AppUi.gapMD;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Center(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _handleTap,
+                  child: Container(
+                    width: double.infinity,
+                    padding: AppUi.cardPadding.copyWith(
+                      top: cardPaddingVertical,
+                      bottom: cardPaddingVertical,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.surfaceElevatedGradient,
+                      borderRadius: BorderRadius.circular(AppUi.radiusXXL),
+                      border: Border.all(
+                        color: AppColors.stroke,
+                        width: AppUi.dividerThickness,
+                      ),
+                      boxShadow: AppUi.cardShadow,
+                    ),
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _items.length,
+                      onPageChanged: _handlePageChange,
+                      reverse: Directionality.of(context) == TextDirection.rtl,
+                      itemBuilder: (context, index) {
+                        final item = _items[index];
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              physics: const ClampingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
                                 ),
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(
-                                        maxWidth: AppUi.maxContentWidth,
+                                child: Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppUi.gapMD,
+                                      vertical: textPaddingVertical,
+                                    ),
+                                    child: ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(
+                                            maxWidth: AppUi.maxContentWidth,
+                                          ),
+                                      child: Text(
+                                        item.arabic,
+                                        textAlign: TextAlign.center,
+                                        style: AppText.body,
                                       ),
-                                  child: Text(
-                                    item.arabic,
-                                    textAlign: TextAlign.center,
-                                    style: AppText.body,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: AppUi.gapSM),
-        Center(
-          child: Text(
-            '$_count / $repeat',
-            style: AppText.caption,
-          ),
-        ),
-        const SizedBox(height: AppUi.gapSM),
-        if (showSource || showFadl) ...[
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: AppUi.gapMD,
-            runSpacing: AppUi.gapSM,
-            children: [
-              if (showSource)
-                _ActionLink(
-                  label: AppStrings.adhkarSource,
-                  onTap: () =>
-                      _showTextSheet(AppStrings.adhkarSource, item.source),
-                ),
-              if (showFadl)
-                _ActionLink(
-                  label: AppStrings.adhkarVirtue,
-                  onTap: () =>
-                      _showTextSheet(AppStrings.adhkarVirtue, item.fadl),
-                ),
+            SizedBox(height: contentGap),
+            Center(
+              child: _RepeatProgress(
+                count: _count,
+                repeat: repeat,
+                size: ringSize,
+                strokeWidth: ringStroke,
+                onTap: _handleTap,
+              ),
+            ),
+            SizedBox(height: sectionGap),
+            if (showSource || showFadl) ...[
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: AppUi.gapMD,
+                runSpacing: AppUi.gapSM,
+                children: [
+                  if (showSource)
+                    _ActionLink(
+                      label: AppStrings.adhkarSource,
+                      onTap: () =>
+                          _showTextSheet(AppStrings.adhkarSource, item.source),
+                    ),
+                  if (showFadl)
+                    _ActionLink(
+                      label: AppStrings.adhkarVirtue,
+                      onTap: () =>
+                          _showTextSheet(AppStrings.adhkarVirtue, item.fadl),
+                    ),
+                ],
+              ),
+              SizedBox(height: groupGap),
             ],
-          ),
-          const SizedBox(height: AppUi.gapMD),
-        ],
-        const SizedBox(height: AppUi.gapSM),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _StepArrow(
-                icon: Icons.chevron_left,
-                enabled: _index > 0,
-                onTap: _goPrev,
+            SizedBox(height: sectionGap),
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _StepArrow(
+                    icon: Icons.chevron_left,
+                    enabled: _index > 0,
+                    onTap: _goPrev,
+                  ),
+                  const SizedBox(width: AppUi.gapLG),
+                  Text(
+                    '${_index + 1} / ${_items.length}',
+                    style: AppText.caption,
+                  ),
+                  const SizedBox(width: AppUi.gapLG),
+                  _StepArrow(
+                    icon: Icons.chevron_right,
+                    enabled: _index < _items.length - 1,
+                    onTap: _goNext,
+                  ),
+                ],
               ),
-              const SizedBox(width: AppUi.gapLG),
-              Text(
-                '${_index + 1} / ${_items.length}',
-                style: AppText.caption,
-              ),
-              const SizedBox(width: AppUi.gapLG),
-              _StepArrow(
-                icon: Icons.chevron_right,
-                enabled: _index < _items.length - 1,
-                onTap: _goNext,
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -506,8 +534,8 @@ class _StepArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = enabled
-        ? AppColors.textSecondary
-        : AppColors.textMuted;
+        ? AppColors.textPrimary.withOpacity(0.7)
+        : AppColors.textPrimary.withOpacity(0.35);
     return InkWell(
       borderRadius: BorderRadius.circular(AppUi.radiusCard),
       onTap: enabled ? onTap : null,
@@ -547,5 +575,159 @@ class _ActionLink extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _RepeatProgress extends StatelessWidget {
+  final int count;
+  final int repeat;
+  final double size;
+  final double strokeWidth;
+  final VoidCallback onTap;
+
+  const _RepeatProgress({
+    required this.count,
+    required this.repeat,
+    this.size = 72.0,
+    this.strokeWidth = 7.0,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress =
+        repeat <= 0 ? 1.0 : (count / repeat).clamp(0.0, 1.0);
+    const progressDuration = Duration(milliseconds: 360);
+    final ringSize = size;
+    final ringRadius = ringSize / 2;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: progress),
+      duration: progressDuration,
+      curve: Curves.easeOut,
+      onEnd: () {
+        if (repeat > 0 && count == repeat) {
+          HapticFeedback.mediumImpact();
+        }
+      },
+      builder: (context, value, _) {
+        final isComplete = value >= 1.0;
+        return AnimatedOpacity(
+          opacity: isComplete ? 0.0 : 1.0,
+          duration: progressDuration,
+          curve: Curves.easeOut,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.4),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+            child: Material(
+              color: AppColors.clear,
+              shape: const CircleBorder(),
+              child: InkResponse(
+                radius: ringRadius,
+                containedInkWell: true,
+                onTap: onTap,
+                child: SizedBox(
+                  width: ringSize,
+                  height: ringSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CustomPaint(
+                        size: Size.square(ringSize),
+                        painter: _ProgressRingPainter(
+                          progress: value,
+                          strokeWidth: strokeWidth,
+                          trackColor:
+                              AppColors.textPrimary.withOpacity(0.12),
+                          startColor: AppColors.primary,
+                          endColor: AppColors.accent,
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: isComplete ? 0.0 : 1.0,
+                        duration: progressDuration,
+                        curve: Curves.easeOut,
+                        child: Text(
+                          '$count / $repeat',
+                          style: AppText.caption,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ProgressRingPainter extends CustomPainter {
+  final double progress;
+  final double strokeWidth;
+  final Color trackColor;
+  final Color startColor;
+  final Color endColor;
+
+  const _ProgressRingPainter({
+    required this.progress,
+    required this.strokeWidth,
+    required this.trackColor,
+    required this.startColor,
+    required this.endColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(rect, -math.pi / 2, math.pi * 2, false, trackPaint);
+
+    final gradient = SweepGradient(
+      startAngle: -math.pi / 2,
+      endAngle: math.pi * 1.5,
+      colors: [
+        startColor,
+        endColor,
+      ],
+    );
+    final progressPaint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      math.pi * 2 * progress,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressRingPainter oldDelegate) {
+    return progress != oldDelegate.progress ||
+        strokeWidth != oldDelegate.strokeWidth ||
+        trackColor != oldDelegate.trackColor ||
+        startColor != oldDelegate.startColor ||
+        endColor != oldDelegate.endColor;
   }
 }

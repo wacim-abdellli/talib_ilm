@@ -6,61 +6,122 @@ import 'app_text.dart';
 import 'app_text_styles.dart';
 
 class AppTheme {
+  static ThemeData light() {
+    return _buildTheme(
+      brightness: Brightness.light,
+      scaffoldBackground: AppColors.background,
+      surface: AppColors.surface,
+      surfaceVariant: AppColors.surfaceVariant,
+      surfaceElevated: AppColors.surfaceElevated,
+      textPrimary: AppColors.textPrimary,
+      textSecondary: AppColors.textSecondary,
+      textDisabled: AppColors.textDisabled,
+      onPrimary: AppColors.surface,
+      onSecondary: AppColors.textPrimary,
+    );
+  }
+
   static ThemeData dark() {
+    return _buildTheme(
+      brightness: Brightness.dark,
+      scaffoldBackground: AppColors.darkBackground,
+      surface: AppColors.darkSurface,
+      surfaceVariant: AppColors.darkSurfaceVariant,
+      surfaceElevated: AppColors.darkSurfaceElevated,
+      textPrimary: AppColors.darkTextPrimary,
+      textSecondary: AppColors.darkTextSecondary,
+      textDisabled: AppColors.darkTextDisabled,
+      onPrimary: AppColors.darkTextPrimary,
+      onSecondary: AppColors.darkBackground,
+    );
+  }
+
+  static ThemeData _buildTheme({
+    required Brightness brightness,
+    required Color scaffoldBackground,
+    required Color surface,
+    required Color surfaceVariant,
+    required Color surfaceElevated,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color textDisabled,
+    required Color onPrimary,
+    required Color onSecondary,
+  }) {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
     );
     final textStyle =
         AppTextStyles.body.copyWith(fontWeight: FontWeight.w600);
     const minSize = Size(0, AppSpacing.buttonMinHeight);
+    final dividerColor = textPrimary.withOpacity(0.16);
+
+    final scheme = (brightness == Brightness.dark
+            ? ColorScheme.dark(
+                primary: AppColors.primary,
+                secondary: AppColors.secondary,
+                background: scaffoldBackground,
+                surface: surfaceElevated,
+                onPrimary: onPrimary,
+                onSecondary: onSecondary,
+                onBackground: textPrimary,
+                onSurface: textPrimary,
+              )
+            : ColorScheme.light(
+                primary: AppColors.primary,
+                secondary: AppColors.secondary,
+                background: scaffoldBackground,
+                surface: surfaceElevated,
+                onPrimary: onPrimary,
+                onSecondary: onSecondary,
+                onBackground: textPrimary,
+                onSurface: textPrimary,
+              ))
+        .copyWith(surfaceVariant: surfaceVariant);
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.background,
+      brightness: brightness,
+      scaffoldBackgroundColor: scaffoldBackground,
+      canvasColor: surface,
+      dialogBackgroundColor: surfaceElevated,
       primaryColor: AppColors.primary,
       fontFamily: AppTextStyles.fontFamily,
       splashFactory: NoSplash.splashFactory,
       splashColor: AppColors.clear,
       highlightColor: AppColors.clear,
-      hoverColor: AppColors.overlay,
+      hoverColor: textPrimary.withOpacity(0.08),
       focusColor: AppColors.clear,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
-        surface: AppColors.surfaceElevated,
-        onPrimary: AppColors.textPrimary,
-        onSecondary: AppColors.textPrimary,
-        onSurface: AppColors.textPrimary,
-      ),
+      colorScheme: scheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: scaffoldBackground,
+        foregroundColor: textPrimary,
         centerTitle: true,
         elevation: 0,
         shadowColor: AppColors.clear,
         surfaceTintColor: AppColors.clear,
-        iconTheme: const IconThemeData(color: AppColors.textSecondary),
-        actionsIconTheme: const IconThemeData(color: AppColors.textSecondary),
+        iconTheme: IconThemeData(color: textSecondary),
+        actionsIconTheme: IconThemeData(color: textSecondary),
       ),
-      textTheme: AppTextStyles.textTheme,
-      cardTheme: const CardThemeData(
-        color: AppColors.surfaceElevated,
+      textTheme: AppTextStyles.textTheme.apply(
+        bodyColor: textPrimary,
+        displayColor: textPrimary,
+      ),
+      disabledColor: textDisabled,
+      cardTheme: CardThemeData(
+        color: surfaceElevated,
         elevation: 0,
         margin: EdgeInsets.zero,
       ),
-      dividerColor: AppColors.divider,
-      iconTheme: const IconThemeData(
-        color: AppColors.textSecondary,
+      dividerColor: dividerColor,
+      iconTheme: IconThemeData(
+        color: textSecondary,
         size: AppSpacing.iconMD,
       ),
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
-          foregroundColor:
-              const WidgetStatePropertyAll(AppColors.textSecondary),
-          overlayColor: WidgetStatePropertyAll(
-            AppColors.clear,
-          ),
+          foregroundColor: WidgetStatePropertyAll(textSecondary),
+          overlayColor: const WidgetStatePropertyAll(AppColors.clear),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -69,8 +130,8 @@ class AppTheme {
         ),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: AppColors.textPrimary,
-        unselectedLabelColor: AppColors.textMuted,
+        labelColor: textPrimary,
+        unselectedLabelColor: textSecondary,
         indicatorColor: AppColors.primary,
         labelStyle: AppText.body.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppText.body.copyWith(
@@ -84,22 +145,19 @@ class AppTheme {
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           backgroundColor: const WidgetStatePropertyAll(AppColors.primary),
-          foregroundColor:
-              const WidgetStatePropertyAll(AppColors.textPrimary),
+          foregroundColor: WidgetStatePropertyAll(onPrimary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 2 : 0,
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
-          overlayColor: WidgetStatePropertyAll(
-            AppColors.clear,
-          ),
+          overlayColor: const WidgetStatePropertyAll(AppColors.clear),
           animationDuration: AppSpacing.animFast,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background,
+        backgroundColor: scaffoldBackground,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMuted,
+        unselectedItemColor: textSecondary,
         selectedIconTheme: const IconThemeData(size: AppSpacing.iconMD),
         unselectedIconTheme: const IconThemeData(size: AppSpacing.iconMD),
         selectedLabelStyle: AppText.navigationLabel,
@@ -116,15 +174,12 @@ class AppTheme {
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
           backgroundColor: const WidgetStatePropertyAll(AppColors.primary),
-          foregroundColor:
-              const WidgetStatePropertyAll(AppColors.textPrimary),
+          foregroundColor: WidgetStatePropertyAll(onPrimary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 2 : 0,
           ),
           shadowColor: const WidgetStatePropertyAll(AppColors.primary),
-          overlayColor: WidgetStatePropertyAll(
-            AppColors.clear,
-          ),
+          overlayColor: const WidgetStatePropertyAll(AppColors.clear),
           animationDuration: AppSpacing.animFast,
         ),
       ),
@@ -135,14 +190,11 @@ class AppTheme {
               const WidgetStatePropertyAll(AppSpacing.buttonPaddingCompact),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
-          foregroundColor:
-              const WidgetStatePropertyAll(AppColors.primary),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.primary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
-          overlayColor: WidgetStatePropertyAll(
-            AppColors.clear,
-          ),
+          overlayColor: const WidgetStatePropertyAll(AppColors.clear),
           animationDuration: AppSpacing.animFast,
         ),
       ),
@@ -153,17 +205,14 @@ class AppTheme {
               const WidgetStatePropertyAll(AppSpacing.buttonPaddingCompact),
           shape: WidgetStatePropertyAll(shape),
           textStyle: WidgetStatePropertyAll(textStyle),
-          foregroundColor:
-              const WidgetStatePropertyAll(AppColors.primary),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.primary),
           elevation: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed) ? 1 : 0,
           ),
           side: WidgetStatePropertyAll(
-            BorderSide(color: AppColors.primary.withValues(alpha: 0.6)),
+            BorderSide(color: AppColors.primary.withOpacity(0.6)),
           ),
-          overlayColor: WidgetStatePropertyAll(
-            AppColors.clear,
-          ),
+          overlayColor: const WidgetStatePropertyAll(AppColors.clear),
           animationDuration: AppSpacing.animFast,
         ),
       ),

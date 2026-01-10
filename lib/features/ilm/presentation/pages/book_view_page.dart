@@ -333,7 +333,6 @@ class _BookViewPageState extends State<BookViewPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: UnifiedAppBar(
         title: widget.book.title,
         showBack: true,
@@ -376,10 +375,14 @@ class _BookViewPageState extends State<BookViewPage>
         ),
       ),
 
-      body: TabBarView(
-        controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
           FutureBuilder<int>(
             future: _mutunInitialPage,
             builder: (context, snapshot) {
@@ -487,6 +490,7 @@ class _BookViewPageState extends State<BookViewPage>
                   ),
         ],
       ),
+      ),
     );
   }
 
@@ -535,7 +539,7 @@ class _ContinueSharhCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: BorderRadius.circular(AppUi.radiusMD),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
       ),
       child: Row(

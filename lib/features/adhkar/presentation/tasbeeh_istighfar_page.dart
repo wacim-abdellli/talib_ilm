@@ -196,7 +196,6 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: UnifiedAppBar(
         title: AppStrings.tasbeehTitle,
         showBack: true,
@@ -208,35 +207,40 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _CounterCard(
-                  label: _tasbeehItems.isEmpty
-                      ? AppStrings.tasbeehDefault
-                      : _tasbeehItems[_tasbeehIndex].arabic,
-                  count: _tasbeehCount,
-                  target: _tasbeehTarget,
-                  onTap: _increment,
-                  onReset: _reset,
-                  onChangeDhikr: _changeDhikr,
-                  onSetTarget: _setTarget,
-                ),
-                _CounterCard(
-                  label: _istighfarItems.isEmpty
-                      ? AppStrings.istighfarDefault
-                      : _istighfarItems[_istighfarIndex].arabic,
-                  count: _istighfarCount,
-                  target: _istighfarTarget,
-                  onTap: _increment,
-                  onReset: _reset,
-                  onChangeDhikr: _changeDhikr,
-                  onSetTarget: _setTarget,
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _CounterCard(
+                    label: _tasbeehItems.isEmpty
+                        ? AppStrings.tasbeehDefault
+                        : _tasbeehItems[_tasbeehIndex].arabic,
+                    count: _tasbeehCount,
+                    target: _tasbeehTarget,
+                    onTap: _increment,
+                    onReset: _reset,
+                    onChangeDhikr: _changeDhikr,
+                    onSetTarget: _setTarget,
+                  ),
+                  _CounterCard(
+                    label: _istighfarItems.isEmpty
+                        ? AppStrings.istighfarDefault
+                        : _istighfarItems[_istighfarIndex].arabic,
+                    count: _istighfarCount,
+                    target: _istighfarTarget,
+                    onTap: _increment,
+                    onReset: _reset,
+                    onChangeDhikr: _changeDhikr,
+                    onSetTarget: _setTarget,
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -277,7 +281,7 @@ class _CounterCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppUi.paddingLG),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated,
+                  gradient: AppColors.surfaceElevatedGradient,
                   borderRadius: BorderRadius.circular(AppUi.radiusLG),
                   boxShadow: AppUi.cardShadow,
                 ),

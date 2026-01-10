@@ -31,7 +31,7 @@ class PrayerTimeTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppUi.gapSM),
       decoration: BoxDecoration(
         // 🔑 Normal surface only (no elevation)
-        color: AppColors.surface,
+        gradient: AppColors.surfaceGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
 
         // Subtle structure without depth

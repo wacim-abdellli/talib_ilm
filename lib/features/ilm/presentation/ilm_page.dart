@@ -66,15 +66,18 @@ class _IlmPageState extends State<IlmPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: UnifiedAppBar(
         title: AppStrings.ilmTitle,
         showMenu: true,
       ),
-      body: FutureBuilder<_IlmOverview>(
-        future: _loadOverview(),
-        builder: (context, snapshot) {
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: FutureBuilder<_IlmOverview>(
+          future: _loadOverview(),
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -126,7 +129,8 @@ class _IlmPageState extends State<IlmPage> {
               );
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -167,7 +171,7 @@ class _LevelCard extends StatelessWidget {
             padding: AppUi.cardPadding,
             borderRadius: BorderRadius.circular(AppUi.radiusMD),
             decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
+              gradient: AppColors.surfaceElevatedGradient,
               borderRadius: BorderRadius.circular(AppUi.radiusMD),
             ),
             child: Column(

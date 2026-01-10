@@ -149,7 +149,7 @@ class _LessonsListPageState extends State<LessonsListPage> {
               vertical: AppUi.gapMD,
             ),
             decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
+              gradient: AppColors.surfaceElevatedGradient,
               borderRadius: BorderRadius.circular(AppUi.radiusMD),
               boxShadow: AppUi.cardShadow,
             ),

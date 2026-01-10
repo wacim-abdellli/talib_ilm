@@ -99,103 +99,107 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: widget.showAppBar
           ? UnifiedAppBar(
               title: widget.title,
               showBack: true,
             )
           : null,
-      body: Stack(
-        children: [
-          SfPdfViewer.asset(
-            widget.assetPath,
-            controller: _controller,
-            initialPageNumber: _currentPage,
-            scrollDirection: PdfScrollDirection.vertical,
-            pageLayoutMode: PdfPageLayoutMode.continuous,
-            enableDoubleTapZooming: true,
-            canShowScrollHead: false,
-            canShowScrollStatus: false,
-            onDocumentLoaded: (details) {
-              if (!mounted) return;
-              final total = details.document.pages.count;
-              final safePage = _currentPage < 1
-                  ? 1
-                  : (_currentPage > total ? total : _currentPage);
-              final shouldJump = safePage != _currentPage;
-              setState(() {
-                _totalPages = total;
-                _currentPage = safePage;
-              });
-              if (shouldJump) {
-                _controller.jumpToPage(safePage);
-              }
-            },
-            onPageChanged: (details) {
-              if (!mounted) return;
-              setState(() => _currentPage = details.newPageNumber);
-              widget.onPageChanged?.call(
-                details.newPageNumber,
-                _totalPages,
-              );
-            },
-            onDocumentLoadFailed: (details) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(details.description)),
-              );
-            },
-          ),
-          if (_totalPages == 0)
-            const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: Stack(
+          children: [
+            SfPdfViewer.asset(
+              widget.assetPath,
+              controller: _controller,
+              initialPageNumber: _currentPage,
+              scrollDirection: PdfScrollDirection.vertical,
+              pageLayoutMode: PdfPageLayoutMode.continuous,
+              enableDoubleTapZooming: true,
+              canShowScrollHead: false,
+              canShowScrollStatus: false,
+              onDocumentLoaded: (details) {
+                if (!mounted) return;
+                final total = details.document.pages.count;
+                final safePage = _currentPage < 1
+                    ? 1
+                    : (_currentPage > total ? total : _currentPage);
+                final shouldJump = safePage != _currentPage;
+                setState(() {
+                  _totalPages = total;
+                  _currentPage = safePage;
+                });
+                if (shouldJump) {
+                  _controller.jumpToPage(safePage);
+                }
+              },
+              onPageChanged: (details) {
+                if (!mounted) return;
+                setState(() => _currentPage = details.newPageNumber);
+                widget.onPageChanged?.call(
+                  details.newPageNumber,
+                  _totalPages,
+                );
+              },
+              onDocumentLoadFailed: (details) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(details.description)),
+                );
+              },
             ),
-          if (_totalPages > 0)
-            Positioned(
-              right: AppUi.gapMD,
-              bottom: AppUi.gapMD,
-              child: SafeArea(
-                top: false,
-                child: AnimatedContainer(
-                  duration: AppUi.animationMedium,
-                  curve: Curves.easeOut,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                    onTap: _showJumpDialog,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppUi.gapMD,
-                        vertical: AppUi.gapSM,
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: AppUi.animationFast,
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeOut,
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                        child: Text(
-                          AppStrings.pageCounter(_currentPage, _totalPages),
-                          key: ValueKey('$_currentPage-$_totalPages'),
-                          style: AppText.caption,
+            if (_totalPages == 0)
+              const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              ),
+            if (_totalPages > 0)
+              Positioned(
+                right: AppUi.gapMD,
+                bottom: AppUi.gapMD,
+                child: SafeArea(
+                  top: false,
+                  child: AnimatedContainer(
+                    duration: AppUi.animationMedium,
+                    curve: Curves.easeOut,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(AppUi.radiusPill),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppUi.radiusPill),
+                      onTap: _showJumpDialog,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppUi.gapMD,
+                          vertical: AppUi.gapSM,
+                        ),
+                        child: AnimatedSwitcher(
+                          duration: AppUi.animationFast,
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeOut,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          child: Text(
+                            AppStrings.pageCounter(_currentPage, _totalPages),
+                            key: ValueKey('$_currentPage-$_totalPages'),
+                            style: AppText.caption,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

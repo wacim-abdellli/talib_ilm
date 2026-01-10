@@ -42,7 +42,7 @@ class BookCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: radius,
         border: Border.all(
           color: AppColors.stroke,

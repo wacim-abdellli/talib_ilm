@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:talib_ilm/features/home/presentation/widgets/home_section_card.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
@@ -11,18 +10,20 @@ import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../core/utils/prayer_countdown.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../adhkar/presentation/adhkar_page.dart';
 import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/models/sharh_model.dart';
 import '../../ilm/presentation/ilm_page.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
+import '../../library/presentation/library_page.dart';
 import '../domain/models/hadith.dart';
 import '../domain/services/hadith_service.dart';
 import '../presentation/widgets/hadith_of_the_day_card.dart';
+import '../presentation/widgets/home_section_card.dart';
 import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/prayer_page.dart';
 import '../../prayer/presentation/widgets/next_prayer_card.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/pressable_scale.dart';
 
@@ -187,27 +188,58 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: const UnifiedAppBar(title: AppStrings.navHome, showMenu: true),
-      body: SafeArea(
-        child: ListView(
-          padding: AppUi.screenPadding,
-          children: [
-            _buildGreetingSection(),
-
-            const SizedBox(height: AppUi.gapXXL),
-
-            _buildHeroSection(context),
-
-            const SizedBox(height: AppUi.gapXXXL),
-
-            _buildContinueSection(context),
-
-            const SizedBox(height: AppUi.gapXL),
-
-            _buildHadithSection(),
-
-            const SizedBox(height: AppUi.gapXL),
-          ],
+      body: NestedScrollView(
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              floating: true,
+              snap: true,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              centerTitle: true,
+              title: Text(
+                AppStrings.navHome,
+                style: AppText.heading.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              leading: Builder(
+                builder: (context) => IconButton(
+                  tooltip: AppStrings.tooltipMenu,
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
+            ),
+          ];
+        },
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: AppUi.paddingMD),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeroSection(context),
+                const SizedBox(height: AppUi.gapLG),
+                _buildSectionTitle("Today's Wisdom"),
+                _buildHadithSection(),
+                const SizedBox(height: AppUi.paddingMD),
+                _buildDhikrCard(context),
+                const SizedBox(height: AppUi.gapXL),
+                _buildSectionTitle('Quick Access'),
+                _buildQuickAccessGrid(context),
+                const SizedBox(height: AppUi.gapXXL),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -282,6 +314,14 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
   }
 
+  void _openAdhkar(BuildContext context) {
+    Navigator.push(context, buildFadeRoute(page: const AdhkarPage()));
+  }
+
+  void _openLibrary(BuildContext context) {
+    Navigator.push(context, buildFadeRoute(page: const LibraryPage()));
+  }
+
   Widget _buildHeroSection(BuildContext context) {
     return FutureBuilder<PrayerTimesDay>(
       future: _prayerFuture,
@@ -310,11 +350,11 @@ class _HomePageState extends State<HomePage> {
         }
 
         final data = snapshot.data;
-        return HomeSectionCard(
+        return _ContinueLearningCard(
+          data: data,
           onTap: data == null
               ? () => _openIlm(context)
               : () => _continueLearning(context, data),
-          child: _ContinueLearningCard(data: data, onTap: null),
         );
       },
     );
@@ -339,6 +379,119 @@ class _HomePageState extends State<HomePage> {
               _hadithService.getRandomHadith(exclude: current),
         );
       },
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppUi.gapSM),
+      child: Text(
+        title,
+        style: AppText.heading.copyWith(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDhikrCard(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: PressableCard(
+        onTap: () => _openAdhkar(context),
+        padding: AppUi.cardPadding,
+        borderRadius: BorderRadius.circular(AppUi.radiusMD),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppUi.radiusMD),
+          border: Border.all(
+            color: AppColors.stroke,
+            width: AppUi.dividerThickness,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.homeDhikrTitle,
+              style: AppText.heading.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppUi.gapSM),
+            Text(
+              AppStrings.adhkarTitle,
+              style: AppText.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppUi.gapLG),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                AppStrings.actionStartNow,
+                style: AppText.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessGrid(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: AppUi.gapMD,
+      mainAxisSpacing: AppUi.gapMD,
+      children: [
+        HomeSectionCard(
+          title: AppStrings.navPrayer,
+          subtitle: AppStrings.prayerNext,
+          icon: Icons.access_time_rounded,
+          kind: HomeSectionKind.prayer,
+          onTap: () => _openPrayer(context),
+        ),
+        HomeSectionCard(
+          title: AppStrings.navAdhkar,
+          subtitle: AppStrings.adhkarMorning,
+          icon: Icons.self_improvement_rounded,
+          kind: HomeSectionKind.adhkar,
+          onTap: () => _openAdhkar(context),
+        ),
+        FutureBuilder<_ContinueData?>(
+          future: _continueFuture,
+          builder: (context, snapshot) {
+            final data = snapshot.data;
+            final subtitle =
+                data?.book.title ?? AppStrings.homeStartLearningTitle;
+            return HomeSectionCard(
+              title: AppStrings.navIlm,
+              subtitle: subtitle,
+              icon: Icons.menu_book_rounded,
+              kind: HomeSectionKind.ilm,
+              onTap: data == null
+                  ? () => _openIlm(context)
+                  : () => _continueLearning(context, data),
+            );
+          },
+        ),
+        HomeSectionCard(
+          title: AppStrings.navLibrary,
+          subtitle: AppStrings.actionReadFull,
+          icon: Icons.local_library_rounded,
+          kind: HomeSectionKind.library,
+          onTap: () => _openLibrary(context),
+        ),
+      ],
     );
   }
 
@@ -396,14 +549,14 @@ class _ContinueLearningCard extends StatelessWidget {
               AppStrings.homeStartLearningTitle,
               style: AppText.heading.copyWith(color: AppColors.textPrimary),
             ),
-            const SizedBox(height: AppUi.gapSM),
+            const SizedBox(height: AppUi.gapMD),
             Text(
               AppStrings.homeStartLearningMessage,
               style: AppText.body.copyWith(
                 color: AppColors.textPrimary.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: AppUi.gapLG),
+            const SizedBox(height: AppUi.gapXL),
             Align(
               alignment: Alignment.centerRight,
               child: _ContinueButton(
@@ -461,14 +614,14 @@ class _ContinueLearningCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppUi.gapSM),
+          const SizedBox(height: AppUi.gapMD),
           Text(
             AppStrings.sectionValue(tabLabel),
             style: AppText.body.copyWith(
               color: AppColors.textPrimary.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: AppUi.gapMD),
+          const SizedBox(height: AppUi.gapLG),
           Row(
             children: [
               Icon(
@@ -495,7 +648,7 @@ class _ContinueLearningCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppUi.gapSM),
+          const SizedBox(height: AppUi.gapMD),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppUi.radiusPill),
             child: LinearProgressIndicator(
@@ -507,7 +660,7 @@ class _ContinueLearningCard extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
           ),
-          const SizedBox(height: AppUi.gapMD),
+          const SizedBox(height: AppUi.gapLG),
           Text(
             subtitle,
             style: AppText.body.copyWith(
@@ -515,7 +668,7 @@ class _ContinueLearningCard extends StatelessWidget {
             ),
           ),
           if (pageInfo != null) ...[
-            const SizedBox(height: AppUi.gapSM),
+            const SizedBox(height: AppUi.gapMD),
             Text(
               pageInfo,
               style: AppText.caption.copyWith(
@@ -523,7 +676,7 @@ class _ContinueLearningCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: AppUi.gapLG),
+          const SizedBox(height: AppUi.gapXL),
           Align(
             alignment: Alignment.centerRight,
             child: _ContinueButton(
@@ -547,15 +700,28 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: PressableCard(
-        onTap: onTap,
-        padding: AppUi.cardPadding,
-        borderRadius: BorderRadius.circular(AppUi.radiusMD),
+      child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppUi.radiusMD),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.25),
+              blurRadius: 40,
+              spreadRadius: -10,
+              offset: const Offset(0, 20),
+            ),
+          ],
         ),
-        child: child,
+        child: PressableCard(
+          onTap: onTap,
+          padding: AppUi.cardPadding,
+          borderRadius: BorderRadius.circular(AppUi.radiusMD),
+          decoration: BoxDecoration(
+            gradient: AppColors.surfaceElevatedGradient,
+            borderRadius: BorderRadius.circular(AppUi.radiusMD),
+          ),
+          child: child,
+        ),
       ),
     );
   }

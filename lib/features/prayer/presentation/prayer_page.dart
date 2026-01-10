@@ -50,7 +50,6 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: UnifiedAppBar(
         title: AppStrings.prayerTitle,
@@ -66,9 +65,13 @@ class _PrayerPageState extends State<PrayerPage> {
           ),
         ],
       ),
-      body: FutureBuilder<PrayerTimesDay>(
-        future: _prayerFuture,
-        builder: (context, snapshot) {
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: FutureBuilder<PrayerTimesDay>(
+          future: _prayerFuture,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -98,13 +101,13 @@ class _PrayerPageState extends State<PrayerPage> {
                 dayLabel: AppStrings.prayerDayLabel,
                 hijriDate: hijriDate,
               ),
-              const SizedBox(height: AppUi.gapXL),
+              const SizedBox(height: AppUi.gapXXL),
               _buildCurrentPrayerCard(
                 data: data,
                 currentName: currentName,
                 nextName: nextName,
               ),
-              const SizedBox(height: AppUi.gapXL),
+              const SizedBox(height: AppUi.gapXXXL),
               ...times.map(
                 (item) => PrayerTimeTile(
                   item: item,
@@ -115,7 +118,8 @@ class _PrayerPageState extends State<PrayerPage> {
               ),
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -312,7 +316,7 @@ class _CurrentPrayerCard extends StatelessWidget {
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusLG),
         boxShadow: AppUi.cardShadow,
       ),

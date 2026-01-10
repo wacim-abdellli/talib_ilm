@@ -48,19 +48,23 @@ class LibraryPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: const UnifiedAppBar(
         title: AppStrings.libraryTitle,
         showMenu: true,
       ),
-      body: ListView(
-        padding: AppUi.screenPadding,
-        children: [
-          _LibraryHeader(),
-          const SizedBox(height: AppUi.gapXXL),
-          ...levelCards,
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: ListView(
+          padding: AppUi.screenPadding,
+          children: [
+            _LibraryHeader(),
+            const SizedBox(height: AppUi.gapXXL),
+            ...levelCards,
+          ],
+        ),
       ),
     );
   }
@@ -74,7 +78,7 @@ class _LibraryHeader extends StatelessWidget {
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: radius,
         border: Border.all(
           color: AppColors.stroke,
@@ -113,7 +117,7 @@ class _LibraryLevelCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: AppColors.surfaceGradient,
         borderRadius: radius,
         border: Border.all(
           color: AppColors.stroke,

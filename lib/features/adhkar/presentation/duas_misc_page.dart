@@ -16,14 +16,17 @@ class DuasMiscPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: const UnifiedAppBar(
         title: AppStrings.duasTitle,
         showBack: true,
       ),
-      body: FutureBuilder<AthkarCatalog>(
-        future: _service.loadCatalog(),
-        builder: (context, snapshot) {
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: FutureBuilder<AthkarCatalog>(
+          future: _service.loadCatalog(),
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -49,7 +52,8 @@ class DuasMiscPage extends StatelessWidget {
               return _DuaCard(item: item);
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -66,7 +70,7 @@ class _DuaCard extends StatelessWidget {
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
         boxShadow: AppUi.cardShadow,
       ),

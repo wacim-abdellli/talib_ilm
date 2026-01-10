@@ -27,7 +27,7 @@ class NextPrayerCard extends StatelessWidget {
       child: Container(
         padding: AppUi.cardPadding,
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
+          gradient: AppColors.surfaceElevatedGradient,
           borderRadius: radius,
           border: Border.all(
             color: AppColors.stroke,
@@ -78,7 +78,7 @@ class NextPrayerCardPlaceholder extends StatelessWidget {
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: AppColors.surfaceGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
       ),
       child: Column(

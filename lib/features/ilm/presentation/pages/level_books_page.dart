@@ -151,23 +151,26 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
     final books = _filteredBooks();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: UnifiedAppBar(
         title: widget.level.title,
         showBack: true,
       ),
-      body: Padding(
-        padding: AppUi.screenPaddingCompact,
-        child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: Padding(
+          padding: AppUi.screenPaddingCompact,
+          child: Column(
           children: [
             // ---------- HERO HEADER ----------
             Container(
               padding: const EdgeInsets.all(AppUi.gapLG),
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
+                gradient: AppColors.surfaceElevatedGradient,
                 borderRadius: BorderRadius.circular(AppUi.radiusLG),
                 border: Border.all(
-                  color: AppColors.textPrimary.withValues(alpha: 0.06),
+                  color: AppColors.stroke,
                 ),
               ),
               child: Column(
@@ -275,6 +278,7 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -44,15 +44,18 @@ class _AdhkarPageState extends State<AdhkarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: UnifiedAppBar(
         title: AppStrings.adhkarTitle,
         showMenu: true,
       ),
-      body: FutureBuilder<AthkarCatalog>(
-        future: _future,
-        builder: (context, snapshot) {
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: FutureBuilder<AthkarCatalog>(
+          future: _future,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -79,32 +82,48 @@ class _AdhkarPageState extends State<AdhkarPage> {
             );
           }
 
-          return GridView.builder(
-            padding: AppUi.screenPaddingCompact,
-            itemCount: categories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: AppUi.gapLG,
-              mainAxisSpacing: AppUi.gapLG,
-              childAspectRatio: AppUi.gridAspect,
-            ),
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final meta = _metaFor(category.id) ??
-                  const _CategoryMeta(
-                    icon: Icons.menu_book_outlined,
-                    accent: AppColors.primary,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final textScale = MediaQuery.textScaleFactorOf(context).clamp(
+                AppUi.textScaleMin,
+                AppUi.textScaleMax,
+              );
+              final widthScale =
+                  (constraints.maxWidth / AppUi.textScaleBaseWidth).clamp(
+                AppUi.textScaleMin,
+                AppUi.textScaleMax,
+              );
+              final aspectRatio = AppUi.gridAspect * (widthScale / textScale);
+
+              return GridView.builder(
+                padding: AppUi.screenPaddingCompact,
+                itemCount: categories.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppUi.gapLG,
+                  mainAxisSpacing: AppUi.gapLG,
+                  childAspectRatio: aspectRatio,
+                ),
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final meta = _metaFor(category.id) ??
+                      const _CategoryMeta(
+                        icon: Icons.menu_book_outlined,
+                        accent: AppColors.primary,
+                      );
+                  return _CategoryTile(
+                    title: category.title,
+                    subtitle: category.subtitle,
+                    icon: meta.icon,
+                    accent: meta.accent,
+                    onTap: () => _openCategory(context, category),
                   );
-              return _CategoryTile(
-                title: category.title,
-                subtitle: category.subtitle,
-                icon: meta.icon,
-                accent: meta.accent,
-                onTap: () => _openCategory(context, category),
+                },
               );
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -253,7 +272,7 @@ class _CategoryTile extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: BorderRadius.circular(AppUi.radiusCard),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        gradient: AppColors.surfaceElevatedGradient,
         borderRadius: BorderRadius.circular(AppUi.radiusCard),
       ),
       child: Column(

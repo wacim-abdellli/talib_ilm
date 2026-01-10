@@ -39,23 +39,27 @@ class MorePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: UnifiedAppBar(
         title: AppStrings.moreSectionTitle,
         showBack: true,
       ),
-      body: ListView(
-        padding: AppUi.screenPadding,
-        children: [
-          const SizedBox(height: AppUi.gapSM),
-          _MoreSectionCard(section: sections[0]),
-          const SizedBox(height: AppUi.gapMD),
-          _MoreSectionCard(section: sections[1]),
-          const SizedBox(height: AppUi.gapMD),
-          _MoreSectionCard(section: sections[2]),
-          const SizedBox(height: AppUi.gapMD),
-          _MoreSectionCard(section: sections[3]),
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: ListView(
+          padding: AppUi.screenPadding,
+          children: [
+            const SizedBox(height: AppUi.gapSM),
+            _MoreSectionCard(section: sections[0]),
+            const SizedBox(height: AppUi.gapMD),
+            _MoreSectionCard(section: sections[1]),
+            const SizedBox(height: AppUi.gapMD),
+            _MoreSectionCard(section: sections[2]),
+            const SizedBox(height: AppUi.gapMD),
+            _MoreSectionCard(section: sections[3]),
+          ],
+        ),
       ),
     );
   }
@@ -98,7 +102,7 @@ class _MoreSectionCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: AppColors.surfaceGradient,
         borderRadius: radius,
         border: Border.all(
           color: AppColors.stroke,

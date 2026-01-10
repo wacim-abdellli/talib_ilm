@@ -15,7 +15,9 @@ class TalibIlmApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: AppStrings.appName,
-      theme: AppTheme.dark(),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       scrollBehavior: const AppScrollBehavior(),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar'), Locale('en')],

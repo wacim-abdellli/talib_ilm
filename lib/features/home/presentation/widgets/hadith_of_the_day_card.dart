@@ -171,7 +171,6 @@ class _HadithOfTheDayCardState extends State<HadithOfTheDayCard>
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     const primary = AppColors.textPrimary;
     const secondary = AppColors.textSecondary;
     final cardHeight = (MediaQuery.of(context).size.height *
@@ -183,9 +182,19 @@ class _HadithOfTheDayCardState extends State<HadithOfTheDayCard>
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppUi.radiusMD),
-        boxShadow: AppUi.cardShadow,
+        border: Border.all(
+          color: AppColors.primaryLight,
+          width: AppUi.dividerThickness,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDark.withOpacity(0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: SizedBox(
         height: cardHeight,
@@ -226,7 +235,7 @@ class _HadithOfTheDayCardState extends State<HadithOfTheDayCard>
                                   ? Icons.favorite
                                   : Icons.favorite_border,
                             ),
-                            color: _isSaved ? colors.primary : secondary,
+                            color: _isSaved ? AppColors.primary : secondary,
                             tooltip: AppStrings.actionSave,
                           ),
                         ),
