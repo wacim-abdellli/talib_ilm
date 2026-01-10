@@ -6,9 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhkar_session_service.dart';
-import '../../../shared/widgets/pressable_scale.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -35,7 +33,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   late final PageController _pageController;
   List<AthkarItem> _items = const [];
   Map<String, int> _counts = {};
-  String? _categoryTitle;
   int _index = 0;
   int _count = 0;
   bool _loading = true;
@@ -66,7 +63,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     setState(() {
       _items = items;
       _counts = {};
-      _categoryTitle = categoryData?.title;
       _index = initialIndex;
       _count = savedCount < 0 ? 0 : savedCount;
       _ritualLocked = false;
@@ -140,23 +136,23 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.titleOverride ?? _categoryTitle ?? widget.category.label;
     return Scaffold(
-      appBar: UnifiedAppBar(
-        title: title,
-        showBack: true,
-      ),
+      backgroundColor: Colors.transparent,
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary,
+              AppColors.primaryDark,
+            ],
+          ),
         ),
         child: _loading
             ? const SizedBox.shrink()
             : SafeArea(
-                child: Padding(
-                  padding: AppUi.screenPaddingTopLarge,
-                  child: _items.isEmpty ? _buildEmpty() : _buildSession(),
-                ),
+                child: _items.isEmpty ? _buildEmpty() : _buildSession(),
               ),
       ),
     );
@@ -173,149 +169,132 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   Widget _buildSession() {
     final item = _items[_index];
-    final showSource = item.source.isNotEmpty;
-    final showFadl = item.fadl.isNotEmpty;
     final repeat = _repeatFor(_items, _index);
+    final overallProgress = _overallProgress(repeat);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxHeight = constraints.maxHeight;
         final isCompact = maxHeight < 620;
-        final cardPaddingVertical = isCompact ? AppUi.gapLG : AppUi.gapXXL;
-        final contentGap = isCompact ? AppUi.gapSM : AppUi.gapLG;
-        final sectionGap = isCompact ? AppUi.gapSM : AppUi.gapMD;
-        final groupGap = isCompact ? AppUi.gapMD : AppUi.gapLG;
-        final ringSize =
-            math.min(72.0, math.max(56.0, maxHeight * 0.12));
-        final ringStroke = isCompact ? 6.0 : 7.0;
-        final textPaddingVertical =
-            isCompact ? AppUi.gapSMPlus : AppUi.gapMD;
+        final counterSize = math.min(
+          200.0,
+          math.max(160.0, constraints.maxWidth * 0.6),
+        );
+        final topPadding = isCompact ? AppUi.gapSM : AppUi.gapMD;
+        final sidePadding = isCompact ? AppUi.gapLG : AppUi.gapXL;
+        final isComplete = repeat > 0 && _count >= repeat;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            LinearProgressIndicator(
+              value: overallProgress,
+              minHeight: 4,
+              backgroundColor: AppColors.secondaryLight.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation(
+                AppColors.secondaryLight,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppUi.paddingMD,
+                vertical: topPadding,
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    AppStrings.numberPair(_index + 1, _items.length),
+                    style: AppText.caption.copyWith(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (item.audio.isNotEmpty)
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                      },
+                      icon: const Icon(Icons.volume_up_outlined),
+                      color: Colors.white,
+                      tooltip: AppStrings.actionDetails,
+                    ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                    color: Colors.white,
+                    tooltip: AppStrings.actionClose,
+                  ),
+                ],
+              ),
+            ),
             Expanded(
-              child: Center(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _handleTap,
-                  child: Container(
-                    width: double.infinity,
-                    padding: AppUi.cardPadding.copyWith(
-                      top: cardPaddingVertical,
-                      bottom: cardPaddingVertical,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.surfaceElevatedGradient,
-                      borderRadius: BorderRadius.circular(AppUi.radiusXXL),
-                      border: Border.all(
-                        color: AppColors.stroke,
-                        width: AppUi.dividerThickness,
-                      ),
-                      boxShadow: AppUi.cardShadow,
-                    ),
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: _items.length,
-                      onPageChanged: _handlePageChange,
-                      reverse: Directionality.of(context) == TextDirection.rtl,
-                      itemBuilder: (context, index) {
-                        final item = _items[index];
-                        return LayoutBuilder(
-                          builder: (context, constraints) {
-                            return SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: constraints.maxHeight,
-                                ),
-                                child: Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: AppUi.gapMD,
-                                      vertical: textPaddingVertical,
-                                    ),
-                                    child: ConstrainedBox(
-                                      constraints:
-                                          const BoxConstraints(
-                                            maxWidth: AppUi.maxContentWidth,
-                                          ),
-                                      child: Text(
-                                        item.arabic,
-                                        textAlign: TextAlign.center,
-                                        style: AppText.body,
-                                      ),
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _items.length,
+                onPageChanged: _handlePageChange,
+                reverse: Directionality.of(context) == TextDirection.rtl,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  final translation = _translationFor(item);
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: sidePadding,
+                                vertical: AppUi.gapLG,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item.arabic,
+                                    textAlign: TextAlign.center,
+                                    style: AppText.dhikrText.copyWith(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      height: 1.8,
                                     ),
                                   ),
-                                ),
+                                  if (translation.isNotEmpty) ...[
+                                    const SizedBox(height: AppUi.gapLG),
+                                    Text(
+                                      translation,
+                                      textAlign: TextAlign.center,
+                                      style: AppText.body.copyWith(
+                                        fontSize: 18,
+                                        color: Colors.white70,
+                                        height: 1.6,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
-            SizedBox(height: contentGap),
-            Center(
-              child: _RepeatProgress(
-                count: _count,
-                repeat: repeat,
-                size: ringSize,
-                strokeWidth: ringStroke,
-                onTap: _handleTap,
-              ),
+            const SizedBox(height: AppUi.gapLG),
+            _CounterButton(
+              count: _count,
+              size: counterSize,
+              isComplete: isComplete,
+              onTap: _handleTap,
             ),
-            SizedBox(height: sectionGap),
-            if (showSource || showFadl) ...[
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: AppUi.gapMD,
-                runSpacing: AppUi.gapSM,
-                children: [
-                  if (showSource)
-                    _ActionLink(
-                      label: AppStrings.adhkarSource,
-                      onTap: () =>
-                          _showTextSheet(AppStrings.adhkarSource, item.source),
-                    ),
-                  if (showFadl)
-                    _ActionLink(
-                      label: AppStrings.adhkarVirtue,
-                      onTap: () =>
-                          _showTextSheet(AppStrings.adhkarVirtue, item.fadl),
-                    ),
-                ],
-              ),
-              SizedBox(height: groupGap),
-            ],
-            SizedBox(height: sectionGap),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _StepArrow(
-                    icon: Icons.chevron_left,
-                    enabled: _index > 0,
-                    onTap: _goPrev,
-                  ),
-                  const SizedBox(width: AppUi.gapLG),
-                  Text(
-                    '${_index + 1} / ${_items.length}',
-                    style: AppText.caption,
-                  ),
-                  const SizedBox(width: AppUi.gapLG),
-                  _StepArrow(
-                    icon: Icons.chevron_right,
-                    enabled: _index < _items.length - 1,
-                    onTap: _goNext,
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: AppUi.gapXL),
           ],
         );
       },
@@ -332,110 +311,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     );
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: AppColors.primary),
-            const SizedBox(width: AppUi.gapSM),
-            Expanded(
-              child: Text(message, style: AppText.body),
-            ),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(
-          AppUi.paddingMD,
-          0,
-          AppUi.paddingMD,
-          AppUi.paddingMD,
-        ),
-        duration: AppUi.snackDurationLong,
-        showCloseIcon: true,
-        closeIconColor: AppColors.textMuted,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-        ),
-      ),
-    );
-  }
-
-  void _showTextSheet(String title, String content) {
-    _showDetailSections(title, [
-      _DetailSection(title: title, content: content),
-    ]);
-  }
-
-  void _showDetailSections(String title, List<_DetailSection> sections) {
-    final combined = sections.map((s) => s.content).join('\n\n');
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusLG),
-        ),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppUi.paddingMD,
-              AppUi.gapMD,
-              AppUi.paddingMD,
-              AppUi.paddingMD,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(title, style: AppText.heading),
-                    ),
-                    IconButton(
-                      tooltip: AppStrings.actionCopy,
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: combined));
-                        _showSnackBar(AppStrings.copyDone);
-                      },
-                      icon: const Icon(Icons.copy_outlined),
-                    ),
-                    IconButton(
-                      tooltip: AppStrings.actionClose,
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppUi.gapMD),
-                ...sections.map(
-                  (section) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppUi.gapMD),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(section.title, style: AppText.caption),
-                        const SizedBox(height: AppUi.gapXSPlus),
-                        Text(
-                          section.content,
-                          style: AppText.bodyMuted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   void _handlePageChange(int index) {
     if (_loading || _ritualLocked || index == _index) return;
@@ -508,226 +383,72 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     await _sessionService.saveCounts(widget.category, const {});
   }
 
-}
-
-class _DetailSection {
-  final String title;
-  final String content;
-
-  const _DetailSection({
-    required this.title,
-    required this.content,
-  });
-}
-
-class _StepArrow extends StatelessWidget {
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _StepArrow({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = enabled
-        ? AppColors.textPrimary.withOpacity(0.7)
-        : AppColors.textPrimary.withOpacity(0.35);
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppUi.radiusCard),
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.all(AppUi.gapXSPlus),
-        child: Icon(icon, color: color),
-      ),
-    );
+  String _translationFor(AthkarItem item) {
+    if (item.meaning.isNotEmpty) return item.meaning;
+    if (item.transliteration.isNotEmpty) return item.transliteration;
+    return '';
   }
-}
 
-class _ActionLink extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionLink({
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableScale(
-      child: TextButton(
-        onPressed: onTap,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppUi.gapSMPlus,
-            vertical: AppUi.gapXSPlus,
-          ),
-          minimumSize: const Size(0, AppUi.tapTargetMin),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Text(
-          label,
-          style: AppText.caption,
-        ),
-      ),
-    );
+  double _overallProgress(int repeat) {
+    if (_items.isEmpty) return 0;
+    final perItem = repeat <= 0 ? 1.0 : (_count / repeat).clamp(0.0, 1.0);
+    final progress = (_index + perItem) / _items.length;
+    return progress.clamp(0.0, 1.0);
   }
+
 }
 
-class _RepeatProgress extends StatelessWidget {
+class _CounterButton extends StatelessWidget {
   final int count;
-  final int repeat;
   final double size;
-  final double strokeWidth;
+  final bool isComplete;
   final VoidCallback onTap;
 
-  const _RepeatProgress({
+  const _CounterButton({
     required this.count,
-    required this.repeat,
-    this.size = 72.0,
-    this.strokeWidth = 7.0,
+    required this.size,
+    required this.isComplete,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        repeat <= 0 ? 1.0 : (count / repeat).clamp(0.0, 1.0);
-    const progressDuration = Duration(milliseconds: 360);
-    final ringSize = size;
-    final ringRadius = ringSize / 2;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(end: progress),
-      duration: progressDuration,
+    return AnimatedScale(
+      scale: isComplete ? 1.06 : 1,
+      duration: AppUi.animationMedium,
       curve: Curves.easeOut,
-      onEnd: () {
-        if (repeat > 0 && count == repeat) {
-          HapticFeedback.mediumImpact();
-        }
-      },
-      builder: (context, value, _) {
-        final isComplete = value >= 1.0;
-        return AnimatedOpacity(
-          opacity: isComplete ? 0.0 : 1.0,
-          duration: progressDuration,
-          curve: Curves.easeOut,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.4),
-                  blurRadius: 24,
-                ),
-              ],
-            ),
-            child: Material(
-              color: AppColors.clear,
-              shape: const CircleBorder(),
-              child: InkResponse(
-                radius: ringRadius,
-                containedInkWell: true,
-                onTap: onTap,
-                child: SizedBox(
-                  width: ringSize,
-                  height: ringSize,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CustomPaint(
-                        size: Size.square(ringSize),
-                        painter: _ProgressRingPainter(
-                          progress: value,
-                          strokeWidth: strokeWidth,
-                          trackColor:
-                              AppColors.textPrimary.withOpacity(0.12),
-                          startColor: AppColors.primary,
-                          endColor: AppColors.accent,
-                        ),
-                      ),
-                      AnimatedOpacity(
-                        opacity: isComplete ? 0.0 : 1.0,
-                        duration: progressDuration,
-                        curve: Curves.easeOut,
-                        child: Text(
-                          '$count / $repeat',
-                          style: AppText.caption,
-                        ),
-                      ),
-                    ],
+      child: Material(
+        color: AppColors.secondary.withOpacity(0.4),
+        shape: const CircleBorder(),
+        child: InkResponse(
+          onTap: onTap,
+          radius: size / 2,
+          containedInkWell: true,
+          splashColor: AppColors.secondaryLight.withOpacity(0.35),
+          highlightColor: AppColors.secondary.withOpacity(0.2),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Center(
+              child: AnimatedOpacity(
+                opacity: isComplete ? 0.6 : 1.0,
+                duration: AppUi.animationMedium,
+                curve: Curves.easeOut,
+                child: FittedBox(
+                  child: Text(
+                    '$count',
+                    style: AppText.heading.copyWith(
+                      fontSize: 72,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
-  }
-}
-
-class _ProgressRingPainter extends CustomPainter {
-  final double progress;
-  final double strokeWidth;
-  final Color trackColor;
-  final Color startColor;
-  final Color endColor;
-
-  const _ProgressRingPainter({
-    required this.progress,
-    required this.strokeWidth,
-    required this.trackColor,
-    required this.startColor,
-    required this.endColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = (size.shortestSide - strokeWidth) / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(rect, -math.pi / 2, math.pi * 2, false, trackPaint);
-
-    final gradient = SweepGradient(
-      startAngle: -math.pi / 2,
-      endAngle: math.pi * 1.5,
-      colors: [
-        startColor,
-        endColor,
-      ],
-    );
-    final progressPaint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(
-      rect,
-      -math.pi / 2,
-      math.pi * 2 * progress,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ProgressRingPainter oldDelegate) {
-    return progress != oldDelegate.progress ||
-        strokeWidth != oldDelegate.strokeWidth ||
-        trackColor != oldDelegate.trackColor ||
-        startColor != oldDelegate.startColor ||
-        endColor != oldDelegate.endColor;
   }
 }
