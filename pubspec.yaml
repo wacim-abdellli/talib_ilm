@@ -1,0 +1,79 @@
+name: talib_ilm
+description: "A new Flutter project."
+publish_to: 'none' 
+
+environment:
+  sdk: ^3.10.4
+
+
+dependencies:
+  shared_preferences: ^2.2.2
+  youtube_player_flutter: ^9.1.1
+  flutter_inappwebview: ^6.0.0
+  syncfusion_flutter_pdfviewer: ^32.1.21
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  adhan: ^2.0.0+1
+  hijri: ^3.0.0
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.2
+  flutter_timezone: ^5.0.1
+  just_audio: ^0.9.38
+  share_plus: ^10.0.2
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+ 
+  cupertino_icons: ^1.0.8
+  window_size: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  
+  flutter_lints: ^6.0.0
+
+
+
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/mutun_program.json
+    - assets/data/
+    - assets/audio/
+    - assets/images/logo.png
+    - assets/icons/
+    - assets/pdfs/mutun/
+    - assets/pdfs/shuruh/bk_usul_thalatha/
+    - assets/fonts/
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Cairo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cairo-ExtraBold.ttf
+          weight: 800
+
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+
+    - family: Vazirmatn
+      fonts:
+        - asset: assets/fonts/Vazirmatn-Regular.ttf
+        - asset: assets/fonts/Vazirmatn-Bold.ttf

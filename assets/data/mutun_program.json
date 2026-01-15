@@ -1,0 +1,563 @@
+{
+  "program": {
+    "id": "talib_al_ilm_mutun",
+    "title": "برنامج متون طالب العلم",
+    "version": "2.0.0",
+    "levels": [
+      {
+        "id": "lvl_preparatory",
+        "order": 0,
+        "title": "المستوى التمهيدي",
+        "label": "التمهيدي",
+        "goal": "تأسيس الطالب في الآداب والأذكار الشرعية",
+        "duration": "٣-٦ أشهر",
+        "focus": [
+          "الأذكار اليومية",
+          "الآداب الشرعية",
+          "الأخلاق الإسلامية"
+        ],
+        "description": "مرحلة تمهيدية تركز على الآداب الشرعية والأذكار اليومية لتأسيس الطالب على المنهج السليم.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_adhkar_adab",
+            "title": "الآداب والأذكار",
+            "author": "مجموعة من العلماء",
+            "subject": "الآداب والأذكار",
+            "description": "كتاب يجمع الأذكار اليومية والآداب الشرعية الأساسية التي يحتاجها المسلم في حياته اليومية.",
+            "totalPages": 60,
+            "pdf_path": "assets/pdfs/mutun/bk_adhkar_adab.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "حصن المسلم",
+                  "file": "hisn_al_muslim",
+                  "scholar": "سعيد بن علي القحطاني"
+                },
+                {
+                  "title": "الأذكار النووية",
+                  "file": "adhkar_nawawi",
+                  "scholar": "النووي"
+                }
+              ]
+            },
+            "level": "المستوى التمهيدي"
+          }
+        ]
+      },
+      {
+        "id": "lvl_foundation",
+        "order": 1,
+        "title": "المستوى الأول",
+        "label": "المبتدئ",
+        "goal": "بناء الأساس العقدي والعلمي الأولي",
+        "duration": "١-٢ سنوات",
+        "focus": [
+          "العقيدة الأساسية",
+          "أصول الدين",
+          "الأحاديث الأساسية"
+        ],
+        "description": "مرحلة التأسيس الأولى للطالب، يركز على العقيدة والمتون الأساسية.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_nawaqid_islam",
+            "title": "نواقض الإسلام",
+            "author": "محمد بن عبد الوهاب",
+            "subject": "العقيدة ",
+            "description": "بيان الأمور التي تُخرج المسلم من الإسلام.",
+            "totalPages": 15,
+            "pdf_path": "assets/pdfs/mutun/bk_nawaqid_islam.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح نواقض الإسلام",
+                  "file": "ibn_baz_nawaqid",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "شرح نواقض الإسلام",
+                  "file": "ibn_uthaymeen_nawaqid",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح نواقض الإسلام",
+                  "file": "al_sheikh_nawaqid",
+                  "scholar": "الشيخ صالح بن عبد العزيز آل الشيخ"
+                }
+              ]
+            },
+            "level": "المستوى الأول"
+          },
+          {
+            "id": "bk_qawaid_arba",
+            "title": "القواعد الأربع",
+            "author": "محمد بن عبد الوهاب",
+            "subject": "العقيدة",
+            "description": "قواعد عظيمة في تمييز التوحيد عن الشرك.",
+            "totalPages": 16,
+            "pdf_path": "assets/pdfs/mutun/bk_qawaid_arba.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح القواعد الأربع",
+                  "file": "ibn_baz_qawaid",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "شرح القواعد الأربع",
+                  "file": "ibn_uthaymeen_qawaid",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                }
+              ]
+            },
+            "level": "المستوى الأول"
+          },
+          {
+            "id": "bk_usul_thalatha",
+            "title": "الأصول الثلاثة وأدلتها",
+            "author": "محمد بن عبد الوهاب",
+            "subject": "العقيدة",
+            "description": "يتناول ثلاثة أسئلة: من ربك؟ ما دينك؟ من نبيك؟ مع الأدلة.",
+            "totalPages": 30,
+            "pdf_path": "assets/pdfs/mutun/bk_usul_thalatha.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "ibn_uthaymeen",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "ibn_baz",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "شرح الأصول الثلاثة",
+                  "file": "salah_al_shaikh",
+                  "scholar": "الشيخ صالح بن عبد العزيز آل الشيخ"
+                }
+              ]
+            },
+            "level": "المستوى الأول"
+          },
+          {
+            "id": "bk_arbaeen_nawawi",
+            "title": "الأربعون النووية",
+            "author": "النووي",
+            "subject": "الحديث",
+            "description": "أربعون حديثاً جامعة في أصول الدين وآداب القلب والجوارح.",
+            "totalPages": 60,
+            "pdf_path": "assets/pdfs/mutun/bk_arbaeen_nawawi.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الأربعين النووية",
+                  "file": "ibn_uthaymeen_arbaeen",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح الأربعين النووية",
+                  "file": "ibn_baz_arbaeen",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "جامع العلوم والحكم",
+                  "file": "ibn_rajab",
+                  "scholar": "ابن رجب الحنبلي"
+                }
+              ]
+            },
+            "level": "المستوى الأول"
+          }
+        ]
+      },
+      {
+        "id": "lvl_intermediate_1",
+        "order": 2,
+        "title": "المستوى الثاني",
+        "label": "المتوسط الأول",
+        "goal": "التوسع في التجويد والفقه والعقيدة",
+        "duration": "١-٢ سنوات",
+        "focus": [
+          "التجويد",
+          "فقه العبادات",
+          "التوحيد"
+        ],
+        "description": "مرحلة البناء على الأساس مع إضافة علوم التجويد والفقه.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_tuhfat_atfal",
+            "title": "تحفة الأطفال",
+            "author": "سليمان الجمزوري",
+            "subject": "التجويد",
+            "description": "منظومة في تجويد القرآن للمبتدئين.",
+            "totalPages": 20,
+            "pdf_path": "assets/pdfs/mutun/bk_tuhfat_atfal.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح تحفة الأطفال",
+                  "file": "tafsir_tuhfat",
+                  "scholar": "متعدد"
+                }
+              ]
+            },
+            "level": "المستوى الثاني"
+          },
+          {
+            "id": "bk_shuroot_salah",
+            "title": "شروط الصلاة وأركانها وواجباتها",
+            "author": "متعدد",
+            "subject": "الفقه",
+            "description": "رسالة في بيان شروط وأركان وواجبات الصلاة.",
+            "totalPages": 25,
+            "pdf_path": "assets/pdfs/mutun/bk_shuroot_salah.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح شروط الصلاة",
+                  "file": "ibn_uthaymeen_shuroot",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح شروط الصلاة",
+                  "file": "ibn_baz_shuroot",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                }
+              ]
+            },
+            "level": "المستوى الثاني"
+          },
+          {
+            "id": "bk_kitab_tawheed",
+            "title": "كتاب التوحيد",
+            "author": "محمد بن عبد الوهاب",
+            "subject": "العقيدة",
+            "description": "كتاب يجمع أبواب التوحيد وينقض الشرك بأدلته من القرآن والسنة.",
+            "totalPages": 80,
+            "pdf_path": "assets/pdfs/mutun/bk_kitab_tawheed.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح كتاب التوحيد",
+                  "file": "ibn_uthaymeen_tawheed",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح كتاب التوحيد",
+                  "file": "salah_al_sheikh_tawheed",
+                  "scholar": "الشيخ صالح آل الشيخ"
+                },
+                {
+                  "title": "شرح كتاب التوحيد",
+                  "file": "ibn_baz_tawheed",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                }
+              ]
+            },
+            "level": "المستوى الثاني"
+          }
+        ]
+      },
+      {
+        "id": "lvl_intermediate_2",
+        "order": 3,
+        "title": "المستوى الثالث",
+        "label": "المتوسط الثاني",
+        "goal": "دراسة علوم الحديث والعقيدة والنحو",
+        "duration": "٢-٣ سنوات",
+        "focus": [
+          "مصطلح الحديث",
+          "العقيدة المتوسطة",
+          "النحو العربي"
+        ],
+        "description": "مرحلة التوسع في العلوم الشرعية واللغة العربية.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_manzumah_baiquoni",
+            "title": "منظومة البيقوني",
+            "author": "البيقوني",
+            "subject": "الحديث",
+            "description": "متن في مصطلح الحديث (34 بيتًا) يشمل أهم مصطلحات علم الحديث.",
+            "totalPages": 10,
+            "pdf_path": "assets/pdfs/mutun/bk_manzumah_baiquoni.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح البيقونية",
+                  "file": "ibn_uthaymeen_baiquoni",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح البيقونية",
+                  "file": "abdulkarim_khudair",
+                  "scholar": "الشيخ عبد الكريم الخضير"
+                }
+              ]
+            },
+            "level": "المستوى الثالث"
+          },
+          {
+            "id": "bk_manzumah_albiri",
+            "title": "منظومة أبي إسحاق الإلبيري",
+            "author": "أبو إسحاق الإلبيري",
+            "subject": "العقيدة",
+            "description": "منظومة في العقيدة السلفية.",
+            "totalPages": 30,
+            "pdf_path": "assets/pdfs/mutun/bk_manzumah_albiri.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح منظومة الإلبيري",
+                  "file": "sharh_albiri",
+                  "scholar": "متعدد"
+                }
+              ]
+            },
+            "level": "المستوى الثالث"
+          },
+          {
+            "id": "bk_ajrumiyyah",
+            "title": "المقدمة الآجرومية",
+            "author": "ابن آجروم",
+            "subject": "اللغة العربية",
+            "description": "المتن الأشهر للمبتدئ في النحو، يقدم القواعد الأساسية.",
+            "totalPages": 30,
+            "pdf_path": "assets/pdfs/mutun/bk_ajrumiyyah.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الآجرومية",
+                  "file": "muhyi_al_din",
+                  "scholar": "محمد محيي الدين عبد الحميد"
+                },
+                {
+                  "title": "شرح الآجرومية",
+                  "file": "alghalayini",
+                  "scholar": "مصطفى الغلاييني"
+                }
+              ]
+            },
+            "level": "المستوى الثالث"
+          },
+          {
+            "id": "bk_wasitiyyah",
+            "title": "العقيدة الواسطية",
+            "author": "ابن تيمية",
+            "subject": "العقيدة",
+            "description": "عرض عقيدة السلف في الأسماء والصفات والقضاء والقدر بأسلوب وسط.",
+            "totalPages": 80,
+            "pdf_path": "assets/pdfs/mutun/bk_wasitiyyah.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الواسطية",
+                  "file": "ibn_uthaymeen_wasitiyyah",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح الواسطية",
+                  "file": "salah_al_sheikh_wasitiyyah",
+                  "scholar": "الشيخ صالح آل الشيخ"
+                },
+                {
+                  "title": "شرح الواسطية",
+                  "file": "ibn_baz_wasitiyyah",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                }
+              ]
+            },
+            "level": "المستوى الثالث"
+          }
+        ]
+      },
+      {
+        "id": "lvl_advanced_1",
+        "order": 4,
+        "title": "المستوى الرابع",
+        "label": "المتقدم الأول",
+        "goal": "دراسة أصول الفقه والفرائض والعقيدة المتقدمة",
+        "duration": "٢-٣ سنوات",
+        "focus": [
+          "أصول الفقه",
+          "الفرائض",
+          "العقيدة المتقدمة"
+        ],
+        "description": "مرحلة الانتقال إلى العلوم الأصولية والتخصصية.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_waraqat",
+            "title": "الورقات",
+            "author": "الجويني",
+            "subject": "أصول الفقه",
+            "description": "مقدمة موجزة في أصول الفقه تذكر أهم المصطلحات والأدلة.",
+            "totalPages": 20,
+            "pdf_path": "assets/pdfs/mutun/bk_waraqat.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الورقات",
+                  "file": "abdulkarim_namlh",
+                  "scholar": "عبد الكريم النملة"
+                },
+                {
+                  "title": "شرح الورقات",
+                  "file": "mustafa_khan",
+                  "scholar": "مصطفى الخن"
+                }
+              ]
+            },
+            "level": "المستوى الرابع"
+          },
+          {
+            "id": "bk_unwan_al_hukm",
+            "title": "عنوان الحكم",
+            "author": "غير محدد",
+            "subject": "غير محدد",
+            "description": "كتاب في الفقه أو الأصول (يحتاج تحديد دقيق).",
+            "totalPages": 100,
+            "pdf_path": "assets/pdfs/mutun/bk_unwan_al_hukm.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "يحتاج مراجعة وتحديد",
+                  "file": "needs_review",
+                  "scholar": "غير محدد"
+                }
+              ]
+            },
+            "level": "المستوى الرابع"
+          },
+          {
+            "id": "bk_rahibiyyah",
+            "title": "الرحبية",
+            "author": "الرحبي",
+            "subject": "الفرائض",
+            "description": "متن في علم الفرائض (الميراث).",
+            "totalPages": 50,
+            "pdf_path": "assets/pdfs/mutun/bk_rahibiyyah.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الرحبية",
+                  "file": "sharh_rahibiyyah",
+                  "scholar": "متعدد"
+                }
+              ]
+            },
+            "level": "المستوى الرابع"
+          },
+          {
+            "id": "bk_aqidah_tahawiyyah",
+            "title": "العقيدة الطحاوية",
+            "author": "الطحاوي",
+            "subject": "العقيدة",
+            "description": "متن جامع شامل في العقيدة السلفية مع شرح ابن أبي العز.",
+            "totalPages": 200,
+            "pdf_path": "assets/pdfs/mutun/bk_aqidah_tahawiyyah.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح الطحاوية",
+                  "file": "ibn_abi_al_izz",
+                  "scholar": "ابن أبي العز"
+                },
+                {
+                  "title": "شرح الطحاوية",
+                  "file": "salah_al_sheikh_tahawiyyah",
+                  "scholar": "الشيخ صالح آل الشيخ"
+                },
+                {
+                  "title": "شرح الطحاوية",
+                  "file": "abdulaziz_rajhi",
+                  "scholar": "الشيخ عبد العزيز الراجحي"
+                }
+              ]
+            },
+            "level": "المستوى الرابع"
+          }
+        ]
+      },
+      {
+        "id": "lvl_advanced_2",
+        "order": 5,
+        "title": "المستوى الخامس",
+        "label": "المتقدم الثاني",
+        "goal": "التمكن من الحديث والفقه",
+        "duration": "٢-٣ سنوات",
+        "focus": [
+          "أحاديث الأحكام",
+          "الفقه المقارن",
+          "الاستنباط الفقهي"
+        ],
+        "description": "مرحلة التخصص والتمكن من علوم الحديث والفقه.",
+        "hidden": false,
+        "books": [
+          {
+            "id": "bk_bulugh_maram",
+            "title": "بلوغ المرام",
+            "author": "ابن حجر العسقلاني",
+            "subject": "الحديث",
+            "description": "يجمع أدلة الأحكام من كتب السنة ويذكر مرتبة الحديث غالباً.",
+            "totalPages": 260,
+            "pdf_path": "assets/pdfs/mutun/bk_bulugh_maram.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "شرح بلوغ المرام",
+                  "file": "ibn_uthaymeen_bulugh",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح بلوغ المرام",
+                  "file": "ibn_baz_bulugh",
+                  "scholar": "الشيخ عبد العزيز بن باز"
+                },
+                {
+                  "title": "شرح بلوغ المرام",
+                  "file": "salih_fawzan_bulugh",
+                  "scholar": "الشيخ صالح الفوزان"
+                }
+              ]
+            },
+            "level": "المستوى الخامس"
+          },
+          {
+            "id": "bk_zad_mustaqni",
+            "title": "زاد المستقنع",
+            "author": "الحجاوي",
+            "subject": "الفقه",
+            "description": "المتن المعتمد في المذهب الحنبلي، دقيق العبارة يحتاج لشرح.",
+            "totalPages": 200,
+            "pdf_path": "assets/pdfs/mutun/bk_zad_mustaqni.pdf",
+            "resources": {
+              "shuruh": [
+                {
+                  "title": "الشرح الممتع",
+                  "file": "ibn_uthaymeen_zad",
+                  "scholar": "الشيخ محمد بن صالح العثيمين"
+                },
+                {
+                  "title": "شرح زاد المستقنع",
+                  "file": "salih_fawzan_zad",
+                  "scholar": "الشيخ صالح الفوزان"
+                },
+                {
+                  "title": "شرح زاد المستقنع",
+                  "file": "abdulkarim_khudair_zad",
+                  "scholar": "الشيخ عبد الكريم الخضير"
+                }
+              ]
+            },
+            "level": "المستوى الخامس"
+          }
+        ]
+      }
+    ]
+  }
+}
