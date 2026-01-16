@@ -5,8 +5,8 @@ import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
-import '../../../shared/widgets/empty_state.dart';
+
+import '../../../shared/widgets/app_states.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -34,61 +34,115 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const UnifiedAppBar(
-        title: AppStrings.favoritesTitle,
-        showBack: true,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
-        child: FutureBuilder<List<FavoriteItem>>(
-          future: _future,
-          builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final items = snapshot.data ?? const [];
-          if (items.isEmpty) {
-            return Padding(
-              padding: AppUi.screenPadding,
-              child: SizedBox(
-                width: double.infinity,
-                child: EmptyState(
-                  icon: Icons.star_border,
-                  title: AppStrings.favoritesEmptyTitle,
-                  message: AppStrings.favoritesEmptyMessage,
-                  actionLabel: AppStrings.actionUpdate,
-                  onAction: _reload,
-                ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
               ),
-            );
-          }
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEC4899), Color(0xFFF472B6)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'المفضلة',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '12 عنصر محفوظ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF64748B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.sort_rounded, size: 26),
+                    color: const Color(0xFF64748B),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.backgroundGradient,
+              ),
+              child: FutureBuilder<List<FavoriteItem>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const AppLoadingIndicator();
+                  }
+                  final items = snapshot.data ?? const [];
+                  if (items.isEmpty) {
+                    return Padding(
+                      padding: AppUi.screenPadding,
+                      child: AppEmptyState.favorites(),
+                    );
+                  }
 
-          final grouped = <FavoriteType, List<FavoriteItem>>{};
-          for (final item in items) {
-            grouped.putIfAbsent(item.type, () => []).add(item);
-          }
+                  final grouped = <FavoriteType, List<FavoriteItem>>{};
+                  for (final item in items) {
+                    grouped.putIfAbsent(item.type, () => []).add(item);
+                  }
 
-          return ListView(
-            padding: AppUi.screenPadding,
-            children: FavoriteType.values
-                .where(grouped.containsKey)
-                .map((type) {
-                  final list = grouped[type]!;
-                  return _Section(
-                    title: _labelFor(type),
-                    items: list,
-                    onRemove: (item) async {
-                      await _service.remove(item.type, item.id);
-                      _reload();
-                    },
+                  return ListView(
+                    padding: AppUi.screenPadding,
+                    children: FavoriteType.values
+                        .where(grouped.containsKey)
+                        .map((type) {
+                          final list = grouped[type]!;
+                          return _Section(
+                            title: _labelFor(type),
+                            items: list,
+                            onRemove: (item) async {
+                              await _service.remove(item.type, item.id);
+                              _reload();
+                            },
+                          );
+                        })
+                        .toList(),
                   );
-                })
-                .toList(),
-          );
-          },
-        ),
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

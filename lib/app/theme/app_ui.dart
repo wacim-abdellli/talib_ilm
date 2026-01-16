@@ -98,6 +98,7 @@ class AppUi {
   static const double lessonScrollExtent = AppSpacing.lessonScrollExtent;
 
   static List<BoxShadow> get cardShadow => AppShadows.card;
+  static List<BoxShadow> get shadowMD => AppShadows.shadowMD;
   static EdgeInsets snackMargin(BuildContext context) {
     final media = MediaQuery.of(context);
     final topOffset = media.padding.top + appBarHeight + gapSM;

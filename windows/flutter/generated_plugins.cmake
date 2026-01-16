@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_inappwebview_windows
   flutter_timezone
   geolocator_windows
+  permission_handler_windows
   share_plus
   syncfusion_pdfviewer_windows
   url_launcher_windows

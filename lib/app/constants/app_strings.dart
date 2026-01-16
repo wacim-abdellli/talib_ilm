@@ -38,9 +38,9 @@ class AppStrings {
 
   static const String greeting = 'السلام عليكم';
 
-  static const String homeStartLearningTitle = 'ابدأ التعلّم';
+  static const String homeStartLearningTitle = 'ابدأ الطلب';
   static const String homeStartLearningMessage =
-      'ابدأ بالمتن المناسب وسنكمل معك خطوة بخطوة.';
+      'ابدأ بالمتن المناسب للتدرج المنهجي في العلم.';
   static const String homeSectionLabel = 'القسم';
   static const String homeProgressLabel = 'التقدم';
   static const String progressUnknown = '—';
@@ -56,10 +56,9 @@ class AppStrings {
   static String lastReadSharh(String title) => 'آخر قراءة: الشرح — $title';
   static const String lastActivityLessons = 'آخر نشاط: الدروس';
   static String sourcePrefix(String source) => '— $source';
-  static String lastPage(int page, [int? total]) =>
-      total == null || total == 0
-          ? 'آخر صفحة: $page'
-          : 'آخر صفحة: ${numberPair(page, total)}';
+  static String lastPage(int page, [int? total]) => total == null || total == 0
+      ? 'آخر صفحة: $page'
+      : 'آخر صفحة: ${numberPair(page, total)}';
 
   static const String continueTabMutn = 'المتن';
   static const String continueTabSharh = 'الشرح';
@@ -96,7 +95,7 @@ class AppStrings {
       prayerName == null ? 'بعد الصلاة' : 'بعد صلاة $prayerName';
 
   static const String qiblaTitle = 'اتجاه القبلة';
-  static const String qiblaComingSoon = 'بوصلة القبلة ستضاف قريبًا';
+  static const String qiblaComingSoon = 'بوصلة القبلة قادمة بإذن الله';
 
   static const String locationSettingsTitle = 'إعدادات الموقع';
   static const String locationManualToggle = 'استخدام موقع يدوي';
@@ -129,8 +128,9 @@ class AppStrings {
   static const String notificationDefaultAction = 'Open';
 
   static const String favoritesTitle = 'المفضلة';
-  static const String favoritesEmptyTitle = 'لا توجد عناصر مفضلة';
-  static const String favoritesEmptyMessage = 'احفظ ما يهمك لتجده سريعًا هنا.';
+  static const String favoritesEmptyTitle = 'المفضلة فارغة';
+  static const String favoritesEmptyMessage =
+      'اجعل هذا المكان مرجعًا لفوائدك المنتقاة.';
   static const String favoritesRemoveTooltip = 'إزالة من المفضلة';
 
   static const String adhkarTitle = 'الأذكار';
@@ -142,15 +142,14 @@ class AppStrings {
   static const String adhkarMorningSubtitle = 'بداية هادئة لليوم';
   static const String adhkarEveningSubtitle = 'ختام مطمئن للمساء';
   static const String adhkarAfterPrayerSubtitle = 'ذكر بعد التسليم';
-  static const String adhkarFreeCountSubtitle = 'عدّ حر بدون قيود';
+  static const String adhkarFreeCountSubtitle = 'تسبيح مطلق';
   static const String adhkarDuasSubtitle = 'قراءة هادئة بدون عدّ';
   static const String adhkarLoadErrorTitle = 'تعذر تحميل الأذكار';
   static const String adhkarLoadErrorMessage = 'حاول مرة أخرى بعد قليل.';
-  static const String adhkarEmptyTitle = 'لا توجد أذكار متاحة الآن';
-  static const String adhkarEmptyMessage = 'سنضيف لك محتوى جديدًا قريبًا.';
-  static const String adhkarSessionEmptyTitle = 'لا توجد أذكار متاحة';
-  static const String adhkarSessionEmptyMessage =
-      'أضف أذكارًا من البيانات لاحقًا.';
+  static const String adhkarEmptyTitle = 'لا يوجد محتوى حاليًا';
+  static const String adhkarEmptyMessage = 'نعدّ لك محتوى نافعًا، فترقبه.';
+  static const String adhkarSessionEmptyTitle = 'لا توجد أذكار';
+  static const String adhkarSessionEmptyMessage = 'يمكنك اختيار مجموعة أخرى.';
   static const String adhkarSource = 'المصدر';
   static const String adhkarVirtue = 'الفضل';
   static const String adhkarOptions = 'الخيارات';
@@ -214,7 +213,8 @@ class AppStrings {
   static const String bookLessonsTab = 'الدروس';
   static const String bookMutnTitle = 'المتن';
   static const String bookMutnEmptyTitle = 'المتن غير متاح';
-  static const String bookMutnEmptyMessage = 'سيتم توفير المتن قريباً بإذن الله.';
+  static const String bookMutnEmptyMessage =
+      'سيتم توفير المتن قريباً بإذن الله.';
   static const String bookSharhEmptyTitle = 'لا توجد شروح متاحة بعد';
   static const String bookSharhEmptyMessage =
       'ابدأ بالمتن وسنضيف الشروح قريبًا بإذن الله.';
@@ -282,4 +282,71 @@ class AppStrings {
 
   static const String videoUnsupported =
       'تشغيل الفيديو غير مدعوم على Linux\nسيعمل على Android و iOS';
+
+  // ═══════════════════════════════════════════
+  // DAILY READING & MOTIVATION
+  // ═══════════════════════════════════════════
+  static const String dailyGoalTitle = 'ورد اليوم';
+  static String dailyGoalPages(int pages) => 'المطلوب: $pages صفحات';
+  static String dailyGoalRemaining(int pages) =>
+      pages == 1 ? 'بقيت صفحة واحدة' : 'بقيت $pages صفحات';
+  static String dailyGoalProgress(int read, int goal) => '$read من $goal';
+  static const String dailyGoalCompleted = 'فتح الله عليك، أتممت وردك اليومي';
+  static String streakDays(int days) => '$days أيام مواظبة';
+  static const String streakLabel = 'سجل العزم';
+  static const String noStreakYet = 'اعزم على البدء اليوم';
+
+  // ═══════════════════════════════════════════
+  // START JOURNEY (NEW USERS)
+  // ═══════════════════════════════════════════
+  static const String startJourneyTitle = 'استعن بالله وابدأ الطلب';
+  static const String startJourneySubtitle = 'بداية مقترحة لطالب العلم';
+  static const String startJourneyHadith =
+      '«من سلك طريقًا يلتمس فيه علمًا سهّل الله له به طريقًا إلى الجنة»';
+  static const String startJourneyButton = 'بسم الله أبدأ';
+
+  // ═══════════════════════════════════════════
+  // BOOK STATES
+  // ═══════════════════════════════════════════
+  static const String bookStateNotStarted = 'لم يُبدأ';
+  static const String bookStateInProgress = 'قيد الدرس';
+  static const String bookStateCompleted = 'أُنجِز';
+  static const String bookStateRecommended = 'مختار لك';
+
+  // ═══════════════════════════════════════════
+  // CONTINUE READING
+  // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // CONTINUE READING
+  // ═══════════════════════════════════════════
+  static const String continueReading = 'استكمال الورد';
+  static const String continueReadingButton = 'متابعة القراءة';
+  static String timeToFinishChapter(int minutes) => '⏱️ ~$minutes دقيقة';
+  static String pageOfTotal(int current, int total) =>
+      'الصفحة $current من $total';
+
+  static const String welcomeBackTitle = 'الحمد لله على عودتك';
+  static const String welcomeBackMessage = 'ابدأ بداية جديدة اليوم بعزم قوي';
+  static const String startFreshButton = 'بسم الله، صفحة جديدة';
+
+  // ═══════════════════════════════════════════
+  // LEVEL PROGRESS
+  // ═══════════════════════════════════════════
+  static const String levelLocked = 'غير متاح';
+  static String levelProgressPercent(int percent) => '$percent٪';
+  static const String levelCompleteIcon = '✓';
+  static const String startHereLabel = 'نقطة الانطلاق';
+  static String levelBooksCount(int count) => '$count متون';
+
+  // ═══════════════════════════════════════════
+  // CELEBRATIONS
+  // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // CELEBRATIONS
+  // ═══════════════════════════════════════════
+  static const String celebrationDailyGoal = 'زادك الله حرصًا، أتممت الورد 🎉';
+  static const String celebrationKeepStreak =
+      'داوم على الخير، فالله يحب المداومة 🔥';
+  static const String celebrationBookComplete = 'هنيئًا لك إتمام هذا المتن 📚';
+  static const String celebrationLevelComplete = 'بلغت منزلة جديدة في العلم 🏆';
 }

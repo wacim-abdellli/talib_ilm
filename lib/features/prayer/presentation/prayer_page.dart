@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hijri/hijri_calendar.dart';
+
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
@@ -10,15 +10,17 @@ import '../../../core/services/prayer_time_service.dart';
 import '../../../core/utils/prayer_countdown.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import '../../../shared/widgets/app_drawer.dart';
+
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
+
+import 'package:shimmer/shimmer.dart'; // Direct shimmer import if needed for extensions? No, wrapper used.
+import '../../../shared/widgets/shimmer_loading.dart';
 import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
 import 'location_settings_sheet.dart';
-import 'prayer_settings_sheet.dart';
+
 import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
 
@@ -61,52 +63,9 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
-    final hasUnread = _hasUnread();
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const AppDrawer(),
-      appBar: PrimaryAppBar(
-        title: AppStrings.prayerTitle,
-        showMenu: true,
-        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-        actions: [
-          IconButton(
-            onPressed: () => _openAdhanSettings(context),
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: AppColors.textSecondary,
-                ),
-                if (hasUnread)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppUi.gapSM),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openQibla(context),
-        backgroundColor: AppColors.primary,
-        child: Icon(
-          Icons.explore,
-          color: AppColors.surface,
-          size: responsive.largeIcon,
-        ),
-      ),
+      // AppBar and FAB removed (moved to header)
       body: Container(
         color: AppColors.background,
         child: Directionality(
@@ -115,7 +74,33 @@ class _PrayerPageState extends State<PrayerPage> {
             future: _prayerFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return Padding(
+                  padding: EdgeInsets.all(responsive.safePadding),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Next Prayer Card Shimmer - approximated by a prayer tile?
+                        // Design says: ShimmerPrayerTile.
+                        // Let's use ShimmerPrayerTile(height: roughly) or create a larger one?
+                        // User spec: "ShimmerPrayerTile list for prayer section".
+                        // For top section, maybe a generic box.
+                        Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(
+                            height: 140, // Next Prayer Card approx height
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: responsive.largeGap),
+                        const ShimmerPrayerList(count: 5),
+                      ],
+                    ),
+                  ),
+                );
               }
 
               if (!snapshot.hasData) {
@@ -126,7 +111,7 @@ class _PrayerPageState extends State<PrayerPage> {
                     child: EmptyState(
                       icon: Icons.access_time,
                       title: AppStrings.prayerLoadErrorTitle,
-                      message: AppStrings.prayerLoadErrorMessage,
+                      subtitle: AppStrings.prayerLoadErrorMessage,
                       actionLabel: AppStrings.actionRetry,
                       onAction: _reloadPrayer,
                     ),
@@ -142,7 +127,6 @@ class _PrayerPageState extends State<PrayerPage> {
                 nextName,
               );
               final times = _buildPrayerTimes(data, nextName, currentName);
-              final hijriDate = _formatHijriDate(data.date);
               final gregorianDate = _formatGregorianDate(data.date);
 
               return FutureBuilder<_LocationInfo>(
@@ -150,47 +134,193 @@ class _PrayerPageState extends State<PrayerPage> {
                 builder: (context, locationSnapshot) {
                   final location = locationSnapshot.data;
                   final city = location?.city ?? data.city;
-                  final isManual = location?.isManual ?? false;
 
                   return SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: responsive.safeHorizontalPadding,
-                      vertical: responsive.safeVerticalPadding,
-                    ),
+                    physics: const BouncingScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _LocationCard(
-                          city: city,
-                          isManual: isManual,
-                          hijriDate: hijriDate,
-                          gregorianDate: gregorianDate,
-                          onTap: () => _openLocationSettings(context),
-                        ),
-                        SizedBox(height: responsive.mediumGap),
-                        _buildNextPrayerCard(data),
-                        SizedBox(height: responsive.largeGap),
-                        Text(
-                          AppStrings.prayerDayLabel,
-                          style: AppText.body.copyWith(
-                            fontSize: responsive.sp(13),
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                        // Header section
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF14B8A6), Color(0xFF0D9488)],
+                            ),
                           ),
-                          textAlign: TextAlign.right,
-                        ),
-                        SizedBox(height: responsive.mediumGap),
-                        for (var i = 0; i < times.length; i++) ...[
-                          _PrayerTimeCard(
-                            item: times[i],
-                            onBeforeAdhkar: () => _openDuas(context),
-                            onAfterAdhkar: () =>
-                                _openAfterPrayer(context, times[i].name),
+                          child: SafeArea(
+                            bottom: false,
+                            child: Column(
+                              children: [
+                                // Top row
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.menu_rounded,
+                                        color: Colors.white,
+                                        size: 26,
+                                      ),
+                                      onPressed: () {},
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.settings_outlined,
+                                        color: Colors.white,
+                                        size: 26,
+                                      ),
+                                      onPressed: () =>
+                                          _openLocationSettings(context),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                // Title
+                                const Text(
+                                  'مواقيت الصلاة',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Location
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on_rounded,
+                                      color: Colors.white.withOpacity(0.9),
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        city,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white.withOpacity(0.9),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                // Date and Qibla row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(
+                                              0.3,
+                                            ),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.calendar_today_rounded,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                gregorianDate,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    GestureDetector(
+                                      onTap: () => _openQibla(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(
+                                              0.3,
+                                            ),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.explore_rounded,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                          if (i != times.length - 1)
-                            SizedBox(height: responsive.smallGap),
-                        ],
-                        SizedBox(height: responsive.largeGap),
+                        ),
+
+                        // Body
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: responsive.safeHorizontalPadding,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(height: responsive.mediumGap),
+                              _buildNextPrayerCard(data),
+                              SizedBox(height: responsive.largeGap),
+                              Text(
+                                AppStrings.prayerDayLabel,
+                                style: AppText.body.copyWith(
+                                  fontSize: responsive.sp(13),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              SizedBox(height: responsive.mediumGap),
+                              for (var i = 0; i < times.length; i++) ...[
+                                _PrayerTimeCard(
+                                  item: times[i],
+                                  onBeforeAdhkar: () => _openDuas(context),
+                                  onAfterAdhkar: () =>
+                                      _openAfterPrayer(context, times[i].name),
+                                ),
+                                if (i != times.length - 1)
+                                  SizedBox(height: responsive.smallGap),
+                              ],
+                              SizedBox(height: responsive.largeGap),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -202,8 +332,6 @@ class _PrayerPageState extends State<PrayerPage> {
       ),
     );
   }
-
-  bool _hasUnread() => false;
 
   Widget _buildNextPrayerCard(PrayerTimesDay day) {
     final controller = _countdownController;
@@ -381,28 +509,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
-  void _openAdhanSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
-        ),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: const PrayerSettingsSheet(),
-        ),
-      ),
-    );
-  }
-
   void _openAfterPrayer(BuildContext context, String prayerName) {
     Navigator.push(
       context,
@@ -432,12 +538,6 @@ class _PrayerPageState extends State<PrayerPage> {
     return '$hours:$minutes:$seconds';
   }
 
-  String _formatHijriDate(DateTime date) {
-    HijriCalendar.setLocal('ar');
-    final hijri = HijriCalendar.fromDate(date);
-    return '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear}';
-  }
-
   String _formatGregorianDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -451,114 +551,6 @@ class _LocationInfo {
   final bool isManual;
 
   const _LocationInfo({required this.city, required this.isManual});
-}
-
-class _LocationCard extends StatelessWidget {
-  final String city;
-  final bool isManual;
-  final String hijriDate;
-  final String gregorianDate;
-  final VoidCallback onTap;
-
-  const _LocationCard({
-    required this.city,
-    required this.isManual,
-    required this.hijriDate,
-    required this.gregorianDate,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-    final badgeLabel = isManual ? 'يدوي' : 'تلقائي';
-    final icon = isManual ? Icons.location_on : Icons.my_location;
-
-    return PressableCard(
-      onTap: onTap,
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.safeHorizontalPadding,
-        vertical: responsive.smallGap,
-      ),
-      borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-        border: Border.all(
-          color: AppColors.stroke,
-          width: AppUi.dividerThickness,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: AppColors.textSecondary,
-            size: responsive.mediumIcon,
-          ),
-          SizedBox(width: responsive.smallGap),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        city,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.body.copyWith(
-                          fontSize: responsive.sp(14),
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: responsive.smallGap),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsive.wp(2.4),
-                        vertical: responsive.hp(0.5),
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                      ),
-                      child: Text(
-                        badgeLabel,
-                        style: AppText.caption.copyWith(
-                          fontSize: responsive.sp(11),
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: responsive.hp(0.6)),
-                Text(
-                  '$hijriDate • $gregorianDate',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.caption.copyWith(
-                    fontSize: responsive.sp(11),
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: responsive.smallGap),
-          Icon(
-            Icons.chevron_left,
-            color: AppColors.textSecondary,
-            size: responsive.mediumIcon,
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PrayerTimeEntry {
@@ -663,22 +655,28 @@ class _PrayerTimeCard extends StatelessWidget {
                     fontSize: responsive.sp(11),
                     color: AppColors.textSecondary,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 if (onBeforeAdhkar != null || onAfterAdhkar != null) ...[
                   SizedBox(height: responsive.hp(0.8)),
                   Row(
                     children: [
                       if (onBeforeAdhkar != null)
-                        _AdhkarLink(
-                          label: AppStrings.beforePrayerDhikr,
-                          onTap: onBeforeAdhkar,
+                        Flexible(
+                          child: _AdhkarLink(
+                            label: AppStrings.beforePrayerDhikr,
+                            onTap: onBeforeAdhkar,
+                          ),
                         ),
                       if (onBeforeAdhkar != null && onAfterAdhkar != null)
-                        SizedBox(width: responsive.mediumGap),
+                        SizedBox(width: responsive.smallGap),
                       if (onAfterAdhkar != null)
-                        _AdhkarLink(
-                          label: AppStrings.afterPrayerDhikr,
-                          onTap: onAfterAdhkar,
+                        Flexible(
+                          child: _AdhkarLink(
+                            label: AppStrings.afterPrayerDhikr,
+                            onTap: onAfterAdhkar,
+                          ),
                         ),
                     ],
                   ),
@@ -775,6 +773,8 @@ class _AdhkarLink extends StatelessWidget {
             fontSize: responsive.sp(11),
             color: AppColors.textSecondary,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
       ),
     );

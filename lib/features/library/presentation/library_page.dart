@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../app/constants/app_strings.dart';
+
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/pressable_card.dart';
-import '../../../shared/widgets/app_drawer.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = _hasUnread();
     final levels = <LibraryLevel>[
       LibraryLevel(
         title: 'طالب العلم',
@@ -48,126 +46,119 @@ class LibraryPage extends StatelessWidget {
     }
 
     return Scaffold(
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF8F3),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: const Text(
-          AppStrings.libraryTitle,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2C1810),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(10),
-          child: Container(
-            height: 10,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFEFE7DA), Color(0x00FAF8F3)],
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF8B7355).withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
-          ),
-        ),
-        leading: Builder(
-          builder: (context) {
-            final canPop = Navigator.of(context).canPop();
-            return IconButton(
-              tooltip: canPop ? AppStrings.actionBack : AppStrings.tooltipMenu,
-              onPressed: () {
-                if (canPop) {
-                  Navigator.pop(context);
-                  return;
-                }
-                Scaffold.of(context).openDrawer();
-              },
-              icon: Icon(canPop ? Icons.arrow_back : Icons.menu),
-              color: const Color(0xFF5D4E37),
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: AppColors.textSecondary,
-                ),
-                if (hasUnread)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.library_books_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'المكتبة',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'تصفح كتب العلم الشرعي',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF64748B),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.search_rounded, size: 26),
+                        color: const Color(0xFF64748B),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Search bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1,
                       ),
                     ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF94A3B8),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'ابحث في الكتب والشروحات...',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: AppUi.gapSM),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
-        child: ListView(
-          padding: AppUi.screenPadding,
-          children: [
-            _LibraryHeader(),
-            const SizedBox(height: AppUi.gapXXL),
-            ...levelCards,
-          ],
-        ),
-      ),
-    );
-  }
-
-  bool _hasUnread() => false;
-}
-
-class _LibraryHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppUi.radiusLG);
-
-    return Container(
-      padding: AppUi.cardPadding,
-      decoration: BoxDecoration(
-        gradient: AppColors.surfaceElevatedGradient,
-        borderRadius: radius,
-        border: Border.all(
-          color: AppColors.stroke,
-          width: AppUi.dividerThickness,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('المكتبة', style: AppText.heading),
-          const SizedBox(height: AppUi.gapSM),
-          Text(
-            'منهج متكامل لطالب العلم\nمرتب حسب المستويات',
-            style: AppText.bodyMuted,
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.backgroundGradient,
+              ),
+              child: ListView(
+                padding: AppUi.screenPadding,
+                children: [...levelCards],
+              ),
+            ),
           ),
         ],
       ),

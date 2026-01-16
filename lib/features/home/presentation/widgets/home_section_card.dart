@@ -56,9 +56,7 @@ class HomeSectionCard extends StatelessWidget {
             highlightColor: AppColors.surfaceVariant,
             child: Container(
               padding: const EdgeInsets.all(AppUi.paddingMD),
-              decoration: BoxDecoration(
-                borderRadius: radius,
-              ),
+              decoration: BoxDecoration(borderRadius: radius),
               child: Row(
                 children: [
                   Container(
@@ -68,11 +66,7 @@ class HomeSectionCard extends StatelessWidget {
                       color: accent.withValues(alpha: 0.18),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      size: AppUi.iconSizeLG,
-                      color: accent,
-                    ),
+                    child: Icon(icon, size: AppUi.iconSizeLG, color: accent),
                   ),
                   const SizedBox(width: AppUi.gapMD),
                   Expanded(
@@ -87,6 +81,8 @@ class HomeSectionCard extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                         const SizedBox(height: AppUi.gapXS),
                         Text(
@@ -96,6 +92,8 @@ class HomeSectionCard extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
                           ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ],
                     ),
@@ -149,265 +147,128 @@ class HomeLearningCard extends StatefulWidget {
 }
 
 class _HomeLearningCardState extends State<HomeLearningCard> {
-  bool _pressed = false;
-
-  void _handleHighlight(bool value) {
-    if (_pressed == value) return;
-    setState(() => _pressed = value);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppUi.radiusMD);
-    final borderColor = AppColors.primary.withValues(alpha: 0.2);
-    final shadowColor = AppColors.primaryDark.withValues(
-      alpha: _pressed ? 0.18 : 0.12,
-    );
-    final elevation = _pressed ? 3.0 : 1.0;
-
-    return PressableScale(
-      enabled: widget.onTap != null,
-      pressedScale: AppUi.pressScale,
-      child: Material(
-        color: AppColors.surface,
-        elevation: elevation,
-        shadowColor: shadowColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: BorderSide(color: borderColor),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: widget.onTap,
-          onHighlightChanged: _handleHighlight,
-          borderRadius: radius,
-          splashColor: AppColors.primary.withValues(alpha: 0.12),
-          highlightColor: AppColors.primary.withValues(alpha: 0.04),
-          child: Padding(
-            padding: const EdgeInsets.all(AppUi.paddingCard),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: widget.variant == HomeLearningVariant.continueLearning
-                  ? _ContinueLearningContent(
-                      title: widget.continueTitle,
-                      bookTitle: widget.bookTitle,
-                      progressLabel: widget.progressLabel,
-                      progress: widget.progress,
-                    )
-                  : _StartLearningContent(
-                      title: widget.startTitle,
-                      subtitle: widget.startSubtitle,
-                      actionLabel: widget.actionLabel,
-                      onActionTap: widget.onActionTap,
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ContinueLearningContent extends StatelessWidget {
-  final String title;
-  final String bookTitle;
-  final String progressLabel;
-  final double progress;
-
-  const _ContinueLearningContent({
-    required this.title,
-    required this.bookTitle,
-    required this.progressLabel,
-    required this.progress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final safeProgress = progress.clamp(0.0, 1.0).toDouble();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          textDirection: TextDirection.rtl,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _LearningIcon(icon: Icons.menu_book_rounded),
-            const SizedBox(width: AppUi.gapMD),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppUi.gapXS),
-                  Text(
-                    bookTitle,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppUi.gapXS),
-                  Text(
-                    progressLabel,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppUi.gapSM),
-        _LearningProgressBar(value: safeProgress),
-      ],
-    );
-  }
-}
-
-class _StartLearningContent extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String actionLabel;
-  final VoidCallback? onActionTap;
-
-  const _StartLearningContent({
-    required this.title,
-    required this.subtitle,
-    required this.actionLabel,
-    required this.onActionTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          textDirection: TextDirection.rtl,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _LearningIcon(icon: Icons.school_rounded),
-            const SizedBox(width: AppUi.gapMD),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppUi.gapXS),
-                  Text(
-                    subtitle,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppUi.gapSM),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: onActionTap,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              textStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppUi.gapMD,
-                vertical: AppUi.gapXSPlus,
-              ),
-              minimumSize: const Size(0, AppUi.tapTargetMin),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppUi.radiusPill),
-              ),
-            ),
-            child: Text(actionLabel),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LearningIcon extends StatelessWidget {
-  final IconData icon;
-
-  const _LearningIcon({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.15),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: AppUi.iconSizeMD,
-        color: AppColors.primary,
-      ),
-    );
-  }
-}
-
-class _LearningProgressBar extends StatelessWidget {
-  final double value;
-
-  const _LearningProgressBar({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final safeValue = value.clamp(0.0, 1.0).toDouble();
-    final radius = BorderRadius.circular(AppUi.radiusPill);
-    return ClipRRect(
-      borderRadius: radius,
+    return GestureDetector(
+      onTap: widget.onTap,
       child: Container(
-        height: AppUi.gapXS,
-        color: AppColors.primary.withValues(alpha: 0.15),
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: FractionallySizedBox(
-            widthFactor: safeValue,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: radius,
-              ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
+          ],
         ),
+        child: widget.variant == HomeLearningVariant.continueLearning
+            ? Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.menu_book_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.continueTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'الكتاب: ${widget.bookTitle}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF64748B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.school_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.startTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.startSubtitle,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF64748B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ],
+              ),
       ),
     );
   }

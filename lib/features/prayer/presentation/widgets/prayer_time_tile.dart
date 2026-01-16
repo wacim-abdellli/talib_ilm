@@ -1,220 +1,193 @@
 import 'package:flutter/material.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_text.dart';
-import '../../../../app/theme/app_ui.dart';
+
 import '../models/prayer_time.dart';
 
 class PrayerTimeTile extends StatelessWidget {
   final PrayerTime item;
-  final VoidCallback? onBeforeAdhkar;
-  final VoidCallback? onAfterAdhkar;
+  final VoidCallback? onTap;
 
-  const PrayerTimeTile({
-    super.key,
-    required this.item,
-    this.onBeforeAdhkar,
-    this.onAfterAdhkar,
-  });
+  const PrayerTimeTile({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isCurrent = item.isCurrent;
-    final isPassed = _isPassed(item, isCurrent);
-    final iconData = _iconFor(item.name);
-    final statusIcon = _statusIcon(isCurrent, isPassed);
-    final statusColor = _statusColor(isCurrent, isPassed);
-    final titleColor = _titleColor(isCurrent, isPassed);
-    final timeColor = _timeColor(isCurrent, isPassed);
-    final backgroundColor =
-        isCurrent ? AppColors.primaryLight : AppColors.surface;
+    final isPassed = _isPassed(item);
 
-    final tile = Material(
-      color: Colors.transparent,
-      elevation: 1,
-      shadowColor: AppColors.textPrimary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-      clipBehavior: Clip.antiAlias,
+    // Determine colors based on prayer name
+    final prayerColor = _getPrayerColor(item.name);
+    final iconData = _getPrayerIcon(item.name);
+
+    return Opacity(
+      opacity: isPassed && !isCurrent ? 0.5 : 1.0,
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-          border: isCurrent
-              ? Border(
-                  left: BorderSide(
-                    color: AppColors.primary,
-                    width: 4,
-                  ),
-                )
-              : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppUi.gapLG,
-            vertical: AppUi.paddingMD,
+          color: isCurrent ? prayerColor.withValues(alpha: 0.15) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isCurrent ? prayerColor : const Color(0xFFE7E5E4),
+            width: isCurrent ? 2 : 1,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
                 children: [
-                  Icon(
-                    iconData.icon,
-                    size: AppUi.iconSizeLG,
-                    color: iconData.color,
-                  ),
-                  const SizedBox(width: AppUi.gapSM),
-                  Expanded(
-                    child: Text(
-                      item.name,
-                      style: AppText.body.copyWith(
-                        fontSize: 16,
-                        fontWeight:
-                            isCurrent ? FontWeight.w800 : FontWeight.w700,
-                        color: titleColor,
+                  // Prayer Icon Circle
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          prayerColor.withValues(alpha: 0.2),
+                          prayerColor.withValues(alpha: 0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppUi.gapSM),
-                  Text(
-                    item.time,
-                    style: AppText.body.copyWith(
-                      fontSize: 18,
-                      fontWeight:
-                          isCurrent ? FontWeight.w800 : FontWeight.w700,
-                      color: timeColor,
+                    child: Icon(
+                      isPassed && !isCurrent ? Icons.check_circle : iconData,
+                      size: 28,
+                      color: isPassed && !isCurrent
+                          ? const Color(0xFF059669) // Green for completed
+                          : prayerColor,
                     ),
                   ),
-                  const SizedBox(width: AppUi.gapSM),
-                  Icon(
-                    statusIcon,
-                    size: AppUi.iconSizeMD,
-                    color: statusColor,
+
+                  const SizedBox(width: 16),
+
+                  // Prayer Name & Badge
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: isCurrent
+                                ? FontWeight.bold
+                                : FontWeight.w600,
+                            color: isPassed && !isCurrent
+                                ? AppColors.textSecondary
+                                : AppColors.textPrimary,
+                            decoration: isPassed && !isCurrent
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        if (isCurrent) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: prayerColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              "الصلاة الحالية",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: prayerColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // Time
+                  Text(
+                    item.time,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: AppColors.textPrimary,
+                      decoration: isPassed && !isCurrent
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppUi.gapSM),
-              Row(
-                children: [
-                  _AdhkarLink(
-                    label: AppStrings.beforePrayerDhikr,
-                    onTap: onBeforeAdhkar,
-                  ),
-                  const SizedBox(width: AppUi.gapMD),
-                  _AdhkarLink(
-                    label: AppStrings.afterPrayerDhikr,
-                    onTap: onAfterAdhkar,
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppUi.gapSM),
-      child: Transform.scale(
-        scale: isCurrent ? 1.02 : 1,
-        alignment: Alignment.center,
-        child: tile,
-      ),
-    );
   }
 
-  _PrayerIconData _iconFor(String name) {
-    switch (name) {
-      case AppStrings.prayerFajr:
-        return const _PrayerIconData(Icons.wb_twilight, Colors.orange);
-      case AppStrings.prayerDhuhr:
-        return const _PrayerIconData(Icons.wb_sunny, Colors.yellow);
-      case AppStrings.prayerAsr:
-        return const _PrayerIconData(Icons.wb_sunny_outlined, Colors.amber);
-      case AppStrings.prayerMaghrib:
-        return const _PrayerIconData(Icons.wb_twilight, Colors.deepOrange);
-      case AppStrings.prayerIsha:
-        return const _PrayerIconData(Icons.nights_stay, Colors.blue);
+  bool _isPassed(PrayerTime item) {
+    if (item.isCurrent) return false;
+    try {
+      final now = DateTime.now();
+      final parts = item.time.split(':');
+      final pTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+      return pTime.isBefore(now);
+    } catch (e) {
+      return false;
     }
-    return _PrayerIconData(Icons.access_time, AppColors.textSecondary);
   }
 
-  IconData _statusIcon(bool isCurrent, bool isPassed) {
-    if (isCurrent) return Icons.radio_button_checked;
-    if (isPassed) return Icons.check_circle;
-    return Icons.notifications_active;
+  Color _getPrayerColor(String name) {
+    // Using exact Arabic strings for matching
+    if (name == 'الفجر') return const Color(0xFF6366F1); // Indigo
+    if (name == 'الشروق') return const Color(0xFFFBBF24); // Amber
+    if (name == 'الظهر') return const Color(0xFF10B981); // Emerald
+    if (name == 'العصر') return const Color(0xFFF59E0B); // Amber
+    if (name == 'المغرب') return const Color(0xFFEC4899); // Pink
+    if (name == 'العشاء') return const Color(0xFF8B5CF6); // Purple
+
+    // Fallback to AppColors if available
+    if (name.contains(AppStrings.prayerFajr)) return AppColors.fajr;
+    if (name.contains(AppStrings.prayerDhuhr)) return AppColors.dhuhr;
+    if (name.contains(AppStrings.prayerAsr)) return AppColors.asr;
+    if (name.contains(AppStrings.prayerMaghrib)) return AppColors.maghrib;
+    if (name.contains(AppStrings.prayerIsha)) return AppColors.isha;
+
+    return const Color(0xFF0D9488); // Default teal
   }
 
-  Color _statusColor(bool isCurrent, bool isPassed) {
-    if (isCurrent) return AppColors.primary;
-    if (isPassed) return AppColors.success;
-    return AppColors.textSecondary;
+  IconData _getPrayerIcon(String name) {
+    if (name.contains(AppStrings.prayerFajr) || name == 'الفجر') {
+      return Icons.wb_twilight;
+    }
+    if (name.contains(AppStrings.prayerDhuhr) || name == 'الظهر') {
+      return Icons.wb_sunny;
+    }
+    if (name.contains(AppStrings.prayerAsr) || name == 'العصر') {
+      return Icons.wb_sunny_outlined;
+    }
+    if (name.contains(AppStrings.prayerMaghrib) || name == 'المغرب') {
+      return Icons.wb_twilight;
+    }
+    if (name.contains(AppStrings.prayerIsha) || name == 'العشاء') {
+      return Icons.nights_stay;
+    }
+    return Icons.access_time;
   }
-
-  Color _titleColor(bool isCurrent, bool isPassed) {
-    if (isCurrent) return AppColors.primary;
-    if (isPassed) return AppColors.textSecondary;
-    return AppColors.textPrimary;
-  }
-
-  Color _timeColor(bool isCurrent, bool isPassed) {
-    if (isCurrent) return AppColors.primary;
-    if (isPassed) return AppColors.textSecondary;
-    return AppColors.textPrimary;
-  }
-
-  bool _isPassed(PrayerTime item, bool isCurrent) {
-    if (isCurrent) return false;
-    final parsed = _parseTime(item.time);
-    if (parsed == null) return false;
-    return parsed.isBefore(DateTime.now());
-  }
-
-  DateTime? _parseTime(String value) {
-    final parts = value.split(':');
-    if (parts.length != 2) return null;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return null;
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, hour, minute);
-  }
-}
-
-class _AdhkarLink extends StatelessWidget {
-  final String label;
-  final VoidCallback? onTap;
-
-  const _AdhkarLink({
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppUi.radiusXS),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppUi.gapXS,
-          vertical: AppUi.gapXXS,
-        ),
-        child: Text(
-          label,
-          style: AppText.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrayerIconData {
-  final IconData icon;
-  final Color color;
-
-  const _PrayerIconData(this.icon, this.color);
 }

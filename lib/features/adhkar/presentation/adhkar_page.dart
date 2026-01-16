@@ -3,9 +3,9 @@ import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
-import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
@@ -43,154 +43,236 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = _hasUnread();
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF8F3),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: const Text(
-          'الأذكار والأدعية',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2C1810),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(10),
-          child: Container(
-            height: 10,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFEFE7DA),
-                  Color(0x00FAF8F3),
-                ],
+      body: Column(
+        children: [
+          // Header section
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF8B7355).withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
-          ),
-        ),
-        leading: Builder(
-          builder: (context) {
-            final canPop = Navigator.of(context).canPop();
-            return IconButton(
-              tooltip:
-                  canPop ? AppStrings.actionBack : AppStrings.tooltipMenu,
-              onPressed: () {
-                if (canPop) {
-                  Navigator.pop(context);
-                  return;
-                }
-                Scaffold.of(context).openDrawer();
-              },
-              icon: Icon(canPop ? Icons.arrow_back : Icons.menu),
-              color: const Color(0xFF5D4E37),
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: AppColors.textSecondary,
-                ),
-                if (hasUnread)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'الأذكار والأدعية',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'احفظ أذكار اليوم والليلة',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF64748B),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.local_fire_department_rounded,
+                              size: 16,
+                              color: Color(0xFF10B981),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '7',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Category tabs
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildCategoryTab(
+                          'الكل',
+                          Icons.grid_view_rounded,
+                          true,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryTab(
+                          'الصباح',
+                          Icons.wb_sunny_rounded,
+                          false,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryTab(
+                          'المساء',
+                          Icons.nightlight_round,
+                          false,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryTab(
+                          'بعد الصلاة',
+                          Icons.mosque_outlined,
+                          false,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryTab(
+                          'متنوعة',
+                          Icons.auto_awesome_outlined,
+                          false,
+                        ),
+                      ],
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: AppUi.gapSM),
-        ],
-      ),
-      body: FutureBuilder<AthkarCatalog>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          Expanded(
+            child: FutureBuilder<AthkarCatalog>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const AppLoadingIndicator();
+                }
 
-          if (snapshot.hasError) {
-            return EmptyState(
-              icon: Icons.error_outline,
-              title: AppStrings.adhkarLoadErrorTitle,
-              message: AppStrings.adhkarLoadErrorMessage,
-              actionLabel: AppStrings.actionRetry,
-              onAction: _reload,
-            );
-          }
-
-          final catalog = snapshot.data;
-          if (catalog == null || catalog.categories.isEmpty) {
-            return EmptyState(
-              icon: Icons.menu_book_outlined,
-              title: AppStrings.adhkarEmptyTitle,
-              message: AppStrings.adhkarEmptyMessage,
-              actionLabel: AppStrings.actionRetry,
-              onAction: _reload,
-            );
-          }
-
-          final items = _dashboardItems(context, catalog);
-
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 720 ? 3 : 2;
-              final tileAspect =
-                  constraints.maxWidth < 360 ? 0.78 : AppUi.gridAspect;
-              return GridView.builder(
-                padding: AppUi.screenPaddingCompact,
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: AppUi.gapMD,
-                  mainAxisSpacing: AppUi.gapMD,
-                  childAspectRatio: tileAspect,
-                ),
-                itemBuilder: (context, index) {
-                  return _CategoryTile(
-                    data: items[index],
-                    progressLoader: items[index].showProgress
-                        ? () => _progressFor(items[index])
-                        : null,
+                if (snapshot.hasError) {
+                  return EmptyState(
+                    icon: Icons.error_outline,
+                    title: AppStrings.adhkarLoadErrorTitle,
+                    subtitle: AppStrings.adhkarLoadErrorMessage,
+                    actionLabel: AppStrings.actionRetry,
+                    onAction: _reload,
                   );
-                },
-              );
-            },
-          );
-        },
+                }
+
+                final catalog = snapshot.data;
+                if (catalog == null || catalog.categories.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.menu_book_outlined,
+                    title: AppStrings.adhkarEmptyTitle,
+                    subtitle: AppStrings.adhkarEmptyMessage,
+                    actionLabel: AppStrings.actionRetry,
+                    onAction: _reload,
+                  );
+                }
+
+                final items = _dashboardItems(context, catalog);
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth >= 720 ? 3 : 2;
+                    final tileAspect = constraints.maxWidth < 360
+                        ? 0.78
+                        : AppUi.gridAspect;
+                    return GridView.builder(
+                      padding: AppUi.screenPaddingCompact,
+                      itemCount: items.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: AppUi.gapMD,
+                        mainAxisSpacing: AppUi.gapMD,
+                        childAspectRatio: tileAspect,
+                      ),
+                      itemBuilder: (context, index) {
+                        return _CategoryTile(
+                          data: items[index],
+                          progressLoader: items[index].showProgress
+                              ? () => _progressFor(items[index])
+                              : null,
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  bool _hasUnread() => false;
+  Widget _buildCategoryTab(String label, IconData icon, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFF59E0B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isActive ? Colors.white : const Color(0xFF64748B),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isActive ? Colors.white : const Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   List<_CategoryCardData> _dashboardItems(
     BuildContext context,
@@ -284,24 +366,17 @@ class _AdhkarPageState extends State<AdhkarPage> {
       case 'tasbeeh':
         Navigator.push(
           context,
-          buildFadeRoute(
-            page: const TasbeehIstighfarPage(initialTabIndex: 0),
-          ),
+          buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 0)),
         );
         return;
       case 'istighfar':
         Navigator.push(
           context,
-          buildFadeRoute(
-            page: const TasbeehIstighfarPage(initialTabIndex: 1),
-          ),
+          buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 1)),
         );
         return;
       case 'duas':
-        Navigator.push(
-          context,
-          buildFadeRoute(page: DuasMiscPage()),
-        );
+        Navigator.push(context, buildFadeRoute(page: DuasMiscPage()));
         return;
     }
 
@@ -319,18 +394,13 @@ class _AdhkarPageState extends State<AdhkarPage> {
   }
 
   void _openDuas(BuildContext context) {
-    Navigator.push(
-      context,
-      buildFadeRoute(page: DuasMiscPage()),
-    );
+    Navigator.push(context, buildFadeRoute(page: DuasMiscPage()));
   }
 
   void _openTasbeeh(BuildContext context) {
     Navigator.push(
       context,
-      buildFadeRoute(
-        page: const TasbeehIstighfarPage(initialTabIndex: 0),
-      ),
+      buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 0)),
     );
   }
 
@@ -390,10 +460,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
     return catalog.byId(categoryId)?.items ?? const [];
   }
 
-  int _completedCount(
-    List<AthkarItem> items,
-    Map<String, int> counts,
-  ) {
+  int _completedCount(List<AthkarItem> items, Map<String, int> counts) {
     var completed = 0;
     for (final item in items) {
       final key = item.id.isNotEmpty ? item.id : item.arabic;
@@ -409,10 +476,7 @@ class _CategoryTile extends StatelessWidget {
   final _CategoryCardData data;
   final Future<_CategoryProgress> Function()? progressLoader;
 
-  const _CategoryTile({
-    required this.data,
-    this.progressLoader,
-  });
+  const _CategoryTile({required this.data, this.progressLoader});
 
   @override
   Widget build(BuildContext context) {
@@ -426,11 +490,7 @@ class _CategoryTile extends StatelessWidget {
             color: AppColors.primaryLight.withValues(alpha: 0.25),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            data.icon,
-            size: AppUi.iconSizeLG,
-            color: data.tint,
-          ),
+          child: Icon(data.icon, size: AppUi.iconSizeLG, color: data.tint),
         ),
         const SizedBox(height: AppUi.gapSM),
         Text(
@@ -477,10 +537,7 @@ class _CategoryTile extends StatelessWidget {
               width: AppUi.dividerThickness,
             ),
           ),
-          child: Padding(
-            padding: AppUi.cardPadding,
-            child: content,
-          ),
+          child: Padding(padding: AppUi.cardPadding, child: content),
         ),
       ),
     );

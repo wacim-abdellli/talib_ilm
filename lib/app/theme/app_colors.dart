@@ -1,156 +1,95 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary (warm parchment golds)
-  static const primary = Color(0xFFB8860B);
-  static const primaryLight = Color(0xFFD4AF37);
-  static const primaryDark = Color(0xFF8B7355);
+  // PRIMARY - Clean modern teal (lighter, friendlier)
+  static const primary = Color(0xFF14B8A6);
+  static const primaryDark = Color(0xFF0D9488);
+  static const primaryLight = Color(0xFF5EEAD4);
 
-  // Secondary (gold harmony)
-  static const secondary = Color(0xFFD4AF37);
-  static const secondaryLight = Color(0xFFD4AF37);
-  static const secondaryDark = Color(0xFF8B7355);
+  // BACKGROUNDS - Clean whites
+  static const background = Color(0xFFFAFAFA);
+  static const surface = Color(0xFFFFFFFF);
+  static const surfaceSecondary = Color(0xFFF5F5F5);
 
-  // Backgrounds / Surfaces
-  static const borderSubtle = Color(0xFFE6E2DA);
-  static const background = Color(0xFFFAF8F3);
-  static const surface = Color(0xFFF5F1E8);
-  static const surfaceVariant = Color(0xFFEFEBE0);
-  static const surfaceElevated = Color(0xFFEFEBE0);
+  // TEXT - High contrast, readable
+  static const textPrimary = Color(0xFF0F172A);
+  static const textSecondary = Color(0xFF64748B);
+  static const textTertiary = Color(0xFF94A3B8);
 
-  // Text (rich browns)
-  static const textPrimary = Color(0xFF2C1810);
-  static const textSecondary = Color(0xFF5D4E37);
-  static const textDisabled = Color(0xFF9E8B7B);
+  // ACCENT COLORS - Vibrant, modern
+  static const accentBlue = Color(0xFF3B82F6);
+  static const accentPurple = Color(0xFF8B5CF6);
+  static const accentPink = Color(0xFFEC4899);
+  static const accentOrange = Color(0xFFF97316);
+  static const accentGreen = Color(0xFF10B981);
+  static const accentYellow = Color(0xFFFBBF24);
 
-  // Accent / Status
-  static const accent = Color(0xFF7D9B76);
-  static const accentLight = Color(0xFFA8C5A0);
-  static const success = Color(0xFF7D9B76);
-  static const error = Color(0xFFC17F5E);
-  static const warning = Color(0xFFDAA520);
+  // PRAYER COLORS - Distinct, beautiful
+  static const fajr = Color(0xFF6366F1);
+  static const sunrise = Color(0xFFFBBF24);
+  static const dhuhr = Color(0xFF14B8A6);
+  static const asr = Color(0xFFF97316);
+  static const maghrib = Color(0xFFEC4899);
+  static const isha = Color(0xFF8B5CF6);
 
-  // Prayer time tones
-  static const fajr = Color(0xFFE8A87C);
-  static const dhuhr = Color(0xFFD4AF37);
-  static const asr = Color(0xFFC19A6B);
-  static const maghrib = Color(0xFFCD853F);
-  static const isha = Color(0xFF6B7F99);
+  // STATES
+  static const success = Color(0xFF10B981);
+  static const error = Color(0xFFEF4444);
+  static const warning = Color(0xFFF59E0B);
 
-  static const clear = Color(0x00000000);
+  // BORDERS & DIVIDERS - Subtle
+  static const border = Color(0xFFE2E8F0);
+  static const divider = Color(0xFFF1F5F9);
 
-  // Dark palette (warm earth)
-  static const darkBackground = Color(0xFF1A1512);
-  static const darkSurface = Color(0xFF2C2520);
-  static const darkSurfaceVariant = Color(0xFF2C2520);
-  static const darkSurfaceElevated = Color(0xFF2C2520);
-  static const darkTextPrimary = Color(0xFFF5F1E8);
-  static const darkTextSecondary = Color(0xFFF5F1E8);
-  static const darkTextDisabled = Color(0xFFF5F1E8);
+  // --- COMPATIBILITY LAYER (Mapping old keys to new palette) ---
 
-  static const backgroundBottom = Color(0xFFEFEBE0);
+  // General aliasing
+  static const stroke = border;
+  static const textMuted = textTertiary;
+  static const textDisabled = textTertiary;
+  static const textOnPrimary = surface;
+  static const clear = Colors.transparent;
+  static const black = Colors.black;
+  static const accent = accentOrange; // Replacing Gold with Orange
+  static const secondary = primaryLight;
+  static const surfaceElevated = surface;
+  static const surfaceVariant = surfaceSecondary;
 
-  static Color get stroke => textPrimary.withValues(alpha: 0.12);
-  static Color get divider => textPrimary.withValues(alpha: 0.16);
-  static Color get overlay => textPrimary.withValues(alpha: 0.08);
+  // Dark Theme Mappings (Modern Slate)
+  static const darkBackground = Color(0xFF0F172A);
+  static const darkSurface = Color(0xFF1E293B);
+  static const darkTextPrimary = Color(0xFFF8FAFC);
+  static const darkTextSecondary = Color(0xFF94A3B8);
 
-  static Color get textMuted => textSecondary;
+  // Categories (Mapped to Accents)
+  static const categoryAqidah = accentBlue;
+  static const categoryFiqh = accentPurple;
+  static const categoryHadith = accentGreen;
+  static const categoryArabic = accentOrange;
+  static const categoryQuran = accentPink;
 
-  // Accent roles
-  static const prayerNext = primary;
-  static const prayerCurrent = secondary;
-  static const cardAccent = accent;
-
-  // Gradients (light)
-  static const LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFFAF8F3),
-      Color(0xFFEFEBE0),
-    ],
-  );
-
-  static const LinearGradient appBackgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFFAF8F3),
-      Color(0xFFEFEBE0),
-    ],
-  );
-
-  static const LinearGradient vignetteGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0x00FAF8F3),
-      Color(0x66EFEBE0),
-    ],
-  );
-
-  static const LinearGradient surfaceGradient = LinearGradient(
+  // Gradients
+  static const primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFF5F1E8),
-      Color(0xFFEFEBE0),
-    ],
+    colors: [primaryLight, primary],
   );
 
-  static const LinearGradient surfaceElevatedGradient = LinearGradient(
+  static const backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFF5F1E8),
-      Color(0xFFEFEBE0),
-    ],
+    colors: [background, surface],
   );
 
-  static const LinearGradient glowGradient = LinearGradient(
-    colors: [
-      Color(0x26B8860B),
-      Color(0x00B8860B),
-    ],
-  );
-
-  static const LinearGradient primaryGradient = LinearGradient(
+  static const surfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFB8860B),
-      Color(0xFF8B7355),
-      Color(0xFFD4AF37),
-    ],
+    colors: [surface, surfaceSecondary],
   );
-}
 
-class AppColorsDark {
-  static const background = AppColors.darkBackground;
-  static const surface = AppColors.darkSurface;
-  static const surfaceVariant = AppColors.darkSurfaceVariant;
-  static const surfaceElevated = AppColors.darkSurfaceElevated;
-
-  static const textPrimary = AppColors.darkTextPrimary;
-  static const textSecondary = AppColors.darkTextSecondary;
-  static const textDisabled = AppColors.darkTextDisabled;
-
-  static const primary = AppColors.primary;
-  static const primaryLight = AppColors.primaryLight;
-  static const primaryDark = AppColors.primaryDark;
-
-  static const secondary = AppColors.secondary;
-  static const secondaryLight = AppColors.secondaryLight;
-  static const secondaryDark = AppColors.secondaryDark;
-
-  static const accent = AppColors.accent;
-  static const accentLight = AppColors.accentLight;
-  static const success = AppColors.success;
-  static const error = AppColors.error;
-  static const warning = AppColors.warning;
-
-  static Color get stroke => textPrimary.withValues(alpha: 0.12);
-  static Color get divider => textPrimary.withValues(alpha: 0.16);
-  static Color get overlay => textPrimary.withValues(alpha: 0.08);
-  static Color get textMuted => textSecondary;
+  static const surfaceElevatedGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [surface, surfaceSecondary],
+  );
 }

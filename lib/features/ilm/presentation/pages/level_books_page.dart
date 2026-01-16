@@ -76,8 +76,8 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
         completed += 1;
       }
 
-      final started = p.status != BookProgressStatus.notStarted ||
-          (p.completedLessons > 0);
+      final started =
+          p.status != BookProgressStatus.notStarted || (p.completedLessons > 0);
       if (started) hasProgress = true;
     }
 
@@ -127,8 +127,8 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
     // Simple logic: first book that is started but not completed.
     for (final b in widget.level.books) {
       final p = _progressOf(b.id);
-      final started = p.status != BookProgressStatus.notStarted ||
-          p.completedLessons > 0;
+      final started =
+          p.status != BookProgressStatus.notStarted || p.completedLessons > 0;
       final done = p.status == BookProgressStatus.completed;
 
       if (started && !done) {
@@ -146,139 +146,137 @@ class _LevelBooksPageState extends State<LevelBooksPage> {
     final progress = _levelProgress();
     final completed = progress.completed;
     final total = progress.total;
-    final progressValue = total == 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
+    final progressValue = total == 0
+        ? 0.0
+        : (completed / total).clamp(0.0, 1.0);
 
     final books = _filteredBooks();
 
     return Scaffold(
-      appBar: UnifiedAppBar(
-        title: widget.level.title,
-        showBack: true,
-      ),
+      appBar: UnifiedAppBar(title: widget.level.title, showBack: true),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: Padding(
           padding: AppUi.screenPaddingCompact,
           child: Column(
-          children: [
-            // ---------- HERO HEADER ----------
-            Container(
-              padding: const EdgeInsets.all(AppUi.gapLG),
-              decoration: BoxDecoration(
-                gradient: AppColors.surfaceElevatedGradient,
-                borderRadius: BorderRadius.circular(AppUi.radiusLG),
-                border: Border.all(
-                  color: AppColors.stroke,
+            children: [
+              // ---------- HERO HEADER ----------
+              Container(
+                padding: const EdgeInsets.all(AppUi.gapLG),
+                decoration: BoxDecoration(
+                  gradient: AppColors.surfaceElevatedGradient,
+                  borderRadius: BorderRadius.circular(AppUi.radiusLG),
+                  border: Border.all(color: AppColors.stroke),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(AppStrings.levelProgressTitle, style: AppText.heading),
+                    const SizedBox(height: AppUi.gapSM),
+                    Text(
+                      AppStrings.levelCompletedSummary(completed, total),
+                      style: AppText.bodyMuted,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppUi.gapMD),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppUi.radiusPill),
+                      child: LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: AppUi.progressBarHeight,
+                        color: AppColors.primary,
+                        backgroundColor: AppColors.textPrimary.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppUi.gapLG),
+
+                    // actions
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PrimaryMiniButton(
+                            label: AppStrings.actionStartNow,
+                            onTap: _openFirstBook,
+                          ),
+                        ),
+                        const SizedBox(width: AppUi.gapMD),
+                        Expanded(
+                          child: _SecondaryMiniButton(
+                            label: 'متابعة',
+                            onTap: _openContinueBook,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(AppStrings.levelProgressTitle, style: AppText.heading),
-                  const SizedBox(height: AppUi.gapSM),
-                  Text(
-                    AppStrings.levelCompletedSummary(completed, total),
-                    style: AppText.bodyMuted,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppUi.gapMD),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                    child: LinearProgressIndicator(
-                      value: progressValue,
-                      minHeight: AppUi.progressBarHeight,
-                      color: AppColors.primary,
-                      backgroundColor:
-                          AppColors.textPrimary.withValues(alpha: 0.08),
+
+              const SizedBox(height: AppUi.gapLG),
+
+              // ---------- FILTER CHIPS ----------
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'الكل',
+                      selected: _filter == _BooksFilter.all,
+                      onTap: () => setState(() => _filter = _BooksFilter.all),
                     ),
-                  ),
-                  const SizedBox(height: AppUi.gapLG),
-
-                  // actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PrimaryMiniButton(
-                          label: AppStrings.actionStartNow,
-                          onTap: _openFirstBook,
-                        ),
-                      ),
-                      const SizedBox(width: AppUi.gapMD),
-                      Expanded(
-                        child: _SecondaryMiniButton(
-                          label: 'متابعة',
-                          onTap: _openContinueBook,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    const SizedBox(width: AppUi.gapSM),
+                    _FilterChip(
+                      label: 'قيد التقدم',
+                      selected: _filter == _BooksFilter.inProgress,
+                      onTap: () =>
+                          setState(() => _filter = _BooksFilter.inProgress),
+                    ),
+                    const SizedBox(width: AppUi.gapSM),
+                    _FilterChip(
+                      label: 'مكتمل',
+                      selected: _filter == _BooksFilter.completed,
+                      onTap: () =>
+                          setState(() => _filter = _BooksFilter.completed),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: AppUi.gapLG),
+              const SizedBox(height: AppUi.gapLG),
 
-            // ---------- FILTER CHIPS ----------
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: 'الكل',
-                    selected: _filter == _BooksFilter.all,
-                    onTap: () => setState(() => _filter = _BooksFilter.all),
-                  ),
-                  const SizedBox(width: AppUi.gapSM),
-                  _FilterChip(
-                    label: 'قيد التقدم',
-                    selected: _filter == _BooksFilter.inProgress,
-                    onTap: () => setState(() => _filter = _BooksFilter.inProgress),
-                  ),
-                  const SizedBox(width: AppUi.gapSM),
-                  _FilterChip(
-                    label: 'مكتمل',
-                    selected: _filter == _BooksFilter.completed,
-                    onTap: () => setState(() => _filter = _BooksFilter.completed),
-                  ),
-                ],
+              // ---------- CONTENT ----------
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : (!progress.hasProgress && widget.level.books.isNotEmpty)
+                    ? EmptyState(
+                        icon: Icons.flag_outlined,
+                        title: AppStrings.levelNotStartedTitle,
+                        subtitle: AppStrings.levelNotStartedMessage,
+                        actionLabel: AppStrings.actionStartNow,
+                        onAction: _openFirstBook,
+                      )
+                    : ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: books.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppUi.gapLG),
+                        itemBuilder: (context, index) {
+                          final item = books[index];
+                          return BookCard(
+                            book: item.book,
+                            progress: item.progress,
+                            onTap: () => _openBook(item.book),
+                          );
+                        },
+                      ),
               ),
-            ),
-
-            const SizedBox(height: AppUi.gapLG),
-
-            // ---------- CONTENT ----------
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (!progress.hasProgress && widget.level.books.isNotEmpty)
-                      ? EmptyState(
-                          icon: Icons.flag_outlined,
-                          title: AppStrings.levelNotStartedTitle,
-                          message: AppStrings.levelNotStartedMessage,
-                          actionLabel: AppStrings.actionStartNow,
-                          onAction: _openFirstBook,
-                        )
-                      : ListView.separated(
-                          padding: EdgeInsets.zero,
-                          itemCount: books.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: AppUi.gapLG),
-                          itemBuilder: (context, index) {
-                            final item = books[index];
-                            return BookCard(
-                              book: item.book,
-                              progress: item.progress,
-                              onTap: () => _openBook(item.book),
-                            );
-                          },
-                        ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -316,7 +314,9 @@ class _FilterChip extends StatelessWidget {
           vertical: AppUi.gapSM,
         ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.18) : AppColors.surfaceElevated,
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.18)
+              : AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppUi.radiusPill),
           border: Border.all(
             color: selected
@@ -324,10 +324,7 @@ class _FilterChip extends StatelessWidget {
                 : AppColors.textPrimary.withValues(alpha: 0.06),
           ),
         ),
-        child: Text(
-          label,
-          style: selected ? AppText.body : AppText.bodyMuted,
-        ),
+        child: Text(label, style: selected ? AppText.body : AppText.bodyMuted),
       ),
     );
   }

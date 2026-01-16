@@ -1,119 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:talib_ilm/app/theme/app_text.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_ui.dart';
-import '../../../../shared/widgets/pressable_card.dart';
 
 class HomeHeroCard extends StatelessWidget {
-  final String greeting;
-  final String locationLabel;
-  final IconData locationIcon;
-  final String? userName;
-  final String hijriDate;
-  final VoidCallback? onLocationTap;
-  final VoidCallback? onTap;
+  final String nextPrayer;
+  final String timeRemaining;
+  final String nextPrayerTime;
 
   const HomeHeroCard({
     super.key,
-    required this.greeting,
-    required this.locationLabel,
-    required this.hijriDate,
-    this.locationIcon = Icons.location_on_outlined,
-    this.userName,
-    this.onLocationTap,
-    this.onTap,
+    required this.nextPrayer,
+    required this.timeRemaining,
+    required this.nextPrayerTime,
   });
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppUi.radiusLG);
-
     return Container(
-      constraints: const BoxConstraints(minHeight: 140),
-      child: PressableCard(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppUi.paddingLG,
-          vertical: AppUi.gapLG,
-        ),
-        borderRadius: radius,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.surface,
-              AppColors.primaryLight.withValues(alpha: 0.3),
-            ],
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F766E).withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          borderRadius: radius,
-        ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: InkWell(
-                      onTap: onLocationTap,
-                      borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppUi.gapSM,
-                          vertical: AppUi.gapXXS,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              locationIcon,
-                              size: AppUi.iconSizeSM,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: AppUi.gapXS),
-                            Text(
-                              locationLabel,
-                              style: AppText.caption.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+            // Icon with teal gradient
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF14B8A6), Color(0xFF0D9488)],
                 ),
-              ],
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mosque_outlined,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
-            const SizedBox(height: AppUi.gapMD),
+
+            const SizedBox(height: 20),
+
+            // Prayer name
             Text(
-              'السلام عليكم',
-              style: AppText.body.copyWith(
-                fontSize: 16,
+              nextPrayer,
+              style: const TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Color(0xFF64748B),
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
-            const SizedBox(height: AppUi.gapSM),
+
+            const SizedBox(height: 12),
+
+            // Countdown
             Text(
-              userName?.trim().isNotEmpty == true
-                  ? userName!.trim()
-                  : greeting,
-              style: AppText.body.copyWith(
-                fontSize: 14,
-                color: AppColors.textSecondary,
+              timeRemaining,
+              style: const TextStyle(
+                fontSize: 52,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+                height: 1,
+                letterSpacing: -2,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
-            const SizedBox(height: AppUi.gapSM),
-            Text(
-              hijriDate,
-              style: AppText.caption.copyWith(
-                fontSize: 12,
-                color: AppColors.primary,
+
+            const SizedBox(height: 16),
+
+            // Time pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 16,
+                    color: Color(0xFF14B8A6),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    nextPrayerTime,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
               ),
             ),
           ],

@@ -25,7 +25,7 @@ class AppTheme {
         bodySmall: AppTextStyles.bodySmall,
         labelLarge: AppTextStyles.button,
         labelMedium: AppTextStyles.label,
-        labelSmall: AppTextStyles.labelSmall,
+        labelSmall: AppTextStyles.caption,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
@@ -95,7 +95,7 @@ class AppTheme {
         ),
         labelLarge: AppTextStyles.button,
         labelMedium: AppTextStyles.label,
-        labelSmall: AppTextStyles.labelSmall,
+        labelSmall: AppTextStyles.caption,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkBackground,

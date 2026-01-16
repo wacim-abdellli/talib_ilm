@@ -267,29 +267,29 @@ class _BookViewPageState extends State<BookViewPage>
     } else {}
   }
 
-Future<void> _resetProgress() async {
-  if (!_bookServiceReady) return;
+  Future<void> _resetProgress() async {
+    if (!_bookServiceReady) return;
 
-  await _bookProgressService.resetBook(widget.book.id);
+    await _bookProgressService.resetBook(widget.book.id);
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  setState(() {
-    _currentPage = 1;
-    _totalPages = 0;
-    _maxPageReached = 1;
-    _readingSeconds = 0;
-    _hasShownReadHint = false;
-    _bookmarkedPages.clear();
-    _isBookmarked = false;
-  });
+    setState(() {
+      _currentPage = 1;
+      _totalPages = 0;
+      _maxPageReached = 1;
+      _readingSeconds = 0;
+      _hasShownReadHint = false;
+      _bookmarkedPages.clear();
+      _isBookmarked = false;
+    });
 
-  // 🔥 THIS NOW WORKS
-  _mutnPdfKey.currentState?.resetToStart();
+    // 🔥 THIS NOW WORKS
+    _mutnPdfKey.currentState?.resetToStart();
 
-  HapticFeedback.mediumImpact();
-  AppSnackbar.success(context, 'تمت إعادة تعيين تقدم الكتاب');
-}
+    HapticFeedback.mediumImpact();
+    AppSnackbar.success(context, 'تمت إعادة تعيين تقدم الكتاب');
+  }
 
   void _handleTabChange() {
     if (_tabController.index == _lastTabIndex) return;
@@ -641,7 +641,7 @@ Future<void> _resetProgress() async {
                     child: EmptyState(
                       icon: Icons.menu_book_outlined,
                       title: AppStrings.bookMutnEmptyTitle,
-                      message: AppStrings.bookMutnEmptyMessage,
+                      subtitle: AppStrings.bookMutnEmptyMessage,
                       actionLabel: AppStrings.actionBack,
                       onAction: () => Navigator.pop(context),
                     ),
@@ -707,7 +707,7 @@ Future<void> _resetProgress() async {
                             final justCompleted = await _bookProgressService
                                 .markCompleted(widget.book.id);
 
-                            if (justCompleted && mounted) {
+                            if (justCompleted && context.mounted) {
                               HapticFeedback.selectionClick();
                               AppPopup.show(
                                 context: context,
@@ -728,7 +728,7 @@ Future<void> _resetProgress() async {
                     child: EmptyState(
                       icon: Icons.menu_book_outlined,
                       title: AppStrings.bookSharhEmptyTitle,
-                      message: AppStrings.bookSharhEmptyMessage,
+                      subtitle: AppStrings.bookSharhEmptyMessage,
                       actionLabel: AppStrings.bookSharhEmptyAction,
                       onAction: _goToMutn,
                     ),
@@ -780,7 +780,7 @@ Future<void> _resetProgress() async {
                     child: EmptyState(
                       icon: Icons.ondemand_video_outlined,
                       title: AppStrings.bookLessonsEmptyTitle,
-                      message: AppStrings.bookLessonsEmptyMessage,
+                      subtitle: AppStrings.bookLessonsEmptyMessage,
                       actionLabel: AppStrings.bookLessonsEmptyAction,
                       onAction: _goToMutn,
                     ),
@@ -985,9 +985,11 @@ class _SharhReaderPageState extends State<_SharhReaderPage> {
               if (!context.mounted) return;
               Navigator.of(context).pop();
               await _loadSharhData();
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('تم حفظ الملاحظة')));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تم حفظ الملاحظة')),
+                );
+              }
             },
             child: const Text('حفظ'),
           ),

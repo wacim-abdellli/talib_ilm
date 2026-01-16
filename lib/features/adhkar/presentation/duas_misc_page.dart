@@ -16,42 +16,37 @@ class DuasMiscPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const UnifiedAppBar(
-        title: AppStrings.duasTitle,
-        showBack: true,
-      ),
+      appBar: const UnifiedAppBar(title: AppStrings.duasTitle, showBack: true),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: FutureBuilder<AthkarCatalog>(
           future: _service.loadCatalog(),
           builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final items = snapshot.data?.byId('duas')?.items ?? const [];
-          if (items.isEmpty) {
-            return EmptyState(
-              icon: Icons.menu_book_outlined,
-              title: AppStrings.duasEmptyTitle,
-              message: AppStrings.duasEmptyMessage,
-              actionLabel: AppStrings.actionBack,
-              onAction: () => Navigator.pop(context),
+            final items = snapshot.data?.byId('duas')?.items ?? const [];
+            if (items.isEmpty) {
+              return EmptyState(
+                icon: Icons.menu_book_outlined,
+                title: AppStrings.duasEmptyTitle,
+                subtitle: AppStrings.duasEmptyMessage,
+                actionLabel: AppStrings.actionBack,
+                onAction: () => Navigator.pop(context),
+              );
+            }
+
+            return ListView.separated(
+              padding: AppUi.screenPadding,
+              itemCount: items.length,
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: AppUi.gapMD),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _DuaCard(item: item);
+              },
             );
-          }
-
-          return ListView.separated(
-            padding: AppUi.screenPadding,
-            itemCount: items.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: AppUi.gapMD),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _DuaCard(item: item);
-            },
-          );
           },
         ),
       ),
@@ -83,8 +78,9 @@ class _DuaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.arabic,
-                  style:
-                      AppText.athkarBody.copyWith(color: AppColors.textPrimary),
+                  style: AppText.athkarBody.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -98,10 +94,7 @@ class _DuaCard extends StatelessWidget {
           ],
           if (item.meaning.isNotEmpty) ...[
             const SizedBox(height: AppUi.gapSM),
-            Text(
-              item.meaning,
-              style: AppText.body.copyWith(color: secondary),
-            ),
+            Text(item.meaning, style: AppText.body.copyWith(color: secondary)),
           ],
         ],
       ),
