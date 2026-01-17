@@ -129,7 +129,9 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     final progress = _totalPages > 0 ? _currentPage / _totalPages : 0.0;
 
     return Scaffold(
-      backgroundColor: _nightMode ? const Color(0xFF1E1E1E) : Colors.white,
+      backgroundColor: _nightMode
+          ? const Color(0xFF1E1E1E)
+          : const Color(0xFFFBFAF8), // Warm Ivory
       body: Stack(
         children: [
           // 1. PDF Viewer with Night Mode & Brightness
@@ -219,7 +221,9 @@ class PdfViewerPageState extends State<PdfViewerPage> {
       height: 80, // Allow space for status bar
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: const Color(
+          0xFFFBFAF8,
+        ).withValues(alpha: 0.95), // BackgroundMain
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -256,8 +260,10 @@ class PdfViewerPageState extends State<PdfViewerPage> {
           // Linear Progress Indicator at bottom edge
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: AppColors.surfaceVariant,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+            backgroundColor: const Color(0xFFE8E6E3), // BorderSubtle
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              Color(0xFF6A9A9A),
+            ), // PrimaryAccent
             minHeight: 2,
           ),
         ],
@@ -271,7 +277,9 @@ class PdfViewerPageState extends State<PdfViewerPage> {
       margin: EdgeInsets.only(bottom: 0), // Anchored to bottom
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: const Color(
+          0xFFFBFAF8,
+        ).withValues(alpha: 0.95), // BackgroundMain
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -369,8 +377,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                         ? Icons.bookmark
                         : Icons.bookmark_border,
                     color: widget.isBookmarked
-                        ? AppColors.accent
-                        : AppColors.textPrimary,
+                        ? const Color(0xFF6A9A9A)
+                        : const Color(0xFF3A3A3A),
                   ),
                   onPressed: () {
                     _resetHideTimer();
@@ -408,7 +416,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
             margin: const EdgeInsets.only(bottom: 90, left: 20, right: 20),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFFFBFAF8),
               borderRadius: BorderRadius.circular(16),
               boxShadow: AppUi.shadowMD,
             ),

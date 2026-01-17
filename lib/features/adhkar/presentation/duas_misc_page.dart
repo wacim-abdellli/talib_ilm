@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -18,7 +16,7 @@ class DuasMiscPage extends StatelessWidget {
     return Scaffold(
       appBar: const UnifiedAppBar(title: AppStrings.duasTitle, showBack: true),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        color: const Color(0xFFFBFAF8), // BackgroundMain
         child: FutureBuilder<AthkarCatalog>(
           future: _service.loadCatalog(),
           builder: (context, snapshot) {
@@ -61,13 +59,15 @@ class _DuaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        gradient: AppColors.surfaceElevatedGradient,
-        borderRadius: BorderRadius.circular(AppUi.radiusMD),
-        boxShadow: AppUi.cardShadow,
+        color: const Color(0xFFF5F3F0), // SurfaceCard
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE8E6E3), // BorderSubtle
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,8 +78,11 @@ class _DuaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.arabic,
-                  style: AppText.athkarBody.copyWith(
-                    color: AppColors.textPrimary,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF3A3A3A),
+                    fontFamily: 'Amiri',
                   ),
                 ),
               ),
@@ -89,12 +92,15 @@ class _DuaCard extends StatelessWidget {
             const SizedBox(height: AppUi.gapSM),
             Text(
               item.transliteration,
-              style: AppText.body.copyWith(color: secondary),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6E6E6E)),
             ),
           ],
           if (item.meaning.isNotEmpty) ...[
             const SizedBox(height: AppUi.gapSM),
-            Text(item.meaning, style: AppText.body.copyWith(color: secondary)),
+            Text(
+              item.meaning,
+              style: const TextStyle(fontSize: 15, color: Color(0xFF3A3A3A)),
+            ),
           ],
         ],
       ),

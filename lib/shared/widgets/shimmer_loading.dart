@@ -7,7 +7,8 @@ class ShimmerBookCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _buildShimmer(
-      child: Container(
+      context,
+      Container(
         height: 160,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -80,7 +81,8 @@ class ShimmerPrayerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _buildShimmer(
-      child: Container(
+      context,
+      Container(
         height: 72,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -166,7 +168,8 @@ class ShimmerHadithCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _buildShimmer(
-      child: Container(
+      context,
+      Container(
         height: 200,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
@@ -222,10 +225,76 @@ class ShimmerHadithCard extends StatelessWidget {
 }
 
 // Helper
-Widget _buildShimmer({required Widget child}) {
+Widget _buildShimmer(BuildContext context, Widget child) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return Shimmer.fromColors(
-    baseColor: Colors.grey[300]!,
-    highlightColor: Colors.grey[100]!,
+    baseColor: isDark ? const Color(0xFF1A1A1A) : Colors.grey[300]!,
+    highlightColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100]!,
     child: child,
   );
+}
+
+class ShimmerHeroCard extends StatelessWidget {
+  const ShimmerHeroCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildShimmer(
+      context,
+      Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        height: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            children: [
+              // Icon circle
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Name text
+              Container(
+                width: 100,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Big time
+              Container(
+                width: 200,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Pill
+              Container(
+                width: 100,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

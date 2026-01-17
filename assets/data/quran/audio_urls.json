@@ -1,0 +1,76 @@
+{
+    "reciters": [
+        {
+            "id": "mishary",
+            "nameArabic": "مشاري راشد العفاسي",
+            "nameEnglish": "Mishary Rashid Alafasy",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.alafasy",
+            "imageUrl": "assets/images/reciters/mishary.jpg"
+        },
+        {
+            "id": "abdulbasit",
+            "nameArabic": "عبد الباسط عبد الصمد",
+            "nameEnglish": "Abdul Basit Abdul Samad",
+            "style": "mujawwad",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.abdulsamad",
+            "imageUrl": "assets/images/reciters/abdulbasit.jpg"
+        },
+        {
+            "id": "minshawi",
+            "nameArabic": "محمد صديق المنشاوي",
+            "nameEnglish": "Mohamed Siddiq El-Minshawi",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.minshawi",
+            "imageUrl": "assets/images/reciters/minshawi.jpg"
+        },
+        {
+            "id": "maher",
+            "nameArabic": "ماهر المعيقلي",
+            "nameEnglish": "Maher Al Muaiqly",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.mahermuaiqly",
+            "imageUrl": "assets/images/reciters/maher.jpg"
+        },
+        {
+            "id": "sudais",
+            "nameArabic": "عبد الرحمن السديس",
+            "nameEnglish": "Abdul Rahman Al-Sudais",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.abdurrahmaansudais",
+            "imageUrl": "assets/images/reciters/sudais.jpg"
+        },
+        {
+            "id": "husary",
+            "nameArabic": "محمود خليل الحصري",
+            "nameEnglish": "Mahmoud Khalil Al-Husary",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.husary",
+            "imageUrl": "assets/images/reciters/husary.jpg"
+        },
+        {
+            "id": "shuraym",
+            "nameArabic": "سعود الشريم",
+            "nameEnglish": "Saud Al-Shuraim",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.shuraym",
+            "imageUrl": "assets/images/reciters/shuraym.jpg"
+        },
+        {
+            "id": "hudhaify",
+            "nameArabic": "علي الحذيفي",
+            "nameEnglish": "Ali Al-Hudhaify",
+            "style": "murattal",
+            "audioBaseUrl": "https://cdn.islamic.network/quran/audio/128/ar.hudhaify",
+            "imageUrl": "assets/images/reciters/hudhaify.jpg"
+        }
+    ],
+    "audioFormat": "mp3",
+    "audioUrlPattern": "{baseUrl}/{ayahNumber}.mp3",
+    "surahAudioPattern": "{baseUrl}/surah/{surahNumber}.mp3",
+    "notes": {
+        "globalAyahNumber": "Use global ayah number (1-6236) for individual verses",
+        "surahNumber": "Use 1-114 for full surah audio",
+        "quality": "128kbps MP3 format"
+    }
+}

@@ -67,7 +67,8 @@ class VideoLessonCard extends StatelessWidget {
                       ? Image.network(
                           thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _PlaceholderThumbnail(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _PlaceholderThumbnail(),
                         )
                       : const _PlaceholderThumbnail(),
 

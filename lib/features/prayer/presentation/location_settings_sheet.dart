@@ -75,8 +75,9 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     widget.onSaved?.call();
     if (mounted) Navigator.pop(context);
   }
+
   void _showMessage(String message) {
-    AppSnackbar.success(context, AppStrings.bookProgressSaved);
+    AppSnackbar.error(context, message);
   }
 
   @override

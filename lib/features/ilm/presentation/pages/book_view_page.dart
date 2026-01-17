@@ -13,6 +13,7 @@ import '../../data/models/lesson_model.dart';
 import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -444,9 +445,7 @@ class _BookViewPageState extends State<BookViewPage>
               _noteController.clear();
               if (!context.mounted) return;
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('تم حفظ الملاحظة')));
+              AppSnackbar.success(context, 'تم حفظ الملاحظة');
             },
             child: const Text('حفظ'),
           ),
@@ -518,10 +517,19 @@ class _BookViewPageState extends State<BookViewPage>
       context: context,
       builder: (context) => Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('الإشارات المرجعية', style: AppTextStyles.heading2),
+            Text(
+              'الإشارات المرجعية',
+              style: AppTextStyles.heading2.copyWith(
+                color: context.textPrimaryColor,
+              ),
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView.separated(
@@ -532,12 +540,27 @@ class _BookViewPageState extends State<BookViewPage>
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.title, style: AppTextStyles.bodyMedium),
+                      Text(
+                        item.title,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: context.textPrimaryColor,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(item.subtitle, style: AppTextStyles.caption),
+                      Text(
+                        item.subtitle,
+                        style: AppTextStyles.caption.copyWith(
+                          color: context.textSecondaryColor,
+                        ),
+                      ),
                       if (item.note != null && item.note!.isNotEmpty) ...[
                         const SizedBox(height: 6),
-                        Text(item.note!, style: AppTextStyles.bodySmall),
+                        Text(
+                          item.note!,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: context.textSecondaryColor,
+                          ),
+                        ),
                       ],
                     ],
                   );
@@ -562,25 +585,32 @@ class _BookViewPageState extends State<BookViewPage>
                 ? AppStrings.bookFavoriteRemove
                 : AppStrings.bookFavoriteAdd,
             onPressed: _toggleFavorite,
-            icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
+            icon: Icon(
+              _isFavorite ? Icons.star : Icons.star_border,
+              color: context.textPrimaryColor,
+            ),
           ),
           IconButton(
             tooltip: AppStrings.bookResetProgress,
             onPressed: _resetProgress,
-            icon: const Icon(Icons.refresh_outlined),
+            icon: Icon(Icons.refresh_outlined, color: context.textPrimaryColor),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.18),
+            color: const Color(0xFF6A9A9A).withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
           ),
-          labelColor: AppColors.textPrimary,
-          unselectedLabelColor: AppColors.textPrimary.withValues(alpha: 0.6),
-          labelStyle: AppText.body.copyWith(fontWeight: FontWeight.w700),
-          unselectedLabelStyle: AppText.body.copyWith(
+          labelColor: const Color(0xFF6A9A9A),
+          unselectedLabelColor: context.textSecondaryColor,
+          labelStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           indicatorPadding: const EdgeInsets.symmetric(
@@ -602,35 +632,35 @@ class _BookViewPageState extends State<BookViewPage>
                   heroTag: 'bookmark_fab',
                   mini: true,
                   backgroundColor: _isBookmarked
-                      ? AppColors.primary
-                      : AppColors.surface,
+                      ? context.primaryColor
+                      : context.surfaceElevatedColor,
                   onPressed: _toggleBookmark,
                   child: Icon(
                     _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: _isBookmarked ? Colors.white : AppColors.primary,
+                    color: _isBookmarked ? Colors.white : context.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
                   heroTag: 'note_fab',
                   mini: true,
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.surfaceElevatedColor,
                   onPressed: _showNoteDialog,
-                  child: const Icon(Icons.note_add, color: AppColors.primary),
+                  child: Icon(Icons.note_add, color: context.primaryColor),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
                   heroTag: 'bookmarks_fab',
                   mini: true,
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.surfaceElevatedColor,
                   onPressed: _showGlobalBookmarksList,
-                  child: const Icon(Icons.list, color: AppColors.primary),
+                  child: Icon(Icons.list, color: context.primaryColor),
                 ),
               ],
             )
           : null,
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        color: context.backgroundColor, // BackgroundMain
         child: TabBarView(
           controller: _tabController,
           physics: const NeverScrollableScrollPhysics(),
@@ -986,9 +1016,7 @@ class _SharhReaderPageState extends State<_SharhReaderPage> {
               Navigator.of(context).pop();
               await _loadSharhData();
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم حفظ الملاحظة')),
-                );
+                AppSnackbar.success(context, 'تم حفظ الملاحظة');
               }
             },
             child: const Text('حفظ'),
@@ -1000,9 +1028,7 @@ class _SharhReaderPageState extends State<_SharhReaderPage> {
 
   void _showBookmarksList() {
     if (_bookmarkedPages.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('لا توجد إشارات مرجعية')));
+      AppSnackbar.info(context, 'لا توجد إشارات مرجعية');
       return;
     }
 

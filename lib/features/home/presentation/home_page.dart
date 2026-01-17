@@ -10,7 +10,6 @@ import '../../../core/services/last_sharh_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import 'package:intl/intl.dart' as intl;
 
 import 'widgets/home_hero_card.dart';
 
@@ -29,6 +28,8 @@ import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../library/presentation/library_page.dart';
 import '../../adhkar/presentation/adhkar_page.dart';
+import '../../quran/presentation/quran_page.dart';
+import '../../../app/theme/theme_colors.dart';
 
 class HomePage extends StatefulWidget {
   final bool isActive;
@@ -196,30 +197,117 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+    );
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: context.backgroundColor,
       // Drawer removed as moved to More tab
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _handlePullRefresh,
           child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             slivers: [
-              // App bar with logo
+              // App bar with context (Date, Logo, Location)
               SliverToBoxAdapter(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF000000)
+                        : context.surfaceColor,
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                      bottom: BorderSide(
+                        color: isDark
+                            ? const Color(0xFF1F1F1F)
+                            : context.borderColor,
+                        width: 1,
+                      ),
                     ),
                   ),
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      height: 56,
-                      fit: BoxFit.contain,
-                    ),
+                  child: FutureBuilder<PrayerTimesDay>(
+                    future: _prayerFuture,
+                    builder: (context, snapshot) {
+                      final city = snapshot.data?.city ?? 'مكة المكرمة';
+                      final date = snapshot.data?.date ?? DateTime.now();
+
+                      // Calculate Hijri date
+                      final hijriDate = _getHijriDate(date);
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Left: Hijri Date
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hijriDate['day']!,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: isDark
+                                      ? const Color(0xFFFFFFFF)
+                                      : context.textPrimaryColor,
+                                ),
+                              ),
+                              Text(
+                                hijriDate['year']!,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? const Color(0xFFA1A1A1)
+                                      : context.textSecondaryColor,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Center: Logo
+                          Image.asset(
+                            'assets/images/logo.png',
+                            height: 44,
+                            fit: BoxFit.contain,
+                          ),
+
+                          // Right: Location
+                          Row(
+                            children: [
+                              Text(
+                                city,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: isDark
+                                      ? const Color(0xFFFFFFFF)
+                                      : context.textPrimaryColor,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: isDark
+                                    ? const Color(0xFFFFFFFF)
+                                    : context.textTertiaryColor,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -229,7 +317,7 @@ class _HomePageState extends State<HomePage> {
               // Hero card (Prayer Time)
               SliverToBoxAdapter(child: _buildHeroGreetingCard()),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // Daily Motivation
               if (_dailyQuote != null) ...[
@@ -249,13 +337,32 @@ class _HomePageState extends State<HomePage> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'رحلة التعلم',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                    ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFA855F7), Color(0xFFC084FC)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'رحلة التعلم',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? Colors.white
+                              : context.textPrimaryColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -271,13 +378,32 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'الأقسام',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(2),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF00D9C0), Color(0xFF14B8A6)],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'الأقسام',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : context.textPrimaryColor,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       SingleChildScrollView(
@@ -328,7 +454,8 @@ class _HomePageState extends State<HomePage> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              // Extra padding for nav bar
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
@@ -345,9 +472,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openQuran(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('القرآن الكريم: قريباً إن شاء الله')),
-    );
+    Navigator.push(context, buildFadeRoute(page: const QuranPage()));
   }
 
   void _openLibrary(BuildContext context) {
@@ -366,44 +491,47 @@ class _HomePageState extends State<HomePage> {
     return FutureBuilder<PrayerTimesDay>(
       future: _prayerFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SizedBox.shrink();
+        // Show card immediately with estimated/fallback data
+        final hasData = snapshot.hasData;
+        final day = snapshot.data;
+
+        // Fallback: estimate next prayer based on current time
+        String nextPrayerName;
+        DateTime nextPrayerTime;
+
+        if (hasData && day != null) {
+          nextPrayerName = day.nextPrayer;
+          nextPrayerTime = day.prayers[nextPrayerName] ?? DateTime.now();
+        } else {
+          // Estimate based on typical prayer times
+          final now = DateTime.now();
+          final hour = now.hour;
+
+          if (hour < 5) {
+            nextPrayerName = 'الفجر';
+            nextPrayerTime = DateTime(now.year, now.month, now.day, 5, 0);
+          } else if (hour < 12) {
+            nextPrayerName = 'الظهر';
+            nextPrayerTime = DateTime(now.year, now.month, now.day, 12, 30);
+          } else if (hour < 15) {
+            nextPrayerName = 'العصر';
+            nextPrayerTime = DateTime(now.year, now.month, now.day, 15, 30);
+          } else if (hour < 18) {
+            nextPrayerName = 'المغرب';
+            nextPrayerTime = DateTime(now.year, now.month, now.day, 18, 30);
+          } else if (hour < 20) {
+            nextPrayerName = 'العشاء';
+            nextPrayerTime = DateTime(now.year, now.month, now.day, 20, 0);
+          } else {
+            nextPrayerName = 'الفجر';
+            // Next day Fajr
+            nextPrayerTime = DateTime(now.year, now.month, now.day + 1, 5, 0);
+          }
         }
 
-        final day = snapshot.data!;
-        final nextPrayerName = day.nextPrayer;
-        final nextPrayerTime = day.prayers[nextPrayerName] ?? DateTime.now();
-        final timeDisplay = intl.DateFormat.jm('ar').format(nextPrayerTime);
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            // Calculate time remaining
-            final now = DateTime.now();
-            final difference = nextPrayerTime.difference(now);
-            final hours = difference.inHours.toString().padLeft(2, '0');
-            final minutes = (difference.inMinutes % 60).toString().padLeft(
-              2,
-              '0',
-            );
-            final seconds = (difference.inSeconds % 60).toString().padLeft(
-              2,
-              '0',
-            );
-            final timeRemaining = '$hours:$minutes:$seconds';
-
-            // Update every second
-            Future.delayed(const Duration(seconds: 1), () {
-              if (context.mounted) {
-                setState(() {});
-              }
-            });
-
-            return HomeHeroCard(
-              nextPrayer: nextPrayerName,
-              timeRemaining: timeRemaining,
-              nextPrayerTime: timeDisplay,
-            );
-          },
+        return HomeHeroCard(
+          nextPrayerName: nextPrayerName,
+          nextPrayerTime: nextPrayerTime,
         );
       },
     );
@@ -446,8 +574,54 @@ class _HomePageState extends State<HomePage> {
             ? 0.0
             : ((data.progressPercent ?? 0) / 100).clamp(0.0, 1.0);
 
+        // Styling Variables
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        final containerBg = isDark
+            ? const Color(0xFF0A0A0A)
+            : context.goldLightColor;
+
+        final borderColor = isDark
+            ? const Color(0xFFA855F7).withValues(alpha: 0.2)
+            : context.borderColor;
+
+        final shadowColor = isDark
+            ? const Color(0xFFA855F7).withValues(alpha: 0.2)
+            : Colors.transparent;
+
+        final shadowBlur = isDark ? 16.0 : 0.0;
+
+        // Icon Gradient (Purple in Dark, Gold in Light)
+        final iconDecoration = BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  colors: [Color(0xFFA855F7), Color(0xFFC084FC)],
+                )
+              : null,
+          color: isDark ? null : context.goldColor.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+        );
+
+        final iconColor = isDark ? Colors.white : context.goldColor;
+
+        // Text Colors
+        final titleColor = isDark
+            ? const Color(0xFFFFFFFF)
+            : context.textPrimaryColor;
+        final subtitleColor = isDark
+            ? const Color(0xFFA1A1A1)
+            : context.textSecondaryColor;
+        final arrowColor = isDark
+            ? const Color(0xFFA855F7)
+            : context
+                  .goldColor; // Added arrow color if needed, or assume icon color
+
+        final progressColor = isDark
+            ? const Color(0xFFA855F7)
+            : context.goldColor;
+
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Material(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(20),
@@ -458,11 +632,19 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F1E8),
+                  color: containerBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE8DCC8), width: 1),
+                  border: Border.all(color: borderColor, width: 1),
+                  boxShadow: [
+                    if (isDark)
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: shadowBlur,
+                        offset: const Offset(0, 4), // Assumed nice offset
+                      ),
+                  ],
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,17 +652,10 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       width: 48,
                       height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.menu_book,
-                        color: const Color(0xFFB8860B),
-                        size: 24,
-                      ),
+                      decoration: iconDecoration,
+                      child: Icon(Icons.menu_book, color: iconColor, size: 24),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,11 +665,11 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF2C1810),
+                              color: titleColor,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             data == null
                                 ? 'استكشف الكتب المتاحة'
@@ -504,37 +679,41 @@ class _HomePageState extends State<HomePage> {
                               fontWeight: data == null
                                   ? FontWeight.w400
                                   : FontWeight.w600,
-                              color: data == null
-                                  ? const Color(0xFF5D4E37)
-                                  : const Color(0xFF2C1810),
+                              color: subtitleColor,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: progressValue,
-                              backgroundColor: const Color(0xFFE8DCC8),
-                              valueColor: const AlwaysStoppedAnimation(
-                                Color(0xFFB8860B),
-                              ),
+                              backgroundColor: borderColor,
+                              valueColor: AlwaysStoppedAnimation(progressColor),
                               minHeight: 4.0,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             percentText == null
                                 ? progressLabel
                                 : '$progressLabel • $percentText',
                             style: TextStyle(
                               fontSize: 11,
-                              color: const Color(0xFF8B7355),
+                              color: isDark
+                                  ? const Color(0xFF666666)
+                                  : context.textTertiaryColor,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: arrowColor,
                     ),
                   ],
                 ),
@@ -544,6 +723,36 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  Map<String, String> _getHijriDate(DateTime gregorianDate) {
+    // Simple Hijri approximation (for display purposes)
+    // For production, use a proper Hijri calendar package like 'hijri'
+    final hijriYear = ((gregorianDate.year - 622) * 1.030684).round();
+    final hijriMonth = gregorianDate.month;
+    final hijriDay = gregorianDate.day;
+
+    final monthNames = [
+      'محرم',
+      'صفر',
+      'ربيع الأول',
+      'ربيع الثاني',
+      'جمادى الأولى',
+      'جمادى الثانية',
+      'رجب',
+      'شعبان',
+      'رمضان',
+      'شوال',
+      'ذو القعدة',
+      'ذو الحجة',
+    ];
+
+    final monthIndex = (hijriMonth - 1) % 12;
+
+    return {
+      'day': '$hijriDay ${monthNames[monthIndex]}',
+      'year': '$hijriYear هـ',
+    };
   }
 }
 

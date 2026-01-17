@@ -1,10 +1,4 @@
-enum FavoriteType {
-  hadith,
-  dhikr,
-  dua,
-  lesson,
-  book,
-}
+enum FavoriteType { hadith, dhikr, dua, lesson, book, quran, quote }
 
 extension FavoriteTypeX on FavoriteType {
   String get id => name;
@@ -31,16 +25,12 @@ class FavoriteItem {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type.id,
-      'id': id,
-      'title': title,
-      'subtitle': subtitle,
-    };
+    return {'type': type.id, 'id': id, 'title': title, 'subtitle': subtitle};
   }
 
   factory FavoriteItem.fromJson(Map<String, dynamic> json) {
-    final type = FavoriteTypeX.fromId(json['type']?.toString() ?? '') ??
+    final type =
+        FavoriteTypeX.fromId(json['type']?.toString() ?? '') ??
         FavoriteType.hadith;
     return FavoriteItem(
       type: type,

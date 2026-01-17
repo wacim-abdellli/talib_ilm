@@ -274,6 +274,8 @@ class AppStrings {
   static const String favoriteTypeDua = 'الأدعية';
   static const String favoriteTypeLesson = 'الدروس';
   static const String favoriteTypeBook = 'الكتب';
+  static const String favoriteTypeQuran = 'القرآن الكريم';
+  static const String favoriteTypeQuote = 'أقوال وفوائد';
 
   static const String progressStatusCompleted = 'مكتمل';
   static const String progressStatusInProgress = 'قيد التقدم';

@@ -1,0 +1,68 @@
+[
+    {
+        "languageCode": "en",
+        "languageName": "English",
+        "translators": [
+            {
+                "id": "sahih",
+                "name": "Sahih International",
+                "nameArabic": "صحيح إنترناشيونال",
+                "source": "https://api.alquran.cloud/v1/quran/en.sahih"
+            },
+            {
+                "id": "pickthall",
+                "name": "Pickthall",
+                "nameArabic": "بيكثال",
+                "source": "https://api.alquran.cloud/v1/quran/en.pickthall"
+            },
+            {
+                "id": "yusufali",
+                "name": "Yusuf Ali",
+                "nameArabic": "يوسف علي",
+                "source": "https://api.alquran.cloud/v1/quran/en.yusufali"
+            }
+        ]
+    },
+    {
+        "languageCode": "fr",
+        "languageName": "Français",
+        "translators": [
+            {
+                "id": "hamidullah",
+                "name": "Muhammad Hamidullah",
+                "nameArabic": "محمد حميد الله",
+                "source": "https://api.alquran.cloud/v1/quran/fr.hamidullah"
+            }
+        ]
+    },
+    {
+        "languageCode": "ur",
+        "languageName": "اردو",
+        "translators": [
+            {
+                "id": "jalandhry",
+                "name": "Fateh Muhammad Jalandhry",
+                "nameArabic": "فتح محمد جالندھری",
+                "source": "https://api.alquran.cloud/v1/quran/ur.jalandhry"
+            }
+        ]
+    },
+    {
+        "languageCode": "ar_tafsir",
+        "languageName": "تفسير عربي",
+        "translators": [
+            {
+                "id": "ibn_kathir",
+                "name": "Tafsir Ibn Kathir",
+                "nameArabic": "تفسير ابن كثير",
+                "source": "https://api.quran.com/api/v4/tafsirs/169/by_ayah"
+            },
+            {
+                "id": "muyassar",
+                "name": "Tafsir Al-Muyassar",
+                "nameArabic": "التفسير الميسر",
+                "source": "https://api.alquran.cloud/v1/quran/ar.muyassar"
+            }
+        ]
+    }
+]

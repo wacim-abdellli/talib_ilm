@@ -9,6 +9,7 @@ enum AdhkarCategory {
   tasbeeh,
   istighfar,
   duas,
+  sleeping,
 }
 
 extension AdhkarCategoryLabel on AdhkarCategory {
@@ -30,6 +31,8 @@ extension AdhkarCategoryLabel on AdhkarCategory {
         return AppStrings.istighfarTab;
       case AdhkarCategory.duas:
         return AppStrings.duasTitle;
+      case AdhkarCategory.sleeping:
+        return 'أذكار النوم';
     }
   }
 
@@ -58,6 +61,8 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
       return AdhkarCategory.duas;
     case 'general':
       return AdhkarCategory.general;
+    case 'sleeping':
+      return AdhkarCategory.sleeping;
   }
   return null;
 }
@@ -96,31 +101,30 @@ class AthkarItem {
   factory AthkarItem.fromJson(Map<String, dynamic> json) {
     final orderValue = _asInt(json['order']);
     final typeValue = _asInt(json['type']) ?? 0;
-    final id = json['id']?.toString() ??
+    final id =
+        json['id']?.toString() ??
         (orderValue != null ? 'order_$orderValue' : '');
     return AthkarItem(
       id: id,
-      arabic: json['arabic']?.toString() ??
-          json['content']?.toString() ??
-          '',
+      arabic: json['arabic']?.toString() ?? json['content']?.toString() ?? '',
       transliteration: json['transliteration']?.toString() ?? '',
       meaning: json['meaning']?.toString() ?? '',
-      target: _asInt(json['target']) ??
-          _asInt(json['count']) ??
-          0,
-      countDescription: json['count_description']?.toString() ??
+      target: _asInt(json['target']) ?? _asInt(json['count']) ?? 0,
+      countDescription:
+          json['count_description']?.toString() ??
           json['countDescription']?.toString() ??
           '',
       fadl: json['fadl']?.toString() ?? '',
       source: json['source']?.toString() ?? '',
       audio: json['audio']?.toString() ?? '',
-      hadithText: json['hadith_text']?.toString() ??
+      hadithText:
+          json['hadith_text']?.toString() ??
           json['hadithText']?.toString() ??
           '',
       hadithExplanation:
           json['explanation_of_hadith_vocabulary']?.toString() ??
-              json['hadithExplanation']?.toString() ??
-              '',
+          json['hadithExplanation']?.toString() ??
+          '',
       order: orderValue ?? 0,
       type: typeValue,
     );

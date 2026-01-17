@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:talib_ilm/shared/widgets/app_popup.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
@@ -102,17 +102,29 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
       builder: (context) {
         return SafeArea(
           top: false,
-          child: ListView.builder(
-            itemCount: options.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(options[index].arabic, style: AppText.athkarTitle),
-                trailing: index == currentIndex
-                    ? const Icon(Icons.check, size: AppUi.iconSizeSM)
-                    : null,
-                onTap: () => Navigator.pop(context, index),
-              );
-            },
+          child: Container(
+            color: context.surfaceColor,
+            child: ListView.builder(
+              itemCount: options.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                    options[index].arabic,
+                    style: AppText.athkarTitle.copyWith(
+                      color: context.textPrimaryColor,
+                    ),
+                  ),
+                  trailing: index == currentIndex
+                      ? Icon(
+                          Icons.check,
+                          size: AppUi.iconSizeSM,
+                          color: context.primaryColor,
+                        )
+                      : null,
+                  onTap: () => Navigator.pop(context, index),
+                );
+              },
+            ),
           ),
         );
       },
@@ -143,12 +155,23 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(AppStrings.targetTitle, style: AppText.heading),
+          backgroundColor: context.surfaceColor,
+          title: Text(
+            AppStrings.targetTitle,
+            style: AppText.heading.copyWith(color: context.textPrimaryColor),
+          ),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
+            style: TextStyle(color: context.textPrimaryColor),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(hintText: AppStrings.targetHint),
+            decoration: InputDecoration(
+              hintText: AppStrings.targetHint,
+              hintStyle: TextStyle(color: context.textTertiaryColor),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.borderColor),
+              ),
+            ),
           ),
           actions: [
             TextButton(
@@ -164,6 +187,9 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
                 final value = int.tryParse(controller.text);
                 Navigator.pop(context, value);
               },
+              style: FilledButton.styleFrom(
+                backgroundColor: context.primaryColor,
+              ),
               child: const Text(AppStrings.targetSave),
             ),
           ],
@@ -194,11 +220,17 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.backgroundColor,
       appBar: UnifiedAppBar(
         title: AppStrings.tasbeehTitle,
         showBack: true,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: const Color(0xFF6A9A9A),
+          indicatorWeight: 3,
+          labelColor: const Color(0xFF6A9A9A),
+          unselectedLabelColor: context.textSecondaryColor,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
             Tab(text: AppStrings.tasbeehTab),
             Tab(text: AppStrings.istighfarTab),
@@ -206,7 +238,7 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        color: context.backgroundColor, // BackgroundMain
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
@@ -262,7 +294,7 @@ class _CounterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const secondary = AppColors.textSecondary;
+    final secondary = context.textSecondaryColor;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -277,15 +309,30 @@ class _CounterCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppUi.paddingLG),
                 decoration: BoxDecoration(
-                  gradient: AppColors.surfaceElevatedGradient,
-                  borderRadius: BorderRadius.circular(AppUi.radiusLG),
-                  boxShadow: AppUi.cardShadow,
+                  color: context.surfaceSecondaryColor, // SurfaceCard
+                  shape: BoxShape.circle, // Circular counter area
+                  border: Border.all(
+                    color: const Color(
+                      0xFF6A9A9A,
+                    ).withValues(alpha: 0.3), // PrimaryAccent Ring
+                    width: 8,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Text(
                     count.toString(),
-                    style: AppText.athkarCounter.copyWith(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      fontSize: 80,
+                      fontWeight: FontWeight.w700,
+                      color: context.textPrimaryColor, // Charcoal
+                      fontFamily: 'Cairo',
                     ),
                   ),
                 ),
@@ -299,7 +346,10 @@ class _CounterCard extends StatelessWidget {
                     target == null
                         ? AppStrings.tapToCountNoTarget
                         : AppStrings.targetLabel(target!),
-                    style: AppText.caption.copyWith(color: secondary),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: context.textSecondaryColor, // TextSecondary
+                    ),
                   ),
                 ),
                 TextButton(
@@ -316,17 +366,28 @@ class _CounterCard extends StatelessWidget {
                     target == null
                         ? AppStrings.targetHintMessage
                         : AppStrings.progressLabel(count, target!),
-                    style: AppText.caption.copyWith(color: secondary),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: context.textSecondaryColor, // TextSecondary
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: onSetTarget,
-                  child: const Text(AppStrings.setTarget),
+                  child: const Text(
+                    AppStrings.setTarget,
+                    style: TextStyle(color: Color(0xFF6A9A9A)),
+                  ),
                 ),
                 const SizedBox(width: AppUi.gapXSPlus),
                 TextButton(
                   onPressed: onReset,
-                  child: const Text(AppStrings.reset),
+                  child: Text(
+                    AppStrings.reset,
+                    style: TextStyle(
+                      color: context.textTertiaryColor,
+                    ), // iconMuted (Gray)
+                  ),
                 ),
               ],
             ),

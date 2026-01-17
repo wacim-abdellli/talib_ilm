@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../shared/widgets/pressable_card.dart';
 
 class LibraryPage extends StatelessWidget {
@@ -46,14 +46,15 @@ class LibraryPage extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: context.backgroundColor,
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
               border: Border(
-                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                bottom: BorderSide(color: context.borderColor, width: 1),
               ),
             ),
             child: SafeArea(
@@ -78,7 +79,7 @@ class LibraryPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -87,7 +88,7 @@ class LibraryPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: context.textPrimaryColor,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -95,7 +96,7 @@ class LibraryPage extends StatelessWidget {
                               'تصفح كتب العلم الشرعي',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF64748B),
+                                color: context.textSecondaryColor,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -104,7 +105,7 @@ class LibraryPage extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.search_rounded, size: 26),
-                        color: const Color(0xFF64748B),
+                        color: context.textSecondaryColor,
                         onPressed: () {},
                       ),
                     ],
@@ -117,27 +118,24 @@ class LibraryPage extends StatelessWidget {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.surfaceSecondaryColor,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
+                      border: Border.all(color: context.borderColor, width: 1),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.search_rounded,
-                          color: Color(0xFF94A3B8),
+                          color: context.textTertiaryColor,
                           size: 22,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'ابحث في الكتب والشروحات...',
                             style: TextStyle(
                               fontSize: 15,
-                              color: Color(0xFF94A3B8),
+                              color: context.textTertiaryColor,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -151,9 +149,7 @@ class LibraryPage extends StatelessWidget {
           ),
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.backgroundGradient,
-              ),
+              color: context.backgroundColor,
               child: ListView(
                 padding: AppUi.screenPadding,
                 children: [...levelCards],
@@ -180,10 +176,10 @@ class _LibraryLevelCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        gradient: AppColors.surfaceGradient,
+        color: context.surfaceColor,
         borderRadius: radius,
         border: Border.all(
-          color: AppColors.stroke,
+          color: context.borderColor,
           width: AppUi.dividerThickness,
         ),
       ),
@@ -193,18 +189,25 @@ class _LibraryLevelCard extends StatelessWidget {
             width: AppUi.iconBoxSize,
             height: AppUi.iconBoxSize,
             decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
+              color: context.backgroundColor,
               borderRadius: radius,
               border: Border.all(
-                color: AppColors.stroke,
+                color: context.borderColor,
                 width: AppUi.dividerThickness,
               ),
             ),
-            child: Icon(level.icon, color: AppColors.textMuted),
+            child: Icon(level.icon, color: context.textSecondaryColor),
           ),
           const SizedBox(width: AppUi.gapMD),
-          Expanded(child: Text(level.title, style: AppText.sectionTitle)),
-          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          Expanded(
+            child: Text(
+              level.title,
+              style: AppText.sectionTitle.copyWith(
+                color: context.textPrimaryColor,
+              ),
+            ),
+          ),
+          Icon(Icons.chevron_right, color: context.textSecondaryColor),
         ],
       ),
     );

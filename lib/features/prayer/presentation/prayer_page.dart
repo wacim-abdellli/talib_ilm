@@ -55,19 +55,28 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   Future<_LocationInfo> _loadLocation() async {
-    final manual = await _locationService.getManualLocation();
-    final location = await _locationService.getLocation();
-    return _LocationInfo(city: location.city, isManual: manual != null);
+    // Add small delay to prevent startup resource contention on emulators
+    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final manual = await _locationService.getManualLocation();
+      final location = await _locationService.getLocation();
+      return _LocationInfo(city: location.city, isManual: manual != null);
+    } catch (e) {
+      debugPrint('Error loading location: $e');
+      // Return a safe default if location fails
+      return const _LocationInfo(city: 'مكة المكرمة', isManual: false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       key: _scaffoldKey,
-      // AppBar and FAB removed (moved to header)
       body: Container(
-        color: AppColors.background,
+        color: isDark ? Colors.black : AppColors.background,
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: FutureBuilder<PrayerTimesDay>(
@@ -79,18 +88,19 @@ class _PrayerPageState extends State<PrayerPage> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Next Prayer Card Shimmer - approximated by a prayer tile?
-                        // Design says: ShimmerPrayerTile.
-                        // Let's use ShimmerPrayerTile(height: roughly) or create a larger one?
-                        // User spec: "ShimmerPrayerTile list for prayer section".
-                        // For top section, maybe a generic box.
                         Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
+                          baseColor: isDark
+                              ? const Color(0xFF1A1A1A)
+                              : Colors.grey[300]!,
+                          highlightColor: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.grey[100]!,
                           child: Container(
-                            height: 140, // Next Prayer Card approx height
+                            height: 140,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF0A0A0A)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
@@ -136,19 +146,26 @@ class _PrayerPageState extends State<PrayerPage> {
                   final city = location?.city ?? data.city;
 
                   return SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Header section
                         Container(
                           padding: const EdgeInsets.all(20),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF14B8A6), Color(0xFF0D9488)],
-                            ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF000000)
+                                : const Color(0xFF6A9A9A),
+                            border: isDark
+                                ? const Border(
+                                    bottom: BorderSide(
+                                      color: Color(0xFF1F1F1F),
+                                    ),
+                                  )
+                                : null,
                           ),
                           child: SafeArea(
                             bottom: false,
@@ -195,7 +212,9 @@ class _PrayerPageState extends State<PrayerPage> {
                                   children: [
                                     Icon(
                                       Icons.location_on_rounded,
-                                      color: Colors.white.withOpacity(0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       size: 18,
                                     ),
                                     const SizedBox(width: 6),
@@ -204,7 +223,9 @@ class _PrayerPageState extends State<PrayerPage> {
                                         city,
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -219,14 +240,20 @@ class _PrayerPageState extends State<PrayerPage> {
                                       child: Container(
                                         padding: const EdgeInsets.all(14),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: isDark
+                                              ? const Color(0xFF141414)
+                                              : Colors.white.withValues(
+                                                  alpha: 0.12,
+                                                ),
                                           borderRadius: BorderRadius.circular(
                                             16,
                                           ),
                                           border: Border.all(
-                                            color: Colors.white.withOpacity(
-                                              0.3,
-                                            ),
+                                            color: isDark
+                                                ? const Color(0xFF333333)
+                                                : Colors.white.withValues(
+                                                    alpha: 0.25,
+                                                  ),
                                             width: 1,
                                           ),
                                         ),
@@ -261,14 +288,20 @@ class _PrayerPageState extends State<PrayerPage> {
                                       child: Container(
                                         padding: const EdgeInsets.all(14),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: isDark
+                                              ? const Color(0xFF141414)
+                                              : Colors.white.withValues(
+                                                  alpha: 0.12,
+                                                ),
                                           borderRadius: BorderRadius.circular(
                                             16,
                                           ),
                                           border: Border.all(
-                                            color: Colors.white.withOpacity(
-                                              0.3,
-                                            ),
+                                            color: isDark
+                                                ? const Color(0xFF333333)
+                                                : Colors.white.withValues(
+                                                    alpha: 0.25,
+                                                  ),
                                             width: 1,
                                           ),
                                         ),
@@ -302,7 +335,9 @@ class _PrayerPageState extends State<PrayerPage> {
                                 style: AppText.body.copyWith(
                                   fontSize: responsive.sp(13),
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
                                 textAlign: TextAlign.right,
                               ),
@@ -318,6 +353,8 @@ class _PrayerPageState extends State<PrayerPage> {
                                   SizedBox(height: responsive.smallGap),
                               ],
                               SizedBox(height: responsive.largeGap),
+                              // Extra padding for nav bar
+                              const SizedBox(height: 100),
                             ],
                           ),
                         ),
@@ -583,22 +620,50 @@ class _PrayerTimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final isCurrent = item.isCurrent;
     final isCompleted = item.isCompleted;
     final iconData = _iconFor(item.name);
-    final iconColor = _colorFor(item.name);
+    final iconColor = _colorFor(item.name, isDark);
     final statusIcon = _statusIcon(isCurrent, isCompleted);
-    final statusColor = _statusColor(isCurrent, isCompleted);
-    final titleColor = isCompleted
-        ? AppColors.textSecondary
-        : AppColors.textPrimary;
-    final timeColor = isCurrent ? AppColors.primary : titleColor;
-    final backgroundColor = isCurrent
-        ? AppColors.primaryLight.withValues(alpha: 0.08)
-        : AppColors.surface;
-    final borderColor = isCurrent
-        ? AppColors.primary.withValues(alpha: 0.25)
-        : AppColors.stroke;
+    final statusColor = _statusColor(isCurrent, isCompleted, isDark);
+
+    final titleColor = isDark
+        ? Colors.white
+        : (isCompleted ? AppColors.textSecondary : AppColors.textPrimary);
+
+    final timeColor = isDark
+        ? Colors.white
+        : (isCurrent ? AppColors.primary : titleColor);
+
+    // Dark mode logic matching PrayerTimeTile
+    final backgroundColor = isDark
+        ? (isCurrent ? const Color(0xFF0A0A0A) : const Color(0xFF0A0A0A))
+        : (isCurrent
+              ? const Color(0xFF6A9A9A).withValues(alpha: 0.08)
+              : const Color(0xFFF5F3F0));
+
+    final borderColor = isDark
+        ? (isCurrent
+              ? iconColor.withValues(alpha: 0.4)
+              : const Color(0xFF1F1F1F))
+        : (isCurrent
+              ? const Color(0xFF6A9A9A).withValues(alpha: 0.2)
+              : const Color(0xFFE8E6E3));
+
+    // Active Gradient Overlay for Dark Mode
+    final gradient = (isDark && isCurrent)
+        ? LinearGradient(
+            colors: [
+              iconColor.withValues(alpha: 0.15),
+              const Color(0xFF0A0A0A),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
+        : null;
+
     final subtitle = isCurrent
         ? AppStrings.prayerCurrent
         : item.isNext
@@ -614,8 +679,12 @@ class _PrayerTimeCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
       decoration: BoxDecoration(
         color: backgroundColor,
+        gradient: gradient,
         borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
-        border: Border.all(color: borderColor, width: AppUi.dividerThickness),
+        border: Border.all(
+          color: borderColor,
+          width: isDark && isCurrent ? 1.5 : AppUi.dividerThickness,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -624,8 +693,21 @@ class _PrayerTimeCard extends StatelessWidget {
             width: responsive.sp(40),
             height: responsive.sp(40),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.18),
+              color: isDark
+                  ? iconColor.withValues(alpha: 0.15)
+                  : iconColor.withValues(alpha: 0.18),
               shape: BoxShape.circle,
+              // Add gradient for active icon in dark mode if needed
+              gradient: (isDark && isCurrent)
+                  ? LinearGradient(
+                      colors: [
+                        iconColor.withValues(alpha: 0.3),
+                        iconColor.withValues(alpha: 0.15),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
             ),
             child: Icon(
               iconData,
@@ -653,7 +735,9 @@ class _PrayerTimeCard extends StatelessWidget {
                   subtitle,
                   style: AppText.caption.copyWith(
                     fontSize: responsive.sp(11),
-                    color: AppColors.textSecondary,
+                    color: isDark
+                        ? const Color(0xFFA1A1A1)
+                        : AppColors.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -721,7 +805,23 @@ class _PrayerTimeCard extends StatelessWidget {
     return Icons.access_time;
   }
 
-  Color _colorFor(String name) {
+  Color _colorFor(String name, bool isDark) {
+    if (isDark) {
+      switch (name) {
+        case AppStrings.prayerFajr:
+          return const Color(0xFF6366F1);
+        case AppStrings.prayerDhuhr:
+          return const Color(0xFF00D9C0);
+        case AppStrings.prayerAsr:
+          return const Color(0xFFFF8A3D);
+        case AppStrings.prayerMaghrib:
+          return const Color(0xFFFF4D9E);
+        case AppStrings.prayerIsha:
+          return const Color(0xFFA855F7);
+      }
+      return const Color(0xFF00D9C0);
+    }
+
     switch (name) {
       case AppStrings.prayerFajr:
         return const Color(0xFFE8A87C);
@@ -743,10 +843,14 @@ class _PrayerTimeCard extends StatelessWidget {
     return Icons.notifications_none;
   }
 
-  Color _statusColor(bool isCurrent, bool isCompleted) {
-    if (isCurrent) return AppColors.primary;
-    if (isCompleted) return AppColors.success;
-    return AppColors.textSecondary;
+  Color _statusColor(bool isCurrent, bool isCompleted, bool isDark) {
+    if (isCurrent) {
+      return isDark ? const Color(0xFF00D9C0) : const Color(0xFF6A9A9A);
+    }
+    if (isCompleted) {
+      return isDark ? const Color(0xFF666666) : const Color(0xFF85A885);
+    }
+    return isDark ? const Color(0xFF666666) : const Color(0xFF9A9A9A);
   }
 }
 
@@ -759,6 +863,8 @@ class _AdhkarLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppUi.radiusXS),
@@ -771,7 +877,7 @@ class _AdhkarLink extends StatelessWidget {
           label,
           style: AppText.caption.copyWith(
             fontSize: responsive.sp(11),
-            color: AppColors.textSecondary,
+            color: isDark ? const Color(0xFFA1A1A1) : AppColors.textSecondary,
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,

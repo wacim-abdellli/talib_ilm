@@ -68,12 +68,19 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       fontFamily: 'Cairo',
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.darkPrimary,
+        secondary: AppColors.darkPrimaryLight,
         surface: AppColors.darkSurface,
         error: AppColors.error,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: AppColors.darkTextPrimary,
+        onError: Colors.white,
       ),
+      dividerColor: AppColors.darkDivider,
       textTheme: TextTheme(
         displayLarge: AppTextStyles.heading1.copyWith(
           color: AppColors.darkTextPrimary,
@@ -93,12 +100,18 @@ class AppTheme {
         bodySmall: AppTextStyles.bodySmall.copyWith(
           color: AppColors.darkTextSecondary,
         ),
-        labelLarge: AppTextStyles.button,
-        labelMedium: AppTextStyles.label,
-        labelSmall: AppTextStyles.caption,
+        labelLarge: AppTextStyles.button.copyWith(
+          color: AppColors.darkTextPrimary,
+        ),
+        labelMedium: AppTextStyles.label.copyWith(
+          color: AppColors.darkTextSecondary,
+        ),
+        labelSmall: AppTextStyles.caption.copyWith(
+          color: AppColors.darkTextTertiary,
+        ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: AppColors.darkSurface,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: const TextStyle(
@@ -109,9 +122,14 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
       ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.darkSurface,
+        selectedItemColor: AppColors.darkPrimary,
+        unselectedItemColor: AppColors.darkTextTertiary,
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.darkPrimary,
           foregroundColor: Colors.white,
           textStyle: AppTextStyles.button,
           elevation: 0,
@@ -126,11 +144,13 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            width: 1,
-          ),
+          side: BorderSide(color: AppColors.darkBorder, width: 1),
         ),
+      ),
+      iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.darkSurfaceElevated,
+        contentTextStyle: const TextStyle(color: AppColors.darkTextPrimary),
       ),
     );
   }

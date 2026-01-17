@@ -17,84 +17,145 @@ class HadithOfTheDayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Dark Mode Styling Colors (User Request: Ultra Dark)
+    final containerBg = isDark ? const Color(0xFF0A0A0A) : Colors.white;
+
+    final borderColor = isDark
+        ? const Color(0xFF3B9EFF).withValues(alpha: 0.2)
+        : const Color(0xFFE2E8F0);
+
+    final shadowColor = isDark
+        ? const Color(0xFF3B9EFF).withValues(alpha: 0.2)
+        : Colors.black.withValues(alpha: 0.04);
+
+    final shadowBlur = isDark ? 20.0 : 12.0;
+    final shadowOffset = isDark ? const Offset(0, 8) : const Offset(0, 4);
+
+    // Gradients
+    const gradientColors = [Color(0xFF3B9EFF), Color(0xFF60A5FA)];
+    const leftAccentGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: gradientColors,
+    );
+
+    // Icon Container
+    final iconDecoration = BoxDecoration(
+      gradient: isDark ? const LinearGradient(colors: gradientColors) : null,
+      color: isDark ? null : const Color(0xFFEFF6FF),
+      borderRadius: BorderRadius.circular(10),
+    );
+
+    final iconColor = isDark ? Colors.white : const Color(0xFF3B82F6);
+
+    // Text Colors
+    final titleColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF0F172A);
+    final arabicColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF1E293B);
+
+    // Source Badge
+    final sourceBadgeBg = isDark
+        ? const Color(0xFF141414)
+        : const Color(0xFFF8FAFC);
+    final sourceTextColor = isDark
+        ? const Color(0xFF3B9EFF)
+        : const Color(0xFF64748B);
+    final checkIconColor = isDark
+        ? const Color(0xFF00E676)
+        : const Color(0xFF22C55E); // Neon green in dark
+
+    // Action Icons
+    final actionIconColor = isDark
+        ? const Color(0xFFA1A1A1)
+        : const Color(0xFF64748B);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: containerBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        border: Border.all(color: borderColor, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: shadowColor,
+            blurRadius: shadowBlur,
+            offset: shadowOffset,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+          // Left accent stripe
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 4,
+              decoration: const BoxDecoration(
+                gradient: leftAccentGradient,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  bottomLeft: Radius.circular(24),
                 ),
-                child: const Icon(
-                  Icons.auto_stories_outlined,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'حديث نبوي',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: onFavoriteToggle,
-                icon: Icon(
-                  isFavorite ? Icons.bookmark : Icons.bookmark_border,
-                  color: const Color(0xFF3B82F6),
-                  size: 22,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Quote decoration
-          Container(
-            padding: const EdgeInsets.only(right: 12),
-            decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(color: Color(0xFF3B82F6), width: 3),
               ),
             ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: iconDecoration,
+                      child: Icon(
+                        Icons.auto_stories_rounded,
+                        color: iconColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'حديث نبوي',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: titleColor,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: onFavoriteToggle,
+                      icon: Icon(
+                        isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                        color: actionIconColor,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
                 // Arabic text
                 Text(
                   arabicText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 19,
-                    height: 1.9,
-                    color: Color(0xFF0F172A),
+                    height: 2.2,
+                    color: arabicColor,
                     fontFamily: 'Amiri',
                     fontWeight: FontWeight.w500,
                   ),
@@ -103,67 +164,67 @@ class HadithOfTheDayCard extends StatelessWidget {
                   overflow: TextOverflow.fade,
                   maxLines: 8,
                 ),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-          // Source and actions
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC), // Ultra light slate
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                // Source and actions
+                Row(
                   children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: Color(0xFF22C55E),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        source,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
+                      decoration: BoxDecoration(
+                        color: sourceBadgeBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: checkIconColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              source,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: sourceTextColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: arabicText));
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 20),
+                      color: actionIconColor,
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.share_rounded, size: 20),
+                      color: actionIconColor,
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: arabicText));
-                },
-                icon: const Icon(Icons.copy_rounded, size: 20),
-                color: const Color(0xFF64748B),
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.share_rounded, size: 20),
-                color: const Color(0xFF64748B),
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

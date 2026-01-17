@@ -1,0 +1,107 @@
+[
+    {
+        "id": 1,
+        "surahId": 1,
+        "ayahNumber": 1,
+        "textUthmani": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        "textSimple": "بسم الله الرحمن الرحيم",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
+            "fr": "Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux."
+        }
+    },
+    {
+        "id": 2,
+        "surahId": 1,
+        "ayahNumber": 2,
+        "textUthmani": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        "textSimple": "الحمد لله رب العالمين",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "[All] praise is [due] to Allah, Lord of the worlds -",
+            "fr": "Louange à Allah, Seigneur de l'univers."
+        }
+    },
+    {
+        "id": 3,
+        "surahId": 1,
+        "ayahNumber": 3,
+        "textUthmani": "الرَّحْمَٰنِ الرَّحِيمِ",
+        "textSimple": "الرحمن الرحيم",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "The Entirely Merciful, the Especially Merciful,",
+            "fr": "Le Tout Miséricordieux, le Très Miséricordieux,"
+        }
+    },
+    {
+        "id": 4,
+        "surahId": 1,
+        "ayahNumber": 4,
+        "textUthmani": "مَالِكِ يَوْمِ الدِّينِ",
+        "textSimple": "مالك يوم الدين",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "Sovereign of the Day of Recompense.",
+            "fr": "Maître du Jour de la rétribution."
+        }
+    },
+    {
+        "id": 5,
+        "surahId": 1,
+        "ayahNumber": 5,
+        "textUthmani": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+        "textSimple": "إياك نعبد وإياك نستعين",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "It is You we worship and You we ask for help.",
+            "fr": "C'est Toi [Seul] que nous adorons, et c'est Toi [Seul] dont nous implorons secours."
+        }
+    },
+    {
+        "id": 6,
+        "surahId": 1,
+        "ayahNumber": 6,
+        "textUthmani": "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+        "textSimple": "اهدنا الصراط المستقيم",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "Guide us to the straight path -",
+            "fr": "Guide-nous dans le droit chemin,"
+        }
+    },
+    {
+        "id": 7,
+        "surahId": 1,
+        "ayahNumber": 7,
+        "textUthmani": "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
+        "textSimple": "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
+        "juzNumber": 1,
+        "pageNumber": 1,
+        "hizbNumber": 1,
+        "rubNumber": 1,
+        "translations": {
+            "en": "The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray.",
+            "fr": "Le chemin de ceux que Tu as comblés de faveurs, non pas de ceux qui ont encouru Ta colère, ni des égarés."
+        }
+    }
+]

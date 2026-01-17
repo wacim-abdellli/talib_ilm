@@ -48,7 +48,13 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     await _clearPersistedSession();
     final catalog = await _athkarService.loadCatalog();
     final categoryId = _catalogIdFor(widget.category);
-    final categoryData = catalog.byId(categoryId);
+    var categoryData = catalog.byId(categoryId);
+
+    // Fallbacks for sleeping
+    if (categoryData == null && widget.category == AdhkarCategory.sleeping) {
+      categoryData = catalog.byId('general') ?? catalog.byId('before_prayer');
+    }
+
     final items = categoryData?.items ?? const <AthkarItem>[];
 
     if (!mounted) return;
@@ -167,7 +173,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         widget.titleOverride ?? _categoryTitle ?? widget.category.label;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: UnifiedAppBar(
         title: title,
         showBack: true,
@@ -181,16 +186,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAFAF9), // Off-white
-              Color(0xFFF5F5F4), // Light grey
-            ],
-          ),
-        ),
+        color: const Color(0xFFFBFAF8), // BackgroundMain
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -234,7 +230,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
                                         height: 1.6,
-                                        color: AppColors.textPrimary,
+                                        color: Color(
+                                          0xFF2A2A2A,
+                                        ), // Near-black charcoal
                                       ),
                                     ),
                                     const SizedBox(height: 20),
@@ -244,10 +242,11 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                         item.meaning,
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          // fontFamily: 'Cairo', // Fallback to safe default or implicit
                                           fontSize: 16,
                                           height: 1.5,
-                                          color: AppColors.textSecondary,
+                                          color: Color(
+                                            0xFF6E6E6E,
+                                          ), // TextSecondary
                                         ),
                                       ),
                                     const SizedBox(
@@ -290,12 +289,14 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.error.withValues(alpha: 0.5),
+                                color: const Color(
+                                  0xFF9A9A9A,
+                                ).withValues(alpha: 0.3),
                               ),
                             ),
                             child: const Icon(
                               Icons.replay,
-                              color: AppColors.error,
+                              color: Color(0xFF9A9A9A), // Muted Reset
                               size: 24,
                             ),
                           ),
@@ -309,7 +310,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         child: IgnorePointer(
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            color: AppColors.success.withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF6A9A9A,
+                            ).withValues(alpha: 0.08), // PrimaryAccent tint
                           ),
                         ),
                       ),
@@ -347,12 +350,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 transitionBuilder: (child, anim) =>
                     ScaleTransition(scale: anim, child: child),
                 child: Text(
-                  isComplete ? '$_count' : '$_count', // Just count
+                  '$_count',
                   key: ValueKey(_count),
                   style: const TextStyle(
                     fontSize: 96,
-                    fontWeight: FontWeight.w900, // Extra bold
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3A3A3A),
                     height: 1,
                   ),
                 ),
@@ -363,7 +366,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                   'من $repeat',
                   style: const TextStyle(
                     fontSize: 20,
-                    color: AppColors.textTertiary,
+                    color: Color(0xFF9A9A9A),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -372,7 +375,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 const SizedBox(height: 8),
                 const Icon(
                   Icons.check_circle,
-                  color: AppColors.success,
+                  color: Color(0xFF6A9A9A), // PrimaryAccent
                   size: 32,
                 ),
               ],
@@ -385,8 +388,16 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   // Helpers
   String _catalogIdFor(AdhkarCategory category) {
-    return category
-        .name; // Simplified, assumes mapping matches or handles in service
+    if (category == AdhkarCategory.sleeping) {
+      return 'sleeping'; // Will fallback in loadItems if not found
+    }
+    if (category == AdhkarCategory.afterPrayer) {
+      return 'after_prayer';
+    }
+    if (category == AdhkarCategory.beforePrayer) {
+      return 'before_prayer';
+    }
+    return category.name;
   }
 
   String _favoriteIdFor(AthkarItem item) {
@@ -431,18 +442,9 @@ class _DhikrProgressPainter extends CustomPainter {
     final progress = (count / total).clamp(0.0, 1.0);
     if (progress > 0) {
       final rect = Rect.fromCircle(center: center, radius: radius);
-      final gradient = const SweepGradient(
-        colors: [
-          Color(0xFFD4AF37), // Axcent
-          Color(0xFFF5EDD6), // Light Accent
-          Color(0xFFD4AF37), // Accent
-        ],
-        // stops: [0.0, 0.5, 1.0],
-        transform: GradientRotation(-math.pi / 2),
-      );
-
       final progressPaint = Paint()
-        ..shader = gradient.createShader(rect)
+        ..color =
+            const Color(0xFF6A9A9A) // PrimaryAccent ring
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16
         ..strokeCap = StrokeCap.round;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_ui.dart';
+import '../../app/theme/theme_colors.dart';
 import 'app_overflow_menu.dart';
 
 class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -33,47 +34,23 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: preferredSize.height,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            // Leading
-            if (showBack || showMenu || leadingIcon != null)
-              _buildLeading(context) ?? const SizedBox(width: 40)
-            else
-              const SizedBox(width: 40),
-
-            // Title (centered)
-            Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                  fontFamily: 'Cairo',
-                ),
-              ),
-            ),
-
-            // Actions
-            if (actions.isNotEmpty)
-              Row(mainAxisSize: MainAxisSize.min, children: actions)
-            else
-              const SizedBox(width: 40),
-          ],
+    return AppBar(
+      backgroundColor: context.backgroundColor, // BackgroundMain
+      elevation: 0,
+      centerTitle: true,
+      toolbarHeight: height,
+      leading: _buildLeading(context),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: context.textPrimaryColor,
         ),
       ),
+      actions: actions.isEmpty ? [const SizedBox(width: 48)] : actions,
+      shape: Border(bottom: BorderSide(color: context.borderColor, width: 1)),
+      bottom: bottom,
     );
   }
 
@@ -84,7 +61,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
         return IconButton(
           tooltip: AppStrings.tooltipMenu,
           onPressed: onMenuTap,
-          icon: const Icon(Icons.menu),
+          icon: Icon(Icons.menu, color: context.textPrimaryColor),
         );
       }
       return const AppOverflowMenu();
@@ -99,7 +76,11 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     return IconButton(
       tooltip: AppStrings.tooltipBack,
       onPressed: tap,
-      icon: Icon(icon, size: AppUi.iconSizeSM),
+      icon: Icon(
+        icon,
+        size: 20,
+        color: context.primaryColor, // PrimaryAccent
+      ),
     );
   }
 }

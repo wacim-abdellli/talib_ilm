@@ -49,9 +49,14 @@ class _AppShellState extends State<AppShell> {
       const MorePage(),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? const Color(0xFF000000) : const Color(0xFFFBFAF8);
+    final navBorder = isDark
+        ? const Color(0xFF1F1F1F)
+        : const Color(0xFFE8E6E3);
+
     return Scaffold(
-      extendBody:
-          true, // Important for floating/rounded effects if needed, but safe here with solid container
+      extendBody: true,
       body: Stack(
         children: List.generate(pages.length, (index) {
           final active = index == _currentIndex;
@@ -65,55 +70,51 @@ class _AppShellState extends State<AppShell> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          color: navBg,
+          border: Border(top: BorderSide(color: navBorder, width: 1)),
         ),
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: 56,
+            height: 60,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildNavItem(
                   0,
                   Icons.home_rounded,
+                  Icons.home_outlined,
                   'الرئيسية',
-                  const Color(0xFF14B8A6),
+                  isDark ? const Color(0xFF00D9C0) : null,
                 ),
                 _buildNavItem(
                   1,
+                  Icons.access_time_filled_rounded,
                   Icons.access_time_rounded,
                   'الصلاة',
-                  const Color(0xFF3B82F6),
+                  isDark ? const Color(0xFF3B9EFF) : null,
                 ),
                 _buildNavItem(
                   2,
-                  Icons.menu_book_rounded,
+                  Icons.auto_stories_rounded,
+                  Icons.auto_stories_outlined,
                   'العلم',
-                  const Color(0xFF8B5CF6),
+                  isDark ? const Color(0xFFA855F7) : null,
                 ),
                 _buildNavItem(
                   3,
-                  Icons.auto_awesome_rounded,
+                  Icons.spa_rounded,
+                  Icons.spa_outlined,
                   'الأذكار',
-                  const Color(0xFFF59E0B),
+                  isDark ? const Color(0xFFFFD600) : null, // Gold
                 ),
                 _buildNavItem(
                   4,
-                  Icons.more_horiz_rounded,
+                  Icons.dashboard_rounded,
+                  Icons.dashboard_outlined,
                   'المزيد',
-                  const Color(0xFF64748B),
+                  isDark ? const Color(0xFFFFFFFF) : null, // White for More
+                  gradientBase: isDark ? const Color(0xFF666666) : null,
                 ),
               ],
             ),
@@ -123,13 +124,34 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, Color color) {
+  Widget _buildNavItem(
+    int index,
+    IconData activeIcon,
+    IconData inactiveIcon,
+    String label,
+    Color? darkActiveColor, {
+    Color? gradientBase,
+  }) {
     final isActive = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Resolve Colors
+    final Color activeColor = isDark
+        ? (darkActiveColor ?? const Color(0xFF6A9A9A))
+        : const Color(0xFF6A9A9A);
+
+    final Color inactiveColor = isDark
+        ? const Color(0xFF666666)
+        : const Color(0xFF9A9A9A);
+
+    final Color labelColor = (isDark && isActive)
+        ? const Color(0xFFFFFFFF)
+        : (isActive ? activeColor : inactiveColor);
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          HapticFeedback.lightImpact();
           setState(() => _currentIndex = index);
         },
         behavior: HitTestBehavior.opaque,
@@ -137,18 +159,31 @@ class _AppShellState extends State<AppShell> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: isActive ? 24 : 22,
-              color: isActive ? color : const Color(0xFF94A3B8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              decoration: BoxDecoration(
+                color: (isActive && isDark)
+                    ? activeColor.withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                isActive ? activeIcon : inactiveIcon,
+                size: 24,
+                color: isActive ? activeColor : inactiveColor,
+              ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? color : const Color(0xFF94A3B8),
+                color: labelColor,
+                height: 1,
+                fontFamily: 'Cairo',
               ),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,

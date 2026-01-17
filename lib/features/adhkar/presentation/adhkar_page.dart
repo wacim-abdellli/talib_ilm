@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/pressable_card.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
@@ -14,6 +15,7 @@ import 'after_prayer_athkar_page.dart';
 import 'duas_misc_page.dart';
 import 'evening_athkar_page.dart';
 import 'morning_athkar_page.dart';
+import 'sleeping_athkar_page.dart';
 import 'tasbeeh_istighfar_page.dart';
 
 class AdhkarPage extends StatefulWidget {
@@ -43,18 +45,42 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Header Colors
+    final headerBg = isDark ? const Color(0xFF000000) : const Color(0xFFFBFAF8);
+    final headerBorder = isDark
+        ? const Color(0xFF1F1F1F)
+        : const Color(0xFFE8E6E3);
+    final titleColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF3A3A3A);
+    final subtitleColor = isDark
+        ? const Color(0xFFA1A1A1)
+        : const Color(0xFF6E6E6E);
+
+    // Icon Container
+    final iconContainerDecoration = BoxDecoration(
+      gradient: isDark
+          ? const LinearGradient(colors: [Color(0xFF6A9A9A), Color(0xFF8ACACA)])
+          : null,
+      color: isDark ? null : const Color(0xFF6A9A9A).withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(14),
+    );
+    final iconColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF6A9A9A);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.backgroundColor,
       body: Column(
         children: [
           // Header section
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-              ),
+            decoration: BoxDecoration(
+              color: headerBg,
+              border: Border(bottom: BorderSide(color: headerBorder, width: 1)),
             ),
             child: SafeArea(
               bottom: false,
@@ -66,20 +92,15 @@ class _AdhkarPageState extends State<AdhkarPage> {
                       Container(
                         width: 48,
                         height: 48,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
+                        decoration: iconContainerDecoration,
+                        child: Icon(
                           Icons.auto_awesome_rounded,
-                          color: Colors.white,
+                          color: iconColor,
                           size: 24,
                         ),
                       ),
                       const SizedBox(width: 14),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -88,7 +109,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: titleColor,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -96,7 +117,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                               'احفظ أذكار اليوم والليلة',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF64748B),
+                                color: subtitleColor,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -109,24 +130,33 @@ class _AdhkarPageState extends State<AdhkarPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          color: isDark
+                              ? const Color(0xFFCAAF7C).withValues(alpha: 0.15)
+                              : const Color(0xFFCAAF7C).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
+                          border: isDark
+                              ? Border.all(color: const Color(0xFF1F1F1F))
+                              : null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(
                               Icons.local_fire_department_rounded,
                               size: 16,
-                              color: Color(0xFF10B981),
+                              color: isDark
+                                  ? const Color(0xFFE8C252)
+                                  : const Color(0xFFCAAF7C),
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               '7',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF10B981),
+                                color: isDark
+                                    ? const Color(0xFFE8C252)
+                                    : const Color(0xFFCAAF7C),
                               ),
                             ),
                           ],
@@ -214,7 +244,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
                         ? 0.78
                         : AppUi.gridAspect;
                     return GridView.builder(
-                      padding: AppUi.screenPaddingCompact,
+                      padding: AppUi.screenPaddingCompact.copyWith(bottom: 100),
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemCount: items.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
@@ -242,15 +275,33 @@ class _AdhkarPageState extends State<AdhkarPage> {
   }
 
   Widget _buildCategoryTab(String label, IconData icon, bool isActive) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Active State
+    final activeGradient = isDark
+        ? const LinearGradient(colors: [Color(0xFF6A9A9A), Color(0xFF8ACACA)])
+        : null;
+    final activeColor = isDark ? null : const Color(0xFF6A9A9A);
+    final activeTextColor = Colors.white;
+
+    // Inactive State
+    final inactiveBg = isDark
+        ? const Color(0xFF141414)
+        : const Color(0xFFFBFAF8);
+    final inactiveBorder = isDark
+        ? const Color(0xFF1F1F1F)
+        : const Color(0xFFE8E6E3);
+    final inactiveText = isDark
+        ? const Color(0xFF666666)
+        : const Color(0xFF6E6E6E);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFF59E0B) : const Color(0xFFF8FAFC),
+        color: isActive ? activeColor : inactiveBg,
+        gradient: isActive ? activeGradient : null,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
+        border: isActive ? null : Border.all(color: inactiveBorder, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -258,7 +309,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
           Icon(
             icon,
             size: 18,
-            color: isActive ? Colors.white : const Color(0xFF64748B),
+            color: isActive ? activeTextColor : inactiveText,
           ),
           const SizedBox(width: 6),
           Text(
@@ -266,7 +317,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: isActive ? Colors.white : const Color(0xFF64748B),
+              color: isActive ? activeTextColor : inactiveText,
             ),
           ),
         ],
@@ -285,7 +336,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
     final afterPrayer = byId('after_prayer');
     final duas = byId('duas');
     final tasbeeh = byId('tasbeeh');
-    final sleeping = byId('general') ?? byId('before_prayer');
+    final sleeping =
+        byId('sleeping') ?? byId('general') ?? byId('before_prayer');
 
     return [
       _CategoryCardData(
@@ -405,24 +457,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
   }
 
   void _openSleeping(BuildContext context, AthkarCategoryData? category) {
-    if (category == null) {
-      _openDuas(context);
-      return;
-    }
-    final parsed = adhkarCategoryFromId(category.id);
-    if (parsed == null) {
-      _openDuas(context);
-      return;
-    }
-    Navigator.push(
-      context,
-      buildFadeRoute(
-        page: AdhkarSessionPage(
-          category: parsed,
-          titleOverride: category.title,
-        ),
-      ),
-    );
+    Navigator.push(context, buildFadeRoute(page: const SleepingAthkarPage()));
   }
 
   String _normalizeId(String id) {
@@ -480,6 +515,20 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Tiles Dark Styling
+    final tileBg = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF5F3F0);
+    final tileBorder = isDark
+        ? const Color(0xFF1F1F1F)
+        : const Color(0xFFE8E6E3);
+    final textColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF3A3A3A);
+    final subtitleColor = isDark
+        ? const Color(0xFFA1A1A1)
+        : const Color(0xFF6E6E6E);
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -487,59 +536,55 @@ class _CategoryTile extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.primaryLight.withValues(alpha: 0.25),
+            color: isDark
+                ? const Color(0xFF6A9A9A).withValues(alpha: 0.2)
+                : const Color(0xFF6A9A9A).withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(data.icon, size: AppUi.iconSizeLG, color: data.tint),
+          child: Icon(
+            Icons.spa_outlined, // Unified icon for category badges
+            size: 24,
+            color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF6A9A9A),
+          ),
         ),
-        const SizedBox(height: AppUi.gapSM),
+        const SizedBox(height: 14),
         Text(
           data.title,
-          style: AppText.body.copyWith(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: textColor,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: AppUi.gapXS),
+        const SizedBox(height: 4),
         Text(
           _subtitleLabel(data.total),
-          style: AppText.body.copyWith(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: subtitleColor,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         const Spacer(),
-        if (progressLoader != null) const SizedBox.shrink(),
       ],
     );
 
-    return Material(
-      color: Colors.transparent,
-      elevation: 2,
-      shadowColor: AppColors.primaryDark.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(AppUi.radiusMD),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: data.onTap,
-        borderRadius: BorderRadius.circular(AppUi.radiusMD),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppUi.radiusMD),
-            border: Border.all(
-              color: AppColors.primaryLight,
-              width: AppUi.dividerThickness,
-            ),
-          ),
-          child: Padding(padding: AppUi.cardPadding, child: content),
-        ),
+    final radius = BorderRadius.circular(16);
+
+    return PressableCard(
+      onTap: data.onTap,
+      borderRadius: radius,
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: tileBg,
+        borderRadius: radius,
+        border: Border.all(color: tileBorder, width: 1),
       ),
+      child: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }
 

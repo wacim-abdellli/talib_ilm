@@ -221,5 +221,9 @@ String _labelFor(FavoriteType type) {
       return AppStrings.favoriteTypeLesson;
     case FavoriteType.book:
       return AppStrings.favoriteTypeBook;
+    case FavoriteType.quran:
+      return AppStrings.favoriteTypeQuran;
+    case FavoriteType.quote:
+      return AppStrings.favoriteTypeQuote;
   }
 }

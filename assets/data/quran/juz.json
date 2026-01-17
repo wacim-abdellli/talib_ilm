@@ -1,0 +1,242 @@
+[
+    {
+        "juzNumber": 1,
+        "startSurah": 1,
+        "startAyah": 1,
+        "endSurah": 2,
+        "endAyah": 141,
+        "name": "الم"
+    },
+    {
+        "juzNumber": 2,
+        "startSurah": 2,
+        "startAyah": 142,
+        "endSurah": 2,
+        "endAyah": 252,
+        "name": "سيقول السفهاء"
+    },
+    {
+        "juzNumber": 3,
+        "startSurah": 2,
+        "startAyah": 253,
+        "endSurah": 3,
+        "endAyah": 92,
+        "name": "تلك الرسل"
+    },
+    {
+        "juzNumber": 4,
+        "startSurah": 3,
+        "startAyah": 93,
+        "endSurah": 4,
+        "endAyah": 23,
+        "name": "لن تنالوا البر"
+    },
+    {
+        "juzNumber": 5,
+        "startSurah": 4,
+        "startAyah": 24,
+        "endSurah": 4,
+        "endAyah": 147,
+        "name": "والمحصنات"
+    },
+    {
+        "juzNumber": 6,
+        "startSurah": 4,
+        "startAyah": 148,
+        "endSurah": 5,
+        "endAyah": 82,
+        "name": "لا يحب الله"
+    },
+    {
+        "juzNumber": 7,
+        "startSurah": 5,
+        "startAyah": 83,
+        "endSurah": 6,
+        "endAyah": 110,
+        "name": "وإذا سمعوا"
+    },
+    {
+        "juzNumber": 8,
+        "startSurah": 6,
+        "startAyah": 111,
+        "endSurah": 7,
+        "endAyah": 87,
+        "name": "ولو أننا نزلنا"
+    },
+    {
+        "juzNumber": 9,
+        "startSurah": 7,
+        "startAyah": 88,
+        "endSurah": 8,
+        "endAyah": 40,
+        "name": "قال الملأ"
+    },
+    {
+        "juzNumber": 10,
+        "startSurah": 8,
+        "startAyah": 41,
+        "endSurah": 9,
+        "endAyah": 92,
+        "name": "واعلموا أنما"
+    },
+    {
+        "juzNumber": 11,
+        "startSurah": 9,
+        "startAyah": 93,
+        "endSurah": 11,
+        "endAyah": 5,
+        "name": "يعتذرون"
+    },
+    {
+        "juzNumber": 12,
+        "startSurah": 11,
+        "startAyah": 6,
+        "endSurah": 12,
+        "endAyah": 52,
+        "name": "وما من دابة"
+    },
+    {
+        "juzNumber": 13,
+        "startSurah": 12,
+        "startAyah": 53,
+        "endSurah": 14,
+        "endAyah": 52,
+        "name": "وما أبرئ نفسي"
+    },
+    {
+        "juzNumber": 14,
+        "startSurah": 15,
+        "startAyah": 1,
+        "endSurah": 16,
+        "endAyah": 128,
+        "name": "الر"
+    },
+    {
+        "juzNumber": 15,
+        "startSurah": 17,
+        "startAyah": 1,
+        "endSurah": 18,
+        "endAyah": 74,
+        "name": "سبحان الذي"
+    },
+    {
+        "juzNumber": 16,
+        "startSurah": 18,
+        "startAyah": 75,
+        "endSurah": 20,
+        "endAyah": 135,
+        "name": "قال ألم أقل"
+    },
+    {
+        "juzNumber": 17,
+        "startSurah": 21,
+        "startAyah": 1,
+        "endSurah": 22,
+        "endAyah": 78,
+        "name": "اقترب للناس"
+    },
+    {
+        "juzNumber": 18,
+        "startSurah": 23,
+        "startAyah": 1,
+        "endSurah": 25,
+        "endAyah": 20,
+        "name": "قد أفلح"
+    },
+    {
+        "juzNumber": 19,
+        "startSurah": 25,
+        "startAyah": 21,
+        "endSurah": 27,
+        "endAyah": 55,
+        "name": "وقال الذين"
+    },
+    {
+        "juzNumber": 20,
+        "startSurah": 27,
+        "startAyah": 56,
+        "endSurah": 29,
+        "endAyah": 45,
+        "name": "أمن خلق"
+    },
+    {
+        "juzNumber": 21,
+        "startSurah": 29,
+        "startAyah": 46,
+        "endSurah": 33,
+        "endAyah": 30,
+        "name": "ولا تجادلوا"
+    },
+    {
+        "juzNumber": 22,
+        "startSurah": 33,
+        "startAyah": 31,
+        "endSurah": 36,
+        "endAyah": 27,
+        "name": "ومن يقنت"
+    },
+    {
+        "juzNumber": 23,
+        "startSurah": 36,
+        "startAyah": 28,
+        "endSurah": 39,
+        "endAyah": 31,
+        "name": "وما لي"
+    },
+    {
+        "juzNumber": 24,
+        "startSurah": 39,
+        "startAyah": 32,
+        "endSurah": 41,
+        "endAyah": 46,
+        "name": "فمن أظلم"
+    },
+    {
+        "juzNumber": 25,
+        "startSurah": 41,
+        "startAyah": 47,
+        "endSurah": 45,
+        "endAyah": 37,
+        "name": "إليه يرد"
+    },
+    {
+        "juzNumber": 26,
+        "startSurah": 46,
+        "startAyah": 1,
+        "endSurah": 51,
+        "endAyah": 30,
+        "name": "حم"
+    },
+    {
+        "juzNumber": 27,
+        "startSurah": 51,
+        "startAyah": 31,
+        "endSurah": 57,
+        "endAyah": 29,
+        "name": "قال فما خطبكم"
+    },
+    {
+        "juzNumber": 28,
+        "startSurah": 58,
+        "startAyah": 1,
+        "endSurah": 66,
+        "endAyah": 12,
+        "name": "قد سمع الله"
+    },
+    {
+        "juzNumber": 29,
+        "startSurah": 67,
+        "startAyah": 1,
+        "endSurah": 77,
+        "endAyah": 50,
+        "name": "تبارك الذي"
+    },
+    {
+        "juzNumber": 30,
+        "startSurah": 78,
+        "startAyah": 1,
+        "endSurah": 114,
+        "endAyah": 6,
+        "name": "عم"
+    }
+]

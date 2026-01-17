@@ -32,6 +32,9 @@ dependencies:
   flutter_compass: ^0.8.0
   permission_handler: ^11.0.1
   shimmer: ^3.0.0
+  http: ^1.2.0
+  connectivity_plus: ^7.0.0
+  wakelock_plus: ^1.4.0
 
 dev_dependencies:
   flutter_test:

@@ -70,25 +70,36 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Styling constants
-    final borderColor = _isFocused
-        ? AppColors.primary
-        : const Color(0xFFE7E5E4); // Light Stone
+    final borderColor = isDark
+        ? (_isFocused ? AppColors.primary : const Color(0xFF1F1F1F))
+        : (_isFocused
+              ? AppColors.primary
+              : const Color(0xFFE7E5E4)); // Light Stone
     final borderWidth = _isFocused ? 2.0 : 1.5;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF141414) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+          isDark
+              ? BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -4,
+                )
+              : BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
         ],
       ),
       child: Material(
@@ -97,10 +108,10 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           children: [
             const SizedBox(width: 16),
             // Leading Icon
-            const Icon(
+            Icon(
               Icons.search,
               size: 20,
-              color: AppColors.textSecondary, // Grey
+              color: isDark ? const Color(0xFF666666) : AppColors.textSecondary,
             ),
             const SizedBox(width: 12),
             // TextField
@@ -110,11 +121,17 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 focusNode: _focusNode,
                 textInputAction: TextInputAction.search,
                 onChanged: _onSearchChanged,
-                style: AppText.body.copyWith(fontSize: 16),
+                style: AppText.body.copyWith(
+                  fontSize: 16,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+                cursorColor: AppColors.primary,
                 decoration: InputDecoration(
                   hintText: widget.hintText,
                   hintStyle: AppText.body.copyWith(
-                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    color: isDark
+                        ? const Color(0xFF666666)
+                        : AppColors.textSecondary.withValues(alpha: 0.6),
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -125,28 +142,30 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             // Trailing Actions
             if (_hasText)
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.close,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  color: isDark
+                      ? const Color(0xFFA1A1A1)
+                      : AppColors.textSecondary,
                 ),
                 onPressed: _clearSearch,
                 splashRadius: 20,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
-            // Filter Button (always visible or conditional? User prompt implies always)
-            // But usually distinct from 'clear'.
-            // "Trailing: clear button (x) when text exists, filter button (Icons.tune)"
-            // implies BOTH can coexist or conditional. Usually filter is always there.
+
+            // Separation line
             Container(
               height: 24,
               width: 1,
-              color: AppColors.textSecondary.withValues(
-                alpha: 0.2,
-              ), // Separation line
+              color: isDark
+                  ? const Color(0xFF333333)
+                  : AppColors.textSecondary.withValues(alpha: 0.2),
               margin: const EdgeInsets.symmetric(horizontal: 4),
             ),
+
+            // Filter Button
             IconButton(
               icon: const Icon(Icons.tune, size: 20, color: AppColors.primary),
               onPressed: widget.onFilterTap,

@@ -1,38 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/responsive.dart';
+import '../../../../core/models/favorite_item.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../data/services/motivation_service.dart';
 
+import '../../../../app/theme/theme_colors.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+
 /// Displays daily motivational quote from Quran/Hadith
-class DailyMotivationCard extends StatelessWidget {
+class DailyMotivationCard extends StatefulWidget {
   final DailyQuote quote;
   final VoidCallback? onReload;
 
   const DailyMotivationCard({super.key, required this.quote, this.onReload});
 
   @override
+  State<DailyMotivationCard> createState() => _DailyMotivationCardState();
+}
+
+class _DailyMotivationCardState extends State<DailyMotivationCard> {
+  final FavoritesService _favoritesService = FavoritesService();
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavorite();
+  }
+
+  @override
+  void didUpdateWidget(DailyMotivationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.quote != widget.quote) {
+      _isFavorite = false;
+      _checkFavorite();
+    }
+  }
+
+  Future<void> _checkFavorite() async {
+    final type = _getFavoriteType();
+    final id = _getId();
+    final isFav = await _favoritesService.isFavorite(type, id);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  String _getId() => widget.quote.text.hashCode.toString();
+
+  FavoriteType _getFavoriteType() {
+    switch (widget.quote.type) {
+      case QuoteType.quran:
+        return FavoriteType.quran;
+      case QuoteType.hadith:
+        return FavoriteType.hadith;
+      case QuoteType.scholar:
+        return FavoriteType.quote;
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final type = _getFavoriteType();
+    final item = FavoriteItem(
+      type: type,
+      id: _getId(),
+      title: widget.quote.text,
+      subtitle: widget.quote.source,
+    );
+
+    final isFav = await _favoritesService.toggle(item);
+    if (mounted) {
+      setState(() => _isFavorite = isFav);
+      if (_isFavorite) {
+        AppSnackbar.success(context, 'تم الحفظ في المفضلة');
+      } else {
+        AppSnackbar.info(context, 'تمت الإزالة من المفضلة');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
 
+    // Muted accent colors for quote types
     Color accentColor;
     String typeLabel;
     IconData typeIcon;
 
-    switch (quote.type) {
+    switch (widget.quote.type) {
       case QuoteType.quran:
-        accentColor = const Color(0xFF2E7D32);
+        accentColor = const Color(0xFF85A885); // Muted sage
         typeLabel = 'قرآن كريم';
         typeIcon = Icons.menu_book;
         break;
       case QuoteType.hadith:
-        accentColor = const Color(0xFF1976D2);
+        accentColor = const Color(0xFF7A9CB5); // Muted blue
         typeLabel = 'حديث نبوي';
         typeIcon = Icons.format_quote;
         break;
       case QuoteType.scholar:
-        accentColor = AppColors.primary;
+        accentColor = const Color(0xFF6A9A9A); // Muted teal
         typeLabel = 'قول مأثور';
         typeIcon = Icons.lightbulb_outline;
         break;
@@ -41,98 +109,113 @@ class DailyMotivationCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(responsive.wp(4.5)),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            accentColor.withValues(alpha: 0.08),
-            accentColor.withValues(alpha: 0.03),
-          ],
-        ),
+        color: context.surfaceSecondaryColor, // Tinted ivory / Dark Elevated
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: accentColor.withValues(alpha: 0.2),
-          width: 1.5,
+          color: context.borderColor, // Subtle border
+          width: 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Type badge
+          // Header: Title + Action Icons
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(typeIcon, size: responsive.sp(14), color: accentColor),
-              SizedBox(width: 6),
-              Text(
-                typeLabel,
-                style: TextStyle(
-                  fontSize: responsive.sp(12),
-                  fontWeight: FontWeight.w600,
-                  color: accentColor,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {
-                  Clipboard.setData(
-                    ClipboardData(text: '${quote.text}\n\n${quote.source}'),
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم النسخ', textAlign: TextAlign.center),
-                      duration: Duration(seconds: 1),
+              // Action icons on left (LTR perspective)
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _toggleFavorite,
+                    icon: Icon(
+                      _isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                      size: 20,
+                      color: _isFavorite
+                          ? accentColor
+                          : accentColor.withValues(alpha: 0.6),
                     ),
-                  );
-                },
-                icon: Icon(
-                  Icons.copy_rounded,
-                  size: 20,
-                  color: accentColor.withValues(alpha: 0.6),
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              if (onReload != null) ...[
-                const SizedBox(width: 16),
-                IconButton(
-                  onPressed: onReload,
-                  icon: Icon(
-                    Icons.refresh_rounded,
-                    size: 22,
-                    color: accentColor,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text:
+                              '${widget.quote.text}\n\n${widget.quote.source}',
+                        ),
+                      );
+                      AppSnackbar.success(context, 'تم النسخ');
+                    },
+                    icon: Icon(
+                      Icons.copy_rounded,
+                      size: 20,
+                      color: accentColor.withValues(alpha: 0.6),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  if (widget.onReload != null) ...[
+                    const SizedBox(width: 12),
+                    IconButton(
+                      onPressed: widget.onReload,
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        size: 22,
+                        color: accentColor,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ],
+              ),
+              // Title on right
+              Row(
+                children: [
+                  Icon(typeIcon, size: responsive.sp(14), color: accentColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    typeLabel,
+                    style: TextStyle(
+                      fontSize: responsive.sp(12),
+                      fontWeight: FontWeight.w600,
+                      color: accentColor,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
 
-          SizedBox(height: responsive.hp(1.2)),
+          SizedBox(height: responsive.hp(1.5)),
 
-          // Quote text
-          Text(
-            quote.text,
+          // Quote text (selectable + larger)
+          SelectableText(
+            widget.quote.text,
             style: TextStyle(
-              fontSize: responsive.sp(15),
+              fontSize: responsive.sp(17),
               height: 1.8,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
+              color: context.textPrimaryColor,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.right,
           ),
 
           SizedBox(height: responsive.hp(1)),
 
-          // Source
+          // Source (lighter)
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                '— ${quote.source}',
+                '— ${widget.quote.source}',
                 style: TextStyle(
-                  fontSize: responsive.sp(12),
-                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  color: context.textSecondaryColor, // TextSecondary
+                  fontWeight: FontWeight.w400,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -160,19 +243,22 @@ class MilestoneCelebrationDialog extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: responsive.wp(85)),
         padding: EdgeInsets.all(responsive.wp(6)),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFFDF7), Color(0xFFFFF9E6)],
-          ),
+          color: context.surfaceElevatedColor,
+          gradient: context.isDark
+              ? null
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFFDF7), Color(0xFFFFF9E6)],
+                ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+            color: context.goldColor.withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+              color: context.goldColor.withValues(alpha: 0.2),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -188,13 +274,13 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFD4AF37).withValues(alpha: 0.2),
-                    const Color(0xFFE8C252).withValues(alpha: 0.15),
+                    context.goldColor.withValues(alpha: 0.2),
+                    context.goldColor.withValues(alpha: 0.15),
                   ],
                 ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                  color: context.goldColor.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -214,7 +300,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: responsive.sp(20),
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: context.textPrimaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -227,7 +313,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: responsive.sp(14),
                 height: 1.6,
-                color: AppColors.textSecondary,
+                color: context.textSecondaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -238,10 +324,10 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(responsive.wp(4)),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: context.primaryColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                    color: context.primaryColor.withValues(alpha: 0.15),
                   ),
                 ),
                 child: Column(
@@ -251,7 +337,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: responsive.sp(13),
                         height: 1.7,
-                        color: AppColors.primary,
+                        color: context.primaryColor,
                         fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.center,
@@ -261,7 +347,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
                       milestone.verseRef ?? milestone.hadithRef ?? '',
                       style: TextStyle(
                         fontSize: responsive.sp(11),
-                        color: AppColors.textSecondary,
+                        color: context.textSecondaryColor,
                       ),
                     ),
                   ],
@@ -277,7 +363,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: context.primaryColor,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: responsive.hp(1.6)),
                   shape: RoundedRectangleBorder(
@@ -329,16 +415,28 @@ class EncouragementBanner extends StatelessWidget {
 
     switch (encouragement.tone) {
       case EncouragementTone.gentle:
-        backgroundColor = const Color(0xFFFFF9E6);
-        textColor = const Color(0xFF8B6914);
+        backgroundColor = context.isDark
+            ? context.goldColor.withValues(alpha: 0.15)
+            : const Color(0xFFFFF9E6);
+        textColor = context.isDark
+            ? context.goldColor
+            : const Color(0xFF8B6914);
         break;
       case EncouragementTone.warm:
-        backgroundColor = const Color(0xFFF0FDF4);
-        textColor = const Color(0xFF166534);
+        backgroundColor = context.isDark
+            ? context.successColor.withValues(alpha: 0.15)
+            : const Color(0xFFF0FDF4);
+        textColor = context.isDark
+            ? context.successColor
+            : const Color(0xFF166534);
         break;
       case EncouragementTone.encouraging:
-        backgroundColor = const Color(0xFFEFF6FF);
-        textColor = const Color(0xFF1E40AF);
+        backgroundColor = context.isDark
+            ? context.primaryColor.withValues(alpha: 0.15)
+            : const Color(0xFFEFF6FF);
+        textColor = context.isDark
+            ? context.primaryColor
+            : const Color(0xFF1E40AF);
         break;
     }
 
@@ -433,7 +531,7 @@ class ProgressInsightCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: responsive.sp(14),
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: context.textPrimaryColor,
                   ),
                 ),
                 SizedBox(height: 2),
@@ -441,7 +539,7 @@ class ProgressInsightCard extends StatelessWidget {
                   detail,
                   style: TextStyle(
                     fontSize: responsive.sp(12),
-                    color: AppColors.textSecondary,
+                    color: context.textSecondaryColor,
                   ),
                 ),
               ],
@@ -471,12 +569,12 @@ class ContextualProgressMessage extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withValues(alpha: 0.15),
-            AppColors.primary.withValues(alpha: 0.08),
+            context.primaryColor.withValues(alpha: 0.15),
+            context.primaryColor.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: context.primaryColor.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -484,14 +582,14 @@ class ContextualProgressMessage extends StatelessWidget {
           Icon(
             Icons.auto_awesome,
             size: responsive.sp(14),
-            color: AppColors.primary,
+            color: context.primaryColor,
           ),
           SizedBox(width: 6),
           Text(
             message,
             style: TextStyle(
               fontSize: responsive.sp(12),
-              color: AppColors.primary,
+              color: context.primaryColor,
               fontWeight: FontWeight.w500,
             ),
           ),

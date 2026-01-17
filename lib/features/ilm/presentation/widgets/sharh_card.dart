@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
 
@@ -60,7 +61,7 @@ class SharhCard extends StatelessWidget {
         bottom: AppUi.gapMD,
       ), // Use external margin if needed, or parent handles it
       decoration: BoxDecoration(
-        color: AppColors.surface, // White/Surface
+        color: context.surfaceColor, // White/Surface
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
@@ -79,10 +80,10 @@ class SharhCard extends StatelessWidget {
             onLongPress: onLongPress,
             borderRadius: borderRadius,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: AppColors.accent, // Gold
+                    color: context.goldColor, // Gold
                     width: 3,
                   ),
                 ),
@@ -107,7 +108,7 @@ class SharhCard extends StatelessWidget {
                           style: AppText.body.copyWith(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: context.textPrimaryColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -118,7 +119,7 @@ class SharhCard extends StatelessWidget {
                           subtitleText,
                           style: AppText.body.copyWith(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: context.textSecondaryColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -130,7 +131,7 @@ class SharhCard extends StatelessWidget {
                             progressText,
                             style: AppText.body.copyWith(
                               fontSize: 12,
-                              color: AppColors.primary, // Teal
+                              color: context.primaryColor, // Teal
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
@@ -147,7 +148,7 @@ class SharhCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textTertiary,
+                    color: context.textTertiaryColor,
                     // Note: In RTL, this points Right (>).
                     // If visual matching "Right" is desired, this is correct placement (End).
                     // If direction is confusing, user can provide feedback.
