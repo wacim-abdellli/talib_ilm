@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../core/utils/responsive.dart';
 import '../data/services/quran_cache_service.dart';
 import '../data/services/bookmark_service.dart';
 import '../data/services/reading_stats_service.dart';
 import '../data/models/quran_models.dart';
 import 'quran_reading_page.dart';
+import 'mushaf_viewer_page.dart';
 
 class QuranPage extends StatefulWidget {
   const QuranPage({super.key});
@@ -152,7 +154,7 @@ class _QuranPageState extends State<QuranPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final responsive = Responsive(context);
-    final bgColor = isDark ? const Color(0xFF000000) : const Color(0xFFFAFAFA);
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -168,8 +170,8 @@ class _QuranPageState extends State<QuranPage> {
                 await QuranRepository.getSurahList(forceRefresh: true);
                 _loadData();
               },
-              color: const Color(0xFF14B8A6),
-              backgroundColor: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+              color: isDark ? AppColors.primaryNeon : AppColors.primary,
+              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
               child: _isLoading
                   ? _buildShimmerLoading(isDark)
                   : _error != null
@@ -228,27 +230,30 @@ class _QuranPageState extends State<QuranPage> {
             onPressed: () => Navigator.maybePop(context),
           ),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'القرآن الكريم',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: responsive.sp(24),
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'القرآن الكريم',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: responsive.sp(24),
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                '${_filteredSurahs.length} سورة',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: responsive.sp(14),
-                  color: Colors.grey,
+                Text(
+                  '${_filteredSurahs.length} سورة',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: responsive.sp(14),
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -315,12 +320,14 @@ class _QuranPageState extends State<QuranPage> {
               lastReadAyah: lastReadAyah,
               isBookmarked: isBookmarked,
               onTap: () {
+                // Get start page from surahStartPage map
+                final startPage = SurahMeta.surahStartPage[surah.number] ?? 1;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => QuranReadingPage(
+                    builder: (_) => MushafViewerPage(
+                      initialPage: startPage,
                       surahNumber: surah.number,
-                      surahName: surah.name,
                     ),
                   ),
                 ).then((_) => _loadData());
@@ -336,21 +343,23 @@ class _QuranPageState extends State<QuranPage> {
 
   Widget _buildHeroCard(bool isDark, Responsive responsive) {
     if (_lastRead == null) {
-      // NEW USER CARD
+      // NEW USER CARD - Uses Gold/Warmth for Quran
       return Container(
         constraints: const BoxConstraints(minHeight: 180),
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)], // Purple to Pink
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF5A4A28), AppColors.accent] // Dark gold
+                : [AppColors.accent, AppColors.goldGlow], // Warm gold
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFEC4899).withValues(alpha: 0.4),
+              color: AppColors.accent.withValues(alpha: 0.35),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -394,11 +403,21 @@ class _QuranPageState extends State<QuranPage> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      // TODO: Focus search or navigate
+                      // Scroll to surah list or open Al-Fatiha
+                      if (_surahs.isNotEmpty) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => QuranReadingPage(
+                              surahNumber: 1,
+                              surahName: _surahs.first.name,
+                            ),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFEC4899),
+                      foregroundColor: AppColors.accent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -408,8 +427,11 @@ class _QuranPageState extends State<QuranPage> {
                       ),
                     ),
                     child: const Text(
-                      'استكشف المصحف',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      'ابدأ من الفاتحة',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                      ),
                     ),
                   ),
                 ],
@@ -453,18 +475,27 @@ class _QuranPageState extends State<QuranPage> {
             .then((_) => _loadData());
       },
       child: Container(
-        constraints: const BoxConstraints(minHeight: 180),
+        height: 240,
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0F766E), Color(0xFF14B8A6)], // Dark Teal to Teal
+          gradient: LinearGradient(
+            colors: isDark
+                ? [
+                    AppColors.primaryDark,
+                    AppColors.primaryNeon,
+                  ] // Neon teal for dark
+                : [
+                    AppColors.primaryDark,
+                    AppColors.primary,
+                  ], // Muted teal for light
             begin: Alignment.bottomLeft,
             end: Alignment.topRight,
           ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF14B8A6).withValues(alpha: 0.4),
+              color: (isDark ? AppColors.primaryNeon : AppColors.primary)
+                  .withValues(alpha: 0.35),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -517,16 +548,18 @@ class _QuranPageState extends State<QuranPage> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.play_arrow_rounded,
-                          color: Color(0xFF0F766E),
+                          color: isDark
+                              ? AppColors.primaryNeon
+                              : AppColors.primary,
                           size: 30,
                         ),
                       ),
                     ],
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 12),
 
                   Text(
                     lastSurahMeta.name,
@@ -634,7 +667,7 @@ class _QuranPageState extends State<QuranPage> {
     bool isDark,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -643,33 +676,35 @@ class _QuranPageState extends State<QuranPage> {
         ),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 18, color: color),
+            child: Icon(icon, size: 16, color: color),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 value,
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 14,
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Cairo',
-                  fontSize: 12,
+                  fontSize: 10,
                   color: Colors.grey,
                 ),
               ),
@@ -800,7 +835,9 @@ class _SurahCardState extends State<_SurahCard> {
                 boxShadow: [
                   BoxShadow(
                     color:
-                        (widget.isDark ? const Color(0xFF14B8A6) : Colors.black)
+                        (widget.isDark
+                                ? AppColors.primaryNeon
+                                : AppColors.shadow)
                             .withValues(alpha: widget.isDark ? 0.05 : 0.03),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
@@ -815,10 +852,15 @@ class _SurahCardState extends State<_SurahCard> {
                     height: 64,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF14B8A6), Color(0xFF0D9488)],
+                        colors: widget.isDark
+                            ? [
+                                AppColors.primaryNeon,
+                                AppColors.primaryNeon.withValues(alpha: 0.8),
+                              ]
+                            : [AppColors.primary, AppColors.primaryDark],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
@@ -827,7 +869,11 @@ class _SurahCardState extends State<_SurahCard> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF14B8A6).withValues(alpha: 0.3),
+                          color:
+                              (widget.isDark
+                                      ? AppColors.primaryNeon
+                                      : AppColors.primary)
+                                  .withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -861,15 +907,18 @@ class _SurahCardState extends State<_SurahCard> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              widget.surah.name,
-                              style: TextStyle(
-                                fontFamily: 'Amiri',
-                                fontSize: widget.responsive.sp(20),
-                                fontWeight: FontWeight.bold,
-                                color: widget.isDark
-                                    ? Colors.white
-                                    : const Color(0xFF1E293B),
+                            Expanded(
+                              child: Text(
+                                widget.surah.name,
+                                style: TextStyle(
+                                  fontFamily: 'Amiri',
+                                  fontSize: widget.responsive.sp(20),
+                                  fontWeight: FontWeight.bold,
+                                  color: widget.isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 8),

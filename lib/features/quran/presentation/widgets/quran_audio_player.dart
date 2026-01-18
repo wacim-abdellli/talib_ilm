@@ -111,196 +111,276 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // responsive removed
-    final height =
-        140.0 +
-        MediaQuery.of(
-          context,
-        ).padding.bottom; // Increased height for controls + slider
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: height,
+      height:
+          220 +
+          MediaQuery.of(
+            context,
+          ).padding.bottom, // Increased height for vertical layout
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
           ),
         ],
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF1F1F1F) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF333333) : const Color(0xFFF1F5F9),
+            width: 1,
           ),
         ),
       ),
       child: Stack(
         children: [
-          // Minimize Button
+          // Drag Handle
           Positioned(
-            top: 8,
-            left: 16,
-            child: GestureDetector(
-              onTap: () => setState(() => _isMinimized = true),
-              child: Icon(
-                Icons.keyboard_arrow_down,
-                color: isDark ? Colors.grey : Colors.grey[600],
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => setState(() => _isMinimized = true),
+                child: Container(
+                  width: 48,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      // LEFT SECTION: Reciter
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey[800],
-                                border: Border.all(color: Colors.white12),
+                // TOP ROW: Reciter Info & Options
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Reciter Info
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: const DecorationImage(
+                                image: AssetImage(
+                                  'assets/images/reciter_placeholder.png',
+                                ), // Ideally real image
+                                fit: BoxFit.cover,
                               ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.white70,
-                                size: 24,
+                              color: isDark
+                                  ? const Color(0xFF333333)
+                                  : Colors.grey[200],
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF14B8A6,
+                                ).withValues(alpha: 0.3),
+                                width: 2,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'الشيخ مشاري', // Hardcoded or mapped
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.grey,
+                            ), // Fallback
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _getReciterName(widget.reciterId),
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E293B),
                                   ),
-                                  if (_isPlaying)
-                                    SizedBox(
-                                      height: 12,
-                                      child: _buildWaveform(isDark),
-                                    ),
-                                ],
-                              ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'سورة ${widget.surahName}',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 12,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
 
-                      // CENTER SECTION: Controls
-                      Expanded(
-                        flex: 4,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.skip_next_rounded,
-                                size: 28,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                              onPressed: widget
-                                  .onPrevious, // RTL Logic: Next is Previous in sequence? No, skip_next sends to visual next right
-                            ),
-                            const SizedBox(width: 12),
-                            _buildPlayButton(),
-                            const SizedBox(width: 12),
-                            IconButton(
-                              icon: Icon(
-                                Icons.skip_previous_rounded,
-                                size: 28,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                              onPressed: widget.onNext,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // RIGHT SECTION: Options
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            _buildOptionIcon(
-                              Icons.speed,
-                              '1.0x',
-                              isDark,
-                            ), // Placeholder text
-                            const SizedBox(width: 8),
-                            _buildOptionIcon(Icons.repeat, '', isDark),
-                            const SizedBox(width: 8),
-                            _buildOptionIcon(Icons.volume_up, '', isDark),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    // Options (Speed/More)
+                    Row(
+                      children: [
+                        _buildOptionIconButton(Icons.speed, isDark, "1.0x"),
+                        const SizedBox(width: 8),
+                        _buildOptionIconButton(Icons.more_horiz, isDark, null),
+                      ],
+                    ),
+                  ],
                 ),
 
-                // Progress Slider
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
+
+                // MIDDLE ROW: Player Controls
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      _formatDuration(_position),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    IconButton(
+                      onPressed: () {}, // Shuffle/Repeat
+                      icon: Icon(
+                        Icons.shuffle,
+                        color: isDark ? Colors.white38 : Colors.grey[400],
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SizedBox(
-                        height: 4,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: _duration.inMilliseconds > 0
-                                ? _position.inMilliseconds /
-                                      _duration.inMilliseconds
-                                : 0,
-                            backgroundColor: isDark
-                                ? Colors.white10
-                                : Colors.grey[300],
-                            valueColor: const AlwaysStoppedAnimation(
-                              Color(0xFF14B8A6),
-                            ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(
+                        Icons.skip_next_rounded,
+                        size: 32,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      ),
+                      onPressed: widget.onPrevious, // RTL
+                    ),
+                    const SizedBox(width: 24),
+                    _buildPlayButton(),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: Icon(
+                        Icons.skip_previous_rounded,
+                        size: 32,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      ),
+                      onPressed: widget.onNext,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {}, // Like/Bookmark
+                      icon: Icon(
+                        Icons.favorite_border,
+                        color: isDark ? Colors.white38 : Colors.grey[400],
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // BOTTOM ROW: Progress
+                Column(
+                  children: [
+                    SizedBox(
+                      height: 4,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: _duration.inMilliseconds > 0
+                              ? _position.inMilliseconds /
+                                    _duration.inMilliseconds
+                              : 0,
+                          backgroundColor: isDark
+                              ? Colors.white10
+                              : const Color(0xFFE2E8F0),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Color(0xFF14B8A6),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatDuration(_duration),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDuration(_position),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white54
+                                : const Color(0xFF94A3B8),
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        Text(
+                          _formatDuration(_duration),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white54
+                                : const Color(0xFF94A3B8),
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  String _getReciterName(String id) {
+    const names = {
+      'ar.alafasy': 'مشاري العفاسي',
+      'ar.minshawi': 'محمد صديق المنشاوي',
+      'ar.sudais': 'عبد الرحمن السديس',
+    };
+    return names[id] ?? 'قارئ';
+  }
+
+  Widget _buildOptionIconButton(IconData icon, bool isDark, String? label) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: label != null
+          ? Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            )
+          : Icon(
+              icon,
+              size: 18,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
     );
   }
 
@@ -434,36 +514,6 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
                   size: 32,
                 ),
               ),
-      ),
-    );
-  }
-
-  Widget _buildOptionIcon(IconData icon, String label, bool isDark) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 20, color: isDark ? Colors.grey : Colors.grey[600]),
-        if (label.isNotEmpty)
-          Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildWaveform(bool isDark) {
-    // Placeholder for waveform animation
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(
-        5,
-        (index) => Container(
-          width: 3,
-          height: 8 + (index % 3) * 4.0,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-          decoration: BoxDecoration(
-            color: const Color(0xFF14B8A6),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
       ),
     );
   }

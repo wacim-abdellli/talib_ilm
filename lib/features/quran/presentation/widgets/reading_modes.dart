@@ -279,7 +279,6 @@ class MushafModeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
     final bgColor = nightMode
         ? const Color(0xFF0A0A0A)
         : const Color(0xFFFFF9E6);

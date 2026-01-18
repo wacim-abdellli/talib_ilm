@@ -39,7 +39,7 @@ class QuranReadingSettings {
     this.nightMode = false,
     this.reciter = 'mishary',
     this.autoPlay = false,
-    this.readingMode = ReadingMode.singleVerse,
+    this.readingMode = ReadingMode.page,
   });
 
   QuranReadingSettings copyWith({
@@ -192,17 +192,87 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
                     decoration: BoxDecoration(
                       color: _settings.backgroundColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.grey.withValues(alpha: 0.2),
-                      ),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
-                    child: Text(
-                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Amiri', // Simplified for preview
-                        fontSize: _settings.fontSize,
-                        color: isDark ? Colors.white : Colors.black,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: _settings.fontSize * 0.8,
+                                color: isDark ? Colors.white : Colors.black,
+                                height: 2.0,
+                              ),
+                            ),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                width: 24,
+                                height: 24,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF14B8A6),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '1', // Example ayah number
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontFamily: 'Cairo',
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const TextSpan(text: '  '), // Small gap
+                            TextSpan(
+                              text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: _settings.fontSize * 0.8,
+                                color: isDark ? Colors.white : Colors.black,
+                                height: 2.0,
+                              ),
+                            ),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                width: 24,
+                                height: 24,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF14B8A6),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '2', // Example ayah number
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontFamily: 'Cairo',
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.justify,
                       ),
                     ),
                   ),
@@ -264,7 +334,6 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
                       ),
                     ),
                     value: _settings.showTranslation,
-                    // ignore: deprecated_member_use
                     activeColor: const Color(0xFF14B8A6),
                     contentPadding: EdgeInsets.zero,
                     onChanged: (val) => _updateSettings(

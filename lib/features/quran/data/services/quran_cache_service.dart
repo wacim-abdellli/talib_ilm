@@ -100,46 +100,8 @@ class QuranCacheService {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE CACHE
+  // PAGE CACHE REMOVED (Migrated to QuranDatabase)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  /// Cache page ayahs
-  static Future<void> cachePage(int pageNumber, List<Ayah> ayahs) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = '$_pagePrefix$pageNumber';
-    final jsonList = ayahs.map((a) => a.toJson()).toList();
-    await prefs.setString(key, jsonEncode(jsonList));
-    await prefs.setString(
-      '$key$_timestampSuffix',
-      DateTime.now().toIso8601String(),
-    );
-  }
-
-  /// Get cached page
-  static Future<List<Ayah>?> getCachedPage(int pageNumber) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = '$_pagePrefix$pageNumber';
-    final jsonString = prefs.getString(key);
-
-    if (jsonString == null) return null;
-
-    // Check validity
-    if (!await isPageCacheValid(pageNumber)) return null;
-
-    try {
-      final List<dynamic> jsonList = jsonDecode(jsonString);
-      return jsonList.map((json) => Ayah.fromJson(json)).toList();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  static Future<bool> isPageCacheValid(int pageNumber) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = '$_pagePrefix$pageNumber';
-    final timestampStr = prefs.getString('$key$_timestampSuffix');
-    return _isTimestampValid(timestampStr);
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // READING PROGRESS
@@ -342,19 +304,12 @@ class QuranRepository {
     int pageNumber, {
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      final cached = await QuranCacheService.getCachedPage(pageNumber);
-      if (cached != null && cached.isNotEmpty) return cached;
-    }
-
+    // Page caching moved to QuranPageService (SQLite).
+    // This legacy repository just fetches from API if used.
     try {
-      final ayahs = await QuranApiService.getPage(pageNumber);
-      if (ayahs.isNotEmpty) {
-        await QuranCacheService.cachePage(pageNumber, ayahs);
-      }
-      return ayahs;
+      return await QuranApiService.getPage(pageNumber);
     } catch (e) {
-      return await QuranCacheService.getCachedPage(pageNumber) ?? [];
+      return [];
     }
   }
 

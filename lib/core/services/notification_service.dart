@@ -95,6 +95,9 @@ class NotificationService {
   }
 
   Future<void> cancelAll() async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
     await _plugin.cancelAll();
   }
 
