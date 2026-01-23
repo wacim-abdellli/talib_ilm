@@ -9,7 +9,7 @@ import '../quran_api_service.dart';
 class QuranCacheService {
   static const String _surahListKey = 'quran_cache_surah_list';
   static const String _surahPrefix = 'quran_cache_surah_';
-  static const String _pagePrefix = 'quran_cache_page_';
+
   static const String _progressKey = 'quran_cache_progress';
   static const String _bookmarksKey = 'quran_cache_bookmarks';
   static const String _timestampSuffix = '_timestamp';

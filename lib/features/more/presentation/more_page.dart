@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:talib_ilm/shared/widgets/app_snackbar.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../app/app.dart';
-import '../../../shared/widgets/pressable_card.dart';
 
 import '../../prayer/presentation/prayer_settings_sheet.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
@@ -338,68 +338,128 @@ class _MoreSection {
   });
 }
 
-class _MoreSectionCard extends StatelessWidget {
+class _MoreSectionCard extends StatefulWidget {
   final _MoreSection section;
 
   const _MoreSectionCard({required this.section});
 
   @override
+  State<_MoreSectionCard> createState() => _MoreSectionCardState();
+}
+
+class _MoreSectionCardState extends State<_MoreSectionCard> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(AppUi.radiusMD);
 
-    return PressableCard(
-      onTap: section.onTap,
-      padding: AppUi.cardPadding,
-      borderRadius: radius,
-      decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: radius,
-        border: Border.all(
-          color: context.borderColor,
-          width: AppUi.dividerThickness,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppUi.iconBoxSize,
-            height: AppUi.iconBoxSize,
-            decoration: BoxDecoration(
-              color: context.backgroundColor,
-              borderRadius: radius,
-              border: Border.all(
-                color: context.borderColor,
-                width: AppUi.dividerThickness,
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        HapticFeedback.lightImpact();
+        setState(() => _isPressed = false);
+        widget.section.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          padding: AppUi.cardPadding,
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? LinearGradient(
+                    colors: _isPressed
+                        ? [const Color(0xFF1A1A1A), const Color(0xFF0F0F0F)]
+                        : [const Color(0xFF0A0A0A), const Color(0xFF0A0A0A)],
+                  )
+                : null,
+            color: isDark
+                ? null
+                : (_isPressed
+                      ? context.surfaceSecondaryColor
+                      : context.surfaceColor),
+            borderRadius: radius,
+            border: Border.all(
+              color: isDark
+                  ? (_isPressed
+                        ? const Color(0xFF2A2A2A)
+                        : const Color(0xFF1F1F1F))
+                  : context.borderColor,
+              width: AppUi.dividerThickness,
+            ),
+            boxShadow: _isPressed && isDark
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF00D9C0).withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      spreadRadius: -2,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: AppUi.iconBoxSize,
+                height: AppUi.iconBoxSize,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF141414)
+                      : context.backgroundColor,
+                  borderRadius: radius,
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF1F1F1F)
+                        : context.borderColor,
+                    width: AppUi.dividerThickness,
+                  ),
+                ),
+                child: Icon(
+                  widget.section.icon,
+                  color: isDark
+                      ? const Color(0xFFA1A1A1)
+                      : context.textTertiaryColor,
+                ),
               ),
-            ),
-            child: Icon(section.icon, color: context.textTertiaryColor),
-          ),
-          const SizedBox(width: AppUi.gapMD),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  section.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.textPrimaryColor,
-                  ),
+              const SizedBox(width: AppUi.gapMD),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.section.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: context.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: AppUi.gapXS),
+                    Text(
+                      widget.section.subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: context.textSecondaryColor,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppUi.gapXS),
-                Text(
-                  section.subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: context.textSecondaryColor,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.chevron_left,
+                color: isDark
+                    ? const Color(0xFF666666)
+                    : context.textTertiaryColor,
+                size: 20,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

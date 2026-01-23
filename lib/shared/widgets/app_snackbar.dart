@@ -17,30 +17,34 @@ class AppSnackbar {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           duration: duration ?? const Duration(seconds: 2),
-          backgroundColor: const Color(0xFF1F1F1F),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           margin: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(config.icon, size: 20, color: config.color),
-              const SizedBox(width: 8),
-              if (message.length < 40)
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    fontFamily: 'Cairo',
-                  ),
-                )
-              else
-                Expanded(
-                  child: Text(
+          padding: EdgeInsets.zero,
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1F1F1F),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: config.color.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: config.color.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(config.icon, size: 20, color: config.color),
+                const SizedBox(width: 8),
+                if (message.length < 40)
+                  Text(
                     message,
                     style: const TextStyle(
                       fontSize: 14,
@@ -48,10 +52,22 @@ class AppSnackbar {
                       color: Colors.white,
                       fontFamily: 'Cairo',
                     ),
-                    textAlign: TextAlign.center,
+                  )
+                else
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontFamily: 'Cairo',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       );

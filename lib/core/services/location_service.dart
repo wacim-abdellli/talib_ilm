@@ -155,12 +155,10 @@ class LocationService {
   Future<LocationResult?> _tryIpLocation() async {
     try {
       final client = HttpClient();
-      final request = await client.getUrl(
-        Uri.parse('https://ipapi.co/json/'),
-      );
+      final request = await client.getUrl(Uri.parse('https://ipapi.co/json/'));
       final response = await request.close().timeout(
-            const Duration(seconds: 4),
-          );
+        const Duration(seconds: 4),
+      );
       if (response.statusCode != HttpStatus.ok) {
         client.close();
         return null;

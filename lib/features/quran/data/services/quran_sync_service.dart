@@ -6,7 +6,7 @@ import '../database/quran_database.dart';
 import 'quran_page_service.dart';
 
 class QuranSyncService {
-  static const String _syncKey = 'quran_full_synced';
+  static const String _chunkKeyPrefix = 'quran_chunk_synced_';
   static const String _baseUrl = 'https://api.quran.com/api/v4';
 
   // Singleton
@@ -18,54 +18,75 @@ class QuranSyncService {
       StreamController.broadcast();
   Stream<double> get progressStream => _progressController.stream;
 
-  bool _isSyncing = false;
-  bool get isSyncing => _isSyncing;
+  // Track active downloads to prevent duplicates
+  final Set<int> _activeDownloads = {};
 
-  /// Check if Quran is fully downloaded
-  Future<bool> isQuranDownloaded() async {
+  /// Check if a specific chunk (20 pages) is downloaded
+  Future<bool> isChunkDownloaded(int chunkIndex) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_syncKey) ?? false;
+    return prefs.getBool('$_chunkKeyPrefix$chunkIndex') ?? false;
   }
 
-  /// Start full download (Option B)
-  Future<void> startFullSync() async {
-    if (_isSyncing) return;
-    _isSyncing = true;
+  /// Download Initial content (Al-Fatiha + Pages 1-3)
+  /// Blocking, fast, essential for First Launch.
+  Future<void> downloadInitialContent() async {
+    if (await isChunkDownloaded(1)) return; // Already have first chunk
+
+    // Just download first 3 pages quickly
+    // But for simplicity, we can trigger Chunk 1 download and wait for it.
+    // Chunk 1 is pages 1-20.
+    await downloadChunk(1);
+  }
+
+  /// Download a logical chunk of pages (Index 1..31)
+  /// Each chunk is 20 pages (Juz-like size).
+  Future<void> downloadChunk(int chunkIndex) async {
+    if (_activeDownloads.contains(chunkIndex)) return; // Already downloading
+    if (await isChunkDownloaded(chunkIndex)) return; // Already done
+
+    _activeDownloads.add(chunkIndex);
     _progressController.add(0.0);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final startPage = (chunkIndex - 1) * 20 + 1;
+      final endPage = (chunkIndex * 20).clamp(1, 604);
+      final totalPages = endPage - startPage + 1;
 
-      // Strategy: Download all 604 pages
-      for (int i = 1; i <= 604; i++) {
-        // Check if page exists in DB (resume capability)
-        final existing = await QuranDatabase.instance.getPage(i);
+      print(
+        'Starting download for Chunk $chunkIndex (Pages $startPage-$endPage)',
+      );
+
+      for (int i = 0; i < totalPages; i++) {
+        final pageNum = startPage + i;
+
+        // Check DB first (Checkpointing)
+        final existing = await QuranDatabase.instance.getPage(pageNum);
         if (existing == null) {
-          await _fetchAndSavePage(i);
+          await _fetchAndSavePage(pageNum);
         }
 
-        // Update progress
-        double progress = i / 604;
-        _progressController.add(progress);
+        // Progress for this chunk operation
+        _progressController.add((i + 1) / totalPages);
 
-        // Tiny throttle to prevent aggressive rate limiting
-        await Future.delayed(const Duration(milliseconds: 20));
+        // Gentle throttle
+        await Future.delayed(const Duration(milliseconds: 50));
       }
 
       // Mark as done
-      await prefs.setBool(_syncKey, true);
-      _progressController.add(1.0);
-      print('Quran Sync Completed Successfully.');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_chunkKeyPrefix$chunkIndex', true);
+      print('Chunk $chunkIndex Completed.');
     } catch (e) {
-      print('Sync Failed: $e');
+      print('Chunk $chunkIndex Failed: $e');
       _progressController.addError(e);
+      rethrow;
     } finally {
-      _isSyncing = false;
+      _activeDownloads.remove(chunkIndex);
     }
   }
 
+  /// Single Page Fetcher (Internal)
   Future<void> _fetchAndSavePage(int pageNumber) async {
-    // Retry logic
     int attempts = 0;
     while (attempts < 3) {
       try {
@@ -87,7 +108,7 @@ class QuranSyncService {
           final json = jsonDecode(response.body);
           final data = QuranPageData.fromApiResponse(pageNumber, json);
           await QuranDatabase.instance.savePage(pageNumber, data);
-          return; // Success
+          return;
         } else {
           throw Exception('HTTP ${response.statusCode}');
         }

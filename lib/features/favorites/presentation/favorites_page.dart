@@ -122,6 +122,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   }
 
                   return ListView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     padding: AppUi.screenPadding,
                     children: FavoriteType.values
                         .where(grouped.containsKey)

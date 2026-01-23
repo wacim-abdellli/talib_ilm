@@ -160,33 +160,57 @@ class _AppShellState extends State<AppShell> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              width: isActive ? 64 : 48,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: (isActive && isDark)
-                    ? activeColor.withValues(alpha: 0.15)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                gradient: isActive && isDark
+                    ? LinearGradient(
+                        colors: [
+                          activeColor.withValues(alpha: 0.25),
+                          activeColor.withValues(alpha: 0.1),
+                        ],
+                      )
+                    : (isActive
+                          ? LinearGradient(
+                              colors: [
+                                activeColor.withValues(alpha: 0.15),
+                                activeColor.withValues(alpha: 0.08),
+                              ],
+                            )
+                          : null),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: isActive && isDark
+                    ? [
+                        BoxShadow(
+                          color: activeColor.withValues(
+                            alpha: 0.2,
+                          ), // Reduced from 0.4
+                          blurRadius: 8, // Reduced from 12
+                          spreadRadius: -4, // Reduced from -2
+                        ),
+                      ]
+                    : null,
               ),
               child: Icon(
                 isActive ? activeIcon : inactiveIcon,
-                size: 24,
+                size: isActive ? 26 : 24,
                 color: isActive ? activeColor : inactiveColor,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                fontSize: isActive ? 11 : 10,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: labelColor,
                 height: 1,
                 fontFamily: 'Cairo',
               ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+              child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
             ),
           ],
         ),

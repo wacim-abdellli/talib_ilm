@@ -187,6 +187,12 @@ class AppColors {
   static const darkGold = yellowNeon;
   static const darkGoldLight = Color(0xFF332B00);
 
+  static const premiumDarkGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [darkSurface, darkSurfaceSecondary],
+  );
+
   // Deprecated - kept for backwards compatibility
   @Deprecated('Use categoryLanguage instead')
   static const accentBlue = Color(0xFF7A9CB5);

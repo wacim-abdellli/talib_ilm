@@ -152,6 +152,9 @@ class LibraryPage extends StatelessWidget {
               color: context.backgroundColor,
               child: ListView(
                 padding: AppUi.screenPadding,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
                 children: [...levelCards],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_ui.dart';
 import '../../app/theme/app_spacing.dart';
@@ -38,8 +39,9 @@ class _PressableCardState extends State<PressableCard> {
   Widget build(BuildContext context) {
     final shape = widget.decoration.shape;
     final borderRadius = shape == BoxShape.rectangle
-        ? (widget.decoration.borderRadius ?? widget.borderRadius)
-            .resolve(Directionality.of(context))
+        ? (widget.decoration.borderRadius ?? widget.borderRadius).resolve(
+            Directionality.of(context),
+          )
         : null;
     final fallbackBorder = Border.all(
       color: const Color(0xFFE5DED0),
@@ -59,7 +61,8 @@ class _PressableCardState extends State<PressableCard> {
         offset: const Offset(0, 12),
       ),
     ];
-    final fillColor = widget.decoration.color ??
+    final fillColor =
+        widget.decoration.color ??
         (widget.decoration.gradient == null ? AppColors.surface : null);
     final effectiveDecoration = BoxDecoration(
       color: fillColor,
@@ -67,7 +70,9 @@ class _PressableCardState extends State<PressableCard> {
       image: widget.decoration.image,
       border: widget.decoration.border ?? fallbackBorder,
       borderRadius: borderRadius,
-      boxShadow: widget.decoration.boxShadow ?? (_pressed ? pressedShadow : baseShadow),
+      boxShadow:
+          widget.decoration.boxShadow ??
+          (_pressed ? pressedShadow : baseShadow),
       shape: shape,
       backgroundBlendMode: widget.decoration.backgroundBlendMode,
     );
@@ -87,15 +92,17 @@ class _PressableCardState extends State<PressableCard> {
             highlightColor: rippleColor,
             overlayColor: WidgetStatePropertyAll(rippleColor),
             onHighlightChanged: widget.onTap == null ? null : _setPressed,
-            onTap: widget.onTap,
+            onTap: widget.onTap == null
+                ? null
+                : () {
+                    HapticFeedback.lightImpact();
+                    widget.onTap!();
+                  },
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 minHeight: AppUi.buttonMinHeight,
               ),
-              child: Padding(
-                padding: widget.padding,
-                child: widget.child,
-              ),
+              child: Padding(padding: widget.padding, child: widget.child),
             ),
           ),
         ),

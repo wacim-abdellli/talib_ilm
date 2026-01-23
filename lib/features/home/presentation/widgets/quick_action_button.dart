@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../app/theme/app_colors.dart';
 
 class QuickActionButton extends StatelessWidget {
@@ -42,48 +43,69 @@ class QuickActionButton extends StatelessWidget {
     final shadowBlur = isDark ? 12.0 : 8.0;
     final textColor = isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: containerBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderColor, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: shadowBlur,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: effectiveColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        splashColor: effectiveColor.withValues(alpha: 0.3),
+        highlightColor: effectiveColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 80,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: containerBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: shadowColor,
+                blurRadius: shadowBlur,
+                offset: const Offset(0, 2),
               ),
-              child: Icon(icon, size: 24, color: effectiveColor),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: textColor,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [
+                      effectiveColor.withValues(alpha: 0.1),
+                      effectiveColor.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: effectiveColor.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
+                child: Icon(icon, size: 28, color: effectiveColor),
               ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
         ),
       ),
     );

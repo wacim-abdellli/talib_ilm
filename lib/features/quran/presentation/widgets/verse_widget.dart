@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import 'ayah_context_menu.dart';
 
 /// Verse data model
 class VerseData {
@@ -32,6 +33,7 @@ class VerseWidget extends StatefulWidget {
   final VoidCallback? onBookmark;
   final VoidCallback? onPlay;
   final VoidCallback? onShare;
+  final VoidCallback? onTafsir;
 
   const VerseWidget({
     super.key,
@@ -43,6 +45,7 @@ class VerseWidget extends StatefulWidget {
     this.onBookmark,
     this.onPlay,
     this.onShare,
+    this.onTafsir,
   });
 
   @override
@@ -93,6 +96,23 @@ class _VerseWidgetState extends State<VerseWidget>
     _toggleActions();
   }
 
+  void _openContextMenu(BuildContext context, bool isDark) {
+    // Use callback if provided, otherwise open context menu
+    if (widget.onTafsir != null) {
+      widget.onTafsir!();
+    } else {
+      AyahContextMenu.show(
+        context,
+        surah: widget.verse.surahNumber,
+        ayah: widget.verse.verseNumber,
+        ayahText: widget.verse.arabicText,
+        isDark: isDark,
+        onPlayAudio: widget.onPlay,
+        onShare: widget.onShare,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
@@ -109,6 +129,7 @@ class _VerseWidgetState extends State<VerseWidget>
 
     return GestureDetector(
       onTap: _toggleActions,
+      onLongPress: () => _openContextMenu(context, isDark),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
@@ -216,9 +237,7 @@ class _VerseWidgetState extends State<VerseWidget>
                     _toggleActions();
                   },
                   onTafsir: () {
-                    setState(() {
-                      _tafsirExpanded = !_tafsirExpanded;
-                    });
+                    _openContextMenu(context, isDark);
                     _toggleActions();
                   },
                 ),

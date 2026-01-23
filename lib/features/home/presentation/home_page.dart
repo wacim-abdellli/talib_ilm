@@ -408,6 +408,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 12),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
                             QuickActionButton(

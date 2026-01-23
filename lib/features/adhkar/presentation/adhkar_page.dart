@@ -48,9 +48,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Header Colors
-    final headerBg = isDark ? const Color(0xFF000000) : const Color(0xFFFBFAF8);
+    final headerBg = isDark ? null : const Color(0xFFFBFAF8);
+    final headerGradient = isDark ? AppColors.premiumDarkGradient : null;
     final headerBorder = isDark
-        ? const Color(0xFF1F1F1F)
+        ? const Color(0xFF00D9C0).withValues(alpha: 0.1)
         : const Color(0xFFE8E6E3);
     final titleColor = isDark
         ? const Color(0xFFFFFFFF)
@@ -62,10 +63,17 @@ class _AdhkarPageState extends State<AdhkarPage> {
     // Icon Container
     final iconContainerDecoration = BoxDecoration(
       gradient: isDark
-          ? const LinearGradient(colors: [Color(0xFF6A9A9A), Color(0xFF8ACACA)])
+          ? const LinearGradient(colors: [Color(0xFF00D9C0), Color(0xFF00BFA5)])
           : null,
       color: isDark ? null : const Color(0xFF6A9A9A).withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        if (isDark)
+          BoxShadow(
+            color: const Color(0xFF00D9C0).withValues(alpha: 0.2),
+            blurRadius: 10,
+          ),
+      ],
     );
     final iconColor = isDark
         ? const Color(0xFFFFFFFF)
@@ -80,6 +88,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: BoxDecoration(
               color: headerBg,
+              gradient: headerGradient,
               border: Border(bottom: BorderSide(color: headerBorder, width: 1)),
             ),
             child: SafeArea(
@@ -168,6 +177,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                   // Category tabs
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
                         _buildCategoryTab(
@@ -529,6 +539,9 @@ class _CategoryTile extends StatelessWidget {
         ? const Color(0xFFA1A1A1)
         : const Color(0xFF6E6E6E);
 
+    // Get category accent color
+    final accentColors = _getCategoryColors(data.id);
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -537,14 +550,14 @@ class _CategoryTile extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF6A9A9A).withValues(alpha: 0.2)
-                : const Color(0xFF6A9A9A).withValues(alpha: 0.12),
+                ? accentColors[0].withValues(alpha: 0.2)
+                : accentColors[0].withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(
-            Icons.spa_outlined, // Unified icon for category badges
+            _getCategoryIcon(data.id),
             size: 24,
-            color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF6A9A9A),
+            color: isDark ? accentColors[0] : accentColors[1],
           ),
         ),
         const SizedBox(height: 14),
@@ -584,8 +597,71 @@ class _CategoryTile extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(color: tileBorder, width: 1),
       ),
-      child: Padding(padding: const EdgeInsets.all(16), child: content),
+      child: Stack(
+        children: [
+          // Colored left stripe
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 4,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: accentColors,
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          Padding(padding: const EdgeInsets.all(16), child: content),
+        ],
+      ),
     );
+  }
+
+  List<Color> _getCategoryColors(String id) {
+    switch (id) {
+      case 'morning':
+        return const [Color(0xFFFF8A3D), Color(0xFFFF6B1A)]; // Orange
+      case 'evening':
+        return const [Color(0xFFA855F7), Color(0xFF8B5CF6)]; // Purple
+      case 'after_prayer':
+        return const [Color(0xFF00E676), Color(0xFF00C853)]; // Green
+      case 'duas':
+        return const [Color(0xFF3B82F6), Color(0xFF2563EB)]; // Blue
+      case 'tasbeeh':
+        return const [Color(0xFFFFD600), Color(0xFFFFC107)]; // Yellow/Gold
+      case 'sleeping':
+        return const [Color(0xFF6366F1), Color(0xFF4F46E5)]; // Indigo
+      default:
+        return const [Color(0xFF00D9C0), Color(0xFF14B8A6)]; // Teal
+    }
+  }
+
+  IconData _getCategoryIcon(String id) {
+    switch (id) {
+      case 'morning':
+        return Icons.wb_sunny_outlined;
+      case 'evening':
+        return Icons.nights_stay_outlined;
+      case 'after_prayer':
+        return Icons.auto_awesome_outlined;
+      case 'duas':
+        return Icons.menu_book_outlined;
+      case 'tasbeeh':
+        return Icons.circle_outlined;
+      case 'sleeping':
+        return Icons.bedtime_outlined;
+      default:
+        return Icons.spa_outlined;
+    }
   }
 
   String _subtitleLabel(int total) {

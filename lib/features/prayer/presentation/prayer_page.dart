@@ -232,6 +232,63 @@ class _PrayerPageState extends State<PrayerPage> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 24),
+
+                                // Time progress circle
+                                Center(
+                                  child: SizedBox(
+                                    width: 200,
+                                    height: 200,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // Background circle
+                                        SizedBox(
+                                          width: 200,
+                                          height: 200,
+                                          child: CircularProgressIndicator(
+                                            value: 1.0,
+                                            strokeWidth: 12,
+                                            color: const Color(0xFF1F1F1F),
+                                          ),
+                                        ),
+                                        // Progress circle
+                                        SizedBox(
+                                          width: 200,
+                                          height: 200,
+                                          child: CircularProgressIndicator(
+                                            value:
+                                                0.4, // Calculate: time passed / total time
+                                            strokeWidth: 12,
+                                            color: const Color(0xFF00D9C0),
+                                          ),
+                                        ),
+                                        // Center text
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'العصر',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                            Text(
+                                              '00:37:39',
+                                              style: TextStyle(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
                                 const SizedBox(height: 20),
                                 // Date and Qibla row
                                 Row(

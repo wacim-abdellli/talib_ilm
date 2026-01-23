@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/utils/responsive.dart';
 
 enum ReadingMode { singleVerse, continuous, page }
@@ -27,6 +29,9 @@ class QuranReadingSettings {
   // Reading Mode
   ReadingMode readingMode;
 
+  // Display
+  bool useEnglishNumbers;
+
   QuranReadingSettings({
     this.fontSize = 28.0,
     this.fontFamily = 'hafs',
@@ -40,6 +45,7 @@ class QuranReadingSettings {
     this.reciter = 'mishary',
     this.autoPlay = false,
     this.readingMode = ReadingMode.page,
+    this.useEnglishNumbers = false,
   });
 
   QuranReadingSettings copyWith({
@@ -55,6 +61,7 @@ class QuranReadingSettings {
     String? reciter,
     bool? autoPlay,
     ReadingMode? readingMode,
+    bool? useEnglishNumbers,
   }) {
     return QuranReadingSettings(
       fontSize: fontSize ?? this.fontSize,
@@ -69,18 +76,25 @@ class QuranReadingSettings {
       reciter: reciter ?? this.reciter,
       autoPlay: autoPlay ?? this.autoPlay,
       readingMode: readingMode ?? this.readingMode,
+      useEnglishNumbers: useEnglishNumbers ?? this.useEnglishNumbers,
     );
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM READING SETTINGS SHEET
+// ═══════════════════════════════════════════════════════════════════════════
+
 class ReadingSettingsSheet extends StatefulWidget {
   final QuranReadingSettings settings;
   final ValueChanged<QuranReadingSettings> onSettingsChanged;
+  final ScrollController? scrollController;
 
   const ReadingSettingsSheet({
     super.key,
     required this.settings,
     required this.onSettingsChanged,
+    this.scrollController,
   });
 
   static Future<void> show(
@@ -92,9 +106,19 @@ class ReadingSettingsSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ReadingSettingsSheet(
-        settings: settings,
-        onSettingsChanged: onSettingsChanged,
+      useSafeArea: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        expand: false,
+        snap: true,
+        snapSizes: const [0.65, 0.95],
+        builder: (context, scrollController) => ReadingSettingsSheet(
+          settings: settings,
+          onSettingsChanged: onSettingsChanged,
+          scrollController: scrollController,
+        ),
       ),
     );
   }
@@ -103,429 +127,447 @@ class ReadingSettingsSheet extends StatefulWidget {
   State<ReadingSettingsSheet> createState() => _ReadingSettingsSheetState();
 }
 
-class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
+class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
+    with SingleTickerProviderStateMixin {
   late QuranReadingSettings _settings;
+  late AnimationController _animController;
+  Timer? _fontSizeDebounce;
+
+  // Premium Dark Mode Colors
+  static const _darkBg = Color(0xFF121212);
+  static const _darkSurface = Color(0xFF1E1E1E);
+  static const _darkText = Color(0xFFEDEDED);
+  static const _darkSubtext = Color(0xFFA0A0A0);
+  static const _accent = Color(0xFF14B8A6);
+  static const _accentDark = Color(0xFF0D9488);
 
   @override
   void initState() {
     super.initState();
     _settings = widget.settings;
-  }
-
-  void _updateSettings(QuranReadingSettings newSettings) {
-    setState(() {
-      _settings = newSettings;
-    });
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
   }
 
   @override
+  void dispose() {
+    _fontSizeDebounce?.cancel();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _updateSettings(QuranReadingSettings newSettings) {
+    HapticFeedback.selectionClick();
+    setState(() => _settings = newSettings);
+    // Instantly persist to parent (no page rebuild, just state update)
+    widget.onSettingsChanged(newSettings);
+  }
+
+  void _updateFontSize(double size) {
+    // Debounce font size changes to avoid jitter
+    _fontSizeDebounce?.cancel();
+    setState(() => _settings = _settings.copyWith(fontSize: size));
+    _fontSizeDebounce = Timer(const Duration(milliseconds: 150), () {
+      widget.onSettingsChanged(_settings);
+    });
+  }
+
+  void _resetToDefaults() {
+    HapticFeedback.mediumImpact();
+    final defaults = QuranReadingSettings();
+    setState(() => _settings = defaults);
+    widget.onSettingsChanged(defaults);
+  }
+
+  void _applyPreset(String preset) {
+    HapticFeedback.mediumImpact();
+    QuranReadingSettings newSettings;
+    switch (preset) {
+      case 'night':
+        newSettings = _settings.copyWith(
+          nightMode: true,
+          backgroundColor: _darkBg,
+          fontSize: 26,
+        );
+        break;
+      case 'mushaf':
+        newSettings = _settings.copyWith(
+          readingMode: ReadingMode.page,
+          fontSize: 24,
+          nightMode: false,
+          backgroundColor: const Color(0xFFFFF9E6),
+        );
+        break;
+      case 'focus':
+        newSettings = _settings.copyWith(
+          readingMode: ReadingMode.singleVerse,
+          fontSize: 32,
+          nightMode: true,
+          backgroundColor: _darkBg,
+        );
+        break;
+      default:
+        return;
+    }
+    setState(() => _settings = newSettings);
+    widget.onSettingsChanged(newSettings);
+  }
+
+  Color get _bgColor => _settings.nightMode ? _darkBg : Colors.white;
+  Color get _textColor => _settings.nightMode ? _darkText : Colors.black87;
+  Color get _subtextColor =>
+      _settings.nightMode ? _darkSubtext : Colors.grey[600]!;
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = _settings.nightMode;
     final responsive = Responsive(context);
     final mediaQuery = MediaQuery.of(context);
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.9),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        color: _bgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          // Handle
+          // ═══ HANDLE BAR ═══
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade400,
+              color: _subtextColor.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
 
-          // Header
+          // ═══ HEADER ═══
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF14B8A6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: const LinearGradient(
+                      colors: [_accent, _accentDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _accent.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: const Icon(
-                    Icons.settings_outlined,
-                    color: Color(0xFF14B8A6),
-                    size: 24,
+                    Icons.tune_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'إعدادات القراءة',
-                  style: TextStyle(
-                    fontSize: responsive.sp(20),
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Cairo',
-                    color: isDark ? Colors.white : Colors.black,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'إعدادات القراءة',
+                        style: TextStyle(
+                          fontSize: responsive.sp(20),
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Cairo',
+                          color: _textColor,
+                        ),
+                      ),
+                      Text(
+                        'خصص تجربة القراءة',
+                        style: TextStyle(
+                          fontSize: responsive.sp(12),
+                          fontFamily: 'Cairo',
+                          color: _subtextColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
 
-          // Content
+          // ═══ CONTENT ═══
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              controller: widget.scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. FONT SIZE & PREVIEW
-                  _SectionTitle('حجم الخط', isDark, responsive),
                   const SizedBox(height: 16),
 
-                  // Preview Box
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: _settings.backgroundColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                    ),
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ',
-                              style: TextStyle(
-                                fontFamily: 'Amiri',
-                                fontSize: _settings.fontSize * 0.8,
-                                color: isDark ? Colors.white : Colors.black,
-                                height: 2.0,
-                              ),
-                            ),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                width: 24,
-                                height: 24,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF14B8A6),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  '1', // Example ayah number
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontFamily: 'Cairo',
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const TextSpan(text: '  '), // Small gap
-                            TextSpan(
-                              text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ',
-                              style: TextStyle(
-                                fontFamily: 'Amiri',
-                                fontSize: _settings.fontSize * 0.8,
-                                color: isDark ? Colors.white : Colors.black,
-                                height: 2.0,
-                              ),
-                            ),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                width: 24,
-                                height: 24,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF14B8A6),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  '2', // Example ayah number
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontFamily: 'Cairo',
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.justify,
-                      ),
-                    ),
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 1: APPEARANCE (المظهر)
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'المظهر',
+                    icon: Icons.palette_outlined,
+                    isDark: _settings.nightMode,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  Row(
-                    children: [
-                      Text(
-                        '16',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: responsive.sp(12),
-                        ),
-                      ),
-                      Expanded(
-                        child: Slider(
-                          value: _settings.fontSize,
-                          min: 16,
-                          max: 48,
-                          activeColor: const Color(0xFF14B8A6),
-                          inactiveColor: isDark
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          onChanged: (val) => _updateSettings(
-                            _settings.copyWith(fontSize: val),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '48',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: responsive.sp(12),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _settings.fontSize.toInt().toString(),
-                        style: TextStyle(
-                          color: const Color(0xFF14B8A6),
-                          fontWeight: FontWeight.bold,
-                          fontSize: responsive.sp(14),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  _Divider(isDark),
-
-                  // 2. TRANSLATION
-                  _SectionTitle('الترجمة', isDark, responsive),
-                  SwitchListTile(
-                    title: Text(
-                      'عرض الترجمة',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: responsive.sp(16),
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
-                    value: _settings.showTranslation,
-                    activeColor: const Color(0xFF14B8A6),
-                    contentPadding: EdgeInsets.zero,
+                  // Dark Mode Toggle
+                  _PremiumToggle(
+                    icon: Icons.dark_mode_rounded,
+                    title: 'الوضع الداكن',
+                    subtitle: 'أفضل للقراءة الليلية',
+                    value: _settings.nightMode,
+                    isDark: _settings.nightMode,
                     onChanged: (val) => _updateSettings(
-                      _settings.copyWith(showTranslation: val),
-                    ),
-                  ),
-                  if (_settings.showTranslation)
-                    _DropdownButton<String>(
-                      value: _settings.translationLanguage,
-                      isDark: isDark,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'english',
-                          child: Text('English'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'french',
-                          child: Text('French'),
-                        ),
-                        DropdownMenuItem(value: 'urdu', child: Text('Urdu')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          _updateSettings(
-                            _settings.copyWith(translationLanguage: val),
-                          );
-                        }
-                      },
-                    ),
-
-                  _Divider(isDark),
-
-                  // 3. THEME
-                  _SectionTitle('المظهر', isDark, responsive),
-                  const SizedBox(height: 8),
-                  _ThemeRadioOption(
-                    label: 'كريمي (مريح للعين)',
-                    value: const Color(0xFFFFF9E6),
-                    groupValue: _settings.backgroundColor,
-                    isDark: isDark,
-                    onChanged: (color) => _updateSettings(
                       _settings.copyWith(
-                        backgroundColor: color,
-                        nightMode: false,
-                      ),
-                    ),
-                  ),
-                  _ThemeRadioOption(
-                    label: 'أبيض (ساطع)',
-                    value: const Color(0xFFFFFFFF),
-                    groupValue: _settings.backgroundColor,
-                    isDark: isDark,
-                    onChanged: (color) => _updateSettings(
-                      _settings.copyWith(
-                        backgroundColor: color,
-                        nightMode: false,
-                      ),
-                    ),
-                  ),
-                  _ThemeRadioOption(
-                    label: 'داكن (Dark)',
-                    value: const Color(0xFF0A0A0A),
-                    groupValue: _settings.backgroundColor,
-                    isDark: isDark,
-                    onChanged: (color) => _updateSettings(
-                      _settings.copyWith(
-                        backgroundColor: color,
-                        nightMode: true,
-                      ),
-                    ),
-                  ),
-                  _ThemeRadioOption(
-                    label: 'أسود تماماً (OLED)',
-                    value: const Color(0xFF000000),
-                    groupValue: _settings.backgroundColor,
-                    isDark: isDark,
-                    onChanged: (color) => _updateSettings(
-                      _settings.copyWith(
-                        backgroundColor: color,
-                        nightMode: true,
+                        nightMode: val,
+                        backgroundColor: val
+                            ? _darkBg
+                            : const Color(0xFFFFF9E6),
                       ),
                     ),
                   ),
 
-                  _Divider(isDark),
-
-                  // 4. READING MODE
-                  _SectionTitle('وضع القراءة', isDark, responsive),
-                  const SizedBox(height: 8),
-                  _RadioOption<ReadingMode>(
-                    label: 'آية واحدة',
-                    value: ReadingMode.singleVerse,
-                    groupValue: _settings.readingMode,
-                    isDark: isDark,
-                    onChanged: (val) =>
-                        _updateSettings(_settings.copyWith(readingMode: val)),
-                  ),
-                  _RadioOption<ReadingMode>(
-                    label: 'تمرير مستمر',
-                    value: ReadingMode.continuous,
-                    groupValue: _settings.readingMode,
-                    isDark: isDark,
-                    onChanged: (val) =>
-                        _updateSettings(_settings.copyWith(readingMode: val)),
-                  ),
-                  _RadioOption<ReadingMode>(
-                    label: 'صفحات (المصحف)',
-                    value: ReadingMode.page,
-                    groupValue: _settings.readingMode,
-                    isDark: isDark,
-                    onChanged: (val) =>
-                        _updateSettings(_settings.copyWith(readingMode: val)),
+                  // English Numbers Toggle
+                  _PremiumToggle(
+                    icon: Icons.numbers_rounded,
+                    title: 'الأرقام الإنجليزية',
+                    subtitle: 'استخدم 1,2,3 بدلاً من ١,٢,٣',
+                    value: _settings.useEnglishNumbers,
+                    isDark: _settings.nightMode,
+                    onChanged: (val) => _updateSettings(
+                      _settings.copyWith(useEnglishNumbers: val),
+                    ),
                   ),
 
-                  _Divider(isDark),
+                  const SizedBox(height: 24),
 
-                  // 5. AUDIO
-                  _SectionTitle('الصوت', isDark, responsive),
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 2: READING MODE (وضع القراءة)
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'وضع القراءة',
+                    icon: Icons.auto_stories_rounded,
+                    isDark: _settings.nightMode,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Reading Mode Selector
+                  _ReadingModeSelector(
+                    selected: _settings.readingMode,
+                    isDark: _settings.nightMode,
+                    onChanged: (mode) =>
+                        _updateSettings(_settings.copyWith(readingMode: mode)),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 3: TYPOGRAPHY (الخط)
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'الخط',
+                    icon: Icons.text_fields_rounded,
+                    isDark: _settings.nightMode,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Font Preview
+                  _FontPreview(
+                    fontSize: _settings.fontSize,
+                    isDark: _settings.nightMode,
+                  ),
+
                   const SizedBox(height: 16),
-                  _DropdownButton<String>(
-                    value: _settings.reciter,
-                    isDark: isDark,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'alafasy',
-                        child: Text('مشاري العفاسي'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'minshawi',
-                        child: Text('محمد صديق المنشاوي'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'sudais',
-                        child: Text('عبد الرحمن السديس'),
-                      ),
-                    ],
-                    onChanged: (val) =>
-                        _updateSettings(_settings.copyWith(reciter: val!)),
+
+                  // Font Size Slider
+                  _FontSizeSlider(
+                    value: _settings.fontSize,
+                    isDark: _settings.nightMode,
+                    onChanged: _updateFontSize, // Debounced
                   ),
-                  SwitchListTile(
-                    title: Text(
-                      'تشغيل تلقائي',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: responsive.sp(16),
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Font Style Selector
+                  _FontStyleSelector(
+                    selected: _settings.fontStyle,
+                    isDark: _settings.nightMode,
+                    onChanged: (style) =>
+                        _updateSettings(_settings.copyWith(fontStyle: style)),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 4: AUDIO (الصوت)
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'الصوت',
+                    icon: Icons.headphones_rounded,
+                    isDark: _settings.nightMode,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Reciter Dropdown
+                  _ReciterSelector(
+                    selected: _settings.reciter,
+                    isDark: _settings.nightMode,
+                    onChanged: (reciter) =>
+                        _updateSettings(_settings.copyWith(reciter: reciter)),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Auto-play Toggle
+                  _PremiumToggle(
+                    icon: Icons.play_circle_outline_rounded,
+                    title: 'تشغيل تلقائي',
+                    subtitle: 'تشغيل التلاوة عند التنقل',
                     value: _settings.autoPlay,
-                    // ignore: deprecated_member_use
-                    activeColor: const Color(0xFF14B8A6),
-                    contentPadding: EdgeInsets.zero,
+                    isDark: _settings.nightMode,
                     onChanged: (val) =>
                         _updateSettings(_settings.copyWith(autoPlay: val)),
                   ),
 
-                  const SizedBox(height: 100), // Spacing for button
+                  const SizedBox(height: 24),
+
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 5: PRESETS (إعدادات سريعة)
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'إعدادات سريعة',
+                    icon: Icons.auto_awesome_rounded,
+                    isDark: _settings.nightMode,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Presets Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PresetCard(
+                          icon: Icons.dark_mode_rounded,
+                          label: 'ليلي',
+                          isDark: _settings.nightMode,
+                          onTap: () => _applyPreset('night'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PresetCard(
+                          icon: Icons.menu_book_rounded,
+                          label: 'المصحف',
+                          isDark: _settings.nightMode,
+                          onTap: () => _applyPreset('mushaf'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PresetCard(
+                          icon: Icons.center_focus_strong_rounded,
+                          label: 'تركيز',
+                          isDark: _settings.nightMode,
+                          onTap: () => _applyPreset('focus'),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Reset Button
+                  GestureDetector(
+                    onTap: _resetToDefaults,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _settings.nightMode
+                            ? Colors.red.withValues(alpha: 0.1)
+                            : Colors.red.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.restore_rounded,
+                            size: 18,
+                            color: Colors.red[400],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'إعادة الضبط للافتراضي',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
 
-          // Save Button
-          Padding(
-            padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              bottom: mediaQuery.padding.bottom + 24,
-              top: 16,
+          // ═══ SAVE BUTTON ═══
+          Container(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              mediaQuery.padding.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: _bgColor,
+              border: Border(
+                top: BorderSide(color: _subtextColor.withValues(alpha: 0.1)),
+              ),
             ),
             child: SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 54,
               child: ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   widget.onSettingsChanged(_settings);
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF14B8A6),
+                  backgroundColor: _accent,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 0,
                 ),
                 child: const Text(
-                  'حفظ',
+                  'حفظ الإعدادات',
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
               ),
@@ -537,177 +579,815 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION HEADER WIDGET
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _SectionHeader extends StatelessWidget {
   final String title;
+  final IconData icon;
   final bool isDark;
-  final Responsive responsive;
 
-  const _SectionTitle(this.title, this.isDark, this.responsive);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontFamily: 'Cairo',
-        fontSize: responsive.sp(18),
-        fontWeight: FontWeight.bold,
-        color: isDark ? const Color(0xFF14B8A6) : const Color(0xFF0F766E),
-      ),
-    );
-  }
-}
-
-class _ThemeRadioOption extends StatelessWidget {
-  final String label;
-  final Color value;
-  final Color groupValue;
-  final bool isDark;
-  final ValueChanged<Color> onChanged;
-
-  const _ThemeRadioOption({
-    required this.label,
-    required this.value,
-    required this.groupValue,
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
     required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RadioListTile<Color>(
-      title: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: value,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-        ],
-      ),
-      value: value,
-      // ignore: deprecated_member_use
-      groupValue: groupValue,
-      // ignore: deprecated_member_use
-      activeColor: const Color(0xFF14B8A6),
-      contentPadding: EdgeInsets.zero,
-      // ignore: deprecated_member_use
-      onChanged: (val) {
-        if (val != null) {
-          onChanged(val);
-        }
-      },
-    );
-  }
-}
-
-class _RadioOption<T> extends StatelessWidget {
-  final String label;
-  final T value;
-  final T groupValue;
-  final bool isDark;
-  final ValueChanged<T> onChanged;
-
-  const _RadioOption({
-    required this.label,
-    required this.value,
-    required this.groupValue,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RadioListTile<T>(
-      title: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Cairo',
-          color: isDark ? Colors.white : Colors.black,
-        ),
-      ),
-      value: value,
-      // ignore: deprecated_member_use
-      groupValue: groupValue,
-      // ignore: deprecated_member_use
-      activeColor: const Color(0xFF14B8A6),
-      contentPadding: EdgeInsets.zero,
-      // ignore: deprecated_member_use
-      onChanged: (val) {
-        if (val != null) {
-          onChanged(val);
-        }
-      },
-    );
-  }
-}
-
-class _DropdownButton<T> extends StatelessWidget {
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final bool isDark;
-  final ValueChanged<T?> onChanged;
-
-  const _DropdownButton({
-    required this.value,
-    required this.items,
-    required this.isDark,
-    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.white24 : Colors.grey[300]!),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF14B8A6)),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF14B8A6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF14B8A6).withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            color: isDark ? Colors.white70 : Colors.black54,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM TOGGLE WIDGET (Full Row Tappable)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PremiumToggle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  const _PremiumToggle({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+  static const _darkSurface = Color(0xFF1E1E1E);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onChanged(!value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? _darkSurface : const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: value
+                ? _accent.withValues(alpha: 0.5)
+                : (isDark ? Colors.white12 : Colors.grey.shade200),
+            width: value ? 1.5 : 1,
           ),
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            color: isDark ? Colors.white : Colors.black,
-          ),
-          items: items,
-          onChanged: onChanged,
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: value
+                    ? _accent.withValues(alpha: 0.15)
+                    : (isDark ? Colors.white10 : Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: value
+                    ? _accent
+                    : (isDark ? Colors.white60 : Colors.grey[600]),
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: isDark
+                          ? const Color(0xFFA0A0A0)
+                          : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Switch
+            _AnimatedSwitch(value: value, isDark: isDark),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Divider extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════════════════
+// ANIMATED SWITCH
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _AnimatedSwitch extends StatelessWidget {
+  final bool value;
   final bool isDark;
-  const _Divider(this.isDark);
+
+  const _AnimatedSwitch({required this.value, required this.isDark});
+
+  static const _accent = Color(0xFF14B8A6);
+  static const _accentDark = Color(0xFF0D9488);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Divider(
-        color: isDark ? Colors.white12 : Colors.grey[200],
-        thickness: 1,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 50,
+      height: 28,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: value
+            ? const LinearGradient(
+                colors: [_accent, _accentDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: value ? null : (isDark ? Colors.grey[700] : Colors.grey[300]),
+        boxShadow: value
+            ? [
+                BoxShadow(
+                  color: _accent.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Stack(
+        children: [
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutBack,
+            left: value ? 24 : 2,
+            top: 2,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: value
+                  ? const Icon(Icons.check, size: 14, color: _accent)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// READING MODE SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _ReadingModeSelector extends StatelessWidget {
+  final ReadingMode selected;
+  final bool isDark;
+  final ValueChanged<ReadingMode> onChanged;
+
+  const _ReadingModeSelector({
+    required this.selected,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+  static const _darkSurface = Color(0xFF1E1E1E);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? _darkSurface : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        children: [
+          _ModeOption(
+            icon: Icons.center_focus_strong_rounded,
+            title: 'آية واحدة',
+            subtitle: 'التركيز على آية واحدة',
+            isSelected: selected == ReadingMode.singleVerse,
+            isDark: isDark,
+            isFirst: true,
+            onTap: () => onChanged(ReadingMode.singleVerse),
+          ),
+          Divider(
+            height: 1,
+            color: isDark ? Colors.white12 : Colors.grey.shade200,
+          ),
+          _ModeOption(
+            icon: Icons.view_stream_rounded,
+            title: 'القراءة المستمرة',
+            subtitle: 'تمرير متواصل للنص',
+            isSelected: selected == ReadingMode.continuous,
+            isDark: isDark,
+            onTap: () => onChanged(ReadingMode.continuous),
+          ),
+          Divider(
+            height: 1,
+            color: isDark ? Colors.white12 : Colors.grey.shade200,
+          ),
+          _ModeOption(
+            icon: Icons.menu_book_rounded,
+            title: 'صفحات المصحف',
+            subtitle: 'عرض كصفحات المصحف',
+            isSelected: selected == ReadingMode.page,
+            isDark: isDark,
+            isLast: true,
+            onTap: () => onChanged(ReadingMode.page),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final bool isDark;
+  final bool isFirst;
+  final bool isLast;
+  final VoidCallback onTap;
+
+  const _ModeOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.isDark,
+    this.isFirst = false,
+    this.isLast = false,
+    required this.onTap,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? _accent.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.vertical(
+            top: isFirst ? const Radius.circular(15) : Radius.zero,
+            bottom: isLast ? const Radius.circular(15) : Radius.zero,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? _accent.withValues(alpha: 0.2)
+                    : (isDark ? Colors.white10 : Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected
+                    ? _accent
+                    : (isDark ? Colors.white60 : Colors.grey[600]),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? _accent
+                          : (isDark ? const Color(0xFFEDEDED) : Colors.black87),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: isDark
+                          ? const Color(0xFFA0A0A0)
+                          : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: _accent,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, size: 14, color: Colors.white),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FONT PREVIEW
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _FontPreview extends StatelessWidget {
+  final double fontSize;
+  final bool isDark;
+
+  const _FontPreview({required this.fontSize, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0A0A0A) : const Color(0xFFFFF9E6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF14B8A6).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 300),
+          style: TextStyle(
+            fontFamily: 'Amiri',
+            fontSize: fontSize * 0.75,
+            color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+            height: 1.8,
+          ),
+          child: const Text(
+            'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FONT SIZE SLIDER
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _FontSizeSlider extends StatelessWidget {
+  final double value;
+  final bool isDark;
+  final ValueChanged<double> onChanged;
+
+  const _FontSizeSlider({
+    required this.value,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'حجم الخط',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: _accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${value.round()}',
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _accent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                'صغير',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  color: isDark ? const Color(0xFFA0A0A0) : Colors.grey[600],
+                ),
+              ),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderThemeData(
+                    activeTrackColor: _accent,
+                    inactiveTrackColor: isDark
+                        ? Colors.grey[800]
+                        : Colors.grey[300],
+                    thumbColor: _accent,
+                    overlayColor: _accent.withValues(alpha: 0.2),
+                    trackHeight: 4,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 8,
+                    ),
+                  ),
+                  child: Slider(
+                    value: value,
+                    min: 18,
+                    max: 44,
+                    divisions: 13, // Snap to steps
+                    onChanged: onChanged,
+                  ),
+                ),
+              ),
+              Text(
+                'كبير',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  color: isDark ? const Color(0xFFA0A0A0) : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FONT STYLE SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _FontStyleSelector extends StatelessWidget {
+  final String selected;
+  final bool isDark;
+  final ValueChanged<String> onChanged;
+
+  const _FontStyleSelector({
+    required this.selected,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          _StyleChip(
+            label: 'Amiri Quran (Hafs)',
+            value: 'uthmanic',
+            selected: selected,
+            isDark: isDark,
+            onTap: () => onChanged('uthmanic'),
+          ),
+          const SizedBox(width: 6),
+          _StyleChip(
+            label: 'Modern Kufi',
+            value: 'traditional',
+            selected: selected,
+            isDark: isDark,
+            onTap: () => onChanged('traditional'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StyleChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final String selected;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _StyleChip({
+    required this.label,
+    required this.value,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = value == selected;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? const LinearGradient(
+                    colors: [_accent, Color(0xFF0D9488)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isActive ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: _accent.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 13,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              color: isActive
+                  ? Colors.white
+                  : (isDark ? const Color(0xFFA0A0A0) : Colors.grey[700]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RECITER SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _ReciterSelector extends StatelessWidget {
+  final String selected;
+  final bool isDark;
+  final ValueChanged<String> onChanged;
+
+  const _ReciterSelector({
+    required this.selected,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  static const _reciters = [
+    {'id': 'alafasy', 'name': 'مشاري العفاسي'},
+    {'id': 'minshawi', 'name': 'محمد صديق المنشاوي'},
+    {'id': 'sudais', 'name': 'عبد الرحمن السديس'},
+    {'id': 'shuraim', 'name': 'سعود الشريم'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.grey.shade200,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selected,
+          isExpanded: true,
+          dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: isDark ? const Color(0xFFA0A0A0) : Colors.grey[600],
+          ),
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 15,
+            color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+          ),
+          items: _reciters.map((r) {
+            return DropdownMenuItem(
+              value: r['id'],
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.mic_rounded,
+                    size: 18,
+                    color: selected == r['id'] ? _accent : Colors.grey,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(r['name']!),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) {
+              HapticFeedback.selectionClick();
+              onChanged(val);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRESET CARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PresetCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _PresetCard({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  static const _accent = Color(0xFF14B8A6);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark ? Colors.white12 : Colors.grey.shade200,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _accent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: _accent),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

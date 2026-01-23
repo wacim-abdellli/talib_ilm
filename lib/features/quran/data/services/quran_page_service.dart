@@ -61,6 +61,18 @@ class QuranPageData {
     'juzNumber': juzNumber,
     'hizbNumber': hizbNumber,
   };
+
+  /// Helper to group verses by surah (for page headers)
+  Map<int, List<PageVerse>> get versesBySurah {
+    final Map<int, List<PageVerse>> grouped = {};
+    for (var verse in verses) {
+      if (!grouped.containsKey(verse.surahNumber)) {
+        grouped[verse.surahNumber] = [];
+      }
+      grouped[verse.surahNumber]!.add(verse);
+    }
+    return grouped;
+  }
 }
 
 /// Single Verse Model

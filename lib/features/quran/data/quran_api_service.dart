@@ -31,7 +31,7 @@ class QuranApiService {
       // Use quran.com API v4 (more reliable)
       final response = await http
           .get(Uri.parse('https://api.quran.com/api/v4/chapters'))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -481,7 +481,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/surah/$number/$edition'))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 7));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -571,7 +571,7 @@ class QuranApiService {
       final encodedQuery = Uri.encodeComponent(query);
       final response = await http
           .get(Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 7));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -625,7 +625,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/ayah/$reference/$edition'))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -653,7 +653,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz'))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -673,7 +673,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz/$number/$edition'))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 7));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -697,7 +697,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/page/$pageNumber/$edition'))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 7));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

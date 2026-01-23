@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/responsive.dart';
@@ -506,29 +507,85 @@ class _MushafVerseMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = nightMode
-        ? const Color(0xFF14B8A6).withValues(alpha: 0.7)
-        : const Color(0xFFD4AF37);
+    const markerColor = Color(0xFF00D9C0);
 
     return Container(
-      width: 28,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color, width: 1.5),
-      ),
-      child: Center(
-        child: Text(
-          _toArabicNumerals(number),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: color,
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: CustomPaint(
+        painter: _OrnamentalMarkerPainter(color: markerColor),
+        child: Center(
+          child: Text(
+            _toArabicNumerals(number),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              fontFamily: 'Amiri',
+              fontWeight: FontWeight.w600,
+              color: markerColor,
+              height: 1.0,
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// Ornamental Marker Painter
+class _OrnamentalMarkerPainter extends CustomPainter {
+  final Color color;
+
+  _OrnamentalMarkerPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..isAntiAlias = true;
+
+    // Outer circle
+    canvas.drawCircle(center, radius * 0.88, paint);
+
+    // Inner circle
+    final innerPaint = Paint()
+      ..color = color.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..isAntiAlias = true;
+    canvas.drawCircle(center, radius * 0.70, innerPaint);
+
+    // Crown ornament at top
+    final topY = center.dy - (radius * 0.88);
+    final crownPath = Path();
+    crownPath.moveTo(center.dx - 5, topY + 1);
+    crownPath.quadraticBezierTo(center.dx - 3, topY - 4, center.dx, topY - 5);
+    crownPath.quadraticBezierTo(
+      center.dx + 3,
+      topY - 4,
+      center.dx + 5,
+      topY + 1,
+    );
+    canvas.drawPath(crownPath, paint);
+
+    // Bottom dot
+    final bottomY = center.dy + (radius * 0.88);
+    canvas.drawCircle(
+      Offset(center.dx, bottomY + 2),
+      1.5,
+      paint..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _OrnamentalMarkerPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 

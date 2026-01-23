@@ -341,7 +341,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 ),
               ),
               child: DropdownButtonFormField<AdhanSound>(
-                value: settings.sound,
+                initialValue: settings.sound,
                 decoration: const InputDecoration(
                   labelText: 'المؤذن',
                   border: InputBorder.none,
