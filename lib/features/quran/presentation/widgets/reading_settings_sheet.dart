@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/responsive.dart';
-import '../../data/models/quran_models.dart'; // Import Models for QuranEdition
+import '../../data/models/quran_models.dart';
+import '../../data/services/edition_service.dart';
 
 enum ReadingMode { singleVerse, page }
 
@@ -1368,7 +1369,7 @@ class _PresetCard extends StatelessWidget {
 // EDITION SELECTOR
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _EditionSelector extends StatelessWidget {
+class _EditionSelector extends StatefulWidget {
   final String selectedReference;
   final bool isDark;
   final ValueChanged<String> onChanged;
@@ -1379,7 +1380,27 @@ class _EditionSelector extends StatelessWidget {
     required this.onChanged,
   });
 
+  @override
+  State<_EditionSelector> createState() => _EditionSelectorState();
+}
+
+class _EditionSelectorState extends State<_EditionSelector> {
+  List<String> _downloadedEditions = ['hafs'];
+
   static const _accent = Color(0xFFD4A853);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDownloadedEditions();
+  }
+
+  Future<void> _loadDownloadedEditions() async {
+    final downloaded = await EditionService.getDownloadedEditions();
+    if (mounted) {
+      setState(() => _downloadedEditions = downloaded);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1387,14 +1408,13 @@ class _EditionSelector extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: QuranEdition.availableEditions.map((edition) {
-          final isSelected = selectedReference == edition.id;
-          final isDownloaded =
-              edition.id == 'hafs'; // Mock check: only Hafs is "downloaded"
+          final isSelected = widget.selectedReference == edition.id;
+          final isDownloaded = _downloadedEditions.contains(edition.id);
 
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
-              onChanged(edition.id);
+              widget.onChanged(edition.id);
             },
             child: Container(
               margin: const EdgeInsets.only(left: 12),
@@ -1403,12 +1423,14 @@ class _EditionSelector extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? _accent.withValues(alpha: 0.15)
-                    : (isDark ? const Color(0xFF1E1E1E) : Colors.grey[100]),
+                    : (widget.isDark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.grey[100]),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected
                       ? _accent
-                      : (isDark ? Colors.white12 : Colors.transparent),
+                      : (widget.isDark ? Colors.white12 : Colors.transparent),
                   width: 1.5,
                 ),
               ),
@@ -1424,11 +1446,13 @@ class _EditionSelector extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? _accent : Colors.grey[800],
+                          color: isDownloaded
+                              ? const Color(0xFF10B981)
+                              : (isSelected ? _accent : Colors.grey[800]),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          edition.type.toUpperCase(),
+                          isDownloaded ? '✓' : edition.type.toUpperCase(),
                           style: const TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 10,
@@ -1437,7 +1461,7 @@ class _EditionSelector extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (!isDownloaded && !isSelected)
+                      if (!isDownloaded)
                         Icon(Icons.download_rounded, size: 16, color: _accent),
                     ],
                   ),
@@ -1448,7 +1472,7 @@ class _EditionSelector extends StatelessWidget {
                       fontFamily: 'Cairo',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
+                      color: widget.isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1457,7 +1481,7 @@ class _EditionSelector extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 11,
-                      color: isDark ? Colors.white54 : Colors.grey[600],
+                      color: widget.isDark ? Colors.white54 : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -1486,6 +1510,7 @@ class _DownloadDialog extends StatefulWidget {
 class _DownloadDialogState extends State<_DownloadDialog> {
   double _progress = 0.0;
   String _status = 'جاري الاتصال...';
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -1494,33 +1519,36 @@ class _DownloadDialogState extends State<_DownloadDialog> {
   }
 
   void _startDownload() async {
-    // Stage 1: Connecting
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
     setState(() {
-      _progress = 0.1;
-      _status = 'جاري التحميل...';
+      _hasError = false;
+      _progress = 0.0;
+      _status = 'جاري الاتصال...';
     });
 
-    // Stage 2: Downloading
-    final totalSteps = 20;
-    for (int i = 0; i <= totalSteps; i++) {
-      await Future.delayed(const Duration(milliseconds: 100));
+    // Use real EditionService download stream
+    await for (final update in EditionService.downloadEdition(
+      widget.editionName,
+    )) {
       if (!mounted) return;
+
       setState(() {
-        _progress = 0.1 + ((i / totalSteps) * 0.6); // Up to 0.7
+        _progress = update.progress;
+        _status = update.status;
+        _hasError = update.isError;
       });
-    }
 
-    // Stage 3: Installing
-    setState(() => _status = 'جاري التثبيت...');
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() => _progress = 1.0);
+      if (update.isError) {
+        return; // Stop on error
+      }
 
-    // Done
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
-      Navigator.pop(context, true);
+      if (update.progress >= 1.0) {
+        // Success - close dialog after short delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+        return;
+      }
     }
   }
 
@@ -1534,14 +1562,16 @@ class _DownloadDialogState extends State<_DownloadDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.cloud_download_rounded,
-              color: Color(0xFF10B981),
+            Icon(
+              _hasError
+                  ? Icons.error_outline_rounded
+                  : Icons.cloud_download_rounded,
+              color: _hasError ? Colors.redAccent : const Color(0xFF10B981),
               size: 48,
             ),
             const SizedBox(height: 20),
             Text(
-              'تثبيت محتوى',
+              _hasError ? 'حدث خطأ' : 'تثبيت محتوى',
               style: const TextStyle(
                 fontFamily: 'Cairo',
                 fontSize: 18,
@@ -1551,32 +1581,77 @@ class _DownloadDialogState extends State<_DownloadDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.editionName,
+              _hasError
+                  ? _status
+                  : (_getEditionDisplayName(widget.editionName)),
               style: TextStyle(
                 fontFamily: 'Cairo',
                 fontSize: 14,
                 color: Colors.white.withValues(alpha: 0.6),
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            LinearProgressIndicator(
-              value: _progress,
-              backgroundColor: Colors.white10,
-              color: const Color(0xFF10B981),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _status,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                color: Colors.white,
-                fontSize: 12,
+            if (!_hasError) ...[
+              LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: Colors.white10,
+                color: const Color(0xFF10B981),
+                borderRadius: BorderRadius.circular(4),
               ),
-            ),
+              const SizedBox(height: 12),
+              Text(
+                _status,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ] else ...[
+              // Error state with retry button
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: _startDownload,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                    ),
+                    child: const Text(
+                      'إعادة المحاولة',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  String _getEditionDisplayName(String id) {
+    final edition = QuranEdition.availableEditions.firstWhere(
+      (e) => e.id == id,
+      orElse: () => QuranEdition.availableEditions.first,
+    );
+    return edition.nameArabic;
   }
 }

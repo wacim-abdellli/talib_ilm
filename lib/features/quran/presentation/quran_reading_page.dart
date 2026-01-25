@@ -240,6 +240,8 @@ class _QuranReadingPageState extends State<QuranReadingPage>
   }
 
   void _handleSettingsChange(QuranReadingSettings newSettings) {
+    final editionChanged = newSettings.fontFamily != _settings.fontFamily;
+
     if (newSettings.readingMode != _settings.readingMode) {
       _switchReadingMode(newSettings.readingMode);
     }
@@ -248,6 +250,11 @@ class _QuranReadingPageState extends State<QuranReadingPage>
       _settings = newSettings;
     });
     _saveSettings(newSettings);
+
+    // Reload surah data if edition changed
+    if (editionChanged) {
+      _loadSurahData();
+    }
   }
 
   void _switchReadingMode(ReadingMode newMode) {
@@ -324,6 +331,8 @@ class _QuranReadingPageState extends State<QuranReadingPage>
 
       final surah = await QuranRepository.getSurah(
         surahNum,
+        editionId:
+            _settings.fontFamily, // Use selected edition (hafs, warsh, tajweed)
         onProgress: (status, progress) {
           if (mounted) {
             setState(() {

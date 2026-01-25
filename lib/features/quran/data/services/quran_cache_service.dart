@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/quran_models.dart';
 import '../quran_api_service.dart';
+import 'edition_service.dart';
 
 /// Quran Cache Service
 /// Uses SharedPreferences for persistent caching
@@ -282,8 +283,24 @@ class QuranRepository {
   static Future<Surah?> getSurah(
     int number, {
     bool forceRefresh = false,
+    String editionId = 'hafs',
     Function(String status, int progress)? onProgress,
   }) async {
+    // If using a non-default edition, try loading from EditionService first
+    if (editionId != 'hafs') {
+      onProgress?.call('جاري تحميل رواية $editionId...', 20);
+      final editionSurah = await EditionService.loadSurahFromEdition(
+        editionId,
+        number,
+      );
+      if (editionSurah != null) {
+        onProgress?.call('تم التحميل', 100);
+        return editionSurah;
+      }
+      // If edition file not found, fall back to default hafs
+      onProgress?.call('الرواية غير متوفرة، جاري تحميل حفص...', 30);
+    }
+
     onProgress?.call('جاري التحقق من الذاكرة...', 10);
     if (!forceRefresh) {
       final cached = await QuranCacheService.getCachedSurah(number);
