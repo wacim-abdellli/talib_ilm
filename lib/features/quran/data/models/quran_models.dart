@@ -570,3 +570,56 @@ class Reciter {
     ),
   ];
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// QURAN EDITION (Riwaya/Type)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class QuranEdition {
+  final String id;
+  final String nameArabic;
+  final String nameEnglish;
+  final String identifier; // API identifier
+  final String format; // text or audio
+  final String type; // translation, quran, etc
+  final String? fontName; // Required font for this edition
+
+  const QuranEdition({
+    required this.id,
+    required this.nameArabic,
+    required this.nameEnglish,
+    required this.identifier,
+    required this.format,
+    required this.type,
+    this.fontName,
+  });
+
+  static const List<QuranEdition> availableEditions = [
+    QuranEdition(
+      id: 'hafs',
+      nameArabic: 'حفص عن عاصم',
+      nameEnglish: 'Hafs',
+      identifier: 'quran-uthmani',
+      format: 'text',
+      type: 'quran',
+      fontName: 'Amiri', // Standard font
+    ),
+    QuranEdition(
+      id: 'warsh',
+      nameArabic: 'ورش عن نافع',
+      nameEnglish: 'Warsh',
+      identifier: 'quran-warsh',
+      format: 'text',
+      type: 'quran',
+      fontName: 'Warsh', // Needs custom font bundle
+    ),
+    QuranEdition(
+      id: 'tajweed',
+      nameArabic: 'مصحف التجويد',
+      nameEnglish: 'Tajweed',
+      identifier: 'quran-tajweed',
+      format: 'text',
+      type: 'quran',
+      fontName: 'Amiri', // Usually works with standard but colors matter
+    ),
+  ];
+}

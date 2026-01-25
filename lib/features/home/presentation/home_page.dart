@@ -414,7 +414,9 @@ class _HomePageState extends State<HomePage> {
                             QuickActionButton(
                               icon: Icons.menu_book_rounded,
                               label: 'القرآن الكريم',
-                              color: const Color(0xFF10B981),
+                              color: const Color(
+                                0xFF8D6E63,
+                              ), // Brown (was Green)
                               onTap: () => _openQuran(context),
                             ),
                             const SizedBox(width: 10),

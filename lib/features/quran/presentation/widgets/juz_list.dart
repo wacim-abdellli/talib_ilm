@@ -59,20 +59,17 @@ class JuzCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const JuzCard({super.key, required this.juz, this.onTap});
-
-  // Get gradient colors based on juz number (rotating through a palette)
   List<Color> _getGradientColors(int juzNumber) {
     final gradients = [
-      [const Color(0xFF14B8A6), const Color(0xFF0D9488)], // Teal
-      [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)], // Purple
-      [const Color(0xFF3B82F6), const Color(0xFF2563EB)], // Blue
-      [const Color(0xFFEC4899), const Color(0xFFDB2777)], // Pink
-      [const Color(0xFFF59E0B), const Color(0xFFD97706)], // Amber
-      [const Color(0xFF10B981), const Color(0xFF059669)], // Emerald
-      [const Color(0xFF6366F1), const Color(0xFF4F46E5)], // Indigo
-      [const Color(0xFFEF4444), const Color(0xFFDC2626)], // Red
-      [const Color(0xFF06B6D4), const Color(0xFF0891B2)], // Cyan
-      [const Color(0xFF84CC16), const Color(0xFF65A30D)], // Lime
+      [const Color(0xFFD4A853), const Color(0xFFE8C252)], // Classic Gold
+      [const Color(0xFF2E8B57), const Color(0xFF4CAF50)], // Sea Green
+      [const Color(0xFF8D6E63), const Color(0xFFA1887F)], // Warm Brown
+      [const Color(0xFF00695C), const Color(0xFF26A69A)], // Deep Teal
+      [
+        const Color(0xFFBCAAA4),
+        const Color(0xFFD7CCC8),
+      ],
+      [const Color(0xFF5D4037), const Color(0xFF795548)], // Dark Wood
     ];
     return gradients[(juzNumber - 1) % gradients.length];
   }

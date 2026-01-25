@@ -103,8 +103,8 @@ class _AyahNotesDialogState extends State<AyahNotesDialog> {
     final bgColor = widget.isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = widget.isDark ? Colors.white : Colors.black87;
     final subtleColor = widget.isDark ? Colors.white54 : Colors.black45;
-    // Use amber accent for consistency
-    const accentColor = Color(0xFFFFC107);
+    // Use premium gold accent
+    const accentColor = Color(0xFFD4A853);
 
     return Dialog(
       backgroundColor: bgColor,
@@ -135,7 +135,7 @@ class _AyahNotesDialogState extends State<AyahNotesDialog> {
                   IconButton(
                     icon: Icon(
                       Icons.delete_outline,
-                      color: Colors.red.shade400,
+                      color: const Color(0xFFEF9A9A),
                     ),
                     onPressed: _deleteNote,
                     tooltip: 'حذف الملاحظة',

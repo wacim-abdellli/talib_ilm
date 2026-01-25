@@ -31,7 +31,7 @@ class QuranApiService {
       // Use quran.com API v4 (more reliable)
       final response = await http
           .get(Uri.parse('https://api.quran.com/api/v4/chapters'))
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -478,75 +478,155 @@ class QuranApiService {
 
   /// Fetch surah with specific edition
   static Future<Surah?> getSurahWithEdition(int number, String edition) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/surah/$number/$edition'))
-          .timeout(const Duration(seconds: 7));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return Surah.fromJson(data['data']);
-      } else {
-        throw Exception('Failed to load surah $number: ${response.statusCode}');
-      }
-    } catch (e) {
-      // API failed, try local fallback
-      return _loadSurahFromAssets(number);
+    // QUICK LOAD STRATEGY FOR FATIHA (Surah 1)
+    // Always try local asset first for Surah 1 to ensure instant load
+    if (number == 1) {
+      try {
+        final localFatiha = await _loadSurahFromAssets(1);
+        if (localFatiha != null) return localFatiha;
+      } catch (_) {}
     }
+
+    // PRIMARY SOURCE: AlQuran.Cloud API
+    int attempts = 0;
+    while (attempts < 2) {
+      try {
+        final response = await http
+            .get(Uri.parse('$_baseUrl/surah/$number/$edition'))
+            .timeout(
+              Duration(seconds: attempts == 0 ? 3 : 10),
+            ); // FAST TIMEOUT FIRST
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return Surah.fromJson(data['data']);
+        } else {
+          if (response.statusCode < 500) {
+            throw Exception('Failed to load surah $number');
+          }
+        }
+      } catch (e) {
+        attempts++;
+        if (attempts >= 2) break;
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    }
+
+    // SECONDARY SOURCE: Quran.com API v4
+    try {
+      return await _fetchFromQuranComV4(number);
+    } catch (_) {
+      // Ignore
+    }
+
+    // FINAL FALLBACK: Local Assets
+    return _loadSurahFromAssets(number);
   }
 
   /// Load surah from local assets (only Al-Fatiha available)
   static Future<Surah?> _loadSurahFromAssets(int number) async {
-    // Get surah metadata first
-    final surahsList = await _loadSurahsFromAssets();
-    final surahMeta = surahsList.firstWhere(
-      (s) => s.number == number,
-      orElse: () => throw Exception('Surah $number not found'),
-    );
-
-    // Try to load local ayahs file
-    for (final path in [
-      'data/quran/surah_$number.json',
-      'assets/data/quran/surah_$number.json',
-    ]) {
+    try {
+      // Get surah metadata first (handle errors gracefully)
+      SurahMeta surahMeta;
       try {
-        final String jsonString = await rootBundle.loadString(path);
-        final List<dynamic> ayahsJson = jsonDecode(jsonString);
-
-        final ayahs = ayahsJson.map((json) {
-          return Ayah(
-            number: json['id'],
-            numberInSurah: json['ayahNumber'],
-            text: json['textUthmani'] ?? json['textSimple'],
-            juz: json['juzNumber'] ?? 1,
-            page: json['pageNumber'] ?? 1,
-            hizbQuarter: json['hizbNumber'] ?? 1,
-            sajda: false,
-            translation: json['translations']?['en'],
-          );
-        }).toList();
-
-        return Surah(
-          number: number,
-          name: surahMeta.name,
-          englishName: surahMeta.englishName,
-          englishNameTranslation: surahMeta.englishNameTranslation,
-          revelationType: surahMeta.revelationType,
-          numberOfAyahs: ayahs.length,
-          ayahs: ayahs,
-        );
-      } catch (e) {
-        continue;
+        final surahsList = await _loadSurahsFromAssets();
+        surahMeta = surahsList.firstWhere((s) => s.number == number);
+      } catch (_) {
+        // Fallback metadata if asset list load fails
+        final allHardcoded = _getHardcodedSurahs();
+        surahMeta = allHardcoded.firstWhere((s) => s.number == number);
       }
-    }
 
-    // No local file for this surah
+      // Try to load local ayahs file
+      for (final path in [
+        'data/quran/surah_$number.json',
+        'assets/data/quran/surah_$number.json',
+      ]) {
+        try {
+          final String jsonString = await rootBundle.loadString(path);
+          final List<dynamic> ayahsJson = jsonDecode(jsonString);
+
+          final ayahs = ayahsJson.map((json) {
+            return Ayah(
+              number: json['id'],
+              numberInSurah: json['ayahNumber'],
+              text: json['textUthmani'] ?? json['textSimple'],
+              juz: json['juzNumber'] ?? 1,
+              page: json['pageNumber'] ?? 1,
+              hizbQuarter: json['hizbNumber'] ?? 1,
+              sajda: false,
+              translation: json['translations']?['en'],
+            );
+          }).toList();
+
+          return Surah(
+            number: number,
+            name: surahMeta.name,
+            englishName: surahMeta.englishName,
+            englishNameTranslation: surahMeta.englishNameTranslation,
+            revelationType: surahMeta.revelationType,
+            numberOfAyahs: ayahs.length,
+            ayahs: ayahs,
+          );
+        } catch (e) {
+          continue;
+        }
+      }
+    } catch (e) {
+      return null;
+    }
     return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 3. GET SURAH WITH TRANSLATION
   // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Private helper: Fetch from quran.com API v4 as fallback
+  static Future<Surah> _fetchFromQuranComV4(int surahNumber) async {
+    final response = await http
+        .get(
+          Uri.parse(
+            'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber',
+          ),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final List<dynamic> verses = json['verses'];
+
+      // Get Surah metadata for details
+      final surahs = await getAllSurahs();
+      final meta = surahs.firstWhere((s) => s.number == surahNumber);
+
+      final ayahs = verses.map((v) {
+        final verseKey = v['verse_key'] as String;
+        final ayahNum = int.parse(verseKey.split(':')[1]);
+
+        return Ayah(
+          number: v['id'],
+          text: v['text_uthmani'],
+          numberInSurah: ayahNum,
+          juz:
+              0, // Not provided directly, will be approximated or updated later
+          page: 0,
+          sajda: false,
+        );
+      }).toList();
+
+      return Surah(
+        number: surahNumber,
+        name: meta.name,
+        englishName: meta.englishName,
+        englishNameTranslation: meta.englishNameTranslation,
+        numberOfAyahs: ayahs.length,
+        revelationType: meta.revelationType,
+        ayahs: ayahs,
+      );
+    }
+    throw Exception('Failed to load from quran.com');
+  }
 
   /// Fetch surah with translation
   static Future<Surah?> getSurahWithTranslation(
@@ -571,7 +651,7 @@ class QuranApiService {
       final encodedQuery = Uri.encodeComponent(query);
       final response = await http
           .get(Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'))
-          .timeout(const Duration(seconds: 7));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -625,7 +705,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/ayah/$reference/$edition'))
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -653,7 +733,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz'))
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -673,7 +753,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz/$number/$edition'))
-          .timeout(const Duration(seconds: 7));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -697,7 +777,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/page/$pageNumber/$edition'))
-          .timeout(const Duration(seconds: 7));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

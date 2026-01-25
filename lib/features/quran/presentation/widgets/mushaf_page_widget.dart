@@ -480,7 +480,7 @@ class _VerseMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const markerColor = Color(0xFF00D9C0);
+    const markerColor = Color(0xFFFFC107);
 
     return GestureDetector(
       onTap: () {
@@ -677,8 +677,8 @@ class MushafPageSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bgColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF7F3E8);
     final accentColor = isDark
-        ? const Color(0xFF00D9C0)
-        : const Color(0xFF14B8A6);
+        ? const Color(0xFFFFC107)
+        : const Color(0xFFD4A853);
 
     return Container(
       color: bgColor,

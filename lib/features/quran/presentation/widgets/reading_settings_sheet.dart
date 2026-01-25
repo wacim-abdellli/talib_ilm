@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/responsive.dart';
+import '../../data/models/quran_models.dart'; // Import Models for QuranEdition
 
 enum ReadingMode { singleVerse, page }
 
@@ -134,12 +135,12 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
   Timer? _fontSizeDebounce;
 
   // FORCED: Pure Black OLED palette
-  static const _darkBg = Color(0xFF000000);      // PURE BLACK (FORCED)
+  static const _darkBg = Color(0xFF000000); // PURE BLACK (FORCED)
   static const _darkSurface = Color(0xFF080A0F); // Pitch Dark surface
-  static const _darkText = Color(0xFFF4F4F0);    // Off-White (FORCED)
+  static const _darkText = Color(0xFFF4F4F0); // Off-White (FORCED)
   static const _darkSubtext = Color(0xFFB8B8B8); // Soft gray
-  static const _accent = Color(0xFFFFC107);      // Amber (FORCED)
-  static const _accentDark = Color(0xFFE6AC00);  // Darker Amber
+  static const _accent = Color(0xFFD4A853); // Premium Gold (FORCED)
+  static const _accentDark = Color(0xFFB58E3E); // Darker Gold
 
   @override
   void initState() {
@@ -213,6 +214,38 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
     }
     setState(() => _settings = newSettings);
     widget.onSettingsChanged(newSettings);
+  }
+
+  // SIMULATE DOWNLOAD (DLC Logic)
+  void _simulateDownload(
+    BuildContext context,
+    String editionId,
+    VoidCallback onSuccess,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return _DownloadDialog(editionName: editionId);
+      },
+    ).then((completed) {
+      if (completed == true) {
+        // Success
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'تم تثبيت الرواية بنجاح ✅',
+                style: TextStyle(fontFamily: 'Cairo'),
+              ),
+              backgroundColor: Color(0xFF10B981),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        onSuccess();
+      }
+    });
   }
 
   Color get _bgColor => _settings.nightMode ? _darkBg : Colors.white;
@@ -365,7 +398,39 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                   const SizedBox(height: 24),
 
                   // ══════════════════════════════════════════════════════════
-                  // SECTION 2: READING MODE (وضع القراءة)
+                  // SECTION 2.5: EDITION (الرواية) - NEW!
+                  // ══════════════════════════════════════════════════════════
+                  _SectionHeader(
+                    title: 'الرواية',
+                    icon: Icons.auto_stories_rounded,
+                    isDark: _settings.nightMode,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _EditionSelector(
+                    selectedReference: _settings
+                        .fontFamily, // Using fontFamily to store edition ID
+                    isDark: _settings.nightMode,
+                    onChanged: (editionId) {
+                      // DLC Logic: Simulate download for non-Hafs
+                      if (editionId != 'hafs') {
+                        _simulateDownload(context, editionId, () {
+                          _updateSettings(
+                            _settings.copyWith(fontFamily: editionId),
+                          );
+                        });
+                      } else {
+                        _updateSettings(
+                          _settings.copyWith(fontFamily: editionId),
+                        );
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ══════════════════════════════════════════════════════════
+                  // SECTION 3: READING MODE (وضع القراءة)
                   // ══════════════════════════════════════════════════════════
                   _SectionHeader(
                     title: 'طريقة العرض',
@@ -514,7 +579,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFFFFC107)),
+          Icon(icon, size: 18, color: const Color(0xFFD4A853)),
           const SizedBox(width: 8),
           Text(
             title,
@@ -522,7 +587,7 @@ class _SectionHeader extends StatelessWidget {
               fontFamily: 'Cairo',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFFFFC107),
+              color: const Color(0xFFD4A853),
             ),
           ),
           const SizedBox(width: 12),
@@ -532,7 +597,7 @@ class _SectionHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFFC107).withValues(alpha: 0.3),
+                    const Color(0xFFD4A853).withValues(alpha: 0.3),
                     Colors.transparent,
                   ],
                 ),
@@ -566,7 +631,7 @@ class _PremiumToggle extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFFFFC107);
+  static const _accent = Color(0xFFD4A853);
   static const _darkSurface = Color(0xFF1E1E1E);
 
   @override
@@ -659,8 +724,8 @@ class _AnimatedSwitch extends StatelessWidget {
 
   const _AnimatedSwitch({required this.value, required this.isDark});
 
-  static const _accent = Color(0xFFFFC107);
-  static const _accentDark = Color(0xFFE6AC00);
+  static const _accent = Color(0xFFD4A853);
+  static const _accentDark = Color(0xFFB58E3E);
 
   @override
   Widget build(BuildContext context) {
@@ -735,7 +800,7 @@ class _ReadingModeSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFFFFC107);
+  static const _accent = Color(0xFFD4A853);
   static const _darkSurface = Color(0xFF1E1E1E);
 
   @override
@@ -874,7 +939,11 @@ class _ModeOption extends StatelessWidget {
                   color: _accent,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, size: 14, color: Color(0xFF1A1A1A)),
+                child: const Icon(
+                  Icons.check,
+                  size: 14,
+                  color: Color(0xFF1A1A1A),
+                ),
               ),
           ],
         ),
@@ -1286,6 +1355,223 @@ class _PresetCard extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? const Color(0xFFEDEDED) : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EDITION SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _EditionSelector extends StatelessWidget {
+  final String selectedReference;
+  final bool isDark;
+  final ValueChanged<String> onChanged;
+
+  const _EditionSelector({
+    required this.selectedReference,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  static const _accent = Color(0xFFD4A853);
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: QuranEdition.availableEditions.map((edition) {
+          final isSelected = selectedReference == edition.id;
+          final isDownloaded =
+              edition.id == 'hafs'; // Mock check: only Hafs is "downloaded"
+
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onChanged(edition.id);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(left: 12),
+              padding: const EdgeInsets.all(12),
+              width: 140,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? _accent.withValues(alpha: 0.15)
+                    : (isDark ? const Color(0xFF1E1E1E) : Colors.grey[100]),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? _accent
+                      : (isDark ? Colors.white12 : Colors.transparent),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? _accent : Colors.grey[800],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          edition.type.toUpperCase(),
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      if (!isDownloaded && !isSelected)
+                        Icon(Icons.download_rounded, size: 16, color: _accent),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    edition.nameArabic,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    edition.nameEnglish,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 11,
+                      color: isDark ? Colors.white54 : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOWNLOAD DIALOG
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _DownloadDialog extends StatefulWidget {
+  final String editionName;
+
+  const _DownloadDialog({required this.editionName});
+
+  @override
+  State<_DownloadDialog> createState() => _DownloadDialogState();
+}
+
+class _DownloadDialogState extends State<_DownloadDialog> {
+  double _progress = 0.0;
+  String _status = 'جاري الاتصال...';
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  void _startDownload() async {
+    // Stage 1: Connecting
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    setState(() {
+      _progress = 0.1;
+      _status = 'جاري التحميل...';
+    });
+
+    // Stage 2: Downloading
+    final totalSteps = 20;
+    for (int i = 0; i <= totalSteps; i++) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+      setState(() {
+        _progress = 0.1 + ((i / totalSteps) * 0.6); // Up to 0.7
+      });
+    }
+
+    // Stage 3: Installing
+    setState(() => _status = 'جاري التثبيت...');
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() => _progress = 1.0);
+
+    // Done
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_download_rounded,
+              color: Color(0xFF10B981),
+              size: 48,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'تثبيت محتوى',
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.editionName,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
+            LinearProgressIndicator(
+              value: _progress,
+              backgroundColor: Colors.white10,
+              color: const Color(0xFF10B981),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _status,
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.white,
+                fontSize: 12,
               ),
             ),
           ],

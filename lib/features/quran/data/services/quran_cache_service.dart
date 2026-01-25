@@ -282,19 +282,30 @@ class QuranRepository {
   static Future<Surah?> getSurah(
     int number, {
     bool forceRefresh = false,
+    Function(String status, int progress)? onProgress,
   }) async {
+    onProgress?.call('جاري التحقق من الذاكرة...', 10);
     if (!forceRefresh) {
       final cached = await QuranCacheService.getCachedSurah(number);
-      if (cached != null) return cached;
+      if (cached != null) {
+        onProgress?.call('تم التحميل من الذاكرة', 100);
+        return cached;
+      }
     }
 
     try {
+      onProgress?.call('جاري التحميل من السيرفر...', 30);
       final surah = await QuranApiService.getSurah(number);
+
+      onProgress?.call('جاري معالجة البيانات...', 70);
       if (surah != null) {
+        onProgress?.call('جاري الحفظ في الجهاز...', 90);
         await QuranCacheService.cacheSurah(surah);
       }
+      onProgress?.call('اكتمل التحميل', 100);
       return surah;
     } catch (e) {
+      onProgress?.call('حدث خطأ، جاري استعادة النسخة الاحتياطية...', 50);
       return await QuranCacheService.getCachedSurah(number);
     }
   }

@@ -56,8 +56,8 @@ class AyahContextMenu extends StatelessWidget {
     final bgColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subtleColor = isDark ? Colors.white54 : Colors.black45;
-    // Use amber accent for consistency
-    const accentColor = Color(0xFFFFC107);
+    // Use premium gold accent
+    const accentColor = Color(0xFFD4A853);
 
     return Container(
       constraints: BoxConstraints(
@@ -151,7 +151,7 @@ class AyahContextMenu extends StatelessWidget {
                       icon: Icons.bookmark_add_rounded,
                       label: 'حفظ الآية',
                       subtitle: 'إضافة إلى المفضلة',
-                      color: Colors.amber.shade600,
+                      color: const Color(0xFFFFC107), // Vibrant Amber
                       onTap: () async {
                         Navigator.pop(context);
                         await QuranBookmarkService.instance.bookmarkAyah(
@@ -169,7 +169,7 @@ class AyahContextMenu extends StatelessWidget {
                       icon: Icons.edit_note_rounded,
                       label: 'ملاحظاتي',
                       subtitle: 'إضافة ملاحظة شخصية',
-                      color: Colors.blue.shade400,
+                      color: const Color(0xFF42A5F5), // Vibrant Blue
                       onTap: () {
                         Navigator.pop(context);
                         AyahNotesDialog.show(
@@ -187,7 +187,7 @@ class AyahContextMenu extends StatelessWidget {
                       icon: Icons.play_circle_rounded,
                       label: 'استماع',
                       subtitle: 'تشغيل الآية',
-                      color: Colors.green.shade500,
+                      color: const Color(0xFF00E676), // Neon Green
                       onTap: () {
                         Navigator.pop(context);
                         onPlayAudio?.call();
@@ -199,7 +199,7 @@ class AyahContextMenu extends StatelessWidget {
                       icon: Icons.copy_rounded,
                       label: 'نسخ',
                       subtitle: 'نسخ نص الآية',
-                      color: Colors.purple.shade400,
+                      color: const Color(0xFFAB47BC), // Vibrant Purple
                       onTap: () {
                         Navigator.pop(context);
                         final text = '$ayahText\n\n[$surah:$ayah]';
@@ -215,7 +215,7 @@ class AyahContextMenu extends StatelessWidget {
                       icon: Icons.share_rounded,
                       label: 'مشاركة',
                       subtitle: 'مشاركة الآية',
-                      color: Colors.teal.shade400,
+                      color: const Color(0xFF26C6DA), // Cyan
                       onTap: () {
                         Navigator.pop(context);
                         onShare?.call();
