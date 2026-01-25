@@ -9,7 +9,6 @@ import '../data/services/reading_stats_service.dart';
 import '../data/models/quran_models.dart';
 import '../data/services/quran_sync_service.dart';
 import 'quran_reading_page.dart';
-import 'mushaf_viewer_page.dart';
 
 class QuranPage extends StatefulWidget {
   const QuranPage({super.key});
@@ -325,13 +324,12 @@ class _QuranPageState extends State<QuranPage> {
               isBookmarked: isBookmarked,
               onTap: () {
                 // Get start page from surahStartPage map
-                final startPage = SurahMeta.surahStartPage[surah.number] ?? 1;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => MushafViewerPage(
-                      initialPage: startPage,
+                    builder: (_) => QuranReadingPage(
                       surahNumber: surah.number,
+                      surahName: surah.name,
                     ),
                   ),
                 ).then((_) => _loadData());

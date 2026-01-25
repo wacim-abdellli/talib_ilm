@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../../data/services/quran_page_service.dart';
 import 'ayah_context_menu.dart';
+import '../../data/tajweed_rules.dart';
 
 /// Surah names for headers
 const List<String> surahNames = [
@@ -129,6 +130,9 @@ class MushafPageWidget extends StatelessWidget {
   final double fontSize;
   final bool isDark;
   final bool useEnglishNumbers;
+  final String fontFamily;
+  final bool enableScroll;
+  final bool showTajweed;
 
   const MushafPageWidget({
     super.key,
@@ -138,10 +142,8 @@ class MushafPageWidget extends StatelessWidget {
     this.useEnglishNumbers = false,
     this.fontFamily = 'Amiri',
     this.enableScroll = true,
+    this.showTajweed = false,
   });
-
-  final String fontFamily;
-  final bool enableScroll;
 
   @override
   Widget build(BuildContext context) {
@@ -286,29 +288,77 @@ class MushafPageWidget extends StatelessWidget {
       // Add verses
       for (final verse in verses) {
         // Tappable verse text using TextSpan to allow proper wrapping
-        spans.add(
-          TextSpan(
-            text: '${verse.textUthmani} ',
-            style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: fontSize,
-              color: textColor,
-              height: 2.2,
-              letterSpacing: 0,
-              wordSpacing: 2,
+        if (showTajweed) {
+          List<InlineSpan> tajweedSpans = [];
+          final segments = TajweedParser.parse(verse.textUthmani);
+
+          for (final segment in segments) {
+            final color = segment.rule != TajweedRule.normal
+                ? TajweedColors.getColor(
+                    segment.rule,
+                    nightMode: isDark,
+                  ).withValues(
+                    alpha: isDark ? 0.4 : 0.6,
+                  ) // Slightly more opaque for readability
+                : textColor;
+
+            tajweedSpans.add(
+              TextSpan(
+                text: segment.text,
+                style: TextStyle(
+                  fontFamily: fontFamily,
+                  fontSize: fontSize,
+                  color: color,
+                  height: 2.2,
+                  letterSpacing: 0,
+                  wordSpacing: 2,
+                ),
+              ),
+            );
+          }
+          // Add space
+          tajweedSpans.add(const TextSpan(text: ' '));
+
+          spans.add(
+            TextSpan(
+              children: tajweedSpans,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  AyahContextMenu.show(
+                    context,
+                    surah: surahNum,
+                    ayah: verse.verseNumber,
+                    ayahText: verse.textUthmani,
+                    isDark: isDark,
+                  );
+                },
             ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                AyahContextMenu.show(
-                  context,
-                  surah: surahNum,
-                  ayah: verse.verseNumber,
-                  ayahText: verse.textUthmani,
-                  isDark: isDark,
-                );
-              },
-          ),
-        );
+          );
+        } else {
+          spans.add(
+            TextSpan(
+              text: '${verse.textUthmani} ',
+              style: TextStyle(
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+                color: textColor,
+                height: 2.2,
+                letterSpacing: 0,
+                wordSpacing: 2,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  AyahContextMenu.show(
+                    context,
+                    surah: surahNum,
+                    ayah: verse.verseNumber,
+                    ayahText: verse.textUthmani,
+                    isDark: isDark,
+                  );
+                },
+            ),
+          );
+        }
 
         // Add verse number marker (tappable for menu)
         spans.add(

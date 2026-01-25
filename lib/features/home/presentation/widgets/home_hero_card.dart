@@ -75,7 +75,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         ? Border.all(color: const Color(0xFF1F1F1F), width: 1)
         : null;
     final shadowColor = isDark
-        ? const Color(0xFF00D9C0).withValues(alpha: 0.25)
+        ? const Color(0xFF10B981).withValues(alpha: 0.25)
         : lightPrimaryTeal.withValues(alpha: 0.25);
     final shadowBlur = isDark ? 20.0 : 16.0;
     final shadowOffset = isDark ? const Offset(0, 8) : const Offset(0, 6);
@@ -84,7 +84,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     // Icon Stylng
     final iconDecoration = BoxDecoration(
       gradient: isDark
-          ? const LinearGradient(colors: [Color(0xFF00D9C0), Color(0xFF00BFA5)])
+          ? const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF059669)])
           : null,
       color: isDark
           ? null
@@ -107,12 +107,12 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         : Colors.white.withValues(alpha: 0.2);
     final pillBorder = isDark
         ? Border.all(
-            color: const Color(0xFF00D9C0).withValues(alpha: 0.4),
+            color: const Color(0xFF10B981).withValues(alpha: 0.4),
             width: 1.5,
           )
         : null;
     final clockIconColor = isDark
-        ? const Color(0xFF00D9C0)
+        ? const Color(0xFF10B981)
         : Colors.white.withValues(alpha: 0.9);
     final pillTextColor = isDark
         ? const Color(0xFFFFFFFF)

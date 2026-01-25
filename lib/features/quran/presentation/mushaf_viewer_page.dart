@@ -32,6 +32,7 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
   bool _useEnglishNumbers = false;
   bool _isVerticalScroll = false;
   String _fontFamily = 'Amiri';
+  bool _showTajweed = false;
 
   // Page cache logic
   final Map<int, QuranPageData> _pageCache = {};
@@ -76,6 +77,9 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
         }
         if (settings.containsKey('fontFamily')) {
           _fontFamily = settings['fontFamily'];
+        }
+        if (settings.containsKey('showTajweed')) {
+          _showTajweed = settings['showTajweed'];
         }
         // Important: Update Controller if vertical scroll loaded
         // However, we don't persist Vertical Scroll in Step 1157 yet.
@@ -181,6 +185,7 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
       fontSize: _fontSize,
       useEnglishNumbers: _useEnglishNumbers,
       fontFamily: _fontFamily,
+      showTajweed: _showTajweed, // Pass current value
       // Default or inferred values for others
       readingMode: ReadingMode.page,
       reciter: 'alafasy', // Default
@@ -195,6 +200,7 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
           _fontSize = newSettings.fontSize;
           _useEnglishNumbers = newSettings.useEnglishNumbers;
           _fontFamily = newSettings.fontFamily;
+          _showTajweed = newSettings.showTajweed; // Update logic
 
           // Helper to map ReadingMode back to scroll direction if needed
           // For now we keep vertical scroll separate toggle in settings if we want
@@ -218,6 +224,10 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
           QuranSettingsService.keyFontFamily,
           newSettings.fontFamily,
         );
+        QuranSettingsService.instance.saveSetting(
+          'showTajweed',
+          newSettings.showTajweed,
+        );
       },
     );
   }
@@ -234,6 +244,7 @@ class _MushafViewerPageState extends State<MushafViewerPage> {
         fontSize: _fontSize,
         useEnglishNumbers: _useEnglishNumbers,
         fontFamily: _fontFamily,
+        showTajweed: _showTajweed,
         enableScroll:
             !_isVerticalScroll, // Disable inner scroll if Vertical (ListView)
       );

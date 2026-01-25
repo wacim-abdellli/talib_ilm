@@ -17,33 +17,37 @@ enum TajweedRule {
 
 /// Tajweed color definitions
 class TajweedColors {
-  // Light mode colors (pastel for readability)
-  static const Color ghunnah = Color(0xFFE9D5FF); // Light purple
-  static const Color ikhfa = Color(0xFFF3F4F6); // Light grey
-  static const Color idgham = Color(0xFFD1FAE5); // Light green
-  static const Color iqlab = Color(0xFFDBEAFE); // Light blue
-  static const Color qalqalah = Color(0xFFFEE2E2); // Light red
-  static const Color madd = Color(0xFFFEF3C7); // Yellow
-  static const Color lamShams = Color(0xFFBFDBFE); // Dark blue
-  static const Color lamQamar = Color(0xFFCCFBF1); // Light teal
-  static const Color silent = Color(0xFFE5E7EB); // Light grey
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEXT COLORS FOR LIGHT MODE (Darker shades for contrast on white bg)
+  // ═══════════════════════════════════════════════════════════════════════════
+  static const Color ghunnahLight = Color(0xFF7E22CE); // Purple 700
+  static const Color ikhfaLight = Color(0xFF0F766E); // Teal 700
+  static const Color idghamLight = Color(0xFF15803D); // Green 700
+  static const Color iqlabLight = Color(0xFF1D4ED8); // Blue 700
+  static const Color qalqalahLight = Color(0xFFB91C1C); // Red 700
+  static const Color maddLight = Color(0xFFB45309); // Amber 700
+  static const Color lamShamsLight = Color(0xFF4338CA); // Indigo 700
+  static const Color lamQamarLight = Color(0xFF0E7490); // Cyan 700
+  static const Color silentLight = Color(0xFF6B7280); // Gray 500
 
-  // Dark mode colors (slightly darker for contrast)
-  static const Color ghunnaDark = Color(0xFF7C3AED); // Purple
-  static const Color ikhfaDark = Color(0xFF6B7280); // Grey
-  static const Color idghamDark = Color(0xFF10B981); // Green
-  static const Color iqlabDark = Color(0xFF3B82F6); // Blue
-  static const Color qalqalahDark = Color(0xFFEF4444); // Red
-  static const Color maddDark = Color(0xFFF59E0B); // Amber
-  static const Color lamShamsDark = Color(0xFF60A5FA); // Blue
-  static const Color lamQamarDark = Color(0xFF14B8A6); // Teal
-  static const Color silentDark = Color(0xFF9CA3AF); // Grey
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEXT COLORS FOR DARK MODE (Lighter shades for contrast on dark bg)
+  // ═══════════════════════════════════════════════════════════════════════════
+  static const Color ghunnahDark = Color(0xFFD8B4FE); // Purple 300
+  static const Color ikhfaDark = Color(0xFF5EEAD4); // Teal 300
+  static const Color idghamDark = Color(0xFF86EFAC); // Green 300
+  static const Color iqlabDark = Color(0xFF93C5FD); // Blue 300
+  static const Color qalqalahDark = Color(0xFFFCA5A5); // Red 300
+  static const Color maddDark = Color(0xFFFCD34D); // Amber 300
+  static const Color lamShamsDark = Color(0xFFA5B4FC); // Indigo 300
+  static const Color lamQamarDark = Color(0xFF67E8F9); // Cyan 300
+  static const Color silentDark = Color(0xFF9CA3AF); // Gray 400
 
   static Color getColor(TajweedRule rule, {bool nightMode = false}) {
     if (nightMode) {
       switch (rule) {
         case TajweedRule.ghunnah:
-          return ghunnaDark;
+          return ghunnahDark;
         case TajweedRule.ikhfa:
           return ikhfaDark;
         case TajweedRule.idgham:
@@ -66,25 +70,25 @@ class TajweedColors {
     } else {
       switch (rule) {
         case TajweedRule.ghunnah:
-          return ghunnah;
+          return ghunnahLight;
         case TajweedRule.ikhfa:
-          return ikhfa;
+          return ikhfaLight;
         case TajweedRule.idgham:
-          return idgham;
+          return idghamLight;
         case TajweedRule.iqlab:
-          return iqlab;
+          return iqlabLight;
         case TajweedRule.qalqalah:
-          return qalqalah;
+          return qalqalahLight;
         case TajweedRule.madd:
-          return madd;
+          return maddLight;
         case TajweedRule.lamShams:
-          return lamShams;
+          return lamShamsLight;
         case TajweedRule.lamQamar:
-          return lamQamar;
+          return lamQamarLight;
         case TajweedRule.silent:
-          return silent;
+          return silentLight;
         case TajweedRule.normal:
-          return const Color(0xFF0F172A);
+          return const Color(0xFF1E1E1E);
       }
     }
   }
@@ -234,14 +238,14 @@ class TajweedParser {
   // Idgham letters (يرملون)
   static const idghamLetters = ['ي', 'ر', 'م', 'ل', 'و', 'ن'];
 
-  // Madd letters
-  static const maddLetters = ['ا', 'و', 'ي', 'ى'];
+  // Madd letters (including Small Alif)
+  static const maddLetters = ['ا', 'و', 'ي', 'ى', 'ٰ'];
 
-  // Shaddah (تشديد)
-  static const String shaddah = 'ّ';
-
-  // Sukoon
-  static const String sukoon = 'ْ';
+  // SPECIAL CHARACTERS
+  static const String shaddah = 'ّ'; // 0x0651
+  static const String sukoon = 'ْ'; // 0x0652
+  static const String uthmanicSukoon = 'ۡ'; // 0x06E1 (Small High Head of Khah)
+  static const String smallAlif = 'ٰ'; // 0x0670
 
   // Noon sakinah / tanween
   static const noonSakinah = ['ن'];
@@ -275,87 +279,92 @@ class TajweedParser {
       // Check for Alif-Lam (ال)
       if (char == 'ا' && nextChar == 'ل') {
         // Look ahead to next letter after lam
-        if (i + 2 < chars.length) {
-          String afterLam = chars[i + 2];
-          // Skip any diacritics
-          int j = i + 2;
-          while (j < chars.length && _isDiacritic(chars[j])) {
-            j++;
-          }
-          if (j < chars.length) {
-            afterLam = chars[j];
-            if (shamsLetters.contains(afterLam)) {
-              rule = TajweedRule.lamShams;
-              segment = 'ال';
-              i += 2;
-              segments.add(TajweedSegment(segment, rule));
-              continue;
-            } else if (qamarLetters.contains(afterLam)) {
-              rule = TajweedRule.lamQamar;
-              segment = 'ال';
-              i += 2;
-              segments.add(TajweedSegment(segment, rule));
-              continue;
-            }
+        // We might have diacritics on the Lam itself (like shaddah or sukoon)
+        // or spaces.
+        int j = i + 2;
+        while (j < chars.length &&
+            (_isDiacritic(chars[j]) || chars[j] == ' ')) {
+          j++;
+        }
+
+        if (j < chars.length) {
+          final afterLam = chars[j];
+          if (shamsLetters.contains(afterLam)) {
+            rule = TajweedRule.lamShams;
+            // Include Lam and any diacritics
+            segment = text.substring(i, i + 2); // 'ال'
+            i += 2; // Skip 'ال'
+            segments.add(TajweedSegment(segment, rule));
+            continue;
+          } else if (qamarLetters.contains(afterLam)) {
+            rule = TajweedRule.lamQamar;
+            segment = text.substring(i, i + 2); // 'ال'
+            i += 2;
+            segments.add(TajweedSegment(segment, rule));
+            continue;
           }
         }
       }
 
       // Check for Noon Sakinah / Tanween rules
-      if (char == 'ن' && (nextChar == sukoon || nextChar == ' ')) {
+      bool isNoonSakinah =
+          char == 'ن' && (_isSukoon(nextChar) || nextChar == ' ');
+      bool isTanween = tanweenMarks.contains(char);
+
+      if (isNoonSakinah || isTanween) {
         // Look for next letter
-        int j = i + 1;
+        int searchIndex = isNoonSakinah && _isSukoon(nextChar) ? i + 2 : i + 1;
+
+        int j = searchIndex;
         while (j < chars.length &&
             (chars[j] == ' ' || _isDiacritic(chars[j]))) {
           j++;
         }
+
         if (j < chars.length) {
           final nextLetter = chars[j];
           if (nextLetter == 'ب') {
+            // Iqlab
             rule = TajweedRule.iqlab;
           } else if (ikhfaLetters.contains(nextLetter)) {
+            // Ikhfa
             rule = TajweedRule.ikhfa;
           } else if (idghamLetters.contains(nextLetter)) {
+            // Idgham
             rule = TajweedRule.idgham;
           }
         }
       }
 
-      // Check for Tanween followed by rules
-      if (tanweenMarks.contains(char)) {
-        int j = i + 1;
-        while (j < chars.length &&
-            (chars[j] == ' ' || _isDiacritic(chars[j]))) {
-          j++;
-        }
-        if (j < chars.length) {
-          final nextLetter = chars[j];
-          if (nextLetter == 'ب') {
-            rule = TajweedRule.iqlab;
-          } else if (ikhfaLetters.contains(nextLetter)) {
-            rule = TajweedRule.ikhfa;
-          } else if (idghamLetters.contains(nextLetter)) {
-            rule = TajweedRule.idgham;
-          }
+      // Check for Qalqalah: Letter + Sukoon, or Letter at End of Word/Verse
+      if (qalqalahLetters.contains(char)) {
+        if (_isSukoon(nextChar) || nextChar == ' ' || i == chars.length - 1) {
+          rule = TajweedRule.qalqalah;
         }
       }
 
-      // Check for Qalqalah
-      if (qalqalahLetters.contains(char) &&
-          (nextChar == sukoon || nextChar == ' ' || i == chars.length - 1)) {
-        rule = TajweedRule.qalqalah;
-      }
+      // Check for Madd (Long Vowel)
+      if (maddLetters.contains(char) || char == smallAlif) {
+        // Basic detection: If it's a madd letter, likely part of madd rule
+        // A better check would look for 'Madda' mark (~) 0x0653
+        final isMaddaMark = nextChar == 'ٓ'; // U+0653 (Madda Above)
 
-      // Check for Madd
-      if (maddLetters.contains(char)) {
-        // Simple madd detection (letter followed by vowel extension)
-        if (_isVowelMark(prevChar)) {
+        if (isMaddaMark) {
+          rule = TajweedRule.madd;
+          // consume madda mark too if we want, but for now we color the base letter
+        } else if (_isVowelMark(prevChar)) {
+          // Simple madd (natural elongation)
+          rule = TajweedRule.madd;
+        }
+        // Handle Small Alif explicitly as Madd
+        if (char == smallAlif) {
           rule = TajweedRule.madd;
         }
       }
 
-      // Check for Sukoon (silent)
-      if (nextChar == sukoon) {
+      // Check for Sukoon (Silent/Sakin)
+      // Only mark as generic 'silent' if not already Qalqalah or other rule
+      if (_isSukoon(nextChar) && rule == TajweedRule.normal) {
         rule = TajweedRule.silent;
         segment = char + nextChar;
         i += 2;
@@ -371,8 +380,17 @@ class TajweedParser {
   }
 
   static bool _isDiacritic(String char) {
-    final codeUnit = char.codeUnits.isNotEmpty ? char.codeUnits[0] : 0;
-    return codeUnit >= 0x064B && codeUnit <= 0x0652;
+    if (char.isEmpty) return false;
+    final codeUnit = char.codeUnits[0];
+    // Range 064B-065F includes fathatan, dammatan, kasratan, fatha, damma, kasra, shadda, sukun, madda, etc.
+    // Also include 0670 (small alif) and 06E1 (small high head of khah)
+    return (codeUnit >= 0x064B && codeUnit <= 0x065F) ||
+        codeUnit == 0x0670 ||
+        codeUnit == 0x06E1;
+  }
+
+  static bool _isSukoon(String char) {
+    return char == sukoon || char == uthmanicSukoon;
   }
 
   static bool _isVowelMark(String char) {
@@ -451,20 +469,14 @@ class TajweedText extends StatelessWidget {
           fontWeight: FontWeight.w500,
           fontFamily: 'Amiri',
           height: 2.0,
+          color: nightMode ? Colors.white : Colors.black87, // Default color
         ),
         children: segments.map((segment) {
           return TextSpan(
             text: segment.text,
             style: TextStyle(
-              color: segment.rule == TajweedRule.normal
-                  ? (nightMode ? Colors.white : const Color(0xFF0F172A))
-                  : null,
-              backgroundColor: segment.rule != TajweedRule.normal
-                  ? TajweedColors.getColor(
-                      segment.rule,
-                      nightMode: nightMode,
-                    ).withValues(alpha: nightMode ? 0.3 : 0.5)
-                  : null,
+              // Apply color directly to text
+              color: TajweedColors.getColor(segment.rule, nightMode: nightMode),
             ),
           );
         }).toList(),

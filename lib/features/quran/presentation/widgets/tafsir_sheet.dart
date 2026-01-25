@@ -110,9 +110,8 @@ class _TafsirSheetState extends State<TafsirSheet> {
     final bgColor = widget.isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = widget.isDark ? Colors.white : Colors.black87;
     final subtleColor = widget.isDark ? Colors.white54 : Colors.black45;
-    final accentColor = widget.isDark
-        ? const Color(0xFF00D9C0)
-        : const Color(0xFFD4A853);
+    // Use amber accent for consistency
+    const accentColor = Color(0xFFFFC107);
 
     return Container(
       constraints: BoxConstraints(
@@ -305,7 +304,7 @@ class _TafsirSheetState extends State<TafsirSheet> {
                         ? FontWeight.bold
                         : FontWeight.normal,
                     color: isSelected
-                        ? (widget.isDark ? Colors.black : Colors.white)
+                        ? const Color(0xFF1A1A1A)
                         : textColor,
                   ),
                 ),
@@ -400,7 +399,7 @@ class _TafsirSheetState extends State<TafsirSheet> {
               icon,
               size: 18,
               color: isPrimary
-                  ? (widget.isDark ? Colors.black : Colors.white)
+                  ? const Color(0xFF1A1A1A)
                   : textColor,
             ),
             const SizedBox(width: 8),
@@ -411,7 +410,7 @@ class _TafsirSheetState extends State<TafsirSheet> {
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: isPrimary
-                    ? (widget.isDark ? Colors.black : Colors.white)
+                    ? const Color(0xFF1A1A1A)
                     : textColor,
               ),
             ),

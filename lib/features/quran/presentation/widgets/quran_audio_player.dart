@@ -1,52 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
-// unused import removed
 import '../../data/models/quran_models.dart';
 
+/// Playback mode for audio
+enum PlaybackMode {
+  single,     // Play one ayah and stop
+  continuous, // Auto-play next ayah
+  repeatOne,  // Repeat current ayah
+}
+
+/// Compact Quran Audio Player
 class QuranAudioPlayer extends StatefulWidget {
   final Ayah ayah;
   final String surahName;
-  final String reciterId; // e.g. "ar.alafasy"
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
+  final int surahNumber;
+  final int totalAyahs;
+  final String reciterId;
+  final int startingAyahNumber; // Which ayah to start from
+  final VoidCallback? onClose;
+  final ValueChanged<int>? onAyahChanged; // Callback when ayah changes
 
   const QuranAudioPlayer({
     super.key,
     required this.ayah,
     required this.surahName,
+    required this.surahNumber,
+    required this.totalAyahs,
     required this.reciterId,
-    required this.onNext,
-    required this.onPrevious,
+    required this.startingAyahNumber,
+    this.onClose,
+    this.onAyahChanged,
   });
 
   @override
   State<QuranAudioPlayer> createState() => _QuranAudioPlayerState();
 }
 
-class _QuranAudioPlayerState extends State<QuranAudioPlayer>
-    with SingleTickerProviderStateMixin {
+class _QuranAudioPlayerState extends State<QuranAudioPlayer> {
   late AudioPlayer _player;
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   bool _isLoading = true;
-  bool _isMinimized = false;
+  String? _error;
+  
+  // Track current ayah internally
+  late int _currentAyahNumber;
+  late int _globalAyahNumber;
+  
+  // Playback mode
+  PlaybackMode _playbackMode = PlaybackMode.continuous;
+
+  static const _accent = Color(0xFFFFC107);
+  
+  // Flag to prevent double initialization
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer();
+    // Start from the specified ayah, not the page ayah
+    _currentAyahNumber = widget.startingAyahNumber;
+    // Calculate global ayah number from starting ayah
+    _globalAyahNumber = widget.ayah.number - widget.ayah.numberInSurah + widget.startingAyahNumber;
     _setupPlayerListeners();
-    _loadAudio();
-  }
-
-  @override
-  void didUpdateWidget(QuranAudioPlayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.ayah.number != widget.ayah.number ||
-        oldWidget.reciterId != widget.reciterId) {
-      _loadAudio();
-    }
+    // Delay loading to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_initialized) {
+        _initialized = true;
+        _loadAudio();
+      }
+    });
   }
 
   @override
@@ -61,7 +87,7 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
         setState(() {
           _isPlaying = state.playing;
           if (state.processingState == ProcessingState.completed) {
-            widget.onNext();
+            _onAyahCompleted();
           }
         });
       }
@@ -76,273 +102,403 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
     });
   }
 
+  void _onAyahCompleted() {
+    switch (_playbackMode) {
+      case PlaybackMode.single:
+        // Stop - do nothing
+        break;
+      case PlaybackMode.continuous:
+        _playNext();
+        break;
+      case PlaybackMode.repeatOne:
+        _player.seek(Duration.zero);
+        _player.play();
+        break;
+    }
+  }
+
   Future<void> _loadAudio() async {
-    setState(() => _isLoading = true);
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    
     try {
-      String reciter = widget.reciterId;
-      if (!reciter.contains('.')) {
-        reciter = 'ar.alafasy'; // Default fallback
-      }
-
-      final url =
-          'https://cdn.alquran.cloud/media/audio/ayah/$reciter/${widget.ayah.number}';
-      await _player.setUrl(url);
-
-      if (_isPlaying) {
-        // Auto-play if already playing
-        await _player.play();
-      } else {
-        await _player.play(); // Auto-play on load as requested conceptually
-      }
-
-      if (mounted) {
-        setState(() => _isLoading = false);
+      // Try everyayah.com first for higher quality audio (192kbps)
+      final reciterFolder = _getReciterFolder(widget.reciterId);
+      final surahPadded = widget.surahNumber.toString().padLeft(3, '0');
+      final ayahPadded = _currentAyahNumber.toString().padLeft(3, '0');
+      
+      final primaryUrl = 'https://everyayah.com/data/$reciterFolder/$surahPadded$ayahPadded.mp3';
+      
+      try {
+        await _player.setUrl(primaryUrl).timeout(const Duration(seconds: 5));
+        if (mounted) {
+          setState(() => _isLoading = false);
+          await _player.play();
+        }
+      } catch (_) {
+        // Fallback to alquran.cloud API
+        final fallbackUrl = 'https://cdn.islamic.network/quran/audio/128/${widget.reciterId}/$_globalAyahNumber.mp3';
+        await _player.setUrl(fallbackUrl).timeout(const Duration(seconds: 5));
+        if (mounted) {
+          setState(() => _isLoading = false);
+          await _player.play();
+        }
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'تعذر تحميل الصوت';
+        });
+      }
+    }
+  }
+
+  // Map reciter ID to everyayah.com folder name (192kbps high quality)
+  String _getReciterFolder(String reciterId) {
+    const reciterFolders = {
+      'alafasy': 'Alafasy_128kbps',
+      'ar.alafasy': 'Alafasy_128kbps',
+      'minshawi': 'Minshawy_Murattal_128kbps',
+      'ar.minshawi': 'Minshawy_Murattal_128kbps',
+      'sudais': 'Abdurrahmaan_As-Sudais_192kbps',
+      'ar.abdurrahmaansudais': 'Abdurrahmaan_As-Sudais_192kbps',
+      'shuraim': 'Saood_ash-Shuraym_128kbps',
+      'ar.saaborinah': 'Saood_ash-Shuraym_128kbps',
+      'husary': 'Husary_128kbps',
+      'ar.husary': 'Husary_128kbps',
+      'abdulbasit': 'Abdul_Basit_Murattal_192kbps',
+      'ar.abdulbasit': 'Abdul_Basit_Murattal_192kbps',
+    };
+    return reciterFolders[reciterId] ?? 'Alafasy_128kbps';
+  }
+
+  void _playNext() {
+    if (_currentAyahNumber < widget.totalAyahs) {
+      setState(() {
+        _currentAyahNumber++;
+        _globalAyahNumber++;
+      });
+      widget.onAyahChanged?.call(_currentAyahNumber);
+      _loadAudio();
+    }
+  }
+
+  void _playPrevious() {
+    if (_currentAyahNumber > 1) {
+      setState(() {
+        _currentAyahNumber--;
+        _globalAyahNumber--;
+      });
+      widget.onAyahChanged?.call(_currentAyahNumber);
+      _loadAudio();
+    }
+  }
+
+  void _togglePlay() {
+    HapticFeedback.lightImpact();
+    if (_isPlaying) {
+      _player.pause();
+    } else {
+      _player.play();
+    }
+  }
+
+  void _cyclePlaybackMode() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      switch (_playbackMode) {
+        case PlaybackMode.continuous:
+          _playbackMode = PlaybackMode.single;
+          break;
+        case PlaybackMode.single:
+          _playbackMode = PlaybackMode.repeatOne;
+          break;
+        case PlaybackMode.repeatOne:
+          _playbackMode = PlaybackMode.continuous;
+          break;
+      }
+    });
+  }
+
+  IconData _getPlaybackModeIcon() {
+    switch (_playbackMode) {
+      case PlaybackMode.continuous:
+        return Icons.repeat_rounded;
+      case PlaybackMode.single:
+        return Icons.looks_one_rounded;
+      case PlaybackMode.repeatOne:
+        return Icons.repeat_one_rounded;
+    }
+  }
+
+  String _getPlaybackModeTooltip() {
+    switch (_playbackMode) {
+      case PlaybackMode.continuous:
+        return 'تشغيل متواصل';
+      case PlaybackMode.single:
+        return 'آية واحدة';
+      case PlaybackMode.repeatOne:
+        return 'تكرار الآية';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isMinimized) {
-      return _buildMiniPlayer();
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // responsive removed
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height:
-          220 +
-          MediaQuery.of(
-            context,
-          ).padding.bottom, // Increased height for vertical layout
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    
+    return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF1A1A1A),
+            Color(0xFF0D0D0D),
+          ],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
-        border: Border(
-          top: BorderSide(
-            color: isDark ? const Color(0xFF333333) : const Color(0xFFF1F5F9),
-            width: 1,
-          ),
-        ),
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag Handle
-          Positioned(
-            top: 12,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => setState(() => _isMinimized = true),
-                child: Container(
-                  width: 48,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: _accent.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 20 + bottomPadding),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // TOP ROW: Reciter Info & Options
+                // Surah info header
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Reciter Info
-                    Expanded(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _accent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _accent.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                  'assets/images/reciter_placeholder.png',
-                                ), // Ideally real image
-                                fit: BoxFit.cover,
-                              ),
-                              color: isDark
-                                  ? const Color(0xFF333333)
-                                  : Colors.grey[200],
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF14B8A6,
-                                ).withValues(alpha: 0.3),
-                                width: 2,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.grey,
-                            ), // Fallback
+                          Icon(
+                            Icons.auto_stories_rounded,
+                            size: 16,
+                            color: _accent,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _getReciterName(widget.reciterId),
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  'سورة ${widget.surahName}',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? Colors.white54
-                                        : const Color(0xFF64748B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.surahName,
+                            style: const TextStyle(
+                              fontFamily: 'Amiri',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFEDEDED),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '$_currentAyahNumber/${widget.totalAyahs}',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _accent,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    // Options (Speed/More)
-                    Row(
-                      children: [
-                        _buildOptionIconButton(Icons.speed, isDark, "1.0x"),
-                        const SizedBox(width: 8),
-                        _buildOptionIconButton(Icons.more_horiz, isDark, null),
-                      ],
-                    ),
                   ],
                 ),
-
+                
                 const SizedBox(height: 20),
+                
+                // Progress slider with better styling
+                SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 5,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+                    activeTrackColor: _accent,
+                    inactiveTrackColor: const Color(0xFF2A2A2A),
+                    thumbColor: _accent,
+                    overlayColor: _accent.withValues(alpha: 0.2),
+                    trackShape: const RoundedRectSliderTrackShape(),
+                  ),
+                  child: Slider(
+                    value: _duration.inMilliseconds > 0
+                        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
+                        : 0,
+                    onChanged: (value) {
+                      final newPosition = Duration(
+                        milliseconds: (value * _duration.inMilliseconds).round(),
+                      );
+                      _player.seek(newPosition);
+                    },
+                  ),
+                ),
 
-                // MIDDLE ROW: Player Controls
+                // Time display
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDuration(_position),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF808080),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      Text(
+                        _formatDuration(_duration),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF808080),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Main controls row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
-                      onPressed: () {}, // Shuffle/Repeat
-                      icon: Icon(
-                        Icons.shuffle,
-                        color: isDark ? Colors.white38 : Colors.grey[400],
-                        size: 20,
+                    // Playback mode button
+                    _buildControlButton(
+                      icon: _getPlaybackModeIcon(),
+                      onTap: _cyclePlaybackMode,
+                      isActive: _playbackMode != PlaybackMode.continuous,
+                      size: 22,
+                    ),
+                    
+                    // Previous ayah
+                    _buildControlButton(
+                      icon: Icons.skip_previous_rounded,
+                      onTap: _currentAyahNumber > 1 ? _playPrevious : null,
+                      size: 32,
+                    ),
+                    
+                    // Play/Pause button (main)
+                    GestureDetector(
+                      onTap: _togglePlay,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _accent,
+                              _accent.withValues(alpha: 0.8),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _accent.withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: _isLoading
+                            ? const Padding(
+                                padding: EdgeInsets.all(18),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF1A1A1A),
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Icon(
+                                _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                color: const Color(0xFF1A1A1A),
+                                size: 36,
+                              ),
                       ),
                     ),
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                        Icons.skip_next_rounded,
-                        size: 32,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      ),
-                      onPressed: widget.onPrevious, // RTL
+                    
+                    // Next ayah
+                    _buildControlButton(
+                      icon: Icons.skip_next_rounded,
+                      onTap: _currentAyahNumber < widget.totalAyahs ? _playNext : null,
+                      size: 32,
                     ),
-                    const SizedBox(width: 24),
-                    _buildPlayButton(),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: Icon(
-                        Icons.skip_previous_rounded,
-                        size: 32,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      ),
-                      onPressed: widget.onNext,
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () {}, // Like/Bookmark
-                      icon: Icon(
-                        Icons.favorite_border,
-                        color: isDark ? Colors.white38 : Colors.grey[400],
-                        size: 20,
-                      ),
+                    
+                    // Close button
+                    _buildControlButton(
+                      icon: Icons.close_rounded,
+                      onTap: () {
+                        _player.stop();
+                        widget.onClose?.call();
+                      },
+                      size: 22,
+                      isClose: true,
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 20),
-
-                // BOTTOM ROW: Progress
-                Column(
-                  children: [
-                    SizedBox(
-                      height: 4,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: _duration.inMilliseconds > 0
-                              ? _position.inMilliseconds /
-                                    _duration.inMilliseconds
-                              : 0,
-                          backgroundColor: isDark
-                              ? Colors.white10
-                              : const Color(0xFFE2E8F0),
-                          valueColor: const AlwaysStoppedAnimation(
-                            Color(0xFF14B8A6),
-                          ),
+                // Error message
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 12,
+                          color: Colors.red[300],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _formatDuration(_position),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? Colors.white54
-                                : const Color(0xFF94A3B8),
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                        Text(
-                          _formatDuration(_duration),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? Colors.white54
-                                : const Color(0xFF94A3B8),
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
@@ -351,169 +507,35 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
     );
   }
 
-  String _getReciterName(String id) {
-    const names = {
-      'ar.alafasy': 'مشاري العفاسي',
-      'ar.minshawi': 'محمد صديق المنشاوي',
-      'ar.sudais': 'عبد الرحمن السديس',
-    };
-    return names[id] ?? 'قارئ';
-  }
-
-  Widget _buildOptionIconButton(IconData icon, bool isDark, String? label) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: label != null
-          ? Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white70 : Colors.black87,
-              ),
-            )
-          : Icon(
-              icon,
-              size: 18,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-    );
-  }
-
-  Widget _buildMiniPlayer() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildControlButton({
+    required IconData icon,
+    required VoidCallback? onTap,
+    double size = 24,
+    bool isActive = false,
+    bool isClose = false,
+  }) {
+    final isEnabled = onTap != null;
+    final color = isClose 
+        ? const Color(0xFF606060)
+        : isActive 
+            ? _accent 
+            : (isEnabled ? const Color(0xFFEDEDED) : const Color(0xFF404040));
+    
     return GestureDetector(
-      onTap: () => setState(() => _isMinimized = false),
+      onTap: onTap,
       child: Container(
-        height: 70 + MediaQuery.of(context).padding.bottom,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF14B8A6),
-              ),
-              child: const Icon(
-                Icons.music_note,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'سورة ${widget.surahName}',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const Text(
-                    'اضغط للتكبير',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 10,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                color: const Color(0xFF14B8A6),
-              ),
-              onPressed: () {
-                if (_isPlaying) {
-                  _player.pause();
-                } else {
-                  _player.play();
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayButton() {
-    return GestureDetector(
-      onTapDown: (_) => setState(
-        () {},
-      ), // Trigger scale (would need state var but GestureDetector basic scale works if animated container)
-      // Better: Use a simple state var for scale or just AnimatedScale on separate controller.
-      // For now, let's just make the Icon AnimatedSwitcher.
-      onTap: () {
-        if (_isPlaying) {
-          _player.pause();
-        } else {
-          _player.play();
-        }
-      },
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
+          color: isActive ? _accent.withValues(alpha: 0.15) : const Color(0xFF1E1E1E),
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF14B8A6), Color(0xFF06B6D4)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF14B8A6).withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: isActive ? Border.all(color: _accent.withValues(alpha: 0.3), width: 1) : null,
         ),
-        child: _isLoading
-            ? const Padding(
-                padding: EdgeInsets.all(18),
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, anim) =>
-                    ScaleTransition(scale: anim, child: child),
-                child: Icon(
-                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  key: ValueKey(_isPlaying),
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
+        child: Icon(
+          icon,
+          size: size,
+          color: color,
+        ),
       ),
     );
   }
@@ -523,3 +545,4 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer>
     return '${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}';
   }
 }
+

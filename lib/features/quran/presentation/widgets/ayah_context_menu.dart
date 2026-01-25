@@ -56,9 +56,8 @@ class AyahContextMenu extends StatelessWidget {
     final bgColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subtleColor = isDark ? Colors.white54 : Colors.black45;
-    final accentColor = isDark
-        ? const Color(0xFF00D9C0)
-        : const Color(0xFFD4A853);
+    // Use amber accent for consistency
+    const accentColor = Color(0xFFFFC107);
 
     return Container(
       constraints: BoxConstraints(

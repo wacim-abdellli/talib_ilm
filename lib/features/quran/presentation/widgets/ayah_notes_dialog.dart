@@ -103,9 +103,8 @@ class _AyahNotesDialogState extends State<AyahNotesDialog> {
     final bgColor = widget.isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = widget.isDark ? Colors.white : Colors.black87;
     final subtleColor = widget.isDark ? Colors.white54 : Colors.black45;
-    final accentColor = widget.isDark
-        ? const Color(0xFF00D9C0)
-        : const Color(0xFFD4A853);
+    // Use amber accent for consistency
+    const accentColor = Color(0xFFFFC107);
 
     return Dialog(
       backgroundColor: bgColor,
@@ -226,9 +225,7 @@ class _AyahNotesDialogState extends State<AyahNotesDialog> {
                     onPressed: _isSaving ? null : _saveNote,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
-                      foregroundColor: widget.isDark
-                          ? Colors.black
-                          : Colors.white,
+                      foregroundColor: const Color(0xFF1A1A1A),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

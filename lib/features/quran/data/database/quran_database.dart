@@ -10,7 +10,7 @@ class QuranDatabase {
   static Database? _database;
 
   QuranDatabase._init();
-
+ 
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('quran_data.db');

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/responsive.dart';
 
-enum ReadingMode { singleVerse, continuous, page }
+enum ReadingMode { singleVerse, page }
 
 /// Reading settings model
 class QuranReadingSettings {
@@ -33,7 +33,7 @@ class QuranReadingSettings {
   bool useEnglishNumbers;
 
   QuranReadingSettings({
-    this.fontSize = 28.0,
+    this.fontSize = 24.0,
     this.fontFamily = 'hafs',
     this.showTajweed = false,
     this.fontStyle = 'uthmanic',
@@ -42,7 +42,7 @@ class QuranReadingSettings {
     this.translationFontSize = 16.0,
     this.backgroundColor = const Color(0xFFFFF9E6),
     this.nightMode = false,
-    this.reciter = 'mishary',
+    this.reciter = 'alafasy',
     this.autoPlay = false,
     this.readingMode = ReadingMode.page,
     this.useEnglishNumbers = false,
@@ -133,13 +133,13 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
   late AnimationController _animController;
   Timer? _fontSizeDebounce;
 
-  // Premium Dark Mode Colors
-  static const _darkBg = Color(0xFF121212);
-  static const _darkSurface = Color(0xFF1E1E1E);
-  static const _darkText = Color(0xFFEDEDED);
-  static const _darkSubtext = Color(0xFFA0A0A0);
-  static const _accent = Color(0xFF14B8A6);
-  static const _accentDark = Color(0xFF0D9488);
+  // FORCED: Pure Black OLED palette
+  static const _darkBg = Color(0xFF000000);      // PURE BLACK (FORCED)
+  static const _darkSurface = Color(0xFF080A0F); // Pitch Dark surface
+  static const _darkText = Color(0xFFF4F4F0);    // Off-White (FORCED)
+  static const _darkSubtext = Color(0xFFB8B8B8); // Soft gray
+  static const _accent = Color(0xFFFFC107);      // Amber (FORCED)
+  static const _accentDark = Color(0xFFE6AC00);  // Darker Amber
 
   @override
   void initState() {
@@ -288,7 +288,7 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                         ),
                       ),
                       Text(
-                        'خصص تجربة القراءة',
+                        'تخصيص إعدادات المصحف',
                         style: TextStyle(
                           fontSize: responsive.sp(12),
                           fontFamily: 'Cairo',
@@ -325,8 +325,8 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                   // Dark Mode Toggle
                   _PremiumToggle(
                     icon: Icons.dark_mode_rounded,
-                    title: 'الوضع الداكن',
-                    subtitle: 'أفضل للقراءة الليلية',
+                    title: 'الوضع الليلي',
+                    subtitle: 'مريح للعين في الإضاءة المنخفضة',
                     value: _settings.nightMode,
                     isDark: _settings.nightMode,
                     onChanged: (val) => _updateSettings(
@@ -339,16 +339,27 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                     ),
                   ),
 
-                  // English Numbers Toggle
+                  // Hindi Numbers Toggle (inverted - when ON, use Hindi numerals)
                   _PremiumToggle(
-                    icon: Icons.numbers_rounded,
-                    title: 'الأرقام الإنجليزية',
-                    subtitle: 'استخدم 1,2,3 بدلاً من ١,٢,٣',
-                    value: _settings.useEnglishNumbers,
+                    icon: Icons.tag_rounded,
+                    title: 'الأرقام الهندية',
+                    subtitle: 'عرض أرقام الآيات بالشكل ١٢٣',
+                    value: !_settings.useEnglishNumbers,
                     isDark: _settings.nightMode,
                     onChanged: (val) => _updateSettings(
-                      _settings.copyWith(useEnglishNumbers: val),
+                      _settings.copyWith(useEnglishNumbers: !val),
                     ),
+                  ),
+
+                  // Tajweed Toggle
+                  _PremiumToggle(
+                    icon: Icons.color_lens_outlined,
+                    title: 'تلوين التجويد',
+                    subtitle: 'إظهار أحكام التجويد ملونة',
+                    value: _settings.showTajweed,
+                    isDark: _settings.nightMode,
+                    onChanged: (val) =>
+                        _updateSettings(_settings.copyWith(showTajweed: val)),
                   ),
 
                   const SizedBox(height: 24),
@@ -357,8 +368,8 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                   // SECTION 2: READING MODE (وضع القراءة)
                   // ══════════════════════════════════════════════════════════
                   _SectionHeader(
-                    title: 'وضع القراءة',
-                    icon: Icons.auto_stories_rounded,
+                    title: 'طريقة العرض',
+                    icon: Icons.view_agenda_rounded,
                     isDark: _settings.nightMode,
                   ),
                   const SizedBox(height: 12),
@@ -414,8 +425,8 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                   // SECTION 4: AUDIO (الصوت)
                   // ══════════════════════════════════════════════════════════
                   _SectionHeader(
-                    title: 'الصوت',
-                    icon: Icons.headphones_rounded,
+                    title: 'التلاوة',
+                    icon: Icons.mic_rounded,
                     isDark: _settings.nightMode,
                   ),
                   const SizedBox(height: 12),
@@ -428,104 +439,7 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                         _updateSettings(_settings.copyWith(reciter: reciter)),
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // Auto-play Toggle
-                  _PremiumToggle(
-                    icon: Icons.play_circle_outline_rounded,
-                    title: 'تشغيل تلقائي',
-                    subtitle: 'تشغيل التلاوة عند التنقل',
-                    value: _settings.autoPlay,
-                    isDark: _settings.nightMode,
-                    onChanged: (val) =>
-                        _updateSettings(_settings.copyWith(autoPlay: val)),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ══════════════════════════════════════════════════════════
-                  // SECTION 5: PRESETS (إعدادات سريعة)
-                  // ══════════════════════════════════════════════════════════
-                  _SectionHeader(
-                    title: 'إعدادات سريعة',
-                    icon: Icons.auto_awesome_rounded,
-                    isDark: _settings.nightMode,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Presets Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PresetCard(
-                          icon: Icons.dark_mode_rounded,
-                          label: 'ليلي',
-                          isDark: _settings.nightMode,
-                          onTap: () => _applyPreset('night'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _PresetCard(
-                          icon: Icons.menu_book_rounded,
-                          label: 'المصحف',
-                          isDark: _settings.nightMode,
-                          onTap: () => _applyPreset('mushaf'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _PresetCard(
-                          icon: Icons.center_focus_strong_rounded,
-                          label: 'تركيز',
-                          isDark: _settings.nightMode,
-                          onTap: () => _applyPreset('focus'),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Reset Button
-                  GestureDetector(
-                    onTap: _resetToDefaults,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: _settings.nightMode
-                            ? Colors.red.withValues(alpha: 0.1)
-                            : Colors.red.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.restore_rounded,
-                            size: 18,
-                            color: Colors.red[400],
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'إعادة الضبط للافتراضي',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red[400],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -563,7 +477,7 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet>
                   elevation: 0,
                 ),
                 child: const Text(
-                  'حفظ الإعدادات',
+                  'تطبيق',
                   style: TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 17,
@@ -600,7 +514,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF14B8A6)),
+          Icon(icon, size: 18, color: const Color(0xFFFFC107)),
           const SizedBox(width: 8),
           Text(
             title,
@@ -608,7 +522,7 @@ class _SectionHeader extends StatelessWidget {
               fontFamily: 'Cairo',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF14B8A6),
+              color: const Color(0xFFFFC107),
             ),
           ),
           const SizedBox(width: 12),
@@ -618,7 +532,7 @@ class _SectionHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF14B8A6).withValues(alpha: 0.3),
+                    const Color(0xFFFFC107).withValues(alpha: 0.3),
                     Colors.transparent,
                   ],
                 ),
@@ -652,7 +566,7 @@ class _PremiumToggle extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
   static const _darkSurface = Color(0xFF1E1E1E);
 
   @override
@@ -745,8 +659,8 @@ class _AnimatedSwitch extends StatelessWidget {
 
   const _AnimatedSwitch({required this.value, required this.isDark});
 
-  static const _accent = Color(0xFF14B8A6);
-  static const _accentDark = Color(0xFF0D9488);
+  static const _accent = Color(0xFFFFC107);
+  static const _accentDark = Color(0xFFE6AC00);
 
   @override
   Widget build(BuildContext context) {
@@ -821,7 +735,7 @@ class _ReadingModeSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
   static const _darkSurface = Color(0xFF1E1E1E);
 
   @override
@@ -837,8 +751,8 @@ class _ReadingModeSelector extends StatelessWidget {
       child: Column(
         children: [
           _ModeOption(
-            icon: Icons.center_focus_strong_rounded,
-            title: 'آية واحدة',
+            icon: Icons.format_quote_rounded,
+            title: 'آية بآية',
             subtitle: 'التركيز على آية واحدة',
             isSelected: selected == ReadingMode.singleVerse,
             isDark: isDark,
@@ -850,21 +764,9 @@ class _ReadingModeSelector extends StatelessWidget {
             color: isDark ? Colors.white12 : Colors.grey.shade200,
           ),
           _ModeOption(
-            icon: Icons.view_stream_rounded,
-            title: 'القراءة المستمرة',
-            subtitle: 'تمرير متواصل للنص',
-            isSelected: selected == ReadingMode.continuous,
-            isDark: isDark,
-            onTap: () => onChanged(ReadingMode.continuous),
-          ),
-          Divider(
-            height: 1,
-            color: isDark ? Colors.white12 : Colors.grey.shade200,
-          ),
-          _ModeOption(
-            icon: Icons.menu_book_rounded,
-            title: 'صفحات المصحف',
-            subtitle: 'عرض كصفحات المصحف',
+            icon: Icons.auto_stories_rounded,
+            title: 'صفحة المصحف',
+            subtitle: 'عرض صفحة كاملة',
             isSelected: selected == ReadingMode.page,
             isDark: isDark,
             isLast: true,
@@ -897,7 +799,7 @@ class _ModeOption extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   @override
   Widget build(BuildContext context) {
@@ -972,7 +874,7 @@ class _ModeOption extends StatelessWidget {
                   color: _accent,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, size: 14, color: Colors.white),
+                child: const Icon(Icons.check, size: 14, color: Color(0xFF1A1A1A)),
               ),
           ],
         ),
@@ -1002,7 +904,7 @@ class _FontPreview extends StatelessWidget {
         color: isDark ? const Color(0xFF0A0A0A) : const Color(0xFFFFF9E6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF14B8A6).withValues(alpha: 0.3),
+          color: const Color(0xFFFFC107).withValues(alpha: 0.3),
         ),
       ),
       child: Directionality(
@@ -1040,7 +942,7 @@ class _FontSizeSlider extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   @override
   Widget build(BuildContext context) {
@@ -1153,7 +1055,7 @@ class _FontStyleSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   @override
   Widget build(BuildContext context) {
@@ -1169,7 +1071,7 @@ class _FontStyleSelector extends StatelessWidget {
       child: Row(
         children: [
           _StyleChip(
-            label: 'Amiri Quran (Hafs)',
+            label: 'Amiri Quran',
             value: 'uthmanic',
             selected: selected,
             isDark: isDark,
@@ -1204,7 +1106,7 @@ class _StyleChip extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   @override
   Widget build(BuildContext context) {
@@ -1222,7 +1124,7 @@ class _StyleChip extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: isActive
                 ? const LinearGradient(
-                    colors: [_accent, Color(0xFF0D9488)],
+                    colors: [Color(0xFFFFC107), Color(0xFFE6AC00)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -1247,7 +1149,7 @@ class _StyleChip extends StatelessWidget {
               fontSize: 13,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               color: isActive
-                  ? Colors.white
+                  ? const Color(0xFF1A1A1A)
                   : (isDark ? const Color(0xFFA0A0A0) : Colors.grey[700]),
             ),
           ),
@@ -1272,7 +1174,7 @@ class _ReciterSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   static const _reciters = [
     {'id': 'alafasy', 'name': 'مشاري العفاسي'},
@@ -1351,7 +1253,7 @@ class _PresetCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _accent = Color(0xFF14B8A6);
+  static const _accent = Color(0xFFFFC107);
 
   @override
   Widget build(BuildContext context) {
