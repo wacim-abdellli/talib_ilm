@@ -18,7 +18,7 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
   flutter_timezone: ^5.0.1
-  just_audio: ^0.9.38
+  just_audio: ^0.10.5
   share_plus: ^10.0.2
   flutter:
     sdk: flutter
@@ -39,6 +39,7 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.2
   quran: ^1.4.1
+  quran_library: ^2.3.5
   cached_network_image: ^3.3.1
 
 dev_dependencies:
@@ -78,6 +79,14 @@ flutter:
         - asset: assets/fonts/Cairo-ExtraBold.ttf
           weight: 800
 
+    - family: ScheherazadeNew
+      fonts:
+        - asset: assets/fonts/ScheherazadeNew-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ScheherazadeNew-Bold.ttf
+          weight: 700
+
+    # Legacy Amiri font (keeping for backward compatibility)
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf

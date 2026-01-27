@@ -11,7 +11,8 @@ class ReadingStatsService {
     required int versesRead,
     required int surahNumber,
   }) async {
-    if (durationSeconds < 10 && versesRead == 0) return; // Ignore tiny sessions
+    if (durationSeconds < 5 && versesRead == 0)
+      return; // Ignore very short accidental opens
 
     final prefs = await SharedPreferences.getInstance();
     final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
@@ -32,7 +33,7 @@ class ReadingStatsService {
     final prefs = await SharedPreferences.getInstance();
     final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
 
-    int totalMinutes = 0;
+    int totalSeconds = 0;
     int totalVerses = 0;
 
     final now = DateTime.now();
@@ -42,10 +43,17 @@ class ReadingStatsService {
       final map = jsonDecode(s);
       final date = DateTime.fromMillisecondsSinceEpoch(map['timestamp']);
       if (date.isAfter(startOfDay)) {
-        totalMinutes += (map['duration'] as int) ~/ 60;
+        totalSeconds += (map['duration'] as int);
         totalVerses += (map['verses'] as int);
       }
     }
+
+    // Convert total seconds to minutes (rounding up if > 30s is generous, or just standard round)
+    // We'll use ceil to be motivating? No, standard round is fair.
+    // Or just (total / 60).round()
+    int totalMinutes = (totalSeconds / 60).ceil();
+    if (totalSeconds > 0 && totalMinutes == 0)
+      totalMinutes = 1; // Minimum 1 min calculation if any reading
 
     return {'minutes': totalMinutes, 'verses': totalVerses};
   }

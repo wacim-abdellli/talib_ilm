@@ -728,7 +728,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     ? null
                     : [
                         BoxShadow(
-                          color: const Color(0xFF6A9A9A).withOpacity(0.3),
+                          color: const Color(0xFF6A9A9A).withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

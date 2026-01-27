@@ -68,6 +68,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
       subtitle: widget.quote.source,
     );
 
+    HapticFeedback.mediumImpact();
     final isFav = await _favoritesService.toggle(item);
     if (mounted) {
       setState(() => _isFavorite = isFav);
@@ -79,147 +80,212 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     }
   }
 
+  void _copyQuote() {
+    Clipboard.setData(
+      ClipboardData(text: '${widget.quote.text}\n\n— ${widget.quote.source}'),
+    );
+    HapticFeedback.lightImpact();
+    AppSnackbar.success(context, 'تم نسخ الاقتباس');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-
-    // Muted accent colors for quote types
-    Color accentColor;
-    String typeLabel;
+    // Resolve colors based on type
+    Color typeColor;
     IconData typeIcon;
+    String typeLabel;
 
     switch (widget.quote.type) {
       case QuoteType.quran:
-        accentColor = const Color(0xFF85A885); // Muted sage
-        typeLabel = 'قرآن كريم';
-        typeIcon = Icons.menu_book;
+        typeColor = context.islamicGreenColor;
+        typeIcon = Icons.auto_stories_outlined;
+        typeLabel = 'آية قرآنية';
         break;
       case QuoteType.hadith:
-        accentColor = const Color(0xFF7A9CB5); // Muted blue
+        typeColor = context.goldColor;
+        typeIcon = Icons.menu_book_outlined;
         typeLabel = 'حديث نبوي';
-        typeIcon = Icons.format_quote;
         break;
       case QuoteType.scholar:
-        accentColor = const Color(0xFF6A9A9A); // Muted teal
-        typeLabel = 'قول مأثور';
+        typeColor = context.celestialBlueColor;
         typeIcon = Icons.lightbulb_outline;
+        typeLabel = 'حكمة';
         break;
     }
 
     return Container(
-      padding: EdgeInsets.all(responsive.wp(4.5)),
-      decoration: BoxDecoration(
-        color: context.surfaceSecondaryColor, // Tinted ivory / Dark Elevated
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.borderColor, // Subtle border
-          width: 1,
-        ),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Title + Action Icons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Action icons on left (LTR perspective)
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: _toggleFavorite,
-                    icon: Icon(
-                      _isFavorite ? Icons.bookmark : Icons.bookmark_border,
-                      size: 20,
-                      color: _isFavorite
-                          ? accentColor
-                          : accentColor.withValues(alpha: 0.6),
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+          // Header with Refresh Action
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12, right: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Quote Type Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: () {
-                      Clipboard.setData(
-                        ClipboardData(
-                          text:
-                              '${widget.quote.text}\n\n${widget.quote.source}',
+                  decoration: BoxDecoration(
+                    color: typeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(typeIcon, size: 16, color: typeColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        typeLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: typeColor,
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.w600,
                         ),
-                      );
-                      AppSnackbar.success(context, 'تم النسخ');
-                    },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Refresh Button
+                if (widget.onReload != null)
+                  IconButton(
                     icon: Icon(
-                      Icons.copy_rounded,
+                      Icons.refresh_rounded,
                       size: 20,
-                      color: accentColor.withValues(alpha: 0.6),
+                      color: context.textTertiaryColor,
                     ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      widget.onReload!();
+                    },
+                    tooltip: 'تحديث',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  if (widget.onReload != null) ...[
-                    const SizedBox(width: 12),
-                    IconButton(
-                      onPressed: widget.onReload,
-                      icon: Icon(
-                        Icons.refresh_rounded,
-                        size: 22,
-                        color: accentColor,
+              ],
+            ),
+          ),
+
+          // Card with Swipe
+          GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (widget.onReload == null) return;
+              if (details.primaryVelocity != 0) {
+                HapticFeedback.lightImpact();
+                widget.onReload!();
+              }
+            },
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              transitionBuilder: (child, animation) {
+                final offsetAnimation =
+                    Tween<Offset>(
+                      begin: const Offset(0.05, 0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                    );
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                key: ValueKey(widget.quote.text),
+                padding: const EdgeInsets.all(24), // More padding
+                decoration: BoxDecoration(
+                  color: context.surfaceLow, // M3 Low Container
+                  borderRadius: BorderRadius.circular(20),
+                  // No border, just surface difference
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Quote Text
+                    SelectableText(
+                      widget.quote.text,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: context.textPrimaryColor,
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.w400,
+                        height: 1.9, // Relaxed reading
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      textAlign: TextAlign.right,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Footer: Source and Actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Source
+                        Expanded(
+                          child: Text(
+                            '— ${widget.quote.source}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: context.textSecondaryColor,
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+
+                        // Actions
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _isFavorite
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                size: 20,
+                                color: _isFavorite
+                                    ? context.goldColor
+                                    : context.textTertiaryColor,
+                              ),
+                              onPressed: _toggleFavorite,
+                              tooltip: 'حفظ',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(
+                                Icons.copy_rounded,
+                                size: 20,
+                                color: context.textTertiaryColor,
+                              ),
+                              onPressed: _copyQuote,
+                              tooltip: 'نسخ',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
-                ],
-              ),
-              // Title on right
-              Row(
-                children: [
-                  Icon(typeIcon, size: responsive.sp(14), color: accentColor),
-                  const SizedBox(width: 6),
-                  Text(
-                    typeLabel,
-                    style: TextStyle(
-                      fontSize: responsive.sp(12),
-                      fontWeight: FontWeight.w600,
-                      color: accentColor,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: responsive.hp(1.5)),
-
-          // Quote text (selectable + larger)
-          SelectableText(
-            widget.quote.text,
-            style: TextStyle(
-              fontSize: responsive.sp(17),
-              height: 1.8,
-              color: context.textPrimaryColor,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.right,
-          ),
-
-          SizedBox(height: responsive.hp(1)),
-
-          // Source (lighter)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                '— ${widget.quote.source}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.textSecondaryColor, // TextSecondary
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.italic,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

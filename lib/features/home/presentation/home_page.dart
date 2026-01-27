@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:talib_ilm/shared/widgets/shimmer_loading.dart';
+import 'package:shimmer/shimmer.dart';
+// import 'package:hijri/hijri.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/last_activity_service.dart';
@@ -26,10 +27,12 @@ import '../../favorites/presentation/favorites_page.dart';
 
 import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
+import '../../prayer/presentation/prayer_page.dart';
 import '../../library/presentation/library_page.dart';
-import '../../adhkar/presentation/adhkar_page.dart';
+// import '../../adhkar/presentation/adhkar_page.dart'; // Removed
 import '../../quran/presentation/quran_page.dart';
 import '../../../app/theme/theme_colors.dart';
+import '../data/home_state_controller.dart';
 
 class HomePage extends StatefulWidget {
   final bool isActive;
@@ -38,24 +41,57 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final LastActivityService _lastActivityService = LastActivityService();
   final LastSharhService _lastSharhService = LastSharhService();
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
 
   final ProgressService _progressService = ProgressService();
-  late Future<_ContinueData?> _continueFuture;
-  late final Future<PrayerTimesDay> _prayerFuture;
-
+  bool _isLoading = true;
+  PrayerTimesDay? _prayerDay;
+  _ContinueData? _continueData;
   DailyQuote? _dailyQuote;
+
+  // Emotional state controller
+  final HomeStateController _stateController = HomeStateController();
+  Timer? _stateRefreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _continueFuture = _loadContinueData();
-    _prayerFuture = _prayerTimeService.getPrayerTimesDay();
+    WidgetsBinding.instance.addObserver(this);
+    _loadAllData();
 
-    _loadDailyQuote();
+    // Refresh state every minute
+    _stateRefreshTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _stateController.refresh(),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/images/logo.png'), context);
+  }
+
+  Future<void> _loadAllData() async {
+    // Parallel data loading
+    final results = await Future.wait([
+      _prayerTimeService.getPrayerTimesDay(),
+      _loadContinueData(),
+      _loadDailyQuoteData(), // Helper method returning data instead of setting state
+      _stateController.initialize(),
+    ]);
+
+    if (!mounted) return;
+
+    setState(() {
+      _prayerDay = results[0] as PrayerTimesDay;
+      _continueData = results[1] as _ContinueData?;
+      _dailyQuote = results[2] as DailyQuote?;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -63,11 +99,21 @@ class _HomePageState extends State<HomePage> {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
       _refreshStats();
+      _stateController.refresh();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _stateController.refresh();
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stateRefreshTimer?.cancel();
     super.dispose();
   }
 
@@ -167,14 +213,17 @@ class _HomePageState extends State<HomePage> {
     _refreshStats();
   }
 
-  void _refreshStats() {
-    setState(() {
-      _continueFuture = _loadContinueData();
-    });
+  void _refreshStats() async {
+    final data = await _loadContinueData();
+    if (mounted) {
+      setState(() {
+        _continueData = data;
+      });
+    }
   }
 
   Future<void> _handlePullRefresh() async {
-    await _loadDailyQuote();
+    await _loadAllData();
   }
 
   Future<void> _cycleQuote() async {
@@ -186,17 +235,17 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _loadDailyQuote() async {
+  Future<DailyQuote?> _loadDailyQuoteData() async {
     final prefs = await SharedPreferences.getInstance();
     final service = MotivationService(prefs);
-    final quote = await service.getDailyQuote();
-    setState(() {
-      _dailyQuote = quote;
-    });
+    return service.getDailyQuote();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     SystemChrome.setSystemUIOverlayStyle(
@@ -210,271 +259,384 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: context.backgroundColor,
       // Drawer removed as moved to More tab
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _handlePullRefresh,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // App bar with context (Date, Logo, Location)
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF000000)
-                        : context.surfaceColor,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF1F1F1F)
-                            : context.borderColor,
-                        width: 1,
+        child: ListenableBuilder(
+          listenable: _stateController,
+          builder: (context, child) {
+            final weights = _stateController.getHierarchyWeights();
+
+            return RefreshIndicator(
+              onRefresh: _handlePullRefresh,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  // App bar (Cleaner, no border)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24, // increased side padding
+                        vertical: 16,
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          final city = _prayerDay?.city ?? 'مكة المكرمة';
+                          final date = _prayerDay?.date ?? DateTime.now();
+                          // DISABLED HIJRI due to build error
+                          // HijriCalendar.setLocal('ar');
+                          // final hijriDate = HijriCalendar.fromDate(date);
+
+                          return Column(
+                            children: [
+                              // Row 1: Dates (Gregorian + Hijri)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Gregorian Date
+                                  Text(
+                                    '${date.day}/${date.month}/${date.year}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: context.textPrimaryColor,
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+
+                                  // Hijri Date - Spiritual Context
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: context.islamicGreenMutedColor
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: context.islamicGreenLightColor
+                                            .withValues(alpha: 0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 12,
+                                          color: context.islamicGreenLightColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        // Placeholder for Hijri (Disabled)
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Row 2: Logo + Greeting + Location
+                              Row(
+                                children: [
+                                  // App Logo
+                                  Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 52,
+                                    height: 52,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Greeting
+                                  Text(
+                                    _getGreeting(),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.textPrimaryColor,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+
+                                  // Location with enhanced icon
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on_rounded,
+                                        size: 16,
+                                        color: context.islamicGreenLightColor,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        city,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textSecondaryColor,
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
-                  child: FutureBuilder<PrayerTimesDay>(
-                    future: _prayerFuture,
-                    builder: (context, snapshot) {
-                      final city = snapshot.data?.city ?? 'مكة المكرمة';
-                      final date = snapshot.data?.date ?? DateTime.now();
 
-                      // Calculate Hijri date
-                      final hijriDate = _getHijriDate(date);
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Left: Hijri Date
-                          Column(
+                  // Hero card (Prayer Time)
+                  SliverToBoxAdapter(
+                    child: AnimatedOpacity(
+                      opacity: weights['prayer'] ?? 1.0,
+                      duration: const Duration(milliseconds: 500),
+                      child: AnimatedScale(
+                        scale: 0.95 + ((weights['prayer'] ?? 1.0) * 0.05),
+                        duration: const Duration(milliseconds: 500),
+                        child: _buildHeroGreetingCard(),
+                      ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                  // Daily Motivation with temporal framing
+                  if (_dailyQuote != null) ...[
+                    SliverToBoxAdapter(
+                      child: AnimatedOpacity(
+                        opacity: weights['quote'] ?? 1.0,
+                        duration: const Duration(milliseconds: 500),
+                        child: AnimatedScale(
+                          scale: 0.95 + ((weights['quote'] ?? 1.0) * 0.05),
+                          duration: const Duration(milliseconds: 500),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Temporal framing: "Today's reflection"
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome_outlined,
+                                      size: 16,
+                                      color: context.textTertiaryColor,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'تأمل اليوم',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: context.textSecondaryColor,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                DailyMotivationCard(
+                                  quote: _dailyQuote!,
+                                  onReload: _cycleQuote,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  ],
+
+                  // Continue Learning with personal presence
+                  SliverToBoxAdapter(
+                    child: AnimatedOpacity(
+                      opacity: weights['learning'] ?? 1.0,
+                      duration: const Duration(milliseconds: 500),
+                      child: AnimatedScale(
+                        scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
+                        duration: const Duration(milliseconds: 500),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                hijriDate['day']!,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: isDark
-                                      ? const Color(0xFFFFFFFF)
-                                      : context.textPrimaryColor,
-                                ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(2),
+                                      color: context.textTertiaryColor
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'رحلة التعلم',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.textPrimaryColor,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                hijriDate['year']!,
-                                style: TextStyle(
-                                  color: isDark
-                                      ? const Color(0xFFA1A1A1)
-                                      : context.textSecondaryColor,
-                                  fontSize: 11,
-                                ),
-                              ),
+                              const SizedBox(height: 6),
+                              // Personal presence acknowledgment (subtle, not gamified)
+                              _buildPresenceMessage(context),
                             ],
                           ),
-
-                          // Center: Logo
-                          Image.asset(
-                            'assets/images/logo.png',
-                            height: 44,
-                            fit: BoxFit.contain,
-                          ),
-
-                          // Right: Location
-                          Row(
-                            children: [
-                              Text(
-                                city,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: isDark
-                                      ? const Color(0xFFFFFFFF)
-                                      : context.textPrimaryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.location_on_outlined,
-                                color: isDark
-                                    ? const Color(0xFFFFFFFF)
-                                    : context.textTertiaryColor,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              // Hero card (Prayer Time)
-              SliverToBoxAdapter(child: _buildHeroGreetingCard()),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // Daily Motivation
-              if (_dailyQuote != null) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: DailyMotivationCard(
-                      quote: _dailyQuote!,
-                      onReload: _cycleQuote,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              ],
-
-              // Continue Learning
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(2),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFA855F7), Color(0xFFC084FC)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  SliverToBoxAdapter(
+                    child: AnimatedOpacity(
+                      opacity: weights['learning'] ?? 1.0,
+                      duration: const Duration(milliseconds: 500),
+                      child: AnimatedScale(
+                        scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
+                        duration: const Duration(milliseconds: 500),
+                        child: _buildContinueSection(context),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'رحلة التعلم',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white
-                              : context.textPrimaryColor,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              SliverToBoxAdapter(child: _buildContinueSection(context)),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Quick actions (Other Features)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(2),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF00D9C0), Color(0xFF14B8A6)],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
+                  // Quick actions (Other Features)
+                  SliverToBoxAdapter(
+                    child: AnimatedOpacity(
+                      opacity: weights['actions'] ?? 1.0,
+                      duration: const Duration(milliseconds: 500),
+                      child: AnimatedScale(
+                        scale: 0.95 + ((weights['actions'] ?? 1.0) * 0.05),
+                        duration: const Duration(milliseconds: 500),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(2),
+                                      color: context.textTertiaryColor
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'الأقسام',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.textPrimaryColor,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                              const SizedBox(height: 12),
+
+                              // Responsive Grid Layout
+                              // Contextual Emphasis Logic (Keep for badges if needed later)
+                              // final lastAction = _stateController.lastAction;
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // 1. Holy Quran (Brown/Gold)
+                                  Expanded(
+                                    child: QuickActionButton(
+                                      icon: Icons.menu_book_rounded,
+                                      label: 'القرآن',
+                                      onTap: () => _openQuran(context),
+                                      accentColor: const Color(
+                                        0xFFD4AF37,
+                                      ), // Metallic Gold
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 12),
+
+                                  // 2. Library (Blue)
+                                  Expanded(
+                                    child: QuickActionButton(
+                                      icon: Icons.library_books_rounded,
+                                      label: 'المكتبة',
+                                      onTap: () => _openLibrary(context),
+                                      accentColor: context.celestialBlueColor,
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 12),
+
+                                  // 3. Favorites (Red/Pink/Gold)
+                                  Expanded(
+                                    child: QuickActionButton(
+                                      icon: Icons.favorite_rounded,
+                                      label: 'المفضلة',
+                                      onTap: () => _openFavorites(context),
+                                      accentColor: const Color(
+                                        0xFFE57373,
+                                      ), // Soft Red/Rose
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 12),
+
+                                  // 4. Qibla (Teal/Primary)
+                                  Expanded(
+                                    child: QuickActionButton(
+                                      icon: Icons.explore_rounded,
+                                      label: 'القبلة',
+                                      onTap: () => _openQibla(context),
+                                      accentColor: context.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'الأقسام',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? Colors.white
-                                  : context.textPrimaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        child: Row(
-                          children: [
-                            QuickActionButton(
-                              icon: Icons.menu_book_rounded,
-                              label: 'القرآن الكريم',
-                              color: const Color(
-                                0xFF8D6E63,
-                              ), // Brown (was Green)
-                              onTap: () => _openQuran(context),
-                            ),
-                            const SizedBox(width: 10),
-                            QuickActionButton(
-                              icon: Icons.library_books_rounded,
-                              label: 'المكتبة',
-                              color: const Color(0xFF3B82F6),
-                              onTap: () => _openLibrary(context),
-                            ),
-                            const SizedBox(width: 10),
-                            QuickActionButton(
-                              icon: Icons.favorite_rounded,
-                              label: 'المفضلة',
-                              color: const Color(0xFFEC4899),
-                              onTap: () => _openFavorites(context),
-                            ),
-                            const SizedBox(width: 10),
-                            QuickActionButton(
-                              icon: Icons.explore_rounded,
-                              label: 'القبلة',
-                              color: const Color(0xFF14B8A6),
-                              onTap: () => _openQibla(context),
-                            ),
-                            const SizedBox(width: 10),
-                            QuickActionButton(
-                              icon: Icons.auto_awesome_rounded,
-                              label: 'الأذكار',
-                              color: const Color(0xFF8B5CF6),
-                              onTap: () => _openAdhkar(context),
-                            ),
-                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                  // Extra padding for nav bar
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
               ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // Extra padding for nav bar
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
   void _openIlm(BuildContext context) {
+    _stateController.recordLearningContinued();
     Navigator.push(context, buildFadeRoute(page: const IlmPage()));
   }
 
-  void _openAdhkar(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: const AdhkarPage()));
-  }
-
   void _openQuran(BuildContext context) {
+    _stateController.recordQuranOpened();
     Navigator.push(context, buildFadeRoute(page: const QuranPage()));
   }
 
@@ -490,272 +652,322 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(context, buildFadeRoute(page: const FavoritesPage()));
   }
 
+  void _openPrayerDetails(BuildContext context) {
+    _stateController.recordAdhkarOpened(); // Or prayer?
+    Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'صباح الخير ☀️';
+    if (hour >= 12 && hour < 17) return 'نهارك سعيد';
+    if (hour >= 17 && hour < 22) return 'مساء الخير 🌙';
+    return 'طاب مساؤك';
+  }
+
   Widget _buildHeroGreetingCard() {
-    return FutureBuilder<PrayerTimesDay>(
-      future: _prayerFuture,
-      builder: (context, snapshot) {
-        // Show card immediately with estimated/fallback data
-        final hasData = snapshot.hasData;
-        final day = snapshot.data;
+    final day = _prayerDay;
+    bool isEstimated = false;
 
-        // Fallback: estimate next prayer based on current time
-        String nextPrayerName;
-        DateTime nextPrayerTime;
+    String nextPrayerName;
+    DateTime nextPrayerTime;
 
-        if (hasData && day != null) {
-          nextPrayerName = day.nextPrayer;
-          nextPrayerTime = day.prayers[nextPrayerName] ?? DateTime.now();
-        } else {
-          // Estimate based on typical prayer times
-          final now = DateTime.now();
-          final hour = now.hour;
+    if (day != null) {
+      nextPrayerName = day.nextPrayer;
+      nextPrayerTime = day.prayers[nextPrayerName] ?? DateTime.now();
+      isEstimated = false;
+    } else {
+      // Fallback: estimate next prayer based on current time
+      // Note: This logic is a fallback and marked as estimated.
+      isEstimated = true;
+      final now = DateTime.now();
+      final hour = now.hour;
 
-          if (hour < 5) {
-            nextPrayerName = 'الفجر';
-            nextPrayerTime = DateTime(now.year, now.month, now.day, 5, 0);
-          } else if (hour < 12) {
-            nextPrayerName = 'الظهر';
-            nextPrayerTime = DateTime(now.year, now.month, now.day, 12, 30);
-          } else if (hour < 15) {
-            nextPrayerName = 'العصر';
-            nextPrayerTime = DateTime(now.year, now.month, now.day, 15, 30);
-          } else if (hour < 18) {
-            nextPrayerName = 'المغرب';
-            nextPrayerTime = DateTime(now.year, now.month, now.day, 18, 30);
-          } else if (hour < 20) {
-            nextPrayerName = 'العشاء';
-            nextPrayerTime = DateTime(now.year, now.month, now.day, 20, 0);
-          } else {
-            nextPrayerName = 'الفجر';
-            // Next day Fajr
-            nextPrayerTime = DateTime(now.year, now.month, now.day + 1, 5, 0);
-          }
-        }
+      if (hour < 5) {
+        nextPrayerName = AppStrings.prayerFajr;
+        nextPrayerTime = DateTime(now.year, now.month, now.day, 5, 0);
+      } else if (hour < 12) {
+        nextPrayerName = AppStrings.prayerDhuhr;
+        nextPrayerTime = DateTime(now.year, now.month, now.day, 12, 0);
+      } else if (hour < 15) {
+        nextPrayerName = AppStrings.prayerAsr;
+        nextPrayerTime = DateTime(now.year, now.month, now.day, 15, 0);
+      } else if (hour < 18) {
+        nextPrayerName = AppStrings.prayerMaghrib;
+        nextPrayerTime = DateTime(now.year, now.month, now.day, 18, 0);
+      } else if (hour < 20) {
+        nextPrayerName = AppStrings.prayerIsha;
+        nextPrayerTime = DateTime(now.year, now.month, now.day, 20, 0);
+      } else {
+        nextPrayerName = AppStrings.prayerFajr;
+        // Next day Fajr
+        nextPrayerTime = DateTime(now.year, now.month, now.day + 1, 5, 0);
+      }
+    }
 
-        return HomeHeroCard(
-          nextPrayerName: nextPrayerName,
-          nextPrayerTime: nextPrayerTime,
-        );
-      },
+    return HomeHeroCard(
+      nextPrayerName: nextPrayerName,
+      nextPrayerTime: nextPrayerTime,
+      isEstimated: isEstimated,
+      onTap: () => _openPrayerDetails(context),
+    );
+  }
+
+  /// Personal presence acknowledgment using emotional state
+  Widget _buildPresenceMessage(BuildContext context) {
+    final message = _stateController.getPresenceMessage();
+
+    // Silent presence for userAbsent state (no guilt)
+    if (message == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Text(
+      message,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: context.textTertiaryColor,
+        fontFamily: 'Cairo',
+      ),
     );
   }
 
   Widget _buildContinueSection(BuildContext context) {
-    return FutureBuilder<_ContinueData?>(
-      future: _continueFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: const ShimmerBookCard(),
-          );
-        }
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: _LearningPulseCard(isLoading: true, data: null),
+      );
+    }
 
-        final data = snapshot.data;
-        final tabLabel = data == null
-            ? null
-            : switch (data.tab) {
-                LastActivityService.tabSharh => AppStrings.continueTabSharh,
-                LastActivityService.tabLessons => AppStrings.continueTabLessons,
-                _ => AppStrings.continueTabMutn,
-              };
-        final sectionLabel = tabLabel == null
-            ? null
-            : AppStrings.sectionValue(tabLabel);
-        final page = data?.page;
-        final total = data?.total;
-        final pageInfo = page == null ? null : AppStrings.lastPage(page, total);
-        final progressLabel = data == null
-            ? AppStrings.homeStartLearningMessage
-            : pageInfo == null
-            ? (sectionLabel ?? '')
-            : '$sectionLabel • $pageInfo';
-        final percentText = data?.progressPercent == null
-            ? null
-            : '${data!.progressPercent}%';
-        final progressValue = data == null
-            ? 0.0
-            : ((data.progressPercent ?? 0) / 100).clamp(0.0, 1.0);
+    final data = _continueData;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: _LearningPulseCard(
+        isLoading: false,
+        data: data,
+        onTap: data == null
+            ? () => _openIlm(context)
+            : () => _continueLearning(context, data),
+      ),
+    );
+  }
+}
 
-        // Styling Variables
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+/// Learning Pulse Card - REWARD-DRIVEN
+class _LearningPulseCard extends StatefulWidget {
+  final VoidCallback? onTap;
+  final _ContinueData? data;
+  final bool isLoading;
 
-        final containerBg = isDark
-            ? const Color(0xFF0A0A0A)
-            : context.goldLightColor;
+  const _LearningPulseCard({this.onTap, this.data, this.isLoading = false});
 
-        final borderColor = isDark
-            ? const Color(0xFFA855F7).withValues(alpha: 0.2)
-            : context.borderColor;
+  @override
+  State<_LearningPulseCard> createState() => _LearningPulseCardState();
+}
 
-        final shadowColor = isDark
-            ? const Color(0xFFA855F7).withValues(alpha: 0.2)
-            : Colors.transparent;
+class _LearningPulseCardState extends State<_LearningPulseCard> {
+  // Removed Pulse/Glow Controller - M3 relies on surface elevation not glowing borders
 
-        final shadowBlur = isDark ? 16.0 : 0.0;
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isLoading) {
+      return _buildShimmerCard(context);
+    }
+    return _buildContentCard(context);
+  }
 
-        // Icon Gradient (Purple in Dark, Gold in Light)
-        final iconDecoration = BoxDecoration(
-          gradient: isDark
-              ? const LinearGradient(
-                  colors: [Color(0xFFA855F7), Color(0xFFC084FC)],
-                )
-              : null,
-          color: isDark ? null : context.goldColor.withValues(alpha: 0.15),
-          shape: BoxShape.circle,
-        );
-
-        final iconColor = isDark ? Colors.white : context.goldColor;
-
-        // Text Colors
-        final titleColor = isDark
-            ? const Color(0xFFFFFFFF)
-            : context.textPrimaryColor;
-        final subtitleColor = isDark
-            ? const Color(0xFFA1A1A1)
-            : context.textSecondaryColor;
-        final arrowColor = isDark
-            ? const Color(0xFFA855F7)
-            : context
-                  .goldColor; // Added arrow color if needed, or assume icon color
-
-        final progressColor = isDark
-            ? const Color(0xFFA855F7)
-            : context.goldColor;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              onTap: data == null
-                  ? () => _openIlm(context)
-                  : () => _continueLearning(context, data),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: containerBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: borderColor, width: 1),
-                  boxShadow: [
-                    if (isDark)
-                      BoxShadow(
-                        color: shadowColor,
-                        blurRadius: shadowBlur,
-                        offset: const Offset(0, 4), // Assumed nice offset
-                      ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: iconDecoration,
-                      child: Icon(Icons.menu_book, color: iconColor, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data == null ? 'ابدأ رحلة التعلّم' : 'واصل التعلّم',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: titleColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            data == null
-                                ? 'استكشف الكتب المتاحة'
-                                : 'الكتاب: ${data.book.title}',
-                            style: TextStyle(
-                              fontSize: data == null ? 13 : 14,
-                              fontWeight: data == null
-                                  ? FontWeight.w400
-                                  : FontWeight.w600,
-                              color: subtitleColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progressValue,
-                              backgroundColor: borderColor,
-                              valueColor: AlwaysStoppedAnimation(progressColor),
-                              minHeight: 4.0,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            percentText == null
-                                ? progressLabel
-                                : '$progressLabel • $percentText',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? const Color(0xFF666666)
-                                  : context.textTertiaryColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: arrowColor,
-                    ),
-                  ],
-                ),
+  Widget _buildShimmerCard(BuildContext context) {
+    return Container(
+      height: 120, // Compact
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.surfaceContainer, // M3 Standard
+        borderRadius: BorderRadius.circular(20),
+        // No border
+      ),
+      child: Shimmer.fromColors(
+        baseColor: context.shimmerBaseColor,
+        highlightColor: context.shimmerHighlightColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 100,
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Map<String, String> _getHijriDate(DateTime gregorianDate) {
-    // Simple Hijri approximation (for display purposes)
-    // For production, use a proper Hijri calendar package like 'hijri'
-    final hijriYear = ((gregorianDate.year - 622) * 1.030684).round();
-    final hijriMonth = gregorianDate.month;
-    final hijriDay = gregorianDate.day;
+  Widget _buildContentCard(BuildContext context) {
+    final hasData = widget.data != null;
+    final data = widget.data;
 
-    final monthNames = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الثاني',
-      'جمادى الأولى',
-      'جمادى الثانية',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
-    ];
+    // Theme resolution
+    final containerBg = context.surfaceContainer; // M3 Standard Container
 
-    final monthIndex = (hijriMonth - 1) % 12;
+    // Progress
+    final progress = hasData
+        ? ((data!.progressPercent ?? 0) / 100.0).clamp(0.0, 1.0)
+        : 0.0;
 
-    return {
-      'day': '$hijriDay ${monthNames[monthIndex]}',
-      'year': '$hijriYear هـ',
-    };
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onTap?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(24), // Generous padding
+        decoration: BoxDecoration(
+          color: containerBg,
+          borderRadius: BorderRadius.circular(24),
+          // Subtle elevation via shadow only (no border)
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: context.isDark ? 0.2 : 0.05,
+              ),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Icon + Title
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: context.primaryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    hasData ? Icons.menu_book_rounded : Icons.school_rounded,
+                    size: 24,
+                    color: context.primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasData ? 'متابعة التعلّم' : 'ابدأ رحلة طلب العلم',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.textSecondaryColor,
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        hasData ? data!.book.title : 'استكشف المتون العلمية',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: context.textPrimaryColor,
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_rounded, // Simple arrow
+                  size: 20,
+                  color: context.textTertiaryColor,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Progress Section
+            if (hasData)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${data!.progressPercent}% مكتمل',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.textSecondaryColor,
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (data.page != null)
+                        Text(
+                          'صفحة ${data.page}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.textTertiaryColor,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor:
+                          context.surfaceElevatedColor, // Lighter track
+                      valueColor: AlwaysStoppedAnimation(context.primaryColor),
+                      minHeight: 6,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

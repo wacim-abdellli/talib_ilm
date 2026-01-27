@@ -601,7 +601,7 @@ class QuranEdition {
       identifier: 'quran-uthmani',
       format: 'text',
       type: 'quran',
-      fontName: 'Amiri', // Standard font
+      fontName: 'ScheherazadeNew', // Standard font
     ),
     QuranEdition(
       id: 'warsh',
@@ -619,7 +619,8 @@ class QuranEdition {
       identifier: 'quran-tajweed',
       format: 'text',
       type: 'quran',
-      fontName: 'Amiri', // Usually works with standard but colors matter
+      fontName:
+          'ScheherazadeNew', // Usually works with standard but colors matter
     ),
   ];
 }

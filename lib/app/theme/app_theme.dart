@@ -9,12 +9,36 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      useMaterial3: true,
       fontFamily: 'Cairo',
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.surface,
+        onPrimary: Colors.white,
+        primaryContainer: AppColors.primaryLight,
+        onPrimaryContainer: Color(0xFF002022), // Dark teal for contrast
+
+        secondary: AppColors.accent,
+        onSecondary: Colors.white,
+        secondaryContainer: AppColors.goldLight,
+        onSecondaryContainer: Color(0xFF2B2100), // Dark gold for contrast
+        // M3 Surface Ladder (Light)
+        surface: Color(
+          0xFFF9F9F9,
+        ), // App background (slightly grey for contrast)
+        surfaceContainerLowest: Color(0xFFFFFFFF), // Quick actions (pure white)
+        surfaceContainerLow: Color(0xFFF5F5F0), // Quote card
+        surfaceContainer: Color(0xFFF0F0EB), // Learning card
+        surfaceContainerHigh: Color(0xFFEBEBE6), // Prayer hero anchor
+        surfaceContainerHighest: Color(0xFFE6E6E1),
+
+        onSurface: AppColors.textPrimary,
+        onSurfaceVariant: AppColors.textSecondary,
+
+        outline: Color(0xFFB5B5B5),
+        outlineVariant: Color(0xFFE8E6E3),
+
         error: AppColors.error,
+        onError: Colors.white,
       ),
       textTheme: TextTheme(
         displayLarge: AppTextStyles.heading1,
@@ -27,17 +51,17 @@ class AppTheme {
         labelMedium: AppTextStyles.label,
         labelSmall: AppTextStyles.caption,
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        iconTheme: const IconThemeData(color: AppColors.textSecondary),
+        iconTheme: IconThemeData(color: AppColors.textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -52,14 +76,11 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: AppColors.primary.withValues(alpha: 0.15),
-            width: 1,
-          ),
+          side: BorderSide.none, // Remove default borders, use container colors
         ),
       ),
     );
@@ -67,17 +88,36 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     return ThemeData(
+      useMaterial3: true,
       fontFamily: 'Cairo',
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.darkPrimary,
-        secondary: AppColors.darkPrimaryLight,
-        surface: AppColors.darkSurface,
-        error: AppColors.error,
         onPrimary: Colors.white,
-        onSecondary: Colors.white,
+        primaryContainer: AppColors.darkPrimaryLight,
+        onPrimaryContainer: Colors.white,
+
+        secondary: AppColors.darkGold,
+        onSecondary: Colors.black,
+        secondaryContainer: AppColors.darkGoldLight,
+        onSecondaryContainer: Color(0xFFFFD700),
+
+        // M3 Surface Ladder (Dark)
+        surface: AppColors.darkBackground, // #121212
+        surfaceContainerLowest: Color(0xFF0A0A0A), // Deepest (Quick actions)
+        surfaceContainerLow: Color(0xFF1E1E1E), // Quote card
+        surfaceContainer: Color(0xFF252525), // Learning card
+        surfaceContainerHigh: Color(0xFF2D2D2D), // Prayer hero
+        surfaceContainerHighest: Color(0xFF353535),
+
         onSurface: AppColors.darkTextPrimary,
+        onSurfaceVariant: AppColors.darkTextSecondary,
+
+        outline: Color(0xFF484848),
+        outlineVariant: Color(0xFF2A2A2A),
+
+        error: AppColors.error,
         onError: Colors.white,
       ),
       dividerColor: AppColors.darkDivider,
@@ -110,19 +150,19 @@ class AppTheme {
           color: AppColors.darkTextTertiary,
         ),
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.darkTextPrimary,
         ),
-        iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
+        iconTheme: IconThemeData(color: AppColors.darkTextSecondary),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
         selectedItemColor: AppColors.darkPrimary,
         unselectedItemColor: AppColors.darkTextTertiary,
@@ -144,13 +184,13 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.darkBorder, width: 1),
+          side: BorderSide.none,
         ),
       ),
       iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
-      snackBarTheme: SnackBarThemeData(
+      snackBarTheme: const SnackBarThemeData(
         backgroundColor: AppColors.darkSurfaceElevated,
-        contentTextStyle: const TextStyle(color: AppColors.darkTextPrimary),
+        contentTextStyle: TextStyle(color: AppColors.darkTextPrimary),
       ),
     );
   }
