@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_ui.dart';
 import '../../app/theme/theme_colors.dart';
 
@@ -59,8 +58,6 @@ class _AppShellState extends State<AppShell> {
     ];
 
     final isDark = context.isDark;
-    final navBg = isDark ? AppColors.darkBackground : AppColors.background;
-    final navBorder = context.outlineVariantColor;
 
     return Scaffold(
       extendBody: true,
@@ -75,15 +72,32 @@ class _AppShellState extends State<AppShell> {
           );
         }),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: navBg,
-          border: Border(top: BorderSide(color: navBorder, width: 1)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 62,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Container(
+            height: 68,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF182222).withValues(alpha: 0.95)
+                  : Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark
+                    ? context.primaryColor.withValues(alpha: 0.25)
+                    : context.outlineVariantColor,
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -2,
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -144,43 +158,57 @@ class _AppShellState extends State<AppShell> {
           setState(() => _currentIndex = index);
         },
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              width: isActive ? 56 : 44,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? (isDark
-                        ? activeColor.withValues(alpha: 0.2)
-                        : activeColor.withValues(alpha: 0.12))
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+        child: AnimatedScale(
+          scale: isActive ? 1.04 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                width: isActive ? 52 : 40,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: isActive
+                      ? LinearGradient(
+                          colors: [
+                            activeColor.withValues(alpha: isDark ? 0.28 : 0.16),
+                            activeColor.withValues(alpha: isDark ? 0.14 : 0.08),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  isActive ? activeIcon : inactiveIcon,
+                  size: isActive ? 22 : 20,
+                  color: isActive ? activeColor : inactiveColor,
+                ),
               ),
-              child: Icon(
-                isActive ? activeIcon : inactiveIcon,
-                size: isActive ? 24 : 22,
-                color: isActive ? activeColor : inactiveColor,
+              const SizedBox(height: 2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                style: TextStyle(
+                  fontSize: isActive ? 11 : 10,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isActive ? activeColor : inactiveColor,
+                  height: 1,
+                  fontFamily: 'Cairo',
+                ),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              style: TextStyle(
-                fontSize: isActive ? 11 : 10,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? activeColor : inactiveColor,
-                height: 1,
-                fontFamily: 'Cairo',
-              ),
-              child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
