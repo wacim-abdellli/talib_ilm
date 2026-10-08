@@ -91,24 +91,31 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     // Thresholds
     final isVeryNear = _timeLeft.inMinutes < 5;
 
-    // === M3 ANTICIPATION-DRIVEN STYLING ===
-    // Surface: High container (Anchor)
-    final backgroundColor = context.surfaceHigh;
+    // === SPIRITUAL SERENITY LUXURY CARD ===
+    final gradient = isDark
+        ? const LinearGradient(
+            colors: [Color(0xFF1B2626), Color(0xFF131C1C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : const LinearGradient(
+            colors: [Colors.white, Color(0xFFF9F7F4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
 
-    // Border: Subtle outline, gets slightly thicker when very near
     final borderColor = isVeryNear
-        ? context.primaryColor.withValues(alpha: 0.5)
-        : context.outlineVariantColor;
+        ? context.goldColor.withValues(alpha: 0.8)
+        : (isDark
+            ? context.goldColor.withValues(alpha: 0.22)
+            : context.outlineVariantColor);
 
     // Shadow: Soft elevation
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.3)
+        ? Colors.black.withValues(alpha: 0.4)
         : Colors.black.withValues(alpha: 0.05);
-    final elevationBlur = isVeryNear ? 16.0 : 8.0;
-    final elevationOffset = isVeryNear ? 4.0 : 2.0;
-
-    // Gold ring (Sacred accent) - Keep clean
-    // unused: final goldRing = context.goldRingColor;
+    final elevationBlur = isVeryNear ? 20.0 : 12.0;
+    final elevationOffset = isVeryNear ? 6.0 : 3.0;
 
     // Time formatting
     final hours = _timeLeft.inHours.toString().padLeft(2, '0');
@@ -122,7 +129,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     final nearnessLabel = _getNearnessLabel();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16), // Aligned margins
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Semantics(
         label: 'الصلاة القادمة: ${widget.nextPrayerName}',
         hint: 'المتبقي ${_getReadableDuration()}',
@@ -139,11 +146,11 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
               duration: const Duration(milliseconds: 600),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                color: backgroundColor,
+                gradient: gradient,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: borderColor,
-                  width: 1, // Keep thin and elegant
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -154,7 +161,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(24), // More air
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
                     // Top Row: Status Chip + Mosque Icon
@@ -162,7 +169,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Status Chip (M3 Secondary Container)
+                        // Status Chip
                         if (nearnessLabel != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -170,22 +177,20 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: context.isDark
-                                  ? context.goldColor.withValues(alpha: 0.15)
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.secondaryContainer,
+                              color: context.goldColor.withValues(
+                                alpha: isDark ? 0.2 : 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: context.goldColor.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
                             ),
                             child: Text(
                               nearnessLabel,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: context.isDark
-                                    ? context.goldColor
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onSecondaryContainer,
+                                color: context.goldColor,
                                 fontFamily: 'Cairo',
                                 fontWeight: FontWeight.w600,
                               ),
@@ -194,21 +199,24 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                         else
                           const Spacer(),
 
-                        // Sacred Icon
+                        // Sacred Mosque Icon
                         Container(
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
+                            color: context.goldColor.withValues(
+                              alpha: isDark ? 0.15 : 0.1,
+                            ),
                             border: Border.all(
-                              color: context.outlineVariantColor,
+                              color: context.goldColor.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
                           child: Icon(
-                            Icons.mosque_outlined,
+                            Icons.mosque_rounded,
                             size: 24,
-                            color: context.textSecondaryColor,
+                            color: context.goldColor,
                           ),
                         ),
                       ],
@@ -234,18 +242,18 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              // FIXED: Cairo font, NOT Roboto
                               ExcludeSemantics(
                                 child: Text(
                                   timeString,
                                   style: TextStyle(
-                                    fontSize: 36, // Larger, premium
-                                    color: context.textPrimaryColor,
+                                    fontSize: 38,
+                                    color: isVeryNear
+                                        ? context.goldColor
+                                        : context.textPrimaryColor,
                                     fontFamily: 'Cairo',
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                     height: 1.1,
-                                    letterSpacing:
-                                        0, // No letter spacing for numbers in Arabic context
+                                    letterSpacing: 0,
                                   ),
                                 ),
                               ),
@@ -260,11 +268,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                             Text(
                               widget.nextPrayerName,
                               style: TextStyle(
-                                fontSize: 24,
-                                color: context
-                                    .primaryColor, // Use primary brand color
+                                fontSize: 26,
+                                color: context.primaryColor,
                                 fontFamily: 'Cairo',
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 4),

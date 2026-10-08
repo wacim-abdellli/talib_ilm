@@ -845,9 +845,7 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
   Widget _buildContentCard(BuildContext context) {
     final hasData = widget.data != null;
     final data = widget.data;
-
-    // Theme resolution
-    final containerBg = context.surfaceContainer; // M3 Standard Container
+    final isDark = context.isDark;
 
     // Progress
     final progress = hasData
@@ -860,17 +858,20 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
         widget.onTap?.call();
       },
       child: Container(
-        padding: const EdgeInsets.all(24), // Generous padding
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: containerBg,
-          borderRadius: BorderRadius.circular(24),
-          // Subtle elevation via shadow only (no border)
+          color: context.surfaceContainer,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: context.goldColor.withValues(alpha: isDark ? 0.18 : 0.22),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(
-                alpha: context.isDark ? 0.2 : 0.05,
+                alpha: isDark ? 0.25 : 0.05,
               ),
-              blurRadius: 12,
+              blurRadius: 16,
               offset: const Offset(0, 4),
             ),
           ],
@@ -880,21 +881,32 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
           children: [
             // Header: Icon + Title
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: 0.1),
+                    gradient: LinearGradient(
+                      colors: [
+                        context.primaryColor.withValues(alpha: 0.2),
+                        context.goldColor.withValues(alpha: 0.12),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.goldColor.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
                   ),
                   child: Icon(
                     hasData ? Icons.menu_book_rounded : Icons.school_rounded,
-                    size: 24,
-                    color: context.primaryColor,
+                    size: 22,
+                    color: context.goldColor,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,16 +915,16 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                         hasData ? 'متابعة التعلّم' : 'ابدأ رحلة طلب العلم',
                         style: TextStyle(
                           fontSize: 12,
-                          color: context.textSecondaryColor,
+                          color: context.goldColor,
                           fontFamily: 'Cairo',
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
-                        hasData ? data!.book.title : 'استكشف المتون العلمية',
+                        hasData ? data!.book.title : 'استكشف المتون العلمية وشروحها',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           color: context.textPrimaryColor,
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.w700,
@@ -924,15 +936,22 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_rounded, // Simple arrow
-                  size: 20,
-                  color: context.textTertiaryColor,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: context.surfaceElevatedColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: context.textSecondaryColor,
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Progress Section
             if (hasData)
@@ -964,13 +983,30 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                   ),
                   const SizedBox(height: 8),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor:
-                          context.surfaceElevatedColor, // Lighter track
-                      valueColor: AlwaysStoppedAnimation(context.primaryColor),
-                      minHeight: 6,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Stack(
+                      children: [
+                        Container(
+                          height: 6,
+                          width: double.infinity,
+                          color: context.surfaceElevatedColor,
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: progress,
+                          child: Container(
+                            height: 6,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  context.primaryColor,
+                                  context.goldColor,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

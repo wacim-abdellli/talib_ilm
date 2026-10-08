@@ -200,11 +200,23 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
               },
               child: Container(
                 key: ValueKey(widget.quote.text),
-                padding: const EdgeInsets.all(24), // More padding
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: context.surfaceLow, // M3 Low Container
-                  borderRadius: BorderRadius.circular(20),
-                  // No border, just surface difference
+                  color: context.surfaceContainer,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: typeColor.withValues(alpha: context.isDark ? 0.22 : 0.28),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: context.isDark ? 0.25 : 0.05,
+                      ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

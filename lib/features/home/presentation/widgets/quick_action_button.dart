@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../app/theme/theme_colors.dart';
 
@@ -36,83 +37,77 @@ class _QuickActionButtonState extends State<QuickActionButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Theme resolution now handled directly in widget tree with M3 roles
-
-    // Determine colors
-    final hasAccent = widget.accentColor != null;
-
-    // Background
-    final bgColor = hasAccent
-        ? widget.accentColor!.withValues(alpha: 0.12) // Low tint
-        : context.surfaceLowest;
-
-    // Border
-    final borderColor = hasAccent
-        ? widget.accentColor!.withValues(alpha: 0.3)
-        : (widget.isEmphasized
-              ? context.primaryColor.withValues(alpha: 0.3)
-              : context.outlineVariantColor);
-
-    // Foreground
-    final fgColor = hasAccent
-        ? widget.accentColor!
-        : (widget.isEmphasized
-              ? context.primaryColor
-              : context.textPrimaryColor);
-
-    final labelColor = hasAccent
-        ? widget.accentColor!
-        : (widget.isEmphasized
-              ? context.primaryColor
-              : context.textSecondaryColor);
+    final isDark = context.isDark;
+    final effectiveAccent = widget.accentColor ?? context.primaryColor;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
+        HapticFeedback.lightImpact();
         widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: AnimatedOpacity(
-          opacity: _isPressed ? 0.8 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          child: Container(
-            width: widget.width ?? 80,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: 1.0),
-              // No shadow for flat tiles in M3, just surface color diff
+        scale: _isPressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          width: widget.width ?? 80,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+          decoration: BoxDecoration(
+            color: context.surfaceColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? effectiveAccent.withValues(alpha: 0.2)
+                  : context.outlineVariantColor,
+              width: 1.0,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(widget.icon, size: 26, color: fgColor),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: labelColor,
-                      fontFamily: 'Cairo',
-                      fontWeight: (widget.isEmphasized || hasAccent)
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: effectiveAccent.withValues(
+                    alpha: isDark ? 0.18 : 0.12,
+                  ),
+                  border: Border.all(
+                    color: effectiveAccent.withValues(alpha: 0.25),
+                    width: 1,
                   ),
                 ),
-              ],
-            ),
+                child: Icon(widget.icon, size: 22, color: effectiveAccent),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.textPrimaryColor,
+                    fontFamily: 'Cairo',
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ),
