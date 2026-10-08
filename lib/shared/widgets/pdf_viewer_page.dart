@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_colors.dart';
+import '../../app/theme/theme_colors.dart';
 import '../../app/theme/app_text.dart';
 import '../../app/theme/app_ui.dart';
 
@@ -217,16 +218,16 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Widget _buildTopBar(double progress) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 80, // Allow space for status bar
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
-        color: const Color(
-          0xFFFBFAF8,
-        ).withValues(alpha: 0.95), // BackgroundMain
+        color: (isDark ? const Color(0xFF161F1F) : const Color(0xFFFBFAF8))
+            .withValues(alpha: 0.95),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -244,7 +245,12 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: AppText.body.copyWith(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimaryColor,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -260,10 +266,11 @@ class PdfViewerPageState extends State<PdfViewerPage> {
           // Linear Progress Indicator at bottom edge
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: const Color(0xFFE8E6E3), // BorderSubtle
+            backgroundColor:
+                isDark ? const Color(0xFF263333) : const Color(0xFFE8E6E3),
             valueColor: const AlwaysStoppedAnimation<Color>(
-              Color(0xFF6A9A9A),
-            ), // PrimaryAccent
+              AppColors.primary,
+            ),
             minHeight: 2,
           ),
         ],
@@ -272,18 +279,24 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Widget _buildBottomBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 80, // Increased to fit controls comfortably + safe area if needed
-      margin: EdgeInsets.only(bottom: 0), // Anchored to bottom
+      margin: EdgeInsets.zero, // Anchored to bottom
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(
-          0xFFFBFAF8,
-        ).withValues(alpha: 0.95), // BackgroundMain
+        color: (isDark ? const Color(0xFF161F1F) : const Color(0xFFFBFAF8))
+            .withValues(alpha: 0.95),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border(
+          top: BorderSide(
+            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -302,7 +315,12 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 _ControlAction(
                   child: Text(
                     '$_currentPage / $_totalPages',
-                    style: AppText.body.copyWith(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: context.textPrimaryColor,
+                    ),
                   ),
                   onTap: () {
                     _resetHideTimer();
@@ -313,8 +331,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 // 2. Brightness
                 _ControlAction(
                   icon: _brightness < 0.5
-                      ? Icons.brightness_low
-                      : Icons.brightness_high,
+                      ? Icons.brightness_low_rounded
+                      : Icons.brightness_high_rounded,
                   onTap: () {
                     _resetHideTimer();
                     _showBrightnessDialog();
@@ -326,11 +344,12 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Text(
+                      icon: Text(
                         'A-',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
+                          color: context.textPrimaryColor,
                         ),
                       ),
                       onPressed: () {
@@ -347,11 +366,12 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                       },
                     ),
                     IconButton(
-                      icon: const Text(
+                      icon: Text(
                         'A+',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: context.textPrimaryColor,
                         ),
                       ),
                       onPressed: () {
@@ -374,11 +394,11 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 IconButton(
                   icon: Icon(
                     widget.isBookmarked
-                        ? Icons.bookmark
-                        : Icons.bookmark_border,
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
                     color: widget.isBookmarked
-                        ? const Color(0xFF6A9A9A)
-                        : const Color(0xFF3A3A3A),
+                        ? AppColors.gold
+                        : context.textSecondaryColor,
                   ),
                   onPressed: () {
                     _resetHideTimer();
@@ -389,8 +409,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 // 5. Night Mode
                 IconButton(
                   icon: Icon(
-                    _nightMode ? Icons.wb_sunny : Icons.nights_stay,
-                    color: AppColors.textPrimary,
+                    _nightMode ? Icons.wb_sunny_rounded : Icons.nights_stay_rounded,
+                    color: _nightMode ? AppColors.gold : context.textSecondaryColor,
                   ),
                   onPressed: () {
                     _resetHideTimer();
@@ -406,6 +426,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   void _showBrightnessDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       barrierColor: Colors.transparent, // Don't dim rest
@@ -416,20 +437,34 @@ class PdfViewerPageState extends State<PdfViewerPage> {
             margin: const EdgeInsets.only(bottom: 90, left: 20, right: 20),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFBFAF8),
+              color: context.surfaceContainer,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: AppUi.shadowMD,
+              border: Border.all(
+                color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Material(
               color: Colors.transparent,
               child: Row(
                 children: [
-                  const Icon(Icons.brightness_low, size: 20),
+                  Icon(
+                    Icons.brightness_low_rounded,
+                    size: 20,
+                    color: context.textSecondaryColor,
+                  ),
                   Expanded(
                     child: StatefulBuilder(
                       builder: (context, setInnerState) {
                         return Slider(
                           value: _brightness,
+                          activeColor: AppColors.primary,
                           onChanged: (val) {
                             setInnerState(() {});
                             setState(() => _brightness = val);
@@ -439,7 +474,11 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                       },
                     ),
                   ),
-                  const Icon(Icons.brightness_high, size: 20),
+                  Icon(
+                    Icons.brightness_high_rounded,
+                    size: 20,
+                    color: context.textSecondaryColor,
+                  ),
                 ],
               ),
             ),
@@ -511,7 +550,7 @@ class _ControlAction extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: child ?? Icon(icon, color: AppColors.textPrimary),
+        child: child ?? Icon(icon, color: context.textPrimaryColor),
       ),
     );
   }
