@@ -56,24 +56,32 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
           color: isCurrent
-              ? prayerColor.withValues(alpha: isDark ? 0.15 : 0.08)
-              : context.surfaceColor,
+              ? prayerColor.withValues(alpha: isDark ? 0.16 : 0.08)
+              : context.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isCurrent ? prayerColor : context.outlineVariantColor,
+            color: isCurrent
+                ? prayerColor
+                : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
             width: isCurrent ? 1.5 : 1.0,
           ),
           boxShadow: isCurrent
               ? [
                   BoxShadow(
                     color: prayerColor.withValues(
-                      alpha: (isDark ? 0.3 : 0.15) * pulseValue,
+                      alpha: (isDark ? 0.35 : 0.18) * pulseValue,
                     ),
                     blurRadius: 16,
                     spreadRadius: -2,
                   ),
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -86,20 +94,24 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
                   },
             borderRadius: BorderRadius.circular(20),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               child: Row(
                 children: [
-                  // Prayer Icon Circle
+                  // Prayer Icon Medallion
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: prayerColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                      color: prayerColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                      border: Border.all(
+                        color: prayerColor.withValues(alpha: isDark ? 0.4 : 0.25),
+                        width: 1,
+                      ),
                     ),
                     child: Icon(
-                      isPassed && !isCurrent ? Icons.check_circle : iconData,
-                      size: 28,
+                      isPassed && !isCurrent ? Icons.check_circle_rounded : iconData,
+                      size: 24,
                       color: isPassed && !isCurrent
                           ? context.textSecondaryColor
                           : prayerColor,
@@ -113,39 +125,50 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.item.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: isCurrent
-                                ? FontWeight.bold
-                                : FontWeight.w600,
-                            color: isPassed && !isCurrent
-                                ? context.textSecondaryColor
-                                : context.textPrimaryColor,
-                            decoration: isPassed && !isCurrent
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        Row(
+                          children: [
+                            Text(
+                              widget.item.name,
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 17,
+                                fontWeight: isCurrent
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: isPassed && !isCurrent
+                                    ? context.textSecondaryColor
+                                    : context.textPrimaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            if (isPassed && !isCurrent) ...[
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.done_all_rounded,
+                                size: 16,
+                                color: context.textTertiaryColor,
+                              ),
+                            ],
+                          ],
                         ),
                         if (isCurrent) ...[
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: 10,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: prayerColor.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(12),
+                              color: prayerColor.withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               "الصلاة الحالية",
                               style: TextStyle(
+                                fontFamily: 'Cairo',
                                 fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w700,
                                 color: prayerColor,
                               ),
                             ),
@@ -159,17 +182,15 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
                   Text(
                     widget.item.time,
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Cairo',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: isCurrent
                           ? prayerColor
                           : (isPassed
                               ? context.textSecondaryColor
                               : context.textPrimaryColor),
-                      decoration: isPassed && !isCurrent
-                          ? TextDecoration.lineThrough
-                          : null,
                     ),
                   ),
                 ],
@@ -191,7 +212,7 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
     }
 
     return Opacity(
-      opacity: isPassed && !isCurrent ? 0.6 : 1.0,
+      opacity: isPassed && !isCurrent ? 0.72 : 1.0,
       child: content,
     );
   }
@@ -236,20 +257,20 @@ class _PrayerTimeTileState extends State<PrayerTimeTile>
 
   IconData _getPrayerIcon(String name) {
     if (name.contains(AppStrings.prayerFajr) || name == 'الفجر') {
-      return Icons.wb_twilight;
+      return Icons.wb_twilight_rounded;
     }
     if (name.contains(AppStrings.prayerDhuhr) || name == 'الظهر') {
-      return Icons.wb_sunny;
+      return Icons.wb_sunny_rounded;
     }
     if (name.contains(AppStrings.prayerAsr) || name == 'العصر') {
       return Icons.wb_sunny_outlined;
     }
     if (name.contains(AppStrings.prayerMaghrib) || name == 'المغرب') {
-      return Icons.wb_twilight;
+      return Icons.wb_twilight_rounded;
     }
     if (name.contains(AppStrings.prayerIsha) || name == 'العشاء') {
-      return Icons.nights_stay;
+      return Icons.nights_stay_rounded;
     }
-    return Icons.access_time;
+    return Icons.access_time_rounded;
   }
 }
