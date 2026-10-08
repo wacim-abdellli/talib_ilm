@@ -7,8 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../core/services/location_service.dart';
-import '../../../shared/widgets/app_drawer.dart';
 
 class QiblaPage extends StatefulWidget {
   const QiblaPage({super.key});
@@ -86,37 +86,33 @@ class _QiblaPageState extends State<QiblaPage>
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      drawer: const AppDrawer(selectedIndex: 1),
       appBar: AppBar(
         title: const Text(
           AppStrings.qiblaTitle,
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        leading: Builder(
-          builder: (context) {
-            final canPop = Navigator.of(context).canPop();
-            return IconButton(
-              icon: Icon(canPop ? Icons.arrow_back : Icons.menu),
-              onPressed: () {
-                if (canPop) {
-                  Navigator.pop(context);
-                } else {
-                  Scaffold.of(context).openDrawer();
-                }
-              },
-            );
-          },
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0D9488), Color(0xFF0F766E)],
+            colors: [
+              context.primaryColor,
+              const Color(0xFF162534), // Deep celestial night
+            ],
           ),
         ),
         child: StreamBuilder<CompassEvent>(

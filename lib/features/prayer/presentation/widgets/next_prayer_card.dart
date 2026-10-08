@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_ui.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../data/models/prayer_models.dart';
@@ -30,22 +29,22 @@ class NextPrayerCard extends StatelessWidget {
     return Align(
       alignment: Alignment.center,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: responsive.wp(92)),
+        constraints: BoxConstraints(maxWidth: responsive.wp(94)),
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.all(responsive.wp(5)),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: context.surfaceColor,
-            borderRadius: BorderRadius.circular(AppUi.radiusMD),
+            color: context.surfaceContainer,
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: context.outlineVariantColor,
-              width: AppUi.dividerThickness,
+              color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.3),
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                blurRadius: responsive.sp(10),
-                offset: Offset(0, responsive.sp(2)),
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -53,49 +52,64 @@ class NextPrayerCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      AppStrings.prayerNext,
-                      style: TextStyle(
-                        fontSize: responsive.sp(12),
-                        color: context.textSecondaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: context.goldColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                  SizedBox(width: responsive.smallGap),
-                  Expanded(
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.access_time,
-                          size: responsive.sp(13),
-                          color: context.textSecondaryColor,
+                          Icons.notifications_active_outlined,
+                          size: 14,
+                          color: context.goldColor,
                         ),
-                        SizedBox(width: responsive.smallGap * 0.5),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: responsive.wp(2.2),
-                            vertical: responsive.hp(0.6),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppStrings.prayerNext,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.goldColor,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Cairo',
                           ),
-                          decoration: BoxDecoration(
-                            color: context.primaryColor.withValues(
-                              alpha: isDark ? 0.2 : 0.1,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              AppUi.radiusPill,
-                            ),
-                          ),
-                          child: Text(
-                            _formatTime(prayer.time),
-                            style: TextStyle(
-                              fontSize: responsive.sp(13),
-                              color: context.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.primaryColor.withValues(
+                        alpha: isDark ? 0.18 : 0.12,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: context.primaryColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 14,
+                          color: context.primaryColor,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatTime(prayer.time),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: context.primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Cairo',
                           ),
                         ),
                       ],
@@ -103,35 +117,54 @@ class NextPrayerCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: responsive.smallGap),
+              const SizedBox(height: 12),
               Text(
                 prayer.prayer.labelAr,
                 style: TextStyle(
-                  fontSize: responsive.sp(22),
-                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
                   color: context.textPrimaryColor,
+                  fontFamily: 'Cairo',
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: responsive.smallGap * 0.5),
+              const SizedBox(height: 6),
               Text(
                 countdown,
                 style: TextStyle(
-                  fontSize: responsive.sp(26),
-                  fontWeight: FontWeight.w700,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
                   color: context.goldColor,
-                  height: 1,
+                  fontFamily: 'Cairo',
+                  letterSpacing: 1.5,
+                  height: 1.1,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: responsive.smallGap),
+              const SizedBox(height: 14),
               ClipRRect(
-                borderRadius: BorderRadius.circular(responsive.sp(2)),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: context.outlineVariantColor,
-                  valueColor: AlwaysStoppedAnimation(context.primaryColor),
-                  minHeight: responsive.sp(3),
+                borderRadius: BorderRadius.circular(6),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 6,
+                      width: double.infinity,
+                      color: context.surfaceElevatedColor,
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              context.primaryColor,
+                              context.goldColor,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

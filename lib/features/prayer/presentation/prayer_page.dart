@@ -152,220 +152,165 @@ class _PrayerPageState extends State<PrayerPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Header section
+                        // Celestial Header Banner
                         Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF000000)
-                                : const Color(0xFF6A9A9A),
-                            border: isDark
-                                ? const Border(
-                                    bottom: BorderSide(
-                                      color: Color(0xFF1F1F1F),
-                                    ),
-                                  )
-                                : null,
+                            color: context.surfaceColor,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: context.outlineColor.withValues(alpha: 0.1),
+                              ),
+                            ),
                           ),
                           child: SafeArea(
                             bottom: false,
                             child: Column(
                               children: [
-                                // Top row
+                                // Top row: Title + Settings
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.menu_rounded,
-                                        color: Colors.white,
-                                        size: 26,
-                                      ),
-                                      onPressed: () {},
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.settings_outlined,
-                                        color: Colors.white,
-                                        size: 26,
-                                      ),
-                                      onPressed: () =>
-                                          _openLocationSettings(context),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                // Title
-                                const Text(
-                                  'مواقيت الصلاة',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                // Location
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.location_on_rounded,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        city,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.9,
-                                          ),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Time progress circle
-                                Center(
-                                  child: SizedBox(
-                                    width: 200,
-                                    height: 200,
-                                    child: Stack(
-                                      alignment: Alignment.center,
+                                    Row(
                                       children: [
-                                        // Background circle
-                                        SizedBox(
-                                          width: 200,
-                                          height: 200,
-                                          child: CircularProgressIndicator(
-                                            value: 1.0,
-                                            strokeWidth: 12,
-                                            color: const Color(0xFF1F1F1F),
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: context.primaryColor.withValues(alpha: 0.12),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.mosque_rounded,
+                                            color: context.primaryColor,
+                                            size: 22,
                                           ),
                                         ),
-                                        // Progress circle
-                                        SizedBox(
-                                          width: 200,
-                                          height: 200,
-                                          child: CircularProgressIndicator(
-                                            value:
-                                                0.4, // Calculate: time passed / total time
-                                            strokeWidth: 12,
-                                            color: const Color(0xFF00D9C0),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          'مواقيت الصلاة',
+                                          style: TextStyle(
+                                            fontFamily: 'Cairo',
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w800,
+                                            color: context.textPrimaryColor,
                                           ),
-                                        ),
-                                        // Center text
-                                        Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'العصر',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                color: Colors.white70,
-                                              ),
-                                            ),
-                                            Text(
-                                              '00:37:39',
-                                              style: TextStyle(
-                                                fontSize: 32,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
                                         ),
                                       ],
                                     ),
-                                  ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.settings_outlined,
+                                        color: context.textSecondaryColor,
+                                        size: 22,
+                                      ),
+                                      tooltip: 'إعدادات الصلاة',
+                                      onPressed: () => _openLocationSettings(context),
+                                    ),
+                                  ],
                                 ),
-
-                                const SizedBox(height: 20),
-                                // Date and Qibla row
+                                const SizedBox(height: 16),
+                                // Chips: City, Date, Qibla
                                 Row(
                                   children: [
+                                    // City Selector Chip
                                     Expanded(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? const Color(0xFF141414)
-                                              : Colors.white.withValues(
-                                                  alpha: 0.12,
-                                                ),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                      child: InkWell(
+                                        onTap: () => _openLocationSettings(context),
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
                                           ),
-                                          border: Border.all(
-                                            color: isDark
-                                                ? const Color(0xFF333333)
-                                                : Colors.white.withValues(
-                                                    alpha: 0.25,
-                                                  ),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.calendar_today_rounded,
-                                              color: Colors.white,
-                                              size: 18,
+                                          decoration: BoxDecoration(
+                                            color: context.surfaceContainer,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(
+                                              color: context.outlineColor.withValues(alpha: 0.15),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Flexible(
-                                              child: Text(
-                                                gregorianDate,
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.white,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.location_on_rounded,
+                                                color: context.islamicGreenColor,
+                                                size: 18,
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  city,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Cairo',
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: context.textPrimaryColor,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    GestureDetector(
-                                      onTap: () => _openQibla(context),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? const Color(0xFF141414)
-                                              : Colors.white.withValues(
-                                                  alpha: 0.12,
-                                                ),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                    const SizedBox(width: 10),
+                                    // Date Chip
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.surfaceContainer,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: context.outlineColor.withValues(alpha: 0.15),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today_rounded,
+                                            color: context.textSecondaryColor,
+                                            size: 16,
                                           ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            gregorianDate,
+                                            style: TextStyle(
+                                              fontFamily: 'Cairo',
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: context.textPrimaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    // Qibla Button
+                                    InkWell(
+                                      onTap: () => _openQibla(context),
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              context.goldColor.withValues(alpha: 0.2),
+                                              context.goldColor.withValues(alpha: 0.08),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(16),
                                           border: Border.all(
-                                            color: isDark
-                                                ? const Color(0xFF333333)
-                                                : Colors.white.withValues(
-                                                    alpha: 0.25,
-                                                  ),
-                                            width: 1,
+                                            color: context.goldColor.withValues(alpha: 0.35),
                                           ),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.explore_rounded,
-                                          color: Colors.white,
-                                          size: 24,
+                                          color: context.goldColor,
+                                          size: 22,
                                         ),
                                       ),
                                     ),
@@ -694,27 +639,19 @@ class _PrayerTimeCard extends StatelessWidget {
         ? Colors.white
         : (isCurrent ? AppColors.primary : titleColor);
 
-    // Dark mode logic matching PrayerTimeTile
-    final backgroundColor = isDark
-        ? (isCurrent ? const Color(0xFF0A0A0A) : const Color(0xFF0A0A0A))
-        : (isCurrent
-              ? const Color(0xFF6A9A9A).withValues(alpha: 0.08)
-              : const Color(0xFFF5F3F0));
+    final backgroundColor = isCurrent
+        ? context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08)
+        : context.surfaceContainer;
 
-    final borderColor = isDark
-        ? (isCurrent
-              ? iconColor.withValues(alpha: 0.4)
-              : const Color(0xFF1F1F1F))
-        : (isCurrent
-              ? const Color(0xFF6A9A9A).withValues(alpha: 0.2)
-              : const Color(0xFFE8E6E3));
+    final borderColor = isCurrent
+        ? context.goldColor.withValues(alpha: 0.45)
+        : context.outlineColor.withValues(alpha: isDark ? 0.12 : 0.08);
 
-    // Active Gradient Overlay for Dark Mode
     final gradient = (isDark && isCurrent)
         ? LinearGradient(
             colors: [
               iconColor.withValues(alpha: 0.15),
-              const Color(0xFF0A0A0A),
+              context.surfaceContainer,
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
