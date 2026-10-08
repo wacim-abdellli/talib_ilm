@@ -800,35 +800,19 @@ class _PrayerTimeCard extends StatelessWidget {
   }
 
   Color _colorFor(String name, bool isDark) {
-    if (isDark) {
-      switch (name) {
-        case AppStrings.prayerFajr:
-          return const Color(0xFF6366F1);
-        case AppStrings.prayerDhuhr:
-          return const Color(0xFF00D9C0);
-        case AppStrings.prayerAsr:
-          return const Color(0xFFFF8A3D);
-        case AppStrings.prayerMaghrib:
-          return const Color(0xFFFF4D9E);
-        case AppStrings.prayerIsha:
-          return const Color(0xFFA855F7);
-      }
-      return const Color(0xFF00D9C0);
-    }
-
     switch (name) {
       case AppStrings.prayerFajr:
-        return const Color(0xFFE8A87C);
+        return AppColors.fajr;
       case AppStrings.prayerDhuhr:
-        return const Color(0xFFD4AF37);
+        return AppColors.gold;
       case AppStrings.prayerAsr:
-        return const Color(0xFFC19A6B);
+        return AppColors.asr;
       case AppStrings.prayerMaghrib:
-        return const Color(0xFFCD853F);
+        return AppColors.maghrib;
       case AppStrings.prayerIsha:
-        return const Color(0xFF6B7F99);
+        return AppColors.isha;
     }
-    return AppColors.textSecondary;
+    return isDark ? AppColors.darkGold : AppColors.primary;
   }
 
   IconData _statusIcon(bool isCurrent, bool isCompleted) {
@@ -839,12 +823,12 @@ class _PrayerTimeCard extends StatelessWidget {
 
   Color _statusColor(bool isCurrent, bool isCompleted, bool isDark) {
     if (isCurrent) {
-      return isDark ? const Color(0xFF00D9C0) : const Color(0xFF6A9A9A);
+      return isDark ? AppColors.darkGold : AppColors.primary;
     }
     if (isCompleted) {
-      return isDark ? const Color(0xFF666666) : const Color(0xFF85A885);
+      return isDark ? AppColors.darkSuccess : AppColors.success;
     }
-    return isDark ? const Color(0xFF666666) : const Color(0xFF9A9A9A);
+    return isDark ? const Color(0xFF888888) : const Color(0xFF9A9A9A);
   }
 }
 

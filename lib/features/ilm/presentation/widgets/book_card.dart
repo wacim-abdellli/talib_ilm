@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_colors.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/progress_models.dart';
 import '../../../../shared/widgets/pressable_card.dart';
@@ -43,29 +44,20 @@ class _BookCardState extends State<BookCard> {
     }
   }
 
-  Color _getCategoryColor(String category, bool isDark) {
-    if (isDark) {
-      if (category.contains('عقيدة')) return const Color(0xFFA855F7);
-      if (category.contains('فقه')) return const Color(0xFF3B9EFF);
-      if (category.contains('حديث')) return const Color(0xFFFF8A3D);
-      if (category.contains('لغة')) return const Color(0xFFFF4D9E);
-      // Fallbacks matching neon theme
-      if (category.contains('قرآن')) return const Color(0xFF00D9C0);
-      return const Color(0xFF00D9C0);
-    }
-    // Light mode defaults
+  Color _getCategoryColor(String category) {
     if (category.contains('عقيدة')) return AppColors.categoryAqidah;
     if (category.contains('فقه')) return AppColors.categoryFiqh;
     if (category.contains('حديث')) return AppColors.categoryHadith;
-    if (category.contains('لغة')) return AppColors.categoryArabic;
+    if (category.contains('لغة')) return AppColors.categoryLanguage;
     if (category.contains('قرآن')) return AppColors.categoryQuran;
+    if (category.contains('سيرة')) return AppColors.categorySeerah;
     return AppColors.primary;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categoryColor = _getCategoryColor(widget.book.subject, isDark);
+    final categoryColor = _getCategoryColor(widget.book.subject);
 
     // Calculate progress
     double percent = 0;
@@ -100,16 +92,16 @@ class _BookCardState extends State<BookCard> {
           borderRadius: BorderRadius.circular(20),
           padding: EdgeInsets.zero,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF5F3F0),
+            color: context.surfaceContainer,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDark ? const Color(0xFF1F1F1F) : const Color(0xFFE8E6E3),
+              color: categoryColor.withValues(alpha: isDark ? 0.28 : 0.18),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: 0.2)
+                    ? Colors.black.withValues(alpha: 0.25)
                     : const Color(0xFF3A3A3A).withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 3),
@@ -148,11 +140,9 @@ class _BookCardState extends State<BookCard> {
                         ),
                       ),
                       if (_isFavorite)
-                        Icon(
-                          Icons.bookmark,
-                          color: isDark
-                              ? const Color(0xFFFFD600)
-                              : AppColors.accent,
+                        const Icon(
+                          Icons.bookmark_rounded,
+                          color: AppColors.gold,
                           size: 20,
                         ),
                     ],
@@ -166,7 +156,8 @@ class _BookCardState extends State<BookCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 19,
+                      fontFamily: 'Cairo',
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
                       color: isDark ? Colors.white : const Color(0xFF3A3A3A),
@@ -181,7 +172,8 @@ class _BookCardState extends State<BookCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontFamily: 'Cairo',
+                      fontSize: 13,
                       color: isDark
                           ? const Color(0xFFA1A1A1)
                           : const Color(0xFF6E6E6E),
@@ -228,7 +220,7 @@ class _BookCardState extends State<BookCard> {
                           height: 6,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF141414)
+                                ? const Color(0xFF1E2828)
                                 : const Color(0xFFE5E4E2),
                             borderRadius: BorderRadius.circular(3),
                           ),

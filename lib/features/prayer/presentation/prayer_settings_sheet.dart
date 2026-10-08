@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 import '../../../shared/widgets/app_snackbar.dart';
@@ -77,7 +78,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        color: context.surfaceContainer,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -233,14 +234,12 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                           : null,
                       color: isSelected
                           ? null
-                          : (isDark ? const Color(0xFF0A0A0A) : Colors.white),
+                          : context.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? Colors.transparent
-                            : (isDark
-                                  ? const Color(0xFF1F1F1F)
-                                  : const Color(0xFFE8E6E3)),
+                            : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
                       ),
                     ),
                     child: Row(
@@ -332,12 +331,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+                color: context.surfaceContainer,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF1F1F1F)
-                      : const Color(0xFFE8E6E3),
+                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 ),
               ),
               child: DropdownButtonFormField<AdhanSound>(
@@ -615,12 +612,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+                      color: context.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF1F1F1F)
-                            : const Color(0xFFE8E6E3),
+                        color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
                       ),
                     ),
                     child: Row(
@@ -699,10 +694,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        color: context.surfaceContainer,
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF1F1F1F) : const Color(0xFFE8E6E3),
+            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
           ),
         ),
       ),
