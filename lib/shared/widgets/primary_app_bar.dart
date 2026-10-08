@@ -43,6 +43,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(
         title,
         style: TextStyle(
+          fontFamily: 'Cairo',
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: context.textPrimaryColor,

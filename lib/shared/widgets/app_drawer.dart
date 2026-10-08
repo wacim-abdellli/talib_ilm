@@ -4,7 +4,6 @@ import 'package:share_plus/share_plus.dart';
 import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_colors.dart';
-import '../../app/theme/app_text_styles.dart';
 import '../../app/theme/app_ui.dart';
 import '../../app/theme/theme_colors.dart';
 import '../navigation/app_shell.dart';
@@ -21,7 +20,7 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
-      backgroundColor: context.surfaceColor,
+      backgroundColor: context.surfaceContainer,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(AppUi.radiusLG),
@@ -58,9 +57,15 @@ class AppDrawer extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1.5,
+                        color: AppColors.gold.withValues(alpha: 0.5),
+                        width: 2,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.gold.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                        ),
+                      ],
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(10),
@@ -78,7 +83,8 @@ class AppDrawer extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     AppStrings.appName,
-                    style: AppTextStyles.heading1.copyWith(
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -87,8 +93,9 @@ class AppDrawer extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'v${AppStrings.appVersion}',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.75),
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      color: Colors.white70,
                       fontSize: 12,
                     ),
                   ),
@@ -207,7 +214,8 @@ class AppDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Text(
               'وفق منهج أهل السنة والجماعة',
-              style: AppTextStyles.caption.copyWith(
+              style: TextStyle(
+                fontFamily: 'Cairo',
                 color: context.textTertiaryColor,
                 fontSize: 12,
               ),
