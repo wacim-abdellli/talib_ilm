@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
@@ -48,6 +48,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
   Future<void> _save() async {
     if (_settings == null || _saving) return;
+    HapticFeedback.mediumImpact();
     setState(() => _saving = true);
 
     await _settingsService.saveSettings(_settings!);
@@ -55,9 +56,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     if (!mounted) return;
 
-    // Success feedback
-    // Success feedback
-    AppSnackbar.success(context, 'تم حفظ الإعدادات');
+    AppSnackbar.success(context, 'تم حفظ إعدادات الصلاة');
 
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) Navigator.pop(context);
@@ -78,15 +77,19 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.12),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           _buildHeader(context),
-          const Divider(height: 1),
+          Divider(height: 1, color: context.outlineVariantColor),
 
           // Scrollable content
           Flexible(
@@ -99,13 +102,13 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildCalcMethodSection(settings, isDark),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   _buildAdhanSection(settings, isDark),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   _buildNotificationsSection(settings, isDark),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   _buildAdjustmentsSection(settings, isDark),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -119,43 +122,61 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF6A9A9A), const Color(0xFF8ACACA)]
-                    : [const Color(0xFF6A9A9A), const Color(0xFF7AB5A8)],
+                colors: [
+                  context.primaryColor,
+                  context.primaryColor.withValues(alpha: 0.8),
+                ],
               ),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: context.goldColor.withValues(alpha: 0.4),
+                width: 1,
+              ),
             ),
             child: const Icon(
-              Icons.mosque_outlined,
+              Icons.mosque_rounded,
               color: Colors.white,
-              size: 20,
+              size: 22,
             ),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              'إعدادات الصلاة',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إعدادات الصلاة والأذان',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: context.textPrimaryColor,
+                  ),
+                ),
+                Text(
+                  'تخصيص الحساب والمؤذن والتنبيهات',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    color: context.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
           ),
           IconButton(
             icon: Icon(
               Icons.close_rounded,
-              color: isDark ? Colors.white70 : AppColors.textSecondary,
+              color: context.textSecondaryColor,
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -166,12 +187,12 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
   Widget _buildSectionCard({required Widget child, required bool isDark}) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141414) : const Color(0xFFF5F3F0),
-        borderRadius: BorderRadius.circular(16),
+        color: context.surfaceContainer,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF1F1F1F) : const Color(0xFFE8E6E3),
+          color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
         ),
       ),
       child: child,
@@ -185,18 +206,19 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFF6A9A9A).withValues(alpha: 0.15),
+            color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF6A9A9A)),
+          child: Icon(icon, size: 18, color: context.primaryColor),
         ),
         const SizedBox(width: 12),
         Text(
           title,
           style: TextStyle(
+            fontFamily: 'Cairo',
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : AppColors.textPrimary,
+            color: context.textPrimaryColor,
           ),
         ),
       ],
@@ -219,38 +241,40 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
+                    HapticFeedback.selectionClick();
                     _updateSettings(
                       settings.copyWith(calculationMethod: entry.key),
                     );
                   },
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [Color(0xFF6A9A9A), Color(0xFF7AB5A8)],
+                          ? LinearGradient(
+                              colors: [
+                                context.primaryColor,
+                                context.primaryColor.withValues(alpha: 0.85),
+                              ],
                             )
                           : null,
-                      color: isSelected
-                          ? null
-                          : context.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      color: isSelected ? null : context.surfaceColor,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.transparent
-                            : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                            ? context.primaryColor
+                            : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           isSelected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_off,
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_off_rounded,
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? Colors.white54 : Colors.black54),
+                              : context.textSecondaryColor,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -258,15 +282,12 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                           child: Text(
                             entry.value,
                             style: TextStyle(
+                              fontFamily: 'Cairo',
                               fontSize: 14,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                               color: isSelected
                                   ? Colors.white
-                                  : (isDark
-                                        ? Colors.white
-                                        : AppColors.textPrimary),
+                                  : context.textPrimaryColor,
                             ),
                           ),
                         ),
@@ -302,9 +323,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 child: Text(
                   'تشغيل صوت الأذان',
                   style: TextStyle(
+                    fontFamily: 'Cairo',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    color: context.textPrimaryColor,
                   ),
                 ),
               ),
@@ -313,12 +335,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 child: Switch(
                   value: settings.enabled,
                   onChanged: (val) {
+                    HapticFeedback.selectionClick();
                     _updateSettings(settings.copyWith(enabled: val));
                   },
-                  activeThumbColor: const Color(0xFF6A9A9A),
-                  activeTrackColor: const Color(
-                    0xFF6A9A9A,
-                  ).withValues(alpha: 0.5),
+                  activeThumbColor: context.primaryColor,
+                  activeTrackColor: context.primaryColor.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -331,16 +352,27 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
-                color: context.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: context.surfaceColor,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
                 ),
               ),
               child: DropdownButtonFormField<AdhanSound>(
                 initialValue: settings.sound,
-                decoration: const InputDecoration(
-                  labelText: 'المؤذن',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: context.textPrimaryColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'صوت المؤذن',
+                  labelStyle: TextStyle(
+                    fontFamily: 'Cairo',
+                    color: context.textSecondaryColor,
+                    fontSize: 13,
+                  ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -374,18 +406,18 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     Text(
                       'مستوى الصوت',
                       style: TextStyle(
+                        fontFamily: 'Cairo',
                         fontSize: 14,
-                        color: isDark
-                            ? Colors.white70
-                            : AppColors.textSecondary,
+                        color: context.textSecondaryColor,
                       ),
                     ),
                     Text(
                       '${settings.volume.toInt()}%',
                       style: TextStyle(
+                        fontFamily: 'Cairo',
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF6A9A9A),
+                        fontWeight: FontWeight.w700,
+                        color: context.primaryColor,
                       ),
                     ),
                   ],
@@ -393,22 +425,18 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.volume_mute,
-                      size: 18,
-                      color: Color(0xFF6A9A9A),
+                    Icon(
+                      Icons.volume_mute_rounded,
+                      size: 20,
+                      color: context.textSecondaryColor,
                     ),
                     Expanded(
                       child: SliderTheme(
                         data: SliderThemeData(
-                          activeTrackColor: const Color(0xFF6A9A9A),
-                          inactiveTrackColor: const Color(
-                            0xFF6A9A9A,
-                          ).withValues(alpha: 0.2),
-                          thumbColor: const Color(0xFF6A9A9A),
-                          overlayColor: const Color(
-                            0xFF6A9A9A,
-                          ).withValues(alpha: 0.2),
+                          activeTrackColor: context.primaryColor,
+                          inactiveTrackColor: context.primaryColor.withValues(alpha: 0.2),
+                          thumbColor: context.primaryColor,
+                          overlayColor: context.primaryColor.withValues(alpha: 0.15),
                         ),
                         child: Slider(
                           value: settings.volume,
@@ -420,53 +448,55 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.volume_up,
-                      size: 18,
-                      color: Color(0xFF6A9A9A),
+                    Icon(
+                      Icons.volume_up_rounded,
+                      size: 20,
+                      color: context.primaryColor,
                     ),
                   ],
                 ),
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             // Test button
             Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
+                  HapticFeedback.lightImpact();
                   await _adhanService.test(
                     settings.sound,
                     volume: settings.volume,
                   );
                 },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6A9A9A).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.1),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: const Color(0xFF6A9A9A).withValues(alpha: 0.3),
+                      color: context.primaryColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.play_circle_outline,
-                        color: Color(0xFF6A9A9A),
+                      Icon(
+                        Icons.play_circle_outline_rounded,
+                        color: context.primaryColor,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'تجربة الصوت',
+                        'تجربة صوت الأذان',
                         style: TextStyle(
+                          fontFamily: 'Cairo',
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF6A9A9A),
+                          fontWeight: FontWeight.w700,
+                          color: context.primaryColor,
                         ),
                       ),
                     ],
@@ -501,19 +531,21 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'التنبيه قبل الصلاة',
+                    'التنبيه قبل دخول الوقت',
                     style: TextStyle(
+                      fontFamily: 'Cairo',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      color: context.textPrimaryColor,
                     ),
                   ),
                   Text(
                     '${settings.notifyBeforeMinutes.toInt()} دقيقة',
-                    style: const TextStyle(
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFCAAF7C),
+                      fontWeight: FontWeight.w700,
+                      color: context.goldColor,
                     ),
                   ),
                 ],
@@ -521,12 +553,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               const SizedBox(height: 8),
               SliderTheme(
                 data: SliderThemeData(
-                  activeTrackColor: const Color(0xFFCAAF7C),
-                  inactiveTrackColor: const Color(
-                    0xFFCAAF7C,
-                  ).withValues(alpha: 0.2),
-                  thumbColor: const Color(0xFFCAAF7C),
-                  overlayColor: const Color(0xFFCAAF7C).withValues(alpha: 0.2),
+                  activeTrackColor: context.goldColor,
+                  inactiveTrackColor: context.goldColor.withValues(alpha: 0.2),
+                  thumbColor: context.goldColor,
+                  overlayColor: context.goldColor.withValues(alpha: 0.15),
                 ),
                 child: Slider(
                   value: settings.notifyBeforeMinutes,
@@ -552,9 +582,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 child: Text(
                   'تذكير الإقامة',
                   style: TextStyle(
+                    fontFamily: 'Cairo',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    color: context.textPrimaryColor,
                   ),
                 ),
               ),
@@ -563,12 +594,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 child: Switch(
                   value: settings.iqamaReminders,
                   onChanged: (val) {
+                    HapticFeedback.selectionClick();
                     _updateSettings(settings.copyWith(iqamaReminders: val));
                   },
-                  activeThumbColor: const Color(0xFFCAAF7C),
-                  activeTrackColor: const Color(
-                    0xFFCAAF7C,
-                  ).withValues(alpha: 0.5),
+                  activeThumbColor: context.goldColor,
+                  activeTrackColor: context.goldColor.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -587,10 +617,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
           _buildSectionHeader('تعديل التوقيت', Icons.tune_outlined, isDark),
           const SizedBox(height: 4),
           Text(
-            'تعديل بالدقيقة (+ أو -)',
+            'تعديل التوقيت بالدقيقة (+ أو -)',
             style: TextStyle(
+              fontFamily: 'Cairo',
               fontSize: 12,
-              color: isDark ? Colors.white54 : AppColors.textSecondary,
+              color: context.textSecondaryColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -604,26 +635,28 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     child: Text(
                       name,
                       style: TextStyle(
+                        fontFamily: 'Cairo',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
+                        color: context.textPrimaryColor,
                       ),
                     ),
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: context.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      color: context.surfaceColor,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                        color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildAdjustButton(
-                          icon: Icons.remove,
+                          icon: Icons.remove_rounded,
                           onPressed: () {
+                            HapticFeedback.selectionClick();
                             final updated = Map<String, int>.from(
                               settings.adjustments,
                             );
@@ -639,17 +672,19 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                           child: Text(
                             adj > 0 ? '+$adj' : '$adj',
                             style: TextStyle(
+                              fontFamily: 'Cairo',
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: adj == 0
-                                  ? (isDark ? Colors.white54 : Colors.black54)
-                                  : const Color(0xFF6A9A9A),
+                                  ? context.textSecondaryColor
+                                  : context.primaryColor,
                             ),
                           ),
                         ),
                         _buildAdjustButton(
-                          icon: Icons.add,
+                          icon: Icons.add_rounded,
                           onPressed: () {
+                            HapticFeedback.selectionClick();
                             final updated = Map<String, int>.from(
                               settings.adjustments,
                             );
@@ -684,7 +719,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
           width: 36,
           height: 36,
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: const Color(0xFF6A9A9A)),
+          child: Icon(icon, size: 18, color: context.primaryColor),
         ),
       ),
     );
@@ -694,10 +729,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: context.surfaceContainer,
+        color: context.surfaceColor,
         border: Border(
           top: BorderSide(
-            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
           ),
         ),
       ),
@@ -707,23 +742,26 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
           color: Colors.transparent,
           child: InkWell(
             onTap: _saving ? null : _save,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
               width: double.infinity,
               height: 52,
               decoration: BoxDecoration(
                 gradient: _saving
                     ? null
-                    : const LinearGradient(
-                        colors: [Color(0xFF6A9A9A), Color(0xFF7AB5A8)],
+                    : LinearGradient(
+                        colors: [
+                          context.primaryColor,
+                          context.primaryColor.withValues(alpha: 0.85),
+                        ],
                       ),
                 color: _saving ? Colors.grey : null,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: _saving
                     ? null
                     : [
                         BoxShadow(
-                          color: const Color(0xFF6A9A9A).withValues(alpha: 0.3),
+                          color: context.primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -742,6 +780,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     : const Text(
                         'حفظ الإعدادات',
                         style: TextStyle(
+                          fontFamily: 'Cairo',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
