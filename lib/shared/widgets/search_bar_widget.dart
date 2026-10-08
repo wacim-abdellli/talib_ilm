@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/app_text.dart';
+import '../../app/theme/theme_colors.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final ValueChanged<String> onSearch;
@@ -72,48 +71,40 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Styling constants
-    final borderColor = isDark
-        ? (_isFocused ? AppColors.primary : const Color(0xFF1F1F1F))
-        : (_isFocused
-              ? AppColors.primary
-              : const Color(0xFFE7E5E4)); // Light Stone
-    final borderWidth = _isFocused ? 2.0 : 1.5;
+    final borderColor = _isFocused
+        ? context.goldColor
+        : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08);
+    final borderWidth = _isFocused ? 1.5 : 1.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 48,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141414) : Colors.white,
+        color: context.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
-          isDark
-              ? BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                  spreadRadius: -4,
-                )
-              : BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+          BoxShadow(
+            color: _isFocused
+                ? context.goldColor.withValues(alpha: isDark ? 0.2 : 0.1)
+                : Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
+            blurRadius: _isFocused ? 14 : 6,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: Row(
           children: [
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             // Leading Icon
             Icon(
-              Icons.search,
+              Icons.search_rounded,
               size: 20,
-              color: isDark ? const Color(0xFF666666) : AppColors.textSecondary,
+              color: _isFocused ? context.goldColor : context.textSecondaryColor,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             // TextField
             Expanded(
               child: TextField(
@@ -121,17 +112,19 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 focusNode: _focusNode,
                 textInputAction: TextInputAction.search,
                 onChanged: _onSearchChanged,
-                style: AppText.body.copyWith(
-                  fontSize: 16,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimaryColor,
                 ),
-                cursorColor: AppColors.primary,
+                cursorColor: context.goldColor,
                 decoration: InputDecoration(
                   hintText: widget.hintText,
-                  hintStyle: AppText.body.copyWith(
-                    color: isDark
-                        ? const Color(0xFF666666)
-                        : AppColors.textSecondary.withValues(alpha: 0.6),
+                  hintStyle: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 13,
+                    color: context.textTertiaryColor,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -143,35 +136,31 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             if (_hasText)
               IconButton(
                 icon: Icon(
-                  Icons.close,
-                  size: 20,
-                  color: isDark
-                      ? const Color(0xFFA1A1A1)
-                      : AppColors.textSecondary,
+                  Icons.close_rounded,
+                  size: 18,
+                  color: context.textSecondaryColor,
                 ),
                 onPressed: _clearSearch,
                 splashRadius: 20,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
 
             // Separation line
             Container(
-              height: 24,
+              height: 20,
               width: 1,
-              color: isDark
-                  ? const Color(0xFF333333)
-                  : AppColors.textSecondary.withValues(alpha: 0.2),
+              color: context.outlineVariantColor,
               margin: const EdgeInsets.symmetric(horizontal: 4),
             ),
 
             // Filter Button
             IconButton(
-              icon: const Icon(Icons.tune, size: 20, color: AppColors.primary),
+              icon: Icon(Icons.tune_rounded, size: 19, color: context.primaryColor),
               onPressed: widget.onFilterTap,
               splashRadius: 20,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),
             const SizedBox(width: 4),
           ],
