@@ -24,12 +24,11 @@ import '../../ilm/data/services/motivation_service.dart';
 import '../../ilm/presentation/widgets/motivation_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
-import '../../favorites/presentation/favorites_page.dart';
+import '../../../app/theme/app_colors.dart';
 
 import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
-// import '../../adhkar/presentation/adhkar_page.dart'; // Removed
 import '../../quran/presentation/quran_page.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../data/home_state_controller.dart';
@@ -578,11 +577,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.menu_book_rounded,
                                       label: 'القرآن',
                                       onTap: () => _openQuran(context),
-                                      accentColor: context.goldColor,
+                                      accentColor: AppColors.gold,
                                     ),
                                   ),
 
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
 
                                   // 2. Ilm / Mutun (Teal)
                                   Expanded(
@@ -590,31 +589,31 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.auto_stories_rounded,
                                       label: 'العلم',
                                       onTap: () => _openIlm(context),
-                                      accentColor: context.primaryColor,
+                                      accentColor: AppColors.primary,
                                     ),
                                   ),
 
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
 
-                                  // 3. Favorites (Gold Ring)
+                                  // 3. Adhkar (Emerald)
                                   Expanded(
                                     child: QuickActionButton(
-                                      icon: Icons.favorite_rounded,
-                                      label: 'المفضلة',
-                                      onTap: () => _openFavorites(context),
-                                      accentColor: context.goldColor,
+                                      icon: Icons.spa_rounded,
+                                      label: 'الأذكار',
+                                      onTap: () => _openAdhkar(context),
+                                      accentColor: const Color(0xFF10B981),
                                     ),
                                   ),
 
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
 
-                                  // 4. Qibla (Sacred Green)
+                                  // 4. Qibla (Sky Blue)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.explore_rounded,
                                       label: 'القبلة',
                                       onTap: () => _openQibla(context),
-                                      accentColor: context.islamicGreenColor,
+                                      accentColor: const Color(0xFF0EA5E9),
                                     ),
                                   ),
                                 ],
@@ -657,9 +656,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Navigator.push(context, buildFadeRoute(page: const QiblaPage()));
   }
 
-  void _openFavorites(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: const FavoritesPage()));
+  void _openAdhkar(BuildContext context) {
+    AppShell.switchToTab(context, 3);
   }
+
+
 
   void _openPrayerDetails(BuildContext context) {
     final handled = AppShell.switchToTab(context, 1);
@@ -670,10 +671,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) return 'صباح الخير ☀️';
-    if (hour >= 12 && hour < 17) return 'نهارك سعيد';
-    if (hour >= 17 && hour < 22) return 'مساء الخير 🌙';
-    return 'طاب مساؤك';
+    if (hour >= 5 && hour < 12) return 'صباح الخير والبركة ☀️';
+    if (hour >= 12 && hour < 17) return 'نهارك طيب وسعيد';
+    if (hour >= 17 && hour < 22) return 'مساء السكينة والنور 🌙';
+    return 'طاب مساؤك بذكر الله';
   }
 
   Widget _buildHeroGreetingCard() {
@@ -689,7 +690,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       isEstimated = false;
     } else {
       // Fallback: estimate next prayer based on current time
-      // Note: This logic is a fallback and marked as estimated.
       isEstimated = true;
       final now = DateTime.now();
       final hour = now.hour;
@@ -711,7 +711,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         nextPrayerTime = DateTime(now.year, now.month, now.day, 20, 0);
       } else {
         nextPrayerName = AppStrings.prayerFajr;
-        // Next day Fajr
         nextPrayerTime = DateTime(now.year, now.month, now.day + 1, 5, 0);
       }
     }
@@ -720,6 +719,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       nextPrayerName: nextPrayerName,
       nextPrayerTime: nextPrayerTime,
       isEstimated: isEstimated,
+      allPrayers: day?.prayers,
       onTap: () => _openPrayerDetails(context),
     );
   }
