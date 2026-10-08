@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:talib_ilm/shared/widgets/app_snackbar.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_ui.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../app/app.dart';
 
@@ -21,31 +20,36 @@ class MorePage extends StatelessWidget {
           _MoreSection(
             title: 'إعدادات الصلاة',
             subtitle: 'تنبيهات الأذان وطرق الحساب',
-            icon: Icons.mosque_outlined,
+            icon: Icons.mosque_rounded,
+            color: context.primaryColor,
             onTap: () => _openPrayerSettings(context),
           ),
           _MoreSection(
             title: 'الإعدادات العامة',
             subtitle: AppStrings.moreGeneralSubtitle,
-            icon: Icons.settings_outlined,
+            icon: Icons.location_on_rounded,
+            color: context.islamicGreenColor,
             onTap: () => _openLocationSettings(context),
           ),
           _MoreSection(
             title: 'المظهر',
             subtitle: themeService.themeDisplayName,
             icon: themeService.themeIcon,
+            color: context.goldColor,
             onTap: () => _showThemeSelector(context),
           ),
           _MoreSection(
             title: AppStrings.moreLanguageTitle,
             subtitle: AppStrings.moreLanguageSubtitle,
-            icon: Icons.language_outlined,
+            icon: Icons.translate_rounded,
+            color: context.celestialBlueLightColor,
             onTap: () => _showInfo(context, AppStrings.moreLanguageInfo),
           ),
           _MoreSection(
             title: AppStrings.moreBackupTitle,
             subtitle: AppStrings.moreBackupSubtitle,
-            icon: Icons.backup_outlined,
+            icon: Icons.cloud_sync_rounded,
+            color: context.goldLightColor,
             onTap: () => _showInfo(context, AppStrings.moreBackupInfo),
           ),
         ];
@@ -55,11 +59,14 @@ class MorePage extends StatelessWidget {
           body: Column(
             children: [
               Container(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
                 decoration: BoxDecoration(
                   color: context.surfaceColor,
                   border: Border(
-                    bottom: BorderSide(color: context.borderColor, width: 1),
+                    bottom: BorderSide(
+                      color: context.outlineColor.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
                   ),
                 ),
                 child: SafeArea(
@@ -67,30 +74,56 @@ class MorePage extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 46,
+                        height: 46,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF64748B), Color(0xFF94A3B8)],
+                          gradient: LinearGradient(
+                            colors: [
+                              context.primaryColor,
+                              context.goldColor,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.goldColor.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: const Icon(
-                          Icons.more_horiz_rounded,
+                          Icons.tune_rounded,
                           color: Colors.white,
                           size: 24,
                         ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: Text(
-                          'المزيد',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: context.textPrimaryColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'المزيد',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: context.textPrimaryColor,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            Text(
+                              'الإعدادات والتفضيلات العامة',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: context.textSecondaryColor,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -98,27 +131,71 @@ class MorePage extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: Container(
-                  color: context.backgroundColor,
-                  child: ListView(
-                    padding: AppUi.screenPadding,
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    children: [
-                      const SizedBox(height: AppUi.gapSM),
-                      _MoreSectionCard(section: sections[0]),
-                      const SizedBox(height: AppUi.gapMD),
-                      _MoreSectionCard(section: sections[1]),
-                      const SizedBox(height: AppUi.gapMD),
-                      _MoreSectionCard(section: sections[2]),
-                      const SizedBox(height: AppUi.gapMD),
-                      _MoreSectionCard(section: sections[3]),
-                      const SizedBox(height: AppUi.gapMD),
-                      _MoreSectionCard(section: sections[4]),
-                      const SizedBox(height: 100), // Extra padding for nav bar
-                    ],
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
+                  children: [
+                    ...sections.map(
+                      (section) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _MoreSectionCard(section: section),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // App Footer Card
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.surfaceContainer.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: context.outlineColor.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  'assets/images/logo.png',
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'طالب علم • النسخة 1.0.0',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: context.textSecondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '«من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة»',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: 13,
+                                color: context.goldColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 100), // Extra padding for floating nav bar
+                  ],
                 ),
               ),
             ],
@@ -135,9 +212,9 @@ class MorePage extends StatelessWidget {
   void _showThemeSelector(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: context.surfaceColor,
+      backgroundColor: context.surfaceContainer,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => SafeArea(
         child: Padding(
@@ -148,10 +225,10 @@ class MorePage extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 40,
+                  width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: context.borderColor,
+                    color: context.outlineColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -160,45 +237,49 @@ class MorePage extends StatelessWidget {
               Text(
                 'اختر المظهر',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: context.textPrimaryColor,
+                  fontFamily: 'Cairo',
                 ),
               ),
               const SizedBox(height: 16),
               _ThemeOption(
-                icon: Icons.brightness_auto,
+                icon: Icons.brightness_auto_rounded,
                 title: 'تلقائي',
                 subtitle: 'حسب إعدادات الجهاز',
                 isSelected: themeService.isSystem,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   themeService.setThemeMode(ThemeMode.system);
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _ThemeOption(
-                icon: Icons.light_mode,
+                icon: Icons.light_mode_rounded,
                 title: 'الوضع الفاتح',
                 subtitle: 'مظهر فاتح دائماً',
                 isSelected: themeService.isLight,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   themeService.setThemeMode(ThemeMode.light);
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _ThemeOption(
-                icon: Icons.dark_mode,
+                icon: Icons.dark_mode_rounded,
                 title: 'الوضع الداكن',
                 subtitle: 'مظهر داكن دائماً',
                 isSelected: themeService.isDark,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   themeService.setThemeMode(ThemeMode.dark);
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -213,7 +294,7 @@ class MorePage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
+          top: Radius.circular(24),
         ),
       ),
       builder: (_) => Container(
@@ -230,7 +311,7 @@ class MorePage extends StatelessWidget {
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
+          top: Radius.circular(24),
         ),
       ),
       builder: (_) => LocationSettingsSheet(
@@ -265,12 +346,14 @@ class _ThemeOption extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? context.primaryColor.withValues(alpha: 0.1)
+              ? context.goldColor.withValues(alpha: 0.12)
               : context.surfaceSecondaryColor,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? context.primaryColor : context.borderColor,
-            width: isSelected ? 2 : 1,
+            color: isSelected
+                ? context.goldColor
+                : context.outlineColor.withValues(alpha: 0.2),
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
@@ -280,14 +363,14 @@ class _ThemeOption extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? context.primaryColor.withValues(alpha: 0.15)
-                    : context.borderColor.withValues(alpha: 0.5),
+                    ? context.goldColor.withValues(alpha: 0.2)
+                    : context.surfaceElevatedColor,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 color: isSelected
-                    ? context.primaryColor
+                    ? context.goldColor
                     : context.textSecondaryColor,
                 size: 22,
               ),
@@ -300,15 +383,17 @@ class _ThemeOption extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Cairo',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                       color: context.textPrimaryColor,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
                       color: context.textSecondaryColor,
                     ),
                   ),
@@ -316,7 +401,7 @@ class _ThemeOption extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: context.primaryColor, size: 24),
+              Icon(Icons.check_circle_rounded, color: context.goldColor, size: 24),
           ],
         ),
       ),
@@ -328,12 +413,14 @@ class _MoreSection {
   final String title;
   final String subtitle;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   _MoreSection({
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.color,
     required this.onTap,
   });
 }
@@ -352,8 +439,8 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final radius = BorderRadius.circular(AppUi.radiusMD);
+    final isDark = context.isDark;
+    final color = widget.section.color;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -364,68 +451,48 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
-        scale: _isPressed ? 0.97 : 1.0,
+        scale: _isPressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
         child: Container(
-          padding: AppUi.cardPadding,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            gradient: isDark
-                ? LinearGradient(
-                    colors: _isPressed
-                        ? [const Color(0xFF1A1A1A), const Color(0xFF0F0F0F)]
-                        : [const Color(0xFF0A0A0A), const Color(0xFF0A0A0A)],
-                  )
-                : null,
-            color: isDark
-                ? null
-                : (_isPressed
-                      ? context.surfaceSecondaryColor
-                      : context.surfaceColor),
-            borderRadius: radius,
+            color: context.surfaceContainer,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isDark
-                  ? (_isPressed
-                        ? const Color(0xFF2A2A2A)
-                        : const Color(0xFF1F1F1F))
-                  : context.borderColor,
-              width: AppUi.dividerThickness,
+              color: color.withValues(alpha: isDark ? 0.2 : 0.15),
+              width: 1,
             ),
-            boxShadow: _isPressed && isDark
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF00D9C0).withValues(alpha: 0.1),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                    ),
-                  ]
-                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(
+                  alpha: isDark ? 0.2 : 0.03,
+                ),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
-                width: AppUi.iconBoxSize,
-                height: AppUi.iconBoxSize,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF141414)
-                      : context.backgroundColor,
-                  borderRadius: radius,
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF1F1F1F)
-                        : context.borderColor,
-                    width: AppUi.dividerThickness,
+                    color: color.withValues(alpha: 0.25),
+                    width: 1,
                   ),
                 ),
                 child: Icon(
                   widget.section.icon,
-                  color: isDark
-                      ? const Color(0xFFA1A1A1)
-                      : context.textTertiaryColor,
+                  color: color,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: AppUi.gapMD),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,16 +500,18 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
                     Text(
                       widget.section.title,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontFamily: 'Cairo',
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: context.textPrimaryColor,
                       ),
                     ),
-                    const SizedBox(height: AppUi.gapXS),
+                    const SizedBox(height: 2),
                     Text(
                       widget.section.subtitle,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: context.textSecondaryColor,
                       ),
@@ -451,11 +520,9 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
                 ),
               ),
               Icon(
-                Icons.chevron_left,
-                color: isDark
-                    ? const Color(0xFF666666)
-                    : context.textTertiaryColor,
-                size: 20,
+                Icons.arrow_back_ios_rounded,
+                color: context.textTertiaryColor,
+                size: 15,
               ),
             ],
           ),
