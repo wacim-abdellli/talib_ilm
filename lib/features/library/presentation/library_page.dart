@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../shared/widgets/pressable_card.dart';
@@ -54,7 +54,10 @@ class LibraryPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.surfaceColor,
               border: Border(
-                bottom: BorderSide(color: context.borderColor, width: 1),
+                bottom: BorderSide(
+                  color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                  width: 1,
+                ),
               ),
             ),
             child: SafeArea(
@@ -68,7 +71,7 @@ class LibraryPage extends StatelessWidget {
                         height: 48,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                            colors: [AppColors.primary, AppColors.primaryLight],
                           ),
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -86,6 +89,7 @@ class LibraryPage extends StatelessWidget {
                             Text(
                               'المكتبة',
                               style: TextStyle(
+                                fontFamily: 'Cairo',
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 color: context.textPrimaryColor,
@@ -95,7 +99,8 @@ class LibraryPage extends StatelessWidget {
                             Text(
                               'تصفح كتب العلم الشرعي',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
                                 color: context.textSecondaryColor,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -118,9 +123,12 @@ class LibraryPage extends StatelessWidget {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: context.surfaceSecondaryColor,
+                      color: context.surfaceContainer,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: context.borderColor, width: 1),
+                      border: Border.all(
+                        color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -134,7 +142,8 @@ class LibraryPage extends StatelessWidget {
                           child: Text(
                             'ابحث في الكتب والشروحات...',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontFamily: 'Cairo',
+                              fontSize: 14,
                               color: context.textTertiaryColor,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -179,12 +188,19 @@ class _LibraryLevelCard extends StatelessWidget {
       padding: AppUi.cardPadding,
       borderRadius: radius,
       decoration: BoxDecoration(
-        color: context.surfaceColor,
+        color: context.surfaceContainer,
         borderRadius: radius,
         border: Border.all(
-          color: context.borderColor,
-          width: AppUi.dividerThickness,
+          color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -192,25 +208,32 @@ class _LibraryLevelCard extends StatelessWidget {
             width: AppUi.iconBoxSize,
             height: AppUi.iconBoxSize,
             decoration: BoxDecoration(
-              color: context.backgroundColor,
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: radius,
               border: Border.all(
-                color: context.borderColor,
-                width: AppUi.dividerThickness,
+                color: AppColors.primary.withValues(alpha: 0.2),
+                width: 1,
               ),
             ),
-            child: Icon(level.icon, color: context.textSecondaryColor),
+            child: Icon(level.icon, color: AppColors.primary),
           ),
           const SizedBox(width: AppUi.gapMD),
           Expanded(
             child: Text(
               level.title,
-              style: AppText.sectionTitle.copyWith(
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
                 color: context.textPrimaryColor,
               ),
             ),
           ),
-          Icon(Icons.chevron_right, color: context.textSecondaryColor),
+          Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 15,
+            color: context.textSecondaryColor,
+          ),
         ],
       ),
     );
