@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../core/services/adhkar_session_service.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
-import '../../../shared/widgets/app_popup.dart';
 
 class AdhkarSessionPage extends StatefulWidget {
   final AdhkarCategory category;
@@ -36,7 +33,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   int _index = 0;
   int _count = 0;
   bool _loading = true;
-  bool _showConfetti = false;
+  bool _showSuccessRipple = false;
 
   @override
   void initState() {
@@ -81,16 +78,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     return target <= 0 ? 1 : target;
   }
 
-  Future<void> _saveState() async {
-    // Placeholder for saving session state
-    return;
-  }
-
-  Future<void> _saveCounts() async {
-    // Placeholder for saving counts
-    return;
-  }
-
   void _handleTap() {
     if (_loading || _index >= _items.length) return;
 
@@ -108,24 +95,21 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       _count = nextCount;
       _counts[key] = nextCount;
       if (repeat > 0 && nextCount >= repeat) {
-        _showConfetti = true;
+        _showSuccessRipple = true;
       }
     });
 
     if (repeat > 0 && nextCount >= repeat) {
       HapticFeedback.mediumImpact();
-      Future.delayed(const Duration(milliseconds: 600), () {
+      Future.delayed(const Duration(milliseconds: 650), () {
         if (mounted) {
-          setState(() => _showConfetti = false);
+          setState(() => _showSuccessRipple = false);
           if (_index + 1 < _items.length) {
             _goNext();
           }
         }
       });
     }
-
-    _saveCounts();
-    _saveState();
   }
 
   void _resetCount() {
@@ -136,14 +120,21 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       _count = 0;
       _counts[key] = 0;
     });
-    _saveCounts();
-    _saveState();
   }
 
   void _goNext() {
     if (_loading || _index + 1 >= _items.length) return;
     HapticFeedback.selectionClick();
     _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _goPrev() {
+    if (_loading || _index <= 0) return;
+    HapticFeedback.selectionClick();
+    _pageController.previousPage(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
@@ -158,160 +149,225 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     });
   }
 
-  void _openSettings() {
-    // Placeholder for settings
-    AppPopup.show(
-      context: context,
-      title: 'الإعدادات',
-      message: 'خيارات العرض والصوت ستتوفر قريباً',
-      icon: Icons.settings,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final title =
         widget.titleOverride ?? _categoryTitle ?? widget.category.label;
+    final isDark = context.isDark;
+    final gold = context.goldColor;
+    final textColor = context.textPrimaryColor;
 
     return Scaffold(
-      appBar: UnifiedAppBar(
-        title: title,
-        showBack: true,
-        actions: [
-          IconButton(
-            onPressed: _openSettings,
-            icon: const Icon(Icons.settings_outlined),
-            color: AppColors.textPrimary,
-          ),
-          const SizedBox(width: 8),
-        ],
+      backgroundColor: context.backgroundColor,
+      appBar: AppBar(
+        title: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: 'Amiri',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            if (_items.isNotEmpty)
+              Text(
+                'الذكر ${_index + 1} من ${_items.length}',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: gold,
+                ),
+              ),
+          ],
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: gold),
       ),
-      body: Container(
-        color: context.backgroundColor,
-        child: SafeArea(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                  children: [
-                    // Main Content (Swipeable Text + Counter)
-                    // We need the counter to be persistent but update values,
-                    // OR swipe the whole thing. "Swipe left/right: PageView to next/previous dhikr".
-                    // Usually better to swipe specific content and keep controls static,
-                    // BUT "Smooth transition" usually implies the whole card swipes.
-                    // Given the request separates "Above circle: Dhikr..." and "Center Circle...",
-                    // let's try swiping the TEXT and keeping the counter static but updating?
-                    // "Center CircularProgressIndicator... Tap circle area: increment".
-                    // If I swipe, the count changes.
-                    // Let's use a PageView for the TOP part (Text) and update the bottom part (Counter).
-                    Column(
-                      children: [
-                        // PageView for Dhikr Text
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: _items.length,
-                            onPageChanged: _onPageChanged,
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final item = _items[index];
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Spacer(),
-                                    // Arabic
-                                    Text(
-                                      item.arabic,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Amiri',
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1.6,
-                                        color: context.textPrimaryColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    // Meaning/Translation
-                                    if (item.meaning.isNotEmpty)
-                                      Text(
-                                        item.meaning,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          height: 1.5,
-                                          color: context.textSecondaryColor,
+      body: SafeArea(
+        child: _loading
+            ? Center(child: CircularProgressIndicator(color: gold))
+            : _items.isEmpty
+                ? Center(
+                    child: Text(
+                      'لا توجد أذكار في هذه الفئة',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: context.textSecondaryColor,
+                      ),
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      Column(
+                        children: [
+                          // Dhikr Text Carousel
+                          Expanded(
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: _items.length,
+                              onPageChanged: _onPageChanged,
+                              physics: const BouncingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                final item = _items[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  child: Center(
+                                    child: SingleChildScrollView(
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(22),
+                                        decoration: BoxDecoration(
+                                          color: context.surfaceContainer,
+                                          borderRadius: BorderRadius.circular(24),
+                                          border: Border.all(
+                                            color: gold.withValues(
+                                              alpha: isDark ? 0.25 : 0.2,
+                                            ),
+                                            width: 1.2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: isDark ? 0.25 : 0.04,
+                                              ),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // Arabic Sacred Text
+                                            Text(
+                                              item.arabic,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontFamily: 'Amiri',
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                height: 1.8,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                            if (item.meaning.isNotEmpty) ...[
+                                              const SizedBox(height: 14),
+                                              Divider(
+                                                color: context.outlineColor
+                                                    .withValues(alpha: 0.15),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                item.meaning,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontFamily: 'Cairo',
+                                                  fontSize: 13,
+                                                  height: 1.6,
+                                                  color: context.textSecondaryColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ),
-                                    const SizedBox(
-                                      height: 40,
-                                    ), // "padding bottom 40" relative to text area
-                                    const Spacer(),
-                                  ],
-                                ),
-                              );
-                            },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
 
-                        // Counter Area (Static position, updates values)
-                        if (_items.isNotEmpty)
+                          const SizedBox(height: 10),
+
+                          // Counter Dial
                           _buildCounterArea(_items[_index]),
 
-                        const SizedBox(height: 40),
+                          const SizedBox(height: 16),
 
-                        // Bottom Controls Layer is overlay, or row here?
-                        // "Reset button: bottom-left".
-                        // Let's create a dedicated bottom area or use Stack for the button.
-                        // Ideally strictly separated.
-                        const SizedBox(height: 80), // Space for bottom controls
-                      ],
-                    ),
-
-                    // Reset Button (Bottom Left)
-                    Positioned(
-                      left: 24,
-                      bottom: 24,
-                      child: Material(
-                        color: Colors.transparent,
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: _resetCount,
-                          customBorder: const CircleBorder(),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: context.outlineVariantColor,
-                              ),
+                          // Bottom Navigation Bar
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
                             ),
-                            child: Icon(
-                              Icons.replay,
-                              color: context.textSecondaryColor,
-                              size: 24,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Previous
+                                IconButton.filledTonal(
+                                  onPressed: _index > 0 ? _goPrev : null,
+                                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: context.surfaceContainer,
+                                    foregroundColor: textColor,
+                                  ),
+                                  tooltip: 'السابق',
+                                ),
+
+                                // Reset
+                                OutlinedButton.icon(
+                                  onPressed: _resetCount,
+                                  icon: Icon(
+                                    Icons.replay_rounded,
+                                    size: 16,
+                                    color: context.textSecondaryColor,
+                                  ),
+                                  label: Text(
+                                    'إعادة العداد',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 12,
+                                      color: context.textSecondaryColor,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: context.outlineColor.withValues(alpha: 0.2),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+
+                                // Next
+                                IconButton.filledTonal(
+                                  onPressed: _index + 1 < _items.length ? _goNext : null,
+                                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: context.surfaceContainer,
+                                    foregroundColor: textColor,
+                                  ),
+                                  tooltip: 'التالي',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+
+                      // Completion Ripple
+                      if (_showSuccessRipple)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              color: context.islamicGreenColor.withValues(alpha: 0.12),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-
-                    // Confetti/Completion Overlay
-                    if (_showConfetti)
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            color: context.primaryColor.withValues(alpha: 0.12),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
+                    ],
+                  ),
       ),
     );
   }
@@ -319,27 +375,29 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Widget _buildCounterArea(AthkarItem item) {
     final repeat = _repeatFor(_items, _index);
     final isComplete = repeat > 0 && _count >= repeat;
+    final gold = context.goldColor;
+    final primary = context.primaryColor;
 
     return GestureDetector(
       onTap: _handleTap,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // The Circle
+          // Circular Progress Dial
           SizedBox(
-            width: 280,
-            height: 280,
+            width: 210,
+            height: 210,
             child: CustomPaint(
               painter: _DhikrProgressPainter(
                 count: _count,
                 total: repeat,
-                trackColor: context.outlineVariantColor,
-                progressColor: context.primaryColor,
+                trackColor: context.outlineColor.withValues(alpha: 0.15),
+                progressColor: isComplete ? context.islamicGreenColor : gold,
               ),
             ),
           ),
 
-          // Inner Text
+          // Inner Numbers & Details
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -351,30 +409,65 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                   '$_count',
                   key: ValueKey(_count),
                   style: TextStyle(
-                    fontSize: 96,
+                    fontFamily: 'Cairo',
+                    fontSize: 72,
                     fontWeight: FontWeight.w900,
-                    color: context.textPrimaryColor,
+                    color: isComplete ? context.islamicGreenColor : context.textPrimaryColor,
                     height: 1,
                   ),
                 ),
               ),
               if (repeat > 0) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'من $repeat',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontFamily: 'Cairo',
+                    fontSize: 16,
                     color: context.textSecondaryColor,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
               if (isComplete) ...[
-                const SizedBox(height: 8),
-                Icon(
-                  Icons.check_circle,
-                  color: context.primaryColor,
-                  size: 32,
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: context.islamicGreenColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: context.islamicGreenColor,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'اكتمل',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: context.islamicGreenColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 4),
+                Text(
+                  'المس للعد',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 11,
+                    color: primary.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ],
@@ -384,10 +477,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     );
   }
 
-  // Helpers
   String _catalogIdFor(AdhkarCategory category) {
     if (category == AdhkarCategory.sleeping) {
-      return 'sleeping'; // Will fallback in loadItems if not found
+      return 'sleeping';
     }
     if (category == AdhkarCategory.afterPrayer) {
       return 'after_prayer';
@@ -429,27 +521,27 @@ class _DhikrProgressPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final radius = (size.width - 16) / 2; // Stroke 16
+    final radius = (size.width - 14) / 2;
 
-    // Track
+    // Track circle
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
+      ..strokeWidth = 10
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, trackPaint);
 
     if (total <= 0) return;
 
-    // Progress
+    // Progress arc
     final progress = (count / total).clamp(0.0, 1.0);
     if (progress > 0) {
       final rect = Rect.fromCircle(center: center, radius: radius);
       final progressPaint = Paint()
         ..color = progressColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 16
+        ..strokeWidth = 10
         ..strokeCap = StrokeCap.round;
 
       canvas.drawArc(
