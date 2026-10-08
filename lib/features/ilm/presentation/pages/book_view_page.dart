@@ -600,16 +600,18 @@ class _BookViewPageState extends State<BookViewPage>
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
-            color: const Color(0xFF6A9A9A).withValues(alpha: 0.12),
+            color: AppColors.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
           ),
-          labelColor: const Color(0xFF6A9A9A),
+          labelColor: AppColors.primary,
           unselectedLabelColor: context.textSecondaryColor,
           labelStyle: const TextStyle(
+            fontFamily: 'Cairo',
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
           unselectedLabelStyle: const TextStyle(
+            fontFamily: 'Cairo',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -632,29 +634,29 @@ class _BookViewPageState extends State<BookViewPage>
                   heroTag: 'bookmark_fab',
                   mini: true,
                   backgroundColor: _isBookmarked
-                      ? context.primaryColor
-                      : context.surfaceElevatedColor,
+                      ? AppColors.gold
+                      : context.surfaceContainer,
                   onPressed: _toggleBookmark,
                   child: Icon(
-                    _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: _isBookmarked ? Colors.white : context.primaryColor,
+                    _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                    color: _isBookmarked ? Colors.white : AppColors.gold,
                   ),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
                   heroTag: 'note_fab',
                   mini: true,
-                  backgroundColor: context.surfaceElevatedColor,
+                  backgroundColor: context.surfaceContainer,
                   onPressed: _showNoteDialog,
-                  child: Icon(Icons.note_add, color: context.primaryColor),
+                  child: const Icon(Icons.note_add_rounded, color: AppColors.primary),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
                   heroTag: 'bookmarks_fab',
                   mini: true,
-                  backgroundColor: context.surfaceElevatedColor,
+                  backgroundColor: context.surfaceContainer,
                   onPressed: _showGlobalBookmarksList,
-                  child: Icon(Icons.list, color: context.primaryColor),
+                  child: const Icon(Icons.list_alt_rounded, color: AppColors.primary),
                 ),
               ],
             )

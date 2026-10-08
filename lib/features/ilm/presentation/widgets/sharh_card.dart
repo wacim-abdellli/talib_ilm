@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_colors.dart';
-import '../../../../app/theme/app_text.dart';
 import '../../../../app/theme/app_ui.dart';
 
 class SharhCard extends StatelessWidget {
@@ -61,13 +60,17 @@ class SharhCard extends StatelessWidget {
         bottom: AppUi.gapMD,
       ), // Use external margin if needed, or parent handles it
       decoration: BoxDecoration(
-        color: context.surfaceColor, // White/Surface
+        color: context.surfaceContainer,
         borderRadius: borderRadius,
+        border: Border.all(
+          color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -83,7 +86,7 @@ class SharhCard extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: context.goldColor, // Gold
+                    color: context.goldColor.withValues(alpha: 0.8),
                     width: 3,
                   ),
                 ),
@@ -91,7 +94,7 @@ class SharhCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppUi.paddingMD),
               child: Row(
                 children: [
-                  // 1. Left: Scholar icon circle (Leading in Row)
+                  // 1. Scholar icon circle
                   _ScholarIcon(),
 
                   const SizedBox(width: AppUi.gapMD),
@@ -105,7 +108,8 @@ class SharhCard extends StatelessWidget {
                         // Title
                         Text(
                           title,
-                          style: AppText.body.copyWith(
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: context.textPrimaryColor,
@@ -117,8 +121,9 @@ class SharhCard extends StatelessWidget {
                         // Subtitle
                         Text(
                           subtitleText,
-                          style: AppText.body.copyWith(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13,
                             color: context.textSecondaryColor,
                           ),
                           maxLines: 1,
@@ -129,9 +134,10 @@ class SharhCard extends StatelessWidget {
                           // Progress
                           Text(
                             progressText,
-                            style: AppText.body.copyWith(
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
                               fontSize: 12,
-                              color: context.primaryColor, // Teal
+                              color: context.primaryColor,
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
@@ -144,14 +150,11 @@ class SharhCard extends StatelessWidget {
 
                   const SizedBox(width: AppUi.gapSM),
 
-                  // 3. Right: arrow_forward_ios (Trailing)
+                  // 3. Trailing arrow
                   Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 15,
                     color: context.textTertiaryColor,
-                    // Note: In RTL, this points Right (>).
-                    // If visual matching "Right" is desired, this is correct placement (End).
-                    // If direction is confusing, user can provide feedback.
                   ),
                 ],
               ),
