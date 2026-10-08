@@ -41,9 +41,9 @@ class ProfessionalQuranScreen extends StatelessWidget {
     // BLACK & GOLD MUSHAF THEME (To hide blue clash)
     // ═══════════════════════════════════════════════════════════════
 
-    // Background Colors - PURE BLACK
+    // Background Colors - Spiritual Dark Base / Warm Cream Paper
     final Color backgroundColor = isDark
-        ? const Color(0xFF000000) // Pure Black
+        ? const Color(0xFF121212) // Spiritual Dark Base (reduced eye strain)
         : const Color(0xFFFDF8F0); // Warm Cream Paper
 
     // Text Colors
