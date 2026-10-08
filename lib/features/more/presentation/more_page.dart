@@ -4,12 +4,37 @@ import '../../../shared/widgets/app_snackbar.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../app/app.dart';
-
+import '../../quran/data/services/reading_stats_service.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 
-class MorePage extends StatelessWidget {
+class MorePage extends StatefulWidget {
   const MorePage({super.key});
+
+  @override
+  State<MorePage> createState() => _MorePageState();
+}
+
+class _MorePageState extends State<MorePage> {
+  int _streak = 0;
+  int _minutesToday = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final stats = await ReadingStatsService().getDailyStats();
+    final streak = await ReadingStatsService().getStreak();
+    if (mounted) {
+      setState(() {
+        _minutesToday = stats['minutes'] ?? 0;
+        _streak = streak;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,20 +44,20 @@ class MorePage extends StatelessWidget {
         final sections = <_MoreSection>[
           _MoreSection(
             title: 'إعدادات الصلاة',
-            subtitle: 'تنبيهات الأذان وطرق الحساب',
+            subtitle: 'تنبيهات الأذان وطرق الحساب ومواقيت الصلاة',
             icon: Icons.mosque_rounded,
             color: context.primaryColor,
             onTap: () => _openPrayerSettings(context),
           ),
           _MoreSection(
-            title: 'الإعدادات العامة',
+            title: 'الإعدادات العامة والموقع',
             subtitle: AppStrings.moreGeneralSubtitle,
             icon: Icons.location_on_rounded,
             color: context.islamicGreenColor,
             onTap: () => _openLocationSettings(context),
           ),
           _MoreSection(
-            title: 'المظهر',
+            title: 'المظهر والسمة',
             subtitle: themeService.themeDisplayName,
             icon: themeService.themeIcon,
             color: context.goldColor,
@@ -54,10 +79,14 @@ class MorePage extends StatelessWidget {
           ),
         ];
 
+        final isDark = context.isDark;
+        final gold = context.goldColor;
+
         return Scaffold(
           backgroundColor: context.backgroundColor,
           body: Column(
             children: [
+              // Header
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
                 decoration: BoxDecoration(
@@ -80,7 +109,7 @@ class MorePage extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               context.primaryColor,
-                              context.goldColor,
+                              gold,
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -88,7 +117,7 @@ class MorePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: context.goldColor.withValues(alpha: 0.25),
+                              color: gold.withValues(alpha: 0.25),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -130,6 +159,8 @@ class MorePage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // Content List
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -137,13 +168,155 @@ class MorePage extends StatelessWidget {
                     parent: AlwaysScrollableScrollPhysics(),
                   ),
                   children: [
+                    // Student Journey Summary Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF1F2B2B),
+                                  const Color(0xFF141E1E),
+                                ]
+                              : [
+                                  const Color(0xFFFFFDF8),
+                                  const Color(0xFFF7F3EA),
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: gold.withValues(alpha: isDark ? 0.35 : 0.28),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.25 : 0.04,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: gold.withValues(alpha: 0.15),
+                              border: Border.all(
+                                color: gold.withValues(alpha: 0.4),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 30,
+                                height: 30,
+                                errorBuilder: (context, error, stackTrace) => Icon(
+                                  Icons.menu_book_rounded,
+                                  color: gold,
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'طالب علم',
+                                      style: TextStyle(
+                                        fontFamily: 'Amiri',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.textPrimaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: gold.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'سائر في الطلب',
+                                        style: TextStyle(
+                                          fontFamily: 'Cairo',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: gold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.local_fire_department_rounded,
+                                      size: 14,
+                                      color: const Color(0xFFE57373),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$_streak أيام تتابع',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 12,
+                                        color: context.textSecondaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.access_time_rounded,
+                                      size: 14,
+                                      color: context.islamicGreenColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$_minutesToday دقيقة اليوم',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 12,
+                                        color: context.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Section Cards
                     ...sections.map(
                       (section) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _MoreSectionCard(section: section),
                       ),
                     ),
-                    const SizedBox(height: 20),
+
+                    const SizedBox(height: 16),
+
                     // App Footer Card
                     Center(
                       child: Container(
@@ -153,7 +326,7 @@ class MorePage extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: context.surfaceContainer.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: context.outlineColor.withValues(alpha: 0.1),
                           ),
@@ -165,8 +338,13 @@ class MorePage extends StatelessWidget {
                               children: [
                                 Image.asset(
                                   'assets/images/logo.png',
-                                  width: 24,
-                                  height: 24,
+                                  width: 22,
+                                  height: 22,
+                                  errorBuilder: (context, error, stackTrace) => Icon(
+                                    Icons.mosque_rounded,
+                                    size: 18,
+                                    color: gold,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -185,8 +363,8 @@ class MorePage extends StatelessWidget {
                               '«من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة»',
                               style: TextStyle(
                                 fontFamily: 'Amiri',
-                                fontSize: 13,
-                                color: context.goldColor,
+                                fontSize: 14,
+                                color: gold,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -247,7 +425,7 @@ class MorePage extends StatelessWidget {
               _ThemeOption(
                 icon: Icons.brightness_auto_rounded,
                 title: 'تلقائي',
-                subtitle: 'حسب إعدادات الجهاز',
+                subtitle: 'حسب إعدادات النظام',
                 isSelected: themeService.isSystem,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -259,7 +437,7 @@ class MorePage extends StatelessWidget {
               _ThemeOption(
                 icon: Icons.light_mode_rounded,
                 title: 'الوضع الفاتح',
-                subtitle: 'مظهر فاتح دائماً',
+                subtitle: 'مظهر فاتح وناصع',
                 isSelected: themeService.isLight,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -271,7 +449,7 @@ class MorePage extends StatelessWidget {
               _ThemeOption(
                 icon: Icons.dark_mode_rounded,
                 title: 'الوضع الداكن',
-                subtitle: 'مظهر داكن دائماً',
+                subtitle: 'مظهر ليلي مريح للعين',
                 isSelected: themeService.isDark,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -315,9 +493,7 @@ class MorePage extends StatelessWidget {
         ),
       ),
       builder: (_) => LocationSettingsSheet(
-        onSaved: () {
-          // No-op for now unless we have a global reload trigger
-        },
+        onSaved: () {},
       ),
     );
   }
@@ -460,7 +636,7 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
             color: context.surfaceContainer,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: color.withValues(alpha: isDark ? 0.2 : 0.15),
+              color: color.withValues(alpha: isDark ? 0.22 : 0.16),
               width: 1,
             ),
             boxShadow: [
@@ -520,9 +696,9 @@ class _MoreSectionCardState extends State<_MoreSectionCard> {
                 ),
               ),
               Icon(
-                Icons.arrow_back_ios_rounded,
-                color: context.textTertiaryColor,
-                size: 15,
+                Icons.arrow_back_ios_new_rounded,
+                color: context.textSecondaryColor,
+                size: 13,
               ),
             ],
           ),
