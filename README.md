@@ -1,16 +1,173 @@
-# talib_ilm
+<div align="center">
 
-A new Flutter project.
+  <img src="assets/images/logo.png" alt="Talib Ilm Logo" width="120" height="120" style="border-radius: 20%;" />
 
-## Getting Started
+  # طالب العلم | Talib Ilm
 
-This project is a starting point for a Flutter application.
+  **تطبيق إرشادي متكامل لطالب العلم الشرعي ومسلم اليوم**  
+  *A Comprehensive Flutter Application for Students of Islamic Knowledge*
 
-A few resources to get you started if this is your first Flutter project:
+  [![Flutter](https://img.shields.io/badge/Flutter-v3.10%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+  [![Dart](https://img.shields.io/badge/Dart-v3.10%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+  [![Platform](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-4CAF50)](#منصات-التشغيل)
+  [![Version](https://img.shields.io/badge/Version-1.0.1-blue)](#)
+  [![License](https://img.shields.io/badge/License-Open%20Source-amber)](#)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+</div>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 📌 نبذة عن التطبيق | About The App
+
+**تطبيق "طالب العلم"** هو رفيق إسلامي رقمي شامل مبني بأحدث تقنيات **Flutter**، يهدف إلى تيسير سلوك طريق طلب العلم الشرعي وفق منهجية متدرجة وواضحة، مع توفير كل ما يحتاجه المسلم في يومه وليلته من قراءة القرآن الكريم، متابعة مواقيت الصلاة والأذان بدقة، تلاوة الأذكار اليومية، والسبحة الإلكترونية، كل ذلك بواجهة عصرية وتجربة مستخدم فاخرة تدعم الوضعين الفاتح والداكن.
+
+> قال رسول الله ﷺ: **«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»** [صحيح مسلم]
+
+---
+
+## ✨ المميزات الرئيسية | Key Features
+
+### 📖 1. القرآن الكريم (The Holy Quran)
+- **قراءة المصحف الشريف:** عرض صفحات المصحف الشريف بالرسم العثماني المعتمد مع خطوط عالية الوضوح (*Cairo, Scheherazade New, Amiri*).
+- **التنقل والفهرس:** فهرس متكامل للسور، الأجزاء، والأحزاب، مع إمكانية القفز السريع للصفحات.
+- **التلاوات الصوتية:** استماع للتلاوة العطرة بأصوات نخبة من أشهر القراء عبر مشغل صوتيات متقدم (`just_audio`).
+- **العلامات المرجعية:** حفظ مواضع القراءة والرجوع إليها بسهولة.
+- **دعم الروايات والترجمات:** دعم تعدد الروايات والتفاسير الميسرة.
+
+### 📚 2. منهج طالب العلم والمتون العلمية (Mutun & Curriculum)
+- **تدرج منهجي ومستويات علمية:** تقسيم المنهج الدراسي إلى مستويات مدروسة تبدأ من المتون التأسيسية.
+- **المتون المشهورة:** متون العقيدة، الفقه، والحديث (مثل *الأصول الثلاثة، القواعد الأربع، كتاب التوحيد، كشف الشبهات* وغيرها).
+- **الشروح والتعليقات:** قارئ PDF مدمج وسلس (`Syncfusion Flutter PDF Viewer`) لقراءة شروح العلماء الموثوقة دون الحاجة لتطبيقات خارجية.
+- **الدروس المرئية والصوتية:** ربط كل متن بسلسلة دروس وشروحات عبر مشغل فيديو يوتيوب متكامل ودعم المقاطع المحملة.
+- **متابعة الإنجاز:** تتبع نسبة قراءة المتن والشروح وحفظ آخر صفحة تم الوصول إليها تلقائياً.
+
+### 🕌 3. مواقيت الصلاة والأذان (Prayer Times & Adhan)
+- **حساب دقيق للمواقيت:** حساب دقيق لمواقيت الصلوات الخمس والشروق باستخدام محرك `adhan` الموثوق.
+- **تحديد الموقع:** دعم التحديد التلقائي عبر الـ GPS أو إدخال الإحداثيات والمدينة يدوياً.
+- **التنبيهات والأذان:** إشعارات محلية عند دخول وقت كل صلاة مع أصوات أذان متعددة (أذان مكة المكرمة، أذان المدينة المنورة) ووضع صامت.
+- **اتجاه القبلة:** بوصلة رقمية مدمجة لمعرفة اتجاه القبلة بدقة (`flutter_compass`).
+
+### 📿 4. الأذكار وحصن المسلم والسبحة (Adhkar & Tasbeeh)
+- **أذكار اليوم والليلة:** أذكار الصباح، أذكار المساء، أذكار ما بعد الصلاة، وأدعية مختارة.
+- **عداد تفاعلي ذكي:** واجهة عداد للأذكار مع تفاعل حركي واهتزازي لطيف عند كل تسبيحة، وتنبيه عند إتمام العدد المطلوب.
+- **السبحة الرقمية والاستغفار:** سبحة إلكترونية حرة تتيح تحديد أهداف مخصصة (مثل 33، 100، أو عد غير محدود).
+- **بيان الفضل والمصدر:** إيضاح فضل كل ذكر ومصدره من السنة المطهرة.
+
+### 🎯 5. الورد اليومي وسجل العزم (Daily Werd & Streaks)
+- **ورد القراءة اليومي:** تحديد هدف يومي لعدد الصفحات ومتابعة نسبة الإنجاز والاحتفال بالختام.
+- **سجل العزم (Daily Streaks):** تحفيز الطالب على المواظبة اليومية على العلم والذكر بدون انقطاع.
+- **فائدة اليوم:** عرض حديث شريف، ذكر، أو فائدة علمية متجددة يومياً على الشاشة الرئيسية.
+
+### 🎨 6. التصميم وتجربة المستخدم (UI & Aesthetics)
+- **تصميم عصري متقن (Material 3):** واجهات أنيقة مستوحاة من الهوية الإسلامية.
+- **دعم الوضعين الفاتح والداكن:** Light Mode & Dark Mode مريحين للعين أثناء القراءة الليلية.
+- **دعم كامل للغة العربية (RTL):** خطوط عربية مخصصة، وتدرج لوني هادئ ومريح.
+- **أداء عالي وخفيف:** استهلاك مثالي للذاكرة والبطارية مع إمكانية العمل أوفلاين.
+
+---
+
+## 🛠️ البنية التقنية والمكتبات | Tech Stack & Libraries
+
+| المجال | المكتبات المستخدمة |
+| :--- | :--- |
+| **إطار العمل واللغة** | Flutter 3.10+ / Dart 3.10+ |
+| **القرآن الكريم** | `quran_library`, `quran` |
+| **مواقيت الصلاة** | `adhan`, `geolocator`, `geocoding`, `flutter_compass` |
+| **قارئ الكتب والمستندات** | `syncfusion_flutter_pdfviewer` |
+| **الصوتيات والوسائط** | `just_audio`, `youtube_player_flutter`, `flutter_inappwebview` |
+| **الإشعارات والتوقيت** | `flutter_local_notifications`, `timezone`, `flutter_timezone` |
+| **التخزين المحلي** | `shared_preferences`, `sqflite`, `path_provider` |
+| **الخطوط والواجهات** | `Cairo`, `ScheherazadeNew`, `Amiri`, `Vazirmatn`, `shimmer` |
+
+---
+
+## 📂 هيكل المشروع | Project Architecture
+
+يتبع المشروع معمارية مجزأة تعتمد على الميزات (**Feature-First Clean Architecture**):
+
+```text
+lib/
+├── app/                        # إعدادات التطبيق العامة، الثيمات، والثوابت
+│   ├── constants/              # نصوص التطبيق ومفاتيح التخزين
+│   ├── theme/                  # الثيم الفاتح/الداكن والألوان والقياسات
+│   └── app.dart                # المكون الجذري للتطبيق
+├── core/                       # الخدمات المشتركة الأساسية
+│   └── services/               # خدمات الثيم، الأذان، الإشعارات، والتخزين
+├── features/                   # ميزات التطبيق المستقلة
+│   ├── home/                   # الصفحة الرئيسية ولوحة التحكم اليومية
+│   ├── quran/                  # قارئ المصحف الشريف والتلاوات
+│   ├── ilm/                    # منهج المتون والمستويات العلمية والشروح
+│   ├── prayer/                 # مواقيت الصلاة، الأذان، والقبلة
+│   ├── adhkar/                 # الأذكار، الأدعية، والسبحة الرقمية
+│   ├── library/                # مكتبة الكتب ومستندات PDF
+│   ├── favorites/              # المفضلة والمحفوظات
+│   └── more/                   # الإعدادات العامة وخيارات التطبيق
+├── shared/                     # المكونات والـ Widgets المشتركة عبر التطبيق
+└── utils/                      # الدوال المساعدة ومعالجة الاتصال
+```
+
+---
+
+## 🚀 التشغيل والتثبيت | Getting Started
+
+### 📋 المتطلبات الأساسية
+- تثبيت [Flutter SDK](https://docs.flutter.dev/get-started/install) (الإصدار `^3.10.4` أو أحدث).
+- تثبيت [Git](https://git-scm.com/).
+- بيئة تطوير: [VS Code](https://code.visualstudio.com/) أو [Android Studio](https://developer.android.com/studio).
+
+### ⚙️ خطوات التثبيت
+
+1. **استنساخ المستودع (Clone the repository):**
+   ```bash
+   git clone https://github.com/wacim-abdellli/talib_ilm.git
+   cd talib_ilm
+   ```
+
+2. **تثبيت حزم ومكتبات المشروع (Get dependencies):**
+   ```bash
+   flutter pub get
+   ```
+
+3. **تشغيل التطبيق في وضع التطوير (Run locally):**
+   ```bash
+   flutter run
+   ```
+
+### 📦 بناء النسخة النهائية (Build for Release)
+
+- **أندرويد APK:**
+  ```bash
+  flutter build apk --release
+  ```
+- **حزمة أندرويد (App Bundle):**
+  ```bash
+  flutter build appbundle --release
+  ```
+- **نظام ويندوز (Windows Desktop):**
+  ```bash
+  flutter build windows --release
+  ```
+
+---
+
+## 🤝 المساهمة | Contributing
+
+المساهمات مرحب بها دائماً! إذا كانت لديك أفكار لتحسين التطبيق أو إضافة متون وخصائص جديدة:
+1. قم بعمل **Fork** للمشروع.
+2. أنشئ فرعاً لميزتك (`git checkout -b feature/amazing-feature`).
+3. سجّل التعديلات (`git commit -m 'feat: Add amazing feature'`).
+4. ارفع التعديلات على الفرع (`git push origin feature/amazing-feature`).
+5. افتح **Pull Request** لمراجعة التغييرات.
+
+---
+
+## 📄 الترخيص | License
+
+هذا المشروع متاح للاستخدام وفق رخصة مفتوحة ومجانية، صدقة جارية ونفعاً لطلاب العلم والمسلمين جميعاً.
+
+---
+
+<div align="center">
+  <sub>نسأل الله أن ينفع بهذا العمل وأن يجعله خالصاً لوجهه الكريم</sub><br>
+  <sub>صنع بـ ❤️ لخدمة طلاب العلم والمسلمين</sub>
+</div>
