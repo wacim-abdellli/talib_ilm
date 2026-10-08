@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../core/models/favorite_item.dart';
@@ -233,6 +234,19 @@ class _DuaCardState extends State<_DuaCard> {
     AppSnackbar.success(context, 'تم نسخ الدعاء إلى الحافظة');
   }
 
+  void _share() {
+    HapticFeedback.lightImpact();
+    final text = StringBuffer()..writeln(widget.item.arabic);
+    if (widget.item.meaning.isNotEmpty) {
+      text.writeln('\n${widget.item.meaning}');
+    }
+    if (widget.item.source.isNotEmpty) {
+      text.writeln('\n— ${widget.item.source}');
+    }
+    text.writeln('\n(من تطبيق طالب العلم)');
+    Share.share(text.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -309,6 +323,13 @@ class _DuaCardState extends State<_DuaCard> {
                   color: context.textSecondaryColor,
                   visualDensity: VisualDensity.compact,
                   onPressed: _copy,
+                ),
+                IconButton(
+                  tooltip: 'مشاركة الدعاء',
+                  icon: const Icon(Icons.share_rounded, size: 19),
+                  color: context.textSecondaryColor,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _share,
                 ),
                 IconButton(
                   tooltip: _isFavorite ? 'في المفضلة' : 'إضافة للمفضلة',
