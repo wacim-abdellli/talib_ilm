@@ -544,28 +544,29 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Tiles Dark Styling
-    final tileBg = context.surfaceColor;
-    final tileBorder = context.outlineVariantColor;
+    // Tiles Styling
+    final accentColors = _getCategoryColors(data.id);
+    final tileBg = context.surfaceContainer;
+    final tileBorder = accentColors[0].withValues(alpha: isDark ? 0.22 : 0.18);
     final textColor = context.textPrimaryColor;
     final subtitleColor = context.textSecondaryColor;
-
-    // Get category accent color
-    final accentColors = _getCategoryColors(data.id);
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             color: accentColors[0].withValues(alpha: isDark ? 0.2 : 0.12),
             shape: BoxShape.circle,
+            border: Border.all(
+              color: accentColors[0].withValues(alpha: 0.3),
+            ),
           ),
           child: Icon(
             _getCategoryIcon(data.id),
-            size: 24,
+            size: 22,
             color: accentColors[0],
           ),
         ),
@@ -573,18 +574,20 @@ class _CategoryTile extends StatelessWidget {
         Text(
           data.title,
           style: TextStyle(
-            fontSize: 16,
+            fontFamily: 'Cairo',
+            fontSize: 15,
             fontWeight: FontWeight.w700,
             color: textColor,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           _subtitleLabel(data.total),
           style: TextStyle(
-            fontSize: 13,
+            fontFamily: 'Cairo',
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: subtitleColor,
           ),
@@ -595,7 +598,7 @@ class _CategoryTile extends StatelessWidget {
       ],
     );
 
-    final radius = BorderRadius.circular(16);
+    final radius = BorderRadius.circular(18);
 
     return PressableCard(
       onTap: data.onTap,
@@ -605,25 +608,29 @@ class _CategoryTile extends StatelessWidget {
         color: tileBg,
         borderRadius: radius,
         border: Border.all(color: tileBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Stack(
         children: [
-          // Colored left stripe
+          // Subtle top colored indicator
           Positioned(
-            left: 0,
+            left: 20,
+            right: 20,
             top: 0,
-            bottom: 0,
             child: Container(
-              width: 4,
+              height: 3,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
                   colors: accentColors,
                 ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(3),
                 ),
               ),
             ),
