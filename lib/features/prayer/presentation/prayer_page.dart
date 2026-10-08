@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
@@ -13,7 +14,6 @@ import '../../../core/utils/responsive.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/pressable_card.dart';
 
 import 'package:shimmer/shimmer.dart'; // Direct shimmer import if needed for extensions? No, wrapper used.
 import '../../../shared/widgets/shimmer_loading.dart';
@@ -621,7 +621,6 @@ class _PrayerTimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isCurrent = item.isCurrent;
@@ -629,132 +628,140 @@ class _PrayerTimeCard extends StatelessWidget {
     final iconData = _iconFor(item.name);
     final iconColor = _colorFor(item.name, isDark);
     final statusIcon = _statusIcon(isCurrent, isCompleted);
-    final statusColor = _statusColor(isCurrent, isCompleted, isDark);
+    final statusColor = isCurrent
+        ? context.goldColor
+        : (isCompleted
+            ? context.islamicGreenColor
+            : context.textSecondaryColor.withValues(alpha: 0.6));
 
-    final titleColor = isDark
-        ? Colors.white
-        : (isCompleted ? AppColors.textSecondary : AppColors.textPrimary);
-
-    final timeColor = isDark
-        ? Colors.white
-        : (isCurrent ? AppColors.primary : titleColor);
+    final titleColor = context.textPrimaryColor;
+    final timeColor = isCurrent ? context.goldColor : context.textPrimaryColor;
 
     final backgroundColor = isCurrent
-        ? context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08)
+        ? context.surfaceContainer
         : context.surfaceContainer;
 
     final borderColor = isCurrent
-        ? context.goldColor.withValues(alpha: 0.45)
+        ? context.goldColor.withValues(alpha: isDark ? 0.6 : 0.5)
         : context.outlineColor.withValues(alpha: isDark ? 0.12 : 0.08);
 
-    final gradient = (isDark && isCurrent)
+    final gradient = isCurrent
         ? LinearGradient(
-            colors: [
-              iconColor.withValues(alpha: 0.15),
-              context.surfaceContainer,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    context.goldColor.withValues(alpha: 0.12),
+                    context.surfaceContainer,
+                  ]
+                : [
+                    context.goldColor.withValues(alpha: 0.08),
+                    context.surfaceContainer,
+                  ],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
           )
         : null;
 
     final subtitle = isCurrent
-        ? AppStrings.prayerCurrent
-        : item.isNext
-        ? AppStrings.prayerNext
-        : AppStrings.prayerDayLabel;
+        ? 'الآن'
+        : (item.isNext ? AppStrings.prayerNext : AppStrings.prayerDayLabel);
 
-    return PressableCard(
-      onTap: null,
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.safeHorizontalPadding,
-        vertical: responsive.hp(1.5),
-      ),
-      borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
+    return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         gradient: gradient,
-        borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: borderColor,
-          width: isDark && isCurrent ? 1.5 : AppUi.dividerThickness,
+          width: isCurrent ? 1.4 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isCurrent
+                ? context.goldColor.withValues(alpha: isDark ? 0.12 : 0.08)
+                : Colors.black.withValues(alpha: isDark ? 0.18 : 0.03),
+            blurRadius: isCurrent ? 14 : 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Prayer Icon with Ornate circular container
           Container(
-            width: responsive.sp(40),
-            height: responsive.sp(40),
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: isDark
-                  ? iconColor.withValues(alpha: 0.15)
-                  : iconColor.withValues(alpha: 0.18),
+              color: iconColor.withValues(alpha: isDark ? 0.16 : 0.12),
               shape: BoxShape.circle,
-              // Add gradient for active icon in dark mode if needed
-              gradient: (isDark && isCurrent)
-                  ? LinearGradient(
-                      colors: [
-                        iconColor.withValues(alpha: 0.3),
-                        iconColor.withValues(alpha: 0.15),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
+              border: Border.all(
+                color: iconColor.withValues(alpha: isCurrent ? 0.45 : 0.25),
+                width: 1.2,
+              ),
             ),
             child: Icon(
               iconData,
-              size: responsive.mediumIcon,
+              size: 22,
               color: iconColor,
             ),
           ),
-          SizedBox(width: responsive.hp(1.2)),
+          const SizedBox(width: 14),
+
+          // Prayer Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.body.copyWith(
-                    fontSize: responsive.sp(15),
-                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
-                    color: titleColor,
-                  ),
-                ),
-                SizedBox(height: responsive.hp(0.6)),
-                Text(
-                  subtitle,
-                  style: AppText.caption.copyWith(
-                    fontSize: responsive.sp(11),
-                    color: isDark
-                        ? const Color(0xFFA1A1A1)
-                        : AppColors.textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                if (onBeforeAdhkar != null || onAfterAdhkar != null) ...[
-                  SizedBox(height: responsive.hp(0.8)),
-                  Row(
-                    children: [
-                      if (onBeforeAdhkar != null)
-                        Flexible(
-                          child: _AdhkarLink(
-                            label: AppStrings.beforePrayerDhikr,
-                            onTap: onBeforeAdhkar,
+                Row(
+                  children: [
+                    Text(
+                      item.name,
+                      style: TextStyle(
+                        fontFamily: 'Amiri',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (isCurrent || item.isNext)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.goldColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: context.goldColor,
                           ),
                         ),
-                      if (onBeforeAdhkar != null && onAfterAdhkar != null)
-                        SizedBox(width: responsive.smallGap),
+                      ),
+                  ],
+                ),
+                if (onBeforeAdhkar != null || onAfterAdhkar != null) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      if (onBeforeAdhkar != null)
+                        _AdhkarLink(
+                          label: AppStrings.beforePrayerDhikr,
+                          onTap: onBeforeAdhkar,
+                        ),
                       if (onAfterAdhkar != null)
-                        Flexible(
-                          child: _AdhkarLink(
-                            label: AppStrings.afterPrayerDhikr,
-                            onTap: onAfterAdhkar,
-                          ),
+                        _AdhkarLink(
+                          label: AppStrings.afterPrayerDhikr,
+                          onTap: onAfterAdhkar,
                         ),
                     ],
                   ),
@@ -762,20 +769,28 @@ class _PrayerTimeCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: responsive.mediumGap),
+
+          const SizedBox(width: 12),
+
+          // Prayer Time & Status Icon
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 item.timeLabel,
-                style: AppText.body.copyWith(
-                  fontSize: responsive.sp(16),
-                  fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                   color: timeColor,
                 ),
               ),
-              SizedBox(height: responsive.hp(0.6)),
-              Icon(statusIcon, size: responsive.mediumIcon, color: statusColor),
+              const SizedBox(height: 4),
+              Icon(
+                statusIcon,
+                size: 18,
+                color: statusColor,
+              ),
             ],
           ),
         ],
@@ -786,17 +801,17 @@ class _PrayerTimeCard extends StatelessWidget {
   IconData _iconFor(String name) {
     switch (name) {
       case AppStrings.prayerFajr:
-        return Icons.wb_twilight;
+        return Icons.wb_twilight_rounded;
       case AppStrings.prayerDhuhr:
-        return Icons.wb_sunny;
+        return Icons.wb_sunny_rounded;
       case AppStrings.prayerAsr:
         return Icons.wb_sunny_outlined;
       case AppStrings.prayerMaghrib:
-        return Icons.nights_stay;
+        return Icons.nights_stay_rounded;
       case AppStrings.prayerIsha:
-        return Icons.dark_mode;
+        return Icons.dark_mode_rounded;
     }
-    return Icons.access_time;
+    return Icons.access_time_rounded;
   }
 
   Color _colorFor(String name, bool isDark) {
@@ -816,19 +831,9 @@ class _PrayerTimeCard extends StatelessWidget {
   }
 
   IconData _statusIcon(bool isCurrent, bool isCompleted) {
-    if (isCurrent) return Icons.notifications_active;
-    if (isCompleted) return Icons.check_circle;
-    return Icons.notifications_none;
-  }
-
-  Color _statusColor(bool isCurrent, bool isCompleted, bool isDark) {
-    if (isCurrent) {
-      return isDark ? AppColors.darkGold : AppColors.primary;
-    }
-    if (isCompleted) {
-      return isDark ? AppColors.darkSuccess : AppColors.success;
-    }
-    return isDark ? const Color(0xFF888888) : const Color(0xFF9A9A9A);
+    if (isCurrent) return Icons.notifications_active_rounded;
+    if (isCompleted) return Icons.check_circle_rounded;
+    return Icons.notifications_none_rounded;
   }
 }
 
@@ -840,25 +845,42 @@ class _AdhkarLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gold = context.goldColor;
 
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppUi.radiusXS),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: responsive.wp(1.4),
-          vertical: responsive.hp(0.4),
-        ),
-        child: Text(
-          label,
-          style: AppText.caption.copyWith(
-            fontSize: responsive.sp(11),
-            color: isDark ? const Color(0xFFA1A1A1) : AppColors.textSecondary,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: gold.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: gold.withValues(alpha: 0.25),
           ),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_stories_rounded,
+              size: 11,
+              color: gold,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: gold,
+              ),
+            ),
+          ],
         ),
       ),
     );

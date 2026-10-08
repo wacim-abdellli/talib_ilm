@@ -22,6 +22,8 @@ class NextPrayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gold = context.goldColor;
+    final primary = context.primaryColor;
 
     final countdown =
         countdownText ?? AppStrings.prayerInMinutes(prayer.minutesRemaining);
@@ -32,31 +34,51 @@ class NextPrayerCard extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: responsive.wp(94)),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            color: context.surfaceContainer,
-            borderRadius: BorderRadius.circular(22),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      const Color(0xFF1E2B2A),
+                      const Color(0xFF141F1E),
+                    ]
+                  : [
+                      const Color(0xFFFFFDF8),
+                      const Color(0xFFF7F2E7),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.3),
+              color: gold.withValues(alpha: isDark ? 0.35 : 0.3),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Column(
             children: [
+              // Header Row: Next Prayer Badge & Time Pill
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
-                      color: context.goldColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      color: gold.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: gold.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -64,14 +86,14 @@ class NextPrayerCard extends StatelessWidget {
                         Icon(
                           Icons.notifications_active_outlined,
                           size: 14,
-                          color: context.goldColor,
+                          color: gold,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           AppStrings.prayerNext,
                           style: TextStyle(
                             fontSize: 12,
-                            color: context.goldColor,
+                            color: gold,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Cairo',
                           ),
@@ -79,19 +101,18 @@ class NextPrayerCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: 12,
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: context.primaryColor.withValues(
-                        alpha: isDark ? 0.18 : 0.12,
+                      color: primary.withValues(
+                        alpha: isDark ? 0.2 : 0.12,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: context.primaryColor.withValues(alpha: 0.25),
+                        color: primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -100,14 +121,14 @@ class NextPrayerCard extends StatelessWidget {
                         Icon(
                           Icons.access_time_rounded,
                           size: 14,
-                          color: context.primaryColor,
+                          color: primary,
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         Text(
                           _formatTime(prayer.time),
                           style: TextStyle(
                             fontSize: 13,
-                            color: context.primaryColor,
+                            color: isDark ? context.textPrimaryColor : primary,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Cairo',
                           ),
@@ -117,50 +138,64 @@ class NextPrayerCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // Prayer Title
               Text(
-                prayer.prayer.labelAr,
+                'صلاة ${prayer.prayer.labelAr}',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
                   color: context.textPrimaryColor,
-                  fontFamily: 'Cairo',
+                  fontFamily: 'Amiri',
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
+
+              // Countdown text
               Text(
                 countdown,
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 34,
                   fontWeight: FontWeight.w800,
-                  color: context.goldColor,
+                  color: gold,
                   fontFamily: 'Cairo',
                   letterSpacing: 1.5,
-                  height: 1.1,
+                  height: 1.15,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
+
+              // Smooth Progress Bar
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
                 child: Stack(
                   children: [
                     Container(
-                      height: 6,
+                      height: 7,
                       width: double.infinity,
-                      color: context.surfaceElevatedColor,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
                     ),
                     FractionallySizedBox(
                       widthFactor: progress.clamp(0.0, 1.0),
                       child: Container(
-                        height: 6,
+                        height: 7,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              context.primaryColor,
-                              context.goldColor,
+                              primary,
+                              gold,
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: gold.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
                       ),
                     ),
