@@ -76,6 +76,7 @@ extension ThemeColors on BuildContext {
   // BORDERS
   // ═══════════════════════════════════════════════════════════════════════
   Color get borderColor => _cs.outline;
+  Color get outlineColor => _cs.outline;
   Color get outlineVariantColor => _cs.outlineVariant;
   Color get dividerColor => _cs.outlineVariant;
 

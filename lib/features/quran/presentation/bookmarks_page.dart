@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../app/theme/theme_colors.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import 'quran_library_wrapper.dart';
 
 class BookmarksPage extends StatefulWidget {
@@ -43,13 +46,11 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF000000) : const Color(0xFFFDF8F0);
-    final cardColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final textColor = isDark
-        ? const Color(0xFFE8DED0)
-        : const Color(0xFF3D2B1F);
-    final accentColor = const Color(0xFFD4A853);
+    final isDark = context.isDark;
+    final bgColor = context.backgroundColor;
+    final cardColor = context.surfaceContainer;
+    final textColor = context.textPrimaryColor;
+    final accentColor = context.goldColor;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -60,6 +61,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
             fontFamily: 'Amiri',
             color: textColor,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -77,22 +79,23 @@ class _BookmarksPageState extends State<BookmarksPage> {
                   Icon(
                     Icons.bookmark_border_rounded,
                     size: 64,
-                    color: accentColor.withValues(alpha: 0.5),
+                    color: accentColor.withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'لا توجد محفوظات',
+                    'لا توجد سور محفوظة بعد',
                     style: TextStyle(
                       fontFamily: 'Cairo',
-                      fontSize: 18,
-                      color: textColor.withValues(alpha: 0.6),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: context.textSecondaryColor,
                     ),
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: _bookmarkedSurahs.length,
               itemBuilder: (context, index) {
                 final surahNum = _bookmarkedSurahs[index];
@@ -105,32 +108,41 @@ class _BookmarksPageState extends State<BookmarksPage> {
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.only(left: 20),
                     decoration: BoxDecoration(
-                      color: Colors.red[900],
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.red.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                     child: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.white,
-                      size: 32,
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                      size: 28,
                     ),
                   ),
                   onDismissed: (direction) {
                     _removeBookmark(surahNum);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('تم الحذف من القائمة')),
-                    );
+                    AppSnackbar.info(context, 'تم الحذف من المحفوظات');
                   },
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: cardColor,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: accentColor.withValues(alpha: 0.3),
+                        color: accentColor.withValues(alpha: 0.2),
+                        width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: ListTile(
                       onTap: () {
+                        HapticFeedback.lightImpact();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -140,19 +152,24 @@ class _BookmarksPageState extends State<BookmarksPage> {
                         );
                       },
                       leading: Container(
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: accentColor,
+                          color: accentColor.withValues(alpha: 0.1),
+                          border: Border.all(
+                            color: accentColor.withValues(alpha: 0.35),
+                            width: 1.2,
+                          ),
                         ),
                         child: Text(
                           '$surahNum',
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.black : Colors.white,
+                            fontSize: 14,
+                            color: accentColor,
                           ),
                         ),
                       ),
@@ -168,10 +185,15 @@ class _BookmarksPageState extends State<BookmarksPage> {
                       ),
                       trailing: IconButton(
                         icon: const Icon(
-                          Icons.delete_outline,
+                          Icons.delete_outline_rounded,
                           color: Colors.redAccent,
+                          size: 22,
                         ),
-                        onPressed: () => _removeBookmark(surahNum),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _removeBookmark(surahNum);
+                          AppSnackbar.info(context, 'تم الحذف من المحفوظات');
+                        },
                       ),
                     ),
                   ),
