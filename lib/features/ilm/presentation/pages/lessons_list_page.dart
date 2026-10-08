@@ -6,8 +6,7 @@ import 'package:talib_ilm/features/ilm/data/models/progress_models.dart';
 import 'package:talib_ilm/features/ilm/data/models/lesson_model.dart';
 import 'package:talib_ilm/shared/widgets/app_popup.dart';
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_text.dart';
+import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/video_player_page.dart';
@@ -128,87 +127,135 @@ class _LessonsListPageState extends State<LessonsListPage> {
           final isCurrent =
               !done && _completedLessons < widget.lessons.length &&
                   index == _completedLessons;
+          final isDark = context.isDark;
 
-          return AnimatedContainer(
-            duration: AppUi.animationMedium,
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppUi.gapSMPlus,
-              vertical: AppUi.gapMD,
-            ),
+          return Container(
             decoration: BoxDecoration(
-              gradient: AppColors.surfaceElevatedGradient,
-              borderRadius: BorderRadius.circular(AppUi.radiusMD),
-              boxShadow: AppUi.cardShadow,
+              color: context.surfaceContainer,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isCurrent
+                    ? context.goldColor.withValues(alpha: 0.5)
+                    : context.outlineColor.withValues(
+                        alpha: isDark ? 0.12 : 0.08,
+                      ),
+                width: isCurrent ? 1.4 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isCurrent
+                      ? context.goldColor.withValues(alpha: isDark ? 0.12 : 0.06)
+                      : Colors.black.withValues(alpha: isDark ? 0.18 : 0.03),
+                  blurRadius: isCurrent ? 12 : 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppUi.radiusMD),
-              onTap: () async {
-                await _lastActivityService.setLastTab(
-                  widget.bookId,
-                  LastActivityService.tabLessons,
-                );
-                if (!context.mounted) return;
-                final watched = await Navigator.push<bool>(
-                  context,
-                  buildFadeRoute(
-                    page: VideoPlayerPage(
-                      title: lesson.title,
-                      videoId: lesson.videoId,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () async {
+                  await _lastActivityService.setLastTab(
+                    widget.bookId,
+                    LastActivityService.tabLessons,
+                  );
+                  if (!context.mounted) return;
+                  final watched = await Navigator.push<bool>(
+                    context,
+                    buildFadeRoute(
+                      page: VideoPlayerPage(
+                        title: lesson.title,
+                        videoId: lesson.videoId,
+                      ),
                     ),
-                  ),
-                );
+                  );
 
-                if (watched == true) {
-                  await _completeLesson(index);
-                }
-              },
-              child: Row(
-                children: [
-                  _LessonIcon(
-                    done: done,
-                    isCurrent: isCurrent,
-                  ),
-                  const SizedBox(width: AppUi.gapMD),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppStrings.lessonTitle(index),
-                          style: AppText.caption.copyWith(
-                            color: AppColors.textPrimary
-                                .withValues(alpha: 0.7),
+                  if (watched == true) {
+                    await _completeLesson(index);
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      _LessonIcon(
+                        done: done,
+                        isCurrent: isCurrent,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.lessonTitle(index),
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: context.textSecondaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              lesson.title,
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13,
+                                  color: context.textSecondaryColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  AppStrings.lessonDuration(lesson.durationMinutes),
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 12,
+                                    color: context.textSecondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isCurrent)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.goldColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: context.goldColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.lessonNext,
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: context.goldColor,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: AppUi.gapXXS),
-                        Text(lesson.title, style: AppText.heading),
-                        const SizedBox(height: AppUi.gapXS),
-                        Text(
-                          AppStrings.lessonDuration(lesson.durationMinutes),
-                          style: AppText.bodyMuted,
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-                  if (isCurrent)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppUi.gapSMPlus,
-                        vertical: AppUi.gapXS,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(AppUi.radiusPill),
-                      ),
-                      child: Text(
-                        AppStrings.lessonNext,
-                        style: AppText.caption.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
           );
@@ -230,25 +277,52 @@ class _LessonIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (done) {
-      return Icon(
-        Icons.check_circle,
-        color: AppColors.primary,
-        size: AppUi.iconSizeLG,
+      return Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: context.islamicGreenColor.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.check_circle_rounded,
+          color: context.islamicGreenColor,
+          size: 24,
+        ),
       );
     }
 
     if (isCurrent) {
-      return Icon(
-        Icons.play_circle_fill,
-        color: AppColors.primary,
-        size: AppUi.iconSizeXL,
+      return Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: context.goldColor.withValues(alpha: 0.16),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: context.goldColor.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Icon(
+          Icons.play_arrow_rounded,
+          color: context.goldColor,
+          size: 26,
+        ),
       );
     }
 
-    return Icon(
-      Icons.play_circle_outline,
-      color: AppColors.textMuted,
-      size: AppUi.iconSizeLG,
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: context.outlineColor.withValues(alpha: 0.08),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.play_arrow_outlined,
+        color: context.textSecondaryColor,
+        size: 22,
+      ),
     );
   }
 }

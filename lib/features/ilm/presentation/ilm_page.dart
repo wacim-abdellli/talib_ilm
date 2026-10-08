@@ -660,12 +660,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
             gradient: const LinearGradient(
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
-              colors: [Color(0xFF1E3A5F), Color(0xFF2D4A6F)],
+              colors: [Color(0xFF4A7A7A), Color(0xFF386363)],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1E3A5F).withValues(alpha: 0.25),
+                color: const Color(0xFF4A7A7A).withValues(alpha: 0.25),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -701,6 +701,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         fontSize: responsive.sp(15),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
+                        fontFamily: 'Cairo',
                         height: 1.3,
                       ),
                     ),
@@ -709,7 +710,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                       recommendedBook.title,
                       style: TextStyle(
                         fontSize: responsive.sp(12),
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontFamily: 'Cairo',
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -724,13 +726,13 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                 child: Container(
                   padding: EdgeInsets.all(responsive.wp(2.5)),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37),
+                    color: const Color(0xFFD4A853),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.arrow_back,
-                    size: responsive.sp(18),
-                    color: const Color(0xFF1E3A5F),
+                    Icons.arrow_back_ios_new_rounded,
+                    size: responsive.sp(16),
+                    color: Colors.white,
                   ),
                 ),
               ),

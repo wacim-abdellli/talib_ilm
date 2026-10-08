@@ -586,24 +586,24 @@ class _BookViewPageState extends State<BookViewPage>
                 : AppStrings.bookFavoriteAdd,
             onPressed: _toggleFavorite,
             icon: Icon(
-              _isFavorite ? Icons.star : Icons.star_border,
-              color: context.textPrimaryColor,
+              _isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+              color: _isFavorite ? context.goldColor : context.textPrimaryColor,
             ),
           ),
           IconButton(
             tooltip: AppStrings.bookResetProgress,
             onPressed: _resetProgress,
-            icon: Icon(Icons.refresh_outlined, color: context.textPrimaryColor),
+            icon: Icon(Icons.refresh_rounded, color: context.textPrimaryColor),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.15),
+            color: context.primaryColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
           ),
-          labelColor: AppColors.primary,
+          labelColor: context.primaryColor,
           unselectedLabelColor: context.textSecondaryColor,
           labelStyle: const TextStyle(
             fontFamily: 'Cairo',
@@ -634,12 +634,12 @@ class _BookViewPageState extends State<BookViewPage>
                   heroTag: 'bookmark_fab',
                   mini: true,
                   backgroundColor: _isBookmarked
-                      ? AppColors.gold
+                      ? context.goldColor
                       : context.surfaceContainer,
                   onPressed: _toggleBookmark,
                   child: Icon(
                     _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    color: _isBookmarked ? Colors.white : AppColors.gold,
+                    color: _isBookmarked ? Colors.white : context.goldColor,
                   ),
                 ),
                 const SizedBox(height: 8),
