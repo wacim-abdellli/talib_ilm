@@ -170,8 +170,6 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppUi.radiusMD);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,15 +180,24 @@ class _Section extends StatelessWidget {
         const SizedBox(height: AppUi.gapMD),
         ...items.map(
           (item) => Container(
-            margin: const EdgeInsets.only(bottom: AppUi.gapMD),
-            padding: AppUi.cardPadding,
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: context.surfaceColor,
-              borderRadius: radius,
+              color: context.surfaceContainer,
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: context.outlineVariantColor,
-                width: AppUi.dividerThickness,
+                color: context.goldColor.withValues(alpha: 0.18),
+                width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: context.isDark ? 0.2 : 0.04,
+                  ),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -200,16 +207,21 @@ class _Section extends StatelessWidget {
                     children: [
                       Text(
                         item.title,
-                        style: AppText.body.copyWith(
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: context.textPrimaryColor,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       if (item.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: AppUi.gapXSPlus),
+                        const SizedBox(height: 4),
                         Text(
                           item.subtitle,
-                          style: AppText.caption.copyWith(
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                             color: context.textSecondaryColor,
                           ),
                         ),
@@ -223,6 +235,7 @@ class _Section extends StatelessWidget {
                   icon: Icon(
                     Icons.bookmark_remove_rounded,
                     color: context.goldColor,
+                    size: 22,
                   ),
                 ),
               ],
