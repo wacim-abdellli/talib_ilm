@@ -6,6 +6,8 @@ import '../../../app/theme/theme_colors.dart';
 import '../data/services/reading_stats_service.dart';
 import 'quran_library_wrapper.dart';
 import 'bookmarks_page.dart';
+import '../../../shared/widgets/empty_state.dart';
+import 'widgets/surah_card.dart';
 
 class QuranPage extends StatefulWidget {
   const QuranPage({super.key});
@@ -258,76 +260,130 @@ class _QuranPageState extends State<QuranPage> {
                         HapticFeedback.lightImpact();
                         _openSurah(_lastOpenedSurah!);
                       },
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [
+                                    const Color(0xFF1E2828),
+                                    const Color(0xFF141C1C),
+                                  ]
+                                : [
+                                    const Color(0xFFFFFDF8),
+                                    const Color(0xFFF7F3EB),
+                                  ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: accentColor.withValues(alpha: 0.25),
+                            color: accentColor.withValues(alpha: isDark ? 0.35 : 0.3),
                             width: 1.2,
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(
-                                alpha: isDark ? 0.2 : 0.04,
+                                alpha: isDark ? 0.25 : 0.04,
                               ),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.arrow_back_ios_rounded,
-                              color: accentColor,
-                              size: 16,
-                            ),
-                            const Spacer(),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'آخر قراءة',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: 11,
-                                    color: accentColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'سورة ${quran.getSurahNameArabic(_lastOpenedSurah!)}',
-                                  style: TextStyle(
-                                    fontFamily: 'Amiri',
-                                    fontSize: 19,
-                                    color: textColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 14),
+                            // Ornate Quran Icon
                             Container(
-                              padding: const EdgeInsets.all(10),
+                              width: 46,
+                              height: 46,
                               decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
+                                color: accentColor.withValues(alpha: 0.14),
                                 border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.25),
-                                  width: 1,
+                                  color: accentColor.withValues(alpha: 0.4),
+                                  width: 1.2,
                                 ),
                               ),
                               child: Icon(
                                 Icons.auto_stories_rounded,
                                 color: accentColor,
-                                size: 20,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Details
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'آخر قراءة',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 10,
+                                        color: accentColor,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'سورة ${quran.getSurahNameArabic(_lastOpenedSurah!)}',
+                                    style: TextStyle(
+                                      fontFamily: 'Amiri',
+                                      fontSize: 20,
+                                      color: textColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Action Button Pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(
+                                  alpha: isDark ? 0.2 : 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: accentColor.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'تابع القراءة',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: 11,
+                                    color: accentColor,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -394,145 +450,36 @@ class _QuranPageState extends State<QuranPage> {
 
                 // ════════ SURAH LIST ════════
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _filteredSurahs.length,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    itemBuilder: (context, index) {
-                      final surahNum = _filteredSurahs[index];
-                      final surahName = quran.getSurahNameArabic(surahNum);
-                      final versesCount = quran.getVerseCount(surahNum);
-                      final place = quran.getPlaceOfRevelation(surahNum);
-                      final isBookmarked = _bookmarkedSurahsStr.contains(
-                        surahNum.toString(),
-                      );
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: context.outlineColor.withValues(
-                              alpha: isDark ? 0.12 : 0.08,
-                            ),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.15 : 0.03,
-                              ),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _openSurah(surahNum);
-                          },
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          leading: Container(
-                            width: 44,
-                            height: 44,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: accentColor.withValues(alpha: 0.1),
-                              border: Border.all(
-                                color: accentColor.withValues(alpha: 0.4),
-                                width: 1.2,
-                              ),
-                            ),
-                            child: Text(
-                              '$surahNum',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: accentColor,
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            'سورة $surahName',
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                              fontFamily: 'Amiri',
-                              fontSize: 21,
-                              fontWeight: FontWeight.bold,
-                              height: 1.25,
-                              color: textColor,
-                            ),
-                          ),
-                          subtitle: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: context.islamicGreenColor.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  place == 'Makkah' ? 'مكية' : 'مدنية',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.islamicGreenColor,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '$versesCount آية',
-                                style: TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 12,
-                                  color: mutedColor,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '•',
-                                style: TextStyle(color: mutedColor),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                quran.getSurahName(surahNum),
-                                style: TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 12,
-                                  color: mutedColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: Icon(
-                              isBookmarked
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              color: isBookmarked ? accentColor : mutedColor,
-                            ),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              _toggleBookmark(surahNum);
+                  child: _filteredSurahs.isEmpty
+                      ? Center(
+                          child: EmptyState(
+                            icon: Icons.search_off_rounded,
+                            title: 'لا توجد نتائج',
+                            subtitle:
+                                'لم نتمكن من العثور على سورة تطابق بحثك. جرّب البحث برقم السورة أو اسمها.',
+                            actionLabel: 'إعادة ضبط البحث',
+                            onAction: () {
+                              _searchController.clear();
                             },
                           ),
+                        )
+                      : ListView.builder(
+                          itemCount: _filteredSurahs.length,
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          itemBuilder: (context, index) {
+                            final surahNum = _filteredSurahs[index];
+                            final isBookmarked = _bookmarkedSurahsStr.contains(
+                              surahNum.toString(),
+                            );
+
+                            return SurahCard(
+                              surahNumber: surahNum,
+                              isBookmarked: isBookmarked,
+                              onTap: () => _openSurah(surahNum),
+                              onBookmarkTap: () => _toggleBookmark(surahNum),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),

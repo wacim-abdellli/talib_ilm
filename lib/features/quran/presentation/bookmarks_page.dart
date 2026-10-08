@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../shared/widgets/app_snackbar.dart';
+import '../../../shared/widgets/empty_state.dart';
 import 'quran_library_wrapper.dart';
+import 'widgets/surah_card.dart';
 
 class BookmarksPage extends StatefulWidget {
   const BookmarksPage({super.key});
@@ -27,10 +28,12 @@ class _BookmarksPageState extends State<BookmarksPage> {
   Future<void> _loadBookmarks() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList(_kBookmarksKey) ?? [];
-    setState(() {
-      _bookmarkedSurahs = list.map((e) => int.parse(e)).toList();
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _bookmarkedSurahs = list.map((e) => int.parse(e)).toList();
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _removeBookmark(int surahNum) async {
@@ -48,21 +51,35 @@ class _BookmarksPageState extends State<BookmarksPage> {
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final bgColor = context.backgroundColor;
-    final cardColor = context.surfaceContainer;
     final textColor = context.textPrimaryColor;
     final accentColor = context.goldColor;
+    final mutedColor = context.textSecondaryColor;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text(
-          'المحفوظات',
-          style: TextStyle(
-            fontFamily: 'Amiri',
-            color: textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+        title: Column(
+          children: [
+            Text(
+              'المحفوظات',
+              style: TextStyle(
+                fontFamily: 'Amiri',
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            if (!_isLoading && _bookmarkedSurahs.isNotEmpty)
+              Text(
+                '${_bookmarkedSurahs.length} سور محفوظة',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: accentColor,
+                ),
+              ),
+          ],
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -72,134 +89,96 @@ class _BookmarksPageState extends State<BookmarksPage> {
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: accentColor))
           : _bookmarkedSurahs.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.bookmark_border_rounded,
-                    size: 64,
-                    color: accentColor.withValues(alpha: 0.4),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'لا توجد سور محفوظة بعد',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.textSecondaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _bookmarkedSurahs.length,
-              itemBuilder: (context, index) {
-                final surahNum = _bookmarkedSurahs[index];
-                final surahName = quran.getSurahNameArabic(surahNum);
+              ? EmptyState(
+                  icon: Icons.bookmark_border_rounded,
+                  title: 'لا توجد سور محفوظة بعد',
+                  subtitle:
+                      'قم بحفظ السور المفضلة لديك بالضغط على أيقونة الحفظ في شاشة القرآن لتصل إليها سريعاً هنا.',
+                  actionLabel: 'تصفح القرآن الكريم',
+                  onAction: () => Navigator.pop(context),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+                  itemCount: _bookmarkedSurahs.length,
+                  itemBuilder: (context, index) {
+                    final surahNum = _bookmarkedSurahs[index];
 
-                return Dismissible(
-                  key: ValueKey(surahNum),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.redAccent,
-                      size: 28,
-                    ),
-                  ),
-                  onDismissed: (direction) {
-                    _removeBookmark(surahNum);
-                    AppSnackbar.info(context, 'تم الحذف من المحفوظات');
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: accentColor.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.04,
-                          ),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProfessionalQuranScreen(initialSurah: surahNum),
-                          ),
-                        );
-                      },
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
+                    return Dismissible(
+                      key: ValueKey(surahNum),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: accentColor.withValues(alpha: 0.1),
+                          color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.12),
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: accentColor.withValues(alpha: 0.35),
-                            width: 1.2,
+                            color: Colors.red.withValues(alpha: 0.3),
                           ),
                         ),
-                        child: Text(
-                          '$surahNum',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: accentColor,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'إزالة',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.redAccent.shade100,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.redAccent,
+                              size: 24,
+                            ),
+                          ],
                         ),
                       ),
-                      title: Text(
-                        'سورة $surahName',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          fontFamily: 'Amiri',
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.redAccent,
-                          size: 22,
-                        ),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          _removeBookmark(surahNum);
-                          AppSnackbar.info(context, 'تم الحذف من المحفوظات');
+                      onDismissed: (direction) {
+                        _removeBookmark(surahNum);
+                        AppSnackbar.info(context, 'تمت إزالة السورة من المحفوظات');
+                      },
+                      child: SurahCard(
+                        surahNumber: surahNum,
+                        isBookmarked: true,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProfessionalQuranScreen(
+                                initialSurah: surahNum,
+                              ),
+                            ),
+                          ).then((_) => _loadBookmarks());
                         },
+                        onBookmarkTap: () {
+                          _removeBookmark(surahNum);
+                          AppSnackbar.info(context, 'تمت إزالة السورة من المحفوظات');
+                        },
+                        trailing: IconButton(
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            color: mutedColor,
+                            size: 22,
+                          ),
+                          tooltip: 'إزالة من المحفوظات',
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            _removeBookmark(surahNum);
+                            AppSnackbar.info(
+                              context,
+                              'تمت إزالة السورة من المحفوظات',
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
     );
   }
 }
