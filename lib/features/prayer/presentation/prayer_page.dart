@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/location_service.dart';
@@ -75,8 +76,9 @@ class _PrayerPageState extends State<PrayerPage> {
 
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: context.backgroundColor,
       body: Container(
-        color: isDark ? Colors.black : AppColors.background,
+        color: context.backgroundColor,
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: FutureBuilder<PrayerTimesDay>(
@@ -98,9 +100,7 @@ class _PrayerPageState extends State<PrayerPage> {
                           child: Container(
                             height: 140,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF0A0A0A)
-                                  : Colors.white,
+                              color: context.surfaceColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),

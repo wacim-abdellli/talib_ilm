@@ -283,9 +283,9 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.backgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.background,
+          backgroundColor: context.backgroundColor,
           elevation: 0,
           leading: null,
         ),
@@ -340,14 +340,10 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                 vertical: responsive.hp(2),
               ),
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF000000)
-                    : context.backgroundColor,
+                color: context.surfaceColor,
                 border: Border(
                   bottom: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF1F1F1F)
-                        : const Color(0xFFE8E6E3),
+                    color: context.outlineVariantColor,
                     width: 1,
                   ),
                 ),
@@ -360,9 +356,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: responsive.sp(26),
                       fontWeight: FontWeight.w700,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : context.textPrimaryColor,
+                      color: context.textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -370,9 +364,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                     _dailyMicrocopy,
                     style: TextStyle(
                       fontSize: responsive.sp(14),
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFA1A1A1)
-                          : context.textSecondaryColor,
+                      color: context.textSecondaryColor,
                       fontStyle: FontStyle.italic,
                     ),
                   ),

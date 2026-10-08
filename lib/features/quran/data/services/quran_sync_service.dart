@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/quran_database.dart';
@@ -52,7 +53,7 @@ class QuranSyncService {
       final endPage = (chunkIndex * 20).clamp(1, 604);
       final totalPages = endPage - startPage + 1;
 
-      print(
+      debugPrint(
         'Starting download for Chunk $chunkIndex (Pages $startPage-$endPage)',
       );
 
@@ -75,9 +76,9 @@ class QuranSyncService {
       // Mark as done
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('$_chunkKeyPrefix$chunkIndex', true);
-      print('Chunk $chunkIndex Completed.');
+      debugPrint('Chunk $chunkIndex Completed.');
     } catch (e) {
-      print('Chunk $chunkIndex Failed: $e');
+      debugPrint('Chunk $chunkIndex Failed: $e');
       _progressController.addError(e);
       rethrow;
     } finally {

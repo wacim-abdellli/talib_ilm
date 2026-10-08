@@ -14,7 +14,7 @@ dependencies:
   geolocator: ^13.0.1
   geocoding: ^3.0.0
   adhan: ^2.0.0+1
-  hijri: ^3.0.0
+  hijri: ^3.0.1
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
   flutter_timezone: ^5.0.1
@@ -60,7 +60,6 @@ flutter:
     - assets/data/
     - assets/audio/
     - assets/images/logo.png
-    - assets/icons/
     - assets/pdfs/mutun/
     - assets/pdfs/shuruh/bk_usul_thalatha/
 

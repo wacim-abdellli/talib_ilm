@@ -10,6 +10,7 @@ import '../../../shared/widgets/pressable_card.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
+import '../../quran/data/services/reading_stats_service.dart';
 import 'adhkar_session_page.dart';
 import 'after_prayer_athkar_page.dart';
 import 'duas_misc_page.dart';
@@ -29,11 +30,23 @@ class _AdhkarPageState extends State<AdhkarPage> {
   final AthkarService _service = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
   late Future<AthkarCatalog> _future;
+  String _selectedCategory = 'all';
+  int _streak = 1;
 
   @override
   void initState() {
     super.initState();
     _future = _service.loadCatalog();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final streak = await ReadingStatsService().getStreak();
+    if (mounted) {
+      setState(() {
+        _streak = streak > 0 ? streak : 1;
+      });
+    }
   }
 
   void _reload() {
@@ -48,36 +61,22 @@ class _AdhkarPageState extends State<AdhkarPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Header Colors
-    final headerBg = isDark ? null : const Color(0xFFFBFAF8);
+    final headerBg = context.surfaceColor;
     final headerGradient = isDark ? AppColors.premiumDarkGradient : null;
-    final headerBorder = isDark
-        ? const Color(0xFF00D9C0).withValues(alpha: 0.1)
-        : const Color(0xFFE8E6E3);
-    final titleColor = isDark
-        ? const Color(0xFFFFFFFF)
-        : const Color(0xFF3A3A3A);
-    final subtitleColor = isDark
-        ? const Color(0xFFA1A1A1)
-        : const Color(0xFF6E6E6E);
+    final headerBorder = context.outlineVariantColor;
+    final titleColor = context.textPrimaryColor;
+    final subtitleColor = context.textSecondaryColor;
 
     // Icon Container
     final iconContainerDecoration = BoxDecoration(
-      gradient: isDark
-          ? const LinearGradient(colors: [Color(0xFF00D9C0), Color(0xFF00BFA5)])
-          : null,
-      color: isDark ? null : const Color(0xFF6A9A9A).withValues(alpha: 0.15),
+      color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
       borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        if (isDark)
-          BoxShadow(
-            color: const Color(0xFF00D9C0).withValues(alpha: 0.2),
-            blurRadius: 10,
-          ),
-      ],
+      border: Border.all(
+        color: context.primaryColor.withValues(alpha: 0.25),
+        width: 1,
+      ),
     );
-    final iconColor = isDark
-        ? const Color(0xFFFFFFFF)
-        : const Color(0xFF6A9A9A);
+    final iconColor = context.primaryColor;
 
     return Scaffold(
       backgroundColor: context.backgroundColor,
@@ -139,13 +138,12 @@ class _AdhkarPageState extends State<AdhkarPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFFCAAF7C).withValues(alpha: 0.15)
-                              : const Color(0xFFCAAF7C).withValues(alpha: 0.12),
+                          color: context.goldColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
-                          border: isDark
-                              ? Border.all(color: const Color(0xFF1F1F1F))
-                              : null,
+                          border: Border.all(
+                            color: context.goldColor.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -153,19 +151,15 @@ class _AdhkarPageState extends State<AdhkarPage> {
                             Icon(
                               Icons.local_fire_department_rounded,
                               size: 16,
-                              color: isDark
-                                  ? const Color(0xFFE8C252)
-                                  : const Color(0xFFCAAF7C),
+                              color: context.goldColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '7',
+                              '$_streak',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? const Color(0xFFE8C252)
-                                    : const Color(0xFFCAAF7C),
+                                color: context.goldColor,
                               ),
                             ),
                           ],
@@ -183,31 +177,36 @@ class _AdhkarPageState extends State<AdhkarPage> {
                         _buildCategoryTab(
                           'الكل',
                           Icons.grid_view_rounded,
-                          true,
+                          _selectedCategory == 'all',
+                          () => setState(() => _selectedCategory = 'all'),
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryTab(
                           'الصباح',
                           Icons.wb_sunny_rounded,
-                          false,
+                          _selectedCategory == 'morning',
+                          () => setState(() => _selectedCategory = 'morning'),
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryTab(
                           'المساء',
-                          Icons.nightlight_round,
-                          false,
+                          Icons.nights_stay_rounded,
+                          _selectedCategory == 'evening',
+                          () => setState(() => _selectedCategory = 'evening'),
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryTab(
                           'بعد الصلاة',
                           Icons.mosque_outlined,
-                          false,
+                          _selectedCategory == 'after_prayer',
+                          () => setState(() => _selectedCategory = 'after_prayer'),
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryTab(
                           'متنوعة',
                           Icons.auto_awesome_outlined,
-                          false,
+                          _selectedCategory == 'misc',
+                          () => setState(() => _selectedCategory = 'misc'),
                         ),
                       ],
                     ),
@@ -245,7 +244,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
                   );
                 }
 
-                final items = _dashboardItems(context, catalog);
+                final allItems = _dashboardItems(context, catalog);
+                final items = _filteredItems(allItems);
 
                 return LayoutBuilder(
                   builder: (context, constraints) {
@@ -284,55 +284,72 @@ class _AdhkarPageState extends State<AdhkarPage> {
     );
   }
 
-  Widget _buildCategoryTab(String label, IconData icon, bool isActive) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildCategoryTab(
+    String label,
+    IconData icon,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
+    final activeBg = context.primaryColor;
+    const activeText = Colors.white;
 
-    // Active State
-    final activeGradient = isDark
-        ? const LinearGradient(colors: [Color(0xFF6A9A9A), Color(0xFF8ACACA)])
-        : null;
-    final activeColor = isDark ? null : const Color(0xFF6A9A9A);
-    final activeTextColor = Colors.white;
+    final inactiveBg = context.surfaceColor;
+    final inactiveBorder = context.outlineVariantColor;
+    final inactiveText = context.textSecondaryColor;
 
-    // Inactive State
-    final inactiveBg = isDark
-        ? const Color(0xFF141414)
-        : const Color(0xFFFBFAF8);
-    final inactiveBorder = isDark
-        ? const Color(0xFF1F1F1F)
-        : const Color(0xFFE8E6E3);
-    final inactiveText = isDark
-        ? const Color(0xFF666666)
-        : const Color(0xFF6E6E6E);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive ? activeColor : inactiveBg,
-        gradient: isActive ? activeGradient : null,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: isActive ? null : Border.all(color: inactiveBorder, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isActive ? activeTextColor : inactiveText,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? activeBg : inactiveBg,
+            borderRadius: BorderRadius.circular(12),
+            border: isActive ? null : Border.all(color: inactiveBorder, width: 1),
           ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isActive ? activeTextColor : inactiveText,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isActive ? activeText : inactiveText,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? activeText : inactiveText,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  List<_CategoryCardData> _filteredItems(List<_CategoryCardData> all) {
+    if (_selectedCategory == 'all') return all;
+    if (_selectedCategory == 'morning') {
+      return all.where((i) => i.id == 'morning').toList();
+    }
+    if (_selectedCategory == 'evening') {
+      return all.where((i) => i.id == 'evening').toList();
+    }
+    if (_selectedCategory == 'after_prayer') {
+      return all.where((i) => i.id == 'after_prayer').toList();
+    }
+    if (_selectedCategory == 'misc') {
+      return all
+          .where((i) => ['duas', 'tasbeeh', 'sleeping'].contains(i.id))
+          .toList();
+    }
+    return all;
   }
 
   List<_CategoryCardData> _dashboardItems(
@@ -528,16 +545,10 @@ class _CategoryTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Tiles Dark Styling
-    final tileBg = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF5F3F0);
-    final tileBorder = isDark
-        ? const Color(0xFF1F1F1F)
-        : const Color(0xFFE8E6E3);
-    final textColor = isDark
-        ? const Color(0xFFFFFFFF)
-        : const Color(0xFF3A3A3A);
-    final subtitleColor = isDark
-        ? const Color(0xFFA1A1A1)
-        : const Color(0xFF6E6E6E);
+    final tileBg = context.surfaceColor;
+    final tileBorder = context.outlineVariantColor;
+    final textColor = context.textPrimaryColor;
+    final subtitleColor = context.textSecondaryColor;
 
     // Get category accent color
     final accentColors = _getCategoryColors(data.id);
@@ -549,15 +560,13 @@ class _CategoryTile extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: isDark
-                ? accentColors[0].withValues(alpha: 0.2)
-                : accentColors[0].withValues(alpha: 0.12),
+            color: accentColors[0].withValues(alpha: isDark ? 0.2 : 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(
             _getCategoryIcon(data.id),
             size: 24,
-            color: isDark ? accentColors[0] : accentColors[1],
+            color: accentColors[0],
           ),
         ),
         const SizedBox(height: 14),
@@ -629,19 +638,19 @@ class _CategoryTile extends StatelessWidget {
   List<Color> _getCategoryColors(String id) {
     switch (id) {
       case 'morning':
-        return const [Color(0xFFFF8A3D), Color(0xFFFF6B1A)]; // Orange
+        return const [Color(0xFFD4A853), Color(0xFFC29742)]; // Divine Gold
       case 'evening':
-        return const [Color(0xFFA855F7), Color(0xFF8B5CF6)]; // Purple
+        return const [Color(0xFF4A6572), Color(0xFF344955)]; // Slate Dusk
       case 'after_prayer':
-        return const [Color(0xFF00E676), Color(0xFF00C853)]; // Green
+        return const [Color(0xFF4A7A7A), Color(0xFF3B6666)]; // Sacred Teal
       case 'duas':
-        return const [Color(0xFF3B82F6), Color(0xFF2563EB)]; // Blue
+        return const [Color(0xFF7D8C6C), Color(0xFF6B7B5A)]; // Olive Bronze
       case 'tasbeeh':
-        return const [Color(0xFFFFD600), Color(0xFFFFC107)]; // Yellow/Gold
+        return const [Color(0xFFE5C07B), Color(0xFFD4A853)]; // Luminous Gold
       case 'sleeping':
-        return const [Color(0xFF6366F1), Color(0xFF4F46E5)]; // Indigo
+        return const [Color(0xFF5C6B73), Color(0xFF455057)]; // Night Slate
       default:
-        return const [Color(0xFF00D9C0), Color(0xFF14B8A6)]; // Teal
+        return const [Color(0xFF4A7A7A), Color(0xFF3B6666)]; // Sacred Teal
     }
   }
 

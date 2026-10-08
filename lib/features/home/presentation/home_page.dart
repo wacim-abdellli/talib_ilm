@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:shimmer/shimmer.dart';
-// import 'package:hijri/hijri.dart';
+import 'package:hijri/hijri_calendar.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/last_activity_service.dart';
 import '../../../core/services/last_sharh_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
+import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 
 import 'widgets/home_hero_card.dart';
@@ -28,7 +29,6 @@ import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
-import '../../library/presentation/library_page.dart';
 // import '../../adhkar/presentation/adhkar_page.dart'; // Removed
 import '../../quran/presentation/quran_page.dart';
 import '../../../app/theme/theme_colors.dart';
@@ -280,11 +280,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                       child: Builder(
                         builder: (context) {
+                          final date = DateTime.now();
                           final city = _prayerDay?.city ?? 'مكة المكرمة';
-                          final date = _prayerDay?.date ?? DateTime.now();
-                          // DISABLED HIJRI due to build error
-                          // HijriCalendar.setLocal('ar');
-                          // final hijriDate = HijriCalendar.fromDate(date);
+                          String hijriStr = '';
+                          try {
+                            HijriCalendar.setLocal('ar');
+                            final h = HijriCalendar.fromDate(date);
+                            hijriStr = '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
+                          } catch (_) {}
 
                           return Column(
                             children: [
@@ -305,33 +308,43 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   ),
 
                                   // Hijri Date - Spiritual Context
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context.islamicGreenMutedColor
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: context.islamicGreenLightColor
-                                            .withValues(alpha: 0.3),
-                                        width: 1,
+                                  if (hijriStr.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.islamicGreenMutedColor
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: context.islamicGreenLightColor
+                                              .withValues(alpha: 0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 12,
+                                            color: context.islamicGreenLightColor,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            hijriStr,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: context.textPrimaryColor,
+                                              fontFamily: 'Cairo',
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_today,
-                                          size: 12,
-                                          color: context.islamicGreenLightColor,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        // Placeholder for Hijri (Disabled)
-                                      ],
-                                    ),
-                                  ),
                                 ],
                               ),
 
@@ -559,53 +572,49 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // 1. Holy Quran (Brown/Gold)
+                                  // 1. Holy Quran (Gold)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.menu_book_rounded,
                                       label: 'القرآن',
                                       onTap: () => _openQuran(context),
-                                      accentColor: const Color(
-                                        0xFFD4AF37,
-                                      ), // Metallic Gold
+                                      accentColor: context.goldColor,
                                     ),
                                   ),
 
                                   const SizedBox(width: 12),
 
-                                  // 2. Library (Blue)
+                                  // 2. Ilm / Mutun (Teal)
                                   Expanded(
                                     child: QuickActionButton(
-                                      icon: Icons.library_books_rounded,
-                                      label: 'المكتبة',
-                                      onTap: () => _openLibrary(context),
-                                      accentColor: context.celestialBlueColor,
+                                      icon: Icons.auto_stories_rounded,
+                                      label: 'العلم',
+                                      onTap: () => _openIlm(context),
+                                      accentColor: context.primaryColor,
                                     ),
                                   ),
 
                                   const SizedBox(width: 12),
 
-                                  // 3. Favorites (Red/Pink/Gold)
+                                  // 3. Favorites (Gold Ring)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.favorite_rounded,
                                       label: 'المفضلة',
                                       onTap: () => _openFavorites(context),
-                                      accentColor: const Color(
-                                        0xFFE57373,
-                                      ), // Soft Red/Rose
+                                      accentColor: context.goldColor,
                                     ),
                                   ),
 
                                   const SizedBox(width: 12),
 
-                                  // 4. Qibla (Teal/Primary)
+                                  // 4. Qibla (Sacred Green)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.explore_rounded,
                                       label: 'القبلة',
                                       onTap: () => _openQibla(context),
-                                      accentColor: context.primaryColor,
+                                      accentColor: context.islamicGreenColor,
                                     ),
                                   ),
                                 ],
@@ -632,7 +641,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _openIlm(BuildContext context) {
     _stateController.recordLearningContinued();
-    Navigator.push(context, buildFadeRoute(page: const IlmPage()));
+    final handled = AppShell.switchToTab(context, 2);
+    if (!handled) {
+      Navigator.push(context, buildFadeRoute(page: const IlmPage()));
+    }
   }
 
   void _openQuran(BuildContext context) {
@@ -640,9 +652,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Navigator.push(context, buildFadeRoute(page: const QuranPage()));
   }
 
-  void _openLibrary(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: const LibraryPage()));
-  }
 
   void _openQibla(BuildContext context) {
     Navigator.push(context, buildFadeRoute(page: const QiblaPage()));
@@ -653,8 +662,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _openPrayerDetails(BuildContext context) {
-    _stateController.recordAdhkarOpened(); // Or prayer?
-    Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
+    final handled = AppShell.switchToTab(context, 1);
+    if (!handled) {
+      Navigator.push(context, buildFadeRoute(page: const PrayerPage()));
+    }
   }
 
   String _getGreeting() {

@@ -534,7 +534,7 @@ class _BookViewPageState extends State<BookViewPage>
             Expanded(
               child: ListView.separated(
                 itemCount: entries.length,
-                separatorBuilder: (_, __) => const Divider(height: 24),
+                separatorBuilder: (_, _) => const Divider(height: 24),
                 itemBuilder: (context, index) {
                   final item = entries[index];
                   return Column(
@@ -1047,7 +1047,7 @@ class _SharhReaderPageState extends State<_SharhReaderPage> {
                   final pages = _bookmarkedPages.toList()..sort();
                   return ListView.separated(
                     itemCount: pages.length,
-                    separatorBuilder: (_, __) => const Divider(height: 24),
+                    separatorBuilder: (_, _) => const Divider(height: 24),
                     itemBuilder: (context, index) {
                       final page = pages[index];
                       final note = _notes[page];

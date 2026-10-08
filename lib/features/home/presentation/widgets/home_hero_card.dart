@@ -305,12 +305,19 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   /// Get nearness label logic (aligned to 30min)
   String? _getNearnessLabel() {
     final minutes = _timeLeft.inMinutes;
-    if (minutes <= 0) return 'حان الوقت';
-    if (minutes <= 5)
-      return 'قريبًا جدا'; // No tanween to avoid font issues maybe? kept simple
-    if (minutes <= 15) return 'قريب';
-    if (minutes <= 30) return 'يقترب';
-    return 'القادمة'; // Always show status
+    if (minutes <= 0) {
+      return 'حان الوقت';
+    }
+    if (minutes <= 5) {
+      return 'قريبًا جدا';
+    }
+    if (minutes <= 15) {
+      return 'قريب';
+    }
+    if (minutes <= 30) {
+      return 'يقترب';
+    }
+    return 'القادمة';
   }
 
   String _getReadableDuration() {

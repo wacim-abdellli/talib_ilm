@@ -226,9 +226,9 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
         showBack: true,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF6A9A9A),
+          indicatorColor: context.primaryColor,
           indicatorWeight: 3,
-          labelColor: const Color(0xFF6A9A9A),
+          labelColor: context.primaryColor,
           unselectedLabelColor: context.textSecondaryColor,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
@@ -374,9 +374,9 @@ class _CounterCard extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: onSetTarget,
-                  child: const Text(
+                  child: Text(
                     AppStrings.setTarget,
-                    style: TextStyle(color: Color(0xFF6A9A9A)),
+                    style: TextStyle(color: context.primaryColor),
                   ),
                 ),
                 const SizedBox(width: AppUi.gapXSPlus),

@@ -95,9 +95,11 @@ class ProfessionalQuranScreen extends StatelessWidget {
           surfaceTint: Colors.transparent, // Disable M3 tint
         ),
         scaffoldBackgroundColor: backgroundColor,
-        dialogBackgroundColor: isDark
-            ? const Color(0xFF1A1A1A)
-            : const Color(0xFFFDF8F0),
+        dialogTheme: DialogThemeData(
+          backgroundColor: isDark
+              ? const Color(0xFF1A1A1A)
+              : const Color(0xFFFDF8F0),
+        ),
 
         // Global Colors
         canvasColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFDF8F0),

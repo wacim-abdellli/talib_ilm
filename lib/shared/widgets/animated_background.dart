@@ -86,7 +86,7 @@ class _AnimatedGeometricBackgroundState
       animation: _controller,
       builder: (context, child) {
         return CustomPaint(
-          painter: GeometricPatternPainter(
+          painter: _GeometricPatternPainter(
             stars: _stars,
             animationValue: _controller.value,
             starColor: widget.starColor.withValues(alpha: 0.03), // 3% opacity
@@ -99,12 +99,12 @@ class _AnimatedGeometricBackgroundState
 }
 
 /// Custom painter for Islamic geometric patterns
-class GeometricPatternPainter extends CustomPainter {
+class _GeometricPatternPainter extends CustomPainter {
   final List<_StarElement> stars;
   final double animationValue;
   final Color starColor;
 
-  GeometricPatternPainter({
+  _GeometricPatternPainter({
     required this.stars,
     required this.animationValue,
     required this.starColor,
@@ -190,7 +190,7 @@ class GeometricPatternPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(GeometricPatternPainter oldDelegate) {
+  bool shouldRepaint(_GeometricPatternPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue;
   }
 }

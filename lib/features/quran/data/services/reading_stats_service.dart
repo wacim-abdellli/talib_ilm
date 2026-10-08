@@ -11,8 +11,9 @@ class ReadingStatsService {
     required int versesRead,
     required int surahNumber,
   }) async {
-    if (durationSeconds < 5 && versesRead == 0)
+    if (durationSeconds < 5 && versesRead == 0) {
       return; // Ignore very short accidental opens
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
@@ -48,12 +49,11 @@ class ReadingStatsService {
       }
     }
 
-    // Convert total seconds to minutes (rounding up if > 30s is generous, or just standard round)
-    // We'll use ceil to be motivating? No, standard round is fair.
-    // Or just (total / 60).round()
+    // Convert total seconds to minutes
     int totalMinutes = (totalSeconds / 60).ceil();
-    if (totalSeconds > 0 && totalMinutes == 0)
+    if (totalSeconds > 0 && totalMinutes == 0) {
       totalMinutes = 1; // Minimum 1 min calculation if any reading
+    }
 
     return {'minutes': totalMinutes, 'verses': totalVerses};
   }

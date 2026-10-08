@@ -22,7 +22,7 @@ class _QuranPageState extends State<QuranPage> {
   // Stats
   int _minutesToday = 0;
   int _streak = 0;
-  int _dailyGoal = 20; // minutes
+  final int _dailyGoal = 20; // minutes
   // Keys used by quran_library
   static const String _kMyLastSurahKey = 'dashboard_last_surah';
   static const String _kBookmarksKey =
@@ -66,8 +66,9 @@ class _QuranPageState extends State<QuranPage> {
   void _filterSurahs() {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
-      if (mounted)
+      if (mounted) {
         setState(() => _filteredSurahs = List.generate(114, (i) => i + 1));
+      }
       return;
     }
 

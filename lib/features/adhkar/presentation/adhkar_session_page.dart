@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
@@ -186,7 +187,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         ],
       ),
       body: Container(
-        color: const Color(0xFFFBFAF8), // BackgroundMain
+        color: context.backgroundColor,
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -225,14 +226,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                     Text(
                                       item.arabic,
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Amiri',
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
                                         height: 1.6,
-                                        color: Color(
-                                          0xFF2A2A2A,
-                                        ), // Near-black charcoal
+                                        color: context.textPrimaryColor,
                                       ),
                                     ),
                                     const SizedBox(height: 20),
@@ -241,12 +240,10 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                       Text(
                                         item.meaning,
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           height: 1.5,
-                                          color: Color(
-                                            0xFF6E6E6E,
-                                          ), // TextSecondary
+                                          color: context.textSecondaryColor,
                                         ),
                                       ),
                                     const SizedBox(
@@ -289,14 +286,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(
-                                  0xFF9A9A9A,
-                                ).withValues(alpha: 0.3),
+                                color: context.outlineVariantColor,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.replay,
-                              color: Color(0xFF9A9A9A), // Muted Reset
+                              color: context.textSecondaryColor,
                               size: 24,
                             ),
                           ),
@@ -310,9 +305,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         child: IgnorePointer(
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            color: const Color(
-                              0xFF6A9A9A,
-                            ).withValues(alpha: 0.08), // PrimaryAccent tint
+                            color: context.primaryColor.withValues(alpha: 0.12),
                           ),
                         ),
                       ),
@@ -337,7 +330,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
             width: 280,
             height: 280,
             child: CustomPaint(
-              painter: _DhikrProgressPainter(count: _count, total: repeat),
+              painter: _DhikrProgressPainter(
+                count: _count,
+                total: repeat,
+                trackColor: context.outlineVariantColor,
+                progressColor: context.primaryColor,
+              ),
             ),
           ),
 
@@ -352,10 +350,10 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 child: Text(
                   '$_count',
                   key: ValueKey(_count),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 96,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF3A3A3A),
+                    color: context.textPrimaryColor,
                     height: 1,
                   ),
                 ),
@@ -364,18 +362,18 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                 const SizedBox(height: 8),
                 Text(
                   'من $repeat',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
-                    color: Color(0xFF9A9A9A),
+                    color: context.textSecondaryColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
               if (isComplete) ...[
                 const SizedBox(height: 8),
-                const Icon(
+                Icon(
                   Icons.check_circle,
-                  color: Color(0xFF6A9A9A), // PrimaryAccent
+                  color: context.primaryColor,
                   size: 32,
                 ),
               ],
@@ -418,8 +416,15 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 class _DhikrProgressPainter extends CustomPainter {
   final int count;
   final int total;
+  final Color trackColor;
+  final Color progressColor;
 
-  _DhikrProgressPainter({required this.count, required this.total});
+  _DhikrProgressPainter({
+    required this.count,
+    required this.total,
+    required this.trackColor,
+    required this.progressColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -428,8 +433,7 @@ class _DhikrProgressPainter extends CustomPainter {
 
     // Track
     final trackPaint = Paint()
-      ..color =
-          const Color(0xFFE5E5E5) // Light grey
+      ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 16
       ..strokeCap = StrokeCap.round;
@@ -443,8 +447,7 @@ class _DhikrProgressPainter extends CustomPainter {
     if (progress > 0) {
       final rect = Rect.fromCircle(center: center, radius: radius);
       final progressPaint = Paint()
-        ..color =
-            const Color(0xFF6A9A9A) // PrimaryAccent ring
+        ..color = progressColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16
         ..strokeCap = StrokeCap.round;
@@ -461,6 +464,9 @@ class _DhikrProgressPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DhikrProgressPainter oldDelegate) {
-    return count != oldDelegate.count || total != oldDelegate.total;
+    return count != oldDelegate.count ||
+        total != oldDelegate.total ||
+        trackColor != oldDelegate.trackColor ||
+        progressColor != oldDelegate.progressColor;
   }
 }

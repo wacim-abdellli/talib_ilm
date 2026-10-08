@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../data/adhkar_models.dart';
@@ -14,9 +15,10 @@ class DuasMiscPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.backgroundColor,
       appBar: const UnifiedAppBar(title: AppStrings.duasTitle, showBack: true),
       body: Container(
-        color: const Color(0xFFFBFAF8), // BackgroundMain
+        color: context.backgroundColor,
         child: FutureBuilder<AthkarCatalog>(
           future: _service.loadCatalog(),
           builder: (context, snapshot) {
@@ -62,10 +64,10 @@ class _DuaCard extends StatelessWidget {
     return Container(
       padding: AppUi.cardPadding,
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F3F0), // SurfaceCard
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE8E6E3), // BorderSubtle
+          color: context.outlineVariantColor,
           width: 1,
         ),
       ),
@@ -78,10 +80,10 @@ class _DuaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.arabic,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF3A3A3A),
+                    color: context.textPrimaryColor,
                     fontFamily: 'Amiri',
                   ),
                 ),
@@ -92,14 +94,14 @@ class _DuaCard extends StatelessWidget {
             const SizedBox(height: AppUi.gapSM),
             Text(
               item.transliteration,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF6E6E6E)),
+              style: TextStyle(fontSize: 14, color: context.textSecondaryColor),
             ),
           ],
           if (item.meaning.isNotEmpty) ...[
             const SizedBox(height: AppUi.gapSM),
             Text(
               item.meaning,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF3A3A3A)),
+              style: TextStyle(fontSize: 15, color: context.textPrimaryColor),
             ),
           ],
         ],

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
+
 void enableBadCertificateCatcher() {
   // Web does not support HttpOverrides (handled by browser)
-  print('Bad certificate catcher ignored for web');
+  debugPrint('Bad certificate catcher ignored for web');
 }

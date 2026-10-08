@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../app/theme/theme_colors.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
 
@@ -18,30 +18,41 @@ class FavoritesPage extends StatefulWidget {
 class _FavoritesPageState extends State<FavoritesPage> {
   final FavoritesService _service = FavoritesService();
   late Future<List<FavoriteItem>> _future;
+  int _itemCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _future = _service.getAll();
+    _load();
+  }
+
+  void _load() {
+    _future = _service.getAll().then((items) {
+      if (mounted) {
+        setState(() => _itemCount = items.length);
+      }
+      return items;
+    });
   }
 
   void _reload() {
     setState(() {
-      _future = _service.getAll();
+      _load();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.backgroundColor,
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
               border: Border(
-                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                bottom: BorderSide(color: context.outlineVariantColor, width: 1),
               ),
             ),
             child: SafeArea(
@@ -52,19 +63,21 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFEC4899), Color(0xFFF472B6)],
-                      ),
+                      color: context.goldColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: context.goldColor.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.favorite_rounded,
-                      color: Colors.white,
+                    child: Icon(
+                      Icons.bookmark_rounded,
+                      color: context.goldColor,
                       size: 24,
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -73,25 +86,20 @@ class _FavoritesPageState extends State<FavoritesPage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: context.textPrimaryColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '12 عنصر محفوظ',
+                          '$_itemCount عنصر محفوظ',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF64748B),
+                            color: context.textSecondaryColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.sort_rounded, size: 26),
-                    color: const Color(0xFF64748B),
-                    onPressed: () {},
                   ),
                 ],
               ),
@@ -99,9 +107,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
           ),
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.backgroundGradient,
-              ),
+              color: context.backgroundColor,
               child: FutureBuilder<List<FavoriteItem>>(
                 future: _future,
                 builder: (context, snapshot) {
@@ -169,17 +175,20 @@ class _Section extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppText.heading),
+        Text(
+          title,
+          style: AppText.heading.copyWith(color: context.textPrimaryColor),
+        ),
         const SizedBox(height: AppUi.gapMD),
         ...items.map(
           (item) => Container(
             margin: const EdgeInsets.only(bottom: AppUi.gapMD),
             padding: AppUi.cardPadding,
             decoration: BoxDecoration(
-              gradient: AppColors.surfaceGradient,
+              color: context.surfaceColor,
               borderRadius: radius,
               border: Border.all(
-                color: AppColors.stroke,
+                color: context.outlineVariantColor,
                 width: AppUi.dividerThickness,
               ),
             ),
@@ -189,10 +198,21 @@ class _Section extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.title, style: AppText.body),
+                      Text(
+                        item.title,
+                        style: AppText.body.copyWith(
+                          color: context.textPrimaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (item.subtitle.isNotEmpty) ...[
                         const SizedBox(height: AppUi.gapXSPlus),
-                        Text(item.subtitle, style: AppText.caption),
+                        Text(
+                          item.subtitle,
+                          style: AppText.caption.copyWith(
+                            color: context.textSecondaryColor,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -200,7 +220,10 @@ class _Section extends StatelessWidget {
                 IconButton(
                   tooltip: AppStrings.favoritesRemoveTooltip,
                   onPressed: () => onRemove(item),
-                  icon: Icon(Icons.star, color: AppColors.textMuted),
+                  icon: Icon(
+                    Icons.bookmark_remove_rounded,
+                    color: context.goldColor,
+                  ),
                 ),
               ],
             ),
