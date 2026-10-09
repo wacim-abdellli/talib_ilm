@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/location_service.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
+import '../../../shared/widgets/icon_badge.dart';
 
 class LocationSettingsSheet extends StatefulWidget {
   final VoidCallback? onSaved;
@@ -81,28 +86,61 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     if (_loading) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator()),
+      return Container(
+        height: 240,
+        decoration: BoxDecoration(
+          color: palette.surfaceRaised,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: palette.border,
+                  borderRadius: AppRadius.pillRadius,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xl),
+            AppSkeleton(
+              width: double.infinity,
+              height: 48,
+              borderRadius: AppRadius.mdRadius,
+            ),
+            const SizedBox(height: AppSpace.md),
+            AppSkeleton(
+              width: double.infinity,
+              height: 52,
+              borderRadius: AppRadius.mdRadius,
+            ),
+          ],
+        ),
       );
     }
 
     return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        top: 12,
-        left: 20,
-        right: 20,
+      padding: EdgeInsetsDirectional.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.xxl,
+        top: AppSpace.md,
+        start: AppSpace.xl,
+        end: AppSpace.xl,
       ),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: palette.surfaceRaised,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         border: Border.all(
-          color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.12),
-          width: 1,
+          color: palette.border,
         ),
       ),
       child: SingleChildScrollView(
@@ -112,140 +150,121 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
           children: [
             Center(
               child: Container(
-                width: 44,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: context.outlineVariantColor,
-                  borderRadius: BorderRadius.circular(2),
+                  color: palette.border,
+                  borderRadius: AppRadius.pillRadius,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: context.goldColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.goldColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Icon(Icons.location_on_rounded, color: context.goldColor, size: 20),
-                ),
-                const SizedBox(width: 12),
+                const IconBadge(icon: Icons.location_on_rounded),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     AppStrings.locationSettingsTitle,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
+                    style: context.text.titleSmall.copyWith(
+                      color: palette.text,
                     ),
                   ),
                 ),
+                AppIconButton(
+                  icon: Icons.close_rounded,
+                  tooltip: 'إغلاق',
+                  color: palette.textMuted,
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              constraints: const BoxConstraints(
+                minHeight: AppSize.tap,
+              ),
               decoration: BoxDecoration(
-                color: context.surfaceContainer,
-                borderRadius: BorderRadius.circular(16),
+                color: palette.surfaceMuted,
+                borderRadius: AppRadius.mdRadius,
                 border: Border.all(
-                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                  color: palette.border,
                 ),
               ),
-              child: SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  AppStrings.locationManualToggle,
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.textPrimaryColor,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppStrings.locationManualToggle,
+                      style: context.text.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: palette.text,
+                      ),
+                    ),
                   ),
-                ),
-                value: _manualEnabled,
-                activeTrackColor: context.goldColor.withValues(alpha: 0.5),
-                activeThumbColor: context.goldColor,
-                onChanged: (value) {
-                  setState(() => _manualEnabled = value);
-                },
+                  Switch(
+                    value: _manualEnabled,
+                    activeThumbColor: palette.primary,
+                    activeTrackColor: palette.primarySoft,
+                    onChanged: (value) {
+                      setState(() => _manualEnabled = value);
+                    },
+                  ),
+                ],
               ),
             ),
             if (_manualEnabled) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               _buildField(
                 controller: _cityController,
                 label: AppStrings.locationManualCityLabel,
                 icon: Icons.location_city_rounded,
                 textInputAction: TextInputAction.next,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               _buildField(
                 controller: _latController,
                 label: AppStrings.locationLatitudeLabel,
                 icon: Icons.north_rounded,
                 textInputAction: TextInputAction.next,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]'))],
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               _buildField(
                 controller: _lonController,
                 label: AppStrings.locationLongitudeLabel,
                 icon: Icons.east_rounded,
                 textInputAction: TextInputAction.done,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]'))],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: context.goldColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text(
-                    AppStrings.locationSave,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
+                ],
+              ),
+              const SizedBox(height: AppSpace.xl),
+              AppButton(
+                label: AppStrings.locationSave,
+                width: double.infinity,
+                onPressed: _save,
               ),
             ] else ...[
-              const SizedBox(height: 16),
-              SizedBox(
+              const SizedBox(height: AppSpace.lg),
+              AppButton.outline(
+                label: AppStrings.locationBackToAuto,
                 width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: _clearManual,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: context.primaryColor),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text(
-                    AppStrings.locationBackToAuto,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.primaryColor,
-                    ),
-                  ),
-                ),
+                onPressed: _clearManual,
               ),
             ],
           ],
@@ -262,40 +281,43 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
     return TextField(
       controller: controller,
       textInputAction: textInputAction,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: TextStyle(
-        fontFamily: 'Cairo',
-        color: context.textPrimaryColor,
-        fontSize: 14,
+      style: context.text.body.copyWith(
+        color: palette.text,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          fontFamily: 'Cairo',
-          color: context.textSecondaryColor,
-          fontSize: 13,
+        labelStyle: context.text.caption.copyWith(
+          color: palette.textMuted,
         ),
-        prefixIcon: Icon(icon, size: 18, color: context.goldColor),
+        prefixIcon: Icon(
+          icon,
+          size: AppIcon.md,
+          color: palette.primary,
+        ),
         filled: true,
-        fillColor: context.surfaceContainer,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        fillColor: palette.surfaceMuted,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg,
+          vertical: AppSpace.md,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08)),
+          borderRadius: AppRadius.mdRadius,
+          borderSide: BorderSide(color: palette.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08)),
+          borderRadius: AppRadius.mdRadius,
+          borderSide: BorderSide(color: palette.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: context.goldColor, width: 1.5),
+          borderRadius: AppRadius.mdRadius,
+          borderSide: BorderSide(color: palette.primary, width: 2),
         ),
       ),
     );

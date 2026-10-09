@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_settings_service.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/section_header.dart';
 
 class PrayerCalcSection extends StatelessWidget {
   final AdhanSettings settings;
@@ -18,46 +21,21 @@ class PrayerCalcSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-        ),
-      ),
+    final palette = context.palette;
+
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.calculate_outlined, size: 18, color: context.primaryColor),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'طريقة الحساب',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: context.textPrimaryColor,
-                ),
-              ),
-            ],
+          const SectionHeader(
+            title: 'طريقة الحساب',
+            padding: EdgeInsets.zero,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.md),
           ...AdhanSettingsService.calculationMethods.entries.map((entry) {
             final isSelected = settings.calculationMethod == entry.key;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpace.sm),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -67,24 +45,19 @@ class PrayerCalcSection extends StatelessWidget {
                       settings.copyWith(calculationMethod: entry.key),
                     );
                   },
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: AppRadius.mdRadius,
                   child: Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(AppSpace.md),
+                    constraints: const BoxConstraints(
+                      minHeight: AppSize.tap,
+                    ),
                     decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              colors: [
-                                context.primaryColor,
-                                context.primaryColor.withValues(alpha: 0.85),
-                              ],
-                            )
-                          : null,
-                      color: isSelected ? null : context.surfaceColor,
-                      borderRadius: BorderRadius.circular(14),
+                      color: isSelected
+                          ? palette.primarySoft
+                          : palette.surfaceMuted,
+                      borderRadius: AppRadius.mdRadius,
                       border: Border.all(
-                        color: isSelected
-                            ? context.primaryColor
-                            : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                        color: isSelected ? palette.primary : palette.border,
                       ),
                     ),
                     child: Row(
@@ -94,21 +67,20 @@ class PrayerCalcSection extends StatelessWidget {
                               ? Icons.radio_button_checked_rounded
                               : Icons.radio_button_off_rounded,
                           color: isSelected
-                              ? Colors.white
-                              : context.textSecondaryColor,
-                          size: 20,
+                              ? palette.primary
+                              : palette.textSubtle,
+                          size: AppIcon.md,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpace.md),
                         Expanded(
                           child: Text(
                             entry.value,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            style: context.text.body.copyWith(
+                              fontWeight:
+                                  isSelected ? FontWeight.w700 : FontWeight.w500,
                               color: isSelected
-                                  ? Colors.white
-                                  : context.textPrimaryColor,
+                                  ? palette.onPrimarySoft
+                                  : palette.text,
                             ),
                           ),
                         ),

@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/theme_colors.dart';
-import '../../../app/theme/app_text.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../core/utils/prayer_countdown.dart';
-import '../../../core/utils/responsive.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-
-import '../../../shared/widgets/empty_state.dart';
-
-import 'package:shimmer/shimmer.dart'; // Direct shimmer import if needed for extensions? No, wrapper used.
-import '../../../shared/widgets/shimmer_loading.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
 import 'location_settings_sheet.dart';
-
 import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
 import 'widgets/prayer_header.dart';
@@ -72,14 +66,11 @@ class _PrayerPageState extends State<PrayerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: context.backgroundColor,
-      body: Container(
-        color: context.backgroundColor,
+      backgroundColor: context.palette.bg,
+      body: ColoredBox(
+        color: context.palette.bg,
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: FutureBuilder<PrayerTimesDay>(
@@ -87,23 +78,24 @@ class _PrayerPageState extends State<PrayerPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Padding(
-                  padding: EdgeInsets.all(responsive.safePadding),
+                  padding: const EdgeInsets.all(AppSpace.xl),
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        Shimmer.fromColors(
-                          baseColor: context.shimmerBaseColor,
-                          highlightColor: context.shimmerHighlightColor,
-                          child: Container(
-                            height: 140,
-                            decoration: BoxDecoration(
-                              color: context.surfaceColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
+                        AppSkeleton(
+                          width: double.infinity,
+                          height: 160,
+                          borderRadius: AppRadius.lgRadius,
                         ),
-                        SizedBox(height: responsive.largeGap),
-                        const ShimmerPrayerList(count: 5),
+                        const SizedBox(height: AppSpace.lg),
+                        for (int i = 0; i < 5; i++) ...[
+                          AppSkeleton(
+                            width: double.infinity,
+                            height: 56,
+                            borderRadius: AppRadius.lgRadius,
+                          ),
+                          if (i < 4) const SizedBox(height: AppSpace.sm),
+                        ],
                       ],
                     ),
                   ),
@@ -112,15 +104,16 @@ class _PrayerPageState extends State<PrayerPage> {
 
               if (!snapshot.hasData) {
                 return Padding(
-                  padding: EdgeInsets.all(responsive.safePadding),
-                  child: SizedBox(
-                    width: responsive.wp(92),
-                    child: EmptyState(
+                  padding: const EdgeInsets.all(AppSpace.xl),
+                  child: Center(
+                    child: AppEmptyState(
                       icon: Icons.access_time,
                       title: AppStrings.prayerLoadErrorTitle,
                       subtitle: AppStrings.prayerLoadErrorMessage,
-                      actionLabel: AppStrings.actionRetry,
-                      onAction: _reloadPrayer,
+                      action: AppButton(
+                        label: AppStrings.actionRetry,
+                        onPressed: _reloadPrayer,
+                      ),
                     ),
                   ),
                 );
@@ -158,27 +151,21 @@ class _PrayerPageState extends State<PrayerPage> {
 
                         // Body
                         Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: responsive.safeHorizontalPadding,
-                          ),
+                          padding: AppSpace.screenPadding,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              SizedBox(height: responsive.mediumGap),
+                              const SizedBox(height: AppSpace.md),
                               _buildNextPrayerCard(data),
-                              SizedBox(height: responsive.largeGap),
+                              const SizedBox(height: AppSpace.lg),
                               Text(
                                 AppStrings.prayerDayLabel,
-                                style: AppText.body.copyWith(
-                                  fontSize: responsive.sp(13),
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
+                                style: context.text.titleSmall.copyWith(
+                                  color: context.palette.text,
                                 ),
                                 textAlign: TextAlign.right,
                               ),
-                              SizedBox(height: responsive.mediumGap),
+                              const SizedBox(height: AppSpace.md),
                               for (var i = 0; i < times.length; i++) ...[
                                 PrayerTimeCard(
                                   item: times[i],
@@ -187,9 +174,9 @@ class _PrayerPageState extends State<PrayerPage> {
                                       _openAfterPrayer(context, times[i].name),
                                 ),
                                 if (i != times.length - 1)
-                                  SizedBox(height: responsive.smallGap),
+                                  const SizedBox(height: AppSpace.sm),
                               ],
-                              SizedBox(height: responsive.largeGap),
+                              const SizedBox(height: AppSpace.lg),
                               SizedBox(height: AppSize.navClearance(context)),
                             ],
                           ),
@@ -373,11 +360,8 @@ class _PrayerPageState extends State<PrayerPage> {
   void _openLocationSettings(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => LocationSettingsSheet(onSaved: _reloadPrayer),
     );
   }
@@ -425,4 +409,3 @@ class _LocationInfo {
 
   const _LocationInfo({required this.city, required this.isManual});
 }
-

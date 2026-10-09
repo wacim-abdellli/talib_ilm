@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
-import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/icon_badge.dart';
+import '../../../shared/widgets/section_header.dart';
 import 'widgets/prayer_adhan_section.dart';
 import 'widgets/prayer_adjustments_section.dart';
 import 'widgets/prayer_calc_section.dart';
@@ -71,8 +76,45 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     if (_loading || _settings == null) {
-      return const SizedBox(height: 300, child: AppLoadingIndicator());
+      return Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: palette.surfaceRaised,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: palette.border,
+                  borderRadius: AppRadius.pillRadius,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xl),
+            AppSkeleton(
+              width: double.infinity,
+              height: 48,
+              borderRadius: AppRadius.mdRadius,
+            ),
+            const SizedBox(height: AppSpace.md),
+            AppSkeleton(
+              width: double.infinity,
+              height: 120,
+              borderRadius: AppRadius.lgRadius,
+            ),
+          ],
+        ),
+      );
     }
 
     final settings = _settings!;
@@ -80,19 +122,33 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: palette.surfaceRaised,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         border: Border.all(
-          color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.12),
-          width: 1,
+          color: palette.border,
         ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: AppSpace.sm),
+              decoration: BoxDecoration(
+                color: palette.border,
+                borderRadius: AppRadius.pillRadius,
+              ),
+            ),
+          ),
+
           // Header
           _buildHeader(context),
-          Divider(height: 1, color: context.outlineVariantColor),
+          Divider(height: 1, color: palette.border),
 
           // Scrollable content
           Flexible(
@@ -100,7 +156,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics(),
               ),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppSpace.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -109,91 +165,69 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     isDark: isDark,
                     onSettingsChanged: _updateSettings,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppSpace.lg),
                   PrayerAdhanSection(
                     settings: settings,
                     isDark: isDark,
                     adhanService: _adhanService,
                     onSettingsChanged: _updateSettings,
                   ),
-                  const SizedBox(height: 18),
-                  _buildNotificationsSection(settings, isDark),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppSpace.lg),
+                  _buildNotificationsSection(settings),
+                  const SizedBox(height: AppSpace.lg),
                   PrayerAdjustmentsSection(
                     settings: settings,
                     isDark: isDark,
                     onSettingsChanged: _updateSettings,
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
 
           // Save button
-          _buildSaveButton(isDark),
+          _buildSaveButton(),
         ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
+    final palette = context.palette;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpace.xl,
+        AppSpace.md,
+        AppSpace.xl,
+        AppSpace.md,
+      ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  context.primaryColor,
-                  context.primaryColor.withValues(alpha: 0.8),
-                ],
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: context.goldColor.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: const Icon(
-              Icons.mosque_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
+          const IconBadge(icon: Icons.mosque_rounded),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'إعدادات الصلاة والأذان',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: context.textPrimaryColor,
+                  style: context.text.titleSmall.copyWith(
+                    color: palette.text,
                   ),
                 ),
                 Text(
                   'تخصيص الحساب والمؤذن والتنبيهات',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 12,
-                    color: context.textSecondaryColor,
+                  style: context.text.caption.copyWith(
+                    color: palette.textMuted,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(
-              Icons.close_rounded,
-              color: context.textSecondaryColor,
-            ),
+          AppIconButton(
+            icon: Icons.close_rounded,
+            tooltip: 'إغلاق',
+            color: palette.textMuted,
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -201,60 +235,18 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     );
   }
 
-  Widget _buildSectionCard({required Widget child, required bool isDark}) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-        ),
-      ),
-      child: child,
-    );
-  }
+  Widget _buildNotificationsSection(AdhanSettings settings) {
+    final palette = context.palette;
 
-  Widget _buildSectionHeader(String title, IconData icon, bool isDark) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 18, color: context.primaryColor),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: context.textPrimaryColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-
-
-  Widget _buildNotificationsSection(AdhanSettings settings, bool isDark) {
-    return _buildSectionCard(
-      isDark: isDark,
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(
-            'التنبيهات',
-            Icons.notifications_outlined,
-            isDark,
+          const SectionHeader(
+            title: 'التنبيهات',
+            padding: EdgeInsets.zero,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.md),
 
           // Notify before slider
           Column(
@@ -265,31 +257,27 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                 children: [
                   Text(
                     'التنبيه قبل دخول الوقت',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 15,
+                    style: context.text.body.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: context.textPrimaryColor,
+                      color: palette.text,
                     ),
                   ),
                   Text(
                     '${settings.notifyBeforeMinutes.toInt()} دقيقة',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 14,
+                    style: context.text.label.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: context.goldColor,
+                      color: palette.primary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               SliderTheme(
                 data: SliderThemeData(
-                  activeTrackColor: context.goldColor,
-                  inactiveTrackColor: context.goldColor.withValues(alpha: 0.2),
-                  thumbColor: context.goldColor,
-                  overlayColor: context.goldColor.withValues(alpha: 0.15),
+                  activeTrackColor: palette.primary,
+                  inactiveTrackColor: palette.border,
+                  thumbColor: palette.primary,
+                  overlayColor: palette.primarySoft,
                 ),
                 child: Slider(
                   value: settings.notifyBeforeMinutes,
@@ -306,107 +294,58 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
 
           // Iqama toggle
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'تذكير الإقامة',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: context.textPrimaryColor,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'تذكير الإقامة',
+                    style: context.text.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: palette.text,
+                    ),
                   ),
                 ),
-              ),
-              Transform.scale(
-                scale: 0.9,
-                child: Switch(
+                Switch(
                   value: settings.iqamaReminders,
                   onChanged: (val) {
                     HapticFeedback.selectionClick();
                     _updateSettings(settings.copyWith(iqamaReminders: val));
                   },
-                  activeThumbColor: context.goldColor,
-                  activeTrackColor: context.goldColor.withValues(alpha: 0.5),
+                  activeThumbColor: palette.primary,
+                  activeTrackColor: palette.primarySoft,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-
-
-  Widget _buildSaveButton(bool isDark) {
+  Widget _buildSaveButton() {
+    final palette = context.palette;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpace.xl),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
+        color: palette.surfaceRaised,
         border: Border(
           top: BorderSide(
-            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+            color: palette.border,
           ),
         ),
       ),
       child: SafeArea(
         top: false,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _saving ? null : _save,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: _saving
-                    ? null
-                    : LinearGradient(
-                        colors: [
-                          context.primaryColor,
-                          context.primaryColor.withValues(alpha: 0.85),
-                        ],
-                      ),
-                color: _saving ? Colors.grey : null,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _saving
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: context.primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-              ),
-              child: Center(
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'حفظ الإعدادات',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-          ),
+        child: AppButton(
+          label: 'حفظ الإعدادات',
+          width: double.infinity,
+          isLoading: _saving,
+          onPressed: _save,
         ),
       ),
     );

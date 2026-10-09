@@ -108,4 +108,23 @@
   - Raw GestureDetector: 13 → 10 (-3)
 - **Open Issues:** None.
 
+---
+
+### Phase 4.2 — Prayer Screen
+- **Status:** Complete
+- **Changes:** Extracted widgets prior to restyling (`prayer_header.dart`, `prayer_time_card.dart`, `prayer_calc_section.dart`, `prayer_adhan_section.dart`, `prayer_adjustments_section.dart` into `lib/features/prayer/presentation/widgets/`). Restyled `prayer_page.dart`, `prayer_settings_sheet.dart`, `location_settings_sheet.dart`, `next_prayer_card.dart`, `prayer_time_tile.dart`, and all prayer widgets to Calm Scholar tokens. Prayer rows use `AppCard`, current prayer emphasised with `primarySoft` background and 8px gold dot, prayer colors restricted strictly to 8px dot, countdown in neutral `text` color, `AppProgress` for next prayer timeline, bottom sheets use `AppSheet` style and tokens, all buttons use `AppButton`. Ensured text scale 1.5 resilience with flexible layout. Added 6 golden tests in `test/golden/prayer_golden_test.dart` (all passed and visually inspected). Lint violations across all 11 prayer presentation files reached **0**.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 65 → 65 (0)
+  - Raw fontSize: <n>: 155 → 118 (-37)
+  - Raw fontFamily: '...': 151 → 114 (-37)
+  - Raw BorderRadius.circular(<n>): 143 → 108 (-35)
+  - Raw EdgeInsets with numbers: 110 → 89 (-21)
+  - Text smaller than 12: 24 → 21 (-3)
+  - Colors.white/black: 107 → 94 (-13)
+  - isDark ? ... : ...: 102 → 72 (-30)
+  - Magic bottom spacer: 0 → 0 (0)
+  - Hand-written BoxShadow: 43 → 37 (-6)
+  - Raw GestureDetector: 10 → 10 (0)
+- **Open Issues:** None.
+
 

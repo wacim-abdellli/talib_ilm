@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_service.dart';
 import '../../../../core/services/adhan_settings_service.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/section_header.dart';
 
 class PrayerAdhanSection extends StatelessWidget {
   final AdhanSettings settings;
@@ -21,126 +25,97 @@ class PrayerAdhanSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-        ),
-      ),
+    final palette = context.palette;
+
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.volume_up_outlined,
-                  size: 18,
-                  color: context.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'الأذان والصوت',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: context.textPrimaryColor,
-                ),
-              ),
-            ],
+          const SectionHeader(
+            title: 'الأذان والصوت',
+            padding: EdgeInsets.zero,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.md),
 
           // Enable toggle
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'تشغيل صوت الأذان',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: context.textPrimaryColor,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'تشغيل صوت الأذان',
+                    style: context.text.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: palette.text,
+                    ),
                   ),
                 ),
-              ),
-              Transform.scale(
-                scale: 0.9,
-                child: Switch(
+                Switch(
                   value: settings.enabled,
                   onChanged: (val) {
                     HapticFeedback.selectionClick();
                     onSettingsChanged(settings.copyWith(enabled: val));
                   },
-                  activeThumbColor: context.primaryColor,
-                  activeTrackColor: context.primaryColor.withValues(alpha: 0.5),
+                  activeThumbColor: palette.primary,
+                  activeTrackColor: palette.primarySoft,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           if (settings.enabled) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.md),
 
             // Muezzin selector
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: context.surfaceColor,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+            DropdownButtonFormField<AdhanSound>(
+              initialValue: settings.sound,
+              style: context.text.body.copyWith(
+                color: palette.text,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                labelText: 'صوت المؤذن',
+                labelStyle: context.text.bodySmall.copyWith(
+                  color: palette.textMuted,
+                ),
+                filled: true,
+                fillColor: palette.surfaceMuted,
+                border: OutlineInputBorder(
+                  borderRadius: AppRadius.mdRadius,
+                  borderSide: BorderSide(color: palette.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: AppRadius.mdRadius,
+                  borderSide: BorderSide(color: palette.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: AppRadius.mdRadius,
+                  borderSide: BorderSide(color: palette.primary, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
                 ),
               ),
-              child: DropdownButtonFormField<AdhanSound>(
-                initialValue: settings.sound,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  color: context.textPrimaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              items: const [
+                DropdownMenuItem(
+                  value: AdhanSound.makkah,
+                  child: Text('مكة المكرمة'),
                 ),
-                decoration: InputDecoration(
-                  labelText: 'صوت المؤذن',
-                  labelStyle: TextStyle(
-                    fontFamily: 'Cairo',
-                    color: context.textSecondaryColor,
-                    fontSize: 13,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+                DropdownMenuItem(
+                  value: AdhanSound.madinah,
+                  child: Text('المدينة المنورة'),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AdhanSound.makkah,
-                    child: Text('مكة المكرمة'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.madinah,
-                    child: Text('المدينة المنورة'),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    onSettingsChanged(settings.copyWith(sound: val));
-                  }
-                },
-              ),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  onSettingsChanged(settings.copyWith(sound: val));
+                }
+              },
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.md),
 
             // Volume slider
             Column(
@@ -151,38 +126,34 @@ class PrayerAdhanSection extends StatelessWidget {
                   children: [
                     Text(
                       'مستوى الصوت',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
-                        color: context.textSecondaryColor,
+                      style: context.text.bodySmall.copyWith(
+                        color: palette.textMuted,
                       ),
                     ),
                     Text(
                       '${settings.volume.toInt()}%',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
+                      style: context.text.label.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: context.primaryColor,
+                        color: palette.primary,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
                     Icon(
                       Icons.volume_mute_rounded,
-                      size: 20,
-                      color: context.textSecondaryColor,
+                      size: AppIcon.md,
+                      color: palette.textMuted,
                     ),
                     Expanded(
                       child: SliderTheme(
                         data: SliderThemeData(
-                          activeTrackColor: context.primaryColor,
-                          inactiveTrackColor: context.primaryColor.withValues(alpha: 0.2),
-                          thumbColor: context.primaryColor,
-                          overlayColor: context.primaryColor.withValues(alpha: 0.15),
+                          activeTrackColor: palette.primary,
+                          inactiveTrackColor: palette.border,
+                          thumbColor: palette.primary,
+                          overlayColor: palette.primarySoft,
                         ),
                         child: Slider(
                           value: settings.volume,
@@ -196,59 +167,28 @@ class PrayerAdhanSection extends StatelessWidget {
                     ),
                     Icon(
                       Icons.volume_up_rounded,
-                      size: 20,
-                      color: context.primaryColor,
+                      size: AppIcon.md,
+                      color: palette.primary,
                     ),
                   ],
                 ),
               ],
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.md),
 
             // Test button
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  await adhanService.test(
-                    settings.sound,
-                    volume: settings.volume,
-                  );
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: context.primaryColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.play_circle_outline_rounded,
-                        color: context.primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'تجربة صوت الأذان',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: context.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            AppButton.tonal(
+              label: 'تجربة صوت الأذان',
+              icon: Icons.play_circle_outline_rounded,
+              width: double.infinity,
+              onPressed: () async {
+                HapticFeedback.lightImpact();
+                await adhanService.test(
+                  settings.sound,
+                  volume: settings.volume,
+                );
+              },
             ),
           ],
         ],
