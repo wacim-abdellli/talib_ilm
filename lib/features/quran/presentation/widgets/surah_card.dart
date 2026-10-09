@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/theme/app_radius.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 /// Authentic Islamic 8-pointed star (Rub el Hizb) medallion for Surah numbers
 class SurahNumberMedallion extends StatelessWidget {
@@ -11,13 +15,12 @@ class SurahNumberMedallion extends StatelessWidget {
   const SurahNumberMedallion({
     super.key,
     required this.number,
-    this.size = 46,
+    this.size = 44,
   });
 
   @override
   Widget build(BuildContext context) {
-    final gold = context.goldColor;
-    final isDark = context.isDark;
+    final palette = context.palette;
 
     return SizedBox(
       width: size,
@@ -32,10 +35,10 @@ class SurahNumberMedallion extends StatelessWidget {
               width: size * 0.72,
               height: size * 0.72,
               decoration: BoxDecoration(
-                color: gold.withValues(alpha: isDark ? 0.08 : 0.06),
-                borderRadius: BorderRadius.circular(size * 0.14),
+                color: palette.goldSoft,
+                borderRadius: AppRadius.smRadius,
                 border: Border.all(
-                  color: gold.withValues(alpha: isDark ? 0.35 : 0.28),
+                  color: palette.gold.withValues(alpha: 0.3),
                   width: 1.1,
                 ),
               ),
@@ -46,22 +49,26 @@ class SurahNumberMedallion extends StatelessWidget {
             width: size * 0.72,
             height: size * 0.72,
             decoration: BoxDecoration(
-              color: gold.withValues(alpha: isDark ? 0.12 : 0.08),
-              borderRadius: BorderRadius.circular(size * 0.14),
+              color: palette.goldSoft,
+              borderRadius: AppRadius.smRadius,
               border: Border.all(
-                color: gold.withValues(alpha: isDark ? 0.45 : 0.35),
+                color: palette.gold.withValues(alpha: 0.4),
                 width: 1.1,
               ),
             ),
           ),
           // Center Surah number
-          Text(
-            '$number',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: size * 0.32,
-              fontWeight: FontWeight.w800,
-              color: gold,
+          Padding(
+            padding: const EdgeInsets.all(AppSpace.xs),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$number',
+                style: context.text.label.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: palette.gold,
+                ),
+              ),
             ),
           ),
         ],
@@ -70,7 +77,7 @@ class SurahNumberMedallion extends StatelessWidget {
   }
 }
 
-/// Ornate Surah card conforming to Spiritual Serenity design system
+/// Ornate Surah card conforming to Calm Scholar design system
 class SurahCard extends StatelessWidget {
   final int surahNumber;
   final bool isBookmarked;
@@ -89,148 +96,118 @@ class SurahCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
-    final cardColor = context.surfaceContainer;
-    final textColor = context.textPrimaryColor;
-    final mutedColor = context.textSecondaryColor;
-    final accentColor = context.goldColor;
+    final palette = context.palette;
     final surahName = quran.getSurahNameArabic(surahNumber);
     final versesCount = quran.getVerseCount(surahNumber);
     final place = quran.getPlaceOfRevelation(surahNumber);
     final isMakki = place == 'Makkah';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.outlineColor.withValues(
-            alpha: isDark ? 0.12 : 0.08,
-          ),
-          width: 1,
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+      child: AppCard(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpace.lg,
+          vertical: AppSpace.md,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: isDark ? 0.16 : 0.03,
-            ),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // Ornate 8-pointed star medallion
-                SurahNumberMedallion(number: surahNumber),
-                const SizedBox(width: 16),
+        child: Row(
+          children: [
+            // Ornate 8-pointed star medallion
+            SurahNumberMedallion(number: surahNumber),
+            const SizedBox(width: AppSpace.lg),
 
-                // Surah Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Surah Details
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'سورة $surahName',
-                            style: TextStyle(
-                              fontFamily: 'Amiri',
-                              fontSize: 21,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                              height: 1.25,
-                            ),
+                      Expanded(
+                        child: Text(
+                          'سورة $surahName',
+                          style: context.text.sacred.copyWith(
+                            color: palette.text,
+                            fontWeight: FontWeight.bold,
+                            height: 1.25,
                           ),
-                          const Spacer(),
-                          // Transliteration name
-                          Text(
-                            quran.getSurahName(surahNumber),
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
-                              color: mutedColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          // Makkah / Madinah badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (isMakki
-                                      ? context.islamicGreenColor
-                                      : accentColor)
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              isMakki ? 'مكية' : 'مدنية',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: isMakki
-                                    ? context.islamicGreenColor
-                                    : accentColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Verse count
-                          Text(
-                            '$versesCount آية',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
-                              color: mutedColor,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: AppSpace.xs),
+                      // Transliteration name
+                      Text(
+                        quran.getSurahName(surahNumber),
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(width: 10),
-
-                // Trailing Action (Bookmark or custom)
-                trailing ??
-                    IconButton(
-                      icon: Icon(
-                        isBookmarked
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_border_rounded,
-                        color: isBookmarked ? accentColor : mutedColor,
-                        size: 22,
+                  const SizedBox(height: AppSpace.xs),
+                  Wrap(
+                    spacing: AppSpace.sm,
+                    runSpacing: AppSpace.xs,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      // Makkah / Madinah badge
+                      Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isMakki
+                              ? palette.primarySoft
+                              : palette.goldSoft,
+                          borderRadius: AppRadius.smRadius,
+                        ),
+                        child: Text(
+                          isMakki ? 'مكية' : 'مدنية',
+                          style: context.text.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: isMakki
+                                ? palette.onPrimarySoft
+                                : palette.gold,
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        onBookmarkTap();
-                      },
-                    ),
-              ],
+                      // Verse count
+                      Text(
+                        '$versesCount آية',
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+
+            const SizedBox(width: AppSpace.sm),
+
+            // Trailing Action (Bookmark or custom)
+            trailing ??
+                AppIconButton(
+                  icon: isBookmarked
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  tooltip: isBookmarked
+                      ? 'إزالة من المحفوظات'
+                      : 'إضافة للمحفوظات',
+                  color: isBookmarked ? palette.gold : palette.textMuted,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    onBookmarkTap();
+                  },
+                ),
+          ],
         ),
       ),
     );

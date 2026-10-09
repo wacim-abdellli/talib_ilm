@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import 'quran_library_wrapper.dart';
 import 'widgets/surah_card.dart';
 
@@ -49,45 +51,32 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
-    final bgColor = context.backgroundColor;
-    final textColor = context.textPrimaryColor;
-    final accentColor = context.goldColor;
-    final mutedColor = context.textSecondaryColor;
+    final palette = context.palette;
+    final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        title: Column(
-          children: [
-            Text(
-              'المحفوظات',
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                color: textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            if (!_isLoading && _bookmarkedSurahs.isNotEmpty)
-              Text(
-                '${_bookmarkedSurahs.length} سور محفوظة',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: accentColor,
+      backgroundColor: palette.bg,
+      appBar: PrimaryAppBar(
+        title: 'المحفوظات',
+        showBack: true,
+        bottom: (!_isLoading && _bookmarkedSurahs.isNotEmpty)
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(24),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpace.xs),
+                  child: Text(
+                    '${_bookmarkedSurahs.length} سور محفوظة',
+                    style: textTheme.caption.copyWith(
+                      color: palette.gold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: accentColor),
+              )
+            : null,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: accentColor))
+          ? Center(child: CircularProgressIndicator(color: palette.gold))
           : _bookmarkedSurahs.isEmpty
               ? EmptyState(
                   icon: Icons.bookmark_border_rounded,
@@ -98,7 +87,10 @@ class _BookmarksPageState extends State<BookmarksPage> {
                   onAction: () => Navigator.pop(context),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+                  padding: AppSpace.screenPadding.copyWith(
+                    top: AppSpace.sm,
+                    bottom: AppSpace.xxl,
+                  ),
                   itemCount: _bookmarkedSurahs.length,
                   itemBuilder: (context, index) {
                     final surahNum = _bookmarkedSurahs[index];
@@ -107,14 +99,14 @@ class _BookmarksPageState extends State<BookmarksPage> {
                       key: ValueKey(surahNum),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        margin: const EdgeInsets.only(bottom: AppSpace.sm),
+                        alignment: AlignmentDirectional.centerStart,
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.12),
-                          borderRadius: BorderRadius.circular(18),
+                          color: palette.errorSoft,
+                          borderRadius: AppRadius.lgRadius,
                           border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3),
+                            color: palette.error.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -122,18 +114,16 @@ class _BookmarksPageState extends State<BookmarksPage> {
                           children: [
                             Text(
                               'إزالة',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 13,
+                              style: textTheme.label.copyWith(
+                                color: palette.error,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.redAccent.shade100,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
+                            const SizedBox(width: AppSpace.xs),
+                            Icon(
                               Icons.delete_outline_rounded,
-                              color: Colors.redAccent,
-                              size: 24,
+                              color: palette.error,
+                              size: AppIcon.md,
                             ),
                           ],
                         ),
@@ -159,13 +149,10 @@ class _BookmarksPageState extends State<BookmarksPage> {
                           _removeBookmark(surahNum);
                           AppSnackbar.info(context, 'تمت إزالة السورة من المحفوظات');
                         },
-                        trailing: IconButton(
-                          icon: Icon(
-                            Icons.delete_outline_rounded,
-                            color: mutedColor,
-                            size: 22,
-                          ),
+                        trailing: AppIconButton(
+                          icon: Icons.delete_outline_rounded,
                           tooltip: 'إزالة من المحفوظات',
+                          color: palette.textMuted,
                           onPressed: () {
                             HapticFeedback.lightImpact();
                             _removeBookmark(surahNum);

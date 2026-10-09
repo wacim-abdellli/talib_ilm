@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quran_library/quran_library.dart';
-import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_spacing.dart';
 
 /// Professional Quran Reading Screen using quran_library package.
 ///
@@ -25,7 +26,8 @@ class ProfessionalQuranScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+    final isDark = palette.isDark;
 
     // Navigate to specific location if provided
     if (initialSurah != null) {
@@ -39,26 +41,13 @@ class ProfessionalQuranScreen extends StatelessWidget {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HARMONIZED MUSHAF THEME (Twilight Sanctuary / Medina Ivory)
+    // HARMONIZED MUSHAF THEME (Calm Scholar Design System)
     // ═══════════════════════════════════════════════════════════════
 
-    // Background Colors - Twilight Sanctuary / Warm Medina Ivory
-    final Color backgroundColor = isDark
-        ? AppColors.darkSurface
-        : AppColors.surfaceWarmIvory;
-
-    // Text Colors
-    final Color textColor = isDark
-        ? AppColors.darkTextPrimary
-        : AppColors.textPrimary;
-
-    // Gold Accent
-    final Color goldColor = isDark
-        ? AppColors.darkGold
-        : AppColors.gold;
-
-    // Highlight Color
-    final Color highlightColor = goldColor.withValues(alpha: isDark ? 0.3 : 0.22);
+    final Color backgroundColor = palette.bg;
+    final Color textColor = palette.text;
+    final Color goldColor = palette.gold;
+    final Color highlightColor = palette.gold.withValues(alpha: 0.22);
 
     // Force override library theme colors
     final theme = Theme.of(context);
@@ -67,8 +56,6 @@ class ProfessionalQuranScreen extends StatelessWidget {
         primaryColor: goldColor,
         primaryColorDark: goldColor,
         primaryColorLight: goldColor,
-        // indicatorColor: goldColor, // Deprecated, move to tabBarTheme if possible or remove if unused
-        // Disable tap visual feedback (Ripples/Hover)
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
@@ -86,60 +73,50 @@ class ProfessionalQuranScreen extends StatelessWidget {
           tertiary: goldColor,
           surface: backgroundColor,
           onSurface: textColor,
-          primaryContainer: goldColor.withValues(alpha: 0.12),
-          onPrimaryContainer: goldColor,
-          secondaryContainer: goldColor.withValues(alpha: 0.12),
-          onSecondaryContainer: goldColor,
-          surfaceContainer: isDark ? AppColors.darkSurfaceContainer : Colors.white,
+          primaryContainer: palette.goldSoft,
+          onPrimaryContainer: palette.onGold,
+          secondaryContainer: palette.goldSoft,
+          onSecondaryContainer: palette.onGold,
+          surfaceContainer: palette.surface,
           surfaceTint: Colors.transparent, // Disable M3 tint
         ),
         scaffoldBackgroundColor: backgroundColor,
         dialogTheme: DialogThemeData(
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainerHigh
-              : AppColors.surfaceWarmIvory,
+          backgroundColor: palette.surfaceRaised,
         ),
 
         // Global Colors
-        canvasColor: isDark ? AppColors.darkSurface : AppColors.surfaceWarmIvory,
-        cardColor: isDark ? AppColors.darkSurfaceContainer : Colors.white,
-        dividerColor: goldColor.withValues(alpha: 0.2),
+        canvasColor: backgroundColor,
+        cardColor: palette.surface,
+        dividerColor: palette.border,
 
         // Specific overrides for commonly used widgets
         appBarTheme: AppBarTheme(
-          backgroundColor: isDark
-              ? AppColors.darkSurface
-              : AppColors.surfaceWarmIvory,
+          backgroundColor: backgroundColor,
           foregroundColor: textColor,
           iconTheme: IconThemeData(color: goldColor),
           elevation: 0,
         ),
         bottomSheetTheme: BottomSheetThemeData(
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainerHigh
-              : AppColors.surfaceWarmIvory,
-          modalBackgroundColor: isDark
-              ? AppColors.darkSurfaceContainerHigh
-              : AppColors.surfaceWarmIvory,
+          backgroundColor: palette.surfaceRaised,
+          modalBackgroundColor: palette.surfaceRaised,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
           ),
         ),
         listTileTheme: ListTileThemeData(
           iconColor: goldColor,
           textColor: textColor,
-          tileColor: isDark ? AppColors.darkSurfaceContainer : Colors.white,
-          selectedColor: goldColor.withValues(alpha: 0.1),
-          selectedTileColor: goldColor.withValues(alpha: 0.1),
+          tileColor: palette.surface,
+          selectedColor: palette.goldSoft,
+          selectedTileColor: palette.goldSoft,
         ),
         radioTheme: RadioThemeData(
           fillColor: WidgetStateProperty.all(goldColor),
         ),
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.all(goldColor),
-          checkColor: WidgetStateProperty.all(
-            isDark ? Colors.black : Colors.white,
-          ),
+          checkColor: WidgetStateProperty.all(palette.onGold),
         ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.all(goldColor),
@@ -151,14 +128,14 @@ class ProfessionalQuranScreen extends StatelessWidget {
           inactiveTrackColor: goldColor.withValues(alpha: 0.2),
           valueIndicatorColor: goldColor,
           valueIndicatorTextStyle: TextStyle(
-            color: isDark ? Colors.black : Colors.white,
+            color: palette.onGold,
           ),
         ),
         progressIndicatorTheme: ProgressIndicatorThemeData(color: goldColor),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: goldColor,
-            foregroundColor: isDark ? Colors.black : Colors.white,
+            foregroundColor: palette.onGold,
           ),
         ),
         textButtonTheme: TextButtonThemeData(

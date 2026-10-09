@@ -166,3 +166,32 @@
   - Hand-written BoxShadow: 22 → 15 (-7)
   - Raw GestureDetector: 6 → 4 (-2)
 - **Open Issues:** None.
+
+---
+
+### Phase 4.5 — Quran & Bookmarks Screens
+- **Status:** Complete
+- **Changes:**
+  - Restyled all 4 Quran presentation files to Calm Scholar tokens: `quran_page.dart`, `bookmarks_page.dart`, `quran_library_wrapper.dart`, and `widgets/surah_card.dart`.
+  - Converted custom AppBars in `quran_page.dart` and `bookmarks_page.dart` to `PrimaryAppBar` with subtitle and action buttons.
+  - Replaced hardcoded stat cards, last-read card, and surah list items with `AppCard`, semantic colors (`palette.gold`, `palette.primary`), and tokens.
+  - Styled `SurahNumberMedallion` with authentic Islamic 8-pointed star (Rub el Hizb) medallion using gold star borders and `FittedBox` scaling for multi-digit numbers.
+  - Surah names use `context.text.sacred` typography (Amiri) and badges wrap with `Wrap` for 1.5 text scale accessibility resilience.
+  - Harmonized `quran_library_wrapper.dart` chrome with `AppPalette` (`palette.bg`, `palette.surface`, `palette.surfaceRaised`, `palette.goldSoft`, `palette.onGold`).
+  - Replaced magic bottom spacer (100) with `AppSize.navClearance(context)`.
+  - Added 6 golden tests in `test/golden/quran_golden_test.dart` (SurahCard unbookmarked, bookmarked, and medallion across light 1.0 and dark 1.5). All 28 golden tests in repo pass.
+  - UI lint violations in all Quran files reached **0**.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 16 → 16 (0)
+  - Raw fontSize: <n>: 57 → 41 (-16)
+  - Raw fontFamily: '...': 55 → 37 (-18)
+  - Raw BorderRadius.circular(<n>): 35 → 22 (-13)
+  - Raw EdgeInsets with numbers: 34 → 23 (-11)
+  - Text smaller than 12: 10 → 4 (-6)
+  - Colors.white/black: 52 → 42 (-10)
+  - isDark ? ... : ...: 36 → 17 (-19)
+  - Magic bottom spacer: 0 → 0 (0)
+  - Hand-written BoxShadow: 15 → 12 (-3)
+  - Raw GestureDetector: 4 → 3 (-1)
+- **Open Issues:** None.
+

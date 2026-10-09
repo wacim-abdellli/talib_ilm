@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/theme_colors.dart';
-import '../data/services/reading_stats_service.dart';
-import 'quran_library_wrapper.dart';
-import 'bookmarks_page.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
+import '../data/services/reading_stats_service.dart';
+import 'bookmarks_page.dart';
+import 'quran_library_wrapper.dart';
 import 'widgets/surah_card.dart';
 
 class QuranPage extends StatefulWidget {
@@ -139,45 +141,32 @@ class _QuranPageState extends State<QuranPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
-    final bgColor = context.backgroundColor;
-    final cardColor = context.surfaceContainer;
-    final textColor = context.textPrimaryColor;
-    final accentColor = context.goldColor;
-    final mutedColor = context.textSecondaryColor;
+    final palette = context.palette;
+    final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        title: Column(
-          children: [
-            Text(
-              'القرآن الكريم',
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: textColor,
-              ),
-            ),
-            Text(
+      backgroundColor: palette.bg,
+      appBar: PrimaryAppBar(
+        title: 'القرآن الكريم',
+        showBack: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpace.xs),
+            child: Text(
               '١١٤ سورة',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 11,
+              style: textTheme.caption.copyWith(
+                color: palette.gold,
                 fontWeight: FontWeight.w600,
-                color: accentColor,
               ),
             ),
-          ],
+          ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.bookmark_rounded, color: accentColor),
+          AppIconButton(
+            icon: Icons.bookmark_rounded,
             tooltip: 'المحفوظات',
+            color: palette.gold,
             onPressed: () {
               HapticFeedback.lightImpact();
               Navigator.push(
@@ -189,43 +178,51 @@ class _QuranPageState extends State<QuranPage> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: accentColor))
+          ? Center(child: CircularProgressIndicator(color: palette.gold))
           : Column(
               children: [
                 // ════════ STATS DASHBOARD ════════
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpace.lg,
+                    AppSpace.xs,
+                    AppSpace.lg,
+                    AppSpace.md,
+                  ),
                   child: Row(
                     children: [
                       // Streak Card
                       Expanded(
                         child: _buildStatCard(
+                          context: context,
                           label: 'أيام التتابع',
                           value: '$_streak',
                           icon: Icons.local_fire_department_rounded,
-                          color: AppColors.categorySeerah, // Warm amber terracotta
-                          cardColor: cardColor,
-                          textColor: textColor,
+                          iconColor: palette.gold,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: AppSpace.sm),
                       // Time Card
                       Expanded(
                         child: _buildStatCard(
+                          context: context,
                           label: 'قراءة اليوم',
                           value: '$_minutesToday د',
                           icon: Icons.timer_outlined,
-                          color: context.islamicGreenColor,
-                          cardColor: cardColor,
-                          textColor: textColor,
+                          iconColor: palette.primary,
                           subtitle:
                               '${(_minutesToday / _dailyGoal * 100).clamp(0, 100).toInt()}% من الهدف',
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: AppSpace.sm),
                       // Bookmarks Card
                       Expanded(
-                        child: GestureDetector(
+                        child: _buildStatCard(
+                          context: context,
+                          label: 'المحفوظات',
+                          value: '${_bookmarkedSurahsStr.length}',
+                          icon: Icons.bookmark_rounded,
+                          iconColor: palette.gold,
                           onTap: () {
                             HapticFeedback.lightImpact();
                             Navigator.push(
@@ -235,14 +232,6 @@ class _QuranPageState extends State<QuranPage> {
                               ),
                             ).then((_) => _loadData());
                           },
-                          child: _buildStatCard(
-                            label: 'المحفوظات',
-                            value: '${_bookmarkedSurahsStr.length}',
-                            icon: Icons.bookmark_rounded,
-                            color: accentColor,
-                            cardColor: cardColor,
-                            textColor: textColor,
-                          ),
                         ),
                       ),
                     ],
@@ -253,197 +242,162 @@ class _QuranPageState extends State<QuranPage> {
                 if (_lastOpenedSurah != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
+                      horizontal: AppSpace.lg,
+                      vertical: AppSpace.xs,
                     ),
-                    child: InkWell(
+                    child: AppCard(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         _openSurah(_lastOpenedSurah!);
                       },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isDark
-                                ? [
-                                    context.surfaceContainerHigh,
-                                    context.surfaceContainer,
-                                  ]
-                                : [
-                                    Colors.white,
-                                    context.surfaceContainerLow,
-                                  ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      padding: const EdgeInsets.all(AppSpace.lg),
+                      border: Border.all(
+                        color: palette.gold.withValues(alpha: 0.35),
+                        width: 1.2,
+                      ),
+                      child: Row(
+                        children: [
+                          // Ornate Quran Icon
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: palette.goldSoft,
+                              border: Border.all(
+                                color: palette.gold.withValues(alpha: 0.4),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.auto_stories_rounded,
+                              color: palette.gold,
+                              size: AppIcon.md,
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: accentColor.withValues(alpha: isDark ? 0.35 : 0.3),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.25 : 0.04,
-                              ),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            // Ornate Quran Icon
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: accentColor.withValues(alpha: 0.14),
-                                border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.4),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.auto_stories_rounded,
-                                color: accentColor,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            // Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: accentColor.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'آخر قراءة',
-                                      style: TextStyle(
-                                        fontFamily: 'Cairo',
-                                        fontSize: 10,
-                                        color: accentColor,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
+                          const SizedBox(width: AppSpace.md),
+                          // Details
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.xs,
                                   ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    'سورة ${quran.getSurahNameArabic(_lastOpenedSurah!)}',
-                                    style: TextStyle(
-                                      fontFamily: 'Amiri',
-                                      fontSize: 20,
-                                      color: textColor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: palette.goldSoft,
+                                    borderRadius: AppRadius.pillRadius,
                                   ),
-                                ],
-                              ),
-                            ),
-                            // Action Button Pill
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(
-                                  alpha: isDark ? 0.2 : 0.12,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.35),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'تابع القراءة',
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      fontSize: 12,
+                                  child: Text(
+                                    'آخر قراءة',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.onGold,
                                       fontWeight: FontWeight.w700,
-                                      color: accentColor,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.arrow_back_ios_new_rounded,
-                                    size: 11,
-                                    color: accentColor,
+                                ),
+                                const SizedBox(height: AppSpace.xs),
+                                Text(
+                                  'سورة ${quran.getSurahNameArabic(_lastOpenedSurah!)}',
+                                  style: textTheme.sacred.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Action Button Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.goldSoft,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: palette.gold.withValues(alpha: 0.35),
                               ),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'تابع القراءة',
+                                  style: textTheme.caption.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: palette.gold,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Icon(
+                                  Icons.arrow_back_ios_new_rounded,
+                                  size: AppIcon.sm,
+                                  color: palette.gold,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
 
                 // ════════ SEARCH ════════
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpace.lg,
+                    AppSpace.sm,
+                    AppSpace.lg,
+                    AppSpace.md,
+                  ),
                   child: TextField(
                     controller: _searchController,
                     textAlign: TextAlign.right,
-                    style: TextStyle(color: textColor, fontFamily: 'Cairo'),
+                    style: textTheme.body.copyWith(color: palette.text),
                     decoration: InputDecoration(
                       hintText: 'ابحث عن سورة بالاسم أو الرقم...',
-                      hintStyle: TextStyle(
-                        color: mutedColor,
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
+                      hintStyle: textTheme.bodySmall.copyWith(
+                        color: palette.textMuted,
                       ),
-                      prefixIcon: Icon(Icons.search_rounded, color: accentColor),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: palette.gold,
+                        size: AppIcon.md,
+                      ),
                       suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear_rounded,
-                                color: mutedColor,
-                                size: 18,
-                              ),
+                          ? AppIconButton(
+                              icon: Icons.clear_rounded,
+                              tooltip: 'مسح البحث',
+                              color: palette.textMuted,
                               onPressed: () {
                                 _searchController.clear();
                               },
                             )
                           : null,
                       filled: true,
-                      fillColor: cardColor,
+                      fillColor: palette.surfaceMuted,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: context.outlineColor.withValues(alpha: 0.15),
-                        ),
+                        borderRadius: AppRadius.lgRadius,
+                        borderSide: BorderSide(color: palette.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: context.outlineColor.withValues(alpha: 0.15),
-                        ),
+                        borderRadius: AppRadius.lgRadius,
+                        borderSide: BorderSide(color: palette.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppRadius.lgRadius,
                         borderSide: BorderSide(
-                          color: accentColor.withValues(alpha: 0.5),
+                          color: palette.gold,
                           width: 1.5,
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: AppSpace.lg,
+                        vertical: AppSpace.md,
                       ),
                     ),
                   ),
@@ -466,7 +420,12 @@ class _QuranPageState extends State<QuranPage> {
                         )
                       : ListView.builder(
                           itemCount: _filteredSurahs.length,
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpace.lg,
+                            0,
+                            AppSpace.lg,
+                            AppSize.navClearance(context),
+                          ),
                           itemBuilder: (context, index) {
                             final surahNum = _filteredSurahs[index];
                             final isBookmarked = _bookmarkedSurahsStr.contains(
@@ -488,74 +447,58 @@ class _QuranPageState extends State<QuranPage> {
   }
 
   Widget _buildStatCard({
+    required BuildContext context,
     required String label,
     required String value,
     required IconData icon,
-    required Color color,
-    required Color cardColor,
-    required Color textColor,
+    required Color iconColor,
     String? subtitle,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.18),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: context.isDark ? 0.2 : 0.04,
-            ),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.md,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpace.xs),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: iconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                color: color.withValues(alpha: 0.25),
+                color: iconColor.withValues(alpha: 0.25),
                 width: 1,
               ),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: iconColor, size: AppIcon.sm),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.xs),
           Text(
             value,
-            style: TextStyle(
-              fontFamily: 'Cairo',
+            style: textTheme.titleSmall.copyWith(
+              color: palette.text,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: textColor,
             ),
           ),
           Text(
             label,
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: textColor.withValues(alpha: 0.7),
+            style: textTheme.caption.copyWith(
+              color: palette.textMuted,
             ),
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
             Text(
               subtitle,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 10,
-                color: color,
+              style: textTheme.caption.copyWith(
+                color: iconColor,
                 fontWeight: FontWeight.w600,
               ),
             ),

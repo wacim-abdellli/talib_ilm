@@ -36,7 +36,7 @@ by_file = "--files" in args
 if by_file:
     args.remove("--files")
 
-target_filter = args[0] if len(args) > 0 else None
+target_filter = os.path.normpath(args[0]) if len(args) > 0 else None
 if target_filter:
     dart_files = [f for f in dart_files if target_filter in f]
 
