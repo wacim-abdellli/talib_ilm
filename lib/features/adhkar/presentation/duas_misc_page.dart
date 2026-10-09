@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
-import '../../../shared/widgets/primary_app_bar.dart';
-import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/app_snackbar.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -59,26 +61,26 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: const UnifiedAppBar(
+      backgroundColor: palette.bg,
+      appBar: const PrimaryAppBar(
         title: AppStrings.duasTitle,
         showBack: true,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppLoadingIndicator())
           : Column(
               children: [
                 // Top Search Bar
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
                   decoration: BoxDecoration(
-                    color: context.surfaceColor,
+                    color: palette.surface,
                     border: Border(
                       bottom: BorderSide(
-                        color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                        color: palette.border,
                         width: 1,
                       ),
                     ),
@@ -86,26 +88,22 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val),
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      color: context.textPrimaryColor,
-                      fontSize: 14,
+                    style: context.text.body.copyWith(
+                      color: palette.text,
                     ),
                     decoration: InputDecoration(
                       hintText: 'ابحث في الأدعية والمأثورات...',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Cairo',
-                        color: context.textTertiaryColor,
-                        fontSize: 13,
+                      hintStyle: context.text.bodySmall.copyWith(
+                        color: palette.textMuted,
                       ),
                       prefixIcon: Icon(
                         Icons.search_rounded,
-                        color: context.goldColor,
-                        size: 22,
+                        color: palette.primary,
+                        size: AppIcon.md,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 18),
+                              icon: const Icon(Icons.clear_rounded, size: AppIcon.sm),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -113,25 +111,24 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                             )
                           : null,
                       filled: true,
-                      fillColor: context.surfaceContainer,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      fillColor: palette.surfaceMuted,
+                      contentPadding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.lg,
+                        vertical: AppSpace.sm,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: context.outlineVariantColor.withValues(alpha: 0.5),
-                        ),
+                        borderRadius: AppRadius.mdRadius,
+                        borderSide: BorderSide(color: palette.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: context.outlineVariantColor.withValues(alpha: 0.5),
-                        ),
+                        borderRadius: AppRadius.mdRadius,
+                        borderSide: BorderSide(color: palette.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppRadius.mdRadius,
                         borderSide: BorderSide(
-                          color: context.goldColor,
-                          width: 1.5,
+                          color: palette.primary,
+                          width: 2,
                         ),
                       ),
                     ),
@@ -141,26 +138,38 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                 // Duas List
                 Expanded(
                   child: _filteredItems.isEmpty
-                      ? EmptyState(
+                      ? AppEmptyState(
                           icon: Icons.menu_book_outlined,
-                          title: _searchQuery.isEmpty ? AppStrings.duasEmptyTitle : 'لا توجد نتائج',
+                          title: _searchQuery.isEmpty
+                              ? AppStrings.duasEmptyTitle
+                              : 'لا توجد نتائج',
                           subtitle: _searchQuery.isEmpty
                               ? AppStrings.duasEmptyMessage
                               : 'لم نعثر على أدعية مطابقة لبحثك',
-                          actionLabel: _searchQuery.isEmpty ? AppStrings.actionBack : 'مسح البحث',
-                          onAction: () {
-                            if (_searchQuery.isNotEmpty) {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            } else {
-                              Navigator.pop(context);
-                            }
-                          },
+                          action: AppButton(
+                            label: _searchQuery.isEmpty
+                                ? AppStrings.actionBack
+                                : 'مسح البحث',
+                            onPressed: () {
+                              if (_searchQuery.isNotEmpty) {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              } else {
+                                Navigator.pop(context);
+                              }
+                            },
+                          ),
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                            AppSpace.lg,
+                            AppSpace.lg,
+                            AppSpace.lg,
+                            AppSize.navClearance(context),
+                          ),
                           itemCount: _filteredItems.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 14),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: AppSpace.md),
                           itemBuilder: (context, index) {
                             final item = _filteredItems[index];
                             return _DuaCard(item: item, index: index + 1);
@@ -208,7 +217,9 @@ class _DuaCardState extends State<_DuaCard> {
       type: FavoriteType.dua,
       id: _duaId,
       title: widget.item.arabic,
-      subtitle: widget.item.source.isNotEmpty ? widget.item.source : widget.item.meaning,
+      subtitle: widget.item.source.isNotEmpty
+          ? widget.item.source
+          : widget.item.meaning,
     );
     final nowFav = await _favService.toggle(favItem);
     if (mounted) {
@@ -249,96 +260,80 @@ class _DuaCardState extends State<_DuaCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.goldColor.withValues(alpha: isDark ? 0.25 : 0.12),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    return AppCard(
+      padding: EdgeInsetsDirectional.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header with number badge and source
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppSpace.lg,
+              AppSpace.md,
+              AppSpace.lg,
+              AppSpace.sm,
+            ),
             child: Row(
               children: [
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: context.goldColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                    color: palette.goldSoft,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: context.goldColor.withValues(alpha: 0.35),
+                      color: palette.gold.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Center(
                     child: Text(
                       '${widget.index}',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 12,
+                      style: context.text.caption.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: context.goldColor,
+                        color: palette.gold,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.sm),
                 if (widget.item.source.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: AppSpace.xs,
+                    ),
                     decoration: BoxDecoration(
-                      color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.smRadius,
                     ),
                     child: Text(
                       widget.item.source,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 11,
+                      style: context.text.caption.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: context.primaryColor,
+                        color: palette.onPrimarySoft,
                       ),
                     ),
                   ),
                 const Spacer(),
                 // Actions
-                IconButton(
+                AppIconButton(
+                  icon: Icons.copy_rounded,
                   tooltip: 'نسخ الدعاء',
-                  icon: const Icon(Icons.copy_rounded, size: 19),
-                  color: context.textSecondaryColor,
-                  visualDensity: VisualDensity.compact,
                   onPressed: _copy,
                 ),
-                IconButton(
+                AppIconButton(
+                  icon: Icons.share_rounded,
                   tooltip: 'مشاركة الدعاء',
-                  icon: const Icon(Icons.share_rounded, size: 19),
-                  color: context.textSecondaryColor,
-                  visualDensity: VisualDensity.compact,
                   onPressed: _share,
                 ),
-                IconButton(
+                AppIconButton(
+                  icon: _isFavorite
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
                   tooltip: _isFavorite ? 'في المفضلة' : 'إضافة للمفضلة',
-                  icon: Icon(
-                    _isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    size: 20,
-                  ),
-                  color: _isFavorite ? context.goldColor : context.textSecondaryColor,
-                  visualDensity: VisualDensity.compact,
+                  color: _isFavorite ? palette.gold : null,
                   onPressed: _toggleFav,
                 ),
               ],
@@ -347,15 +342,18 @@ class _DuaCardState extends State<_DuaCard> {
 
           // Arabic Dua Content
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppSpace.xl,
+              AppSpace.xs,
+              AppSpace.xl,
+              AppSpace.md,
+            ),
             child: Text(
               widget.item.arabic,
               textAlign: TextAlign.right,
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 20,
+              style: context.text.sacred.copyWith(
+                color: palette.text,
                 fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
                 height: 1.7,
               ),
             ),
@@ -364,10 +362,17 @@ class _DuaCardState extends State<_DuaCard> {
           // Meaning & Fadl
           if (widget.item.meaning.isNotEmpty || widget.item.fadl.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpace.lg,
+                AppSpace.md,
+                AppSpace.lg,
+                AppSpace.md,
+              ),
               decoration: BoxDecoration(
-                color: context.surfaceColor.withValues(alpha: 0.6),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(19)),
+                color: palette.surfaceMuted,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(AppRadius.lg),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,32 +380,29 @@ class _DuaCardState extends State<_DuaCard> {
                   if (widget.item.meaning.isNotEmpty)
                     Text(
                       widget.item.meaning,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
-                        color: context.textSecondaryColor,
+                      style: context.text.bodySmall.copyWith(
+                        color: palette.textMuted,
                         height: 1.5,
                       ),
                     ),
                   if (widget.item.fadl.isNotEmpty) ...[
-                    if (widget.item.meaning.isNotEmpty) const SizedBox(height: 6),
+                    if (widget.item.meaning.isNotEmpty)
+                      const SizedBox(height: AppSpace.xs),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.stars_rounded,
-                          size: 15,
-                          color: context.goldColor,
+                          size: AppIcon.sm,
+                          color: palette.gold,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpace.xs),
                         Expanded(
                           child: Text(
                             widget.item.fadl,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
+                            style: context.text.caption.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: context.goldColor,
+                              color: palette.gold,
                               height: 1.4,
                             ),
                           ),

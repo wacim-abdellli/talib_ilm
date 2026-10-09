@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_card.dart';
 
 class RosaryDial extends StatefulWidget {
   final String label;
@@ -27,7 +29,8 @@ class RosaryDial extends StatefulWidget {
   State<RosaryDial> createState() => _RosaryDialState();
 }
 
-class _RosaryDialState extends State<RosaryDial> with SingleTickerProviderStateMixin {
+class _RosaryDialState extends State<RosaryDial>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
 
@@ -36,7 +39,7 @@ class _RosaryDialState extends State<RosaryDial> with SingleTickerProviderStateM
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 90),
+      duration: AppMotion.fast,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -50,6 +53,7 @@ class _RosaryDialState extends State<RosaryDial> with SingleTickerProviderStateM
   }
 
   void _handleTap() {
+    HapticFeedback.lightImpact();
     _pulseController.forward().then((_) {
       if (mounted) _pulseController.reverse();
     });
@@ -58,272 +62,299 @@ class _RosaryDialState extends State<RosaryDial> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
     final progress = widget.target != null && widget.target! > 0
         ? (widget.count / widget.target!).clamp(0.0, 1.0)
         : 0.0;
     final isCompleted = widget.target != null && widget.count >= widget.target!;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: _handleTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Column(
-          children: [
-            // Top Dhikr Display Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: context.surfaceContainer,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: context.goldColor.withValues(alpha: isDark ? 0.3 : 0.15),
-                  width: 1,
+    return Semantics(
+      button: true,
+      label: 'عداد التسبيح، اضغط للعد',
+      child: InkWell(
+        onTap: _handleTap,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight > 0
+                      ? constraints.maxHeight
+                      : 0,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    widget.label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
-                      height: 1.6,
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xl,
+                      vertical: AppSpace.md,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: widget.onChangeDhikr,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: context.goldColor.withValues(alpha: isDark ? 0.15 : 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: context.goldColor.withValues(alpha: 0.3),
-                          width: 1,
+                    child: Column(
+                      children: [
+                        // Top Dhikr Display Card
+                        AppCard(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                          child: Column(
+                            children: [
+                              Text(
+                                widget.label,
+                                textAlign: TextAlign.center,
+                                style: context.text.sacredLarge.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.sm),
+                              InkWell(
+                                onTap: widget.onChangeDhikr,
+                                borderRadius: AppRadius.mdRadius,
+                                child: Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.md,
+                                    vertical: AppSpace.xs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: palette.primarySoft,
+                                    borderRadius: AppRadius.mdRadius,
+                                    border: Border.all(
+                                      color: palette.primary,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.swap_horiz_rounded,
+                                        size: AppIcon.sm,
+                                        color: palette.onPrimarySoft,
+                                      ),
+                                      const SizedBox(width: AppSpace.xs),
+                                      Text(
+                                        AppStrings.changeDhikr,
+                                        style: context.text.caption.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: palette.onPrimarySoft,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.swap_horiz_rounded, size: 16, color: context.goldColor),
-                          const SizedBox(width: 6),
-                          Text(
-                            AppStrings.changeDhikr,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: context.goldColor,
+
+                        const Spacer(),
+                        const SizedBox(height: AppSpace.md),
+
+                        // Interactive Astrolabe Rosary Medallion
+                        AnimatedBuilder(
+                          animation: _scaleAnimation,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _scaleAnimation.value,
+                              child: child,
+                            );
+                          },
+                          child: SizedBox(
+                            width: 250,
+                            height: 250,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Outer decorative halo
+                                Container(
+                                  width: 250,
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: (isCompleted
+                                            ? palette.gold
+                                            : palette.primary)
+                                        .withValues(alpha: 0.1),
+                                  ),
+                                ),
+
+                                // Custom Painter Dial Rings & Progress
+                                CustomPaint(
+                                  size: const Size(220, 220),
+                                  painter: _RosaryPainter(
+                                    progress: progress,
+                                    baseColor: palette.border,
+                                    activeColor: isCompleted
+                                        ? palette.gold
+                                        : palette.primary,
+                                    accentGold: palette.gold,
+                                    isCompleted: isCompleted,
+                                  ),
+                                ),
+
+                                // Center Dial Core
+                                Container(
+                                  width: 170,
+                                  height: 170,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: palette.surface,
+                                    border: Border.all(
+                                      color: isCompleted
+                                          ? palette.gold
+                                          : palette.primary,
+                                      width: 2,
+                                    ),
+                                    boxShadow: palette.shadow,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        widget.count.toString(),
+                                        textScaler: const TextScaler.linear(2.0),
+                                        style: context.text.display.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.1,
+                                          color: isCompleted
+                                              ? palette.gold
+                                              : palette.text,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        widget.target != null
+                                            ? 'الهدف: ${widget.target}'
+                                            : 'عدّ حر',
+                                        style: context.text.caption.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: isCompleted
+                                              ? palette.gold
+                                              : palette.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+
+                        const SizedBox(height: AppSpace.lg),
+                        Text(
+                          'المس الشاشة للتسبيح',
+                          style: context.text.caption.copyWith(
+                            color: palette.textSubtle,
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpace.md),
+                        const Spacer(),
+
+                        // Bottom Action Control Island
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.surface,
+                            borderRadius: AppRadius.lgRadius,
+                            border: Border.all(
+                              color: palette.border,
+                              width: 1,
+                            ),
+                            boxShadow: palette.shadow,
+                          ),
+                          child: Row(
+                            children: [
+                              // Set Target Button
+                              Expanded(
+                                child: InkWell(
+                                  onTap: widget.onSetTarget,
+                                  borderRadius: AppRadius.mdRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.sm,
+                                      vertical: AppSpace.sm,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.flag_outlined,
+                                          size: AppIcon.sm,
+                                          color: palette.gold,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Flexible(
+                                          child: Text(
+                                            widget.target != null
+                                                ? '${widget.target} مرة'
+                                                : 'تحديد هدف',
+                                            style: context.text.label.copyWith(
+                                              color: palette.text,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              Container(
+                                width: 1,
+                                height: 24,
+                                color: palette.border,
+                              ),
+
+                              // Reset Button
+                              Expanded(
+                                child: InkWell(
+                                  onTap: widget.onReset,
+                                  borderRadius: AppRadius.mdRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.sm,
+                                      vertical: AppSpace.sm,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.refresh_rounded,
+                                          size: AppIcon.sm,
+                                          color: palette.textMuted,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Flexible(
+                                          child: Text(
+                                            AppStrings.reset,
+                                            style: context.text.label.copyWith(
+                                              color: palette.textMuted,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            const Spacer(),
-
-            // Interactive Astrolabe Rosary Medallion
-            AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: child,
-                );
-              },
-              child: SizedBox(
-                width: 250,
-                height: 250,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Outer decorative halo
-                    Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            (isCompleted ? context.goldColor : context.primaryColor)
-                                .withValues(alpha: isDark ? 0.18 : 0.1),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.7, 1.0],
-                        ),
-                      ),
-                    ),
-
-                    // Custom Painter Dial Rings & Progress
-                    CustomPaint(
-                      size: const Size(220, 220),
-                      painter: _RosaryPainter(
-                        progress: progress,
-                        baseColor: context.outlineVariantColor.withValues(alpha: 0.4),
-                        activeColor: isCompleted ? context.goldColor : context.primaryColor,
-                        accentGold: context.goldColor,
-                        isCompleted: isCompleted,
-                      ),
-                    ),
-
-                    // Center Glassmorphic Dial Core
-                    Container(
-                      width: 170,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.surfaceColor,
-                        border: Border.all(
-                          color: (isCompleted ? context.goldColor : context.primaryColor)
-                              .withValues(alpha: isDark ? 0.4 : 0.25),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.count.toString(),
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 54,
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                              color: isCompleted ? context.goldColor : context.textPrimaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.target != null
-                                ? 'الهدف: ${widget.target}'
-                                : 'عدّ حر',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isCompleted
-                                  ? context.goldColor
-                                  : context.textSecondaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 16),
-            Text(
-              'المس الشاشة للتسبيح',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 13,
-                color: context.textTertiaryColor,
-              ),
-            ),
-
-            const Spacer(),
-
-            // Bottom Action Control Island
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: context.surfaceContainer,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  // Set Target Button
-                  InkWell(
-                    onTap: widget.onSetTarget,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.flag_outlined, size: 20, color: context.goldColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.target != null ? '${widget.target} مرة' : 'تحديد هدف',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: context.textPrimaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  Container(
-                    width: 1,
-                    height: 24,
-                    color: context.outlineVariantColor,
-                  ),
-
-                  // Reset Button
-                  InkWell(
-                    onTap: widget.onReset,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.refresh_rounded, size: 20, color: context.textSecondaryColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            AppStrings.reset,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: context.textSecondaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -371,7 +402,11 @@ class _RosaryPainter extends CustomPainter {
       final outerY = center.dy + (radius + 2) * math.sin(angle);
       final innerX = center.dx + (radius - 1) * math.cos(angle);
       final innerY = center.dy + (radius - 1) * math.sin(angle);
-      canvas.drawLine(Offset(innerX, innerY), Offset(outerX, outerY), tickPaint);
+      canvas.drawLine(
+        Offset(innerX, innerY),
+        Offset(outerX, outerY),
+        tickPaint,
+      );
     }
 
     // Active progress arc

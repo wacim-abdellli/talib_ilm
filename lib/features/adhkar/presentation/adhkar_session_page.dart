@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../core/services/adhkar_session_service.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
@@ -126,7 +130,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     if (_loading || _index + 1 >= _items.length) return;
     HapticFeedback.selectionClick();
     _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
+      duration: AppMotion.slow,
       curve: Curves.easeInOut,
     );
   }
@@ -135,7 +139,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     if (_loading || _index <= 0) return;
     HapticFeedback.selectionClick();
     _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
+      duration: AppMotion.slow,
       curve: Curves.easeInOut,
     );
   }
@@ -153,51 +157,38 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Widget build(BuildContext context) {
     final title =
         widget.titleOverride ?? _categoryTitle ?? widget.category.label;
-    final isDark = context.isDark;
-    final gold = context.goldColor;
-    final textColor = context.textPrimaryColor;
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: AppBar(
-        title: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            if (_items.isNotEmpty)
-              Text(
-                'الذكر ${_index + 1} من ${_items.length}',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: gold,
+      backgroundColor: palette.bg,
+      appBar: PrimaryAppBar(
+        title: title,
+        showBack: true,
+        bottom: _items.isNotEmpty
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(20),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
+                  child: Text(
+                    'الذكر ${_index + 1} من ${_items.length}',
+                    style: context.text.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: palette.gold,
+                    ),
+                  ),
                 ),
-              ),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: gold),
+              )
+            : null,
       ),
       body: SafeArea(
         child: _loading
-            ? Center(child: CircularProgressIndicator(color: gold))
+            ? const Center(child: AppLoadingIndicator())
             : _items.isEmpty
                 ? Center(
                     child: Text(
                       'لا توجد أذكار في هذه الفئة',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        color: context.textSecondaryColor,
+                      style: context.text.body.copyWith(
+                        color: palette.textMuted,
                       ),
                     ),
                   )
@@ -215,33 +206,16 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                               itemBuilder: (context, index) {
                                 final item = _items[index];
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 8,
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xl,
+                                    vertical: AppSpace.sm,
                                   ),
                                   child: Center(
                                     child: SingleChildScrollView(
                                       physics: const BouncingScrollPhysics(),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(22),
-                                        decoration: BoxDecoration(
-                                          color: context.surfaceContainer,
-                                          borderRadius: BorderRadius.circular(24),
-                                          border: Border.all(
-                                            color: gold.withValues(
-                                              alpha: isDark ? 0.25 : 0.2,
-                                            ),
-                                            width: 1.2,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: isDark ? 0.25 : 0.04,
-                                              ),
-                                              blurRadius: 14,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
+                                      child: AppCard(
+                                        padding: const EdgeInsetsDirectional.all(
+                                          AppSpace.xxl,
                                         ),
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
@@ -250,29 +224,24 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                             Text(
                                               item.arabic,
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontFamily: 'Amiri',
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
+                                              style: context.text.sacredLarge.copyWith(
+                                                color: palette.text,
+                                                fontWeight: FontWeight.w700,
                                                 height: 1.8,
-                                                color: textColor,
                                               ),
                                             ),
                                             if (item.meaning.isNotEmpty) ...[
-                                              const SizedBox(height: 14),
+                                              const SizedBox(height: AppSpace.md),
                                               Divider(
-                                                color: context.outlineColor
-                                                    .withValues(alpha: 0.15),
+                                                color: palette.border,
                                               ),
-                                              const SizedBox(height: 10),
+                                              const SizedBox(height: AppSpace.sm),
                                               Text(
                                                 item.meaning,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontFamily: 'Cairo',
-                                                  fontSize: 13,
+                                                style: context.text.bodySmall.copyWith(
+                                                  color: palette.textMuted,
                                                   height: 1.6,
-                                                  color: context.textSecondaryColor,
                                                 ),
                                               ),
                                             ],
@@ -286,73 +255,48 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: AppSpace.sm),
 
                           // Counter Dial
                           _buildCounterArea(_items[_index]),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpace.lg),
 
                           // Bottom Navigation Bar
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xxl,
+                              vertical: AppSpace.md,
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // Previous
-                                IconButton.filledTonal(
-                                  onPressed: _index > 0 ? _goPrev : null,
-                                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: context.surfaceContainer,
-                                    foregroundColor: textColor,
-                                  ),
+                                AppIconButton(
+                                  icon: Icons.arrow_forward_ios_rounded,
                                   tooltip: 'السابق',
+                                  onPressed: _index > 0 ? _goPrev : null,
                                 ),
 
                                 // Reset
-                                OutlinedButton.icon(
+                                AppButton(
+                                  label: 'إعادة العداد',
+                                  icon: Icons.replay_rounded,
+                                  variant: AppButtonVariant.outline,
+                                  size: AppButtonSize.sm,
                                   onPressed: _resetCount,
-                                  icon: Icon(
-                                    Icons.replay_rounded,
-                                    size: 16,
-                                    color: context.textSecondaryColor,
-                                  ),
-                                  label: Text(
-                                    'إعادة العداد',
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      fontSize: 12,
-                                      color: context.textSecondaryColor,
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                      color: context.outlineColor.withValues(alpha: 0.2),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
                                 ),
 
                                 // Next
-                                IconButton.filledTonal(
-                                  onPressed: _index + 1 < _items.length ? _goNext : null,
-                                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: context.surfaceContainer,
-                                    foregroundColor: textColor,
-                                  ),
+                                AppIconButton(
+                                  icon: Icons.arrow_back_ios_new_rounded,
                                   tooltip: 'التالي',
+                                  onPressed: _index + 1 < _items.length ? _goNext : null,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpace.sm),
                         ],
                       ),
 
@@ -361,8 +305,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         Positioned.fill(
                           child: IgnorePointer(
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              color: context.islamicGreenColor.withValues(alpha: 0.12),
+                              duration: AppMotion.slow,
+                              color: palette.success.withValues(alpha: 0.12),
                             ),
                           ),
                         ),
@@ -375,104 +319,107 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   Widget _buildCounterArea(AthkarItem item) {
     final repeat = _repeatFor(_items, _index);
     final isComplete = repeat > 0 && _count >= repeat;
-    final gold = context.goldColor;
-    final primary = context.primaryColor;
+    final palette = context.palette;
 
-    return GestureDetector(
-      onTap: _handleTap,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Circular Progress Dial
-          SizedBox(
-            width: 210,
-            height: 210,
-            child: CustomPaint(
-              painter: _DhikrProgressPainter(
-                count: _count,
-                total: repeat,
-                trackColor: context.outlineColor.withValues(alpha: 0.15),
-                progressColor: isComplete ? context.islamicGreenColor : gold,
+    return Semantics(
+      button: true,
+      label: 'عداد الذكر، اضغط للعد',
+      child: InkWell(
+        onTap: _handleTap,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Circular Progress Dial
+            SizedBox(
+              width: 210,
+              height: 210,
+              child: CustomPaint(
+                painter: _DhikrProgressPainter(
+                  count: _count,
+                  total: repeat,
+                  trackColor: palette.border,
+                  progressColor: isComplete ? palette.success : palette.gold,
+                ),
               ),
             ),
-          ),
 
-          // Inner Numbers & Details
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 150),
-                transitionBuilder: (child, anim) =>
-                    ScaleTransition(scale: anim, child: child),
-                child: Text(
-                  '$_count',
-                  key: ValueKey(_count),
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 72,
-                    fontWeight: FontWeight.w900,
-                    color: isComplete ? context.islamicGreenColor : context.textPrimaryColor,
-                    height: 1,
+            // Inner Numbers & Details
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: AppMotion.fast,
+                  transitionBuilder: (child, anim) =>
+                      ScaleTransition(scale: anim, child: child),
+                  child: Text(
+                    '$_count',
+                    key: ValueKey(_count),
+                    textScaler: const TextScaler.linear(2.5),
+                    style: context.text.display.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: isComplete
+                          ? palette.success
+                          : palette.text,
+                      height: 1,
+                    ),
                   ),
                 ),
-              ),
-              if (repeat > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'من $repeat',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 16,
-                    color: context.textSecondaryColor,
-                    fontWeight: FontWeight.w600,
+                if (repeat > 0) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    'من $repeat',
+                    style: context.text.label.copyWith(
+                      color: palette.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
-              if (isComplete) ...[
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: context.islamicGreenColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        color: context.islamicGreenColor,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'اكتمل',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: context.islamicGreenColor,
+                ],
+                if (isComplete) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: palette.success,
+                          size: AppIcon.sm,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          'اكتمل',
+                          style: context.text.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: palette.success,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ] else ...[
-                const SizedBox(height: 4),
-                Text(
-                  'المس للعد',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 11,
-                    color: primary.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
+                ] else ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    'المس للعد',
+                    style: context.text.caption.copyWith(
+                      color: palette.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

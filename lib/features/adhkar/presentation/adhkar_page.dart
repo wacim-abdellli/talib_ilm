@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/app_button.dart';
 import '../../../core/services/adhkar_session_service.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
@@ -59,8 +58,9 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Scaffold(
-      backgroundColor: context.backgroundColor,
+      backgroundColor: palette.bg,
       body: Column(
         children: [
           AdhkarHeader(
@@ -77,23 +77,27 @@ class _AdhkarPageState extends State<AdhkarPage> {
                 }
 
                 if (snapshot.hasError) {
-                  return EmptyState(
+                  return AppEmptyState(
                     icon: Icons.error_outline,
                     title: AppStrings.adhkarLoadErrorTitle,
                     subtitle: AppStrings.adhkarLoadErrorMessage,
-                    actionLabel: AppStrings.actionRetry,
-                    onAction: _reload,
+                    action: AppButton(
+                      label: AppStrings.actionRetry,
+                      onPressed: _reload,
+                    ),
                   );
                 }
 
                 final catalog = snapshot.data;
                 if (catalog == null || catalog.categories.isEmpty) {
-                  return EmptyState(
+                  return AppEmptyState(
                     icon: Icons.menu_book_outlined,
                     title: AppStrings.adhkarEmptyTitle,
                     subtitle: AppStrings.adhkarEmptyMessage,
-                    actionLabel: AppStrings.actionRetry,
-                    onAction: _reload,
+                    action: AppButton(
+                      label: AppStrings.actionRetry,
+                      onPressed: _reload,
+                    ),
                   );
                 }
 
@@ -116,12 +120,17 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
                     // Grid of Adhkar Categories
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpace.lg,
+                        AppSpace.sm,
+                        AppSpace.lg,
+                        AppSize.navClearance(context),
+                      ),
                       sliver: SliverGrid(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
+                          crossAxisSpacing: AppSpace.md,
+                          mainAxisSpacing: AppSpace.md,
                           childAspectRatio: 0.95,
                         ),
                         delegate: SliverChildBuilderDelegate(
@@ -186,7 +195,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: morning?.title ?? 'أذكار الصباح',
         total: morning?.items.length ?? 0,
         icon: Icons.wb_sunny_outlined,
-        tint: AppColors.primary,
         showProgress: true,
         onTap: () => _openCategory(context, morning),
       ),
@@ -195,7 +203,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: evening?.title ?? 'أذكار المساء',
         total: evening?.items.length ?? 0,
         icon: Icons.nights_stay_outlined,
-        tint: AppColors.primaryDark,
         showProgress: true,
         onTap: () => _openCategory(context, evening),
       ),
@@ -204,7 +211,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: afterPrayer?.title ?? 'أذكار بعد الصلاة',
         total: afterPrayer?.items.length ?? 0,
         icon: Icons.auto_awesome_outlined,
-        tint: AppColors.accent,
         onTap: () => _openCategory(context, afterPrayer),
       ),
       CategoryCardData(
@@ -212,7 +218,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: duas?.title ?? 'أدعية عامة',
         total: duas?.items.length ?? 0,
         icon: Icons.menu_book_outlined,
-        tint: AppColors.textSecondary,
         onTap: () => _openDuas(context),
       ),
       CategoryCardData(
@@ -220,7 +225,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: tasbeeh?.title ?? 'عداد التسبيح',
         total: tasbeeh?.items.length ?? 0,
         icon: Icons.circle_outlined,
-        tint: AppColors.primary,
         onTap: () => _openTasbeeh(context),
       ),
       CategoryCardData(
@@ -228,7 +232,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         title: sleeping?.title ?? 'أذكار النوم',
         total: sleeping?.items.length ?? 0,
         icon: Icons.bedtime_outlined,
-        tint: AppColors.primaryDark,
         onTap: () => _openSleeping(context, sleeping),
       ),
     ];

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 Future<int?> showSetTargetSheet({
   required BuildContext context,
@@ -10,24 +11,31 @@ Future<int?> showSetTargetSheet({
   final controller = TextEditingController(
     text: currentTarget != null ? currentTarget.toString() : '',
   );
+  final palette = context.palette;
 
   return showModalBottomSheet<int?>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpace.xl,
+            AppSpace.lg,
+            AppSpace.xl,
+            AppSpace.xxl,
+          ),
           decoration: BoxDecoration(
-            color: context.surfaceColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: palette.surfaceRaised,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
             border: Border.all(
-              color: context.goldColor.withValues(alpha: isDark ? 0.3 : 0.15),
+              color: palette.border,
               width: 1,
             ),
           ),
@@ -37,66 +45,64 @@ Future<int?> showSetTargetSheet({
             children: [
               Center(
                 child: Container(
-                  width: 44,
+                  width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: context.outlineVariantColor,
-                    borderRadius: BorderRadius.circular(2),
+                    color: palette.border,
+                    borderRadius: AppRadius.pillRadius,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               Row(
                 children: [
-                  Icon(Icons.flag_rounded, color: context.goldColor, size: 22),
-                  const SizedBox(width: 10),
+                  Icon(
+                    Icons.flag_rounded,
+                    color: palette.primary,
+                    size: AppIcon.lg,
+                  ),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     AppStrings.targetTitle,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
+                    style: context.text.titleSmall.copyWith(
+                      color: palette.text,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               // Quick preset pills
               Text(
                 'أهداف مقترحة',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 13,
-                  color: context.textSecondaryColor,
+                style: context.text.label.copyWith(
+                  color: palette.textMuted,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.sm),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: AppSpace.sm,
+                runSpacing: AppSpace.sm,
                 children: [33, 100, 1000].map((preset) {
                   final isCurrent = currentTarget == preset;
                   return InkWell(
                     onTap: () => Navigator.pop(context, preset),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppRadius.mdRadius,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.lg,
+                        vertical: AppSpace.sm,
+                      ),
                       decoration: BoxDecoration(
-                        color: isCurrent
-                            ? context.goldColor.withValues(alpha: 0.2)
-                            : context.surfaceContainer,
-                        borderRadius: BorderRadius.circular(12),
+                        color: isCurrent ? palette.primarySoft : palette.surface,
+                        borderRadius: AppRadius.mdRadius,
                         border: Border.all(
-                          color: isCurrent ? context.goldColor : context.outlineVariantColor,
+                          color: isCurrent ? palette.primary : palette.border,
                         ),
                       ),
                       child: Text(
                         '$preset مرة',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontWeight: FontWeight.w600,
-                          color: isCurrent ? context.goldColor : context.textPrimaryColor,
+                        style: context.text.label.copyWith(
+                          color: isCurrent ? palette.onPrimarySoft : palette.text,
                         ),
                       ),
                     ),
@@ -105,44 +111,43 @@ Future<int?> showSetTargetSheet({
                   ..add(
                     InkWell(
                       onTap: () => Navigator.pop(context, 0),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.mdRadius,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.lg,
+                          vertical: AppSpace.sm,
+                        ),
                         decoration: BoxDecoration(
                           color: currentTarget == null
-                              ? context.primaryColor.withValues(alpha: 0.2)
-                              : context.surfaceContainer,
-                          borderRadius: BorderRadius.circular(12),
+                              ? palette.primarySoft
+                              : palette.surface,
+                          borderRadius: AppRadius.mdRadius,
                           border: Border.all(
                             color: currentTarget == null
-                                ? context.primaryColor
-                                : context.outlineVariantColor,
+                                ? palette.primary
+                                : palette.border,
                           ),
                         ),
                         child: Text(
                           'بدون هدف (حر)',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontWeight: FontWeight.w600,
+                          style: context.text.label.copyWith(
                             color: currentTarget == null
-                                ? context.primaryColor
-                                : context.textPrimaryColor,
+                                ? palette.onPrimarySoft
+                                : palette.text,
                           ),
                         ),
                       ),
                     ),
                   ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               Text(
                 'أو حدد رقماً مخصصاً:',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 13,
-                  color: context.textSecondaryColor,
+                style: context.text.label.copyWith(
+                  color: palette.textMuted,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
                   Expanded(
@@ -151,44 +156,38 @@ Future<int?> showSetTargetSheet({
                       autofocus: false,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimaryColor,
-                        fontSize: 18,
+                      style: context.text.titleSmall.copyWith(
+                        color: palette.text,
                       ),
                       decoration: InputDecoration(
                         hintText: 'مثال: 500',
                         filled: true,
-                        fillColor: context.surfaceContainer,
+                        fillColor: palette.surfaceMuted,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: context.outlineVariantColor),
+                          borderRadius: AppRadius.mdRadius,
+                          borderSide: BorderSide(color: palette.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: context.goldColor, width: 1.5),
+                          borderRadius: AppRadius.mdRadius,
+                          borderSide: BorderSide(
+                            color: palette.primary,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.lg,
+                          vertical: AppSpace.md,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  FilledButton(
+                  const SizedBox(width: AppSpace.md),
+                  AppButton(
+                    label: 'حفظ',
                     onPressed: () {
                       final val = int.tryParse(controller.text);
                       Navigator.pop(context, val);
                     },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: context.goldColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text(
-                      'حفظ',
-                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700),
-                    ),
                   ),
                 ],
               ),

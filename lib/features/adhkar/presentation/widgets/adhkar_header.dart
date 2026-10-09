@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/icon_badge.dart';
 
 class AdhkarHeader extends StatelessWidget {
   final int streak;
@@ -21,39 +21,44 @@ class AdhkarHeader extends StatelessWidget {
     bool isActive,
     VoidCallback onTap,
   ) {
-    final activeBg = context.primaryColor;
-    const activeText = Colors.white;
+    final palette = context.palette;
+    final activeBg = palette.primary;
+    final activeText = palette.onPrimary;
 
-    final inactiveBg = context.surfaceColor;
-    final inactiveBorder = context.outlineVariantColor;
-    final inactiveText = context.textSecondaryColor;
+    final inactiveBg = palette.surface;
+    final inactiveBorder = palette.border;
+    final inactiveText = palette.textMuted;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.mdRadius,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.md,
+            vertical: AppSpace.sm,
+          ),
           decoration: BoxDecoration(
             color: isActive ? activeBg : inactiveBg,
-            borderRadius: BorderRadius.circular(12),
-            border: isActive ? null : Border.all(color: inactiveBorder, width: 1),
+            borderRadius: AppRadius.mdRadius,
+            border: Border.all(
+              color: isActive ? palette.primary : inactiveBorder,
+              width: 1,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 18,
+                size: AppIcon.sm,
                 color: isActive ? activeText : inactiveText,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.xs),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                style: context.text.label.copyWith(
                   color: isActive ? activeText : inactiveText,
                 ),
               ),
@@ -66,30 +71,18 @@ class AdhkarHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final headerBg = context.surfaceColor;
-    final headerGradient = isDark ? AppColors.premiumDarkGradient : null;
-    final headerBorder = context.outlineVariantColor;
-    final titleColor = context.textPrimaryColor;
-    final subtitleColor = context.textSecondaryColor;
-
-    final iconContainerDecoration = BoxDecoration(
-      color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: context.primaryColor.withValues(alpha: 0.25),
-        width: 1,
-      ),
-    );
-    final iconColor = context.primaryColor;
+    final palette = context.palette;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpace.xl,
+        AppSpace.lg,
+        AppSpace.xl,
+        AppSpace.lg,
+      ),
       decoration: BoxDecoration(
-        color: headerBg,
-        gradient: headerGradient,
-        border: Border(bottom: BorderSide(color: headerBorder, width: 1)),
+        color: palette.surface,
+        border: Border(bottom: BorderSide(color: palette.border, width: 1)),
       ),
       child: SafeArea(
         bottom: false,
@@ -98,35 +91,25 @@ class AdhkarHeader extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: iconContainerDecoration,
-                  child: Icon(
-                    Icons.auto_awesome_rounded,
-                    color: iconColor,
-                    size: 24,
-                  ),
+                const IconBadge(
+                  icon: Icons.auto_awesome_rounded,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'الأذكار والأدعية',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: titleColor,
+                        style: context.text.title.copyWith(
+                          color: palette.text,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         'احفظ أذكار اليوم والليلة',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: subtitleColor,
+                        style: context.text.bodySmall.copyWith(
+                          color: palette.textMuted,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -134,15 +117,15 @@ class AdhkarHeader extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: context.goldColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.smRadius,
                     border: Border.all(
-                      color: context.goldColor.withValues(alpha: 0.3),
+                      color: palette.gold.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -151,16 +134,15 @@ class AdhkarHeader extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.local_fire_department_rounded,
-                        size: 16,
-                        color: context.goldColor,
+                        size: AppIcon.sm,
+                        color: palette.gold,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpace.xs),
                       Text(
                         '$streak',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: context.text.label.copyWith(
+                          color: palette.gold,
                           fontWeight: FontWeight.w700,
-                          color: context.goldColor,
                         ),
                       ),
                     ],
@@ -168,7 +150,7 @@ class AdhkarHeader extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             // Category tabs
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -182,7 +164,7 @@ class AdhkarHeader extends StatelessWidget {
                     selectedCategory == 'all',
                     () => onSelectCategory('all'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
                     'الصباح',
@@ -190,7 +172,7 @@ class AdhkarHeader extends StatelessWidget {
                     selectedCategory == 'morning',
                     () => onSelectCategory('morning'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
                     'المساء',
@@ -198,7 +180,7 @@ class AdhkarHeader extends StatelessWidget {
                     selectedCategory == 'evening',
                     () => onSelectCategory('evening'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
                     'بعد الصلاة',
@@ -206,7 +188,7 @@ class AdhkarHeader extends StatelessWidget {
                     selectedCategory == 'after_prayer',
                     () => onSelectCategory('after_prayer'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
                     'متنوعة',

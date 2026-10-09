@@ -159,26 +159,31 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.palette.gold,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: context.palette.gold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      widget.nextPrayerName,
-                      style: context.text.title.copyWith(
-                        color: context.palette.text,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(width: AppSpace.xs),
+                      Flexible(
+                        child: Text(
+                          widget.nextPrayerName,
+                          style: context.text.title.copyWith(
+                            color: context.palette.text,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsetsDirectional.symmetric(

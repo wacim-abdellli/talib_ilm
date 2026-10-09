@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
 import '../../data/adhkar_models.dart';
 
 Future<int?> showChangeDhikrSheet({
@@ -8,81 +8,85 @@ Future<int?> showChangeDhikrSheet({
   required int currentIndex,
   required bool isTasbeeh,
 }) {
+  final palette = context.palette;
+
   return showModalBottomSheet<int>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
+          maxHeight: MediaQuery.of(context).size.height * 0.72,
         ),
         decoration: BoxDecoration(
-          color: context.surfaceColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          color: palette.surfaceRaised,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
           border: Border.all(
-            color: context.goldColor.withValues(alpha: isDark ? 0.3 : 0.15),
+            color: palette.border,
             width: 1,
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Container(
-              width: 44,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: context.outlineVariantColor,
-                borderRadius: BorderRadius.circular(2),
+                color: palette.border,
+                borderRadius: AppRadius.pillRadius,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpace.xl,
+                AppSpace.lg,
+                AppSpace.xl,
+                AppSpace.md,
+              ),
               child: Row(
                 children: [
                   Icon(
-                    isTasbeeh ? Icons.all_inclusive_rounded : Icons.favorite_rounded,
-                    color: context.goldColor,
-                    size: 22,
+                    isTasbeeh
+                        ? Icons.all_inclusive_rounded
+                        : Icons.favorite_rounded,
+                    color: palette.primary,
+                    size: AppIcon.lg,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     isTasbeeh ? 'اختر صيغة التسبيح' : 'اختر صيغة الاستغفار',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
+                    style: context.text.titleSmall.copyWith(
+                      color: palette.text,
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: palette.border),
             Flexible(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
                 itemCount: options.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppSpace.sm),
                 itemBuilder: (context, index) {
                   final item = options[index];
                   final isSelected = index == currentIndex;
                   return InkWell(
                     onTap: () => Navigator.pop(context, index),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: AppRadius.mdRadius,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsetsDirectional.all(AppSpace.md),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? context.goldColor.withValues(alpha: isDark ? 0.16 : 0.1)
-                            : context.surfaceContainer,
-                        borderRadius: BorderRadius.circular(16),
+                        color: isSelected ? palette.primarySoft : palette.surface,
+                        borderRadius: AppRadius.mdRadius,
                         border: Border.all(
-                          color: isSelected
-                              ? context.goldColor
-                              : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                          color: isSelected ? palette.primary : palette.border,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),
@@ -94,59 +98,55 @@ Future<int?> showChangeDhikrSheet({
                               children: [
                                 Text(
                                   item.arabic,
-                                  style: TextStyle(
-                                    fontFamily: 'Amiri',
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.textPrimaryColor,
+                                  style: context.text.sacred.copyWith(
+                                    color: palette.text,
                                     height: 1.5,
                                   ),
                                 ),
                                 if (item.fadl.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: AppSpace.xs),
                                   Text(
                                     item.fadl,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      fontSize: 12,
-                                      color: context.textSecondaryColor,
+                                    style: context.text.caption.copyWith(
+                                      color: palette.textMuted,
                                     ),
                                   ),
                                 ],
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppSpace.md),
                           if (isSelected)
                             Container(
                               width: 28,
                               height: 28,
                               decoration: BoxDecoration(
-                                color: context.goldColor,
+                                color: palette.primary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.check_rounded,
-                                size: 18,
-                                color: Colors.white,
+                                size: AppIcon.sm,
+                                color: palette.onPrimary,
                               ),
                             )
                           else if (item.target > 0)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xs,
+                              ),
                               decoration: BoxDecoration(
-                                color: context.outlineVariantColor.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(8),
+                                color: palette.surfaceMuted,
+                                borderRadius: AppRadius.smRadius,
                               ),
                               child: Text(
                                 '${item.target}x',
-                                style: TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 12,
+                                style: context.text.caption.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: context.textSecondaryColor,
+                                  color: palette.textMuted,
                                 ),
                               ),
                             ),

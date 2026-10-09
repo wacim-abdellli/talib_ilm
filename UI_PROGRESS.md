@@ -146,5 +146,23 @@
   - Raw GestureDetector: 10 → 6 (-4)
 - **Open Issues:** None.
 
+---
 
-
+### Phase 4.4 — Adhkar / Tasbeeh Screens
+- **Status:** Complete
+- **Changes:**
+  - Commit 1 (`f4aa7a5`): Split files > 600 lines (`adhkar_page.dart` 908 lines, `tasbeeh_istighfar_page.dart` 1011 lines) into modular subwidgets in `lib/features/adhkar/presentation/widgets/` (`adhkar_header.dart`, `adhkar_contextual_hero.dart`, `adhkar_category_tile.dart`, `rosary_dial.dart`, `change_dhikr_sheet.dart`, `set_target_sheet.dart`). Zero visual changes.
+  - Commit 2: Restyled all 10 Adhkar presentation files to Calm Scholar tokens (`adhkar_page.dart`, `adhkar_session_page.dart`, `duas_misc_page.dart`, `tasbeeh_istighfar_page.dart`, and subwidgets). Dhikr/Quran Arabic text uses `sacred` / `sacredLarge` typography. Category cards use `AppCard` and `IconBadge` with `palette.primarySoft` and `palette.onPrimarySoft`. Rosary counter and session counter have >= 72px interactive hit targets with haptics and pulse animations. Sheets use `AppSheet` style, input fields use tokenized decoration, buttons use `AppButton` / `AppIconButton`. Fixed text-scale 1.5 overflow resilience in `RosaryDial`, `CategoryTile`, `AdhkarContextualHero`, and `HomeHeroCard`. Added and verified 8 golden tests in `test/golden/adhkar_golden_test.dart` across light/dark and 1.0/1.5 text scales (all 25 golden tests in repository now pass). Lint violations in all Adhkar files reached **0**.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 19 → 16 (-3)
+  - Raw fontSize: <n>: 101 → 57 (-44)
+  - Raw fontFamily: '...': 99 → 55 (-44)
+  - Raw BorderRadius.circular(<n>): 75 → 35 (-40)
+  - Raw EdgeInsets with numbers: 67 → 34 (-33)
+  - Text smaller than 12: 18 → 10 (-8)
+  - Colors.white/black: 63 → 52 (-11)
+  - isDark ? ... : ...: 63 → 36 (-27)
+  - Magic bottom spacer: 0 → 0 (0)
+  - Hand-written BoxShadow: 22 → 15 (-7)
+  - Raw GestureDetector: 6 → 4 (-2)
+- **Open Issues:** None.

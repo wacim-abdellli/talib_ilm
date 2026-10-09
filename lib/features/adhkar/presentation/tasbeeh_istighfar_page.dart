@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 import 'widgets/change_dhikr_sheet.dart';
@@ -156,23 +157,28 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: UnifiedAppBar(
+      backgroundColor: palette.bg,
+      appBar: PrimaryAppBar(
         title: AppStrings.tasbeehTitle,
         showBack: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(54),
           child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            padding: const EdgeInsets.all(4),
+            margin: const EdgeInsetsDirectional.fromSTEB(
+              AppSpace.lg,
+              0,
+              AppSpace.lg,
+              AppSpace.sm,
+            ),
+            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
             decoration: BoxDecoration(
-              color: context.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.mdRadius,
               border: Border.all(
-                color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                color: palette.border,
               ),
             ),
             child: TabBar(
@@ -180,88 +186,68 @@ class _TasbeehIstighfarPageState extends State<TasbeehIstighfarPage>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    context.primaryColor,
-                    context.primaryColor.withValues(alpha: 0.85),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: context.primaryColor.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: palette.primary,
+                borderRadius: AppRadius.smRadius,
               ),
-              labelColor: Colors.white,
-              unselectedLabelColor: context.textSecondaryColor,
-              labelStyle: const TextStyle(
-                fontFamily: 'Cairo',
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontFamily: 'Cairo',
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
+              labelColor: palette.onPrimary,
+              unselectedLabelColor: palette.textMuted,
+              labelStyle: context.text.label,
+              unselectedLabelStyle: context.text.label,
               tabs: const [
                 Tab(
                   child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.all_inclusive_rounded, size: 18),
-                    SizedBox(width: 8),
-                    Text(AppStrings.tasbeehTab),
-                  ],
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.all_inclusive_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.sm),
+                      Text(AppStrings.tasbeehTab),
+                    ],
+                  ),
                 ),
-              ),
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.favorite_rounded, size: 18),
-                    SizedBox(width: 8),
-                    Text(AppStrings.istighfarTab),
-                  ],
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.favorite_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.sm),
+                      Text(AppStrings.istighfarTab),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : TabBarView(
-            controller: _tabController,
-            children: [
-              RosaryDial(
-                label: _tasbeehItems.isEmpty
-                    ? AppStrings.tasbeehDefault
-                    : _tasbeehItems[_tasbeehIndex].arabic,
-                count: _tasbeehCount,
-                target: _tasbeehTarget,
-                onTap: _increment,
-                onReset: _reset,
-                onChangeDhikr: _changeDhikr,
-                onSetTarget: _setTarget,
-              ),
-              RosaryDial(
-                label: _istighfarItems.isEmpty
-                    ? AppStrings.istighfarDefault
-                    : _istighfarItems[_istighfarIndex].arabic,
-                count: _istighfarCount,
-                target: _istighfarTarget,
-                onTap: _increment,
-                onReset: _reset,
-                onChangeDhikr: _changeDhikr,
-                onSetTarget: _setTarget,
-              ),
-            ],
-          ),
+      body: _loading
+          ? const Center(child: AppLoadingIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                RosaryDial(
+                  label: _tasbeehItems.isEmpty
+                      ? AppStrings.tasbeehDefault
+                      : _tasbeehItems[_tasbeehIndex].arabic,
+                  count: _tasbeehCount,
+                  target: _tasbeehTarget,
+                  onTap: _increment,
+                  onReset: _reset,
+                  onChangeDhikr: _changeDhikr,
+                  onSetTarget: _setTarget,
+                ),
+                RosaryDial(
+                  label: _istighfarItems.isEmpty
+                      ? AppStrings.istighfarDefault
+                      : _istighfarItems[_istighfarIndex].arabic,
+                  count: _istighfarCount,
+                  target: _istighfarTarget,
+                  onTap: _increment,
+                  onReset: _reset,
+                  onChangeDhikr: _changeDhikr,
+                  onSetTarget: _setTarget,
+                ),
+              ],
+            ),
     );
   }
 }
