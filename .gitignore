@@ -46,3 +46,8 @@ app.*.map.json
 
 # Added by Entropy Git Safety Net
 .env*
+
+# Build and analysis artifacts
+*.exe
+analysis*.txt
+build_log.txt
