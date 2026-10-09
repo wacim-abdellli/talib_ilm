@@ -7,10 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/theme_colors.dart';
-import '../../app/theme/app_text.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_palette.dart';
+import 'app_button.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String assetPath;
@@ -126,17 +124,17 @@ class PdfViewerPageState extends State<PdfViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Top progress calculation
+    final palette = context.palette;
     final progress = _totalPages > 0 ? _currentPage / _totalPages : 0.0;
 
     return Scaffold(
-      backgroundColor: _nightMode
-          ? const Color(0xFF1E1E1E)
-          : const Color(0xFFFBFAF8), // Warm Ivory
+      backgroundColor: _nightMode ? AppPalette.dark.bg : palette.bg,
       body: Stack(
         children: [
           // 1. PDF Viewer with Night Mode & Brightness
-          GestureDetector(
+          InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
             onTap: _toggleControls,
             child: ColorFiltered(
               colorFilter: _nightMode
@@ -187,7 +185,10 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                   // Brightness Overlay
                   IgnorePointer(
                     child: Container(
-                      color: Colors.black.withValues(alpha: 1.0 - _brightness),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .scrim
+                          .withValues(alpha: 1.0 - _brightness),
                     ),
                   ),
                 ],
@@ -196,18 +197,19 @@ class PdfViewerPageState extends State<PdfViewerPage> {
           ),
 
           // 2. Custom Top Bar
-          AnimatedPositioned(
-            duration: AppUi.animationMedium,
-            top: _controlsVisible ? 0 : -80,
-            left: 0,
-            right: 0,
-            child: _buildTopBar(progress),
-          ),
+          if (widget.showAppBar)
+            AnimatedPositioned(
+              duration: AppMotion.base,
+              top: _controlsVisible ? 0 : -AppSize.navH * 2,
+              left: 0,
+              right: 0,
+              child: _buildTopBar(progress),
+            ),
 
           // 3. Bottom Control Bar
           AnimatedPositioned(
-            duration: AppUi.animationMedium,
-            bottom: _controlsVisible ? 0 : -100, // Hide completely
+            duration: AppMotion.base,
+            bottom: _controlsVisible ? 0 : -AppSize.navH * 2,
             left: 0,
             right: 0,
             child: _buildBottomBar(),
@@ -218,58 +220,56 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Widget _buildTopBar(double progress) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Container(
-      height: 80, // Allow space for status bar
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
       decoration: BoxDecoration(
-        color: (isDark ? const Color(0xFF161F1F) : const Color(0xFFFBFAF8))
-            .withValues(alpha: 0.95),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: palette.surfaceRaised.withValues(alpha: 0.95),
+        border: Border(
+          bottom: BorderSide(color: palette.border, width: 1),
+        ),
+        boxShadow: palette.shadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // App Bar Content
           SizedBox(
-            height: 56, // Standard Toolbar Height
+            height: AppSize.navH,
             child: Row(
               children: [
-                const BackButton(),
+                AppIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'رجوع',
+                  onPressed: () => Navigator.maybePop(context),
+                  color: palette.text,
+                ),
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: context.textPrimaryColor,
+                    style: textTheme.titleSmall.copyWith(
+                      color: palette.text,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (widget.onResetRequested != null)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
+                  AppIconButton(
+                    icon: Icons.refresh_rounded,
+                    tooltip: 'إعادة',
                     onPressed: widget.onResetRequested,
+                    color: palette.textMuted,
                   ),
               ],
             ),
           ),
-          // Linear Progress Indicator at bottom edge
           LinearProgressIndicator(
             value: progress,
-            backgroundColor:
-                isDark ? const Color(0xFF263333) : const Color(0xFFE8E6E3),
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              AppColors.primary,
+            backgroundColor: palette.border,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              palette.primary,
             ),
             minHeight: 2,
           ),
@@ -279,145 +279,168 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Widget _buildBottomBar() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Container(
-      height: 80, // Increased to fit controls comfortably + safe area if needed
-      margin: EdgeInsets.zero, // Anchored to bottom
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: (isDark ? const Color(0xFF161F1F) : const Color(0xFFFBFAF8))
-            .withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: palette.surfaceRaised.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         border: Border(
           top: BorderSide(
-            color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
+            color: palette.border,
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        boxShadow: palette.shadow,
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: SafeArea(
             top: false,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // 1. Page Indicator / Goto
-                _ControlAction(
-                  child: Text(
-                    '$_currentPage / $_totalPages',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 1. Page Indicator / Goto
+                  InkWell(
+                    onTap: () {
+                      _resetHideTimer();
+                      _showJumpDialog();
+                    },
+                    borderRadius: AppRadius.smRadius,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.sm,
+                      ),
+                      child: Text(
+                        '$_currentPage / $_totalPages',
+                        style: textTheme.label.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                  onTap: () {
-                    _resetHideTimer();
-                    _showJumpDialog();
-                  },
-                ),
 
-                // 2. Brightness
-                _ControlAction(
-                  icon: _brightness < 0.5
-                      ? Icons.brightness_low_rounded
-                      : Icons.brightness_high_rounded,
-                  onTap: () {
-                    _resetHideTimer();
-                    _showBrightnessDialog();
-                  },
-                ),
+                  // 2. Brightness
+                  AppIconButton(
+                    icon: _brightness < 0.5
+                        ? Icons.brightness_low_rounded
+                        : Icons.brightness_high_rounded,
+                    tooltip: 'السطوع',
+                    color: palette.textMuted,
+                    onPressed: () {
+                      _resetHideTimer();
+                      _showBrightnessDialog();
+                    },
+                  ),
 
-                // 3. Zoom / Font Size
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Text(
-                        'A-',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimaryColor,
+                  // 3. Zoom
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Semantics(
+                        button: true,
+                        label: 'تصغير',
+                        child: InkWell(
+                          onTap: () {
+                            _resetHideTimer();
+                            if (_zoomLevel > 1.0) {
+                              setState(
+                                () => _zoomLevel = (_zoomLevel - 0.25).clamp(
+                                  1.0,
+                                  3.0,
+                                ),
+                              );
+                              _controller.zoomLevel = _zoomLevel;
+                            }
+                          },
+                          borderRadius: AppRadius.smRadius,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.sm,
+                            ),
+                            child: Text(
+                              'A-',
+                              style: textTheme.bodySmall.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: palette.text,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      onPressed: () {
-                        _resetHideTimer();
-                        if (_zoomLevel > 1.0) {
-                          setState(
-                            () => _zoomLevel = (_zoomLevel - 0.25).clamp(
-                              1.0,
-                              3.0,
+                      Semantics(
+                        button: true,
+                        label: 'تكبير',
+                        child: InkWell(
+                          onTap: () {
+                            _resetHideTimer();
+                            if (_zoomLevel < 3.0) {
+                              setState(
+                                () => _zoomLevel = (_zoomLevel + 0.25).clamp(
+                                  1.0,
+                                  3.0,
+                                ),
+                              );
+                              _controller.zoomLevel = _zoomLevel;
+                            }
+                          },
+                          borderRadius: AppRadius.smRadius,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.sm,
                             ),
-                          );
-                          _controller.zoomLevel = _zoomLevel;
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: Text(
-                        'A+',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimaryColor,
+                            child: Text(
+                              'A+',
+                              style: textTheme.titleSmall.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: palette.text,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      onPressed: () {
-                        _resetHideTimer();
-                        if (_zoomLevel < 3.0) {
-                          setState(
-                            () => _zoomLevel = (_zoomLevel + 0.25).clamp(
-                              1.0,
-                              3.0,
-                            ),
-                          );
-                          _controller.zoomLevel = _zoomLevel;
-                        }
-                      },
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                // 4. Bookmark
-                IconButton(
-                  icon: Icon(
-                    widget.isBookmarked
+                  // 4. Bookmark
+                  AppIconButton(
+                    icon: widget.isBookmarked
                         ? Icons.bookmark_rounded
                         : Icons.bookmark_border_rounded,
-                    color: widget.isBookmarked
-                        ? AppColors.gold
-                        : context.textSecondaryColor,
+                    tooltip: 'إشارة مرجعية',
+                    color: widget.isBookmarked ? palette.gold : palette.textMuted,
+                    onPressed: () {
+                      _resetHideTimer();
+                      widget.onBookmarkToggle?.call();
+                    },
                   ),
-                  onPressed: () {
-                    _resetHideTimer();
-                    widget.onBookmarkToggle?.call();
-                  },
-                ),
 
-                // 5. Night Mode
-                IconButton(
-                  icon: Icon(
-                    _nightMode ? Icons.wb_sunny_rounded : Icons.nights_stay_rounded,
-                    color: _nightMode ? AppColors.gold : context.textSecondaryColor,
+                  // 5. Night Mode
+                  AppIconButton(
+                    icon: _nightMode
+                        ? Icons.wb_sunny_rounded
+                        : Icons.nights_stay_rounded,
+                    tooltip: 'الوضع الليلي',
+                    color: _nightMode ? palette.gold : palette.textMuted,
+                    onPressed: () {
+                      _resetHideTimer();
+                      setState(() => _nightMode = !_nightMode);
+                    },
                   ),
-                  onPressed: () {
-                    _resetHideTimer();
-                    setState(() => _nightMode = !_nightMode);
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -426,29 +449,25 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   void _showBrightnessDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
     showDialog(
       context: context,
-      barrierColor: Colors.transparent, // Don't dim rest
-      builder: (context) {
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) {
         return Align(
           alignment: Alignment.bottomCenter,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 90, left: 20, right: 20),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(
+              bottom: AppSize.navH + AppSpace.xl,
+              left: AppSpace.xl,
+              right: AppSpace.xl,
+            ),
+            padding: const EdgeInsets.all(AppSpace.lg),
             decoration: BoxDecoration(
-              color: context.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.1),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: palette.surfaceRaised,
+              borderRadius: AppRadius.lgRadius,
+              border: Border.all(color: palette.border),
+              boxShadow: palette.shadow,
             ),
             child: Material(
               color: Colors.transparent,
@@ -456,15 +475,15 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                 children: [
                   Icon(
                     Icons.brightness_low_rounded,
-                    size: 20,
-                    color: context.textSecondaryColor,
+                    size: AppIcon.md,
+                    color: palette.textMuted,
                   ),
                   Expanded(
                     child: StatefulBuilder(
                       builder: (context, setInnerState) {
                         return Slider(
                           value: _brightness,
-                          activeColor: AppColors.primary,
+                          activeColor: palette.primary,
                           onChanged: (val) {
                             setInnerState(() {});
                             setState(() => _brightness = val);
@@ -476,8 +495,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                   ),
                   Icon(
                     Icons.brightness_high_rounded,
-                    size: 20,
-                    color: context.textSecondaryColor,
+                    size: AppIcon.md,
+                    color: palette.textMuted,
                   ),
                 ],
               ),
@@ -489,16 +508,23 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Future<void> _showJumpDialog() async {
-    // ... existing logic ...
-    // Keeping it simple since I'm rewriting the file
     if (_totalPages == 0) return;
 
+    final palette = context.palette;
+    final textTheme = context.text;
     final controller = TextEditingController(text: _currentPage.toString());
     final requested = await showDialog<int>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text(AppStrings.pdfJumpTitle, style: AppText.heading),
+          backgroundColor: palette.surfaceRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.xlRadius,
+          ),
+          title: Text(
+            AppStrings.pdfJumpTitle,
+            style: textTheme.titleSmall.copyWith(color: palette.text),
+          ),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -506,24 +532,31 @@ class PdfViewerPageState extends State<PdfViewerPage> {
             textInputAction: TextInputAction.done,
             onSubmitted: (value) {
               final parsed = int.tryParse(value);
-              Navigator.pop(context, parsed);
+              Navigator.pop(dialogContext, parsed);
             },
+            style: textTheme.body.copyWith(color: palette.text),
             decoration: InputDecoration(
               hintText: '1 - $_totalPages',
-              hintStyle: AppText.caption,
+              hintStyle: textTheme.caption.copyWith(color: palette.textSubtle),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(AppStrings.pdfJumpCancel, style: AppText.body),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                AppStrings.pdfJumpCancel,
+                style: textTheme.label.copyWith(color: palette.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 final value = int.tryParse(controller.text);
-                Navigator.pop(context, value);
+                Navigator.pop(dialogContext, value);
               },
-              child: Text(AppStrings.pdfJumpGo, style: AppText.body),
+              child: Text(
+                AppStrings.pdfJumpGo,
+                style: textTheme.label.copyWith(color: palette.primary),
+              ),
             ),
           ],
         );
@@ -533,25 +566,5 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     if (requested != null) {
       await _jumpToPage(requested);
     }
-  }
-}
-
-class _ControlAction extends StatelessWidget {
-  final Widget? child;
-  final IconData? icon;
-  final VoidCallback onTap;
-
-  const _ControlAction({this.child, this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: child ?? Icon(icon, color: context.textPrimaryColor),
-      ),
-    );
   }
 }
