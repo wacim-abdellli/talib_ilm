@@ -91,12 +91,8 @@ class _PrayerPageState extends State<PrayerPage> {
                     child: Column(
                       children: [
                         Shimmer.fromColors(
-                          baseColor: isDark
-                              ? const Color(0xFF1A1A1A)
-                              : Colors.grey[300]!,
-                          highlightColor: isDark
-                              ? const Color(0xFF2A2A2A)
-                              : Colors.grey[100]!,
+                          baseColor: context.shimmerBaseColor,
+                          highlightColor: context.shimmerHighlightColor,
                           child: Container(
                             height: 140,
                             decoration: BoxDecoration(

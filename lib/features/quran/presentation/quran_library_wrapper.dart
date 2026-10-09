@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quran_library/quran_library.dart';
+import '../../../app/theme/app_colors.dart';
 
 /// Professional Quran Reading Screen using quran_library package.
 ///
@@ -38,26 +39,26 @@ class ProfessionalQuranScreen extends StatelessWidget {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // BLACK & GOLD MUSHAF THEME (To hide blue clash)
+    // HARMONIZED MUSHAF THEME (Twilight Sanctuary / Medina Ivory)
     // ═══════════════════════════════════════════════════════════════
 
-    // Background Colors - Spiritual Dark Base / Warm Cream Paper
+    // Background Colors - Twilight Sanctuary / Warm Medina Ivory
     final Color backgroundColor = isDark
-        ? const Color(0xFF121212) // Spiritual Dark Base (reduced eye strain)
-        : const Color(0xFFFDF8F0); // Warm Cream Paper
+        ? AppColors.darkSurface
+        : AppColors.surfaceWarmIvory;
 
     // Text Colors
     final Color textColor = isDark
-        ? const Color(0xFFE8DED0) // Warm Cream text
-        : const Color(0xFF3D2B1F); // Dark Brown text
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
 
     // Gold Accent
-    final Color goldColor = const Color(0xFFD4A853); // Antique Gold
+    final Color goldColor = isDark
+        ? AppColors.darkGold
+        : AppColors.gold;
 
     // Highlight Color
-    final Color highlightColor = isDark
-        ? const Color(0xFF8B6914).withValues(alpha: 0.3)
-        : const Color(0xFFD4A853).withValues(alpha: 0.25);
+    final Color highlightColor = goldColor.withValues(alpha: isDark ? 0.3 : 0.22);
 
     // Force override library theme colors
     final theme = Theme.of(context);
@@ -85,43 +86,41 @@ class ProfessionalQuranScreen extends StatelessWidget {
           tertiary: goldColor,
           surface: backgroundColor,
           onSurface: textColor,
-          // background: backgroundColor, // Deprecated
-          // onBackground: textColor, // Deprecated
-          primaryContainer: goldColor.withValues(alpha: 0.1),
+          primaryContainer: goldColor.withValues(alpha: 0.12),
           onPrimaryContainer: goldColor,
-          secondaryContainer: goldColor.withValues(alpha: 0.1),
+          secondaryContainer: goldColor.withValues(alpha: 0.12),
           onSecondaryContainer: goldColor,
-          surfaceContainer: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          surfaceContainer: isDark ? AppColors.darkSurfaceContainer : Colors.white,
           surfaceTint: Colors.transparent, // Disable M3 tint
         ),
         scaffoldBackgroundColor: backgroundColor,
         dialogTheme: DialogThemeData(
           backgroundColor: isDark
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFFFDF8F0),
+              ? AppColors.darkSurfaceContainerHigh
+              : AppColors.surfaceWarmIvory,
         ),
 
         // Global Colors
-        canvasColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFDF8F0),
-        cardColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        canvasColor: isDark ? AppColors.darkSurface : AppColors.surfaceWarmIvory,
+        cardColor: isDark ? AppColors.darkSurfaceContainer : Colors.white,
         dividerColor: goldColor.withValues(alpha: 0.2),
 
         // Specific overrides for commonly used widgets
         appBarTheme: AppBarTheme(
           backgroundColor: isDark
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFFFDF8F0),
+              ? AppColors.darkSurface
+              : AppColors.surfaceWarmIvory,
           foregroundColor: textColor,
           iconTheme: IconThemeData(color: goldColor),
           elevation: 0,
         ),
         bottomSheetTheme: BottomSheetThemeData(
           backgroundColor: isDark
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFFFDF8F0),
+              ? AppColors.darkSurfaceContainerHigh
+              : AppColors.surfaceWarmIvory,
           modalBackgroundColor: isDark
-              ? const Color(0xFF1A1A1A)
-              : const Color(0xFFFDF8F0),
+              ? AppColors.darkSurfaceContainerHigh
+              : AppColors.surfaceWarmIvory,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -129,7 +128,7 @@ class ProfessionalQuranScreen extends StatelessWidget {
         listTileTheme: ListTileThemeData(
           iconColor: goldColor,
           textColor: textColor,
-          tileColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          tileColor: isDark ? AppColors.darkSurfaceContainer : Colors.white,
           selectedColor: goldColor.withValues(alpha: 0.1),
           selectedTileColor: goldColor.withValues(alpha: 0.1),
         ),

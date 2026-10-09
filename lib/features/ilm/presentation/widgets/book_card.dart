@@ -102,7 +102,7 @@ class _BookCardState extends State<BookCard> {
               BoxShadow(
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.25)
-                    : const Color(0xFF3A3A3A).withValues(alpha: 0.04),
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 3),
               ),
@@ -160,7 +160,7 @@ class _BookCardState extends State<BookCard> {
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
-                      color: isDark ? Colors.white : const Color(0xFF3A3A3A),
+                      color: context.textPrimaryColor,
                     ),
                   ),
 
@@ -174,9 +174,7 @@ class _BookCardState extends State<BookCard> {
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 13,
-                      color: isDark
-                          ? const Color(0xFFA1A1A1)
-                          : const Color(0xFF6E6E6E),
+                      color: context.textSecondaryColor,
                     ),
                   ),
 
@@ -186,25 +184,27 @@ class _BookCardState extends State<BookCard> {
                   if (remainingLessons > 0)
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.timer_outlined,
                           size: 14,
-                          color: Color(0xFF9E9E9E),
+                          color: context.textTertiaryColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           timeText,
-                          style: const TextStyle(
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
                             fontSize: 12,
-                            color: Color(0xFF9E9E9E),
+                            color: context.textTertiaryColor,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           '$remainingLessons دروس متبقية',
-                          style: const TextStyle(
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
                             fontSize: 12,
-                            color: Color(0xFF9E9E9E),
+                            color: context.textTertiaryColor,
                           ),
                         ),
                       ],
@@ -219,9 +219,7 @@ class _BookCardState extends State<BookCard> {
                         child: Container(
                           height: 6,
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1E2828)
-                                : const Color(0xFFE5E4E2),
+                            color: context.outlineVariantColor.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: ClipRRect(

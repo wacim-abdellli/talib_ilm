@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../app/theme/theme_colors.dart';
 
 class ShimmerBookCard extends StatelessWidget {
   const ShimmerBookCard({super.key});
@@ -224,12 +225,10 @@ class ShimmerHadithCard extends StatelessWidget {
   }
 }
 
-// Helper
 Widget _buildShimmer(BuildContext context, Widget child) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
   return Shimmer.fromColors(
-    baseColor: isDark ? const Color(0xFF1A1A1A) : Colors.grey[300]!,
-    highlightColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100]!,
+    baseColor: context.shimmerBaseColor,
+    highlightColor: context.shimmerHighlightColor,
     child: child,
   );
 }

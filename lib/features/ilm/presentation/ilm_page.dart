@@ -788,10 +788,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                     begin: Alignment.topRight,
                     end: Alignment.bottomLeft,
                     colors: isDark
-                        ? [
-                            context.surfaceContainer,
-                            context.surfaceLowest,
-                          ]
+                        ? [context.surfaceContainer, context.surfaceLowest]
                         : [const Color(0xFFF5F3F0), const Color(0xFFFBFAF8)],
                   ),
                   borderRadius: BorderRadius.circular(16),

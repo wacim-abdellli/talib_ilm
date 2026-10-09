@@ -7,7 +7,6 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../shared/widgets/pressable_scale.dart';
-
 /// HomeHeroCard - Celestial Prayer Time Centerpiece
 class HomeHeroCard extends StatefulWidget {
   final String nextPrayerName;
@@ -15,7 +14,6 @@ class HomeHeroCard extends StatefulWidget {
   final bool isEstimated;
   final Map<String, DateTime>? allPrayers;
   final VoidCallback? onTap;
-
   const HomeHeroCard({
     super.key,
     required this.nextPrayerName,
@@ -24,11 +22,9 @@ class HomeHeroCard extends StatefulWidget {
     this.allPrayers,
     this.onTap,
   });
-
   @override
   State<HomeHeroCard> createState() => _HomeHeroCardState();
 }
-
 class _HomeHeroCardState extends State<HomeHeroCard> {
   late Timer _timer;
   late Duration _timeLeft;
@@ -82,35 +78,36 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
       setState(() => _isPressed = value);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final isVeryNear = _timeLeft.inMinutes < 15;
-
     // Spiritual Serenity gradients
     final gradient = isDark
-        ? const LinearGradient(
-            colors: [Color(0xFF1E2828), Color(0xFF141C1C)],
+        ? LinearGradient(
+            colors: [
+              context.surfaceContainerHigh,
+              context.surfaceContainer,
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
-        : const LinearGradient(
-            colors: [Colors.white, Color(0xFFF9F7F4)],
+        : LinearGradient(
+            colors: [
+              Colors.white,
+              context.surfaceContainerLow,
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );
-
     final borderColor = isVeryNear
         ? AppColors.gold.withValues(alpha: 0.8)
         : (isDark
             ? AppColors.gold.withValues(alpha: 0.25)
             : context.outlineVariantColor);
-
     final shadowColor = isDark
         ? Colors.black.withValues(alpha: 0.4)
         : AppColors.primaryDark.withValues(alpha: 0.08);
-
     // Time formatting
     final hours = _timeLeft.inHours.toString().padLeft(2, '0');
     final minutes = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
@@ -355,8 +352,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF121717)
-                            : const Color(0xFFF2EFE9).withValues(alpha: 0.6),
+                            ? context.surfaceContainerLow
+                            : context.surfaceLow,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: context.outlineColor.withValues(alpha: isDark ? 0.18 : 0.1),
@@ -409,8 +406,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
             icon,
             size: 15,
             color: isCurrent
-                ? AppColors.gold
-                : (isDark ? const Color(0xFF7E8C8C) : const Color(0xFF9E9E9E)),
+                ? context.goldColor
+                : context.textTertiaryColor,
           ),
           const SizedBox(height: 3),
           Text(
@@ -420,8 +417,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
               fontFamily: 'Cairo',
               fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
               color: isCurrent
-                  ? (isDark ? Colors.white : AppColors.gold)
-                  : (isDark ? const Color(0xFFA1AFA5) : const Color(0xFF6E6E6E)),
+                  ? (isDark ? Colors.white : context.goldColor)
+                  : context.textSecondaryColor,
             ),
           ),
           if (timeStr.isNotEmpty) ...[
@@ -433,8 +430,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 fontFamily: 'Cairo',
                 fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
                 color: isCurrent
-                    ? AppColors.gold
-                    : (isDark ? const Color(0xFF7E8C8C) : const Color(0xFF9E9E9E)),
+                    ? context.goldColor
+                    : context.textTertiaryColor,
               ),
             ),
           ],
@@ -490,13 +487,11 @@ class _TimeDigitBadge extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF131A1A)
-                : const Color(0xFFF3EFEA),
+                ? context.surfaceContainerLow
+                : context.surfaceLow,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF263333)
-                  : const Color(0xFFE2DDD5),
+              color: context.outlineVariantColor,
               width: 1,
             ),
           ),
@@ -506,7 +501,7 @@ class _TimeDigitBadge extends StatelessWidget {
               fontSize: 20,
               fontWeight: FontWeight.w800,
               fontFamily: 'Cairo',
-              color: isDark ? Colors.white : AppColors.textPrimary,
+              color: context.textPrimaryColor,
               height: 1.1,
             ),
           ),
@@ -517,7 +512,7 @@ class _TimeDigitBadge extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontFamily: 'Cairo',
-            color: isDark ? const Color(0xFF8A9A9A) : const Color(0xFF9E9E9E),
+            color: context.textTertiaryColor,
           ),
         ),
       ],

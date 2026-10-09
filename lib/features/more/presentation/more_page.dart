@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../app/constants/app_strings.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../../../app/app.dart';
 import '../../quran/data/services/reading_stats_service.dart';
@@ -35,7 +36,6 @@ class _MorePageState extends State<MorePage> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -81,7 +81,6 @@ class _MorePageState extends State<MorePage> {
 
         final isDark = context.isDark;
         final gold = context.goldColor;
-
         return Scaffold(
           backgroundColor: context.backgroundColor,
           body: Column(
@@ -175,12 +174,12 @@ class _MorePageState extends State<MorePage> {
                         gradient: LinearGradient(
                           colors: isDark
                               ? [
-                                  const Color(0xFF1F2B2B),
-                                  const Color(0xFF141E1E),
+                                  context.surfaceContainerHigh,
+                                  context.surfaceContainer,
                                 ]
                               : [
-                                  const Color(0xFFFFFDF8),
-                                  const Color(0xFFF7F3EA),
+                                  Colors.white,
+                                  context.surfaceContainerLow,
                                 ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -270,7 +269,7 @@ class _MorePageState extends State<MorePage> {
                                     Icon(
                                       Icons.local_fire_department_rounded,
                                       size: 14,
-                                      color: const Color(0xFFE57373),
+                                      color: AppColors.categorySeerah,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -382,11 +381,9 @@ class _MorePageState extends State<MorePage> {
       },
     );
   }
-
   void _showInfo(BuildContext context, String message) {
     AppSnackbar.info(context, message);
   }
-
   void _showThemeSelector(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -464,7 +461,6 @@ class _MorePageState extends State<MorePage> {
       ),
     );
   }
-
   void _openPrayerSettings(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -483,7 +479,6 @@ class _MorePageState extends State<MorePage> {
       ),
     );
   }
-
   void _openLocationSettings(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -498,14 +493,12 @@ class _MorePageState extends State<MorePage> {
     );
   }
 }
-
 class _ThemeOption extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
-
   const _ThemeOption({
     required this.icon,
     required this.title,
@@ -513,7 +506,6 @@ class _ThemeOption extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

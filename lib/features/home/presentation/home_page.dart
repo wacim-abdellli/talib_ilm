@@ -601,19 +601,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.spa_rounded,
                                       label: 'الأذكار',
                                       onTap: () => _openAdhkar(context),
-                                      accentColor: const Color(0xFF10B981),
+                                      accentColor: AppColors.categoryHadith,
                                     ),
                                   ),
 
                                   const SizedBox(width: 10),
 
-                                  // 4. Qibla (Sky Blue)
+                                  // 4. Qibla (Lapis Slate)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.explore_rounded,
                                       label: 'القبلة',
                                       onTap: () => _openQibla(context),
-                                      accentColor: const Color(0xFF0EA5E9),
+                                      accentColor: AppColors.categoryLanguage,
                                     ),
                                   ),
                                 ],

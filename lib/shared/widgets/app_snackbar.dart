@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_colors.dart';
 
 enum AppSnackbarType { success, info, error }
 
@@ -24,7 +25,7 @@ class AppSnackbar {
           content: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F1F1F),
+              color: AppColors.darkSurfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: config.color.withValues(alpha: 0.4),
@@ -94,10 +95,13 @@ class _SnackbarConfig {
       case AppSnackbarType.success:
         return _SnackbarConfig(
           Icons.check_circle_rounded,
-          const Color(0xFF00E676),
+          AppColors.darkIslamicGreen,
         );
       case AppSnackbarType.error:
-        return _SnackbarConfig(Icons.error_outline, const Color(0xFFFF5252));
+        return _SnackbarConfig(
+          Icons.error_outline,
+          const Color(0xFFE57373),
+        );
       case AppSnackbarType.info:
         return _SnackbarConfig(Icons.info_outline, Colors.white);
     }

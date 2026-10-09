@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_colors.dart';
 import '../data/services/reading_stats_service.dart';
 import 'quran_library_wrapper.dart';
@@ -202,7 +203,7 @@ class _QuranPageState extends State<QuranPage> {
                           label: 'أيام التتابع',
                           value: '$_streak',
                           icon: Icons.local_fire_department_rounded,
-                          color: const Color(0xFFE57373), // Warm coral
+                          color: AppColors.categorySeerah, // Warm amber terracotta
                           cardColor: cardColor,
                           textColor: textColor,
                         ),
@@ -267,12 +268,12 @@ class _QuranPageState extends State<QuranPage> {
                           gradient: LinearGradient(
                             colors: isDark
                                 ? [
-                                    const Color(0xFF1E2828),
-                                    const Color(0xFF141C1C),
+                                    context.surfaceContainerHigh,
+                                    context.surfaceContainer,
                                   ]
                                 : [
-                                    const Color(0xFFFFFDF8),
-                                    const Color(0xFFF7F3EB),
+                                    Colors.white,
+                                    context.surfaceContainerLow,
                                   ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,

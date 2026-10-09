@@ -11,31 +11,30 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Cairo',
+      scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
-        primaryContainer: AppColors.primaryLight,
-        onPrimaryContainer: Color(0xFF002022), // Dark teal for contrast
+        primaryContainer: AppColors.primaryContainerLight,
+        onPrimaryContainer: AppColors.primaryDark,
 
         secondary: AppColors.accent,
         onSecondary: Colors.white,
         secondaryContainer: AppColors.goldLight,
-        onSecondaryContainer: Color(0xFF2B2100), // Dark gold for contrast
-        // M3 Surface Ladder (Light)
-        surface: Color(
-          0xFFF9F9F9,
-        ), // App background (slightly grey for contrast)
-        surfaceContainerLowest: Color(0xFFFFFFFF), // Quick actions (pure white)
-        surfaceContainerLow: Color(0xFFF5F5F0), // Quote card
-        surfaceContainer: Color(0xFFF0F0EB), // Learning card
-        surfaceContainerHigh: Color(0xFFEBEBE6), // Prayer hero anchor
-        surfaceContainerHighest: Color(0xFFE6E6E1),
+        onSecondaryContainer: Color(0xFF5C4106),
 
+        // M3 Surface Ladder (Warm Medina Ivory & Pure Alabaster)
+        surface: AppColors.background, // 0xFFFAF8F5 (Warm ivory canvas)
+        surfaceContainerLowest: Color(0xFFF3EFE8), // Recessed areas
+        surfaceContainerLow: Color(0xFFF7F4EE),
+        surfaceContainer: Color(0xFFFFFFFF), // Crisp pure white cards
+        surfaceContainerHigh: Color(0xFFFFFFFF),
+        surfaceContainerHighest: Color(0xFFFFFFFF),
         onSurface: AppColors.textPrimary,
         onSurfaceVariant: AppColors.textSecondary,
 
-        outline: Color(0xFFB5B5B5),
-        outlineVariant: Color(0xFFE8E6E3),
+        outline: AppColors.border,
+        outlineVariant: Color(0xFFE8E2D6),
 
         error: AppColors.error,
         onError: Colors.white,
@@ -58,7 +57,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         iconTheme: IconThemeData(color: AppColors.textSecondary),
@@ -70,7 +69,7 @@ class AppTheme {
           textStyle: AppTextStyles.button,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         ),
@@ -79,13 +78,26 @@ class AppTheme {
         color: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide.none, // Remove default borders, use container colors
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFE8E2D6), width: 1),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(22)),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
     );
   }
-
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -93,29 +105,29 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.darkPrimary,
-        onPrimary: Colors.white,
-        primaryContainer: AppColors.darkPrimaryLight,
-        onPrimaryContainer: Colors.white,
+        primary: AppColors.darkPrimary, // 0xFF4DB6AC (Luminous Seafoam Teal)
+        onPrimary: Color(0xFF072424),
+        primaryContainer: AppColors.darkPrimaryContainer,
+        onPrimaryContainer: AppColors.darkPrimary,
 
-        secondary: AppColors.darkGold,
-        onSecondary: Colors.black,
+        secondary: AppColors.darkGold, // 0xFFE5B95C (Celestial Gold)
+        onSecondary: Color(0xFF281C06),
         secondaryContainer: AppColors.darkGoldLight,
-        onSecondaryContainer: Color(0xFFFFD700),
+        onSecondaryContainer: AppColors.goldHighlight,
 
-        // M3 Surface Ladder (Dark)
-        surface: AppColors.darkBackground, // #121212
-        surfaceContainerLowest: Color(0xFF0A0A0A), // Deepest (Quick actions)
-        surfaceContainerLow: Color(0xFF1E1E1E), // Quote card
-        surfaceContainer: Color(0xFF252525), // Learning card
-        surfaceContainerHigh: Color(0xFF2D2D2D), // Prayer hero
-        surfaceContainerHighest: Color(0xFF353535),
+        // M3 Surface Ladder (Twilight Sanctuary Midnight Slate-Teal)
+        surface: AppColors.darkBackground, // 0xFF0F1717
+        surfaceContainerLowest: Color(0xFF0A1010),
+        surfaceContainerLow: Color(0xFF121B1B),
+        surfaceContainer: AppColors.darkSurfaceSecondary, // 0xFF162222
+        surfaceContainerHigh: Color(0xFF1C2C2C),
+        surfaceContainerHighest: AppColors.darkSurfaceElevated, // 0xFF243636
 
         onSurface: AppColors.darkTextPrimary,
         onSurfaceVariant: AppColors.darkTextSecondary,
 
-        outline: Color(0xFF484848),
-        outlineVariant: Color(0xFF2A2A2A),
+        outline: Color(0xFF385252),
+        outlineVariant: AppColors.darkBorder, // 0xFF263939
 
         error: AppColors.error,
         onError: Colors.white,
@@ -157,40 +169,57 @@ class AppTheme {
         titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: AppColors.darkTextPrimary,
         ),
         iconTheme: IconThemeData(color: AppColors.darkTextSecondary),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: AppColors.darkSurfaceSecondary,
         selectedItemColor: AppColors.darkPrimary,
         unselectedItemColor: AppColors.darkTextTertiary,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkPrimary,
-          foregroundColor: Colors.white,
+          foregroundColor: const Color(0xFF072424),
           textStyle: AppTextStyles.button,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         ),
       ),
-      cardTheme: CardThemeData(
-        color: AppColors.darkSurface,
+      cardTheme: const CardThemeData(
+        color: AppColors.darkSurfaceSecondary,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide.none,
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          side: BorderSide(color: AppColors.darkBorder, width: 1),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.darkSurfaceElevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(22)),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.darkSurfaceSecondary,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
       iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: AppColors.darkSurfaceElevated,
-        contentTextStyle: TextStyle(color: AppColors.darkTextPrimary),
+        contentTextStyle: TextStyle(
+          fontFamily: 'Cairo',
+          color: AppColors.darkTextPrimary,
+        ),
       ),
     );
   }

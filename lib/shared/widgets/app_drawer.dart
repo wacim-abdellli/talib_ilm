@@ -29,9 +29,6 @@ class AppDrawer extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ═══════════════════════════════════════════════════════════════════
-          // HEADER: Teal Gradient
-          // ═══════════════════════════════════════════════════════════════════
           Container(
             height: 190,
             width: double.infinity,
@@ -103,10 +100,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
           ),
-
-          // ═══════════════════════════════════════════════════════════════════
           // MENU ITEMS
-          // ═══════════════════════════════════════════════════════════════════
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 12),

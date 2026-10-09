@@ -39,12 +39,12 @@ class NextPrayerCard extends StatelessWidget {
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      const Color(0xFF1E2B2A),
-                      const Color(0xFF141F1E),
+                      context.surfaceContainerHigh,
+                      context.surfaceContainer,
                     ]
                   : [
-                      const Color(0xFFFFFDF8),
-                      const Color(0xFFF7F2E7),
+                      Colors.white,
+                      context.surfaceContainerLow,
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

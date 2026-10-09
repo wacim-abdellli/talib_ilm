@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/theme_colors.dart';
 
 /// Modern loading indicator with teal color
 class AppLoadingIndicator extends StatelessWidget {
@@ -14,7 +15,7 @@ class AppLoadingIndicator extends StatelessWidget {
         width: size,
         height: size,
         child: CircularProgressIndicator(
-          color: const Color(0xFF0D9488),
+          color: context.primaryColor,
           strokeWidth: strokeWidth,
         ),
       ),
@@ -81,14 +82,14 @@ class AppEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 80, color: const Color(0xFFB8B8B8)),
+            Icon(icon, size: 80, color: context.textTertiaryColor),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF6B6B6B),
+                color: context.textSecondaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -96,7 +97,7 @@ class AppEmptyState extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 subtitle!,
-                style: const TextStyle(fontSize: 15, color: Color(0xFFB8B8B8)),
+                style: TextStyle(fontSize: 15, color: context.textTertiaryColor),
                 textAlign: TextAlign.center,
               ),
             ],

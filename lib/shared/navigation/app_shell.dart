@@ -12,12 +12,10 @@ import '../../features/more/presentation/more_page.dart';
 
 class AppShell extends StatefulWidget {
   final int initialIndex;
-
   const AppShell({
     super.key,
     this.initialIndex = 0,
   });
-
   /// Allows any descendant page to cleanly switch bottom navigation tab
   static bool switchToTab(BuildContext context, int index) {
     final state = context.findAncestorStateOfType<_AppShellState>();
@@ -27,11 +25,9 @@ class AppShell extends StatefulWidget {
     }
     return false;
   }
-
   @override
   State<AppShell> createState() => _AppShellState();
 }
-
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
@@ -80,7 +76,7 @@ class _AppShellState extends State<AppShell> {
             height: 68,
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF182222).withValues(alpha: 0.95)
+                  ? context.surfaceContainerHigh.withValues(alpha: 0.96)
                   : Colors.white.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(

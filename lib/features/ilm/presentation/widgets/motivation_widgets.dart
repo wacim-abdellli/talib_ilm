@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/models/favorite_item.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../data/services/motivation_service.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
-
 /// Displays daily motivational quote from Quran/Hadith
 class DailyMotivationCard extends StatefulWidget {
   final DailyQuote quote;
@@ -324,10 +323,10 @@ class MilestoneCelebrationDialog extends StatelessWidget {
           color: context.surfaceElevatedColor,
           gradient: context.isDark
               ? null
-              : const LinearGradient(
+              : LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFFFDF7), Color(0xFFFFF9E6)],
+                  colors: [Colors.white, AppColors.warmIvoryContainer],
                 ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
@@ -495,26 +494,26 @@ class EncouragementBanner extends StatelessWidget {
       case EncouragementTone.gentle:
         backgroundColor = context.isDark
             ? context.goldColor.withValues(alpha: 0.15)
-            : const Color(0xFFFFF9E6);
+            : AppColors.warmIvoryContainer;
         textColor = context.isDark
             ? context.goldColor
-            : const Color(0xFF8B6914);
+            : AppColors.goldDark;
         break;
       case EncouragementTone.warm:
         backgroundColor = context.isDark
             ? context.successColor.withValues(alpha: 0.15)
-            : const Color(0xFFF0FDF4);
+            : AppColors.categoryHadith.withValues(alpha: 0.12);
         textColor = context.isDark
             ? context.successColor
-            : const Color(0xFF166534);
+            : AppColors.categoryHadith;
         break;
       case EncouragementTone.encouraging:
         backgroundColor = context.isDark
             ? context.primaryColor.withValues(alpha: 0.15)
-            : const Color(0xFFEFF6FF);
+            : context.primaryColor.withValues(alpha: 0.12);
         textColor = context.isDark
             ? context.primaryColor
-            : const Color(0xFF1E40AF);
+            : AppColors.primaryDark;
         break;
     }
 

@@ -563,13 +563,13 @@ class _AdhkarPageState extends State<AdhkarPage> {
       recTitle = 'أذكار المساء';
       recSubtitle = 'حصّن يومك ومساءك بذكر الرحمن';
       recIcon = Icons.nights_stay_rounded;
-      recColor = const Color(0xFF5A8A8A);
+      recColor = context.primaryColor;
     } else {
       recId = 'sleeping';
       recTitle = 'أذكار النوم';
       recSubtitle = 'اختم يومك بالسكينة والاستغفار';
       recIcon = Icons.bedtime_rounded;
-      recColor = const Color(0xFF6A7B8C);
+      recColor = AppColors.categoryLanguage;
     }
 
     final cat = catalog.byId(recId) ?? catalog.byId('sleeping');
@@ -592,8 +592,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
                       context.surfaceContainer,
                     ]
                   : [
-                      recColor.withValues(alpha: 0.14),
-                      const Color(0xFFFBF8F2),
+                      recColor.withValues(alpha: 0.12),
+                      Colors.white,
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -835,23 +835,22 @@ class _CategoryTile extends StatelessWidget {
       ),
     );
   }
-
   List<Color> _getCategoryColors(String id) {
     switch (id) {
       case 'morning':
-        return const [Color(0xFFD4A853), Color(0xFFC29742)]; // Divine Gold
+        return const [AppColors.gold, AppColors.goldDark]; // Divine Gold
       case 'evening':
-        return const [Color(0xFF4A6572), Color(0xFF344955)]; // Slate Dusk
+        return const [AppColors.categoryLanguage, Color(0xFF2A4860)]; // Slate Dusk
       case 'after_prayer':
-        return const [Color(0xFF4A7A7A), Color(0xFF3B6666)]; // Sacred Teal
+        return const [AppColors.primary, AppColors.primaryDark]; // Noble Teal
       case 'duas':
-        return const [Color(0xFF7D8C6C), Color(0xFF6B7B5A)]; // Olive Bronze
+        return const [AppColors.categoryHadith, Color(0xFF1E683E)]; // Medina Emerald
       case 'tasbeeh':
-        return const [Color(0xFFE5C07B), Color(0xFFD4A853)]; // Luminous Gold
+        return const [AppColors.darkGold, AppColors.gold]; // Luminous Gold
       case 'sleeping':
-        return const [Color(0xFF5C6B73), Color(0xFF455057)]; // Night Slate
+        return const [Color(0xFF476070), Color(0xFF334652)]; // Night Slate
       default:
-        return const [Color(0xFF4A7A7A), Color(0xFF3B6666)]; // Sacred Teal
+        return const [AppColors.primary, AppColors.primaryDark]; // Noble Teal
     }
   }
 

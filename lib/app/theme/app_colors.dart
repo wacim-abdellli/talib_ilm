@@ -1,109 +1,113 @@
 import 'package:flutter/material.dart';
 
-/// App Colors - Spiritual Serenity Palette
+/// App Colors - Spiritual Serenity Luxury Islamic Palette
 ///
 /// Design Philosophy:
-/// - #121212 base (not pure black) - reduces eye strain
-/// - Islamic Green - Paradise & life (Quranic symbolism)
-/// - Celestial Blue - Transcendence & contemplation
-/// - Divine Gold - Spiritual light (intentional, rare)
-/// - Off-white text - gentler on eyes than pure white
+/// - Noble Emerald Teal: Wisdom, contemplation, serenity
+/// - Andalusian Divine Gold: Celestial light, milestones, sacred borders
+/// - Warm Medina Ivory (Light): Crisp alabaster sheets on warm parchment
+/// - Twilight Sanctuary (Dark): Deep midnight slate-teal, reducing eye strain
+/// - Classical Manuscript Pigments: Mineral tones (malachite, terracotta, ochre, lapis)
 class AppColors {
   // ═══════════════════════════════════════════════════════════════════════
-  // PRIMARY - Muted Teal (main actions, progress, primary UI)
+  // PRIMARY - Noble Emerald Teal
   // ═══════════════════════════════════════════════════════════════════════
-  static const primary = Color(0xFF5A8A8A); // Calm teal
-  static const primaryDark = Color(0xFF4A7A7A);
-  static const primaryLight = Color(0xFF7AB5A8); // Mint teal
+  static const primary = Color(0xFF2C6B6B); // Deep noble teal (Light mode)
+  static const primaryDark = Color(0xFF1E5252);
+  static const primaryLight = Color(0xFF4A8E8E);
+  static const primaryContainerLight = Color(0xFFE4F0F0);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SECONDARY - Soft Gold (achievements, motivation, rewards)
+  // SECONDARY - Andalusian Divine Gold
   // ═══════════════════════════════════════════════════════════════════════
-  static const accent = Color(0xFFD4A853); // Warm gold
+  static const accent = Color(0xFFC59533); // Rich honeyed gold (Light mode)
   static const accentGold = accent;
   static const gold = accent;
-  static const goldLight = Color(0xFFFFF8E7); // Gold surface
-  static const goldGlow = Color(0xFFE8C252);
+  static const goldLight = Color(0xFFFFF9EE); // Soft warm gold tint
+  static const goldDark = Color(0xFF9E721D); // Rich antique gold
+  static const goldGlow = Color(0xFFDDB455);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // BACKGROUNDS - Warm Off-White (never pure white)
+  // LIGHT BACKGROUNDS - Warm Medina Ivory & Pure Alabaster
   // ═══════════════════════════════════════════════════════════════════════
-  static const background = Color(0xFFFBFAF8); // Warm ivory
-  static const surface = Color(0xFFFAFAF9); // Card background
-  static const surfaceSecondary = Color(0xFFF5F3F0);
-  static const surfaceElevated = Color(0xFFFFFFFF); // Dialogs/Modals
-  static const surfaceHover = Color(0xFFF0EFE9); // Hover/Highlight
-  static const cardBackground = surface;
+  static const background = Color(0xFFFAF8F5); // Warm ivory canvas
+  static const surface = Color(0xFFFAF8F5); // App base
+  static const surfaceWarmIvory = Color(0xFFFAF8F5);
+  static const warmIvoryContainer = Color(0xFFFFF9EE);
+  static const surfaceSecondary = Color(0xFFF3EFE8); // Recessed areas
+  static const surfaceElevated = Color(0xFFFFFFFF); // Pure crisp white cards
+  static const surfaceHover = Color(0xFFF5F1E9);
+  static const cardBackground = Color(0xFFFFFFFF); // Cards are crisp white
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SUCCESS - Soft Green (completed states)
+  // SUCCESS - Refined Emerald (Never harsh green)
   // ═══════════════════════════════════════════════════════════════════════
-  static const success = Color(0xFF22C55E);
-  static const successLight = Color(0xFFF0FDF4);
-  static const successMuted = Color(0xFF85A885);
+  static const success = Color(0xFF2E8B57); // Sea emerald
+  static const successLight = Color(0xFFEFF8F3);
+  static const successMuted = Color(0xFF5B9974);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // TEXT - Near-black titles, muted grey secondary
+  // TEXT - Slate Charcoal (Light Mode)
   // ═══════════════════════════════════════════════════════════════════════
-  static const textPrimary = Color(0xFF3A3A3A); // Near-black (charcoal)
-  static const textSecondary = Color(0xFF6E6E6E); // Muted grey
-  static const textTertiary = Color(0xFF9A9A9A); // Light grey
-  static const textDisabled = Color(0xFFB5B5B5);
-  static const textOnPrimary = Color(0xFFFCFCFC); // White on dark
+  static const textPrimary = Color(0xFF1E2827); // Deep teal-slate charcoal
+  static const textSecondary = Color(0xFF5E6B69); // Muted slate
+  static const textTertiary = Color(0xFF8E9B99); // Caption grey
+  static const textDisabled = Color(0xFFB5BEBC);
+  static const textOnPrimary = Color(0xFFFFFFFF);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // BORDERS - Subtle warm grey
+  // BORDERS (Light Mode) - Warm Sand
   // ═══════════════════════════════════════════════════════════════════════
-  static const border = Color(0xFFE8E6E3);
-  static const divider = Color(0xFFF2F0ED);
-  static const separator = Color(0xFFEAE8E5);
+  static const border = Color(0xFFE8E2D6);
+  static const divider = Color(0xFFEFEBE2);
+  static const separator = Color(0xFFE8E2D6);
   static const stroke = border;
 
   // ═══════════════════════════════════════════════════════════════════════
-  // CATEGORY COLORS (Book subjects - no purple)
+  // SCHOLARLY CATEGORY COLORS - Classical Mineral Pigments (No candy neon!)
   // ═══════════════════════════════════════════════════════════════════════
-  static const categoryAqidah = Color(0xFF5A8A8A); // Teal (عقيدة)
-  static const categoryHadith = Color(0xFF6366F1); // Indigo (حديث)
-  static const categoryFiqh = Color(0xFF10B981); // Emerald (فقه)
-  static const categoryQuran = Color(0xFFD4A853); // Gold (قرآن)
-  static const categoryLanguage = Color(0xFF0EA5E9); // Sky blue (لغة)
-  static const categorySeerah = Color(0xFFEC4899); // Pink (سيرة)
+  static const categoryAqidah = Color(0xFF2C6B6B); // Noble Teal (عقيدة)
+  static const categoryQuran = Color(0xFFC59533); // Andalusian Gold (قرآن وتفسير)
+  static const categoryHadith = Color(0xFF2E8B57); // Medina Emerald (حديث)
+  static const categoryFiqh = Color(0xFFB87333); // Warm Ochre (فقه)
+  static const categorySeerah = Color(0xFF9E5A48); // Sandalwood Terracotta (سيرة)
+  static const categoryLanguage = Color(0xFF3E6888); // Lapis Slate (لغة وأدب)
 
   // ═══════════════════════════════════════════════════════════════════════
-  // PRAYER COLORS - Muted, warm tones
+  // PRAYER COLORS - Natural Atmospheric Tones
   // ═══════════════════════════════════════════════════════════════════════
-  static const fajr = Color(0xFF7585A8); // Soft blue
-  static const sunrise = Color(0xFFD4B87A); // Gold
-  static const dhuhr = Color(0xFF85A5B8); // Sky
-  static const asr = Color(0xFFCBA580); // Amber
-  static const maghrib = Color(0xFFA88585); // Rose
-  static const isha = Color(0xFF6A7A95); // Slate blue
+  static const fajr = Color(0xFF5B7B9A); // Twilight slate blue
+  static const sunrise = Color(0xFFD49D42); // Warm morning gold
+  static const dhuhr = Color(0xFF3E8899); // Noon cyan teal
+  static const asr = Color(0xFFC48448); // Golden afternoon amber
+  static const maghrib = Color(0xFFA85C52); // Dusk terracotta
+  static const isha = Color(0xFF4A5D80); // Night sapphire
 
   // ═══════════════════════════════════════════════════════════════════════
-  // STATES - Semantic colors
+  // STATES - Semantic Colors
   // ═══════════════════════════════════════════════════════════════════════
-  static const error = Color(0xFFDC2626);
-  static const errorLight = Color(0xFFFEF2F2);
-  static const warning = Color(0xFFF59E0B);
-  static const warningLight = Color(0xFFFFFBEB);
-  static const info = Color(0xFF0EA5E9);
-  static const infoLight = Color(0xFFF0F9FF);
+  static const error = Color(0xFFC24136); // Muted crimson
+  static const errorLight = Color(0xFFFDF2F1);
+  static const warning = Color(0xFFD97706); // Amber
+  static const warningLight = Color(0xFFFEF9EE);
+  static const info = Color(0xFF2A7B9B); // Lapis
+  static const infoLight = Color(0xFFF0F7FA);
 
   // ═══════════════════════════════════════════════════════════════════════
   // SHADOWS
   // ═══════════════════════════════════════════════════════════════════════
-  static final shadow = const Color(0xFF3A3A3A).withValues(alpha: 0.05);
-  static final shadowMedium = const Color(0xFF3A3A3A).withValues(alpha: 0.1);
+  static final shadow = const Color(0xFF1E2827).withValues(alpha: 0.04);
+  static final shadowMedium = const Color(0xFF1E2827).withValues(alpha: 0.08);
 
   // ═══════════════════════════════════════════════════════════════════════
   // ICON COLORS
   // ═══════════════════════════════════════════════════════════════════════
   static const iconPrimary = primary;
-  static const iconMuted = Color(0xFF9A9A9A);
-  static const iconLight = Color(0xFFB5B5B5);
+  static const iconMuted = Color(0xFF8E9B99);
+  static const iconLight = Color(0xFFB5BEBC);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // GRADIENTS - Subtle, warm
+  // GRADIENTS - Light Mode
   // ═══════════════════════════════════════════════════════════════════════
   static const primaryGradient = LinearGradient(
     begin: Alignment.topRight,
@@ -114,7 +118,7 @@ class AppColors {
   static const tealMintGradient = LinearGradient(
     begin: Alignment.topRight,
     end: Alignment.bottomLeft,
-    colors: [Color(0xFF5A8A8A), Color(0xFF7AB5A8)],
+    colors: [Color(0xFF2C6B6B), Color(0xFF4A8E8E)],
   );
 
   static const goldGradient = LinearGradient(
@@ -132,13 +136,13 @@ class AppColors {
   static const surfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [surface, surfaceSecondary],
+    colors: [Colors.white, Color(0xFFFAF8F5)],
   );
 
   static const surfaceElevatedGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [surface, surfaceSecondary],
+    colors: [Colors.white, Color(0xFFFAF8F5)],
   );
 
   // Category alias for backwards compatibility
@@ -149,142 +153,127 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════════════════
   static const black = textPrimary;
   static const secondary = primaryLight;
-
   static const surfaceVariant = surfaceSecondary;
   static const textMuted = textTertiary;
   static const clear = Colors.transparent;
 
   // ═══════════════════════════════════════════════════════════════════════
-  // DARK THEME - SPIRITUAL SERENITY PALETTE
+  // DARK THEME - TWILIGHT SANCTUARY PALETTE
   // ═══════════════════════════════════════════════════════════════════════
   //
   // Design Philosophy:
-  // - #121212 base (not pure black) - Material Design dark theme standard
-  // - Reduces eye strain while maintaining dark aesthetic
-  // - Elevation expressed through surface color steps
+  // - Deep midnight slate-teal #0F1717 base (NOT generic dead gray)
+  // - Luminous Seafoam Teal #4DB6AC for calming, high-contrast actions
+  // - Celestial Andalusian Gold #E5B95C for sacred accents
+  // - Elevation expressed through layered midnight slate containers
   // ═══════════════════════════════════════════════════════════════════════
 
-  // Backgrounds (Material Design Dark Surface Hierarchy)
-  static const darkBackground = Color(0xFF121212); // Base - NOT pure black
-  static const darkSurface = Color(0xFF1E1E1E); // Elevated 1
-  static const darkSurfaceSecondary = Color(0xFF2A2A2A); // Elevated 2
-  static const darkSurfaceElevated = Color(0xFF353535); // Elevated 3 (Dialogs)
-  static const darkSurfaceHover = Color(0xFF3A3A3A); // Hover states
-  static const darkSurfaceQuote = Color(0xFF1A1F2E); // Celestial blue undertone
-  static const darkSurfaceLearning = Color(
-    0xFF1E1E1E,
-  ); // Neutral (same as darkSurface)
-  static const errorMuted = Color(0xFF8B4545);
+  // Dark Backgrounds (Midnight Slate-Teal Elevation Hierarchy)
+  static const darkBackground = Color(0xFF0F1717); // Base Sanctuary
+  static const darkSurface = Color(0xFF0F1717); // Scaffold base
+  static const darkSurfaceSecondary = Color(0xFF162222); // Card surface
+  static const darkSurfaceContainer = darkSurfaceSecondary;
+  static const darkSurfaceElevated = Color(0xFF243636); // Dialogs / Sheets
+  static const darkSurfaceContainerHigh = darkSurfaceElevated;
+  static const darkSurfaceHover = Color(0xFF1E2D2D);
+  static const darkSurfaceQuote = Color(0xFF142028); // Subtle lapis undertone
+  static const darkSurfaceLearning = Color(0xFF162222);
+  static const errorMuted = Color(0xFF9E3D35);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // ISLAMIC SACRED GREEN - Paradise & Life
-  // "Upon them will be green garments of fine silk" - Surah Al-Insan 76:21
-  // ═══════════════════════════════════════════════════════════════════════
-  static const islamicGreenPrimary = Color(0xFF009000); // Deep, rich green
-  static const islamicGreenMuted = Color(0xFF2D5F3D); // For undertones
-  static const islamicGreenLight = Color(0xFF4A9B5E); // For highlights
-  static const islamicGreenDark = Color(0xFF00600D); // For pressed states
-  static const islamicGreenSurface = Color(0xFF0D2418); // Green-tinted surface
+  // Primary Luminous Teal (Dark Mode)
+  static const darkPrimary = Color(0xFF4DB6AC); // Luminous seafoam teal
+  static const darkPrimaryLight = Color(0xFF234444); // Subdued container teal
+  static const darkPrimaryContainer = Color(0xFF1A3838);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // CELESTIAL BLUE - Transcendence & Contemplation
-  // ═══════════════════════════════════════════════════════════════════════
-  static const celestialBlue = Color(0xFF1E3A5F); // Deep sky blue
-  static const celestialBlueMuted = Color(0xFF2B4D6B); // For secondary elements
-  static const celestialBlueLight = Color(0xFF4A7A9B); // For highlights
-  static const celestialBlueSurface = Color(0xFF0D1A24); // Blue-tinted surface
+  // Sacred Emerald (Dark Mode)
+  static const islamicGreenPrimary = Color(0xFF2E8B57); // Sea emerald
+  static const islamicGreenMuted = Color(0xFF1D4D36);
+  static const islamicGreenLight = Color(0xFF45A67D);
+  static const darkIslamicGreen = islamicGreenLight;
+  static const islamicGreenDark = Color(0xFF133624);
+  static const islamicGreenSurface = Color(0xFF0E2218);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // DIVINE GOLD - Spiritual Light (Intentional, Rare)
-  // ═══════════════════════════════════════════════════════════════════════
-  static const divineGold = Color(0xFFD4AF37); // Classic gold
-  static const goldUndertone = Color(0xFF8B7355); // Muted for backgrounds
-  static const goldHighlight = Color(0xFFFFD700); // For accents only
-  static const goldSurface = Color(0xFF241C0D); // Gold-tinted surface
+  // Celestial Blue / Lapis (Dark Mode)
+  static const celestialBlue = Color(0xFF2E5370);
+  static const celestialBlueMuted = Color(0xFF1F374A);
+  static const celestialBlueLight = Color(0xFF588CAE);
+  static const celestialBlueSurface = Color(0xFF0E1A22);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // TEXT HIERARCHY (Dark Mode) - Off-white for reduced eye strain
-  // ═══════════════════════════════════════════════════════════════════════
-  static const darkTextPrimary = Color(0xFFF2F2F7); // Off-white, not pure
-  static const darkTextSecondary = Color(0xFFB8B8BD); // 70% opacity equiv
-  static const darkTextTertiary = Color(0xFF8E8E93); // 50% opacity equiv
-  static const darkTextDisabled = Color(0xFF636366); // 40% opacity equiv
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // BORDERS (Dark Mode)
-  // ═══════════════════════════════════════════════════════════════════════
-  static const darkBorder = Color(0xFF3A3A3A); // Visible but subtle
-  static const darkDivider = Color(0xFF2A2A2A); // Subtle
-  static const darkSeparator = Color(0xFF3A3A3A);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // ACCENT MAPPING (Dark Mode)
-  // ═══════════════════════════════════════════════════════════════════════
-  static const darkPrimary = islamicGreenLight; // Sacred green as primary
-  static const darkPrimaryLight = islamicGreenMuted;
-
-  static const darkSuccess = islamicGreenPrimary;
-  static const darkSuccessLight = islamicGreenSurface;
-
+  // Divine Gold (Dark Mode)
+  static const divineGold = Color(0xFFE5B95C); // Luminous celestial gold
   static const darkGold = divineGold;
+  static const goldUndertone = Color(0xFF7A602B);
+  static const goldHighlight = Color(0xFFF3CF7A);
+  static const goldSurface = Color(0xFF282012); // Deep gold-tinted surface
   static const darkGoldLight = goldSurface;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // SHIMMER COLORS (for loading states)
-  // ═══════════════════════════════════════════════════════════════════════
-  static const shimmerBase = Color(0xFF2A2A2A);
-  static const shimmerHighlight = Color(0xFF3A3A3A);
-  static const shimmerBaseLight = Color(0xFFE8E6E3);
-  static const shimmerHighlightLight = Color(0xFFF5F3F0);
+  // Text Hierarchy (Dark Mode) - Crisp glowing off-white
+  static const darkTextPrimary = Color(0xFFF1F5F4); // Crisp, non-blinding off-white
+  static const darkTextSecondary = Color(0xFF98ACA9); // Soft sage-silver
+  static const darkTextTertiary = Color(0xFF6B7E7B); // Muted caption text
+  static const darkTextDisabled = Color(0xFF475654);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // GRADIENTS (Dark Mode)
-  // ═══════════════════════════════════════════════════════════════════════
+  // Borders (Dark Mode) - Luminous Midnight Slate
+  static const darkBorder = Color(0xFF263939); // Subtle luminous edge
+  static const darkDivider = Color(0xFF1E2D2D);
+  static const darkSeparator = Color(0xFF263939);
+
+  // Accent Mapping (Dark Mode)
+  static const darkSuccess = islamicGreenLight;
+  static const darkSuccessLight = islamicGreenSurface;
+
+  // Shimmer Colors (for loading states)
+  static const shimmerBase = Color(0xFF162222);
+  static const shimmerHighlight = Color(0xFF223434);
+  static const shimmerBaseLight = Color(0xFFF3EFE8);
+  static const shimmerHighlightLight = Color(0xFFFAF8F5);
+
+  // Gradients (Dark Mode)
   static const premiumDarkGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [darkSurface, darkSurfaceSecondary],
+    colors: [darkSurfaceSecondary, Color(0xFF1C2C2C)],
   );
 
   static const islamicGreenGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [islamicGreenMuted, islamicGreenPrimary],
+    colors: [Color(0xFF1D4D36), Color(0xFF2E8B57)],
   );
 
   static const celestialGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [celestialBlue, celestialBlueMuted],
+    colors: [Color(0xFF1F374A), Color(0xFF2E5370)],
   );
 
   // Deprecated - kept for backwards compatibility
-  @Deprecated('Use islamicGreenLight instead')
-  static const primaryNeon = Color(0xFF00D9C0);
+  @Deprecated('Use darkPrimary instead')
+  static const primaryNeon = Color(0xFF4DB6AC);
   @Deprecated('Use celestialBlueLight instead')
-  static const blueNeon = Color(0xFF3B9EFF);
-  @Deprecated('Removed - not aligned with spiritual theme')
-  static const purpleNeon = Color(0xFFA855F7);
-  @Deprecated('Removed - not aligned with spiritual theme')
-  static const pinkNeon = Color(0xFFFF4D9E);
-  @Deprecated('Removed - not aligned with spiritual theme')
-  static const orangeNeon = Color(0xFFFF8A3D);
-  @Deprecated('Use islamicGreenPrimary instead')
-  static const greenNeon = Color(0xFF00E676);
+  static const blueNeon = Color(0xFF588CAE);
+  @Deprecated('Removed')
+  static const purpleNeon = Color(0xFF2C6B6B);
+  @Deprecated('Removed')
+  static const pinkNeon = Color(0xFF9E5A48);
+  @Deprecated('Removed')
+  static const orangeNeon = Color(0xFFB87333);
+  @Deprecated('Use islamicGreenLight instead')
+  static const greenNeon = Color(0xFF45A67D);
   @Deprecated('Use divineGold instead')
-  static const yellowNeon = Color(0xFFFFD600);
+  static const yellowNeon = Color(0xFFE5B95C);
 
   @Deprecated('Use categoryLanguage instead')
-  static const accentBlue = Color(0xFF7A9CB5);
+  static const accentBlue = categoryLanguage;
   @Deprecated('Use success instead')
-  static const accentGreen = Color(0xFF85A885);
+  static const accentGreen = success;
   static const accentSage = successMuted;
-  @Deprecated('Use accent instead')
-  static const accentOrange = Color(0xFFCBA580);
-  @Deprecated('Removed - not aligned with ilm theme')
-  static const accentPurple = Color(0xFF9A8EB0);
+  @Deprecated('Use categoryFiqh instead')
+  static const accentOrange = categoryFiqh;
+  @Deprecated('Removed')
+  static const accentPurple = categoryAqidah;
   @Deprecated('Use categorySeerah instead')
-  static const accentPink = Color(0xFFB8A0A0);
+  static const accentPink = categorySeerah;
   @Deprecated('Use gold instead')
-  static const accentYellow = Color(0xFFD4C08A);
+  static const accentYellow = gold;
 }
