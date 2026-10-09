@@ -5,27 +5,28 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/core/services/last_activity_service.dart';
 import 'package:talib_ilm/core/services/last_sharh_service.dart';
-import 'package:talib_ilm/features/ilm/presentation/widgets/sharh_card.dart';
 import 'package:talib_ilm/shared/widgets/app_popup.dart';
 import 'package:talib_ilm/shared/widgets/app_snackbar.dart';
 import '../../data/models/lesson_model.dart';
 
 import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_text.dart';
-import '../../../../app/theme/app_text_styles.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/sharh_model.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
-import '../../../../shared/widgets/pressable_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
 import 'lessons_list_page.dart';
+import 'sharh_reader_page.dart';
+import '../widgets/book_mutn_tab.dart';
+import '../widgets/book_sharh_tab.dart';
+import '../widgets/book_view_bookmarks_sheet.dart';
+import '../widgets/book_view_controls.dart';
 import '../../../../shared/widgets/primary_app_bar.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/models/favorite_item.dart';
@@ -285,7 +286,6 @@ class _BookViewPageState extends State<BookViewPage>
       _isBookmarked = false;
     });
 
-    // 🔥 THIS NOW WORKS
     _mutnPdfKey.currentState?.resetToStart();
 
     HapticFeedback.mediumImpact();
@@ -351,7 +351,7 @@ class _BookViewPageState extends State<BookViewPage>
     await Navigator.push(
       context,
       buildFadeRoute(
-        page: _SharhReaderPage(
+        page: SharhReaderPage(
           bookId: widget.book.id,
           sharh: sharh,
           pdfPath: pdfPath,
@@ -416,41 +416,22 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   void _showNoteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('إضافة ملاحظة', style: AppTextStyles.heading3),
-        content: TextField(
-          controller: _noteController,
-          decoration: const InputDecoration(
-            hintText: 'اكتب ملاحظتك هنا...',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 5,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (!_bookServiceReady) return;
-              await _ensureBookInitialized(totalPages: _totalPages);
-              await _bookProgressService.saveNote(
-                widget.book.id,
-                _currentPage,
-                _noteController.text,
-              );
-              _noteController.clear();
-              if (!context.mounted) return;
-              Navigator.of(context).pop();
-              AppSnackbar.success(context, 'تم حفظ الملاحظة');
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+    BookNoteDialog.show(
+      context,
+      controller: _noteController,
+      onSave: () async {
+        if (!_bookServiceReady) return;
+        await _ensureBookInitialized(totalPages: _totalPages);
+        await _bookProgressService.saveNote(
+          widget.book.id,
+          _currentPage,
+          _noteController.text,
+        );
+        _noteController.clear();
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        AppSnackbar.success(context, 'تم حفظ الملاحظة');
+      },
     );
   }
 
@@ -472,7 +453,7 @@ class _BookViewPageState extends State<BookViewPage>
       }
     }
 
-    final entries = <_BookmarkEntry>[];
+    final entries = <BookmarkEntry>[];
 
     for (final progress in allProgress) {
       final bookTitle = progress.bookTitle.isNotEmpty
@@ -481,7 +462,7 @@ class _BookViewPageState extends State<BookViewPage>
       for (final page in progress.bookmarkedPages) {
         final note = progress.notes[page];
         entries.add(
-          _BookmarkEntry(title: bookTitle, subtitle: 'صفحة $page', note: note),
+          BookmarkEntry(title: bookTitle, subtitle: 'صفحة $page', note: note),
         );
       }
     }
@@ -495,7 +476,7 @@ class _BookViewPageState extends State<BookViewPage>
       final notes = sharhNotes[entry.key] ?? <int, String>{};
       for (final page in entry.value) {
         entries.add(
-          _BookmarkEntry(
+          BookmarkEntry(
             title: bookTitle,
             subtitle: '$sharhTitle • صفحة $page',
             note: notes[page],
@@ -509,68 +490,10 @@ class _BookViewPageState extends State<BookViewPage>
     if (!mounted) return;
     if (entries.isEmpty) {
       AppSnackbar.info(context, AppStrings.bookProgressSaved);
-
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.surfaceColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'الإشارات المرجعية',
-              style: AppTextStyles.heading2.copyWith(
-                color: context.textPrimaryColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.separated(
-                itemCount: entries.length,
-                separatorBuilder: (_, _) => const Divider(height: 24),
-                itemBuilder: (context, index) {
-                  final item = entries[index];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: context.textPrimaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.subtitle,
-                        style: AppTextStyles.caption.copyWith(
-                          color: context.textSecondaryColor,
-                        ),
-                      ),
-                      if (item.note != null && item.note!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          item.note!,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: context.textSecondaryColor,
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    BookViewBookmarksSheet.show(context, entries);
   }
 
   @override
@@ -627,184 +550,86 @@ class _BookViewPageState extends State<BookViewPage>
         ),
       ),
       floatingActionButton: _showControls
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'bookmark_fab',
-                  mini: true,
-                  backgroundColor: _isBookmarked
-                      ? context.goldColor
-                      : context.surfaceContainer,
-                  onPressed: _toggleBookmark,
-                  child: Icon(
-                    _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    color: _isBookmarked ? Colors.white : context.goldColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'note_fab',
-                  mini: true,
-                  backgroundColor: context.surfaceContainer,
-                  onPressed: _showNoteDialog,
-                  child: const Icon(Icons.note_add_rounded, color: AppColors.primary),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'bookmarks_fab',
-                  mini: true,
-                  backgroundColor: context.surfaceContainer,
-                  onPressed: _showGlobalBookmarksList,
-                  child: const Icon(Icons.list_alt_rounded, color: AppColors.primary),
-                ),
-              ],
+          ? BookViewControls(
+              isBookmarked: _isBookmarked,
+              onToggleBookmark: _toggleBookmark,
+              onAddNote: _showNoteDialog,
+              onShowBookmarks: _showGlobalBookmarksList,
             )
           : null,
       body: Container(
-        color: context.backgroundColor, // BackgroundMain
+        color: context.backgroundColor,
         child: TabBarView(
           controller: _tabController,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            _mutunPdfPath.isEmpty
-                ? Padding(
-                    padding: AppUi.cardPadding,
-                    child: EmptyState(
-                      icon: Icons.menu_book_outlined,
-                      title: AppStrings.bookMutnEmptyTitle,
-                      subtitle: AppStrings.bookMutnEmptyMessage,
-                      actionLabel: AppStrings.actionBack,
-                      onAction: () => Navigator.pop(context),
-                    ),
-                  )
-                : FutureBuilder<int>(
-                    future: _mutunInitialPage,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+            BookMutnTab(
+              mutunPdfPath: _mutunPdfPath,
+              mutunInitialPage: _mutunInitialPage,
+              mutnPdfKey: _mutnPdfKey,
+              onPageChanged: (page, total) async {
+                if (total <= 0) return;
 
-                      return PdfViewerPage(
-                        key: _mutnPdfKey,
-                        title: AppStrings.bookMutnTitle,
-                        assetPath: _mutunPdfPath,
-                        showAppBar: false,
-                        initialPage: snapshot.data!,
-                        onPageChanged: (page, total) async {
-                          if (total <= 0) return;
+                final safeTotal = total < page ? page : total;
 
-                          final safeTotal = total < page ? page : total;
+                setState(() {
+                  _currentPage = page;
+                  _totalPages = safeTotal;
+                  _isBookmarked = _bookmarkedPages.contains(page);
+                });
 
-                          setState(() {
-                            _currentPage = page;
-                            _totalPages = safeTotal;
-                            _isBookmarked = _bookmarkedPages.contains(page);
-                          });
+                _updateReadingTime();
 
-                          _updateReadingTime();
+                if (page > _maxPageReached) {
+                  _maxPageReached = page;
+                }
 
-                          if (page > _maxPageReached) {
-                            _maxPageReached = page;
-                          }
+                _ensureBookInitialized(totalPages: safeTotal);
 
-                          _ensureBookInitialized(totalPages: safeTotal);
+                _lastActivityService.savePdfPage(
+                  key: _mutunPdfKey,
+                  page: page,
+                  total: safeTotal,
+                );
+                final reachedEnd = page >= safeTotal;
 
-                          _lastActivityService.savePdfPage(
-                            key: _mutunPdfKey,
-                            page: page,
-                            total: safeTotal,
-                          );
-                          _lastActivityService.savePdfPage(
-                            key: _mutunPdfKey,
-                            page: page,
-                            total: safeTotal,
-                          );
-                          final reachedEnd = page >= safeTotal;
+                // hint (only once)
+                if (reachedEnd && !_canCompleteBook && !_hasShownReadHint) {
+                  _hasShownReadHint = true;
 
-                          // hint (only once)
-                          if (reachedEnd &&
-                              !_canCompleteBook &&
-                              !_hasShownReadHint) {
-                            _hasShownReadHint = true;
+                  AppSnackbar.info(
+                    context,
+                    'لإتمام الكتاب، يرجى قراءته بتأنٍ وعدم الاكتفاء بالانتقال السريع بين الصفحات 📖',
+                  );
+                }
 
-                            AppSnackbar.info(
-                              context,
-                              'لإتمام الكتاب، يرجى قراءته بتأنٍ وعدم الاكتفاء بالانتقال السريع بين الصفحات 📖',
-                            );
-                          }
+                // ✅ completion (one-time)
+                if (reachedEnd && _canCompleteBook) {
+                  final justCompleted = await _bookProgressService.markCompleted(
+                    widget.book.id,
+                  );
 
-                          // ✅ completion (one-time)
-                          if (reachedEnd && _canCompleteBook) {
-                            final justCompleted = await _bookProgressService
-                                .markCompleted(widget.book.id);
+                  if (justCompleted && context.mounted) {
+                    HapticFeedback.selectionClick();
+                    AppPopup.show(
+                      context: context,
+                      title: 'اكتمل الكتاب',
+                      message: AppStrings.bookProgressSaved,
+                      icon: Icons.check_circle_rounded,
+                    );
+                  }
+                }
+              },
+            ),
 
-                            if (justCompleted && context.mounted) {
-                              HapticFeedback.selectionClick();
-                              AppPopup.show(
-                                context: context,
-                                title: 'اكتمل الكتاب',
-                                message: AppStrings.bookProgressSaved,
-                                icon: Icons.check_circle_rounded,
-                              );
-                            }
-                          }
-                        },
-                      );
-                    },
-                  ),
-
-            widget.book.shuruh.isEmpty
-                ? Padding(
-                    padding: AppUi.cardPadding,
-                    child: EmptyState(
-                      icon: Icons.menu_book_outlined,
-                      title: AppStrings.bookSharhEmptyTitle,
-                      subtitle: AppStrings.bookSharhEmptyMessage,
-                      actionLabel: AppStrings.bookSharhEmptyAction,
-                      onAction: _goToMutn,
-                    ),
-                  )
-                : Column(
-                    children: [
-                      if (_lastSharh != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppUi.paddingMD,
-                            AppUi.paddingMD,
-                            AppUi.paddingMD,
-                            0,
-                          ),
-                          child: _ContinueSharhCard(
-                            sharh: _lastSharh!,
-                            pageInfo: _lastSharhPage,
-                            onTap: () => _openSharhPdf(_lastSharh!),
-                          ),
-                        ),
-                      if (_lastSharh != null)
-                        const SizedBox(height: AppUi.gapMD),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: AppUi.cardPadding,
-                          itemCount: widget.book.shuruh.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: AppUi.gapMD),
-                          itemBuilder: (context, index) {
-                            final sharh = widget.book.shuruh[index];
-
-                            return SharhCard(
-                              title: sharh.title,
-                              scholar: sharh.scholar,
-                              difficulty: _difficultyLabel(index),
-                              recommended: index == 0,
-                              isLastRead: sharh.file == _lastSharhFile,
-                              onTap: () => _openSharhPdf(sharh),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+            BookSharhTab(
+              shuruh: widget.book.shuruh,
+              lastSharh: _lastSharh,
+              lastSharhPage: _lastSharhPage,
+              lastSharhFile: _lastSharhFile,
+              onGoToMutn: _goToMutn,
+              onOpenSharh: _openSharhPdf,
+            ),
 
             widget.book.playlistId == null
                 ? Padding(
@@ -831,307 +656,8 @@ class _BookViewPageState extends State<BookViewPage>
       ),
     );
   }
-
-  String _difficultyLabel(int index) {
-    if (index == 0) return AppStrings.difficultyBeginner;
-    if (index == 1) return AppStrings.difficultyIntermediate;
-    return AppStrings.difficultyAdvanced;
-  }
 }
 
 extension on Iterable<Sharh> {
   Sharh? firstOrNull() => isEmpty ? null : first;
-}
-
-class _ContinueSharhCard extends StatelessWidget {
-  final Sharh sharh;
-  final PdfPageInfo? pageInfo;
-  final VoidCallback onTap;
-
-  const _ContinueSharhCard({
-    required this.sharh,
-    required this.pageInfo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rawPage = pageInfo?.page;
-    final rawTotal = pageInfo?.total ?? 0;
-    final safeTotal = rawPage != null && rawTotal > 0 && rawTotal < rawPage
-        ? rawPage
-        : (rawTotal > 0 ? rawTotal : null);
-    final safePage = rawPage != null && safeTotal != null
-        ? rawPage.clamp(1, safeTotal)
-        : rawPage;
-    final pageLabel = pageInfo == null
-        ? AppStrings.continueSharh
-        : AppStrings.lastPage(safePage ?? 1, safeTotal);
-
-    return PressableCard(
-      onTap: onTap,
-      padding: AppUi.cardPadding,
-      borderRadius: BorderRadius.circular(AppUi.radiusMD),
-      decoration: BoxDecoration(
-        gradient: AppColors.surfaceElevatedGradient,
-        borderRadius: BorderRadius.circular(AppUi.radiusMD),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.history, color: AppColors.primary),
-          const SizedBox(width: AppUi.gapMD),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sharh.title, style: AppText.heading),
-                const SizedBox(height: AppUi.gapXSPlus),
-                Text(
-                  pageLabel,
-                  style: AppText.caption.copyWith(color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SharhReaderPage extends StatefulWidget {
-  final String bookId;
-  final Sharh sharh;
-  final String pdfPath;
-  final String pdfKey;
-  final int initialPage;
-  final BookProgressService progressService;
-  final LastActivityService lastActivityService;
-
-  const _SharhReaderPage({
-    required this.bookId,
-    required this.sharh,
-    required this.pdfPath,
-    required this.pdfKey,
-    required this.initialPage,
-    required this.progressService,
-    required this.lastActivityService,
-  });
-
-  @override
-  State<_SharhReaderPage> createState() => _SharhReaderPageState();
-}
-
-class _SharhReaderPageState extends State<_SharhReaderPage> {
-  final TextEditingController _noteController = TextEditingController();
-  final Set<int> _bookmarkedPages = <int>{};
-  Map<int, String> _notes = <int, String>{};
-  int _currentPage = 1;
-  bool _isBookmarked = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentPage = widget.initialPage < 1 ? 1 : widget.initialPage;
-    _loadSharhData();
-  }
-
-  Future<void> _loadSharhData() async {
-    final pages = await widget.progressService.getSharhBookmarks(
-      widget.bookId,
-      widget.sharh.file,
-    );
-    final notes = await widget.progressService.getSharhNotes(
-      widget.bookId,
-      widget.sharh.file,
-    );
-    if (!mounted) return;
-    setState(() {
-      _bookmarkedPages
-        ..clear()
-        ..addAll(pages);
-      _notes = notes;
-      _isBookmarked = _bookmarkedPages.contains(_currentPage);
-    });
-  }
-
-  void _handlePageChanged(int page, int total) {
-    if (total <= 0) return;
-    final safeTotal = total < page ? page : total;
-    setState(() {
-      _currentPage = page;
-      _isBookmarked = _bookmarkedPages.contains(page);
-    });
-    widget.lastActivityService.savePdfPage(
-      key: widget.pdfKey,
-      page: page,
-      total: safeTotal,
-    );
-  }
-
-  Future<void> _toggleBookmark() async {
-    if (_bookmarkedPages.contains(_currentPage)) {
-      await widget.progressService.removeSharhBookmark(
-        widget.bookId,
-        widget.sharh.file,
-        _currentPage,
-      );
-    } else {
-      await widget.progressService.addSharhBookmark(
-        widget.bookId,
-        widget.sharh.file,
-        _currentPage,
-      );
-    }
-    await _loadSharhData();
-  }
-
-  void _showNoteDialog() {
-    _noteController.text = _notes[_currentPage] ?? '';
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('إضافة ملاحظة', style: AppTextStyles.heading3),
-        content: TextField(
-          controller: _noteController,
-          decoration: const InputDecoration(
-            hintText: 'اكتب ملاحظتك هنا...',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 5,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await widget.progressService.saveSharhNote(
-                widget.bookId,
-                widget.sharh.file,
-                _currentPage,
-                _noteController.text,
-              );
-              _noteController.clear();
-              if (!context.mounted) return;
-              Navigator.of(context).pop();
-              await _loadSharhData();
-              if (context.mounted) {
-                AppSnackbar.success(context, 'تم حفظ الملاحظة');
-              }
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showBookmarksList() {
-    if (_bookmarkedPages.isEmpty) {
-      AppSnackbar.info(context, 'لا توجد إشارات مرجعية');
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('إشارات الشرح', style: AppTextStyles.heading2),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final pages = _bookmarkedPages.toList()..sort();
-                  return ListView.separated(
-                    itemCount: pages.length,
-                    separatorBuilder: (_, _) => const Divider(height: 24),
-                    itemBuilder: (context, index) {
-                      final page = pages[index];
-                      final note = _notes[page];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('صفحة $page', style: AppTextStyles.bodyMedium),
-                          if (note != null && note.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(note, style: AppTextStyles.bodySmall),
-                          ],
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PdfViewerPage(
-      title: widget.sharh.title,
-      assetPath: widget.pdfPath,
-      initialPage: widget.initialPage,
-      onPageChanged: _handlePageChanged,
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            heroTag: 'sharh_bookmark_fab',
-            mini: true,
-            backgroundColor: _isBookmarked
-                ? AppColors.primary
-                : AppColors.surface,
-            onPressed: _toggleBookmark,
-            child: Icon(
-              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: _isBookmarked ? Colors.white : AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            heroTag: 'sharh_note_fab',
-            mini: true,
-            backgroundColor: AppColors.surface,
-            onPressed: _showNoteDialog,
-            child: const Icon(Icons.note_add, color: AppColors.primary),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            heroTag: 'sharh_bookmarks_fab',
-            mini: true,
-            backgroundColor: AppColors.surface,
-            onPressed: _showBookmarksList,
-            child: const Icon(Icons.list, color: AppColors.primary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookmarkEntry {
-  final String title;
-  final String subtitle;
-  final String? note;
-
-  const _BookmarkEntry({
-    required this.title,
-    required this.subtitle,
-    this.note,
-  });
 }
