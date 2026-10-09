@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_text_styles.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
 
 class BookmarkEntry {
   final String title;
@@ -26,32 +25,61 @@ class BookViewBookmarksSheet extends StatelessWidget {
   static void show(BuildContext context, List<BookmarkEntry> entries) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => BookViewBookmarksSheet(entries: entries),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.md,
+      ),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: palette.surfaceRaised,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'الإشارات المرجعية',
-            style: AppTextStyles.heading2.copyWith(
-              color: context.textPrimaryColor,
+          // Sheet handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: palette.border,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(
+          const SizedBox(height: AppSpace.lg),
+          Text(
+            'الإشارات المرجعية',
+            style: context.text.titleSmall.copyWith(
+              color: palette.text,
+            ),
+          ),
+          const SizedBox(height: AppSpace.lg),
+          Flexible(
             child: ListView.separated(
+              shrinkWrap: true,
               itemCount: entries.length,
-              separatorBuilder: (_, _) => const Divider(height: 24),
+              separatorBuilder: (_, _) => Divider(
+                height: AppSpace.lg,
+                color: palette.border,
+              ),
               itemBuilder: (context, index) {
                 final item = entries[index];
                 return Column(
@@ -59,23 +87,24 @@ class BookViewBookmarksSheet extends StatelessWidget {
                   children: [
                     Text(
                       item.title,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: context.textPrimaryColor,
+                      style: context.text.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: palette.text,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       item.subtitle,
-                      style: AppTextStyles.caption.copyWith(
-                        color: context.textSecondaryColor,
+                      style: context.text.caption.copyWith(
+                        color: palette.textMuted,
                       ),
                     ),
                     if (item.note != null && item.note!.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSpace.xs),
                       Text(
                         item.note!,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: context.textSecondaryColor,
+                        style: context.text.bodySmall.copyWith(
+                          color: palette.textMuted,
                         ),
                       ),
                     ],
@@ -84,6 +113,7 @@ class BookViewBookmarksSheet extends StatelessWidget {
               },
             ),
           ),
+          SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpace.md),
         ],
       ),
     );

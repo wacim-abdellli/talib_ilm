@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_text.dart';
-import '../../../../app/theme/app_ui.dart';
+import '../../../../app/theme/app_palette.dart';
 import '../../../../core/services/last_activity_service.dart';
-import '../../../../shared/widgets/pressable_card.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/icon_badge.dart';
 import '../../data/models/sharh_model.dart';
 
 class ContinueSharhCard extends StatelessWidget {
@@ -34,27 +33,27 @@ class ContinueSharhCard extends StatelessWidget {
         ? AppStrings.continueSharh
         : AppStrings.lastPage(safePage ?? 1, safeTotal);
 
-    return PressableCard(
+    return AppCard(
       onTap: onTap,
-      padding: AppUi.cardPadding,
-      borderRadius: BorderRadius.circular(AppUi.radiusMD),
-      decoration: BoxDecoration(
-        gradient: AppColors.surfaceElevatedGradient,
-        borderRadius: BorderRadius.circular(AppUi.radiusMD),
-      ),
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
-          Icon(Icons.history, color: AppColors.primary),
-          const SizedBox(width: AppUi.gapMD),
+          const IconBadge(icon: Icons.history),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sharh.title, style: AppText.heading),
-                const SizedBox(height: AppUi.gapXSPlus),
+                Text(
+                  sharh.title,
+                  style: context.text.titleSmall,
+                ),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   pageLabel,
-                  style: AppText.caption.copyWith(color: AppColors.textMuted),
+                  style: context.text.caption.copyWith(
+                    color: context.palette.textMuted,
+                  ),
                 ),
               ],
             ),

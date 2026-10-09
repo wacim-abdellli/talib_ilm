@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../core/services/asset_service.dart';
-import '../../../core/utils/responsive.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/shimmer_loading.dart';
 import '../data/models/book_progress_model.dart';
 import '../data/models/mutun_models.dart';
@@ -84,7 +84,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   void _initAnimations() {
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: AppMotion.slow,
       vsync: this,
     )..repeat(reverse: true);
 
@@ -185,7 +185,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
         // Show milestone celebration if triggered
         if (milestone != null && mounted) {
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(AppMotion.base, () {
             if (mounted) {
               MilestoneCelebrationDialog.show(context, milestone);
             }
@@ -280,53 +280,45 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final palette = context.palette;
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: context.backgroundColor,
-        appBar: AppBar(
-          backgroundColor: context.backgroundColor,
-          elevation: 0,
-          leading: null,
-        ),
-        body: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: responsive.safeHorizontalPadding,
-          ),
-          child: ListView(
-            children: [
-              SizedBox(height: responsive.mediumGap),
-              // Continue Learning Shimmer
-              const ShimmerBookCard(),
-              SizedBox(height: responsive.largeGap),
-              // Books Grid Shimmer
-              SizedBox(
-                height: 500,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.65,
+        backgroundColor: palette.bg,
+        body: SafeArea(
+          child: Padding(
+            padding: AppSpace.screenPadding,
+            child: ListView(
+              children: [
+                const SizedBox(height: AppSpace.md),
+                const ShimmerBookCard(),
+                const SizedBox(height: AppSpace.lg),
+                SizedBox(
+                  height: 500,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppSpace.md,
+                      mainAxisSpacing: AppSpace.md,
+                      childAspectRatio: 0.68,
+                    ),
+                    itemCount: 6,
+                    itemBuilder: (context, index) => const ShimmerBookCard(),
                   ),
-                  itemCount: 6,
-                  itemBuilder: (context, index) => const ShimmerBookCard(),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
-    // Get sorted levels for section display
     final sortedLevels = _levelByTab.values.toList()
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
+      backgroundColor: palette.bg,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -345,7 +337,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: responsive.mediumGap),
+                    const SizedBox(height: AppSpace.md),
 
                     // 1. PRIMARY ACTION: CONTINUE LEARNING
                     IlmContinueReadingCard(
@@ -356,7 +348,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                       onNavigateToBook: _navigateToBook,
                     ),
 
-                    SizedBox(height: responsive.mediumGap),
+                    const SizedBox(height: AppSpace.md),
 
                     // 2. DAILY GOAL CARD
                     IlmDailyProgressCard(
@@ -369,28 +361,27 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                       },
                       onStartFresh: () {
                         _scrollController.animateTo(
-                          responsive.hp(40),
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.easeInOut,
+                          200,
+                          duration: AppMotion.slow,
+                          curve: AppMotion.easeIn,
                         );
                       },
                     ),
 
-                    SizedBox(height: responsive.mediumGap),
+                    const SizedBox(height: AppSpace.md),
 
                     // 3. BOOKS BY LEVEL SECTIONS (Main Focus)
                     if (_hasLoadError)
                       Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: responsive.safeHorizontalPadding,
-                          vertical: responsive.largeGap,
-                        ),
-                        child: EmptyState(
+                        padding: AppSpace.screenPadding,
+                        child: AppEmptyState(
                           icon: Icons.error_outline,
                           title: AppStrings.ilmLoadErrorTitle,
                           subtitle: AppStrings.ilmLoadErrorMessage,
-                          actionLabel: AppStrings.actionRetry,
-                          onAction: _loadData,
+                          action: AppButton(
+                            label: AppStrings.actionRetry,
+                            onPressed: _loadData,
+                          ),
                         ),
                       )
                     else
@@ -405,14 +396,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         );
                       }),
 
-                    SizedBox(height: responsive.largeGap),
+                    const SizedBox(height: AppSpace.lg),
 
                     // Motivation Banner (contextual, at bottom)
                     if (_showEncouragement && _dailyEncouragement != null)
                       Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: responsive.safeHorizontalPadding,
-                        ),
+                        padding: AppSpace.screenPadding,
                         child: Column(
                           children: [
                             EncouragementBanner(
@@ -423,7 +412,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                                 });
                               },
                             ),
-                            SizedBox(height: responsive.mediumGap),
+                            const SizedBox(height: AppSpace.md),
                           ],
                         ),
                       ),

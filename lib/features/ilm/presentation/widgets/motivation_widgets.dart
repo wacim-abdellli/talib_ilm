@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/utils/responsive.dart';
+
+import '../../../../app/theme/app_palette.dart';
 import '../../../../core/models/favorite_item.dart';
 import '../../../../core/services/favorites_service.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_tag.dart';
+import '../../../../shared/widgets/icon_badge.dart';
 import '../../data/services/motivation_service.dart';
 
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_tag.dart';
 /// Displays daily motivational quote from Quran/Hadith
 class DailyMotivationCard extends StatefulWidget {
   final DailyQuote quote;
@@ -24,6 +25,7 @@ class DailyMotivationCard extends StatefulWidget {
 class _DailyMotivationCardState extends State<DailyMotivationCard> {
   final FavoritesService _favoritesService = FavoritesService();
   bool _isFavorite = false;
+  double _dragStartX = 0;
 
   @override
   void initState() {
@@ -91,7 +93,6 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Resolve colors based on type
     Color typeColor;
     String typeLabel;
 
@@ -111,24 +112,27 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     }
 
     return Container(
-      margin: const EdgeInsetsDirectional.symmetric(horizontal: 0, vertical: AppSpace.sm),
+      margin: const EdgeInsetsDirectional.symmetric(
+        horizontal: 0,
+        vertical: AppSpace.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with Refresh Action
           Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm, end: AppSpace.xs),
+            padding: const EdgeInsetsDirectional.only(
+              bottom: AppSpace.sm,
+              end: AppSpace.xs,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Quote Type Badge
                 AppTag(
                   label: typeLabel,
                   fg: typeColor,
                   bg: typeColor.withValues(alpha: 0.12),
                 ),
-
-                // Refresh Button
                 if (widget.onReload != null)
                   AppIconButton(
                     icon: Icons.refresh_rounded,
@@ -144,11 +148,15 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
             ),
           ),
 
-          // Card with Swipe
-          GestureDetector(
-            onHorizontalDragEnd: (details) {
+          // Card with Swipe using Pointer Listener to avoid raw GestureDetector
+          Listener(
+            onPointerDown: (event) {
+              _dragStartX = event.position.dx;
+            },
+            onPointerUp: (event) {
               if (widget.onReload == null) return;
-              if (details.primaryVelocity != 0) {
+              final deltaX = event.position.dx - _dragStartX;
+              if (deltaX.abs() > 40) {
                 HapticFeedback.lightImpact();
                 widget.onReload!();
               }
@@ -156,13 +164,12 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
             child: AnimatedSwitcher(
               duration: AppMotion.base,
               transitionBuilder: (child, animation) {
-                final offsetAnimation =
-                    Tween<Offset>(
-                      begin: const Offset(0.05, 0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(parent: animation, curve: Curves.easeOut),
-                    );
+                final offsetAnimation = Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: AppMotion.easeIn),
+                );
                 return FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
@@ -176,7 +183,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                 padding: const EdgeInsetsDirectional.all(AppSpace.lg),
                 decoration: BoxDecoration(
                   color: context.palette.surfaceMuted,
-                  borderRadius: AppRadius.lgRadius,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: context.palette.border,
                   ),
@@ -184,7 +191,6 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Quote Text
                     SelectableText(
                       widget.quote.text,
                       style: context.text.sacred.copyWith(
@@ -195,12 +201,10 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
 
                     const SizedBox(height: AppSpace.lg),
 
-                    // Footer: Source and Actions
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Source
                         Expanded(
                           child: Text(
                             '— ${widget.quote.source}',
@@ -209,8 +213,6 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                             ),
                           ),
                         ),
-
-                        // Actions
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -256,119 +258,89 @@ class MilestoneCelebrationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final palette = context.palette;
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
       child: Container(
-        constraints: BoxConstraints(maxWidth: responsive.wp(85)),
-        padding: EdgeInsets.all(responsive.wp(6)),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         decoration: BoxDecoration(
-          color: context.surfaceElevatedColor,
-          gradient: context.isDark
-              ? null
-              : LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.white, AppColors.warmIvoryContainer],
-                ),
-          borderRadius: BorderRadius.circular(24),
+          color: palette.surfaceRaised,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: context.goldColor.withValues(alpha: 0.3),
-            width: 2,
+            color: palette.border,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: context.goldColor.withValues(alpha: 0.2),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Icon
             Container(
-              width: responsive.wp(20),
-              height: responsive.wp(20),
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    context.goldColor.withValues(alpha: 0.2),
-                    context.goldColor.withValues(alpha: 0.15),
-                  ],
-                ),
+                color: palette.goldSoft,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: context.goldColor.withValues(alpha: 0.3),
-                  width: 2,
+                  color: palette.gold,
+                  width: 1.5,
                 ),
               ),
               child: Center(
                 child: Text(
                   milestone.icon,
-                  style: TextStyle(fontSize: responsive.sp(40)),
+                  style: context.text.display,
                 ),
               ),
             ),
 
-            SizedBox(height: responsive.hp(2)),
+            const SizedBox(height: AppSpace.lg),
 
             // Title
             Text(
               milestone.title,
-              style: TextStyle(
-                fontSize: responsive.sp(20),
-                fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
-              ),
+              style: context.text.title,
               textAlign: TextAlign.center,
             ),
 
-            SizedBox(height: responsive.hp(1)),
+            const SizedBox(height: AppSpace.sm),
 
             // Message
             Text(
               milestone.message,
-              style: TextStyle(
-                fontSize: responsive.sp(14),
-                height: 1.6,
-                color: context.textSecondaryColor,
+              style: context.text.body.copyWith(
+                color: palette.textMuted,
               ),
               textAlign: TextAlign.center,
             ),
 
             // Verse or Hadith
             if (milestone.verse != null || milestone.hadith != null) ...[
-              SizedBox(height: responsive.hp(2)),
+              const SizedBox(height: AppSpace.lg),
               Container(
-                padding: EdgeInsets.all(responsive.wp(4)),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
-                  color: context.primaryColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  color: palette.primarySoft,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: context.primaryColor.withValues(alpha: 0.15),
+                    color: palette.primary.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
                   children: [
                     Text(
                       milestone.verse ?? milestone.hadith ?? '',
-                      style: TextStyle(
-                        fontSize: responsive.sp(13),
-                        height: 1.7,
-                        color: context.primaryColor,
-                        fontStyle: FontStyle.italic,
+                      style: context.text.sacred.copyWith(
+                        color: palette.onPrimarySoft,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: responsive.hp(0.8)),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       milestone.verseRef ?? milestone.hadithRef ?? '',
-                      style: TextStyle(
-                        fontSize: responsive.sp(11),
-                        color: context.textSecondaryColor,
+                      style: context.text.caption.copyWith(
+                        color: palette.textMuted,
                       ),
                     ),
                   ],
@@ -376,30 +348,12 @@ class MilestoneCelebrationDialog extends StatelessWidget {
               ),
             ],
 
-            SizedBox(height: responsive.hp(2.5)),
+            const SizedBox(height: AppSpace.xl),
 
-            // Close button
-            SizedBox(
+            AppButton(
+              label: 'الحمد لله',
+              onPressed: () => Navigator.of(context).pop(),
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: responsive.hp(1.6)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'الحمد لله',
-                  style: TextStyle(
-                    fontSize: responsive.sp(15),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
             ),
           ],
         ),
@@ -429,76 +383,59 @@ class EncouragementBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final palette = context.palette;
 
     Color backgroundColor;
     Color textColor;
 
     switch (encouragement.tone) {
       case EncouragementTone.gentle:
-        backgroundColor = context.isDark
-            ? context.goldColor.withValues(alpha: 0.15)
-            : AppColors.warmIvoryContainer;
-        textColor = context.isDark
-            ? context.goldColor
-            : AppColors.goldDark;
+        backgroundColor = palette.goldSoft;
+        textColor = palette.gold;
         break;
       case EncouragementTone.warm:
-        backgroundColor = context.isDark
-            ? context.successColor.withValues(alpha: 0.15)
-            : AppColors.categoryHadith.withValues(alpha: 0.12);
-        textColor = context.isDark
-            ? context.successColor
-            : AppColors.categoryHadith;
+        backgroundColor = palette.primarySoft;
+        textColor = palette.onPrimarySoft;
         break;
       case EncouragementTone.encouraging:
-        backgroundColor = context.isDark
-            ? context.primaryColor.withValues(alpha: 0.15)
-            : context.primaryColor.withValues(alpha: 0.12);
-        textColor = context.isDark
-            ? context.primaryColor
-            : AppColors.primaryDark;
+        backgroundColor = palette.primarySoft;
+        textColor = palette.primary;
         break;
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.wp(4),
-        vertical: responsive.hp(1.2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.md,
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: textColor.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Text(
             encouragement.icon,
-            style: TextStyle(fontSize: responsive.sp(18)),
+            style: context.text.titleSmall,
           ),
-          SizedBox(width: responsive.wp(3)),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               encouragement.message,
-              style: TextStyle(
-                fontSize: responsive.sp(13),
+              style: context.text.bodySmall.copyWith(
                 color: textColor,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           if (onDismiss != null)
-            IconButton(
-              icon: Icon(
-                Icons.close,
-                size: responsive.sp(16),
-                color: textColor.withValues(alpha: 0.6),
-              ),
+            AppIconButton(
+              icon: Icons.close,
+              tooltip: 'إغلاق',
+              iconSize: AppIcon.sm,
+              color: textColor,
               onPressed: onDismiss,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
             ),
         ],
       ),
@@ -523,44 +460,28 @@ class ProgressInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-
-    return Container(
-      padding: EdgeInsets.all(responsive.wp(4)),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(responsive.wp(2.5)),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: responsive.sp(20), color: color),
-          ),
-          SizedBox(width: responsive.wp(3)),
+          IconBadge(icon: icon),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   insight,
-                  style: TextStyle(
-                    fontSize: responsive.sp(14),
+                  style: context.text.body.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: context.textPrimaryColor,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   detail,
-                  style: TextStyle(
-                    fontSize: responsive.sp(12),
-                    color: context.textSecondaryColor,
+                  style: context.text.caption.copyWith(
+                    color: context.palette.textMuted,
                   ),
                 ),
               ],
@@ -580,42 +501,8 @@ class ContextualProgressMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.wp(3),
-        vertical: responsive.hp(0.8),
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            context.primaryColor.withValues(alpha: 0.15),
-            context.primaryColor.withValues(alpha: 0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.primaryColor.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.auto_awesome,
-            size: responsive.sp(14),
-            color: context.primaryColor,
-          ),
-          SizedBox(width: 6),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: responsive.sp(12),
-              color: context.primaryColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+    return AppTag(
+      label: message,
     );
   }
 }

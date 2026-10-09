@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../core/utils/responsive.dart';
+import '../../../../app/theme/app_palette.dart';
 
 class IlmHeader extends StatelessWidget {
   final String dailyMicrocopy;
@@ -13,19 +12,19 @@ class IlmHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final palette = context.palette;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.safeHorizontalPadding,
-        vertical: responsive.hp(2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.xl,
+        vertical: AppSpace.lg,
       ),
       decoration: BoxDecoration(
-        color: context.surfaceColor,
+        color: palette.surface,
         border: Border(
           bottom: BorderSide(
-            color: context.outlineVariantColor,
+            color: palette.border,
             width: 1,
           ),
         ),
@@ -35,19 +34,13 @@ class IlmHeader extends StatelessWidget {
         children: [
           Text(
             'رحلتك العلمية',
-            style: TextStyle(
-              fontSize: responsive.sp(26),
-              fontWeight: FontWeight.w700,
-              color: context.textPrimaryColor,
-            ),
+            style: context.text.title,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             dailyMicrocopy,
-            style: TextStyle(
-              fontSize: responsive.sp(14),
-              color: context.textSecondaryColor,
-              fontStyle: FontStyle.italic,
+            style: context.text.bodySmall.copyWith(
+              color: palette.textMuted,
             ),
           ),
         ],

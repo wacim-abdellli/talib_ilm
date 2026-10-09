@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_text_styles.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 class BookViewControls extends StatelessWidget {
   final bool isBookmarked;
@@ -20,36 +19,49 @@ class BookViewControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         FloatingActionButton(
           heroTag: 'bookmark_fab',
           mini: true,
-          backgroundColor: isBookmarked
-              ? context.goldColor
-              : context.surfaceContainer,
+          elevation: 2,
+          backgroundColor:
+              isBookmarked ? palette.goldFill : palette.surfaceRaised,
           onPressed: onToggleBookmark,
           child: Icon(
             isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-            color: isBookmarked ? Colors.white : context.goldColor,
+            color: isBookmarked ? palette.onGold : palette.gold,
+            size: AppIcon.md,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         FloatingActionButton(
           heroTag: 'note_fab',
           mini: true,
-          backgroundColor: context.surfaceContainer,
+          elevation: 2,
+          backgroundColor: palette.surfaceRaised,
           onPressed: onAddNote,
-          child: const Icon(Icons.note_add_rounded, color: AppColors.primary),
+          child: Icon(
+            Icons.note_add_rounded,
+            color: palette.primary,
+            size: AppIcon.md,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         FloatingActionButton(
           heroTag: 'bookmarks_fab',
           mini: true,
-          backgroundColor: context.surfaceContainer,
+          elevation: 2,
+          backgroundColor: palette.surfaceRaised,
           onPressed: onShowBookmarks,
-          child: const Icon(Icons.list_alt_rounded, color: AppColors.primary),
+          child: Icon(
+            Icons.list_alt_rounded,
+            color: palette.primary,
+            size: AppIcon.md,
+          ),
         ),
       ],
     );
@@ -82,24 +94,30 @@ class BookNoteDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return AlertDialog(
-      title: Text('إضافة ملاحظة', style: AppTextStyles.heading3),
+      backgroundColor: palette.surfaceRaised,
+      title: Text('إضافة ملاحظة', style: context.text.titleSmall),
       content: TextField(
         controller: controller,
-        decoration: const InputDecoration(
+        style: context.text.body,
+        decoration: InputDecoration(
           hintText: 'اكتب ملاحظتك هنا...',
-          border: OutlineInputBorder(),
+          hintStyle: context.text.bodySmall.copyWith(color: palette.textMuted),
         ),
         maxLines: 5,
       ),
       actions: [
-        TextButton(
+        AppButton.text(
+          label: 'إلغاء',
           onPressed: () => Navigator.pop(context),
-          child: const Text('إلغاء'),
+          size: AppButtonSize.sm,
         ),
-        ElevatedButton(
+        AppButton(
+          label: 'حفظ',
           onPressed: onSave,
-          child: const Text('حفظ'),
+          size: AppButtonSize.sm,
         ),
       ],
     );

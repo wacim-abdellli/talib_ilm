@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../app/theme/app_ui.dart';
+
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/icon_badge.dart';
 
 class SharhCard extends StatelessWidget {
   final String title;
@@ -10,8 +11,6 @@ class SharhCard extends StatelessWidget {
   final VoidCallback? onLongPress;
   final int? totalPages;
   final int? currentPage;
-
-  // Visual cues from previous implementation (mapped to new design)
   final bool recommended;
   final bool isLastRead;
   final String? difficulty;
@@ -31,13 +30,8 @@ class SharhCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Height: 120
-    // BorderRadius: 16 (AppUi.radiusLG usually 16 or similar, or hardcoded)
-    const double height = 120;
-    const double radiusValue = 16;
-    final borderRadius = BorderRadius.circular(radiusValue);
+    final palette = context.palette;
 
-    // Determine subtitle text: Prefer explicit pages, fallback to scholar/difficulty
     String subtitleText;
     if (totalPages != null && totalPages! > 0) {
       subtitleText = '$totalPages صفحة';
@@ -46,7 +40,6 @@ class SharhCard extends StatelessWidget {
       if (difficulty != null) subtitleText += ' • $difficulty';
     }
 
-    // Determine progress text
     String? progressText;
     if (currentPage != null && currentPage! > 0) {
       progressText = 'وصلت إلى صفحة $currentPage';
@@ -54,133 +47,73 @@ class SharhCard extends StatelessWidget {
       progressText = 'آخر قراءة';
     }
 
-    return Container(
-      height: height,
-      margin: const EdgeInsets.only(
-        bottom: AppUi.gapMD,
-      ), // Use external margin if needed, or parent handles it
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            borderRadius: borderRadius,
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: context.goldColor.withValues(alpha: 0.8),
-                    width: 3,
-                  ),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: AppUi.paddingMD),
-              child: Row(
-                children: [
-                  // 1. Scholar icon circle
-                  _ScholarIcon(),
-
-                  const SizedBox(width: AppUi.gapMD),
-
-                  // 2. Middle column
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textPrimaryColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        // Subtitle
-                        Text(
-                          subtitleText,
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 13,
-                            color: context.textSecondaryColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (progressText != null) ...[
-                          const SizedBox(height: 4),
-                          // Progress
-                          Text(
-                            progressText,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
-                              color: context.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
+    return AppCard(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Row(
+        children: [
+          const IconBadge(icon: Icons.person_outline),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: context.text.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    if (isLastRead) ...[
+                      const SizedBox(width: AppSpace.xs),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: palette.gold,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  subtitleText,
+                  style: context.text.bodySmall.copyWith(
+                    color: palette.textMuted,
                   ),
-
-                  const SizedBox(width: AppUi.gapSM),
-
-                  // 3. Trailing arrow
-                  Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 15,
-                    color: context.textTertiaryColor,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (progressText != null) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    progressText,
+                    style: context.text.caption.copyWith(
+                      color: palette.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
+              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ScholarIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: const BoxDecoration(
-        gradient: AppColors.primaryGradient, // Gradient Teal
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.person_outline, // Scholar icon
-        color: Colors.white,
-        size: 24,
+          const SizedBox(width: AppSpace.sm),
+          Icon(
+            Icons.chevron_left_rounded,
+            size: AppIcon.md,
+            color: palette.textSubtle,
+          ),
+        ],
       ),
     );
   }

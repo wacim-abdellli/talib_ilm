@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
+
+import '../../../../app/theme/app_palette.dart';
+import '../../../../core/models/favorite_item.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_progress.dart';
+import '../../../../shared/widgets/app_tag.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/progress_models.dart';
-import '../../../../shared/widgets/pressable_card.dart';
-import '../../../../core/services/favorites_service.dart';
-import '../../../../core/models/favorite_item.dart';
 
 class BookCard extends StatefulWidget {
   final IlmBook book;
@@ -26,7 +28,6 @@ class BookCard extends StatefulWidget {
 class _BookCardState extends State<BookCard> {
   final FavoritesService _favoritesService = FavoritesService();
   bool _isFavorite = false;
-  bool _isHovered = false;
 
   @override
   void initState() {
@@ -44,20 +45,9 @@ class _BookCardState extends State<BookCard> {
     }
   }
 
-  Color _getCategoryColor(String category) {
-    if (category.contains('عقيدة')) return AppColors.categoryAqidah;
-    if (category.contains('فقه')) return AppColors.categoryFiqh;
-    if (category.contains('حديث')) return AppColors.categoryHadith;
-    if (category.contains('لغة')) return AppColors.categoryLanguage;
-    if (category.contains('قرآن')) return AppColors.categoryQuran;
-    if (category.contains('سيرة')) return AppColors.categorySeerah;
-    return AppColors.primary;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categoryColor = _getCategoryColor(widget.book.subject);
+    final palette = context.palette;
 
     // Calculate progress
     double percent = 0;
@@ -80,186 +70,107 @@ class _BookCardState extends State<BookCard> {
 
     final percentText = '${(percent * 100).round()}%';
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        scale: _isHovered ? 1.02 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: PressableCard(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(20),
-          padding: EdgeInsets.zero,
-          decoration: BoxDecoration(
-            color: context.surfaceContainer,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: categoryColor.withValues(alpha: isDark ? 0.28 : 0.18),
-              width: 1,
+    return AppCard(
+      onTap: widget.onTap,
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header Row with Category Badge & Bookmark
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: AppTag(
+                  label: widget.book.subject,
+                  subject: widget.book.subject,
+                ),
+              ),
+              if (_isFavorite)
+                Icon(
+                  Icons.bookmark_rounded,
+                  color: palette.gold,
+                  size: AppIcon.md,
+                ),
+            ],
+          ),
+
+          const SizedBox(height: AppSpace.md),
+
+          // Title
+          Text(
+            widget.book.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.text.titleSmall,
+          ),
+
+          const SizedBox(height: AppSpace.xs),
+
+          // Subtitle / Author
+          Text(
+            widget.book.author,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.text.bodySmall.copyWith(
+              color: palette.textMuted,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.25)
-                    : Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
+          ),
+
+          if (remainingLessons > 0) ...[
+            const SizedBox(height: AppSpace.sm),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpace.sm,
+              runSpacing: AppSpace.xs,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      size: AppIcon.sm,
+                      color: palette.textSubtle,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Text(
+                      timeText,
+                      style: context.text.caption.copyWith(
+                        color: palette.textSubtle,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '$remainingLessons دروس متبقية',
+                  style: context.text.caption.copyWith(
+                    color: palette.textSubtle,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: AppSpace.md),
+
+          // Progress Section
+          Row(
+            children: [
+              Expanded(
+                child: AppProgress(progress: percent),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Text(
+                percentText,
+                style: context.text.label.copyWith(
+                  color: palette.text,
+                ),
               ),
             ],
           ),
-          child: SizedBox(
-            height: 180,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Row with Category Badge
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: categoryColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          widget.book.subject,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: categoryColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      if (_isFavorite)
-                        const Icon(
-                          Icons.bookmark_rounded,
-                          color: AppColors.gold,
-                          size: 20,
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Title
-                  Text(
-                    widget.book.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                      color: context.textPrimaryColor,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // Subtitle
-                  Text(
-                    widget.book.author,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 13,
-                      color: context.textSecondaryColor,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Smart Progress Labels
-                  if (remainingLessons > 0)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 14,
-                          color: context.textTertiaryColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          timeText,
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 12,
-                            color: context.textTertiaryColor,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '$remainingLessons دروس متبقية',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 12,
-                            color: context.textTertiaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const Spacer(),
-
-                  // Progress Section - accent only here
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: context.outlineVariantColor.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(3),
-                            child: TweenAnimationBuilder<double>(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOut,
-                              tween: Tween<double>(begin: 0, end: percent),
-                              builder: (context, value, _) {
-                                return LinearProgressIndicator(
-                                  value: value,
-                                  backgroundColor: Colors.transparent,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    categoryColor, // Neon in Dark
-                                  ),
-                                  minHeight: 6,
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        percentText,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: categoryColor, // Neon in Dark
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }

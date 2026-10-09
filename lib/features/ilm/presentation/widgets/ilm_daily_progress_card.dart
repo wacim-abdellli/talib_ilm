@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../core/utils/responsive.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/icon_badge.dart';
 
 class IlmDailyProgressCard extends StatelessWidget {
   final int dailyGoal;
@@ -23,13 +24,13 @@ class IlmDailyProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final palette = context.palette;
 
     // Fresh Start Intervention
     if (lastReadDate != null && pagesReadToday == 0) {
       final daysLapsed = DateTime.now().difference(lastReadDate!).inDays;
       if (daysLapsed >= 3) {
-        return _buildWelcomeBackCard(context, responsive);
+        return _buildWelcomeBackCard(context);
       }
     }
 
@@ -39,165 +40,95 @@ class IlmDailyProgressCard extends StatelessWidget {
     final isCompleted = pagesReadToday >= dailyGoal;
     final hasStarted = pagesReadToday > 0;
 
-    // Dynamic subtitle based on progress
     String dynamicSubtitle;
     if (isCompleted) {
-      dynamicSubtitle = 'أنجزت اليوم ✨';
+      dynamicSubtitle = 'أنجزت ورد اليوم بفضل الله ✨';
     } else if (hasStarted) {
-      dynamicSubtitle = 'قاربنا الهدف 🔥';
+      dynamicSubtitle = 'قاربت على إتمام الورد اليومي 🔥';
     } else {
-      dynamicSubtitle = 'بداية جميلة 🌱';
+      dynamicSubtitle = 'بداية طيبة لطلب العلم 🌱';
     }
 
-    // Warm gold/amber accent colors
-    const goldAccent = Color(0xFFD4A853);
-    const goldLight = Color(0xFFFFF8E7);
-    const goldGlow = Color(0xFFE8C252);
-    const completedColor = Color(0xFF6A9A9A);
-    const completedLight = Color(0xFFF5FAFA);
-
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.safeHorizontalPadding,
-      ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: EdgeInsets.all(responsive.wp(4)),
-        decoration: BoxDecoration(
-          color: isCompleted
-              ? (context.isDark ? AppColors.darkSuccessLight : completedLight)
-              : (context.isDark ? AppColors.darkGoldLight : goldLight),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isCompleted
-                ? completedColor.withValues(alpha: 0.3)
-                : goldAccent.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isCompleted
-                  ? completedColor.withValues(alpha: 0.1)
-                  : goldAccent.withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
+      padding: AppSpace.screenPadding,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.lg),
+        child: Row(
           children: [
-            Row(
-              children: [
-                // Animated Circular Progress with warm glow
-                SizedBox(
-                  width: responsive.wp(16),
-                  height: responsive.wp(16),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Soft glow behind
-                      Container(
-                        width: responsive.wp(14),
-                        height: responsive.wp(14),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: isCompleted
-                                  ? completedColor.withValues(alpha: 0.2)
-                                  : goldGlow.withValues(alpha: 0.25),
-                              blurRadius: 16,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
+            // Circular progress indicator
+            SizedBox(
+              width: 56,
+              height: 56,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 5,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: palette.border,
+                      valueColor: AlwaysStoppedAnimation(
+                        isCompleted ? palette.success : palette.primary,
                       ),
-                      // Animated progress ring
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: progress),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return SizedBox(
-                            width: responsive.wp(14),
-                            height: responsive.wp(14),
-                            child: CircularProgressIndicator(
-                              value: value,
-                              strokeWidth: 6,
-                              strokeCap: StrokeCap.round,
-                              backgroundColor: isCompleted
-                                  ? completedColor.withValues(alpha: 0.2)
-                                  : goldAccent.withValues(alpha: 0.2),
-                              valueColor: AlwaysStoppedAnimation(
-                                isCompleted ? completedColor : goldAccent,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // Center icon/number
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$pagesReadToday',
-                            style: TextStyle(
-                              fontSize: responsive.sp(18),
-                              fontWeight: FontWeight.w800,
-                              color: isCompleted ? completedColor : goldAccent,
-                            ),
-                          ),
-                          Text(
-                            '/ $dailyGoal',
-                            style: TextStyle(
-                              fontSize: responsive.sp(10),
-                              color: context.textSecondaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-
-                SizedBox(width: responsive.wp(3)),
-
-                // Goal Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'الورد اليومي',
-                        style: TextStyle(
-                          fontSize: responsive.sp(16),
-                          fontWeight: FontWeight.w700,
-                          color: context.textPrimaryColor,
+                        '$pagesReadToday',
+                        style: context.text.label.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: isCompleted ? palette.success : palette.text,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
-                        dynamicSubtitle,
-                        style: TextStyle(
-                          fontSize: responsive.sp(13),
-                          fontWeight: FontWeight.w500,
-                          color: isCompleted ? completedColor : goldAccent,
+                        '/$dailyGoal',
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
+              ),
+            ),
 
-                // Settings icon
-                IconButton(
-                  onPressed: () => _showGoalSetter(context),
-                  icon: Icon(
-                    Icons.tune_rounded,
-                    size: responsive.sp(20),
-                    color: const Color(0xFF9A9A9A),
+            const SizedBox(width: AppSpace.lg),
+
+            // Goal Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'الورد اليومي',
+                    style: context.text.titleSmall,
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    dynamicSubtitle,
+                    style: context.text.bodySmall.copyWith(
+                      color: isCompleted ? palette.success : palette.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            // Settings button
+            AppIconButton(
+              icon: Icons.tune_rounded,
+              tooltip: 'تعديل الهدف اليومي',
+              iconSize: AppIcon.md,
+              color: palette.textSubtle,
+              onPressed: () => _showGoalSetter(context),
             ),
           ],
         ),
@@ -205,69 +136,35 @@ class IlmDailyProgressCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeBackCard(BuildContext context, Responsive responsive) {
+  Widget _buildWelcomeBackCard(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: responsive.safeHorizontalPadding,
-      ),
-      child: Container(
-        padding: EdgeInsets.all(responsive.wp(5)),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: context.isDark
-                ? [AppColors.darkSurface, AppColors.darkSurfaceSecondary]
-                : [const Color(0xFFFFFBF5), const Color(0xFFFFF4E0)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: context.goldColor.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: context.goldColor.withValues(alpha: 0.1),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      padding: AppSpace.screenPadding,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.xl),
         child: Column(
           children: [
-            Icon(
-              Icons.spa_outlined,
-              size: responsive.wp(10),
-              color: context.goldColor,
-            ),
-            SizedBox(height: responsive.mediumGap),
+            const IconBadge(icon: Icons.spa_outlined),
+            const SizedBox(height: AppSpace.md),
             Text(
               AppStrings.welcomeBackTitle,
-              style: TextStyle(
-                fontSize: responsive.sp(18),
-                fontWeight: FontWeight.bold,
-                color: context.textPrimaryColor,
-              ),
+              style: context.text.titleSmall,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
-            SizedBox(height: responsive.smallGap),
+            const SizedBox(height: AppSpace.xs),
             Text(
               AppStrings.welcomeBackMessage,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: responsive.sp(14),
-                color: context.textSecondaryColor,
+              style: context.text.bodySmall.copyWith(
+                color: context.palette.textMuted,
               ),
               overflow: TextOverflow.ellipsis,
               maxLines: 3,
             ),
-            SizedBox(height: responsive.mediumGap),
-            ElevatedButton(
+            const SizedBox(height: AppSpace.lg),
+            AppButton(
+              label: AppStrings.startFreshButton,
               onPressed: onStartFresh,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.goldColor,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(AppStrings.startFreshButton),
             ),
           ],
         ),
@@ -276,90 +173,96 @@ class IlmDailyProgressCard extends StatelessWidget {
   }
 
   void _showGoalSetter(BuildContext context) {
+    final palette = context.palette;
     int localGoal = dailyGoal;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Color(0xFFFBFAF8),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.xl,
+            vertical: AppSpace.lg,
+          ),
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'تعديل الهدف اليومي',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF3A3A3A),
+              // Sheet handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: palette.border,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'كم صفحة تخطط لقراءتها يومياً؟',
-                style: TextStyle(color: Color(0xFF6E6E6E)),
+              const SizedBox(height: AppSpace.lg),
+              Text(
+                'تعديل الهدف اليومي',
+                style: context.text.titleSmall,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                'كم صفحة تخطط لقراءتها يومياً؟',
+                style: context.text.bodySmall.copyWith(
+                  color: palette.textMuted,
+                ),
+              ),
+              const SizedBox(height: AppSpace.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
+                  AppIconButton(
+                    icon: Icons.remove_circle_outline,
+                    tooltip: 'إنقاص',
+                    iconSize: AppIcon.xl,
+                    color: palette.primary,
                     onPressed: () {
                       if (localGoal > 1) {
                         setModalState(() => localGoal--);
                       }
                     },
-                    icon: const Icon(Icons.remove_circle_outline),
-                    color: AppColors.primary,
                   ),
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.xl,
+                    ),
                     child: Text(
                       '$localGoal',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF3A3A3A),
-                      ),
+                      style: context.text.display,
                     ),
                   ),
-                  IconButton(
+                  AppIconButton(
+                    icon: Icons.add_circle_outline,
+                    tooltip: 'زيادة',
+                    iconSize: AppIcon.xl,
+                    color: palette.primary,
                     onPressed: () => setModalState(() => localGoal++),
-                    icon: const Icon(Icons.add_circle_outline),
-                    color: AppColors.primary,
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-              SizedBox(
+              const SizedBox(height: AppSpace.xxl),
+              AppButton(
+                label: 'حفظ التغييرات',
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await onGoalChanged(localGoal);
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'حفظ التغييرات',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                onPressed: () async {
+                  await onGoalChanged(localGoal);
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                },
               ),
-              const SizedBox(height: 16),
+              SizedBox(
+                height: MediaQuery.paddingOf(context).bottom + AppSpace.md,
+              ),
             ],
           ),
         ),

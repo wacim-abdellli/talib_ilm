@@ -127,4 +127,24 @@
   - Raw GestureDetector: 10 → 10 (0)
 - **Open Issues:** None.
 
+---
+
+### Phase 4.3 — Ilm Screen
+- **Status:** Complete
+- **Changes:** Split files > 600 lines (`ilm_page.dart` 1813 lines, `book_view_page.dart` 1137 lines) into dedicated subwidgets in commit 1 (`ilm_header.dart`, `ilm_continue_reading_card.dart`, `ilm_daily_progress_card.dart`, `ilm_level_section.dart`, `ilm_enhanced_book_card.dart`, `sharh_reader_page.dart`, `book_mutn_tab.dart`, `book_sharh_tab.dart`, `book_view_bookmarks_sheet.dart`, `book_view_controls.dart`, `continue_sharh_card.dart`). In commit 2, restyled all 17 presentation files to Calm Scholar tokens. Completely removed private palette (beige `#F5F3F0`, teal `#5A8A8A`, gold `#D4A853`, dark gray `#1F1F1F`) and unified category colors through `palette.category()`. Replaced custom cards with `AppCard`, custom tags with `AppTag`, progress bars with `AppProgress`, buttons with `AppButton`/`AppIconButton`. Handled text scale 1.5 overflow resilience in `BookCard` via `Wrap`. Added and verified 8 golden tests in `test/golden/ilm_golden_test.dart` (all passed and visually inspected). Lint violations in all Ilm files reached **0**.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 65 → 19 (-46)
+  - Raw fontSize: <n>: 118 → 101 (-17)
+  - Raw fontFamily: '...': 114 → 99 (-15)
+  - Raw BorderRadius.circular(<n>): 108 → 75 (-33)
+  - Raw EdgeInsets with numbers: 89 → 67 (-22)
+  - Text smaller than 12: 21 → 18 (-3)
+  - Colors.white/black: 94 → 63 (-31)
+  - isDark ? ... : ...: 72 → 63 (-9)
+  - Magic bottom spacer: 0 → 0 (0)
+  - Hand-written BoxShadow: 37 → 22 (-15)
+  - Raw GestureDetector: 10 → 6 (-4)
+- **Open Issues:** None.
+
+
 

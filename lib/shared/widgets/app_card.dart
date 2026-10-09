@@ -5,6 +5,7 @@ import '../../app/theme/app_palette.dart';
 class AppCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final EdgeInsetsGeometry padding;
   final Color? color;
   final Border? border;
@@ -15,6 +16,7 @@ class AppCard extends StatefulWidget {
     super.key,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.padding = const EdgeInsets.all(AppSpace.lg),
     this.color,
     this.border,
@@ -53,7 +55,7 @@ class _AppCardState extends State<AppCard> {
     final r = widget.borderRadius ?? AppRadius.lgRadius;
     final effectiveBorder = widget.border ?? Border.all(color: palette.border, width: 1);
     final effectiveColor = widget.color ?? palette.surface;
-    final isTappable = widget.onTap != null;
+    final isTappable = widget.onTap != null || widget.onLongPress != null;
 
     final card = Container(
       decoration: BoxDecoration(
@@ -70,12 +72,22 @@ class _AppCardState extends State<AppCard> {
                 onTapDown: _onTapDown,
                 onTapUp: _onTapUp,
                 onTapCancel: _onTapCancel,
-                onTap: () {
-                  if (widget.enableFeedback) {
-                    HapticFeedback.lightImpact();
-                  }
-                  widget.onTap!();
-                },
+                onTap: widget.onTap != null
+                    ? () {
+                        if (widget.enableFeedback) {
+                          HapticFeedback.lightImpact();
+                        }
+                        widget.onTap!();
+                      }
+                    : null,
+                onLongPress: widget.onLongPress != null
+                    ? () {
+                        if (widget.enableFeedback) {
+                          HapticFeedback.mediumImpact();
+                        }
+                        widget.onLongPress!();
+                      }
+                    : null,
                 child: Padding(
                   padding: widget.padding,
                   child: widget.child,

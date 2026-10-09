@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_ui.dart';
+import '../../../../app/theme/app_palette.dart';
 import '../../../../core/services/last_activity_service.dart';
-import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_states.dart';
 import '../../data/models/sharh_model.dart';
 import 'continue_sharh_card.dart';
 import 'sharh_card.dart';
@@ -35,14 +36,18 @@ class BookSharhTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (shuruh.isEmpty) {
-      return Padding(
-        padding: AppUi.cardPadding,
-        child: EmptyState(
-          icon: Icons.menu_book_outlined,
-          title: AppStrings.bookSharhEmptyTitle,
-          subtitle: AppStrings.bookSharhEmptyMessage,
-          actionLabel: AppStrings.bookSharhEmptyAction,
-          onAction: onGoToMutn,
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpace.xl),
+          child: AppEmptyState(
+            icon: Icons.menu_book_outlined,
+            title: AppStrings.bookSharhEmptyTitle,
+            subtitle: AppStrings.bookSharhEmptyMessage,
+            action: AppButton(
+              label: AppStrings.bookSharhEmptyAction,
+              onPressed: onGoToMutn,
+            ),
+          ),
         ),
       );
     }
@@ -52,9 +57,9 @@ class BookSharhTab extends StatelessWidget {
         if (lastSharh != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppUi.paddingMD,
-              AppUi.paddingMD,
-              AppUi.paddingMD,
+              AppSpace.xl,
+              AppSpace.lg,
+              AppSpace.xl,
               0,
             ),
             child: ContinueSharhCard(
@@ -63,13 +68,13 @@ class BookSharhTab extends StatelessWidget {
               onTap: () => onOpenSharh(lastSharh!),
             ),
           ),
-        if (lastSharh != null) const SizedBox(height: AppUi.gapMD),
+        if (lastSharh != null) const SizedBox(height: AppSpace.md),
         Expanded(
           child: ListView.separated(
-            padding: AppUi.cardPadding,
+            padding: const EdgeInsets.all(AppSpace.xl),
             itemCount: shuruh.length,
             separatorBuilder: (context, index) =>
-                const SizedBox(height: AppUi.gapMD),
+                const SizedBox(height: AppSpace.md),
             itemBuilder: (context, index) {
               final sharh = shuruh[index];
 

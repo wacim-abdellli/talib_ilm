@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_ui.dart';
-import '../../../../shared/widgets/empty_state.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_states.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
 
 class BookMutnTab extends StatelessWidget {
@@ -22,14 +23,18 @@ class BookMutnTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mutunPdfPath.isEmpty) {
-      return Padding(
-        padding: AppUi.cardPadding,
-        child: EmptyState(
-          icon: Icons.menu_book_outlined,
-          title: AppStrings.bookMutnEmptyTitle,
-          subtitle: AppStrings.bookMutnEmptyMessage,
-          actionLabel: AppStrings.actionBack,
-          onAction: () => Navigator.pop(context),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpace.xl),
+          child: AppEmptyState(
+            icon: Icons.menu_book_outlined,
+            title: AppStrings.bookMutnEmptyTitle,
+            subtitle: AppStrings.bookMutnEmptyMessage,
+            action: AppButton(
+              label: AppStrings.actionBack,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
         ),
       );
     }
@@ -38,7 +43,11 @@ class BookMutnTab extends StatelessWidget {
       future: mutunInitialPage,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: context.palette.primary,
+            ),
+          );
         }
 
         return PdfViewerPage(

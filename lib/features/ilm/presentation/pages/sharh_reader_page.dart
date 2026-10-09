@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_text_styles.dart';
+import '../../../../app/theme/app_palette.dart';
 import '../../../../core/services/last_activity_service.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../data/models/sharh_model.dart';
 import '../../data/services/book_progress_service.dart';
+import '../widgets/book_view_bookmarks_sheet.dart';
 
 class SharhReaderPage extends StatefulWidget {
   final String bookId;
@@ -98,24 +99,30 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
 
   void _showNoteDialog() {
     _noteController.text = _notes[_currentPage] ?? '';
+    final palette = context.palette;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('إضافة ملاحظة', style: AppTextStyles.heading3),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: palette.surfaceRaised,
+        title: Text('إضافة ملاحظة', style: context.text.titleSmall),
         content: TextField(
           controller: _noteController,
-          decoration: const InputDecoration(
+          style: context.text.body,
+          decoration: InputDecoration(
             hintText: 'اكتب ملاحظتك هنا...',
-            border: OutlineInputBorder(),
+            hintStyle: context.text.bodySmall.copyWith(color: palette.textMuted),
           ),
           maxLines: 5,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+          AppButton.text(
+            label: 'إلغاء',
+            onPressed: () => Navigator.pop(dialogContext),
+            size: AppButtonSize.sm,
           ),
-          ElevatedButton(
+          AppButton(
+            label: 'حفظ',
             onPressed: () async {
               await widget.progressService.saveSharhNote(
                 widget.bookId,
@@ -124,14 +131,15 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
                 _noteController.text,
               );
               _noteController.clear();
-              if (!context.mounted) return;
-              Navigator.of(context).pop();
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
               await _loadSharhData();
-              if (context.mounted) {
+              if (mounted) {
                 AppSnackbar.success(context, 'تم حفظ الملاحظة');
               }
             },
-            child: const Text('حفظ'),
+            size: AppButtonSize.sm,
           ),
         ],
       ),
@@ -144,44 +152,18 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('إشارات الشرح', style: AppTextStyles.heading2),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final pages = _bookmarkedPages.toList()..sort();
-                  return ListView.separated(
-                    itemCount: pages.length,
-                    separatorBuilder: (_, _) => const Divider(height: 24),
-                    itemBuilder: (context, index) {
-                      final page = pages[index];
-                      final note = _notes[page];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('صفحة $page', style: AppTextStyles.bodyMedium),
-                          if (note != null && note.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(note, style: AppTextStyles.bodySmall),
-                          ],
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    final pages = _bookmarkedPages.toList()..sort();
+    final entries = pages
+        .map(
+          (p) => BookmarkEntry(
+            title: widget.sharh.title,
+            subtitle: 'صفحة $p',
+            note: _notes[p],
+          ),
+        )
+        .toList();
+
+    BookViewBookmarksSheet.show(context, entries);
   }
 
   @override
@@ -192,6 +174,8 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return PdfViewerPage(
       title: widget.sharh.title,
       assetPath: widget.pdfPath,
@@ -203,30 +187,41 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
           FloatingActionButton(
             heroTag: 'sharh_bookmark_fab',
             mini: true,
-            backgroundColor: _isBookmarked
-                ? AppColors.primary
-                : AppColors.surface,
+            elevation: 2,
+            backgroundColor:
+                _isBookmarked ? palette.goldFill : palette.surfaceRaised,
             onPressed: _toggleBookmark,
             child: Icon(
               _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: _isBookmarked ? Colors.white : AppColors.primary,
+              color: _isBookmarked ? palette.onGold : palette.gold,
+              size: AppIcon.md,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           FloatingActionButton(
             heroTag: 'sharh_note_fab',
             mini: true,
-            backgroundColor: AppColors.surface,
+            elevation: 2,
+            backgroundColor: palette.surfaceRaised,
             onPressed: _showNoteDialog,
-            child: const Icon(Icons.note_add, color: AppColors.primary),
+            child: Icon(
+              Icons.note_add,
+              color: palette.primary,
+              size: AppIcon.md,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           FloatingActionButton(
             heroTag: 'sharh_bookmarks_fab',
             mini: true,
-            backgroundColor: AppColors.surface,
+            elevation: 2,
+            backgroundColor: palette.surfaceRaised,
             onPressed: _showBookmarksList,
-            child: const Icon(Icons.list, color: AppColors.primary),
+            child: Icon(
+              Icons.list,
+              color: palette.primary,
+              size: AppIcon.md,
+            ),
           ),
         ],
       ),

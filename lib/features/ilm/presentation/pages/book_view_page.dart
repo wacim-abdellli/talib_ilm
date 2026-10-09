@@ -510,37 +510,31 @@ class _BookViewPageState extends State<BookViewPage>
             onPressed: _toggleFavorite,
             icon: Icon(
               _isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-              color: _isFavorite ? context.goldColor : context.textPrimaryColor,
+              color: _isFavorite ? context.palette.gold : context.palette.text,
             ),
           ),
           IconButton(
             tooltip: AppStrings.bookResetProgress,
             onPressed: _resetProgress,
-            icon: Icon(Icons.refresh_rounded, color: context.textPrimaryColor),
+            icon: Icon(Icons.refresh_rounded, color: context.palette.text),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
-            color: context.primaryColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(AppUi.radiusSMPlus),
+            color: context.palette.primarySoft,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          labelColor: context.primaryColor,
-          unselectedLabelColor: context.textSecondaryColor,
-          labelStyle: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 14,
+          labelColor: context.palette.onPrimarySoft,
+          unselectedLabelColor: context.palette.textMuted,
+          labelStyle: context.text.label,
+          unselectedLabelStyle: context.text.label.copyWith(
             fontWeight: FontWeight.w500,
           ),
           indicatorPadding: const EdgeInsets.symmetric(
-            horizontal: AppUi.gapMD,
-            vertical: AppUi.gapXSPlus,
+            horizontal: AppSpace.md,
+            vertical: AppSpace.xs,
           ),
           tabs: const [
             Tab(text: AppStrings.bookMutnTab),
