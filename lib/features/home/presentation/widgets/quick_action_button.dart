@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../app/theme/theme_colors.dart';
 
-/// QuickActionButton - Luxury Spiritual Bento Action Tile
+/// QuickActionButton - Luxury Spiritual Bento Action Tile with Radiant Jewel Badges
 class QuickActionButton extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -58,44 +58,54 @@ class _QuickActionButtonState extends State<QuickActionButton> {
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
                 color: effectiveAccent.withValues(
-                  alpha: isDark ? (_isHovered ? 0.45 : 0.22) : (_isHovered ? 0.4 : 0.16),
+                  alpha: isDark ? (_isHovered ? 0.45 : 0.2) : (_isHovered ? 0.4 : 0.15),
                 ),
-                width: _isHovered ? 1.5 : 1.1,
+                width: _isHovered ? 1.5 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: effectiveAccent.withValues(
-                    alpha: isDark ? 0.15 : 0.08,
-                  ),
-                  blurRadius: _isHovered ? 14 : 8,
-                  offset: const Offset(0, 3),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : effectiveAccent.withValues(alpha: 0.08),
+                  blurRadius: _isHovered ? 16 : 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Ornate Medallion Icon
+                // Radiant Jewel Medallion Icon
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: effectiveAccent.withValues(
-                      alpha: isDark ? 0.2 : 0.12,
+                    gradient: LinearGradient(
+                      colors: [
+                        effectiveAccent,
+                        Color.lerp(effectiveAccent, Colors.black, isDark ? 0.22 : 0.14) ?? effectiveAccent,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     border: Border.all(
-                      color: effectiveAccent.withValues(alpha: 0.35),
+                      color: Colors.white.withValues(alpha: isDark ? 0.3 : 0.4),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: effectiveAccent.withValues(alpha: 0.15),
-                        blurRadius: 10,
+                        color: effectiveAccent.withValues(alpha: isDark ? 0.45 : 0.3),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Icon(widget.icon, size: 24, color: effectiveAccent),
+                  child: Icon(
+                    widget.icon,
+                    size: 25,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Padding(

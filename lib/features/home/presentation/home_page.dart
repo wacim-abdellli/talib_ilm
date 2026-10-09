@@ -488,8 +488,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                     height: 24,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(2),
-                                      color: context.textTertiaryColor
-                                          .withValues(alpha: 0.5),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          context.primaryColor,
+                                          context.goldColor,
+                                        ],
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: context.primaryColor.withValues(alpha: 0.5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -547,8 +559,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                     height: 24,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(2),
-                                      color: context.textTertiaryColor
-                                          .withValues(alpha: 0.5),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          context.primaryColor,
+                                          context.goldColor,
+                                        ],
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: context.primaryColor.withValues(alpha: 0.5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -577,7 +601,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.menu_book_rounded,
                                       label: 'القرآن',
                                       onTap: () => _openQuran(context),
-                                      accentColor: AppColors.gold,
+                                      accentColor: AppColors.jewelQuran,
                                     ),
                                   ),
 
@@ -589,7 +613,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.auto_stories_rounded,
                                       label: 'العلم',
                                       onTap: () => _openIlm(context),
-                                      accentColor: AppColors.primary,
+                                      accentColor: AppColors.jewelIlm,
                                     ),
                                   ),
 
@@ -601,19 +625,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       icon: Icons.spa_rounded,
                                       label: 'الأذكار',
                                       onTap: () => _openAdhkar(context),
-                                      accentColor: AppColors.categoryHadith,
+                                      accentColor: AppColors.jewelAdhkar,
                                     ),
                                   ),
 
                                   const SizedBox(width: 10),
 
-                                  // 4. Qibla (Lapis Slate)
+                                  // 4. Qibla (Azure)
                                   Expanded(
                                     child: QuickActionButton(
                                       icon: Icons.explore_rounded,
                                       label: 'القبلة',
                                       onTap: () => _openQibla(context),
-                                      accentColor: AppColors.categoryLanguage,
+                                      accentColor: AppColors.jewelQibla,
                                     ),
                                   ),
                                 ],
@@ -861,49 +885,65 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: context.surfaceContainer,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: context.goldColor.withValues(alpha: isDark ? 0.18 : 0.22),
-            width: 1,
+            color: isDark
+                ? AppColors.gold.withValues(alpha: 0.22)
+                : AppColors.gold.withValues(alpha: 0.25),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(
-                alpha: isDark ? 0.25 : 0.05,
+                alpha: isDark ? 0.35 : 0.06,
               ),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              blurRadius: 18,
+              offset: const Offset(0, 5),
             ),
+            if (isDark)
+              BoxShadow(
+                color: AppColors.jewelIlm.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 2),
+              ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Icon + Title
+            // Header: Radiant Jewel Medallion + Title + Arrow
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        context.primaryColor.withValues(alpha: 0.2),
-                        context.goldColor.withValues(alpha: 0.12),
+                        AppColors.jewelIlm,
+                        Color.lerp(AppColors.jewelIlm, Colors.black, isDark ? 0.3 : 0.15)!,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: context.goldColor.withValues(alpha: 0.25),
-                      width: 1,
+                      color: Colors.white.withValues(alpha: isDark ? 0.35 : 0.4),
+                      width: 1.2,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.jewelIlm.withValues(alpha: isDark ? 0.4 : 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     hasData ? Icons.menu_book_rounded : Icons.school_rounded,
-                    size: 22,
-                    color: context.goldColor,
+                    size: 24,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -915,7 +955,7 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                         hasData ? 'متابعة التعلّم' : 'ابدأ رحلة طلب العلم',
                         style: TextStyle(
                           fontSize: 12,
-                          color: context.goldColor,
+                          color: isDark ? AppColors.divineGold : AppColors.goldDark,
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.w700,
                         ),
@@ -924,8 +964,8 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                       Text(
                         hasData ? data!.book.title : 'استكشف المتون العلمية وشروحها',
                         style: TextStyle(
-                          fontSize: 15,
-                          color: context.textPrimaryColor,
+                          fontSize: 16,
+                          color: isDark ? const Color(0xFFF8FAFC) : context.textPrimaryColor,
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.w700,
                           height: 1.3,
@@ -937,15 +977,19 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: context.surfaceElevatedColor,
+                    color: isDark ? const Color(0xFF1A242F) : context.surfaceSecondaryColor,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+                      width: 1,
+                    ),
                   ),
                   child: Icon(
                     Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: context.textSecondaryColor,
+                    size: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : context.textSecondaryColor,
                   ),
                 ),
               ],
@@ -953,7 +997,7 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
 
             const SizedBox(height: 16),
 
-            // Progress Section
+            // Progress Section or Discovery Roadmap
             if (hasData)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -965,7 +1009,7 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                         '${data!.progressPercent}% مكتمل',
                         style: TextStyle(
                           fontSize: 12,
-                          color: context.textSecondaryColor,
+                          color: isDark ? const Color(0xFFCBD5E1) : context.textSecondaryColor,
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.w600,
                         ),
@@ -987,14 +1031,14 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                     child: Stack(
                       children: [
                         Container(
-                          height: 6,
+                          height: 7,
                           width: double.infinity,
-                          color: context.surfaceElevatedColor,
+                          color: isDark ? const Color(0xFF0D141C) : context.surfaceElevatedColor,
                         ),
                         FractionallySizedBox(
                           widthFactor: progress,
                           child: Container(
-                            height: 6,
+                            height: 7,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -1010,9 +1054,138 @@ class _LearningPulseCardState extends State<_LearningPulseCard> {
                     ),
                   ),
                 ],
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Curriculum Roadmap Tags
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _buildMilestonePill(
+                        context: context,
+                        label: 'المستوى الأول',
+                        icon: Icons.stars_rounded,
+                        color: AppColors.jewelQuran,
+                        isDark: isDark,
+                      ),
+                      _buildMilestonePill(
+                        context: context,
+                        label: 'التأسيس والتأصيل',
+                        icon: Icons.bookmark_added_rounded,
+                        color: AppColors.jewelIlm,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Discovery CTA Strip
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0D141C)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: context.primaryColor.withValues(alpha: isDark ? 0.2 : 0.15),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.explore_outlined,
+                          size: 18,
+                          color: context.primaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'الأصول الثلاثة • القواعد الأربع • كتاب التوحيد',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFFCBD5E1) : context.textSecondaryColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                context.primaryColor,
+                                Color.lerp(context.primaryColor, Colors.black, 0.2)!,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.primaryColor.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'ابدأ الآن',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMilestonePill({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.35 : 0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : color,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -13,28 +13,28 @@ class AppTheme {
       fontFamily: 'Cairo',
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary, // Blue Gray 700 #455A64
+        primary: AppColors.primary,
         onPrimary: Colors.white,
-        primaryContainer: AppColors.blueGray100, // #CFD8DC
-        onPrimaryContainer: AppColors.blueGray900, // #263238
+        primaryContainer: AppColors.primaryContainerLight,
+        onPrimaryContainer: AppColors.primaryDark,
 
-        secondary: AppColors.accent, // Gold #C59533
+        secondary: AppColors.accent,
         onSecondary: Colors.white,
         secondaryContainer: AppColors.goldLight,
-        onSecondaryContainer: Color(0xFF5C4106),
+        onSecondaryContainer: Color(0xFF78350F),
 
-        // M3 Surface Ladder (Blue Gray 50 Canvas & Pure White Cards)
-        surface: AppColors.background, // 0xFFECEFF1
-        surfaceContainerLowest: Color(0xFFE2E7EA),
-        surfaceContainerLow: Color(0xFFEAEFF1),
-        surfaceContainer: Colors.white, // Crisp pure white cards
+        // M3 Surface Ladder (Crisp Snow & Pure White)
+        surface: AppColors.background, // #F8FAFC
+        surfaceContainerLowest: Color(0xFFF1F5F9),
+        surfaceContainerLow: Color(0xFFF8FAFC),
+        surfaceContainer: Colors.white,
         surfaceContainerHigh: Colors.white,
         surfaceContainerHighest: Colors.white,
-        onSurface: AppColors.textPrimary, // #263238
-        onSurfaceVariant: AppColors.textSecondary, // #546E7A
+        onSurface: AppColors.textPrimary, // #0F172A
+        onSurfaceVariant: AppColors.textSecondary, // #475569
 
-        outline: AppColors.blueGray200, // #B0BEC5
-        outlineVariant: AppColors.blueGray100, // #CFD8DC
+        outline: AppColors.border, // #E2E8F0
+        outlineVariant: Color(0xFFEDF2F7),
 
         error: AppColors.error,
         onError: Colors.white,
@@ -79,7 +79,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: AppColors.blueGray100, width: 1),
+          side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
       dialogTheme: const DialogThemeData(
@@ -106,29 +106,29 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.darkPrimary, // 0xFF90A4AE (Blue Gray 300)
-        onPrimary: Color(0xFF1B2327),
-        primaryContainer: AppColors.blueGray800, // 0xFF37474F
-        onPrimaryContainer: AppColors.blueGray50, // 0xFFECEFF1
+        primary: AppColors.darkPrimary, // #10B981 (Luminous Medina Emerald)
+        onPrimary: Color(0xFF022C22),
+        primaryContainer: AppColors.darkPrimaryContainer,
+        onPrimaryContainer: AppColors.darkPrimary,
 
-        secondary: AppColors.darkGold, // 0xFFE5B95C
-        onSecondary: Color(0xFF281C06),
+        secondary: AppColors.darkGold, // #FBBF24 (Andalusian Gold)
+        onSecondary: Color(0xFF451A03),
         secondaryContainer: AppColors.darkGoldLight,
         onSecondaryContainer: AppColors.goldHighlight,
 
-        // M3 Surface Ladder (Deep Blue Gray Midnight)
-        surface: AppColors.darkBackground, // 0xFF1B2327
-        surfaceContainerLowest: Color(0xFF151C20),
-        surfaceContainerLow: Color(0xFF1F282D),
-        surfaceContainer: AppColors.blueGray900, // 0xFF263238
-        surfaceContainerHigh: Color(0xFF2E3C43),
-        surfaceContainerHighest: AppColors.blueGray800, // 0xFF37474F
+        // M3 Surface Ladder (Deep Midnight Obsidian & Layered Surfaces)
+        surface: AppColors.darkBackground, // #0A0E13
+        surfaceContainerLowest: Color(0xFF06090D),
+        surfaceContainerLow: Color(0xFF0E1318),
+        surfaceContainer: AppColors.darkSurfaceSecondary, // #12181F
+        surfaceContainerHigh: AppColors.darkSurfaceElevated, // #1A232C
+        surfaceContainerHighest: Color(0xFF222E3A),
 
-        onSurface: AppColors.darkTextPrimary, // 0xFFECEFF1
-        onSurfaceVariant: AppColors.darkTextSecondary, // 0xFFB0BEC5
+        onSurface: AppColors.darkTextPrimary, // #F8FAFC
+        onSurfaceVariant: AppColors.darkTextSecondary, // #94A3B8
 
-        outline: AppColors.blueGray600, // 0xFF546E7A
-        outlineVariant: AppColors.blueGray800, // 0xFF37474F
+        outline: AppColors.darkBorder, // #22303C
+        outlineVariant: Color(0xFF1C2731),
 
         error: AppColors.error,
         onError: Colors.white,
@@ -176,14 +176,14 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.darkTextSecondary),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.blueGray900,
+        backgroundColor: AppColors.darkSurfaceSecondary,
         selectedItemColor: AppColors.darkPrimary,
         unselectedItemColor: AppColors.darkTextTertiary,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkPrimary,
-          foregroundColor: const Color(0xFF1B2327),
+          foregroundColor: const Color(0xFF022C22),
           textStyle: AppTextStyles.button,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -193,22 +193,22 @@ class AppTheme {
         ),
       ),
       cardTheme: const CardThemeData(
-        color: AppColors.blueGray900,
+        color: AppColors.darkSurfaceSecondary,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(18)),
-          side: BorderSide(color: AppColors.blueGray800, width: 1),
+          side: BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
       dialogTheme: const DialogThemeData(
-        backgroundColor: AppColors.blueGray800,
+        backgroundColor: AppColors.darkSurfaceElevated,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(22)),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.blueGray900,
+        backgroundColor: AppColors.darkSurfaceSecondary,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -216,7 +216,7 @@ class AppTheme {
       ),
       iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.blueGray800,
+        backgroundColor: AppColors.darkSurfaceElevated,
         contentTextStyle: TextStyle(
           fontFamily: 'Cairo',
           color: AppColors.darkTextPrimary,

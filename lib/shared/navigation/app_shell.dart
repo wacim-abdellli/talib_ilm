@@ -76,19 +76,19 @@ class _AppShellState extends State<AppShell> {
             height: 68,
             decoration: BoxDecoration(
               color: isDark
-                  ? context.surfaceContainerHigh.withValues(alpha: 0.96)
+                  ? const Color(0xFF10171F).withValues(alpha: 0.95)
                   : Colors.white.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isDark
-                    ? context.primaryColor.withValues(alpha: 0.25)
+                    ? const Color(0xFF22303C)
                     : context.outlineVariantColor,
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
-                  blurRadius: 20,
+                  color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.08),
+                  blurRadius: 24,
                   offset: const Offset(0, 8),
                   spreadRadius: -2,
                 ),
@@ -145,7 +145,8 @@ class _AppShellState extends State<AppShell> {
     final isDark = context.isDark;
 
     final Color activeColor = context.primaryColor;
-    final Color inactiveColor = context.textTertiaryColor;
+    final Color inactiveColor =
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Expanded(
       child: GestureDetector(
@@ -171,14 +172,20 @@ class _AppShellState extends State<AppShell> {
                   gradient: isActive
                       ? LinearGradient(
                           colors: [
-                            activeColor.withValues(alpha: isDark ? 0.28 : 0.16),
-                            activeColor.withValues(alpha: isDark ? 0.14 : 0.08),
+                            activeColor.withValues(alpha: isDark ? 0.25 : 0.16),
+                            activeColor.withValues(alpha: isDark ? 0.12 : 0.08),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         )
                       : null,
                   borderRadius: BorderRadius.circular(16),
+                  border: isActive
+                      ? Border.all(
+                          color: activeColor.withValues(alpha: isDark ? 0.35 : 0.25),
+                          width: 1,
+                        )
+                      : null,
                 ),
                 child: Icon(
                   isActive ? activeIcon : inactiveIcon,

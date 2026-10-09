@@ -82,31 +82,31 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final isVeryNear = _timeLeft.inMinutes < 15;
-    // Spiritual Serenity gradients
+    // Spiritual Serenity celestial gradients
     final gradient = isDark
-        ? LinearGradient(
+        ? const LinearGradient(
             colors: [
-              context.surfaceContainerHigh,
-              context.surfaceContainer,
+              Color(0xFF16202A),
+              Color(0xFF0F171F),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
-        : LinearGradient(
+        : const LinearGradient(
             colors: [
               Colors.white,
-              context.surfaceContainerLow,
+              Color(0xFFF1F5F9),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );
     final borderColor = isVeryNear
-        ? AppColors.gold.withValues(alpha: 0.8)
+        ? AppColors.gold.withValues(alpha: 0.85)
         : (isDark
-            ? AppColors.gold.withValues(alpha: 0.25)
+            ? AppColors.gold.withValues(alpha: 0.3)
             : context.outlineVariantColor);
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.4)
+        ? Colors.black.withValues(alpha: 0.5)
         : AppColors.primaryDark.withValues(alpha: 0.08);
     // Time formatting
     final hours = _timeLeft.inHours.toString().padLeft(2, '0');
@@ -145,9 +145,16 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 boxShadow: [
                   BoxShadow(
                     color: shadowColor,
-                    blurRadius: isVeryNear ? 20 : 14,
-                    offset: const Offset(0, 5),
+                    blurRadius: isVeryNear ? 24 : 16,
+                    offset: const Offset(0, 6),
                   ),
+                  if (isDark)
+                    BoxShadow(
+                      color: (isVeryNear ? AppColors.gold : AppColors.darkPrimary)
+                          .withValues(alpha: isVeryNear ? 0.2 : 0.08),
+                      blurRadius: 32,
+                      offset: const Offset(0, 4),
+                    ),
                 ],
               ),
               child: Padding(
@@ -206,30 +213,41 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                           ),
                         ),
 
-                        // Sacred Mosque Medallion
+                        // Sacred Mosque Medallion - Radiant Gold Halo
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.gold.withValues(
-                              alpha: isDark ? 0.18 : 0.12,
+                            gradient: LinearGradient(
+                              colors: isDark
+                                  ? [
+                                      AppColors.gold.withValues(alpha: 0.35),
+                                      AppColors.goldDark.withValues(alpha: 0.15),
+                                    ]
+                                  : [
+                                      AppColors.goldLight,
+                                      AppColors.gold.withValues(alpha: 0.2),
+                                    ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                             border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.4),
-                              width: 1.2,
+                              color: AppColors.gold.withValues(alpha: isDark ? 0.6 : 0.4),
+                              width: 1.4,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.gold.withValues(alpha: 0.15),
-                                blurRadius: 8,
+                                color: AppColors.gold.withValues(alpha: isDark ? 0.3 : 0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.mosque_rounded,
-                            size: 22,
-                            color: AppColors.gold,
+                            size: 23,
+                            color: isDark ? AppColors.divineGold : AppColors.goldDark,
                           ),
                         ),
                       ],
@@ -352,11 +370,13 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? context.surfaceContainerLow
+                            ? const Color(0xFF0D131A)
                             : context.surfaceLow,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: context.outlineColor.withValues(alpha: isDark ? 0.18 : 0.1),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : context.outlineColor.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Row(
@@ -388,15 +408,28 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         : '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: isCurrent
           ? BoxDecoration(
-              color: AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.4),
-                width: 1,
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.2),
+                  AppColors.goldDark.withValues(alpha: isDark ? 0.18 : 0.1),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.gold.withValues(alpha: 0.65),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.gold.withValues(alpha: isDark ? 0.3 : 0.12),
+                  blurRadius: 10,
+                ),
+              ],
             )
           : null,
       child: Column(
@@ -404,10 +437,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         children: [
           Icon(
             icon,
-            size: 15,
+            size: 16,
             color: isCurrent
-                ? context.goldColor
-                : context.textTertiaryColor,
+                ? AppColors.divineGold
+                : (isDark ? const Color(0xFF94A3B8) : context.textTertiaryColor),
           ),
           const SizedBox(height: 3),
           Text(
@@ -415,10 +448,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
             style: TextStyle(
               fontSize: 11,
               fontFamily: 'Cairo',
-              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
+              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
               color: isCurrent
-                  ? (isDark ? Colors.white : context.goldColor)
-                  : context.textSecondaryColor,
+                  ? (isDark ? Colors.white : AppColors.goldDark)
+                  : (isDark ? const Color(0xFFCBD5E1) : context.textSecondaryColor),
             ),
           ),
           if (timeStr.isNotEmpty) ...[
@@ -428,10 +461,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
               style: TextStyle(
                 fontSize: 9,
                 fontFamily: 'Cairo',
-                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                 color: isCurrent
-                    ? context.goldColor
-                    : context.textTertiaryColor,
+                    ? (isDark ? AppColors.goldHighlight : AppColors.goldDark)
+                    : (isDark ? const Color(0xFF64748B) : context.textTertiaryColor),
               ),
             ),
           ],
@@ -484,35 +517,45 @@ class _TimeDigitBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(
             color: isDark
-                ? context.surfaceContainerLow
-                : context.surfaceLow,
-            borderRadius: BorderRadius.circular(8),
+                ? const Color(0xFF16212D)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: context.outlineVariantColor,
+              color: isDark
+                  ? AppColors.gold.withValues(alpha: 0.25)
+                  : context.outlineVariantColor,
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
               fontFamily: 'Cairo',
-              color: context.textPrimaryColor,
+              color: isDark ? const Color(0xFFF8FAFC) : context.textPrimaryColor,
               height: 1.1,
             ),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TextStyle(
             fontSize: 10,
             fontFamily: 'Cairo',
-            color: context.textTertiaryColor,
+            fontWeight: FontWeight.w600,
+            color: isDark ? const Color(0xFF94A3B8) : context.textTertiaryColor,
           ),
         ),
       ],
