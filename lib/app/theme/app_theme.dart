@@ -13,28 +13,28 @@ class AppTheme {
       fontFamily: 'Cairo',
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
+        primary: AppColors.primary, // Blue Gray 700 #455A64
         onPrimary: Colors.white,
-        primaryContainer: AppColors.primaryContainerLight,
-        onPrimaryContainer: AppColors.primaryDark,
+        primaryContainer: AppColors.blueGray100, // #CFD8DC
+        onPrimaryContainer: AppColors.blueGray900, // #263238
 
-        secondary: AppColors.accent,
+        secondary: AppColors.accent, // Gold #C59533
         onSecondary: Colors.white,
         secondaryContainer: AppColors.goldLight,
         onSecondaryContainer: Color(0xFF5C4106),
 
-        // M3 Surface Ladder (Warm Medina Ivory & Pure Alabaster)
-        surface: AppColors.background, // 0xFFFAF8F5 (Warm ivory canvas)
-        surfaceContainerLowest: Color(0xFFF3EFE8), // Recessed areas
-        surfaceContainerLow: Color(0xFFF7F4EE),
-        surfaceContainer: Color(0xFFFFFFFF), // Crisp pure white cards
-        surfaceContainerHigh: Color(0xFFFFFFFF),
-        surfaceContainerHighest: Color(0xFFFFFFFF),
-        onSurface: AppColors.textPrimary,
-        onSurfaceVariant: AppColors.textSecondary,
+        // M3 Surface Ladder (Blue Gray 50 Canvas & Pure White Cards)
+        surface: AppColors.background, // 0xFFECEFF1
+        surfaceContainerLowest: Color(0xFFE2E7EA),
+        surfaceContainerLow: Color(0xFFEAEFF1),
+        surfaceContainer: Colors.white, // Crisp pure white cards
+        surfaceContainerHigh: Colors.white,
+        surfaceContainerHighest: Colors.white,
+        onSurface: AppColors.textPrimary, // #263238
+        onSurfaceVariant: AppColors.textSecondary, // #546E7A
 
-        outline: AppColors.border,
-        outlineVariant: Color(0xFFE8E2D6),
+        outline: AppColors.blueGray200, // #B0BEC5
+        outlineVariant: AppColors.blueGray100, // #CFD8DC
 
         error: AppColors.error,
         onError: Colors.white,
@@ -79,7 +79,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0xFFE8E2D6), width: 1),
+          side: const BorderSide(color: AppColors.blueGray100, width: 1),
         ),
       ),
       dialogTheme: const DialogThemeData(
@@ -98,6 +98,7 @@ class AppTheme {
       ),
     );
   }
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -105,29 +106,29 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.darkPrimary, // 0xFF4DB6AC (Luminous Seafoam Teal)
-        onPrimary: Color(0xFF072424),
-        primaryContainer: AppColors.darkPrimaryContainer,
-        onPrimaryContainer: AppColors.darkPrimary,
+        primary: AppColors.darkPrimary, // 0xFF90A4AE (Blue Gray 300)
+        onPrimary: Color(0xFF1B2327),
+        primaryContainer: AppColors.blueGray800, // 0xFF37474F
+        onPrimaryContainer: AppColors.blueGray50, // 0xFFECEFF1
 
-        secondary: AppColors.darkGold, // 0xFFE5B95C (Celestial Gold)
+        secondary: AppColors.darkGold, // 0xFFE5B95C
         onSecondary: Color(0xFF281C06),
         secondaryContainer: AppColors.darkGoldLight,
         onSecondaryContainer: AppColors.goldHighlight,
 
-        // M3 Surface Ladder (Twilight Sanctuary Midnight Slate-Teal)
-        surface: AppColors.darkBackground, // 0xFF0F1717
-        surfaceContainerLowest: Color(0xFF0A1010),
-        surfaceContainerLow: Color(0xFF121B1B),
-        surfaceContainer: AppColors.darkSurfaceSecondary, // 0xFF162222
-        surfaceContainerHigh: Color(0xFF1C2C2C),
-        surfaceContainerHighest: AppColors.darkSurfaceElevated, // 0xFF243636
+        // M3 Surface Ladder (Deep Blue Gray Midnight)
+        surface: AppColors.darkBackground, // 0xFF1B2327
+        surfaceContainerLowest: Color(0xFF151C20),
+        surfaceContainerLow: Color(0xFF1F282D),
+        surfaceContainer: AppColors.blueGray900, // 0xFF263238
+        surfaceContainerHigh: Color(0xFF2E3C43),
+        surfaceContainerHighest: AppColors.blueGray800, // 0xFF37474F
 
-        onSurface: AppColors.darkTextPrimary,
-        onSurfaceVariant: AppColors.darkTextSecondary,
+        onSurface: AppColors.darkTextPrimary, // 0xFFECEFF1
+        onSurfaceVariant: AppColors.darkTextSecondary, // 0xFFB0BEC5
 
-        outline: Color(0xFF385252),
-        outlineVariant: AppColors.darkBorder, // 0xFF263939
+        outline: AppColors.blueGray600, // 0xFF546E7A
+        outlineVariant: AppColors.blueGray800, // 0xFF37474F
 
         error: AppColors.error,
         onError: Colors.white,
@@ -175,14 +176,14 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.darkTextSecondary),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkSurfaceSecondary,
+        backgroundColor: AppColors.blueGray900,
         selectedItemColor: AppColors.darkPrimary,
         unselectedItemColor: AppColors.darkTextTertiary,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkPrimary,
-          foregroundColor: const Color(0xFF072424),
+          foregroundColor: const Color(0xFF1B2327),
           textStyle: AppTextStyles.button,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -192,22 +193,22 @@ class AppTheme {
         ),
       ),
       cardTheme: const CardThemeData(
-        color: AppColors.darkSurfaceSecondary,
+        color: AppColors.blueGray900,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(18)),
-          side: BorderSide(color: AppColors.darkBorder, width: 1),
+          side: BorderSide(color: AppColors.blueGray800, width: 1),
         ),
       ),
       dialogTheme: const DialogThemeData(
-        backgroundColor: AppColors.darkSurfaceElevated,
+        backgroundColor: AppColors.blueGray800,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(22)),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.darkSurfaceSecondary,
+        backgroundColor: AppColors.blueGray900,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -215,7 +216,7 @@ class AppTheme {
       ),
       iconTheme: const IconThemeData(color: AppColors.darkTextSecondary),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.darkSurfaceElevated,
+        backgroundColor: AppColors.blueGray800,
         contentTextStyle: TextStyle(
           fontFamily: 'Cairo',
           color: AppColors.darkTextPrimary,
