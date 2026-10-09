@@ -455,7 +455,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         ),
                       ),
 
-                    SizedBox(height: 80), // Bottom padding for Nav Bar
+                    SizedBox(height: AppSize.navClearance(context)),
                   ],
                 ),
               ),

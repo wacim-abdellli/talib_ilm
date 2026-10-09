@@ -351,8 +351,7 @@ class _PrayerPageState extends State<PrayerPage> {
                                   SizedBox(height: responsive.smallGap),
                               ],
                               SizedBox(height: responsive.largeGap),
-                              // Extra padding for nav bar
-                              const SizedBox(height: 100),
+                              SizedBox(height: AppSize.navClearance(context)),
                             ],
                           ),
                         ),

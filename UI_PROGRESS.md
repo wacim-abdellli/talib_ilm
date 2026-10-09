@@ -69,3 +69,23 @@
   - Hand-written BoxShadow: 64 → 58 (-6)
   - Raw GestureDetector: 14 → 14
 - **Open Issues:** None.
+
+---
+
+### Phase 3 — Shell & Navigation
+- **Status:** Complete
+- **Changes:** Refactored `app_shell.dart` to use `NavBar` with RTL Semantics and haptic feedback. Replaced `Stack` + `AnimatedOpacity` with `IndexedStack` to stop offscreen tab rendering while preserving scroll state. Replaced all 4 magic bottom spacers (`SizedBox(height: 100)`) with `AppSize.navClearance(context)` across `ilm_page.dart`, `more_page.dart`, `prayer_page.dart`, and `home_page.dart`.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 86 → 83 (-3)
+  - Raw fontSize: <n>: 184 → 184 (0)
+  - Raw fontFamily: '...': 177 → 176 (-1)
+  - Raw BorderRadius.circular(<n>): 166 → 164 (-2)
+  - Raw EdgeInsets with numbers: 132 → 131 (-1)
+  - Text smaller than 12: 29 → 29 (0)
+  - Colors.white/black: 132 → 130 (-2)
+  - isDark ? ... : ...: 149 → 144 (-5)
+  - Magic bottom spacer: 4 → 0 (-4, ELIMINATED)
+  - Hand-written BoxShadow: 58 → 57 (-1)
+  - Raw GestureDetector: 14 → 13 (-1)
+- **Open Issues:** None.
+

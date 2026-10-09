@@ -651,8 +651,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                  // Extra padding for nav bar
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: AppSize.navClearance(context)),
+                  ),
                 ],
               ),
             );

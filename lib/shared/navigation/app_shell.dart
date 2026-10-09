@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import '../../app/theme/app_ui.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/constants/app_strings.dart';
+import '../../shared/widgets/nav_bar.dart';
 
 import '../../features/home/presentation/home_page.dart';
 import '../../features/prayer/presentation/prayer_page.dart';
@@ -12,10 +11,12 @@ import '../../features/more/presentation/more_page.dart';
 
 class AppShell extends StatefulWidget {
   final int initialIndex;
+
   const AppShell({
     super.key,
     this.initialIndex = 0,
   });
+
   /// Allows any descendant page to cleanly switch bottom navigation tab
   static bool switchToTab(BuildContext context, int index) {
     final state = context.findAncestorStateOfType<_AppShellState>();
@@ -25,9 +26,11 @@ class AppShell extends StatefulWidget {
     }
     return false;
   }
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
+
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
@@ -53,168 +56,41 @@ class _AppShellState extends State<AppShell> {
       const MorePage(),
     ];
 
-    final isDark = context.isDark;
-
     return Scaffold(
       extendBody: true,
-      body: Stack(
-        children: List.generate(pages.length, (index) {
-          final active = index == _currentIndex;
-          return AnimatedOpacity(
-            opacity: active ? 1 : 0,
-            duration: AppUi.animationNormal,
-            curve: Curves.easeOut,
-            child: IgnorePointer(ignoring: !active, child: pages[index]),
-          );
-        }),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: pages,
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Container(
-            height: 68,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF10171F).withValues(alpha: 0.95)
-                  : Colors.white.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF22303C)
-                    : context.outlineVariantColor,
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                  spreadRadius: -2,
-                ),
-              ],
+        child: NavBar(
+          currentIndex: _currentIndex,
+          onTap: selectTab,
+          items: const [
+            NavBarItem(
+              icon: Icons.home_rounded,
+              label: AppStrings.navHome,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildNavItem(
-                  0,
-                  Icons.home_rounded,
-                  Icons.home_outlined,
-                  'الرئيسية',
-                ),
-                _buildNavItem(
-                  1,
-                  Icons.access_time_filled_rounded,
-                  Icons.access_time_rounded,
-                  'الصلاة',
-                ),
-                _buildNavItem(
-                  2,
-                  Icons.auto_stories_rounded,
-                  Icons.auto_stories_outlined,
-                  'العلم',
-                ),
-                _buildNavItem(
-                  3,
-                  Icons.spa_rounded,
-                  Icons.spa_outlined,
-                  'الأذكار',
-                ),
-                _buildNavItem(
-                  4,
-                  Icons.dashboard_rounded,
-                  Icons.dashboard_outlined,
-                  'المزيد',
-                ),
-              ],
+            NavBarItem(
+              icon: Icons.access_time_rounded,
+              label: AppStrings.navPrayer,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData activeIcon,
-    IconData inactiveIcon,
-    String label,
-  ) {
-    final isActive = _currentIndex == index;
-    final isDark = context.isDark;
-
-    final Color activeColor = context.primaryColor;
-    final Color inactiveColor =
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          setState(() => _currentIndex = index);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedScale(
-          scale: isActive ? 1.04 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                width: isActive ? 52 : 40,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: isActive
-                      ? LinearGradient(
-                          colors: [
-                            activeColor.withValues(alpha: isDark ? 0.25 : 0.16),
-                            activeColor.withValues(alpha: isDark ? 0.12 : 0.08),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isActive
-                      ? Border.all(
-                          color: activeColor.withValues(alpha: isDark ? 0.35 : 0.25),
-                          width: 1,
-                        )
-                      : null,
-                ),
-                child: Icon(
-                  isActive ? activeIcon : inactiveIcon,
-                  size: isActive ? 22 : 20,
-                  color: isActive ? activeColor : inactiveColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                style: TextStyle(
-                  fontSize: isActive ? 11 : 10,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? activeColor : inactiveColor,
-                  height: 1,
-                  fontFamily: 'Cairo',
-                ),
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-            ],
-          ),
+            NavBarItem(
+              icon: Icons.auto_stories_rounded,
+              label: 'العلم',
+            ),
+            NavBarItem(
+              icon: Icons.spa_rounded,
+              label: 'الأذكار',
+            ),
+            NavBarItem(
+              icon: Icons.dashboard_rounded,
+              label: 'المزيد',
+            ),
+          ],
         ),
       ),
     );
   }
 }
-

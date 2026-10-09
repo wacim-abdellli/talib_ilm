@@ -371,7 +371,7 @@ class _MorePageState extends State<MorePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 100), // Extra padding for floating nav bar
+                    SizedBox(height: AppSize.navClearance(context)),
                   ],
                 ),
               ),
