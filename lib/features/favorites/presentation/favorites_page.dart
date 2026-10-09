@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_text.dart';
-import '../../../app/theme/app_ui.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
-
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_states.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -43,16 +42,24 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Scaffold(
-      backgroundColor: context.backgroundColor,
+      backgroundColor: palette.bg,
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpace.xl,
+              AppSpace.lg,
+              AppSpace.xl,
+              AppSpace.xl,
+            ),
             decoration: BoxDecoration(
-              color: context.surfaceColor,
+              color: palette.surface,
               border: Border(
-                bottom: BorderSide(color: context.outlineVariantColor, width: 1),
+                bottom: BorderSide(color: palette.border, width: 1),
               ),
             ),
             child: SafeArea(
@@ -60,41 +67,38 @@ class _FavoritesPageState extends State<FavoritesPage> {
               child: Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: AppSize.tap,
+                    height: AppSize.tap,
                     decoration: BoxDecoration(
-                      color: context.goldColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(14),
+                      color: palette.goldSoft,
+                      borderRadius: AppRadius.mdRadius,
                       border: Border.all(
-                        color: context.goldColor.withValues(alpha: 0.3),
+                        color: palette.gold.withValues(alpha: 0.25),
                         width: 1,
                       ),
                     ),
                     child: Icon(
                       Icons.bookmark_rounded,
-                      color: context.goldColor,
-                      size: 24,
+                      color: palette.gold,
+                      size: AppIcon.lg,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'المفضلة',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: context.textPrimaryColor,
+                          style: textTheme.title.copyWith(
+                            color: palette.text,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           '$_itemCount عنصر محفوظ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: context.textSecondaryColor,
+                          style: textTheme.bodySmall.copyWith(
+                            color: palette.textMuted,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -106,49 +110,54 @@ class _FavoritesPageState extends State<FavoritesPage> {
             ),
           ),
           Expanded(
-            child: Container(
-              color: context.backgroundColor,
-              child: FutureBuilder<List<FavoriteItem>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const AppLoadingIndicator();
-                  }
-                  final items = snapshot.data ?? const [];
-                  if (items.isEmpty) {
-                    return Padding(
-                      padding: AppUi.screenPadding,
-                      child: AppEmptyState.favorites(),
-                    );
-                  }
-
-                  final grouped = <FavoriteType, List<FavoriteItem>>{};
-                  for (final item in items) {
-                    grouped.putIfAbsent(item.type, () => []).add(item);
-                  }
-
-                  return ListView(
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    padding: AppUi.screenPadding,
-                    children: FavoriteType.values
-                        .where(grouped.containsKey)
-                        .map((type) {
-                          final list = grouped[type]!;
-                          return _Section(
-                            title: _labelFor(type),
-                            items: list,
-                            onRemove: (item) async {
-                              await _service.remove(item.type, item.id);
-                              _reload();
-                            },
-                          );
-                        })
-                        .toList(),
+            child: FutureBuilder<List<FavoriteItem>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const AppLoadingIndicator();
+                }
+                final items = snapshot.data ?? const [];
+                if (items.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(AppSpace.xl),
+                    child: AppEmptyState.favorites(),
                   );
-                },
-              ),
+                }
+
+                final grouped = <FavoriteType, List<FavoriteItem>>{};
+                for (final item in items) {
+                  grouped.putIfAbsent(item.type, () => []).add(item);
+                }
+
+                final sections = FavoriteType.values
+                    .where(grouped.containsKey)
+                    .map((type) {
+                      final list = grouped[type]!;
+                      return _Section(
+                        title: _labelFor(type),
+                        items: list,
+                        onRemove: (item) async {
+                          await _service.remove(item.type, item.id);
+                          _reload();
+                        },
+                      );
+                    })
+                    .toList();
+
+                return ListView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.xl,
+                    vertical: AppSpace.lg,
+                  ),
+                  children: [
+                    ...sections,
+                    SizedBox(height: AppSize.navClearance(context)),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -170,79 +179,63 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: AppText.heading.copyWith(color: context.textPrimaryColor),
+          style: textTheme.titleSmall.copyWith(color: palette.text),
         ),
-        const SizedBox(height: AppUi.gapMD),
+        const SizedBox(height: AppSpace.sm),
         ...items.map(
-          (item) => Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: context.surfaceContainer,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: context.goldColor.withValues(alpha: 0.18),
-                width: 1,
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpace.sm),
+            child: AppCard(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg,
+                vertical: AppSpace.md,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: context.isDark ? 0.2 : 0.04,
-                  ),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: context.textPrimaryColor,
-                        ),
-                      ),
-                      if (item.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          item.subtitle,
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: context.textSecondaryColor,
+                          item.title,
+                          style: textTheme.body.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: palette.text,
                           ),
                         ),
+                        if (item.subtitle.isNotEmpty) ...[
+                          const SizedBox(height: AppSpace.xs),
+                          Text(
+                            item.subtitle,
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  tooltip: AppStrings.favoritesRemoveTooltip,
-                  onPressed: () => onRemove(item),
-                  icon: Icon(
-                    Icons.bookmark_remove_rounded,
-                    color: context.goldColor,
-                    size: 22,
+                  AppIconButton(
+                    tooltip: AppStrings.favoritesRemoveTooltip,
+                    onPressed: () => onRemove(item),
+                    icon: Icons.bookmark_remove_rounded,
+                    color: palette.gold,
+                    iconSize: AppIcon.md,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-        const SizedBox(height: AppUi.gapXL),
+        const SizedBox(height: AppSpace.lg),
       ],
     );
   }
