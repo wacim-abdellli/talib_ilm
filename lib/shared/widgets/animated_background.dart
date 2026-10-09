@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../../app/theme/app_palette.dart';
+
 /// A star element with its properties
 class _StarElement {
   final Offset position;
@@ -18,12 +20,12 @@ class _StarElement {
 
 /// Animated geometric background with Islamic 8-point stars
 class AnimatedGeometricBackground extends StatefulWidget {
-  final Color starColor;
+  final Color? starColor;
   final int starCount;
 
   const AnimatedGeometricBackground({
     super.key,
-    this.starColor = const Color(0xFF14B8A6), // Teal
+    this.starColor,
     this.starCount = 12,
   });
 
@@ -89,7 +91,7 @@ class _AnimatedGeometricBackgroundState
           painter: _GeometricPatternPainter(
             stars: _stars,
             animationValue: _controller.value,
-            starColor: widget.starColor.withValues(alpha: 0.03), // 3% opacity
+            starColor: (widget.starColor ?? context.palette.primary).withValues(alpha: 0.03), // 3% opacity
           ),
           size: Size.infinite,
         );

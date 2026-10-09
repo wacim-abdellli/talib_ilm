@@ -193,5 +193,59 @@
   - Magic bottom spacer: 0 → 0 (0)
   - Hand-written BoxShadow: 15 → 12 (-3)
   - Raw GestureDetector: 4 → 3 (-1)
-- **Open Issues:** None.
+---
+
+### Phase 4.6 — Qibla & More Screens
+- **Status:** Complete
+- **Changes:**
+  - Split `qibla_page.dart` (709 lines) into `astrolabe_compass.dart` (`5bb605c`).
+  - Restyled `qibla_page.dart` and `astrolabe_compass.dart` to Calm Scholar tokens with Astrolabe compass design (`8b27215`). Added golden tests in `test/golden/prayer_golden_test.dart`.
+  - Split `more_page.dart` (701 lines) into `more_section_card.dart` and `theme_selector_sheet.dart` (`03274f2`).
+  - Restyled `more_page.dart`, `more_section_card.dart`, and `theme_selector_sheet.dart` to Calm Scholar tokens (`e2239aa`). Added golden tests in `test/golden/more_golden_test.dart`.
+  - UI lint violations in Qibla and More reached **0**.
+
+---
+
+### Phase 4.7 — Library & Favorites Screens
+- **Status:** Complete
+- **Changes:**
+  - Restyled `library_page.dart` to Calm Scholar tokens: tokenized header with search bar, replaced level cards with `AppCard`, `AppIconButton`, and tokens (`c9f5838`). Added golden tests in `test/golden/library_golden_test.dart`.
+  - Restyled `favorites_page.dart` to Calm Scholar tokens: tokenized header with item count, replaced list items with `AppCard`, integrated `AppEmptyState.favorites()`, and added `AppSize.navClearance` (`3ae85d6`). Added golden tests in `test/golden/favorites_golden_test.dart`.
+  - UI lint violations in Library and Favorites reached **0**.
+
+---
+
+### Phase 4.8 — PDF Viewer & Shared Widgets
+- **Status:** Complete
+- **Changes:**
+  - Restyled `pdf_viewer_page.dart` chrome, top bar, bottom bar, jump dialog, and brightness dialog to Calm Scholar tokens (`9523d22`). Maintained Syncfusion PDF internals untouched.
+  - Tokenized all remaining shared widgets:
+    - `achievement_toast.dart`: tokenized gold celebration toast, confetti painter, and hit targets.
+    - `app_progress.dart`: replaced raw radii with `AppRadius.pillRadius`.
+    - `floating_particles.dart`: tokenized ambient particles with palette defaults.
+    - `notification_badge.dart`: tokenized EdgeInsets and typography.
+    - `animated_background.dart`: tokenized Islamic geometric star background.
+    - `app_drawer.dart`: tokenized list item vertical padding.
+    - `app_snackbar.dart`: tokenized floating margin.
+    - `nav_bar.dart`: removed redundant font size.
+  - UI lint violations in PDF Viewer and all shared widgets reached **0**.
+
+---
+
+## Final Verification & 100% Milestone Completion
+- **UI Lint Status (`tool/ui_lint.py`):** **0 violations across entire repository** (budget 0 for every single rule).
+  - Raw Color(0x...) literals: **0**
+  - Raw fontSize: <n>: **0**
+  - Raw fontFamily: '...': **0**
+  - Raw BorderRadius.circular(<n>): **0**
+  - Raw EdgeInsets with numbers: **0**
+  - Text smaller than 12: **0**
+  - Colors.white/black: **0**
+  - isDark ? ... : ...: **0**
+  - Magic bottom spacer: **0**
+  - Hand-written BoxShadow: **0**
+  - Raw GestureDetector: **0**
+- **Dart Analyzer (`flutter analyze`):** **0 issues found** across the entire repository.
+- **Golden Tests (`flutter test test/golden/`):** **34 / 34 passed** across light (1.0 text scale) and dark (1.5 text scale) modes.
+- **Zero Behavioral Regressions:** Zero changes to models, services, strings, or navigation logic.
 

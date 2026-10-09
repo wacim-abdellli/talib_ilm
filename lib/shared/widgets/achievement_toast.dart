@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme/app_palette.dart';
+import 'app_button.dart';
+
 class AchievementToast extends StatefulWidget {
   final String title;
   final String description;
@@ -27,9 +30,9 @@ class AchievementToast extends StatefulWidget {
 
     entry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 16,
-        right: 16,
+        top: MediaQuery.paddingOf(context).top + AppSpace.lg,
+        left: AppSpace.lg,
+        right: AppSpace.lg,
         child: AchievementToast(
           title: title,
           description: description,
@@ -59,7 +62,7 @@ class _AchievementToastState extends State<AchievementToast>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: AppMotion.slow,
     );
 
     _slideAnimation = Tween<Offset>(
@@ -99,126 +102,101 @@ class _AchievementToastState extends State<AchievementToast>
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Material(
       color: Colors.transparent,
       child: SlideTransition(
         position: _slideAnimation,
         child: ScaleTransition(
           scale: _scaleAnimation,
-          child: Stack(
-            children: [
-              // 1. Confetti Background (Simulated with simple shapes or external package?
-              // Prompt asks for "Confetti background".
-              // Without an external package like `confetti`, we can render static decoration
-              // or simple animated particles. For built-in simplicity,
-              // let's use a subtle pattern in the gradient container or custom painter.
-              // We'll use a CustomPainter for simple sparkles behind the content.)
-
-              // The main container
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFD4AF37),
-                      Color(0xFFE8C85E),
-                    ], // Gold to Light Gold
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    children: [
-                      // Confetti / Sparkles
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _ConfettiPainter(animation: _controller),
-                        ),
-                      ),
-
-                      // Content
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            // Icon
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(8),
-                              child: const Icon(
-                                Icons.emoji_events_rounded, // Trophy
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            // Texts
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    widget.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Cairo', // Assuming app font
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.description,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      fontSize: 14,
-                                      fontFamily: 'Cairo',
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(width: 8),
-
-                            // Close Button
-                            IconButton(
-                              onPressed: _handleDismiss,
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: palette.surfaceRaised,
+              borderRadius: AppRadius.lgRadius,
+              border: Border.all(
+                color: palette.gold,
+                width: 1.5,
               ),
-            ],
+              boxShadow: palette.shadow,
+            ),
+            child: ClipRRect(
+              borderRadius: AppRadius.lgRadius,
+              child: Stack(
+                children: [
+                  // Sparkles / Confetti
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _ConfettiPainter(
+                        animation: _controller,
+                        particleColor: palette.gold,
+                      ),
+                    ),
+                  ),
+
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    child: Row(
+                      children: [
+                        // Icon
+                        Container(
+                          decoration: BoxDecoration(
+                            color: palette.goldSoft,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(AppSpace.sm),
+                          child: Icon(
+                            Icons.emoji_events_rounded,
+                            color: palette.gold,
+                            size: AppIcon.xl,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.md),
+
+                        // Texts
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: textTheme.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.xs),
+                              Text(
+                                widget.description,
+                                style: textTheme.bodySmall.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: AppSpace.sm),
+
+                        // Close Button
+                        AppIconButton(
+                          onPressed: _handleDismiss,
+                          icon: Icons.close_rounded,
+                          tooltip: 'إغلاق',
+                          color: palette.textMuted,
+                          iconSize: AppIcon.md,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -228,9 +206,13 @@ class _AchievementToastState extends State<AchievementToast>
 
 class _ConfettiPainter extends CustomPainter {
   final Animation<double> animation;
-  final Random _random = Random(42); // Fixed seed for consistent sparkly look
+  final Color particleColor;
+  final Random _random = Random(42);
 
-  _ConfettiPainter({required this.animation}) : super(repaint: animation);
+  _ConfettiPainter({
+    required this.animation,
+    required this.particleColor,
+  }) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -242,9 +224,9 @@ class _ConfettiPainter extends CustomPainter {
       final dx = _random.nextDouble() * size.width;
       final dy = _random.nextDouble() * size.height;
       final radius = _random.nextDouble() * 3 + 1;
-      final opacity = (_random.nextDouble() * 0.5 + 0.1) * animation.value;
+      final opacity = (_random.nextDouble() * 0.4 + 0.1) * animation.value;
 
-      paint.color = Colors.white.withValues(alpha: opacity);
+      paint.color = particleColor.withValues(alpha: opacity);
       canvas.drawCircle(Offset(dx, dy), radius, paint);
     }
   }

@@ -232,7 +232,7 @@ class _DrawerItem extends StatelessWidget {
     final textTheme = context.text;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs),
       child: Material(
         color: isActive ? palette.primarySoft : Colors.transparent,
         borderRadius: AppRadius.mdRadius,

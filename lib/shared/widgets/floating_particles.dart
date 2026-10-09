@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../app/theme/app_palette.dart';
 
 /// A single particle with its properties
 class _Particle {
@@ -27,15 +28,15 @@ class _Particle {
 /// Floating particles effect for ambient background
 class FloatingParticles extends StatefulWidget {
   final int particleCount;
-  final Color primaryColor;
-  final Color secondaryColor;
+  final Color? primaryColor;
+  final Color? secondaryColor;
   final bool enabled;
 
   const FloatingParticles({
     super.key,
     this.particleCount = 40,
-    this.primaryColor = const Color(0xFF14B8A6), // Teal
-    this.secondaryColor = Colors.white,
+    this.primaryColor,
+    this.secondaryColor,
     this.enabled = true,
   });
 
@@ -93,6 +94,9 @@ class _FloatingParticlesState extends State<FloatingParticles>
   }
 
   _Particle _createParticle({bool randomY = false}) {
+    final palette = context.palette;
+    final primary = widget.primaryColor ?? palette.primary;
+    final secondary = widget.secondaryColor ?? palette.gold;
     final isTeal = _random.nextBool();
     return _Particle(
       x: _random.nextDouble() * _screenSize.width,
@@ -104,7 +108,7 @@ class _FloatingParticlesState extends State<FloatingParticles>
       size: 2 + _random.nextDouble() * 4, // 2-6
       opacity: 0.1 + _random.nextDouble() * 0.2, // 0.1-0.3
       fadeDirection: 1,
-      color: isTeal ? widget.primaryColor : widget.secondaryColor,
+      color: isTeal ? primary : secondary,
     );
   }
 

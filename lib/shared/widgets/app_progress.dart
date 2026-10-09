@@ -18,7 +18,7 @@ class AppProgress extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: palette.border,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: AppRadius.pillRadius,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -31,7 +31,7 @@ class AppProgress extends StatelessWidget {
               width: constraints.maxWidth * clamped,
               decoration: BoxDecoration(
                 color: fillColor,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: AppRadius.pillRadius,
               ),
             ),
           );

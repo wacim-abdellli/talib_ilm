@@ -39,8 +39,11 @@ class AppSnackbar {
           behavior: SnackBarBehavior.floating,
           duration: duration ?? const Duration(seconds: 2),
           backgroundColor: Colors.transparent,
-          elevation: 0,
-          margin: EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, bottomMargin),
+          margin: EdgeInsets.only(
+            left: AppSpace.lg,
+            right: AppSpace.lg,
+            bottom: bottomMargin,
+          ),
           padding: EdgeInsets.zero,
           content: Container(
             padding: const EdgeInsets.symmetric(

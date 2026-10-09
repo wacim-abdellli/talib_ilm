@@ -79,7 +79,7 @@ class _NotificationBadgeState extends State<NotificationBadge>
             child: widget.count == 0
                 ? const SizedBox.shrink()
                 : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
                     constraints: const BoxConstraints(
                       minWidth: 20,
                       minHeight: 20,
@@ -94,7 +94,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
                       widget.count > 99 ? '99+' : '${widget.count}',
                       style: textTheme.caption.copyWith(
                         color: palette.onPrimary,
-                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         height: 1.1,
                       ),
