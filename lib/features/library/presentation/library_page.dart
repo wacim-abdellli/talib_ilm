@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_ui.dart';
-import '../../../app/theme/theme_colors.dart';
-import '../../../shared/widgets/pressable_card.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     final levels = <LibraryLevel>[
       LibraryLevel(
         title: 'طالب العلم',
@@ -37,25 +39,23 @@ class LibraryPage extends StatelessWidget {
         onTap: () {},
       ),
     ];
-    final levelCards = <Widget>[];
-    for (var i = 0; i < levels.length; i++) {
-      levelCards.add(_LibraryLevelCard(levels[i]));
-      if (i != levels.length - 1) {
-        levelCards.add(const SizedBox(height: AppUi.gapXL));
-      }
-    }
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
+      backgroundColor: palette.bg,
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpace.xl,
+              AppSpace.lg,
+              AppSpace.xl,
+              AppSpace.xl,
+            ),
             decoration: BoxDecoration(
-              color: context.surfaceColor,
+              color: palette.surface,
               border: Border(
                 bottom: BorderSide(
-                  color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                  color: palette.border,
                   width: 1,
                 ),
               ),
@@ -67,66 +67,64 @@ class LibraryPage extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: AppSize.tap,
+                        height: AppSize.tap,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.primaryLight],
+                          color: palette.primarySoft,
+                          borderRadius: AppRadius.mdRadius,
+                          border: Border.all(
+                            color: palette.primary.withValues(alpha: 0.2),
+                            width: 1,
                           ),
-                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.library_books_rounded,
-                          color: Colors.white,
-                          size: 24,
+                          color: palette.primary,
+                          size: AppIcon.lg,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: AppSpace.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'المكتبة',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: context.textPrimaryColor,
+                              style: textTheme.title.copyWith(
+                                color: palette.text,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               'تصفح كتب العلم الشرعي',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 13,
-                                color: context.textSecondaryColor,
+                              style: textTheme.bodySmall.copyWith(
+                                color: palette.textMuted,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.search_rounded, size: 26),
-                        color: context.textSecondaryColor,
+                      AppIconButton(
+                        icon: Icons.search_rounded,
+                        tooltip: 'بحث',
+                        color: palette.textMuted,
                         onPressed: () {},
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
                   // Search bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: AppSpace.lg,
+                      vertical: AppSpace.md,
                     ),
                     decoration: BoxDecoration(
-                      color: context.surfaceContainer,
-                      borderRadius: BorderRadius.circular(14),
+                      color: palette.surfaceMuted,
+                      borderRadius: AppRadius.mdRadius,
                       border: Border.all(
-                        color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                        color: palette.border,
                         width: 1,
                       ),
                     ),
@@ -134,17 +132,15 @@ class LibraryPage extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.search_rounded,
-                          color: context.textTertiaryColor,
-                          size: 22,
+                          color: palette.textSubtle,
+                          size: AppIcon.md,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpace.sm),
                         Expanded(
                           child: Text(
                             'ابحث في الكتب والشروحات...',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              color: context.textTertiaryColor,
+                            style: textTheme.bodySmall.copyWith(
+                              color: palette.textSubtle,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -157,15 +153,25 @@ class LibraryPage extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Container(
-              color: context.backgroundColor,
-              child: ListView(
-                padding: AppUi.screenPadding,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                children: [...levelCards],
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.xl,
+                vertical: AppSpace.lg,
               ),
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              itemCount: levels.length + 1,
+              separatorBuilder: (context, index) {
+                if (index >= levels.length) return const SizedBox.shrink();
+                return const SizedBox(height: AppSpace.md);
+              },
+              itemBuilder: (context, index) {
+                if (index == levels.length) {
+                  return SizedBox(height: AppSize.navClearance(context));
+                }
+                return _LibraryLevelCard(levels[index]);
+              },
             ),
           ),
         ],
@@ -181,58 +187,44 @@ class _LibraryLevelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppUi.radiusMD);
+    final palette = context.palette;
+    final textTheme = context.text;
 
-    return PressableCard(
+    return AppCard(
       onTap: level.onTap,
-      padding: AppUi.cardPadding,
-      borderRadius: radius,
-      decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: radius,
-        border: Border.all(
-          color: context.outlineColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
           Container(
-            width: AppUi.iconBoxSize,
-            height: AppUi.iconBoxSize,
+            width: AppSize.tap,
+            height: AppSize.tap,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: radius,
+              color: palette.primarySoft,
+              borderRadius: AppRadius.mdRadius,
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.2),
+                color: palette.primary.withValues(alpha: 0.15),
                 width: 1,
               ),
             ),
-            child: Icon(level.icon, color: AppColors.primary),
+            child: Icon(
+              level.icon,
+              color: palette.primary,
+              size: AppIcon.lg,
+            ),
           ),
-          const SizedBox(width: AppUi.gapMD),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               level.title,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
+              style: textTheme.titleSmall.copyWith(
+                color: palette.text,
               ),
             ),
           ),
           Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: 15,
-            color: context.textSecondaryColor,
+            size: AppIcon.sm,
+            color: palette.textMuted,
           ),
         ],
       ),

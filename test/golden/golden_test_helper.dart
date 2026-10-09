@@ -11,6 +11,7 @@ Future<void> testGoldenWidget({
   bool isDark = false,
   double textScale = 1.0,
   Size surfaceSize = const Size(390, 844),
+  Finder? finder,
 }) async {
   await tester.binding.setSurfaceSize(surfaceSize);
 
@@ -54,7 +55,9 @@ Future<void> testGoldenWidget({
   await tester.pumpAndSettle();
 
   await expectLater(
-    find.byType(Scaffold),
+    finder ?? (find.byType(Scaffold).evaluate().length > 1
+        ? find.byType(Scaffold).last
+        : find.byType(Scaffold)),
     matchesGoldenFile('$fileName.png'),
   );
 }
