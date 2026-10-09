@@ -6,6 +6,9 @@ import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/app_states.dart';
+import 'widgets/prayer_adhan_section.dart';
+import 'widgets/prayer_adjustments_section.dart';
+import 'widgets/prayer_calc_section.dart';
 
 class PrayerSettingsSheet extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
@@ -101,13 +104,26 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCalcMethodSection(settings, isDark),
+                  PrayerCalcSection(
+                    settings: settings,
+                    isDark: isDark,
+                    onSettingsChanged: _updateSettings,
+                  ),
                   const SizedBox(height: 18),
-                  _buildAdhanSection(settings, isDark),
+                  PrayerAdhanSection(
+                    settings: settings,
+                    isDark: isDark,
+                    adhanService: _adhanService,
+                    onSettingsChanged: _updateSettings,
+                  ),
                   const SizedBox(height: 18),
                   _buildNotificationsSection(settings, isDark),
                   const SizedBox(height: 18),
-                  _buildAdjustmentsSection(settings, isDark),
+                  PrayerAdjustmentsSection(
+                    settings: settings,
+                    isDark: isDark,
+                    onSettingsChanged: _updateSettings,
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -225,290 +241,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     );
   }
 
-  Widget _buildCalcMethodSection(AdhanSettings settings, bool isDark) {
-    return _buildSectionCard(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('طريقة الحساب', Icons.calculate_outlined, isDark),
-          const SizedBox(height: 16),
-          ...AdhanSettingsService.calculationMethods.entries.map((entry) {
-            final isSelected = settings.calculationMethod == entry.key;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _updateSettings(
-                      settings.copyWith(calculationMethod: entry.key),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              colors: [
-                                context.primaryColor,
-                                context.primaryColor.withValues(alpha: 0.85),
-                              ],
-                            )
-                          : null,
-                      color: isSelected ? null : context.surfaceColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? context.primaryColor
-                            : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isSelected
-                              ? Icons.radio_button_checked_rounded
-                              : Icons.radio_button_off_rounded,
-                          color: isSelected
-                              ? Colors.white
-                              : context.textSecondaryColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            entry.value,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected
-                                  ? Colors.white
-                                  : context.textPrimaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildAdhanSection(AdhanSettings settings, bool isDark) {
-    return _buildSectionCard(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            'الأذان والصوت',
-            Icons.volume_up_outlined,
-            isDark,
-          ),
-          const SizedBox(height: 16),
-
-          // Enable toggle
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'تشغيل صوت الأذان',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: context.textPrimaryColor,
-                  ),
-                ),
-              ),
-              Transform.scale(
-                scale: 0.9,
-                child: Switch(
-                  value: settings.enabled,
-                  onChanged: (val) {
-                    HapticFeedback.selectionClick();
-                    _updateSettings(settings.copyWith(enabled: val));
-                  },
-                  activeThumbColor: context.primaryColor,
-                  activeTrackColor: context.primaryColor.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
-
-          if (settings.enabled) ...[
-            const SizedBox(height: 16),
-
-            // Muezzin selector
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: context.surfaceColor,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                ),
-              ),
-              child: DropdownButtonFormField<AdhanSound>(
-                initialValue: settings.sound,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  color: context.textPrimaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'صوت المؤذن',
-                  labelStyle: TextStyle(
-                    fontFamily: 'Cairo',
-                    color: context.textSecondaryColor,
-                    fontSize: 13,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AdhanSound.makkah,
-                    child: Text('مكة المكرمة'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.madinah,
-                    child: Text('المدينة المنورة'),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    _updateSettings(settings.copyWith(sound: val));
-                  }
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Volume slider
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'مستوى الصوت',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
-                        color: context.textSecondaryColor,
-                      ),
-                    ),
-                    Text(
-                      '${settings.volume.toInt()}%',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: context.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.volume_mute_rounded,
-                      size: 20,
-                      color: context.textSecondaryColor,
-                    ),
-                    Expanded(
-                      child: SliderTheme(
-                        data: SliderThemeData(
-                          activeTrackColor: context.primaryColor,
-                          inactiveTrackColor: context.primaryColor.withValues(alpha: 0.2),
-                          thumbColor: context.primaryColor,
-                          overlayColor: context.primaryColor.withValues(alpha: 0.15),
-                        ),
-                        child: Slider(
-                          value: settings.volume,
-                          min: 0,
-                          max: 100,
-                          onChanged: (val) {
-                            _updateSettings(settings.copyWith(volume: val));
-                          },
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      Icons.volume_up_rounded,
-                      size: 20,
-                      color: context.primaryColor,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            // Test button
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  await _adhanService.test(
-                    settings.sound,
-                    volume: settings.volume,
-                  );
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: isDark ? 0.15 : 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: context.primaryColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.play_circle_outline_rounded,
-                        color: context.primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'تجربة صوت الأذان',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: context.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _buildNotificationsSection(AdhanSettings settings, bool isDark) {
     return _buildSectionCard(
@@ -608,122 +341,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     );
   }
 
-  Widget _buildAdjustmentsSection(AdhanSettings settings, bool isDark) {
-    return _buildSectionCard(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('تعديل التوقيت', Icons.tune_outlined, isDark),
-          const SizedBox(height: 4),
-          Text(
-            'تعديل التوقيت بالدقيقة (+ أو -)',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 12,
-              color: context.textSecondaryColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...AdhanSettingsService.prayerNames.map((name) {
-            final adj = settings.adjustments[name] ?? 0;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: context.textPrimaryColor,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: context.surfaceColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildAdjustButton(
-                          icon: Icons.remove_rounded,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            final updated = Map<String, int>.from(
-                              settings.adjustments,
-                            );
-                            updated[name] = adj - 1;
-                            _updateSettings(
-                              settings.copyWith(adjustments: updated),
-                            );
-                          },
-                        ),
-                        Container(
-                          width: 50,
-                          alignment: Alignment.center,
-                          child: Text(
-                            adj > 0 ? '+$adj' : '$adj',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: adj == 0
-                                  ? context.textSecondaryColor
-                                  : context.primaryColor,
-                            ),
-                          ),
-                        ),
-                        _buildAdjustButton(
-                          icon: Icons.add_rounded,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            final updated = Map<String, int>.from(
-                              settings.adjustments,
-                            );
-                            updated[name] = adj + 1;
-                            _updateSettings(
-                              settings.copyWith(adjustments: updated),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildAdjustButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: context.primaryColor),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSaveButton(bool isDark) {
     return Container(
