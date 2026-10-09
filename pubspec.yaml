@@ -84,15 +84,9 @@ flutter:
         - asset: assets/fonts/ScheherazadeNew-Bold.ttf
           weight: 700
 
-    # Legacy Amiri font (keeping for backward compatibility)
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf
           weight: 400
         - asset: assets/fonts/Amiri-Bold.ttf
           weight: 700
-
-    - family: Vazirmatn
-      fonts:
-        - asset: assets/fonts/Vazirmatn-Regular.ttf
-        - asset: assets/fonts/Vazirmatn-Bold.ttf
