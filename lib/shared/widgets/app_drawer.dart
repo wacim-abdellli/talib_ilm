@@ -3,9 +3,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/app_ui.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
 import '../navigation/app_shell.dart';
 import '../navigation/fade_page_route.dart';
 import '../../features/favorites/presentation/favorites_page.dart';
@@ -18,82 +16,71 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
-      backgroundColor: context.surfaceContainer,
+      backgroundColor: palette.surfaceRaised,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(AppUi.radiusLG),
-          bottomLeft: Radius.circular(AppUi.radiusLG),
+          topLeft: Radius.circular(AppRadius.lg),
+          bottomLeft: Radius.circular(AppRadius.lg),
         ),
       ),
       child: Column(
         children: [
+          // Calm Scholar Header
           Container(
-            height: 190,
-            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.xl,
+              vertical: AppSpace.xxl,
+            ),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  context.primaryColor,
-                  AppColors.primaryDark,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: palette.surfaceMuted,
+              border: Border(bottom: BorderSide(color: palette.border, width: 1)),
             ),
             child: SafeArea(
               bottom: false,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: palette.primarySoft,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.gold.withValues(alpha: 0.25),
-                          blurRadius: 12,
-                        ),
-                      ],
+                      border: Border.all(color: palette.border, width: 1),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(AppSpace.sm),
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (c, e, s) => const Icon(
+                        errorBuilder: (c, e, s) => Icon(
                           Icons.menu_book_rounded,
-                          size: 36,
-                          color: Colors.white,
+                          size: AppIcon.lg,
+                          color: palette.primary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppStrings.appName,
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'v${AppStrings.appVersion}',
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      color: Colors.white70,
-                      fontSize: 12,
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          AppStrings.appName,
+                          style: textTheme.titleSmall.copyWith(color: palette.text),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'v${AppStrings.appVersion}',
+                          style: textTheme.caption.copyWith(color: palette.textSubtle),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -103,8 +90,7 @@ class AppDrawer extends StatelessWidget {
           // MENU ITEMS
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.sm),
               children: [
                 _DrawerItem(
                   icon: Icons.home_rounded,
@@ -142,7 +128,7 @@ class AppDrawer extends StatelessWidget {
                   },
                 ),
                 _DrawerItem(
-                  icon: Icons.favorite_rounded,
+                  icon: Icons.bookmark_border_rounded,
                   label: AppStrings.navFavorites,
                   onTap: () {
                     Navigator.pop(context);
@@ -153,10 +139,10 @@ class AppDrawer extends StatelessWidget {
                   },
                 ),
                 Divider(
-                  height: 24,
-                  indent: 20,
-                  endIndent: 20,
-                  color: context.outlineVariantColor,
+                  height: AppSpace.xxl,
+                  indent: AppSpace.md,
+                  endIndent: AppSpace.md,
+                  color: palette.border,
                 ),
                 _DrawerItem(
                   icon: Icons.settings_rounded,
@@ -175,13 +161,9 @@ class AppDrawer extends StatelessWidget {
                           ? Icons.dark_mode_rounded
                           : Icons.light_mode_rounded,
                       label: 'الوضع الداكن',
-                      trailing: Transform.scale(
-                        scale: 0.8,
-                        child: Switch(
-                          value: isDark,
-                          onChanged: (_) => themeService.toggleTheme(),
-                          activeThumbColor: context.primaryColor,
-                        ),
+                      trailing: Switch(
+                        value: isDark,
+                        onChanged: (_) => themeService.toggleTheme(),
                       ),
                       onTap: () => themeService.toggleTheme(),
                     );
@@ -200,19 +182,12 @@ class AppDrawer extends StatelessWidget {
               ],
             ),
           ),
-
-          // ═══════════════════════════════════════════════════════════════════
           // FOOTER
-          // ═══════════════════════════════════════════════════════════════════
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
             child: Text(
               'وفق منهج أهل السنة والجماعة',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                color: context.textTertiaryColor,
-                fontSize: 12,
-              ),
+              style: textTheme.caption.copyWith(color: palette.textSubtle),
             ),
           ),
         ],
@@ -221,7 +196,7 @@ class AppDrawer extends StatelessWidget {
   }
 
   void _goShell(BuildContext context, int index) {
-    Navigator.pop(context); // Close drawer
+    Navigator.pop(context);
     final handled = AppShell.switchToTab(context, index);
     if (!handled) {
       Navigator.pushAndRemoveUntil(
@@ -253,31 +228,44 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = context.primaryColor;
-    final textColor = isActive ? activeColor : context.textPrimaryColor;
-    final iconColor = isActive ? activeColor : context.textSecondaryColor;
+    final palette = context.palette;
+    final textTheme = context.text;
 
-    return ListTile(
-      leading: Icon(icon, size: 22, color: iconColor),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-          color: textColor,
-          fontFamily: 'Cairo',
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: isActive ? palette.primarySoft : Colors.transparent,
+        borderRadius: AppRadius.mdRadius,
+        child: InkWell(
+          borderRadius: AppRadius.mdRadius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: AppIcon.md,
+                    color: isActive ? palette.primary : palette.textMuted,
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: textTheme.body.copyWith(
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        color: isActive ? palette.primary : palette.text,
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) trailing!,
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      trailing: trailing,
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-      horizontalTitleGap: 12,
-      dense: true,
-      tileColor: isActive
-          ? activeColor.withValues(alpha: context.isDark ? 0.15 : 0.08)
-          : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

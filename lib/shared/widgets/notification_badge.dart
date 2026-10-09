@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_palette.dart';
 
 class NotificationBadge extends StatefulWidget {
   final int count;
   final Widget child;
-  final Color badgeColor;
+  final Color? badgeColor;
 
   const NotificationBadge({
     super.key,
     required this.count,
     required this.child,
-    this.badgeColor = Colors.red,
+    this.badgeColor,
   });
 
   @override
@@ -27,7 +28,7 @@ class _NotificationBadgeState extends State<NotificationBadge>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: AppMotion.base,
     );
     _scaleAnimation = CurvedAnimation(
       parent: _controller,
@@ -35,7 +36,7 @@ class _NotificationBadgeState extends State<NotificationBadge>
     );
     _lastCount = widget.count;
     if (widget.count > 0) {
-      _controller.value = 1.0; // Show immediately if initial count > 0
+      _controller.value = 1.0;
     }
   }
 
@@ -48,9 +49,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
       } else if (widget.count == 0 && _lastCount > 0) {
         _controller.reverse();
       } else if (widget.count > _lastCount) {
-        // Pulse effect for increment? Or just update text.
-        // For this task, we focus on appear/disappear.
-        // We can do a quick discrete pulse.
         _controller.forward(from: 0.5);
       }
       _lastCount = widget.count;
@@ -65,13 +63,17 @@ class _NotificationBadgeState extends State<NotificationBadge>
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    final effectiveBadgeColor = widget.badgeColor ?? palette.error;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         widget.child,
-        Positioned(
+        PositionedDirectional(
           top: -4,
-          right: -4,
+          end: -4,
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: widget.count == 0
@@ -79,31 +81,22 @@ class _NotificationBadgeState extends State<NotificationBadge>
                 : Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
+                      minWidth: 20,
+                      minHeight: 20,
                     ),
                     decoration: BoxDecoration(
-                      color: widget.badgeColor,
-                      shape:
-                          BoxShape.circle, // Will deform to pill if wide width
-                      // But constraints minWidth 18 minHeight 18 implies circle for small text.
-                      // If text is large, we need borderRadius pill.
-                      borderRadius: widget.count > 9
-                          ? BorderRadius.circular(10)
-                          : null,
-                      border: Border.all(color: Colors.white, width: 2),
-                      // if count <= 9, use shape circle. if > 9, box decoration with radius.
-                      // Actually BoxDecoration 'shape' handles pure circles.
-                      // Let's use conditional logic for shape vs borderRadius.
+                      color: effectiveBadgeColor,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(color: palette.surfaceRaised, width: 2),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       widget.count > 99 ? '99+' : '${widget.count}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
+                      style: textTheme.caption.copyWith(
+                        color: palette.onPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
                       ),
                       textAlign: TextAlign.center,
                     ),

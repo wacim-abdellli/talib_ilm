@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/ilm/data/models/progress_models.dart';
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/app_text.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_palette.dart';
 
 class ProgressPill extends StatelessWidget {
   final BookProgress progress;
@@ -12,23 +10,24 @@ class ProgressPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _Config config = _map(progress.status);
+    final textTheme = context.text;
+    final config = _map(context, progress.status);
 
     return AnimatedContainer(
-      duration: AppUi.animationMedium,
-      curve: Curves.easeOut,
+      duration: AppMotion.base,
+      curve: AppMotion.easeOut,
       padding: const EdgeInsets.symmetric(
-        horizontal: AppUi.gapMD,
-        vertical: AppUi.gapXSPlus,
+        horizontal: AppSpace.md,
+        vertical: AppSpace.xs,
       ),
       decoration: BoxDecoration(
         color: config.background,
-        borderRadius: BorderRadius.circular(AppUi.radiusPill),
+        borderRadius: AppRadius.pillRadius,
       ),
       child: AnimatedSwitcher(
-        duration: AppUi.animationShort,
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeOut,
+        duration: AppMotion.fast,
+        switchInCurve: AppMotion.easeOut,
+        switchOutCurve: AppMotion.easeOut,
         transitionBuilder: (child, animation) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -36,11 +35,14 @@ class ProgressPill extends StatelessWidget {
           key: ValueKey(config.label),
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(config.icon, size: AppUi.iconSizeXS, color: config.foreground),
-            const SizedBox(width: AppUi.gapXSPlus),
+            Icon(config.icon, size: AppIcon.sm, color: config.foreground),
+            const SizedBox(width: AppSpace.xs),
             Text(
               config.label,
-              style: AppText.caption.copyWith(color: config.foreground),
+              style: textTheme.caption.copyWith(
+                color: config.foreground,
+                fontWeight: FontWeight.w600,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -50,30 +52,32 @@ class ProgressPill extends StatelessWidget {
     );
   }
 
-  _Config _map(BookProgressStatus status) {
+  _Config _map(BuildContext context, BookProgressStatus status) {
+    final palette = context.palette;
+
     switch (status) {
       case BookProgressStatus.completed:
         return _Config(
           label: AppStrings.progressStatusCompleted,
-          icon: Icons.check,
-          foreground: AppColors.primary,
-          background: AppColors.primary.withValues(alpha: 0.12),
+          icon: Icons.check_rounded,
+          foreground: palette.onPrimarySoft,
+          background: palette.primarySoft,
         );
 
       case BookProgressStatus.inProgress:
         return _Config(
           label: AppStrings.progressStatusInProgress,
-          icon: Icons.play_arrow,
-          foreground: AppColors.primary,
-          background: AppColors.primary.withValues(alpha: 0.12),
+          icon: Icons.play_arrow_rounded,
+          foreground: palette.primary,
+          background: palette.primarySoft,
         );
 
       case BookProgressStatus.notStarted:
         return _Config(
           label: AppStrings.progressStatusNotStarted,
           icon: Icons.circle_outlined,
-          foreground: AppColors.textMuted,
-          background: AppColors.textMuted.withValues(alpha: 0.12),
+          foreground: palette.textMuted,
+          background: palette.surfaceMuted,
         );
     }
   }

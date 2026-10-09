@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final ValueChanged<String> onSearch;
@@ -69,100 +69,79 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+    final textTheme = context.text;
 
-    final borderColor = _isFocused
-        ? context.goldColor
-        : context.outlineColor.withValues(alpha: isDark ? 0.2 : 0.08);
-    final borderWidth = _isFocused ? 1.5 : 1.0;
+    final borderColor = _isFocused ? palette.primary : palette.border;
+    final borderWidth = _isFocused ? 2.0 : 1.0;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 48,
+      duration: AppMotion.fast,
+      height: AppSize.inputH,
       decoration: BoxDecoration(
-        color: context.surfaceContainer,
-        borderRadius: BorderRadius.circular(24),
+        color: palette.surfaceMuted,
+        borderRadius: AppRadius.mdRadius,
         border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: _isFocused
-                ? context.goldColor.withValues(alpha: isDark ? 0.2 : 0.1)
-                : Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
-            blurRadius: _isFocused ? 14 : 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: Row(
           children: [
-            const SizedBox(width: 14),
-            // Leading Icon
+            const SizedBox(width: AppSpace.md),
             Icon(
               Icons.search_rounded,
-              size: 20,
-              color: _isFocused ? context.goldColor : context.textSecondaryColor,
+              size: AppIcon.md,
+              color: _isFocused ? palette.primary : palette.textSubtle,
             ),
-            const SizedBox(width: 10),
-            // TextField
+            const SizedBox(width: AppSpace.sm),
             Expanded(
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
                 textInputAction: TextInputAction.search,
                 onChanged: _onSearchChanged,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: context.textPrimaryColor,
-                ),
-                cursorColor: context.goldColor,
+                style: textTheme.body.copyWith(color: palette.text),
+                cursorColor: palette.primary,
                 decoration: InputDecoration(
                   hintText: widget.hintText,
-                  hintStyle: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 13,
-                    color: context.textTertiaryColor,
-                  ),
+                  hintStyle: textTheme.bodySmall.copyWith(color: palette.textSubtle),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
+                  filled: false,
                 ),
               ),
             ),
-            // Trailing Actions
             if (_hasText)
               IconButton(
+                tooltip: 'مسح البحث',
                 icon: Icon(
                   Icons.close_rounded,
-                  size: 18,
-                  color: context.textSecondaryColor,
+                  size: AppIcon.md,
+                  color: palette.textSubtle,
                 ),
                 onPressed: _clearSearch,
-                splashRadius: 20,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
-
-            // Separation line
             Container(
               height: 20,
               width: 1,
-              color: context.outlineVariantColor,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              color: palette.border,
+              margin: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
             ),
-
-            // Filter Button
             IconButton(
-              icon: Icon(Icons.tune_rounded, size: 19, color: context.primaryColor),
+              tooltip: 'تصفية',
+              icon: Icon(
+                Icons.tune_rounded,
+                size: AppIcon.md,
+                color: palette.primary,
+              ),
               onPressed: widget.onFilterTap,
-              splashRadius: 20,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpace.xs),
           ],
         ),
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
 
-/// Modern loading indicator with teal color
+/// Modern loading indicator using theme tokens
 class AppLoadingIndicator extends StatelessWidget {
   final double size;
   final double strokeWidth;
@@ -10,12 +10,13 @@ class AppLoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Center(
       child: SizedBox(
         width: size,
         height: size,
         child: CircularProgressIndicator(
-          color: context.primaryColor,
+          color: palette.primary,
           strokeWidth: strokeWidth,
         ),
       ),
@@ -23,7 +24,7 @@ class AppLoadingIndicator extends StatelessWidget {
   }
 }
 
-/// Empty state widget for when there's no content
+/// Empty state widget conforming to Calm Scholar design direction
 class AppEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -41,7 +42,7 @@ class AppEmptyState extends StatelessWidget {
   /// Factory for favorites empty state
   factory AppEmptyState.favorites() {
     return const AppEmptyState(
-      icon: Icons.bookmark_border,
+      icon: Icons.bookmark_border_rounded,
       title: 'لا توجد مفضلات بعد',
       subtitle: 'ابدأ بإضافة المحتوى المفضل لديك',
     );
@@ -50,7 +51,7 @@ class AppEmptyState extends StatelessWidget {
   /// Factory for search empty state
   factory AppEmptyState.search() {
     return const AppEmptyState(
-      icon: Icons.search_off,
+      icon: Icons.search_off_rounded,
       title: 'لا توجد نتائج',
       subtitle: 'جرب كلمات بحث مختلفة',
     );
@@ -59,7 +60,7 @@ class AppEmptyState extends StatelessWidget {
   /// Factory for books empty state
   factory AppEmptyState.books() {
     return const AppEmptyState(
-      icon: Icons.menu_book_outlined,
+      icon: Icons.menu_book_rounded,
       title: 'لا توجد كتب',
       subtitle: 'ستظهر الكتب هنا قريباً',
     );
@@ -68,7 +69,7 @@ class AppEmptyState extends StatelessWidget {
   /// Factory for prayers empty state
   factory AppEmptyState.prayers() {
     return const AppEmptyState(
-      icon: Icons.access_time_outlined,
+      icon: Icons.access_time_rounded,
       title: 'جارٍ تحميل أوقات الصلاة',
       subtitle: 'يرجى الانتظار...',
     );
@@ -76,32 +77,52 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 80, color: context.textTertiaryColor),
-            const SizedBox(height: 16),
+            // 96px primarySoft circle with 40 icon
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: palette.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: AppIcon.hero,
+                  color: palette.onPrimarySoft,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.lg),
             Text(
               title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: context.textSecondaryColor,
-              ),
+              style: textTheme.titleSmall.copyWith(color: palette.text),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: TextStyle(fontSize: 15, color: context.textTertiaryColor),
-                textAlign: TextAlign.center,
+              const SizedBox(height: AppSpace.sm),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Text(
+                  subtitle!,
+                  style: textTheme.bodySmall.copyWith(color: palette.textMuted),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
-            if (action != null) ...[const SizedBox(height: 24), action!],
+            if (action != null) ...[
+              const SizedBox(height: AppSpace.xl),
+              action!,
+            ],
           ],
         ),
       ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_text.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_palette.dart';
 import '../../features/favorites/presentation/favorites_page.dart';
 import '../navigation/fade_page_route.dart';
+import 'app_button.dart';
+import 'app_list_tile.dart';
+import 'app_sheet.dart';
 
 class AppMenuItem {
   final String label;
@@ -18,16 +20,15 @@ class AppMenuItem {
 }
 
 class AppOverflowMenu extends StatelessWidget {
-  const AppOverflowMenu({
-    super.key,
-  });
+  const AppOverflowMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
     final menuItems = _defaultItems(context);
 
-    return IconButton(
-      icon: const Icon(Icons.menu),
+    return AppIconButton(
+      tooltip: AppStrings.tooltipMenu,
+      icon: Icons.menu,
       onPressed: () => _showSheet(context, menuItems),
     );
   }
@@ -36,7 +37,7 @@ class AppOverflowMenu extends StatelessWidget {
     return [
       AppMenuItem(
         label: AppStrings.navFavorites,
-        icon: Icons.star_outline,
+        icon: Icons.star_outline_rounded,
         onTap: () {
           Navigator.pop(context);
           Navigator.push(
@@ -55,7 +56,7 @@ class AppOverflowMenu extends StatelessWidget {
       ),
       AppMenuItem(
         label: AppStrings.navAbout,
-        icon: Icons.info_outline,
+        icon: Icons.info_outline_rounded,
         onTap: () {
           Navigator.pop(context);
           _showAbout(context);
@@ -65,105 +66,70 @@ class AppOverflowMenu extends StatelessWidget {
   }
 
   void _showSheet(BuildContext context, List<AppMenuItem> items) {
-    showModalBottomSheet<void>(
+    AppSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
+      builder: (sheetContext) => AppSheet(
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: items
+              .map(
+                (item) => AppListTile(
+                  icon: item.icon,
+                  title: item.label,
+                  onTap: item.onTap,
+                ),
+              )
+              .toList(),
         ),
       ),
-      builder: (context) {
-        final colors = Theme.of(context).colorScheme;
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppUi.paddingMD,
-              AppUi.gapMD,
-              AppUi.paddingMD,
-              AppUi.paddingMD,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: items
-                  .map(
-                    (item) => ListTile(
-                      leading: Icon(item.icon,
-                          color: colors.onSurface.withValues(alpha: 0.7)),
-                      title: Text(item.label, style: AppText.body),
-                      onTap: item.onTap,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        );
-      },
     );
   }
 
   void _showAbout(BuildContext context) {
+    final textTheme = context.text;
     showAboutDialog(
       context: context,
       applicationName: AppStrings.appName,
       applicationVersion: AppStrings.appVersion,
       children: [
-        Text(AppStrings.appTagline, style: AppText.body),
+        Text(AppStrings.appTagline, style: textTheme.body),
       ],
     );
   }
 
   void _showAppearance(BuildContext context) {
-    showModalBottomSheet<void>(
+    AppSheet.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppUi.radiusMD),
-        ),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppUi.paddingMD,
-              AppUi.gapMD,
-              AppUi.paddingMD,
-              AppUi.paddingMD,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.palette_outlined,
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                    const SizedBox(width: AppUi.gapSM),
-                    Text(AppStrings.moreThemeTitle,
-                        style: AppText.heading),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: AppStrings.actionClose,
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppUi.gapSM),
-                Text(
-                  AppStrings.moreThemeInfo,
-                  style: AppText.body.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.7),
+      builder: (sheetContext) {
+        final palette = sheetContext.palette;
+        final textTheme = sheetContext.text;
+
+        return AppSheet(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.palette_outlined, color: palette.text, size: AppIcon.lg),
+                  const SizedBox(width: AppSpace.sm),
+                  Text(AppStrings.moreThemeTitle, style: textTheme.titleSmall),
+                  const Spacer(),
+                  AppIconButton(
+                    tooltip: AppStrings.actionClose,
+                    icon: Icons.close_rounded,
+                    onPressed: () => Navigator.pop(sheetContext),
                   ),
-                ),
-                const SizedBox(height: AppUi.gapMD),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.md),
+              Text(
+                AppStrings.moreThemeInfo,
+                style: textTheme.body.copyWith(color: palette.textMuted),
+              ),
+              const SizedBox(height: AppSpace.lg),
+            ],
           ),
         );
       },

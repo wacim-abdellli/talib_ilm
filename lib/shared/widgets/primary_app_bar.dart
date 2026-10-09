@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_ui.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
 import 'app_overflow_menu.dart';
 
 class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -24,7 +23,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingIcon,
     this.onLeadingTap,
     this.onMenuTap,
-    this.height = AppUi.appBarHeight,
+    this.height = AppSize.navH,
     this.bottom,
   });
 
@@ -34,35 +33,35 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return AppBar(
-      backgroundColor: context.backgroundColor, // BackgroundMain
+      backgroundColor: palette.bg,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: true,
       toolbarHeight: height,
       leading: _buildLeading(context),
       title: Text(
         title,
-        style: TextStyle(
-          fontFamily: 'Cairo',
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: context.textPrimaryColor,
-        ),
+        style: textTheme.titleSmall.copyWith(color: palette.text),
       ),
-      actions: actions.isEmpty ? [const SizedBox(width: 48)] : actions,
-      shape: Border(bottom: BorderSide(color: context.borderColor, width: 1)),
+      actions: actions.isEmpty ? [const SizedBox(width: AppSize.tap)] : actions,
+      shape: Border(bottom: BorderSide(color: palette.border, width: 1)),
       bottom: bottom,
     );
   }
 
   Widget? _buildLeading(BuildContext context) {
+    final palette = context.palette;
     if (!showBack && !showMenu && leadingIcon == null) return null;
     if (showMenu && !showBack && leadingIcon == null) {
       if (onMenuTap != null) {
         return IconButton(
           tooltip: AppStrings.tooltipMenu,
           onPressed: onMenuTap,
-          icon: Icon(Icons.menu, color: context.textPrimaryColor),
+          icon: Icon(Icons.menu, color: palette.text, size: AppIcon.lg),
         );
       }
       return const AppOverflowMenu();
@@ -79,8 +78,8 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       onPressed: tap,
       icon: Icon(
         icon,
-        size: 20,
-        color: context.primaryColor, // PrimaryAccent
+        size: AppIcon.md,
+        color: palette.text,
       ),
     );
   }

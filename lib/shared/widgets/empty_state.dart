@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
+import 'app_button.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;
@@ -20,93 +20,50 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+    final textTheme = context.text;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Medallion icon container
             Container(
-              width: 88,
-              height: 88,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                color: palette.primarySoft,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
-                  width: 1.5,
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: AppIcon.hero,
+                  color: palette.onPrimarySoft,
                 ),
               ),
-              child: Icon(
-                icon,
-                size: 42,
-                color: isDark ? AppColors.primaryLight : AppColors.primary,
-              ),
             ),
-
-            const SizedBox(height: 20),
-
-            // Title: Cairo semi-bold
+            const SizedBox(height: AppSpace.lg),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
-              ),
+              style: textTheme.titleSmall.copyWith(color: palette.text),
             ),
-
-            const SizedBox(height: 8),
-
-            // Subtitle: Cairo centered
+            const SizedBox(height: AppSpace.sm),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 290),
               child: Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 14,
-                  color: context.textSecondaryColor,
-                  height: 1.6,
-                ),
+                style: textTheme.bodySmall.copyWith(color: palette.textMuted),
               ),
             ),
-
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
-              // Action button
-              SizedBox(
-                height: 44,
-                child: FilledButton.tonal(
-                  onPressed: onAction,
-                  style: FilledButton.styleFrom(
-                    backgroundColor:
-                        AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
-                    foregroundColor:
-                        isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: AppColors.primary.withValues(alpha: isDark ? 0.3 : 0.2),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                  ),
-                  child: Text(
-                    actionLabel!,
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+              const SizedBox(height: AppSpace.xl),
+              AppButton.tonal(
+                label: actionLabel!,
+                onPressed: onAction,
               ),
             ],
           ],

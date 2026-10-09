@@ -50,3 +50,22 @@
   - All categories (Aqidah, Quran, Hadith, Fiqh, Seerah, Language, Other): Light 4.86–9.45:1, Dark 5.06–9.85:1 (All AA text)
   - All prayers (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha): Light 3.56–6.29:1, Dark 5.99–10.70:1 (All >= 3:1 boundaries)
 - **Open Issues:** None.
+
+---
+
+### Phase 2 — Components
+- **Status:** Complete
+- **Changes:** Built Section E shared components (`AppButton`, `AppIconButton`, `AppCard`, `AppTag`, `IconBadge`, `SectionHeader`, `AppListTile`, `AppProgress`, `AppSheet`, `AppSkeleton`, `NavBar`). Refactored internals of existing shared widgets to new tokens: `AppEmptyState`, `EmptyState`, `PrimaryAppBar`, `AppSnackbar`, `AppPopup`, `ProgressPill`, `SearchBarWidget`, `NotificationBadge`, `PressableCard`, `ShimmerLoading`, `AppDrawer`, `AppOverflowMenu`. Created golden tests helper and test suite in `test/golden/`; all 7 golden tests pass and visually verified.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 88 → 86 (-2)
+  - Raw fontSize: <n>: 200 → 184 (-16)
+  - Raw fontFamily: '...': 192 → 177 (-15)
+  - Raw BorderRadius.circular(<n>): 185 → 166 (-19)
+  - Raw EdgeInsets with numbers: 150 → 132 (-18)
+  - Text smaller than 12: 30 → 29 (-1)
+  - Colors.white/black: 167 → 132 (-35)
+  - isDark ? ... : ...: 162 → 149 (-13)
+  - Magic bottom spacer: 4 → 4
+  - Hand-written BoxShadow: 64 → 58 (-6)
+  - Raw GestureDetector: 14 → 14
+- **Open Issues:** None.

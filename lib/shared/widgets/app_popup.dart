@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../app/theme/theme_colors.dart';
+import '../../app/theme/app_palette.dart';
+import 'app_button.dart';
 
 class AppPopup {
   static void show({
@@ -25,9 +26,9 @@ class AppPopup {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: false,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (sheetContext) {
-        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final palette = sheetContext.palette;
+        final textTheme = sheetContext.text;
 
         if (autoDismiss) {
           Timer(dismissAfter, () {
@@ -39,27 +40,18 @@ class AppPopup {
 
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.lg),
             child: AnimatedScale(
               scale: 1,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
+              duration: AppMotion.fast,
+              curve: AppMotion.easeOut,
               child: Container(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(AppSpace.xl),
                 decoration: BoxDecoration(
-                  color: sheetContext.surfaceColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: sheetContext.goldColor.withValues(alpha: isDark ? 0.3 : 0.15),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  color: palette.surfaceRaised,
+                  borderRadius: AppRadius.xlRadius,
+                  border: Border.all(color: palette.border, width: 1),
+                  boxShadow: palette.shadow,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -68,61 +60,36 @@ class AppPopup {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: sheetContext.primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                        color: palette.primarySoft,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: sheetContext.primaryColor.withValues(alpha: 0.3),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          icon,
+                          color: palette.onPrimarySoft,
+                          size: AppIcon.xl,
                         ),
                       ),
-                      child: Icon(
-                        icon,
-                        color: sheetContext.primaryColor,
-                        size: 28,
-                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpace.lg),
                     Text(
                       title,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: sheetContext.textPrimaryColor,
-                      ),
+                      style: textTheme.titleSmall.copyWith(color: palette.text),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       message,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
-                        color: sheetContext.textSecondaryColor,
-                      ),
+                      style: textTheme.bodySmall.copyWith(color: palette.textMuted),
                       textAlign: TextAlign.center,
                     ),
                     if (!autoDismiss) ...[
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpace.xl),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton(
+                        child: AppButton(
+                          label: buttonText,
                           onPressed: () => Navigator.pop(sheetContext),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: sheetContext.primaryColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: Text(
-                            buttonText,
-                            style: const TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
                         ),
                       ),
                     ],

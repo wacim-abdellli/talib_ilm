@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_palette.dart';
 
 enum AppSnackbarType { success, info, error }
 
@@ -10,7 +10,27 @@ class AppSnackbar {
     AppSnackbarType type = AppSnackbarType.info,
     Duration? duration,
   }) {
-    final config = _SnackbarConfig.fromType(type);
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    Color iconColor;
+    IconData icon;
+    switch (type) {
+      case AppSnackbarType.success:
+        iconColor = palette.success;
+        icon = Icons.check_circle_rounded;
+        break;
+      case AppSnackbarType.info:
+        iconColor = palette.primary;
+        icon = Icons.info_rounded;
+        break;
+      case AppSnackbarType.error:
+        iconColor = palette.error;
+        icon = Icons.error_rounded;
+        break;
+    }
+
+    final bottomMargin = AppSize.navClearance(context);
 
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -20,53 +40,34 @@ class AppSnackbar {
           duration: duration ?? const Duration(seconds: 2),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          margin: const EdgeInsets.all(20),
+          margin: EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, bottomMargin),
           padding: EdgeInsets.zero,
           content: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.lg,
+              vertical: AppSpace.md,
+            ),
             decoration: BoxDecoration(
-              color: AppColors.darkSurfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: config.color.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: config.color.withValues(alpha: 0.15),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                ),
-              ],
+              color: palette.surfaceRaised,
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(color: palette.border, width: 1),
+              boxShadow: palette.shadow,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(config.icon, size: 20, color: config.color),
-                const SizedBox(width: 8),
-                if (message.length < 40)
-                  Text(
+                Icon(icon, size: AppIcon.md, color: iconColor),
+                const SizedBox(width: AppSpace.sm),
+                Expanded(
+                  child: Text(
                     message,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      fontFamily: 'Cairo',
+                    style: textTheme.bodySmall.copyWith(
+                      color: palette.text,
+                      fontWeight: FontWeight.w600,
                     ),
-                  )
-                else
-                  Expanded(
-                    child: Text(
-                      message,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        fontFamily: 'Cairo',
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
               ],
             ),
           ),
@@ -82,28 +83,13 @@ class AppSnackbar {
 
   static void error(BuildContext context, String message) =>
       show(context, message: message, type: AppSnackbarType.error);
-}
 
-class _SnackbarConfig {
-  final IconData icon;
-  final Color color;
+  static void showSuccess(BuildContext context, String message) =>
+      success(context, message);
 
-  _SnackbarConfig(this.icon, this.color);
+  static void showError(BuildContext context, String message) =>
+      error(context, message);
 
-  factory _SnackbarConfig.fromType(AppSnackbarType type) {
-    switch (type) {
-      case AppSnackbarType.success:
-        return _SnackbarConfig(
-          Icons.check_circle_rounded,
-          AppColors.darkIslamicGreen,
-        );
-      case AppSnackbarType.error:
-        return _SnackbarConfig(
-          Icons.error_outline,
-          const Color(0xFFE57373),
-        );
-      case AppSnackbarType.info:
-        return _SnackbarConfig(Icons.info_outline, Colors.white);
-    }
-  }
+  static void showInfo(BuildContext context, String message) =>
+      info(context, message);
 }
