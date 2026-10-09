@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/app.dart';
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_card.dart';
 
 class ThemeOption extends StatelessWidget {
   final IconData icon;
@@ -21,70 +22,63 @@ class ThemeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? context.goldColor.withValues(alpha: 0.12)
-              : context.surfaceSecondaryColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? context.goldColor
-                : context.outlineColor.withValues(alpha: 0.2),
-            width: isSelected ? 1.5 : 1,
+      padding: const EdgeInsets.all(AppSpace.lg),
+      color: isSelected ? palette.goldSoft : palette.surface,
+      border: Border.all(
+        color: isSelected ? palette.gold : palette.border,
+        width: isSelected ? 1.5 : 1,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? palette.gold.withValues(alpha: 0.2)
+                  : palette.surfaceMuted,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? palette.gold : palette.textMuted,
+              size: AppIcon.md,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? context.goldColor.withValues(alpha: 0.2)
-                    : context.surfaceElevatedColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: isSelected
-                    ? context.goldColor
-                    : context.textSecondaryColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: context.textPrimaryColor,
-                    ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: textTheme.label.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.text,
                   ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 12,
-                      color: context.textSecondaryColor,
-                    ),
+                ),
+                Text(
+                  subtitle,
+                  style: textTheme.caption.copyWith(
+                    color: palette.textMuted,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            if (isSelected)
-              Icon(Icons.check_circle_rounded, color: context.goldColor, size: 24),
-          ],
-        ),
+          ),
+          if (isSelected)
+            Icon(
+              Icons.check_circle_rounded,
+              color: palette.gold,
+              size: AppIcon.lg,
+            ),
+        ],
       ),
     );
   }
@@ -94,11 +88,12 @@ class ThemeSelectorSheet extends StatelessWidget {
   const ThemeSelectorSheet({super.key});
 
   static Future<void> show(BuildContext context) {
+    final palette = context.palette;
     return showModalBottomSheet<void>(
       context: context,
-      backgroundColor: context.surfaceContainer,
+      backgroundColor: palette.surfaceRaised,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) => const ThemeSelectorSheet(),
     );
@@ -106,34 +101,35 @@ class ThemeSelectorSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpace.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
-                width: 42,
+                width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: context.outlineColor.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: palette.border,
+                  borderRadius: AppRadius.pillRadius,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
             Text(
               'اختر المظهر',
-              style: TextStyle(
-                fontSize: 18,
+              style: textTheme.titleSmall.copyWith(
                 fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
-                fontFamily: 'Cairo',
+                color: palette.text,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             ThemeOption(
               icon: Icons.brightness_auto_rounded,
               title: 'تلقائي',
@@ -145,7 +141,7 @@ class ThemeSelectorSheet extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.sm),
             ThemeOption(
               icon: Icons.light_mode_rounded,
               title: 'الوضع الفاتح',
@@ -157,7 +153,7 @@ class ThemeSelectorSheet extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.sm),
             ThemeOption(
               icon: Icons.dark_mode_rounded,
               title: 'الوضع الداكن',
@@ -169,7 +165,7 @@ class ThemeSelectorSheet extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
           ],
         ),
       ),
