@@ -28,7 +28,8 @@ import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
 import '../../quran/presentation/quran_page.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
+import '../../../shared/widgets/section_header.dart';
 import '../data/home_state_controller.dart';
 
 class HomePage extends StatefulWidget {
@@ -243,18 +244,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-      ),
-    );
+    final overlay = Theme.of(context).appBarTheme.systemOverlayStyle;
+    if (overlay != null) {
+      SystemChrome.setSystemUIOverlayStyle(overlay);
+    }
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
-      // Drawer removed as moved to More tab
+      backgroundColor: context.palette.bg,
       body: SafeArea(
         child: ListenableBuilder(
           listenable: _stateController,
@@ -268,12 +265,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   parent: AlwaysScrollableScrollPhysics(),
                 ),
                 slivers: [
-                  // App bar (Cleaner, no border)
+                  // App bar
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24, // increased side padding
-                        vertical: 16,
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                        vertical: AppSpace.lg,
                       ),
                       child: HomeHeader(
                         city: _prayerDay?.city ?? 'مكة المكرمة',
@@ -282,58 +279,65 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.sm),
+                  ),
 
                   // Hero card (Prayer Time)
                   SliverToBoxAdapter(
                     child: AnimatedOpacity(
                       opacity: weights['prayer'] ?? 1.0,
-                      duration: const Duration(milliseconds: 500),
+                      duration: AppMotion.slow,
                       child: AnimatedScale(
                         scale: 0.95 + ((weights['prayer'] ?? 1.0) * 0.05),
-                        duration: const Duration(milliseconds: 500),
-                        child: _buildHeroGreetingCard(),
+                        duration: AppMotion.slow,
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xl,
+                          ),
+                          child: _buildHeroGreetingCard(),
+                        ),
                       ),
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.lg),
+                  ),
 
                   // Daily Motivation with temporal framing
                   if (_dailyQuote != null) ...[
                     SliverToBoxAdapter(
                       child: AnimatedOpacity(
                         opacity: weights['quote'] ?? 1.0,
-                        duration: const Duration(milliseconds: 500),
+                        duration: AppMotion.slow,
                         child: AnimatedScale(
                           scale: 0.95 + ((weights['quote'] ?? 1.0) * 0.05),
-                          duration: const Duration(milliseconds: 500),
+                          duration: AppMotion.slow,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xl,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Temporal framing: "Today's reflection"
                                 Row(
                                   children: [
                                     Icon(
                                       Icons.auto_awesome_outlined,
-                                      size: 16,
-                                      color: context.textTertiaryColor,
+                                      size: AppIcon.sm,
+                                      color: context.palette.textMuted,
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: AppSpace.xs),
                                     Text(
                                       'تأمل اليوم',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.textSecondaryColor,
-                                        fontFamily: 'Cairo',
+                                      style: context.text.label.copyWith(
+                                        color: context.palette.textMuted,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: AppSpace.sm),
                                 DailyMotivationCard(
                                   quote: _dailyQuote!,
                                   onReload: _cycleQuote,
@@ -344,58 +348,30 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: AppSpace.xl),
+                    ),
                   ],
 
-                  // Continue Learning with personal presence
+                  // Continue Learning
                   SliverToBoxAdapter(
                     child: AnimatedOpacity(
                       opacity: weights['learning'] ?? 1.0,
-                      duration: const Duration(milliseconds: 500),
+                      duration: AppMotion.slow,
                       child: AnimatedScale(
                         scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
-                        duration: const Duration(milliseconds: 500),
+                        duration: AppMotion.slow,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xl,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 4,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(2),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          context.primaryColor,
-                                          context.goldColor,
-                                        ],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: context.primaryColor.withValues(alpha: 0.5),
-                                          blurRadius: 6,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'رحلة التعلم',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: context.textPrimaryColor,
-                                    ),
-                                  ),
-                                ],
+                              const SectionHeader(
+                                title: 'رحلة التعلم',
+                                padding: EdgeInsetsDirectional.only(bottom: AppSpace.xs),
                               ),
-                              const SizedBox(height: 6),
-                              // Personal presence acknowledgment (subtle, not gamified)
                               _buildPresenceMessage(context),
                             ],
                           ),
@@ -403,31 +379,37 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.md),
+                  ),
                   SliverToBoxAdapter(
                     child: AnimatedOpacity(
                       opacity: weights['learning'] ?? 1.0,
-                      duration: const Duration(milliseconds: 500),
+                      duration: AppMotion.slow,
                       child: AnimatedScale(
                         scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
-                        duration: const Duration(milliseconds: 500),
+                        duration: AppMotion.slow,
                         child: _buildContinueSection(context),
                       ),
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
 
                   // Quick actions (Other Features)
                   SliverToBoxAdapter(
                     child: AnimatedOpacity(
                       opacity: weights['actions'] ?? 1.0,
-                      duration: const Duration(milliseconds: 500),
+                      duration: AppMotion.slow,
                       child: AnimatedScale(
                         scale: 0.95 + ((weights['actions'] ?? 1.0) * 0.05),
-                        duration: const Duration(milliseconds: 500),
+                        duration: AppMotion.slow,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xl,
+                          ),
                           child: HomeQuickActions(
                             onOpenQuran: () => _openQuran(context),
                             onOpenIlm: () => _openIlm(context),
@@ -439,7 +421,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
 
                   SliverToBoxAdapter(
                     child: SizedBox(height: AppSize.navClearance(context)),
@@ -550,11 +534,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     return Text(
       message,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: context.textTertiaryColor,
-        fontFamily: 'Cairo',
+      style: context.text.caption.copyWith(
+        color: context.palette.textSubtle,
       ),
     );
   }
@@ -562,14 +543,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget _buildContinueSection(BuildContext context) {
     if (_isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
         child: LearningPulseCard(isLoading: true, data: null),
       );
     }
 
     final data = _continueData;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
       child: LearningPulseCard(
         isLoading: false,
         data: data,

@@ -89,3 +89,23 @@
   - Raw GestureDetector: 14 → 13 (-1)
 - **Open Issues:** None.
 
+---
+
+### Phase 4.1 — Home Screen
+- **Status:** Complete
+- **Changes:** Extracted widgets prior to restyling (`home_header.dart`, `continue_learning_card.dart`, `home_quick_actions.dart`). Restyled `home_page.dart`, `home_hero_card.dart`, `quick_action_button.dart`, and `DailyMotivationCard` to Calm Scholar tokens. Hero card uses `AppCard` in `surface`, countdown in `text` colour (not gold), and 8px gold dot for current prayer. Quick actions use `AppCard` + `IconBadge` + `label` without gradients or per-feature colours. Continue learning card uses `AppProgress`. Daily motivation card uses `sacred` style on `surfaceMuted`. Fixed text-scale 1.5 overflow resilience. Added golden tests suite in `test/golden/home_golden_test.dart` (all passed and visually inspected). Lint violations in all home presentation files reached **0**.
+- **Lint Numbers:**
+  - Raw Color(0x...) literals: 83 → 65 (-18)
+  - Raw fontSize: <n>: 184 → 155 (-29)
+  - Raw fontFamily: '...': 176 → 151 (-25)
+  - Raw BorderRadius.circular(<n>): 164 → 143 (-21)
+  - Raw EdgeInsets with numbers: 131 → 110 (-21)
+  - Text smaller than 12: 29 → 24 (-5)
+  - Colors.white/black: 130 → 107 (-23)
+  - isDark ? ... : ...: 144 → 102 (-42)
+  - Magic bottom spacer: 0 → 0 (0)
+  - Hand-written BoxShadow: 57 → 43 (-14)
+  - Raw GestureDetector: 13 → 10 (-3)
+- **Open Issues:** None.
+
+

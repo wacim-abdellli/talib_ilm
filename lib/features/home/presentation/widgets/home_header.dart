@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 
-import '../../../../app/theme/theme_colors.dart';
+import '../../../../app/theme/app_palette.dart';
 
 class HomeHeader extends StatelessWidget {
   final String city;
@@ -32,10 +32,8 @@ class HomeHeader extends StatelessWidget {
             // Gregorian Date
             Text(
               '${date.day}/${date.month}/${date.year}',
-              style: TextStyle(
-                fontSize: 14,
-                color: context.textPrimaryColor,
-                fontFamily: 'Cairo',
+              style: context.text.bodySmall.copyWith(
+                color: context.palette.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -43,16 +41,15 @@ class HomeHeader extends StatelessWidget {
             // Hijri Date - Spiritual Context
             if (hijriStr.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: context.islamicGreenMutedColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  color: context.palette.primarySoft,
+                  borderRadius: AppRadius.pillRadius,
                   border: Border.all(
-                    color: context.islamicGreenLightColor.withValues(alpha: 0.3),
-                    width: 1,
+                    color: context.palette.border,
                   ),
                 ),
                 child: Row(
@@ -60,17 +57,15 @@ class HomeHeader extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.calendar_today,
-                      size: 12,
-                      color: context.islamicGreenLightColor,
+                      size: AppIcon.sm,
+                      color: context.palette.primary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpace.xs),
                     Text(
                       hijriStr,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: context.text.caption.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: context.textPrimaryColor,
-                        fontFamily: 'Cairo',
+                        color: context.palette.onPrimarySoft,
                       ),
                     ),
                   ],
@@ -79,7 +74,7 @@ class HomeHeader extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
 
         // Row 2: Logo + Greeting + Location
         Row(
@@ -87,41 +82,39 @@ class HomeHeader extends StatelessWidget {
             // App Logo
             Image.asset(
               'assets/images/logo.png',
-              width: 52,
-              height: 52,
+              width: AppSize.buttonH,
+              height: AppSize.buttonH,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
 
             // Greeting
-            Text(
-              greeting,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.textPrimaryColor,
-                fontFamily: 'Cairo',
+            Expanded(
+              child: Text(
+                greeting,
+                style: context.text.titleSmall.copyWith(
+                  color: context.palette.text,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
 
-            const Spacer(),
-
-            // Location with enhanced icon
+            // Location
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.location_on_rounded,
-                  size: 16,
-                  color: context.islamicGreenLightColor,
+                  size: AppIcon.sm,
+                  color: context.palette.primary,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpace.xs),
                 Text(
                   city,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: context.text.bodySmall.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: context.textSecondaryColor,
-                    fontFamily: 'Cairo',
+                    color: context.palette.textMuted,
                   ),
                 ),
               ],

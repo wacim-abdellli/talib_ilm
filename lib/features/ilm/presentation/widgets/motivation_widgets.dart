@@ -8,6 +8,8 @@ import '../../data/services/motivation_service.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_tag.dart';
 /// Displays daily motivational quote from Quran/Hadith
 class DailyMotivationCard extends StatefulWidget {
   final DailyQuote quote;
@@ -91,80 +93,52 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
   Widget build(BuildContext context) {
     // Resolve colors based on type
     Color typeColor;
-    IconData typeIcon;
     String typeLabel;
 
     switch (widget.quote.type) {
       case QuoteType.quran:
-        typeColor = context.islamicGreenColor;
-        typeIcon = Icons.auto_stories_outlined;
+        typeColor = context.palette.primary;
         typeLabel = 'آية قرآنية';
         break;
       case QuoteType.hadith:
-        typeColor = context.goldColor;
-        typeIcon = Icons.menu_book_outlined;
+        typeColor = context.palette.gold;
         typeLabel = 'حديث نبوي';
         break;
       case QuoteType.scholar:
-        typeColor = context.celestialBlueColor;
-        typeIcon = Icons.lightbulb_outline;
+        typeColor = context.palette.textMuted;
         typeLabel = 'حكمة';
         break;
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      margin: const EdgeInsetsDirectional.symmetric(horizontal: 0, vertical: AppSpace.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with Refresh Action
           Padding(
-            padding: const EdgeInsets.only(bottom: 12, right: 4),
+            padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm, end: AppSpace.xs),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Quote Type Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: typeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(typeIcon, size: 16, color: typeColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        typeLabel,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: typeColor,
-                          fontFamily: 'Cairo',
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                AppTag(
+                  label: typeLabel,
+                  fg: typeColor,
+                  bg: typeColor.withValues(alpha: 0.12),
                 ),
 
                 // Refresh Button
                 if (widget.onReload != null)
-                  IconButton(
-                    icon: Icon(
-                      Icons.refresh_rounded,
-                      size: 20,
-                      color: context.textTertiaryColor,
-                    ),
+                  AppIconButton(
+                    icon: Icons.refresh_rounded,
+                    tooltip: 'تحديث',
+                    iconSize: AppIcon.md,
+                    color: context.palette.textMuted,
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       widget.onReload!();
                     },
-                    tooltip: 'تحديث',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
                   ),
               ],
             ),
@@ -180,7 +154,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
               }
             },
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
+              duration: AppMotion.base,
               transitionBuilder: (child, animation) {
                 final offsetAnimation =
                     Tween<Offset>(
@@ -199,23 +173,13 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
               },
               child: Container(
                 key: ValueKey(widget.quote.text),
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
                 decoration: BoxDecoration(
-                  color: context.surfaceContainer,
-                  borderRadius: BorderRadius.circular(22),
+                  color: context.palette.surfaceMuted,
+                  borderRadius: AppRadius.lgRadius,
                   border: Border.all(
-                    color: typeColor.withValues(alpha: context.isDark ? 0.22 : 0.28),
-                    width: 1,
+                    color: context.palette.border,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: context.isDark ? 0.25 : 0.05,
-                      ),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,71 +187,51 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                     // Quote Text
                     SelectableText(
                       widget.quote.text,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: context.textPrimaryColor,
-                        fontFamily: 'Cairo',
-                        fontWeight: FontWeight.w400,
-                        height: 1.9, // Relaxed reading
+                      style: context.text.sacred.copyWith(
+                        color: context.palette.text,
                       ),
                       textAlign: TextAlign.right,
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpace.lg),
 
                     // Footer: Source and Actions
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Source
                         Expanded(
                           child: Text(
                             '— ${widget.quote.source}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.textSecondaryColor,
-                              fontFamily: 'Cairo',
-                              fontWeight: FontWeight.w400,
+                            style: context.text.bodySmall.copyWith(
+                              color: context.palette.textMuted,
                             ),
                           ),
                         ),
 
                         // Actions
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                _isFavorite
-                                    ? Icons.bookmark
-                                    : Icons.bookmark_border,
-                                size: 20,
-                                color: _isFavorite
-                                    ? context.goldColor
-                                    : context.textTertiaryColor,
-                              ),
-                              onPressed: _toggleFavorite,
+                            AppIconButton(
+                              icon: _isFavorite
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
                               tooltip: 'حفظ',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 32,
-                                minHeight: 32,
-                              ),
+                              iconSize: AppIcon.md,
+                              color: _isFavorite
+                                  ? context.palette.gold
+                                  : context.palette.textSubtle,
+                              onPressed: _toggleFavorite,
                             ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(
-                                Icons.copy_rounded,
-                                size: 20,
-                                color: context.textTertiaryColor,
-                              ),
-                              onPressed: _copyQuote,
+                            const SizedBox(width: AppSpace.xs),
+                            AppIconButton(
+                              icon: Icons.copy_rounded,
                               tooltip: 'نسخ',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 32,
-                                minHeight: 32,
-                              ),
+                              iconSize: AppIcon.md,
+                              color: context.palette.textSubtle,
+                              onPressed: _copyQuote,
                             ),
                           ],
                         ),

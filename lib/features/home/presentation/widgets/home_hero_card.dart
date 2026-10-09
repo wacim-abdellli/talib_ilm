@@ -1,19 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' as intl;
+
 import '../../../../app/constants/app_strings.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
-/// HomeHeroCard - Celestial Prayer Time Centerpiece
+import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/icon_badge.dart';
+
+/// HomeHeroCard - Calm Scholar Prayer Time Centerpiece
 class HomeHeroCard extends StatefulWidget {
   final String nextPrayerName;
   final DateTime nextPrayerTime;
   final bool isEstimated;
   final Map<String, DateTime>? allPrayers;
   final VoidCallback? onTap;
+
   const HomeHeroCard({
     super.key,
     required this.nextPrayerName,
@@ -22,13 +24,14 @@ class HomeHeroCard extends StatefulWidget {
     this.allPrayers,
     this.onTap,
   });
+
   @override
   State<HomeHeroCard> createState() => _HomeHeroCardState();
 }
+
 class _HomeHeroCardState extends State<HomeHeroCard> {
   late Timer _timer;
   late Duration _timeLeft;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -72,43 +75,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     super.dispose();
   }
 
-  void _setPressed(bool value) {
-    if (_isPressed != value) {
-      if (value) HapticFeedback.lightImpact();
-      setState(() => _isPressed = value);
-    }
-  }
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
-    final isVeryNear = _timeLeft.inMinutes < 15;
-    // Spiritual Serenity celestial gradients
-    final gradient = isDark
-        ? const LinearGradient(
-            colors: [
-              Color(0xFF16202A),
-              Color(0xFF0F171F),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
-        : const LinearGradient(
-            colors: [
-              Colors.white,
-              Color(0xFFF1F5F9),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          );
-    final borderColor = isVeryNear
-        ? AppColors.gold.withValues(alpha: 0.85)
-        : (isDark
-            ? AppColors.gold.withValues(alpha: 0.3)
-            : context.outlineVariantColor);
-    final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.5)
-        : AppColors.primaryDark.withValues(alpha: 0.08);
-    // Time formatting
     final hours = _timeLeft.inHours.toString().padLeft(2, '0');
     final minutes = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (_timeLeft.inSeconds % 60).toString().padLeft(2, '0');
@@ -118,289 +86,231 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     ).format(widget.nextPrayerTime);
     final nearnessLabel = _getNearnessLabel();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      child: Semantics(
-        label: 'الصلاة القادمة: ${widget.nextPrayerName}',
-        hint: 'المتبقي ${_getReadableDuration()}',
-        button: true,
-        onTapHint: 'اضغط لعرض تفاصيل الصلاة',
-        child: PressableScale(
-          pressedScale: 0.985,
-          child: GestureDetector(
-            onTap: widget.onTap,
-            onTapDown: (_) => _setPressed(true),
-            onTapUp: (_) => _setPressed(false),
-            onTapCancel: () => _setPressed(false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(
-                  color: borderColor,
-                  width: isVeryNear ? 1.5 : 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: shadowColor,
-                    blurRadius: isVeryNear ? 24 : 16,
-                    offset: const Offset(0, 6),
-                  ),
-                  if (isDark)
-                    BoxShadow(
-                      color: (isVeryNear ? AppColors.gold : AppColors.darkPrimary)
-                          .withValues(alpha: isVeryNear ? 0.2 : 0.08),
-                      blurRadius: 32,
-                      offset: const Offset(0, 4),
+    return Semantics(
+      label: 'الصلاة القادمة: ${widget.nextPrayerName}',
+      hint: 'المتبقي ${_getReadableDuration()}',
+      button: true,
+      onTapHint: 'اضغط لعرض تفاصيل الصلاة',
+      child: AppCard(
+        onTap: widget.onTap,
+        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: Status Chip + Mosque Medallion
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Status Chip
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
                     ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  children: [
-                    // Top Row: Status Chip + Mosque Medallion
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    decoration: BoxDecoration(
+                      color: context.palette.primarySoft,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: context.palette.border,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Status Chip
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isVeryNear
-                                ? AppColors.gold.withValues(alpha: isDark ? 0.25 : 0.18)
-                                : AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isVeryNear
-                                  ? AppColors.gold.withValues(alpha: 0.4)
-                                  : AppColors.primary.withValues(alpha: 0.25),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isVeryNear
-                                      ? AppColors.gold
-                                      : AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              Text(
-                                nearnessLabel,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isVeryNear
-                                      ? AppColors.gold
-                                      : (isDark ? AppColors.primaryLight : AppColors.primaryDark),
-                                  fontFamily: 'Cairo',
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Sacred Mosque Medallion - Radiant Gold Halo
-                        Container(
-                          width: 46,
-                          height: 46,
+                          width: 8,
+                          height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: isDark
-                                  ? [
-                                      AppColors.gold.withValues(alpha: 0.35),
-                                      AppColors.goldDark.withValues(alpha: 0.15),
-                                    ]
-                                  : [
-                                      AppColors.goldLight,
-                                      AppColors.gold.withValues(alpha: 0.2),
-                                    ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(
-                              color: AppColors.gold.withValues(alpha: isDark ? 0.6 : 0.4),
-                              width: 1.4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.gold.withValues(alpha: isDark ? 0.3 : 0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            color: _timeLeft.inMinutes < 15
+                                ? context.palette.gold
+                                : context.palette.primary,
                           ),
-                          child: Icon(
-                            Icons.mosque_rounded,
-                            size: 23,
-                            color: isDark ? AppColors.divineGold : AppColors.goldDark,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Flexible(
+                          child: Text(
+                            nearnessLabel,
+                            style: context.text.caption.copyWith(
+                              color: context.palette.onPrimarySoft,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                // Icon Badge
+                const IconBadge(
+                  icon: Icons.mosque_rounded,
+                ),
+              ],
+            ),
 
-                    const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.lg),
 
-                    // Main Middle Row: Countdown & Prayer Name
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Countdown Display
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'الوقت المتبقي',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: context.textTertiaryColor,
-                                  fontFamily: 'Cairo',
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  _TimeDigitBadge(value: hours, label: 'ساعة', isDark: isDark),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    ':',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.gold,
-                                      height: 1,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  _TimeDigitBadge(value: minutes, label: 'دقيقة', isDark: isDark),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    ':',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.gold,
-                                      height: 1,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  _TimeDigitBadge(value: seconds, label: 'ثانية', isDark: isDark),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Next Prayer Name & Absolute Time
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              widget.nextPrayerName,
-                              style: TextStyle(
-                                fontSize: 26,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
-                                fontFamily: 'Cairo',
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: isDark ? 0.16 : 0.08,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.access_time_rounded,
-                                    size: 13,
-                                    color: isDark
-                                        ? AppColors.primaryLight
-                                        : AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    prayerTimeDisplay,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: isDark
-                                          ? AppColors.primaryLight
-                                          : AppColors.primaryDark,
-                                      fontFamily: 'Cairo',
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    // Bottom: 5 Daily Prayers Timeline Strip
-                    const SizedBox(height: 20),
+            // Next Prayer Name & Time
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                      width: 8,
+                      height: 8,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0D131A)
-                            : context.surfaceLow,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : context.outlineColor.withValues(alpha: 0.1),
-                        ),
+                        shape: BoxShape.circle,
+                        color: context.palette.gold,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildTimelinePrayer(AppStrings.prayerFajr, Icons.nightlight_round, isDark),
-                          _buildTimelinePrayer(AppStrings.prayerDhuhr, Icons.wb_sunny_rounded, isDark),
-                          _buildTimelinePrayer(AppStrings.prayerAsr, Icons.wb_sunny_outlined, isDark),
-                          _buildTimelinePrayer(AppStrings.prayerMaghrib, Icons.wb_twilight_rounded, isDark),
-                          _buildTimelinePrayer(AppStrings.prayerIsha, Icons.bedtime_rounded, isDark),
-                        ],
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Text(
+                      widget.nextPrayerName,
+                      style: context.text.title.copyWith(
+                        color: context.palette.text,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.sm,
+                    vertical: AppSpace.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.palette.surfaceMuted,
+                    borderRadius: AppRadius.smRadius,
+                    border: Border.all(
+                      color: context.palette.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: AppIcon.sm,
+                        color: context.palette.textMuted,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Text(
+                        prayerTimeDisplay,
+                        style: context.text.caption.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: context.palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpace.md),
+
+            // Countdown in display/text colour (not gold)
+            Text(
+              'الوقت المتبقي',
+              style: context.text.caption.copyWith(
+                color: context.palette.textSubtle,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _TimeDigitBadge(value: hours, label: 'ساعة'),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                    ),
+                    child: Text(
+                      ':',
+                      style: context.text.title.copyWith(
+                        color: context.palette.textMuted,
+                      ),
+                    ),
+                  ),
+                  _TimeDigitBadge(value: minutes, label: 'دقيقة'),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                    ),
+                    child: Text(
+                      ':',
+                      style: context.text.title.copyWith(
+                        color: context.palette.textMuted,
+                      ),
+                    ),
+                  ),
+                  _TimeDigitBadge(value: seconds, label: 'ثانية'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpace.lg),
+
+            // 5 Daily Prayers Timeline Strip
+            Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                vertical: AppSpace.sm,
+                horizontal: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: context.palette.surfaceMuted,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(
+                  color: context.palette.border,
+                ),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                  _buildTimelinePrayer(
+                    AppStrings.prayerFajr,
+                    Icons.nightlight_round,
+                  ),
+                  _buildTimelinePrayer(
+                    AppStrings.prayerDhuhr,
+                    Icons.wb_sunny_rounded,
+                  ),
+                  _buildTimelinePrayer(
+                    AppStrings.prayerAsr,
+                    Icons.wb_sunny_outlined,
+                  ),
+                  _buildTimelinePrayer(
+                    AppStrings.prayerMaghrib,
+                    Icons.wb_twilight_rounded,
+                  ),
+                  _buildTimelinePrayer(
+                    AppStrings.prayerIsha,
+                    Icons.bedtime_rounded,
+                  ),
+                ],
               ),
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildTimelinePrayer(String prayerName, IconData icon, bool isDark) {
+  Widget _buildTimelinePrayer(String prayerName, IconData icon) {
     final isCurrent = widget.nextPrayerName == prayerName;
     final prayerTime = widget.allPrayers?[prayerName];
     final timeStr = prayerTime != null
@@ -408,63 +318,64 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         : '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.xs,
+      ),
       decoration: isCurrent
           ? BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.2),
-                  AppColors.goldDark.withValues(alpha: isDark ? 0.18 : 0.1),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(12),
+              color: context.palette.primarySoft,
+              borderRadius: AppRadius.smRadius,
               border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.65),
-                width: 1.2,
+                color: context.palette.border,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.gold.withValues(alpha: isDark ? 0.3 : 0.12),
-                  blurRadius: 10,
-                ),
-              ],
             )
           : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: isCurrent
-                ? AppColors.divineGold
-                : (isDark ? const Color(0xFF94A3B8) : context.textTertiaryColor),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isCurrent) ...[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: context.palette.gold,
+                  ),
+                ),
+                const SizedBox(width: AppSpace.xs),
+              ],
+              Icon(
+                icon,
+                size: AppIcon.sm,
+                color: isCurrent
+                    ? context.palette.primary
+                    : context.palette.textSubtle,
+              ),
+            ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: AppSpace.xs),
           Text(
             prayerName,
-            style: TextStyle(
-              fontSize: 11,
-              fontFamily: 'Cairo',
-              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+            style: context.text.caption.copyWith(
+              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
               color: isCurrent
-                  ? (isDark ? Colors.white : AppColors.goldDark)
-                  : (isDark ? const Color(0xFFCBD5E1) : context.textSecondaryColor),
+                  ? context.palette.text
+                  : context.palette.textMuted,
             ),
           ),
           if (timeStr.isNotEmpty) ...[
-            const SizedBox(height: 1),
+            const SizedBox(height: AppSpace.xs),
             Text(
               timeStr,
-              style: TextStyle(
-                fontSize: 9,
-                fontFamily: 'Cairo',
-                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+              style: context.text.caption.copyWith(
+                fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                 color: isCurrent
-                    ? (isDark ? AppColors.goldHighlight : AppColors.goldDark)
-                    : (isDark ? const Color(0xFF64748B) : context.textTertiaryColor),
+                    ? context.palette.textMuted
+                    : context.palette.textSubtle,
               ),
             ),
           ],
@@ -503,12 +414,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 class _TimeDigitBadge extends StatelessWidget {
   final String value;
   final String label;
-  final bool isDark;
 
   const _TimeDigitBadge({
     required this.value,
     required this.label,
-    required this.isDark,
   });
 
   @override
@@ -517,45 +426,30 @@ class _TimeDigitBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.xs,
+          ),
           decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF16212D)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            color: context.palette.surfaceMuted,
+            borderRadius: AppRadius.smRadius,
             border: Border.all(
-              color: isDark
-                  ? AppColors.gold.withValues(alpha: 0.25)
-                  : context.outlineVariantColor,
-              width: 1,
+              color: context.palette.border,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'Cairo',
-              color: isDark ? const Color(0xFFF8FAFC) : context.textPrimaryColor,
-              height: 1.1,
+            style: context.text.titleSmall.copyWith(
+              fontWeight: FontWeight.w700,
+              color: context.palette.text,
             ),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: AppSpace.xs),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10,
-            fontFamily: 'Cairo',
-            fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFF94A3B8) : context.textTertiaryColor,
+          style: context.text.caption.copyWith(
+            color: context.palette.textSubtle,
           ),
         ),
       ],

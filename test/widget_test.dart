@@ -7,5 +7,6 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const TalibIlmApp());
     expect(find.byType(TalibIlmApp), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
   });
 }
