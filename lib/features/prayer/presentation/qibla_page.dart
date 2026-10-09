@@ -1,4 +1,3 @@
-
 import 'package:adhan/adhan.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +6,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/constants/app_strings.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/theme_colors.dart';
+import '../../../app/theme/app_palette.dart';
 import '../../../core/services/location_service.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import 'widgets/astrolabe_compass.dart';
 
 class QiblaPage extends StatefulWidget {
@@ -83,49 +83,23 @@ class _QiblaPageState extends State<QiblaPage>
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     if (!_hasPermission) {
-      return _buildPermissionView();
+      return _buildPermissionView(palette, textTheme);
     }
 
-    final gold = context.goldColor;
+    final gold = palette.gold;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text(
-          AppStrings.qiblaTitle,
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Amiri',
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_forward_ios_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      backgroundColor: palette.bg,
+      appBar: const PrimaryAppBar(
+        title: AppStrings.qiblaTitle,
+        showBack: true,
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF102224), // Celestial dark teal
-              Color(0xFF0A1315), // Deep night
-              Color(0xFF050A0B),
-            ],
-          ),
-        ),
+        color: palette.bg,
         child: StreamBuilder<CompassEvent>(
           stream: FlutterCompass.events,
           builder: (context, snapshot) {
@@ -133,7 +107,7 @@ class _QiblaPageState extends State<QiblaPage>
               return Center(
                 child: Text(
                   'خطأ في بوصلة الجهاز: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.white, fontFamily: 'Cairo'),
+                  style: textTheme.body.copyWith(color: palette.text),
                 ),
               );
             }
@@ -147,7 +121,7 @@ class _QiblaPageState extends State<QiblaPage>
             final heading = event?.heading ?? 0;
             final accuracy = event?.accuracy;
 
-            // Check alignment (within 3 degrees)
+            // Check alignment (within 3.5 degrees)
             final qibla = _qiblaDirection ?? 0;
             final diff = ((heading - qibla).abs()) % 360;
             final isFacingQibla = diff < 3.5 || diff > 356.5;
@@ -162,21 +136,21 @@ class _QiblaPageState extends State<QiblaPage>
             return SafeArea(
               child: Column(
                 children: [
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
 
                   // City & Status Pill
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
+                      horizontal: AppSpace.lg,
+                      vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
+                      color: isFacingQibla ? palette.goldSoft : palette.surfaceMuted,
+                      borderRadius: AppRadius.pillRadius,
                       border: Border.all(
                         color: isFacingQibla
                             ? gold
-                            : Colors.white.withValues(alpha: 0.15),
+                            : palette.border,
                       ),
                     ),
                     child: Row(
@@ -184,16 +158,14 @@ class _QiblaPageState extends State<QiblaPage>
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          size: 14,
-                          color: isFacingQibla ? gold : Colors.white70,
+                          size: AppIcon.sm,
+                          color: isFacingQibla ? gold : palette.textMuted,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpace.xs),
                         Text(
                           _currentPosition?.city ?? 'موقعك الحالي',
-                          style: TextStyle(
-                            color: isFacingQibla ? gold : Colors.white70,
-                            fontFamily: 'Cairo',
-                            fontSize: 12,
+                          style: textTheme.caption.copyWith(
+                            color: isFacingQibla ? gold : palette.textMuted,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -208,27 +180,26 @@ class _QiblaPageState extends State<QiblaPage>
                     heading: heading,
                     qiblaDirection: _qiblaDirection,
                     isAligned: isFacingQibla,
-                    gold: gold,
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: AppSpace.xxl),
 
                   // Alignment Banner
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppMotion.base,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                      horizontal: AppSpace.xl,
+                      vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
                       color: isFacingQibla
-                          ? gold.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(20),
+                          ? palette.goldSoft
+                          : palette.surfaceMuted,
+                      borderRadius: AppRadius.pillRadius,
                       border: Border.all(
                         color: isFacingQibla
                             ? gold
-                            : Colors.white.withValues(alpha: 0.12),
+                            : palette.border,
                         width: isFacingQibla ? 1.5 : 1,
                       ),
                     ),
@@ -239,26 +210,24 @@ class _QiblaPageState extends State<QiblaPage>
                           isFacingQibla
                               ? Icons.check_circle_rounded
                               : Icons.navigation_rounded,
-                          color: isFacingQibla ? gold : Colors.white70,
-                          size: 16,
+                          color: isFacingQibla ? gold : palette.textMuted,
+                          size: AppIcon.sm,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpace.sm),
                         Text(
                           isFacingQibla
                               ? 'أنت في اتجاه القبلة تماماً'
                               : 'وجّه هاتفك نحو الكعبة المشرفة',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 13,
+                          style: textTheme.label.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: isFacingQibla ? gold : Colors.white,
+                            color: isFacingQibla ? gold : palette.text,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
 
                   // Degree & Distance
                   Row(
@@ -268,53 +237,45 @@ class _QiblaPageState extends State<QiblaPage>
                         children: [
                           Text(
                             '${_qiblaDirection?.toStringAsFixed(0) ?? "--"}°',
-                            style: TextStyle(
-                              fontSize: 40,
+                            style: textTheme.display.copyWith(
                               fontWeight: FontWeight.w800,
                               color: gold,
-                              fontFamily: 'Cairo',
                               height: 1,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpace.xs),
                           Text(
                             'زاوية القبلة',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.6),
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 32),
+                      const SizedBox(width: AppSpace.xxxl),
                       Container(
                         width: 1,
                         height: 40,
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: palette.border,
                       ),
-                      const SizedBox(width: 32),
+                      const SizedBox(width: AppSpace.xxxl),
                       Column(
                         children: [
                           Text(
                             _distanceToMakkah != null
                                 ? '${_distanceToMakkah!.toStringAsFixed(0)} كم'
                                 : '--',
-                            style: const TextStyle(
-                              fontSize: 32,
+                            style: textTheme.title.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              fontFamily: 'Cairo',
+                              color: palette.text,
                               height: 1,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpace.xs),
                           Text(
                             'المسافة إلى مكة',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.6),
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
                             ),
                           ),
                         ],
@@ -326,24 +287,25 @@ class _QiblaPageState extends State<QiblaPage>
 
                   // Accuracy & Calibration
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.xxl,
+                      vertical: AppSpace.lg,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildAccuracyBadge(accuracy),
+                        _buildAccuracyBadge(context, accuracy),
                         TextButton.icon(
                           onPressed: _checkPermissionsAndStart,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.refresh_rounded,
-                            size: 16,
-                            color: Colors.white70,
+                            size: AppIcon.sm,
+                            color: palette.textMuted,
                           ),
-                          label: const Text(
+                          label: Text(
                             'إعادة المعايرة',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
                             ),
                           ),
                         ),
@@ -359,19 +321,24 @@ class _QiblaPageState extends State<QiblaPage>
     );
   }
 
+  Widget _buildAccuracyBadge(BuildContext context, double? accuracy) {
+    final palette = context.palette;
+    final textTheme = context.text;
 
-
-  Widget _buildAccuracyBadge(double? accuracy) {
     bool isAccurate = true;
     if (accuracy != null && accuracy > 20) {
       isAccurate = false;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.md,
+        vertical: AppSpace.xs,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        color: palette.surfaceMuted,
+        borderRadius: AppRadius.pillRadius,
+        border: Border.all(color: palette.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -380,17 +347,15 @@ class _QiblaPageState extends State<QiblaPage>
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: isAccurate ? AppColors.success : AppColors.warning,
+              color: isAccurate ? palette.success : palette.gold,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Text(
             isAccurate ? 'دقة عالية' : 'دقة منخفضة (حرّك الهاتف)',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontFamily: 'Cairo',
+            style: textTheme.caption.copyWith(
+              color: palette.text,
             ),
           ),
         ],
@@ -398,12 +363,16 @@ class _QiblaPageState extends State<QiblaPage>
     );
   }
 
-  Widget _buildPermissionView() {
+  Widget _buildPermissionView(AppPalette palette, AppTextTheme textTheme) {
     return Scaffold(
-      backgroundColor: const Color(0xFF102224),
+      backgroundColor: palette.bg,
+      appBar: const PrimaryAppBar(
+        title: AppStrings.qiblaTitle,
+        showBack: true,
+      ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSpace.xxxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -412,56 +381,35 @@ class _QiblaPageState extends State<QiblaPage>
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: palette.primarySoft,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.explore_off_rounded,
-                  size: 40,
-                  color: Colors.white,
+                  size: AppIcon.hero,
+                  color: palette.onPrimarySoft,
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              const SizedBox(height: AppSpace.xxl),
+              Text(
                 'تحديد اتجاه القبلة',
-                style: TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 24,
+                style: textTheme.title.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: palette.text,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              const SizedBox(height: AppSpace.sm),
+              Text(
                 'نحتاج إذن الوصول إلى الموقع لحساب الاتجاه الدقيق للقبلة والمسافة إلى مكة المكرمة.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  color: Colors.white70,
-                  fontSize: 14,
+                style: textTheme.body.copyWith(
+                  color: palette.textMuted,
                   height: 1.6,
                 ),
               ),
-              const SizedBox(height: 32),
-              FilledButton(
+              const SizedBox(height: AppSpace.xxxl),
+              AppButton(
+                label: 'منح إذن الموقع',
                 onPressed: _checkPermissionsAndStart,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryLight,
-                  foregroundColor: AppColors.primaryDark,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                child: const Text(
-                  'منح إذن الموقع',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ),
             ],
           ),
@@ -470,5 +418,3 @@ class _QiblaPageState extends State<QiblaPage>
     );
   }
 }
-
-

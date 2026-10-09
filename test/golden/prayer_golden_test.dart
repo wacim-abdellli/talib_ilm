@@ -4,6 +4,7 @@ import 'package:talib_ilm/features/prayer/data/models/prayer_models.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/next_prayer_card.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/prayer_header.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/prayer_time_card.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/astrolabe_compass.dart';
 
 import 'golden_test_helper.dart';
 
@@ -144,6 +145,30 @@ void main() {
         tester: tester,
         widget: widget,
         fileName: 'goldens/prayer_header_dark_1_5',
+        isDark: true,
+        textScale: 1.5,
+      );
+    });
+
+    testWidgets('AstrolabeCompass - light 1.0 and dark 1.5', (tester) async {
+      const widget = AstrolabeCompass(
+        heading: 45,
+        qiblaDirection: 112,
+        isAligned: true,
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/astrolabe_compass_light_1_0',
+        isDark: false,
+        textScale: 1.0,
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/astrolabe_compass_dark_1_5',
         isDark: true,
         textScale: 1.5,
       );

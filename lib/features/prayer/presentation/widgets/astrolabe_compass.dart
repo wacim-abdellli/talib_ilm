@@ -1,22 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../app/theme/app_palette.dart';
 
 class AstrolabeCompass extends StatelessWidget {
   final double heading;
   final double? qiblaDirection;
   final bool isAligned;
-  final Color gold;
 
   const AstrolabeCompass({
     super.key,
     required this.heading,
     required this.qiblaDirection,
     required this.isAligned,
-    required this.gold,
+    Color? gold,
   });
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final gold = palette.gold;
     const dialSize = 310.0;
 
     return Container(
@@ -24,21 +26,7 @@ class AstrolabeCompass extends StatelessWidget {
       height: dialSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: isAligned
-            ? [
-                BoxShadow(
-                  color: gold.withValues(alpha: 0.35),
-                  blurRadius: 36,
-                  spreadRadius: 4,
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
+        boxShadow: palette.shadow,
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -48,8 +36,8 @@ class AstrolabeCompass extends StatelessWidget {
             top: 4,
             child: Icon(
               Icons.arrow_drop_down_rounded,
-              size: 28,
-              color: isAligned ? gold : Colors.white,
+              size: AppIcon.xl,
+              color: isAligned ? gold : palette.text,
             ),
           ),
 
@@ -65,14 +53,14 @@ class AstrolabeCompass extends StatelessWidget {
                   // Astrolabe dial canvas
                   CustomPaint(
                     size: const Size(dialSize, dialSize),
-                    painter: AstrolabeDialPainter(gold: gold),
+                    painter: AstrolabeDialPainter(palette: palette),
                   ),
 
                   // Cardinal points in Cairo bold
-                  _buildCardinalDirection('ش', 0, gold),
-                  _buildCardinalDirection('شر', 90, Colors.white70),
-                  _buildCardinalDirection('ج', 180, Colors.white70),
-                  _buildCardinalDirection('غر', 270, Colors.white70),
+                  _buildCardinalDirection(context, 'ش', 0, gold),
+                  _buildCardinalDirection(context, 'شر', 90, palette.textMuted),
+                  _buildCardinalDirection(context, 'ج', 180, palette.textMuted),
+                  _buildCardinalDirection(context, 'غر', 270, palette.textMuted),
 
                   // Kaaba Target Icon on outer orbit
                   if (qiblaDirection != null)
@@ -92,24 +80,17 @@ class AstrolabeCompass extends StatelessWidget {
                                   shape: BoxShape.circle,
                                   color: isAligned
                                       ? gold
-                                      : const Color(0xFF1E282A),
+                                      : palette.surfaceRaised,
                                   border: Border.all(
                                     color: gold,
                                     width: 1.5,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: gold.withValues(
-                                        alpha: isAligned ? 0.6 : 0.25,
-                                      ),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
+                                  boxShadow: palette.shadow,
                                 ),
                                 child: Icon(
                                   Icons.mosque_rounded,
-                                  size: 22,
-                                  color: isAligned ? Colors.black : gold,
+                                  size: AppIcon.md,
+                                  color: isAligned ? palette.onGold : gold,
                                 ),
                               ),
                             ),
@@ -124,7 +105,7 @@ class AstrolabeCompass extends StatelessWidget {
                       angle: (qiblaDirection!) * (math.pi / 180),
                       child: CustomPaint(
                         size: const Size(dialSize, dialSize),
-                        painter: AstrolabeNeedlePainter(gold: gold),
+                        painter: AstrolabeNeedlePainter(palette: palette),
                       ),
                     ),
                 ],
@@ -136,7 +117,7 @@ class AstrolabeCompass extends StatelessWidget {
     );
   }
 
-  Widget _buildCardinalDirection(String text, double angleDeg, Color color) {
+  Widget _buildCardinalDirection(BuildContext context, String text, double angleDeg, Color color) {
     const radius = 95.0;
     final x = radius * math.sin(angleDeg * (math.pi / 180));
     final y = -radius * math.cos(angleDeg * (math.pi / 180));
@@ -145,11 +126,9 @@ class AstrolabeCompass extends StatelessWidget {
       offset: Offset(x, y),
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+        style: context.text.title.copyWith(
           color: color,
-          fontFamily: 'Cairo',
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -158,17 +137,18 @@ class AstrolabeCompass extends StatelessWidget {
 
 /// Ornate Astrolabe dial painter with celestial double rings and tick marks
 class AstrolabeDialPainter extends CustomPainter {
-  final Color gold;
-  AstrolabeDialPainter({required this.gold});
+  final AppPalette palette;
+  AstrolabeDialPainter({required this.palette});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
+    final gold = palette.gold;
 
     // Background disc
     final discPaint = Paint()
-      ..color = const Color(0xFF0F1A1B).withValues(alpha: 0.85)
+      ..color = palette.surfaceMuted.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius - 4, discPaint);
 
@@ -206,7 +186,7 @@ class AstrolabeDialPainter extends CustomPainter {
       final tickPaint = Paint()
         ..color = isMajor
             ? gold.withValues(alpha: 0.85)
-            : Colors.white.withValues(alpha: isMedium ? 0.4 : 0.2)
+            : palette.border.withValues(alpha: isMedium ? 0.6 : 0.3)
         ..strokeWidth = isMajor ? 1.5 : 1;
 
       canvas.drawLine(p1, p2, tickPaint);
@@ -219,12 +199,13 @@ class AstrolabeDialPainter extends CustomPainter {
 
 /// Dynamic Needle Painter towards Qibla
 class AstrolabeNeedlePainter extends CustomPainter {
-  final Color gold;
-  AstrolabeNeedlePainter({required this.gold});
+  final AppPalette palette;
+  AstrolabeNeedlePainter({required this.palette});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
+    final gold = palette.gold;
 
     final path = Path();
     path.moveTo(center.dx, center.dy - 88); // Needle tip
@@ -233,7 +214,7 @@ class AstrolabeNeedlePainter extends CustomPainter {
     path.close();
 
     // Shadow
-    canvas.drawShadow(path, Colors.black, 4, true);
+    canvas.drawShadow(path, palette.border, 4, true);
 
     // Golden Needle
     final paint = Paint()
@@ -250,7 +231,7 @@ class AstrolabeNeedlePainter extends CustomPainter {
     canvas.drawCircle(
       center,
       6,
-      Paint()..color = const Color(0xFF102224),
+      Paint()..color = palette.bg,
     );
   }
 
