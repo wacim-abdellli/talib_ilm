@@ -436,6 +436,27 @@ FAILED (54 violations)
   - `flutter test`: 39/39 tests passed (all golden tests green, including light 1.0 & dark 1.5 splash tests).
   - `flutter build apk --debug`: Built cleanly.
 
+---
+
+## Warm Gold / Obsidian Theme Harmonization & Single Splash Fix
+- **Status:** Complete
+- **Single Splash Page Fix:**
+  - Removed duplicate OS native splash logo in `flutter_native_splash` (Android/iOS now display seamless solid window background, avoiding the double 2-second logo delay).
+  - `SplashPage` is now the sole entrance screen with the Basmalah with full shakl at the top, glowing emblem, and hadith.
+  - Reduced splash duration to 1400ms (`AppMotion.splash`) with instant tap-to-skip.
+- **Harmonized Warm Gold & Obsidian Palette:**
+  - Evolved `AppPalette` to harmonize the whole application with the royal gold logo:
+    - **Light Mode**: Warm ivory parchment `#FAF8F5`, elevated white surfaces `#FFFFFF`, warm parchment border `#E7E0D3`, ink stone text `#1C1917`, imperial amber gold primary `#8D5B0E`, warm cream primary soft `#FEF3C7`, deep amber brown `#784D09`.
+    - **Dark Mode**: Warm deep obsidian `#0C0A09`, obsidian charcoal surfaces `#171412` / `#211C19`, dark bronze border `#2E2721`, warm ivory text `#FAF8F5`, luminous warm gold primary `#F59E0B`, deep amber soft `#2D2310`, radiant gold `#FDE68A`.
+  - All color pairs verified WCAG AA compliant via `tool/contrast.py` (5.45:1 to 18.64:1).
+  - Soft on eyes for extended study sessions, eliminating cold blue glare.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 regressions).
+  - `flutter test`: 39/39 tests passed (all 39 golden tests re-approved).
+  - `flutter build apk --debug`: Built cleanly in 43.0s.
+
+
 
 
 

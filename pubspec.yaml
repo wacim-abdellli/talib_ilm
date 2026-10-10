@@ -60,15 +60,11 @@ flutter_launcher_icons:
   adaptive_icon_monochrome: "assets/branding/android_monochrome_432.png"
 
 flutter_native_splash:
-  color: "#F7F4EE"
-  color_dark: "#0A0A0C"
-  image: "assets/branding/symbol_on_light.png"
-  image_dark: "assets/branding/symbol_on_dark.png"
+  color: "#FAF8F5"
+  color_dark: "#0C0A09"
   android_12:
-    color: "#F7F4EE"
-    color_dark: "#0A0A0C"
-    image: "assets/branding/symbol_on_light.png"
-    image_dark: "assets/branding/symbol_on_dark.png"
+    color: "#FAF8F5"
+    color_dark: "#0C0A09"
 
 flutter:
   uses-material-design: true

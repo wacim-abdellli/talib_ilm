@@ -62,28 +62,28 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.logoLockup,
   });
 
-  /// Light theme palette
+  /// Light theme palette — Warm Ivory Parchment & Imperial Amber Gold
   static const light = AppPalette(
-    bg: Color(0xFFF8FAFC),
+    bg: Color(0xFFFAF8F5),
     surface: Color(0xFFFFFFFF),
     surfaceRaised: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFF1F5F9),
-    border: Color(0xFFE2E8F0),
-    text: Color(0xFF0F172A),
-    textMuted: Color(0xFF475569),
-    textSubtle: Color(0xFF64748B),
-    primary: Color(0xFF0F766E),
+    surfaceMuted: Color(0xFFF4F0E8),
+    border: Color(0xFFE7E0D3),
+    text: Color(0xFF1C1917),
+    textMuted: Color(0xFF57534E),
+    textSubtle: Color(0xFF78716C),
+    primary: Color(0xFF8D5B0E),
     onPrimary: Color(0xFFFFFFFF),
-    primarySoft: Color(0xFFCCFBF1),
-    onPrimarySoft: Color(0xFF0F766E),
+    primarySoft: Color(0xFFFEF3C7),
+    onPrimarySoft: Color(0xFF784D09),
     gold: Color(0xFFB45309),
-    goldFill: Color(0xFFF59E0B),
+    goldFill: Color(0xFFD97706),
     onGold: Color(0xFF451A03),
     goldSoft: Color(0xFFFEF3C7),
     success: Color(0xFF047857),
     error: Color(0xFFB91C1C),
     errorSoft: Color(0xFFFEE2E2),
-    brandDark: Color(0xFF0A0E13),
+    brandDark: Color(0xFF141210),
     shadow: [
       BoxShadow(
         color: Color(0x0A000000), // 4% black
@@ -96,28 +96,28 @@ class AppPalette extends ThemeExtension<AppPalette> {
     logoLockup: 'assets/branding/lockup_on_light.png',
   );
 
-  /// Dark theme palette
+  /// Dark theme palette — Warm Obsidian & Radiant Luminous Gold
   static const dark = AppPalette(
-    bg: Color(0xFF0A0E13),
-    surface: Color(0xFF12181F),
-    surfaceRaised: Color(0xFF1A232C),
-    surfaceMuted: Color(0xFF0E1318),
-    border: Color(0xFF22303C),
-    text: Color(0xFFF8FAFC),
-    textMuted: Color(0xFF94A3B8),
-    textSubtle: Color(0xFF8A9BB0),
-    primary: Color(0xFF10B981),
-    onPrimary: Color(0xFF022C22),
-    primarySoft: Color(0xFF064E3B),
-    onPrimarySoft: Color(0xFF34D399),
+    bg: Color(0xFF0C0A09),
+    surface: Color(0xFF171412),
+    surfaceRaised: Color(0xFF211C19),
+    surfaceMuted: Color(0xFF13100E),
+    border: Color(0xFF2E2721),
+    text: Color(0xFFFAF8F5),
+    textMuted: Color(0xFFA8A29E),
+    textSubtle: Color(0xFF78716C),
+    primary: Color(0xFFF59E0B),
+    onPrimary: Color(0xFF1C1917),
+    primarySoft: Color(0xFF2D2310),
+    onPrimarySoft: Color(0xFFFDE68A),
     gold: Color(0xFFFBBF24),
     goldFill: Color(0xFFF59E0B),
     onGold: Color(0xFF451A03),
-    goldSoft: Color(0xFF451A03),
+    goldSoft: Color(0xFF2D2310),
     success: Color(0xFF34D399),
     error: Color(0xFFF87171),
     errorSoft: Color(0xFF3B1414),
-    brandDark: Color(0xFF0A0E13),
+    brandDark: Color(0xFF0C0A09),
     shadow: [],
     isDark: true,
     logoSymbol: 'assets/branding/symbol_on_dark.png',
@@ -430,7 +430,7 @@ class AppMotion {
   static const Duration fast = Duration(milliseconds: 120);
   static const Duration base = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 320);
-  static const Duration splash = Duration(milliseconds: 1800);
+  static const Duration splash = Duration(milliseconds: 1400);
 
   static const Curve easeIn = Curves.easeInCubic;
   static const Curve easeOut = Curves.easeOutCubic;
