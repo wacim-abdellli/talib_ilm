@@ -5,7 +5,6 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress.dart';
-import '../../../../shared/widgets/app_tag.dart';
 import '../../data/models/prayer_models.dart';
 
 class NextPrayerCard extends StatelessWidget {
@@ -25,100 +24,161 @@ class NextPrayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final prayerColor = palette.prayer(prayer.prayer.labelAr);
     final countdown =
         countdownText ?? AppStrings.prayerInMinutes(prayer.minutesRemaining);
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpace.xl),
+      padding: EdgeInsets.zero,
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header Row: Next Prayer Badge & Time Pill
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: AppTag(
-                    label: AppStrings.prayerNext,
-                    fg: palette.onPrimarySoft,
-                    bg: palette.primarySoft,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerEnd,
-                child: Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(
-                      color: palette.border,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: AppIcon.sm,
-                        color: palette.textMuted,
+      border: Border.all(
+        color: prayerColor.withValues(alpha: 0.32),
+        width: 1.5,
+      ),
+      child: Container(
+        padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.lgRadius,
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [
+              prayerColor.withValues(alpha: 0.10),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.45],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Row: Next Prayer Badge & Time Pill
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xs,
                       ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        formatPrayerTime12h(prayer.time),
-                        style: context.text.label.copyWith(
-                          color: palette.text,
+                      decoration: BoxDecoration(
+                        color: prayerColor.withValues(alpha: 0.14),
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: prayerColor.withValues(alpha: 0.35),
+                          width: 1,
                         ),
                       ),
-                    ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: prayerColor,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            AppStrings.prayerNext,
+                            style: context.text.caption.copyWith(
+                              color: prayerColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          prayerColor.withValues(alpha: 0.16),
+                          prayerColor.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: prayerColor.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: AppIcon.sm,
+                          color: prayerColor,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          formatPrayerTime12h(prayer.time),
+                          style: context.text.label.copyWith(
+                            color: palette.text,
+                            fontWeight: FontWeight.w800,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.lg),
+
+            // Prayer Title with Accent Color
+            Center(
+              child: Text(
+                'صلاة ${prayer.prayer.labelAr}',
+                style: context.text.sacredLarge.copyWith(
+                  color: palette.text,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+
+            // Countdown text with Tabular Figures
+            Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  countdown,
+                  style: context.text.display.copyWith(
+                    color: prayerColor,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.lg),
-
-          // Prayer Title
-          Center(
-            child: Text(
-              'صلاة ${prayer.prayer.labelAr}',
-              style: context.text.sacredLarge.copyWith(
-                color: palette.text,
-              ),
             ),
-          ),
-          const SizedBox(height: AppSpace.xs),
+            const SizedBox(height: AppSpace.lg),
 
-          // Countdown text
-          Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                countdown,
-                style: context.text.display.copyWith(
-                  color: palette.text,
-                  letterSpacing: 1.5,
-                ),
-              ),
+            // Progress Bar with Prayer Color
+            AppProgress(
+              progress: progress.clamp(0.0, 1.0),
+              color: prayerColor,
             ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-
-          // Progress Bar
-          AppProgress(
-            progress: progress.clamp(0.0, 1.0),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

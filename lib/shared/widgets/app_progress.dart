@@ -3,15 +3,16 @@ import '../../app/theme/app_palette.dart';
 
 class AppProgress extends StatelessWidget {
   final double progress; // 0.0 to 1.0
+  final Color? color;
 
-  const AppProgress({super.key, required this.progress});
+  const AppProgress({super.key, required this.progress, this.color});
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final clamped = progress.clamp(0.0, 1.0);
     final isComplete = clamped >= 1.0;
-    final fillColor = isComplete ? palette.gold : palette.primary;
+    final fillColor = color ?? (isComplete ? palette.gold : palette.primary);
 
     return Container(
       height: 6,

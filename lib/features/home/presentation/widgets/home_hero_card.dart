@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/icon_badge.dart';
 import '../../../prayer/data/models/prayer_models.dart';
 
 /// HomeHeroCard - Calm Scholar Prayer Time Centerpiece
@@ -79,6 +78,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final prayerColor = palette.prayer(widget.nextPrayerName);
 
     final hours = _timeLeft.inHours.toString().padLeft(2, '0');
     final minutes = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
@@ -88,54 +88,78 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     final nearnessLabel = _getNearnessLabel();
 
     return Semantics(
-      label: 'الصلاة القادمة: ${widget.nextPrayerName}',
+      label: 'صلاة ${widget.nextPrayerName}',
       hint: 'المتبقي ${_getReadableDuration()}',
       button: true,
       onTapHint: 'اضغط لعرض تفاصيل الصلاة',
       child: AppCard(
         onTap: widget.onTap,
-        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Top Row: Status Chip + Mosque Medallion
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Status Chip
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.primarySoft,
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: palette.border,
-                      ),
-                    ),
+        color: palette.surfaceRaised,
+        border: Border.all(
+          color: prayerColor.withValues(alpha: 0.32),
+          width: 1.5,
+        ),
+        padding: EdgeInsets.zero,
+        child: Container(
+          padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.lgRadius,
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [
+                prayerColor.withValues(alpha: 0.10),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.45],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Unified Single-Line Header: [Medallion + Prayer Name] on Start, [Adhan Time Jewel] on End
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Start: Prayer Medallion + Large Prayer Name
+                  Expanded(
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Celestial Medallion with Luminous Tint & Border
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _timeLeft.inMinutes < 15
-                                ? palette.gold
-                                : palette.primary,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                prayerColor.withValues(alpha: 0.28),
+                                prayerColor.withValues(alpha: 0.10),
+                              ],
+                            ),
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                              color: prayerColor.withValues(alpha: 0.5),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Icon(
+                            _iconForPrayer(widget.nextPrayerName),
+                            color: prayerColor,
+                            size: AppIcon.lg,
                           ),
                         ),
-                        const SizedBox(width: AppSpace.xs),
-                        Flexible(
+                        const SizedBox(width: AppSpace.md),
+
+                        // Large Prayer Title (Uncluttered, Single Line)
+                        Expanded(
                           child: Text(
-                            nearnessLabel,
-                            style: textTheme.caption.copyWith(
-                              color: palette.onPrimarySoft,
-                              fontWeight: FontWeight.w700,
+                            'صلاة ${widget.nextPrayerName}',
+                            style: textTheme.title.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.w800,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -144,148 +168,148 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                // Mosque Medallion
-                const IconBadge(
-                  icon: Icons.mosque_rounded,
-                ),
-              ],
-            ),
 
-            const SizedBox(height: AppSpace.lg),
+                  const SizedBox(width: AppSpace.sm),
 
-            // Next Prayer Name & Time Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Prayer Name with Decorative Accent Dot
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: AppSpace.sm,
-                        height: AppSpace.sm,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: palette.gold,
-                        ),
+                  // End: Adhan Time Jewel Pill (Standard Arabic numerals 123456)
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          prayerColor.withValues(alpha: 0.18),
+                          prayerColor.withValues(alpha: 0.08),
+                        ],
                       ),
-                      const SizedBox(width: AppSpace.sm),
-                      Flexible(
-                        child: Text(
-                          widget.nextPrayerName,
-                          style: textTheme.display.copyWith(
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: prayerColor.withValues(alpha: 0.45),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: AppIcon.sm,
+                          color: prayerColor,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          prayerTimeDisplay,
+                          style: textTheme.label.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: AppSpace.sm),
-
-                // Adhan Time Capsule (Western Arabic numerals 123456)
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
-                    borderRadius: AppRadius.pillRadius,
-                    border: Border.all(
-                      color: palette.border,
+                      ],
                     ),
                   ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpace.md),
+
+              // 2. Horizon Countdown Banner (Unified Single Line with Integrated Badges)
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      prayerColor.withValues(alpha: 0.12),
+                      prayerColor.withValues(alpha: 0.04),
+                    ],
+                  ),
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: prayerColor.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: AppIcon.sm,
-                        color: palette.primary,
+                      // Start: Nearness Indicator with Glowing Pulse Dot
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: prayerColor,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            nearnessLabel,
+                            style: textTheme.caption.copyWith(
+                              color: prayerColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        prayerTimeDisplay,
-                        style: textTheme.label.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                      const SizedBox(width: AppSpace.lg),
+
+                      // End: 3 Modern Time Badges (LTR: 05 س : 46 د : 13 ث)
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _CountdownDigitCapsule(
+                              value: hours,
+                              unit: 'س',
+                              accentColor: prayerColor,
+                            ),
+                            _CountdownSeparator(color: prayerColor),
+                            _CountdownDigitCapsule(
+                              value: minutes,
+                              unit: 'د',
+                              accentColor: prayerColor,
+                            ),
+                            _CountdownSeparator(color: prayerColor),
+                            _CountdownDigitCapsule(
+                              value: seconds,
+                              unit: 'ث',
+                              accentColor: prayerColor,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: AppSpace.md),
-
-            // Countdown Header
-            Text(
-              'الوقت المتبقي للأذان',
-              style: textTheme.caption.copyWith(
-                color: palette.textSubtle,
-                fontWeight: FontWeight.w600,
               ),
-            ),
-            const SizedBox(height: AppSpace.xs),
 
-            // Countdown Timer (In Left-to-Right order: Hours : Minutes : Seconds)
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _CountdownDigitCapsule(
-                      value: hours,
-                      label: 'ساعة',
-                    ),
-                    const _CountdownSeparator(),
-                    _CountdownDigitCapsule(
-                      value: minutes,
-                      label: 'دقيقة',
-                    ),
-                    const _CountdownSeparator(),
-                    _CountdownDigitCapsule(
-                      value: seconds,
-                      label: 'ثانية',
-                    ),
-                  ],
+              const SizedBox(height: AppSpace.md),
+
+              // 3. Bottom: 5 Daily Prayers Journey Strip with Authentic Celestial Jewel Tones
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  vertical: AppSpace.sm,
+                  horizontal: AppSpace.xs,
                 ),
-              ),
-            ),
-
-            const SizedBox(height: AppSpace.lg),
-
-            // 5 Daily Prayers Timeline Strip (Unique Journey Track)
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                vertical: AppSpace.sm,
-                horizontal: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surfaceMuted,
-                borderRadius: AppRadius.lgRadius,
-                border: Border.all(
-                  color: palette.border,
+                decoration: BoxDecoration(
+                  color: palette.surfaceMuted,
+                  borderRadius: AppRadius.lgRadius,
+                  border: Border.all(
+                    color: palette.border,
+                  ),
                 ),
-              ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: AppStrings.prayerOrder.map((prayerName) {
                     final isCurrent = widget.nextPrayerName == prayerName;
                     final prayerTime = widget.allPrayers?[prayerName];
@@ -302,8 +326,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                   }).toList(),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -318,111 +342,145 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   }) {
     final palette = context.palette;
     final textTheme = context.text;
+    final pColor = palette.prayer(prayerName);
     final timeStr =
         prayerTime != null ? formatPrayerTime12h(prayerTime) : '';
     final icon = _iconForPrayer(prayerName);
 
-    return Container(
-      width: 68,
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.xs,
-        vertical: AppSpace.sm,
-      ),
-      margin: const EdgeInsetsDirectional.symmetric(horizontal: 2),
-      decoration: isCurrent
-          ? BoxDecoration(
-              color: palette.surfaceRaised,
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(
-                color: palette.primary,
-                width: 1.5,
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpace.xs,
+          vertical: AppSpace.xs,
+        ),
+        decoration: isCurrent
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    pColor.withValues(alpha: 0.22),
+                    pColor.withValues(alpha: 0.08),
+                  ],
+                ),
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(
+                  color: pColor,
+                  width: 1.5,
+                ),
+                boxShadow: palette.shadow,
+              )
+            : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Status Pip
+            if (isCurrent)
+              Container(
+                width: 5,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: AppSpace.xs),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: palette.gold,
+                ),
+              )
+            else if (isPast)
+              Container(
+                margin: const EdgeInsets.only(bottom: AppSpace.xs),
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 8,
+                  color: palette.success,
+                ),
+              )
+            else
+              Container(
+                width: 4,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppSpace.xs),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: pColor.withValues(alpha: 0.35),
+                ),
               ),
-              boxShadow: palette.shadow,
-            )
-          : null,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Active Indicator Dot
-          if (isCurrent)
-            Container(
-              width: 6,
-              height: 6,
-              margin: const EdgeInsets.only(bottom: AppSpace.xs),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: palette.gold,
-              ),
-            )
-          else
-            const SizedBox(height: 6 + AppSpace.xs),
 
-          // Icon
-          Icon(
-            isPast && !isCurrent ? Icons.check_circle_outline_rounded : icon,
-            size: isCurrent ? AppIcon.md : AppIcon.sm,
-            color: isCurrent
-                ? palette.primary
-                : (isPast ? palette.textSubtle : palette.textMuted),
-          ),
-          const SizedBox(height: AppSpace.xs),
-
-          // Prayer Name
-          Text(
-            prayerName,
-            style: isCurrent
-                ? textTheme.label.copyWith(
-                    color: palette.primary,
-                    fontWeight: FontWeight.bold,
-                  )
-                : textTheme.caption.copyWith(
-                    color: isPast ? palette.textMuted : palette.text,
-                    fontWeight: FontWeight.w600,
-                  ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-
-          // Prayer Time with Western Arabic numerals (123456)
-          if (timeStr.isNotEmpty)
-            Text(
-              timeStr,
-              style: isCurrent
-                  ? textTheme.caption.copyWith(
-                      color: palette.text,
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    )
-                  : textTheme.caption.copyWith(
-                      color: isPast ? palette.textSubtle : palette.textMuted,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            // Celestial Icon with individual prayer color
+            Icon(
+              icon,
+              size: isCurrent ? AppIcon.md : AppIcon.sm,
+              color: isCurrent
+                  ? pColor
+                  : (isPast
+                      ? pColor.withValues(alpha: 0.45)
+                      : pColor.withValues(alpha: 0.85)),
             ),
-        ],
+            const SizedBox(height: AppSpace.xs),
+
+            // Prayer Name
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                prayerName,
+                style: isCurrent
+                    ? textTheme.caption.copyWith(
+                        color: pColor,
+                        fontWeight: FontWeight.w800,
+                      )
+                    : textTheme.caption.copyWith(
+                        color: isPast ? palette.textMuted : palette.text,
+                        fontWeight: FontWeight.w600,
+                      ),
+                maxLines: 1,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 2),
+
+            // Prayer Time with Western Arabic numerals (123456)
+            if (timeStr.isNotEmpty)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  timeStr,
+                  style: isCurrent
+                      ? textTheme.caption.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        )
+                      : textTheme.caption.copyWith(
+                          color: isPast ? palette.textSubtle : palette.textMuted,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
   IconData _iconForPrayer(String name) {
-    if (name.contains(AppStrings.prayerFajr) || name == 'الفجر') {
+    final p = name.trim();
+    if (p.contains(AppStrings.prayerFajr) || p == 'الفجر') {
       return Icons.wb_twilight_rounded;
     }
-    if (name == 'الشروق') {
+    if (p == 'الشروق') {
       return Icons.wb_sunny_rounded;
     }
-    if (name.contains(AppStrings.prayerDhuhr) || name == 'الظهر') {
+    if (p.contains(AppStrings.prayerDhuhr) || p == 'الظهر') {
       return Icons.wb_sunny_rounded;
     }
-    if (name.contains(AppStrings.prayerAsr) || name == 'العصر') {
+    if (p.contains(AppStrings.prayerAsr) || p == 'العصر') {
       return Icons.wb_sunny_outlined;
     }
-    if (name.contains(AppStrings.prayerMaghrib) || name == 'المغرب') {
+    if (p.contains(AppStrings.prayerMaghrib) || p == 'المغرب') {
       return Icons.nights_stay_outlined;
     }
-    if (name.contains(AppStrings.prayerIsha) || name == 'العشاء') {
+    if (p.contains(AppStrings.prayerIsha) || p == 'العشاء') {
       return Icons.bedtime_rounded;
     }
     return Icons.access_time_rounded;
@@ -437,10 +495,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
       return 'يقترب جداً (5 دقائق)';
     }
     if (minutes <= 15) {
-      return 'يقترب وقت الصلاة';
+      return 'خلال 15 دقيقة';
     }
     if (minutes <= 30) {
-      return 'خلال نصف ساعة';
+      return 'خلال 30 دقيقة';
     }
     return 'الصلاة القادمة';
   }
@@ -449,7 +507,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     final hours = _timeLeft.inHours;
     final minutes = _timeLeft.inMinutes % 60;
     if (hours > 0) {
-      return '$hours ساعة و $minutes دقيقة';
+      return '$hours س و $minutes د';
     }
     return '$minutes دقيقة';
   }
@@ -457,11 +515,13 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
 class _CountdownDigitCapsule extends StatelessWidget {
   final String value;
-  final String label;
+  final String unit;
+  final Color accentColor;
 
   const _CountdownDigitCapsule({
     required this.value,
-    required this.label,
+    required this.unit,
+    required this.accentColor,
   });
 
   @override
@@ -469,28 +529,31 @@ class _CountdownDigitCapsule extends StatelessWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          constraints: const BoxConstraints(
-            minWidth: 48,
-            minHeight: 42,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xs,
-          ),
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised,
-            borderRadius: AppRadius.mdRadius,
-            border: Border.all(
-              color: palette.border,
-            ),
-            boxShadow: palette.shadow,
-          ),
-          alignment: Alignment.center,
-          child: Text(
+    return Container(
+      constraints: const BoxConstraints(
+        minWidth: 44,
+        minHeight: 32,
+      ),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.xs,
+      ),
+      decoration: BoxDecoration(
+        color: palette.surfaceRaised,
+        borderRadius: AppRadius.smRadius,
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.4),
+          width: 1.2,
+        ),
+        boxShadow: palette.shadow,
+      ),
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
             value,
             style: textTheme.titleSmall.copyWith(
               fontWeight: FontWeight.w800,
@@ -498,41 +561,35 @@ class _CountdownDigitCapsule extends StatelessWidget {
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-        ),
-        const SizedBox(height: AppSpace.xs),
-        Text(
-          label,
-          style: textTheme.caption.copyWith(
-            color: palette.textMuted,
-            fontWeight: FontWeight.w600,
+          const SizedBox(width: AppSpace.xs / 2),
+          Text(
+            unit,
+            style: textTheme.caption.copyWith(
+              color: accentColor,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _CountdownSeparator extends StatelessWidget {
-  const _CountdownSeparator();
+  final Color color;
+
+  const _CountdownSeparator({required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpace.md),
-            child: Text(
-              ':',
-              style: context.text.titleSmall.copyWith(
-                fontWeight: FontWeight.w800,
-                color: context.palette.textMuted,
-              ),
-            ),
-          ),
-        ],
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
+      child: Text(
+        ':',
+        style: context.text.titleSmall.copyWith(
+          fontWeight: FontWeight.w800,
+          color: color.withValues(alpha: 0.7),
+        ),
       ),
     );
   }
