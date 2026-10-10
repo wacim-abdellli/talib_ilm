@@ -59,6 +59,7 @@ flutter:
     - assets/data/
     - assets/audio/
     - assets/images/logo.png
+    - assets/images/
     - assets/pdfs/mutun/
     - assets/pdfs/shuruh/bk_usul_thalatha/
 

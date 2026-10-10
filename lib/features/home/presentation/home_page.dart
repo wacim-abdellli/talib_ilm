@@ -71,6 +71,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     precacheImage(const AssetImage('assets/images/logo.png'), context);
+    precacheImage(const AssetImage('assets/images/symbol_on_dark.png'), context);
   }
 
   Future<void> _loadAllData() async {
@@ -275,6 +276,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       child: HomeHeader(
                         city: _prayerDay?.city ?? 'مكة المكرمة',
                         greeting: _getGreeting(),
+                        greetingSubtitle: _getGreetingSubtitle(),
                       ),
                     ),
                   ),
@@ -322,18 +324,68 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(
-                                      Icons.auto_awesome_rounded,
-                                      size: AppIcon.sm,
-                                      color: context.palette.gold,
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 34,
+                                          height: 34,
+                                          decoration: BoxDecoration(
+                                            color: context.palette.goldSoft,
+                                            borderRadius: AppRadius.smRadius,
+                                            border: Border.all(
+                                              color: context.palette.gold.withValues(alpha: 0.3),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.auto_awesome_rounded,
+                                            size: AppIcon.sm,
+                                            color: context.palette.gold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: AppSpace.sm),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'قبس من الوحي',
+                                              style: context.text.titleSmall.copyWith(
+                                                color: context.palette.text,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              'هدايات إيمانية ونفحات ربانية',
+                                              style: context.text.caption.copyWith(
+                                                color: context.palette.textMuted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: AppSpace.xs),
-                                    Text(
-                                      'تأمل اليوم',
-                                      style: context.text.titleSmall.copyWith(
-                                        color: context.palette.text,
-                                        fontWeight: FontWeight.w800,
+                                    Container(
+                                      padding: const EdgeInsetsDirectional.symmetric(
+                                        horizontal: AppSpace.sm,
+                                        vertical: AppSpace.xs / 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.palette.surfaceRaised,
+                                        borderRadius: AppRadius.pillRadius,
+                                        border: Border.all(
+                                          color: context.palette.border,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'آيات وبصائر',
+                                        style: context.text.caption.copyWith(
+                                          color: context.palette.gold,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -370,7 +422,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SectionHeader(
-                                title: 'رحلة التعلم',
+                                title: 'طريق العلم والتحصيل',
                                 padding: EdgeInsetsDirectional.only(bottom: AppSpace.xs),
                               ),
                               _buildPresenceMessage(context),
@@ -471,10 +523,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) return 'صباح الخير والبركة ☀️';
-    if (hour >= 12 && hour < 17) return 'نهارك طيب وسعيد';
-    if (hour >= 17 && hour < 22) return 'مساء السكينة والنور 🌙';
-    return 'طاب مساؤك بذكر الله';
+    if (hour >= 5 && hour < 12) return 'أصبحنا وأصبح الملك لله';
+    if (hour >= 12 && hour < 17) return 'حيّاك الله وبيّاك يا طالب العلم';
+    if (hour >= 17 && hour < 22) return 'أمسينا وأمسى الملك لله';
+    return 'طابت ليلتك بذكر الله';
+  }
+
+  String _getGreetingSubtitle() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'طاب مسعاك في طلب العلم والخير';
+    if (hour >= 12 && hour < 17) return 'بارك الله في وقتك وثبّت خطاك';
+    if (hour >= 17 && hour < 22) return 'أنار الله دربك بنور العلم والهدى';
+    return 'ألا بذكر الله تطمئن القلوب';
   }
 
   Widget _buildHeroGreetingCard() {

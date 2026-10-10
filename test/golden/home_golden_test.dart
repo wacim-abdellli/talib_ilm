@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/home_hero_card.dart';
+import 'package:talib_ilm/features/home/presentation/widgets/home_header.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/quick_action_button.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/continue_learning_card.dart';
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
@@ -120,6 +121,30 @@ void main() {
         fileName: 'goldens/home_continue_light_1_0',
         isDark: false,
         textScale: 1.0,
+      );
+    });
+
+    testWidgets('HomeHeader - light 1.0 and dark 1.5', (tester) async {
+      const widget = HomeHeader(
+        city: 'مكة المكرمة',
+        greeting: 'أصبحنا وأصبح الملك لله',
+        greetingSubtitle: 'طاب مسعاك يا طالب العلم',
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/home_header_light_1_0',
+        isDark: false,
+        textScale: 1.0,
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/home_header_dark_1_5',
+        isDark: true,
+        textScale: 1.5,
       );
     });
   });

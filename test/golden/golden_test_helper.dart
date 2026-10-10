@@ -52,6 +52,10 @@ Future<void> testGoldenWidget({
     ),
   );
 
+  for (final element in find.byType(Image).evaluate()) {
+    final img = element.widget as Image;
+    await tester.runAsync(() => precacheImage(img.image, element));
+  }
   await tester.pumpAndSettle();
 
   await expectLater(

@@ -6,11 +6,13 @@ import '../../../../app/theme/app_palette.dart';
 class HomeHeader extends StatelessWidget {
   final String city;
   final String greeting;
+  final String? greetingSubtitle;
 
   const HomeHeader({
     super.key,
     required this.city,
     required this.greeting,
+    this.greetingSubtitle,
   });
 
   @override
@@ -30,34 +32,39 @@ class HomeHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Start: Brand Logo + Greeting + Location
+        // Start: Official Black Emblem + Spiritual Greeting + Location
         Expanded(
           child: Row(
             children: [
-              // Circular App Logo with Subtle Border & Shadow
+              // Premium Obsidian Emblem Badge with Subtle Gold Accent
               Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.surfaceRaised,
+                  color: palette.brandDark,
+                  borderRadius: AppRadius.mdRadius,
                   border: Border.all(
-                    color: palette.border,
+                    color: palette.gold.withValues(alpha: 0.35),
                     width: 1.2,
                   ),
                   boxShadow: palette.shadow,
                 ),
                 padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                child: ClipOval(
+                child: ClipRRect(
+                  borderRadius: AppRadius.smRadius,
                   child: Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/symbol_on_dark.png',
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpace.md),
 
-              // Greeting & Location
+              // Dignified Islamic Greeting & Contextual Subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,13 +75,13 @@ class HomeHeader extends StatelessWidget {
                       style: textTheme.titleSmall.copyWith(
                         color: palette.text,
                         fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.location_on_rounded,
@@ -82,9 +89,11 @@ class HomeHeader extends StatelessWidget {
                           color: palette.primary,
                         ),
                         const SizedBox(width: AppSpace.xs / 2),
-                        Flexible(
+                        Expanded(
                           child: Text(
-                            city,
+                            greetingSubtitle != null
+                                ? '$greetingSubtitle • $city'
+                                : city,
                             style: textTheme.caption.copyWith(
                               color: palette.textMuted,
                               fontWeight: FontWeight.w600,
@@ -104,11 +113,13 @@ class HomeHeader extends StatelessWidget {
 
         const SizedBox(width: AppSpace.sm),
 
-        // End: Hijri Date Jewel Pill
+        // End: Hijri Date Illuminated Jewel Pill
         if (hijriStr.isNotEmpty)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Container(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 130),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Container(
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpace.md,
                 vertical: AppSpace.xs + 2,
@@ -126,7 +137,7 @@ class HomeHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.calendar_today_rounded,
+                    Icons.auto_awesome_rounded,
                     size: AppIcon.sm,
                     color: palette.onPrimarySoft,
                   ),
@@ -143,6 +154,7 @@ class HomeHeader extends StatelessWidget {
               ),
             ),
           ),
+        ),
       ],
     );
   }

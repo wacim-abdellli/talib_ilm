@@ -29,6 +29,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color success;
   final Color error;
   final Color errorSoft;
+  final Color brandDark;
   final List<BoxShadow> shadow;
   final bool isDark;
 
@@ -52,6 +53,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.success,
     required this.error,
     required this.errorSoft,
+    required this.brandDark,
     required this.shadow,
     required this.isDark,
   });
@@ -77,6 +79,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     success: Color(0xFF047857),
     error: Color(0xFFB91C1C),
     errorSoft: Color(0xFFFEE2E2),
+    brandDark: Color(0xFF0A0E13),
     shadow: [
       BoxShadow(
         color: Color(0x0A000000), // 4% black
@@ -108,6 +111,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     success: Color(0xFF34D399),
     error: Color(0xFFF87171),
     errorSoft: Color(0xFF3B1414),
+    brandDark: Color(0xFF0A0E13),
     shadow: [],
     isDark: true,
   );
@@ -198,6 +202,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? success,
     Color? error,
     Color? errorSoft,
+    Color? brandDark,
     List<BoxShadow>? shadow,
     bool? isDark,
   }) {
@@ -221,6 +226,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       success: success ?? this.success,
       error: error ?? this.error,
       errorSoft: errorSoft ?? this.errorSoft,
+      brandDark: brandDark ?? this.brandDark,
       shadow: shadow ?? this.shadow,
       isDark: isDark ?? this.isDark,
     );
@@ -249,6 +255,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       success: Color.lerp(success, other.success, t)!,
       error: Color.lerp(error, other.error, t)!,
       errorSoft: Color.lerp(errorSoft, other.errorSoft, t)!,
+      brandDark: Color.lerp(brandDark, other.brandDark, t)!,
       shadow: t < 0.5 ? shadow : other.shadow,
       isDark: t < 0.5 ? isDark : other.isDark,
     );

@@ -26,7 +26,7 @@ class HomeQuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(
-          title: 'الأقسام',
+          title: 'معالم طالب العلم',
           padding: EdgeInsetsDirectional.only(bottom: AppSpace.md),
         ),
         Row(
