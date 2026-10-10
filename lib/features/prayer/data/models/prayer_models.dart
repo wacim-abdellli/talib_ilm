@@ -66,3 +66,13 @@ Prayer? prayerFromLabel(String label) {
   }
   return null;
 }
+
+/// Formats a [DateTime] into a 12-hour Arabic prayer time string
+/// using standard Western Arabic numerals (e.g. "10:09 ص", "1:29 م")
+/// instead of Arabic-Indic ("Indian") numerals.
+String formatPrayerTime12h(DateTime time) {
+  final hour12 = time.hour % 12 == 0 ? 12 : time.hour % 12;
+  final minuteStr = time.minute.toString().padLeft(2, '0');
+  final period = time.hour >= 12 ? 'م' : 'ص';
+  return '$hour12:$minuteStr $period';
+}

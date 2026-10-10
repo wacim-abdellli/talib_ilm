@@ -75,7 +75,7 @@ class NextPrayerCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Text(
-                        _formatTime(prayer.time),
+                        formatPrayerTime12h(prayer.time),
                         style: context.text.label.copyWith(
                           color: palette.text,
                         ),
@@ -121,11 +121,5 @@ class NextPrayerCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }

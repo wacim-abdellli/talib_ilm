@@ -284,7 +284,7 @@ class _PrayerPageState extends State<PrayerPage> {
       final isNext = nextName != null && name == nextName;
       return PrayerTimeEntry(
         name: name,
-        timeLabel: _formatTime(time),
+        timeLabel: formatPrayerTime12h(time),
         isNext: isNext,
         isCurrent: isCurrent,
         isCompleted: !isCurrent && time.isBefore(now),
@@ -379,12 +379,6 @@ class _PrayerPageState extends State<PrayerPage> {
 
   void _openQibla(BuildContext context) {
     Navigator.push(context, buildFadeRoute(page: const QiblaPage()));
-  }
-
-  String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 
   String _formatCountdown(Duration duration) {
