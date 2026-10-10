@@ -453,10 +453,26 @@ FAILED (54 violations)
 - **Verification Results:**
   - `flutter analyze`: 0 issues found.
   - `python tool/ui_lint_v2.py`: 53 violations (0 regressions).
-  - `flutter test`: 39/39 tests passed (all 39 golden tests re-approved).
-  - `flutter build apk --debug`: Built cleanly in 43.0s.
+---
 
-
-
-
-
+## Home Page Header Component Re-architecture
+- **Status:** Complete
+- **Re-architected Dual-Tier Component Layout (`HomeHeader`):**
+  - Completely replaced the basic single-row header with a stately, multi-component luxury Islamic layout:
+  - **Tier 1 (Brand Lockup & Action Group):**
+    - **Sacred Emblem Badge:** 48×48 elevated jewel badge with gold highlight border (`palette.gold.withValues(alpha: 0.35)`), soft drop shadow, smooth corner radius (`AppRadius.mdRadius`), and ink ripple. Tapping reveals a dignified bottom sheet with the sacred hadith «مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً...».
+    - **Greeting & Spiritual Subtitle:** Replaced the crammed text column with a 2-tier salutation: bold contextual greeting (`greeting`) with a glowing amber beacon dot + time-aware du'a/nasiha (`greetingSubtitle` e.g., «طاب مسعاك في طلب العلم والخير»).
+    - **Action Controls:** Added interactive quick action buttons with 48dp minimum touch target (`AppIconButton`):
+      - Search shortcut (`Icons.search_rounded`) navigating directly to books and mutun search (`_openIlm`).
+      - Qibla compass shortcut (`Icons.explore_outlined`) navigating directly to `QiblaPage` (`_openQibla`).
+  - **Tier 2 (Dedicated Status & Utility Strip):**
+    - **Interactive Location Pill (`_HeaderLocationChip`):** Displays city with gold pin icon, bold typography, and expand chevron with ripple feedback. Tapping opens full prayer timetable (`_openPrayerDetails`).
+    - **Hijri Date Pill (`_HeaderDateChip`):** Features gold calendar icon (no star/sparkle per user request), clean tabular digits, and ripple feedback. Tapping displays a comprehensive Gregorian & Hijri date inspection sheet.
+- **Accessibility & Responsiveness:**
+  - 100% compliant with min 48dp tap target on all interactive elements.
+  - Text scaling immunity: Proportional flex distribution (`flex: 2` Location, `flex: 3` Date) with `FittedBox(fit: BoxFit.scaleDown)` and `TextOverflow.ellipsis`, completely overflow-free across 1.0, 1.5, and 2.0 text scaling.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 new violations, 3 warnings removed).
+  - `flutter test`: 39/39 tests passed (updated and approved `home_header_light_1_0` and `home_header_dark_1_5` goldens).
+  - `flutter build apk --debug`: Built cleanly in 34.8s.
