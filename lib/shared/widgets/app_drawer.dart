@@ -55,7 +55,7 @@ class AppDrawer extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpace.sm),
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        palette.logoSymbol,
                         fit: BoxFit.contain,
                         errorBuilder: (c, e, s) => Icon(
                           Icons.menu_book_rounded,

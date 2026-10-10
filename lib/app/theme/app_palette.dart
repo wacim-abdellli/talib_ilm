@@ -32,6 +32,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color brandDark;
   final List<BoxShadow> shadow;
   final bool isDark;
+  final String logoSymbol;
+  final String logoLockup;
 
   const AppPalette({
     required this.bg,
@@ -56,6 +58,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.brandDark,
     required this.shadow,
     required this.isDark,
+    required this.logoSymbol,
+    required this.logoLockup,
   });
 
   /// Light theme palette
@@ -88,6 +92,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       ),
     ],
     isDark: false,
+    logoSymbol: 'assets/branding/symbol_on_light.png',
+    logoLockup: 'assets/branding/lockup_on_light.png',
   );
 
   /// Dark theme palette
@@ -114,6 +120,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brandDark: Color(0xFF0A0E13),
     shadow: [],
     isDark: true,
+    logoSymbol: 'assets/branding/symbol_on_dark.png',
+    logoLockup: 'assets/branding/lockup_on_dark.png',
   );
 
   /// Canonical category color resolution with >= 4.5:1 contrast
@@ -205,6 +213,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? brandDark,
     List<BoxShadow>? shadow,
     bool? isDark,
+    String? logoSymbol,
+    String? logoLockup,
   }) {
     return AppPalette(
       bg: bg ?? this.bg,
@@ -229,6 +239,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       brandDark: brandDark ?? this.brandDark,
       shadow: shadow ?? this.shadow,
       isDark: isDark ?? this.isDark,
+      logoSymbol: logoSymbol ?? this.logoSymbol,
+      logoLockup: logoLockup ?? this.logoLockup,
     );
   }
 
@@ -258,6 +270,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       brandDark: Color.lerp(brandDark, other.brandDark, t)!,
       shadow: t < 0.5 ? shadow : other.shadow,
       isDark: t < 0.5 ? isDark : other.isDark,
+      logoSymbol: t < 0.5 ? logoSymbol : other.logoSymbol,
+      logoLockup: t < 0.5 ? logoLockup : other.logoLockup,
     );
   }
 }

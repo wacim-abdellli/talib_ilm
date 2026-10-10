@@ -53,12 +53,8 @@ class HomeHeader extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: AppRadius.smRadius,
                   child: Image.asset(
-                    'assets/images/symbol_on_dark.png',
+                    palette.logoSymbol,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.contain,
-                    ),
                   ),
                 ),
               ),

@@ -2,6 +2,7 @@ export 'app_button.dart';
 export 'app_card.dart';
 export 'app_drawer.dart';
 export 'app_list_tile.dart';
+export 'app_logo.dart';
 export 'app_overflow_menu.dart';
 export 'app_popup.dart';
 export 'app_progress.dart';

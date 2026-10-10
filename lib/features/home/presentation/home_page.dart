@@ -70,8 +70,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage('assets/images/logo.png'), context);
-    precacheImage(const AssetImage('assets/images/symbol_on_dark.png'), context);
+    final palette = context.palette;
+    precacheImage(AssetImage(palette.logoSymbol), context);
+    precacheImage(AssetImage(palette.logoLockup), context);
   }
 
   Future<void> _loadAllData() async {

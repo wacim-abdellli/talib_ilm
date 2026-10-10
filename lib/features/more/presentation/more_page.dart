@@ -118,7 +118,7 @@ class _MorePageState extends State<MorePage> {
                       ),
                       child: Center(
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          palette.logoSymbol,
                           width: 28,
                           height: 28,
                           errorBuilder: (context, error, stackTrace) => Icon(
@@ -232,7 +232,7 @@ class _MorePageState extends State<MorePage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Image.asset(
-                            'assets/images/logo.png',
+                            palette.logoSymbol,
                             width: 22,
                             height: 22,
                             errorBuilder: (context, error, stackTrace) => Icon(
