@@ -249,3 +249,112 @@
 - **Golden Tests (`flutter test test/golden/`):** **34 / 34 passed** across light (1.0 text scale) and dark (1.5 text scale) modes.
 - **Zero Behavioral Regressions:** Zero changes to models, services, strings, or navigation logic.
 
+---
+
+# Round 2
+
+## Stage R0 — Rescue, verify, baseline
+
+### 1. Rescue & Remote Backup
+- **Branch created:** `ui/overhaul-round1` created at commit `e892780` (containing all Round 1 commits).
+- **Remote Push:** `git push -u origin ui/overhaul-round1` succeeded.
+- **Tag:** `ui-r1-done` tagged at `e892780` and pushed to `origin`.
+
+### 2. Fonts Verification & Rescue
+- All 5 `assets/fonts/Cairo-*.ttf` files were verified to be saved HTML documents (~297KB each, headers containing `<!DOCTYPE html>`).
+- Replaced with genuine static Cairo TrueType fonts downloaded directly from official Google Fonts CDN (`fonts.gstatic.com`, v31):
+  - `Cairo-Regular.ttf` (91,500 B) — TrueType verified
+  - `Cairo-Medium.ttf` (91,676 B) — TrueType verified
+  - `Cairo-SemiBold.ttf` (91,724 B) — TrueType verified
+  - `Cairo-Bold.ttf` (91,664 B) — TrueType verified
+  - `Cairo-ExtraBold.ttf` (91,748 B) — TrueType verified
+- All other repository TTFs (`Amiri-*.ttf`, `ScheherazadeNew-*.ttf`, `Vazirmatn-*.ttf`) verified as valid TrueType font data.
+
+### 3. Build & Test Verification
+- `flutter pub get`: Succeeded (0 errors).
+- `flutter analyze`: Succeeded (`No issues found!`, ran in 59.6s).
+- `flutter test`: 35 passed, 1 failed (`test/golden/adhkar_golden_test.dart`: `adhkar_hero_light_1_0.png` 0.32% / 1058px diff, `adhkar_hero_dark_1_5.png` 0.25% / 837px diff due to rendering with genuine Cairo font rather than previous fallback).
+- `flutter build apk --debug`: Succeeded (`build\app\outputs\flutter-apk\app-debug.apk` built in 104.2s).
+
+### 4. Round 1 Audit
+- **Phase 5 & 6 Check:** Confirmed `UI_PROGRESS.md` does **NOT** contain Phase 5 (loading/empty/error states) nor Phase 6 (delete `@Deprecated` shims). Neither phase was executed or logged in Round 1.
+- **`@Deprecated` shims in `lib/app/theme/`:** **10** shims found across `app_colors.dart`, `app_radius.dart`, `app_spacing.dart`, `app_ui.dart`, and `theme_colors.dart`.
+
+### 5. UI Lint v2 Baseline (`python tool/ui_lint_v2.py --top 5`)
+- **Total FAIL violations:** 54
+- **Allow markers used:** 0 / 10
+
+```text
+=== UI lint v2 (outside lib/app/theme) ===
+FAIL    34  Duration(milliseconds/seconds) literal
+FAIL    10  @Deprecated shims left in lib/app/theme
+FAIL     6  Icon size: <n>
+FAIL     2  brightness / isDark branching in a screen
+FAIL     1  IconButton without tooltip
+FAIL     1  raw TextStyle( constructor
+WARN    93  FontWeight literal (use text styles)
+WARN    14  RTL: EdgeInsets.only(left/right) / Alignment.*Left|Right
+WARN    12  gradient on a surface (Linear/RadialGradient)
+WARN     7  SizedBox(width/height: <n>) (use AppSpace)
+info  allow markers used: 0 (cap 10)
+
+[Duration(milliseconds/seconds) literal]
+      9  lib\features\quran\data\quran_api_service.dart
+      4  lib\core\services\location_service.dart
+      3  lib\features\quran\data\services\quran_sync_service.dart
+      2  lib\core\utils\micro_interactions.dart
+      1  lib\core\services\adhan_service.dart
+
+[IconButton without tooltip]
+      1  lib\features\adhkar\presentation\duas_misc_page.dart
+
+[Icon size: <n>]
+      2  lib\shared\widgets\shimmer_loading.dart
+      1  lib\features\home\presentation\widgets\continue_learning_card.dart
+      1  lib\features\home\presentation\widgets\home_hero_card.dart
+      1  lib\shared\widgets\animated_background.dart
+      1  lib\shared\widgets\floating_particles.dart
+
+[brightness / isDark branching in a screen]
+      1  lib\features\prayer\presentation\prayer_settings_sheet.dart
+      1  lib\shared\widgets\app_drawer.dart
+
+[raw TextStyle( constructor]
+      1  lib\features\quran\presentation\quran_library_wrapper.dart
+
+[FontWeight literal (use text styles)]
+     10  lib\features\home\presentation\widgets\home_hero_card.dart
+      6  lib\features\adhkar\presentation\adhkar_session_page.dart
+      5  lib\features\home\presentation\widgets\continue_learning_card.dart
+      4  lib\features\adhkar\presentation\duas_misc_page.dart
+      4  lib\features\adhkar\presentation\widgets\rosary_dial.dart
+
+[SizedBox(width/height: <n>) (use AppSpace)]
+      1  lib\features\adhkar\presentation\widgets\rosary_dial.dart
+      1  lib\features\home\presentation\widgets\continue_learning_card.dart
+      1  lib\features\home\presentation\widgets\home_header.dart
+      1  lib\features\home\presentation\widgets\home_hero_card.dart
+      1  lib\features\more\presentation\widgets\more_section_card.dart
+
+[gradient on a surface (Linear/RadialGradient)]
+      5  lib\features\home\presentation\widgets\home_hero_card.dart
+      2  lib\features\home\presentation\widgets\continue_learning_card.dart
+      2  lib\features\home\presentation\widgets\quick_action_button.dart
+      2  lib\features\prayer\presentation\widgets\next_prayer_card.dart
+      1  lib\features\ilm\presentation\widgets\motivation_widgets.dart
+
+[RTL: EdgeInsets.only(left/right) / Alignment.*Left|Right]
+      4  lib\features\home\presentation\widgets\continue_learning_card.dart
+      4  lib\features\home\presentation\widgets\home_hero_card.dart
+      2  lib\features\home\presentation\widgets\quick_action_button.dart
+      2  lib\features\ilm\presentation\widgets\motivation_widgets.dart
+      2  lib\features\prayer\presentation\widgets\next_prayer_card.dart
+
+FAILED (54 violations)
+```
+
+### 6. Open Issues
+- `adhkar_golden_test.dart` has golden mismatches (0.32% and 0.25%) because the actual Cairo font is now rendering Arabic glyphs rather than the previous unstyled fallback font. Will re-approve in R1 when resolving lint issues.
+- 54 UI lint v2 violations to be resolved in R1.
+- 10 `@Deprecated` shims to be removed in R1 Phase 6.
+
