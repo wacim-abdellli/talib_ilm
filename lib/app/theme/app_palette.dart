@@ -153,6 +153,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ? const CategoryColors(fg: Color(0xFFFB923C), bg: Color(0xFF431407))
           : const CategoryColors(fg: Color(0xFF9A3412), bg: Color(0xFFFFEDD5));
     }
+    if (s.contains('آداب') || s.contains('أذكار') || s.contains('تزكية') || s.contains('سلوك')) {
+      return isDark
+          ? const CategoryColors(fg: Color(0xFF2DD4BF), bg: Color(0xFF042F2E))
+          : const CategoryColors(fg: Color(0xFF115E59), bg: Color(0xFFCCFBF1));
+    }
     if (s.contains('لغة') || s.contains('نحو') || s.contains('صرف') || s.contains('بلاغة')) {
       return isDark
           ? const CategoryColors(fg: Color(0xFF38BDF8), bg: Color(0xFF082F49))

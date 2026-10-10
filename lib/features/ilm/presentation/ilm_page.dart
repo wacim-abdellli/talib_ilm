@@ -14,11 +14,12 @@ import '../data/services/book_progress_service.dart';
 import '../data/services/daily_reading_service.dart';
 import '../data/services/motivation_service.dart';
 import 'pages/book_view_page.dart';
-import 'widgets/ilm_continue_reading_card.dart';
-import 'widgets/ilm_daily_progress_card.dart';
 import 'widgets/ilm_header.dart';
-import 'widgets/ilm_level_section.dart';
+import 'widgets/ilm_level_header_card.dart';
+import 'widgets/ilm_search_filter_bar.dart';
 import 'widgets/motivation_widgets.dart';
+import 'widgets/scholarly_book_card.dart';
+import 'widgets/study_resume_pill.dart';
 
 class IlmPage extends StatefulWidget {
   const IlmPage({super.key});
@@ -38,32 +39,34 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   MotivationService? _motivationService;
 
   final ScrollController _scrollController = ScrollController();
-
-  // Animation controllers
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+  final TextEditingController _searchController = TextEditingController();
 
   List<BookProgress> _allProgress = [];
   List<IlmBook> _allBooks = [];
-  String? _selectedLevelTab;
   bool _isLoading = true;
   BookProgress? _continueReadingBook;
   Map<String, IlmBook> _bookCatalog = {};
   Map<String, BookProgress> _progressById = {};
   Map<String, IlmLevel> _levelByTab = {};
+  List<IlmLevel> _sortedLevels = [];
+
+  // Navigation & Search State
+  IlmViewMode _currentMode = IlmViewMode.levels;
+  String? _selectedLevelId;
+  String _selectedDiscipline = 'الكل';
+  String _searchQuery = '';
 
   // Daily reading state
   int _dailyGoal = 5;
   int _pagesReadToday = 0;
   int _currentStreak = 0;
-  DateTime? _lastReadDate;
 
   // Motivation state
   Encouragement? _dailyEncouragement;
   bool _showEncouragement = false;
   late String _dailyMicrocopy;
 
-  // Simple scholarly quotes rotation
+  // Scholarly quotes rotation
   final List<String> _scholarlyQuotes = [
     'العلم يؤتى ولا يأتي',
     'من أدمن الطرق ولج',
@@ -78,21 +81,11 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _initAnimations();
+    _initDailyMicrocopy();
     _initializeService();
   }
 
-  void _initAnimations() {
-    _pulseController = AnimationController(
-      duration: AppMotion.slow,
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    // DETERMINISTIC DAILY QUOTE
+  void _initDailyMicrocopy() {
     final dayOfYear = DateTime.now()
         .difference(DateTime(DateTime.now().year, 1, 1))
         .inDays;
@@ -123,7 +116,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       final visibleLevels = levels.where((level) => !level.hidden).toList();
       final levelByTab = <String, IlmLevel>{};
       for (final level in visibleLevels) {
-        levelByTab[level.title] = level;
+        levelByTab[level.id] = level;
       }
 
       final catalog = <String, IlmBook>{};
@@ -134,12 +127,15 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
           allBooks.add(book);
         }
       }
+
       _bookCatalog = catalog;
       _allBooks = allBooks;
       _levelByTab = levelByTab;
-      if (_selectedLevelTab == null ||
-          !_levelByTab.containsKey(_selectedLevelTab)) {
-        _selectedLevelTab = visibleLevels.first.title;
+      _sortedLevels = visibleLevels;
+
+      if (_selectedLevelId == null ||
+          !_levelByTab.containsKey(_selectedLevelId)) {
+        _selectedLevelId = visibleLevels.first.id;
       }
 
       _allProgress = await _progressService?.getAllProgress() ?? [];
@@ -151,17 +147,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       _continueReadingBook = currentlyReading?.isNotEmpty == true
           ? currentlyReading?.first
           : null;
-      await _progressService?.getCompletedBooks();
-      if (!_levelByTab.containsKey(_selectedLevelTab)) {
-        _selectedLevelTab = 'المستوى الأول';
-      }
 
       // Load daily reading stats
       if (_dailyReadingService != null) {
         _dailyGoal = _dailyReadingService!.getDailyGoal();
         _pagesReadToday = _dailyReadingService!.getPagesReadToday();
         _currentStreak = _dailyReadingService!.getCurrentStreak();
-        _lastReadDate = _dailyReadingService!.getLastReadDate();
       }
 
       // Load motivation data
@@ -183,7 +174,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
           justAchievedDailyGoal: _pagesReadToday >= _dailyGoal,
         );
 
-        // Show milestone celebration if triggered
         if (milestone != null && mounted) {
           Future.delayed(AppMotion.base, () {
             if (mounted) {
@@ -194,7 +184,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       }
 
       _hasLoadError = false;
-      _applyFilters(updateState: false);
       setState(() {});
     } catch (e, stack) {
       _hasLoadError = true;
@@ -207,19 +196,101 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     }
   }
 
-  void _applyFilters({String? levelTab, bool updateState = true}) {
-    if (_allBooks.isEmpty) return;
-    final activeTab = levelTab ?? _selectedLevelTab;
-    if (activeTab == null) return;
+  // ── Helper computations ──────────────────────────────────────────
 
-    if (!updateState) {
-      _selectedLevelTab = activeTab;
-      return;
+  String _normalizeArabic(String text) {
+    return text
+        .replaceAll(RegExp(r'[\u064B-\u0652]'), '') // remove tashkeel
+        .replaceAll(RegExp(r'[أإآ]'), 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي')
+        .toLowerCase()
+        .trim();
+  }
+
+  List<String> get _disciplines {
+    final set = <String>{};
+    for (final book in _allBooks) {
+      final s = book.subject.trim();
+      if (s.isNotEmpty) set.add(s);
+    }
+    final sorted = set.toList()..sort();
+    return ['الكل', ...sorted];
+  }
+
+  Map<String, int> get _disciplineBookCounts {
+    final map = <String, int>{'الكل': _allBooks.length};
+    for (final book in _allBooks) {
+      final s = book.subject.trim();
+      map[s] = (map[s] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Map<String, double> get _levelCompletions {
+    final map = <String, double>{};
+    for (final level in _sortedLevels) {
+      if (level.books.isEmpty) {
+        map[level.id] = 0.0;
+        continue;
+      }
+      int count = 0;
+      for (final book in level.books) {
+        if (_progressById[book.id]?.isCompleted ?? false) {
+          count++;
+        }
+      }
+      map[level.id] = count / level.books.length;
+    }
+    return map;
+  }
+
+  List<IlmBook> get _filteredBooks {
+    if (_searchQuery.isNotEmpty) {
+      final q = _normalizeArabic(_searchQuery);
+      return _allBooks.where((book) {
+        final title = _normalizeArabic(book.title);
+        final author = _normalizeArabic(book.author);
+        final subject = _normalizeArabic(book.subject);
+        final desc = _normalizeArabic(book.description);
+        final level = _normalizeArabic(book.level);
+        final matchesShuruh = book.shuruh.any((s) {
+          return _normalizeArabic(s.title).contains(q) ||
+              _normalizeArabic(s.scholar).contains(q);
+        });
+        return title.contains(q) ||
+            author.contains(q) ||
+            subject.contains(q) ||
+            desc.contains(q) ||
+            level.contains(q) ||
+            matchesShuruh;
+      }).toList();
     }
 
-    setState(() {
-      _selectedLevelTab = activeTab;
-    });
+    if (_currentMode == IlmViewMode.disciplines) {
+      if (_selectedDiscipline == 'الكل') {
+        return _allBooks;
+      }
+      return _allBooks
+          .where((b) => b.subject.trim() == _selectedDiscipline.trim())
+          .toList();
+    }
+
+    // Default: levels mode
+    final currentLevel = _levelByTab[_selectedLevelId];
+    return currentLevel?.books ?? [];
+  }
+
+  IlmBook? get _recommendedFirstBook {
+    for (final level in _sortedLevels) {
+      for (final book in level.books) {
+        final progress = _progressById[book.id];
+        if (progress == null || progress.currentPage <= 1) {
+          return book;
+        }
+      }
+    }
+    return _allBooks.isNotEmpty ? _allBooks.first : null;
   }
 
   Future<void> _toggleFavorite(String bookId) async {
@@ -256,25 +327,24 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     }
   }
 
-  IlmBook? get _recommendedFirstBook {
-    // Get first book from first level that hasn't been started
-    final levels = _levelByTab.values.toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
-    for (final level in levels) {
-      for (final book in level.books) {
-        final progress = _progressById[book.id];
-        if (progress == null || progress.currentPage <= 1) {
-          return book;
-        }
-      }
-    }
-    return _allBooks.isNotEmpty ? _allBooks.first : null;
+  void _showCompletionReward(IlmBook book) {
+    MilestoneCelebrationDialog.show(
+      context,
+      MilestoneTrigger(
+        type: MilestoneType.booksCount,
+        title: 'أحسنت!',
+        message: 'أتممت كتاب "${book.title}" بفضل الله.',
+        icon: '🌿',
+        verse: 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
+        verseRef: 'سورة طه: ١١٤',
+      ),
+    );
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _pulseController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -297,7 +367,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                   height: 500,
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: AppSpace.md,
                       mainAxisSpacing: AppSpace.md,
@@ -314,8 +385,17 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       );
     }
 
-    final sortedLevels = _levelByTab.values.toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final activeLevel = _levelByTab[_selectedLevelId] ?? _sortedLevels.first;
+    final levelBooks = activeLevel.books;
+    final completedInLevel = levelBooks
+        .where((b) => _progressById[b.id]?.isCompleted ?? false)
+        .length;
+    final levelCompletionRatio = levelBooks.isNotEmpty
+        ? completedInLevel / levelBooks.length
+        : 0.0;
+
+    final displayedBooks = _filteredBooks;
+    final isSearching = _searchQuery.isNotEmpty;
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -323,11 +403,14 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
         bottom: false,
         child: Column(
           children: [
-            IlmHeader(dailyMicrocopy: _dailyMicrocopy),
+            // ── 1. Prestigious Library Header ─────────────────────
+            IlmHeader(
+              dailyMicrocopy: _dailyMicrocopy,
+              totalBooksCount: _allBooks.length,
+              completedBooksCount: _completedBooksCount,
+            ),
 
-            // ════════════════════════════════════════════════════════════
-            // SCROLLABLE CONTENT
-            // ════════════════════════════════════════════════════════════
+            // ── 2. Scrollable Library Content ─────────────────────
             Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -339,38 +422,77 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                   children: [
                     const SizedBox(height: AppSpace.md),
 
-                    // 1. PRIMARY ACTION: CONTINUE LEARNING
-                    IlmContinueReadingCard(
-                      continueReadingBook: _continueReadingBook,
-                      recommendedFirstBook: _recommendedFirstBook,
-                      bookCatalog: _bookCatalog,
-                      pulseAnimation: _pulseAnimation,
-                      onNavigateToBook: _navigateToBook,
+                    // ── Hero Study Resume Pill ────────────────────
+                    if (!isSearching) ...[
+                      StudyResumePill(
+                        continueReadingBook: _continueReadingBook,
+                        recommendedFirstBook: _recommendedFirstBook,
+                        bookCatalog: _bookCatalog,
+                        dailyGoal: _dailyGoal,
+                        pagesReadToday: _pagesReadToday,
+                        currentStreak: _currentStreak,
+                        onNavigateToBook: _navigateToBook,
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                    ],
+
+                    // ── Unified Search & Dual-Lens Filter Bar ─────
+                    IlmSearchFilterBar(
+                      searchController: _searchController,
+                      onSearchChanged: (query) {
+                        setState(() => _searchQuery = query.trim());
+                      },
+                      onClearSearch: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                      currentMode: _currentMode,
+                      onModeChanged: (mode) {
+                        setState(() => _currentMode = mode);
+                      },
+                      levels: _sortedLevels,
+                      selectedLevelId: _selectedLevelId ?? activeLevel.id,
+                      onSelectLevel: (lvlId) {
+                        setState(() => _selectedLevelId = lvlId);
+                      },
+                      levelCompletion: _levelCompletions,
+                      disciplines: _disciplines,
+                      selectedDiscipline: _selectedDiscipline,
+                      onSelectDiscipline: (disc) {
+                        setState(() => _selectedDiscipline = disc);
+                      },
+                      disciplineBookCounts: _disciplineBookCounts,
                     ),
 
                     const SizedBox(height: AppSpace.md),
 
-                    // 2. DAILY GOAL CARD
-                    IlmDailyProgressCard(
-                      dailyGoal: _dailyGoal,
-                      pagesReadToday: _pagesReadToday,
-                      lastReadDate: _lastReadDate,
-                      onGoalChanged: (newGoal) async {
-                        await _dailyReadingService?.setDailyGoal(newGoal);
-                        _loadData();
-                      },
-                      onStartFresh: () {
-                        _scrollController.animateTo(
-                          200,
-                          duration: AppMotion.slow,
-                          curve: AppMotion.easeIn,
-                        );
-                      },
-                    ),
+                    // ── Active Level Header Card (Levels mode only)
+                    if (!isSearching && _currentMode == IlmViewMode.levels) ...[
+                      IlmLevelHeaderCard(
+                        level: activeLevel,
+                        completion: levelCompletionRatio,
+                        totalBooks: levelBooks.length,
+                        completedBooks: completedInLevel,
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                    ],
 
-                    const SizedBox(height: AppSpace.md),
+                    // ── Search Results Subtitle ───────────────────
+                    if (isSearching) ...[
+                      Padding(
+                        padding: AppSpace.screenPadding,
+                        child: Text(
+                          'نتائج البحث: ${displayedBooks.length} متون',
+                          style: context.text.titleSmall.copyWith(
+                            color: palette.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.sm),
+                    ],
 
-                    // 3. BOOKS BY LEVEL SECTIONS (Main Focus)
+                    // ── Books Section (2-Column Luxury Grid) ──────
                     if (_hasLoadError)
                       Padding(
                         padding: AppSpace.screenPadding,
@@ -384,21 +506,58 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                           ),
                         ),
                       )
+                    else if (displayedBooks.isEmpty)
+                      Padding(
+                        padding: AppSpace.screenPadding,
+                        child: AppEmptyState(
+                          icon: Icons.search_off_rounded,
+                          title: 'لم يتم العثور على نتائج',
+                          subtitle: isSearching
+                              ? 'لا يوجد متن أو كتاب يطابق عبارة البحث "$_searchQuery"'
+                              : 'لا توجد كتب مسجلة في هذا القسم حالياً',
+                        ),
+                      )
                     else
-                      ...sortedLevels.map((level) {
-                        return IlmLevelSection(
-                          level: level,
-                          allBooks: _allBooks,
-                          progressById: _progressById,
-                          bookCatalog: _bookCatalog,
-                          onNavigateToBook: _navigateToBook,
-                          onToggleFavorite: _toggleFavorite,
-                        );
-                      }),
+                      Padding(
+                        padding: AppSpace.screenPadding,
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isSmall = constraints.maxWidth < 360;
+                            final aspectRatio = isSmall ? 0.62 : 0.68;
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: AppSpace.md,
+                                mainAxisSpacing: AppSpace.md,
+                                childAspectRatio: aspectRatio,
+                              ),
+                              itemCount: displayedBooks.length,
+                              itemBuilder: (context, index) {
+                                final book = displayedBooks[index];
+                                final progress = _progressById[book.id];
+                                final isRecommended =
+                                    book.id == _recommendedFirstBook?.id;
+
+                                return ScholarlyBookCard(
+                                  book: book,
+                                  progress: progress,
+                                  isRecommended: isRecommended,
+                                  onNavigateToBook: _navigateToBook,
+                                  onToggleFavorite: _toggleFavorite,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
 
                     const SizedBox(height: AppSpace.lg),
 
-                    // Motivation Banner (contextual, at bottom)
+                    // ── Motivation Encouragement Banner ───────────
                     if (_showEncouragement && _dailyEncouragement != null)
                       Padding(
                         padding: AppSpace.screenPadding,
@@ -417,6 +576,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         ),
                       ),
 
+                    // ── Safe Bottom Clearance for Floating Nav ────
                     SizedBox(height: AppSize.navClearance(context)),
                   ],
                 ),
@@ -424,20 +584,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showCompletionReward(IlmBook book) {
-    MilestoneCelebrationDialog.show(
-      context,
-      MilestoneTrigger(
-        type: MilestoneType.booksCount,
-        title: 'أحسنت!',
-        message: 'أتممت كتاب "${book.title}" بفضل الله.',
-        icon: '🌿',
-        verse: 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
-        verseRef: 'سورة طه: ١١٤',
       ),
     );
   }

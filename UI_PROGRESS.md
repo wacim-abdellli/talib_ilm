@@ -520,4 +520,25 @@ FAILED (54 violations)
   - `flutter test`: 39/39 tests passed.
   - `flutter build apk --debug`: Built cleanly in 22.3s.
 
+---
+
+## Ilm Knowledge Library Overhaul («المكتبة العلمية وسُلم المتون»)
+- **Status:** Complete
+- **Architectural Transformation:**
+  - Complete overhaul of the core Knowledge Library (`IlmPage` and its presentation layer):
+    - **Dual-Lens Navigation:** Seamless mode toggle between:
+      - **«سُلم المستويات» (Curricular Levels):** Horizontal level selector pills with completion percentages (`التمهيدي` ➔ `المستوى الخامس`), detailed curriculum card (`IlmLevelHeaderCard` showing level goal, duration, focus topic tags, and completion ratio), and 2-column luxury grid of books in that level.
+      - **«الفنون والعلوم الشرعية» (Islamic Disciplines & Sciences):** Dynamic categorization chips (`الكل`, `العقيدة والتوحيد`, `الفقه وأصوله`, `الحديث ومصطلحه`, `القرآن والتجويد`, `اللغة العربية`, `الآداب والأذكار`) automatically extracted from the catalog to scale effortlessly as new books are added in JSON.
+    - **Instant In-Memory Search (`IlmSearchFilterBar`):** Real-time Arabic search with diacritics/tashkeel stripping matching book title, author, subject, description, level, and shuruh commentators. Includes instant clear button and dignified empty state (`AppEmptyState`).
+    - **Hero Study Resume Pill (`StudyResumePill`):** Compact, jewel-like card showing ongoing book with page count, reading progress bar, streak counter (`🔥 X أيام`), and direct resume action without pushing books below the fold.
+    - **Luxury Manuscript Cards (`ScholarlyBookCard`):** 2-column luxury grid cards styled after gold-embossed classical mutun, featuring category color ribbons, feather/scholar attribution glyphs, shuruh counts, progress bars, gold completion seals (`«مُتَمَّم بفضل الله 🌿»`), and accessible favorite toggles (min 48dp tap target with tooltip and semantics).
+  - Added Adab & Adhkar category colors with WCAG AA contrast (Dark: `#2DD4BF` teal on `#042F2E`, Light: `#115E59` on `#FAF8F5`, > 6.7:1 contrast).
+  - Maintained strict modularity: kept `ilm_page.dart` under 480 lines (well below the 600-line split threshold).
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 new violations, 0 allow markers used).
+  - `flutter test`: 40/40 tests passed (100% pass across all 40 test suites, including new `ScholarlyBookCard` goldens).
+  - `flutter build apk --debug`: Built cleanly in 41.3s.
+
+
 

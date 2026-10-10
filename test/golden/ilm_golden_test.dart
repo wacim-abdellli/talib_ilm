@@ -1,11 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:talib_ilm/features/ilm/data/models/book_progress_model.dart' as bpm;
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/models/progress_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/motivation_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/book_card.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/ilm_daily_progress_card.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/motivation_widgets.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/scholarly_book_card.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/sharh_card.dart';
 import 'golden_test_helper.dart';
 
@@ -32,6 +34,39 @@ void main() {
       completedLessons: 5,
       totalLessons: 10,
     );
+
+    testWidgets('ScholarlyBookCard - light 1.0 and dark 1.5', (tester) async {
+      final widget = ScholarlyBookCard(
+        book: sampleBook,
+        progress: bpm.BookProgress(
+          bookId: 'book1',
+          bookTitle: 'الأصول الثلاثة وأدلتها',
+          level: '1',
+          totalPages: 30,
+          currentPage: 15,
+          lastReadDate: DateTime.now(),
+          startedDate: DateTime.now(),
+        ),
+        onNavigateToBook: (_) {},
+        onToggleFavorite: (_) {},
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/ilm_scholarly_book_card_light_1_0',
+        isDark: false,
+        textScale: 1.0,
+      );
+
+      await testGoldenWidget(
+        tester: tester,
+        widget: widget,
+        fileName: 'goldens/ilm_scholarly_book_card_dark_1_5',
+        isDark: true,
+        textScale: 1.5,
+      );
+    });
 
     testWidgets('BookCard - light 1.0 and dark 1.5', (tester) async {
       final widget = BookCard(
