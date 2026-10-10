@@ -114,137 +114,155 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     return Container(
       margin: const EdgeInsetsDirectional.symmetric(
         horizontal: 0,
-        vertical: AppSpace.sm,
+        vertical: AppSpace.xs,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with Refresh Action
-          Padding(
-            padding: const EdgeInsetsDirectional.only(
-              bottom: AppSpace.sm,
-              end: AppSpace.xs,
+      child: Listener(
+        onPointerDown: (event) {
+          _dragStartX = event.position.dx;
+        },
+        onPointerUp: (event) {
+          if (widget.onReload == null) return;
+          final deltaX = event.position.dx - _dragStartX;
+          if (deltaX.abs() > 40) {
+            HapticFeedback.lightImpact();
+            widget.onReload!();
+          }
+        },
+        child: AnimatedSwitcher(
+          duration: AppMotion.base,
+          transitionBuilder: (child, animation) {
+            final offsetAnimation = Tween<Offset>(
+              begin: const Offset(0.05, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: AppMotion.easeIn),
+            );
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: offsetAnimation,
+                child: child,
+              ),
+            );
+          },
+          child: AppCard(
+            key: ValueKey(widget.quote.text),
+            color: context.palette.surfaceRaised,
+            border: Border.all(
+              color: typeColor.withValues(alpha: 0.28),
+              width: 1.2,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                AppTag(
-                  label: typeLabel,
-                  fg: typeColor,
-                  bg: typeColor.withValues(alpha: 0.12),
-                ),
-                if (widget.onReload != null)
-                  AppIconButton(
-                    icon: Icons.refresh_rounded,
-                    tooltip: 'تحديث',
-                    iconSize: AppIcon.md,
-                    color: context.palette.textMuted,
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      widget.onReload!();
-                    },
-                  ),
-              ],
-            ),
-          ),
-
-          // Card with Swipe using Pointer Listener to avoid raw GestureDetector
-          Listener(
-            onPointerDown: (event) {
-              _dragStartX = event.position.dx;
-            },
-            onPointerUp: (event) {
-              if (widget.onReload == null) return;
-              final deltaX = event.position.dx - _dragStartX;
-              if (deltaX.abs() > 40) {
-                HapticFeedback.lightImpact();
-                widget.onReload!();
-              }
-            },
-            child: AnimatedSwitcher(
-              duration: AppMotion.base,
-              transitionBuilder: (child, animation) {
-                final offsetAnimation = Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(parent: animation, curve: AppMotion.easeIn),
-                );
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: offsetAnimation,
-                    child: child,
-                  ),
-                );
-              },
-              child: Container(
-                key: ValueKey(widget.quote.text),
-                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  color: context.palette.surfaceMuted,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: context.palette.border,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SelectableText(
-                      widget.quote.text,
-                      style: context.text.sacred.copyWith(
-                        color: context.palette.text,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-
-                    const SizedBox(height: AppSpace.lg),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '— ${widget.quote.source}',
-                            style: context.text.bodySmall.copyWith(
-                              color: context.palette.textMuted,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppIconButton(
-                              icon: _isFavorite
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              tooltip: 'حفظ',
-                              iconSize: AppIcon.md,
-                              color: _isFavorite
-                                  ? context.palette.gold
-                                  : context.palette.textSubtle,
-                              onPressed: _toggleFavorite,
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            AppIconButton(
-                              icon: Icons.copy_rounded,
-                              tooltip: 'نسخ',
-                              iconSize: AppIcon.md,
-                              color: context.palette.textSubtle,
-                              onPressed: _copyQuote,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+            padding: EdgeInsets.zero,
+            child: Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.lgRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    typeColor.withValues(alpha: 0.10),
+                    Colors.transparent,
                   ],
+                  stops: const [0.0, 0.45],
                 ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Card Header: Type Tag & Top Actions (Refresh, Copy, Bookmark)
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpace.xs,
+                    runSpacing: AppSpace.xs,
+                    children: [
+                      AppTag(
+                        label: typeLabel,
+                        fg: typeColor,
+                        bg: typeColor.withValues(alpha: 0.14),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.onReload != null)
+                            AppIconButton(
+                              icon: Icons.refresh_rounded,
+                              tooltip: 'اقتباس آخر',
+                              iconSize: AppIcon.md,
+                              color: context.palette.textMuted,
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                widget.onReload!();
+                              },
+                            ),
+                          AppIconButton(
+                            icon: _isFavorite
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_border_rounded,
+                            tooltip: 'حفظ',
+                            iconSize: AppIcon.md,
+                            color: _isFavorite
+                                ? context.palette.gold
+                                : context.palette.textSubtle,
+                            onPressed: _toggleFavorite,
+                          ),
+                          AppIconButton(
+                            icon: Icons.copy_rounded,
+                            tooltip: 'نسخ',
+                            iconSize: AppIcon.md,
+                            color: context.palette.textSubtle,
+                            onPressed: _copyQuote,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpace.md),
+
+                  // Sacred Text
+                  SelectableText(
+                    widget.quote.text,
+                    style: context.text.sacred.copyWith(
+                      color: context.palette.text,
+                      height: 1.8,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+
+                  const SizedBox(height: AppSpace.md),
+
+                  // Source Footer
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: typeColor,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Expanded(
+                        child: Text(
+                          widget.quote.source,
+                          style: context.text.caption.copyWith(
+                            color: typeColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

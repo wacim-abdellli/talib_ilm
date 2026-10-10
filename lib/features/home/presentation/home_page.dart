@@ -324,15 +324,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.auto_awesome_outlined,
+                                      Icons.auto_awesome_rounded,
                                       size: AppIcon.sm,
-                                      color: context.palette.textMuted,
+                                      color: context.palette.gold,
                                     ),
                                     const SizedBox(width: AppSpace.xs),
                                     Text(
                                       'تأمل اليوم',
-                                      style: context.text.label.copyWith(
-                                        color: context.palette.textMuted,
+                                      style: context.text.titleSmall.copyWith(
+                                        color: context.palette.text,
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ],

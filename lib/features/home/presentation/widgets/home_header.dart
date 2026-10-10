@@ -15,7 +15,10 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
     final date = DateTime.now();
+
     String hijriStr = '';
     try {
       HijriCalendar.setLocal('ar');
@@ -23,104 +26,123 @@ class HomeHeader extends StatelessWidget {
       hijriStr = '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
     } catch (_) {}
 
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Row 1: Dates (Gregorian + Hijri)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Gregorian Date
-            Text(
-              '${date.day}/${date.month}/${date.year}',
-              style: context.text.bodySmall.copyWith(
-                color: context.palette.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            // Hijri Date - Spiritual Context
-            if (hijriStr.isNotEmpty)
+        // Start: Brand Logo + Greeting + Location
+        Expanded(
+          child: Row(
+            children: [
+              // Circular App Logo with Subtle Border & Shadow
               Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.xs,
-                ),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: context.palette.primarySoft,
-                  borderRadius: AppRadius.pillRadius,
+                  shape: BoxShape.circle,
+                  color: palette.surfaceRaised,
                   border: Border.all(
-                    color: context.palette.border,
+                    color: palette.border,
+                    width: 1.2,
+                  ),
+                  boxShadow: palette.shadow,
+                ),
+                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                child: Row(
+              ),
+              const SizedBox(width: AppSpace.md),
+
+              // Greeting & Location
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: AppIcon.sm,
-                      color: context.palette.primary,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
                     Text(
-                      hijriStr,
-                      style: context.text.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.onPrimarySoft,
+                      greeting,
+                      style: textTheme.titleSmall.copyWith(
+                        color: palette.text,
+                        fontWeight: FontWeight.w800,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: AppIcon.sm,
+                          color: palette.primary,
+                        ),
+                        const SizedBox(width: AppSpace.xs / 2),
+                        Flexible(
+                          child: Text(
+                            city,
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-          ],
+            ],
+          ),
         ),
 
-        const SizedBox(height: AppSpace.md),
+        const SizedBox(width: AppSpace.sm),
 
-        // Row 2: Logo + Greeting + Location
-        Row(
-          children: [
-            // App Logo
-            Image.asset(
-              'assets/images/logo.png',
-              width: AppSize.buttonH,
-              height: AppSize.buttonH,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: AppSpace.md),
-
-            // Greeting
-            Expanded(
-              child: Text(
-                greeting,
-                style: context.text.titleSmall.copyWith(
-                  color: context.palette.text,
+        // End: Hijri Date Jewel Pill
+        if (hijriStr.isNotEmpty)
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs + 2,
+              ),
+              decoration: BoxDecoration(
+                color: palette.primarySoft,
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(
+                  color: palette.primary.withValues(alpha: 0.3),
+                  width: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                boxShadow: palette.shadow,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: AppIcon.sm,
+                    color: palette.onPrimarySoft,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Text(
+                    hijriStr,
+                    style: textTheme.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: palette.onPrimarySoft,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            // Location
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.location_on_rounded,
-                  size: AppIcon.sm,
-                  color: context.palette.primary,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  city,
-                  style: context.text.bodySmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.palette.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
       ],
     );
   }

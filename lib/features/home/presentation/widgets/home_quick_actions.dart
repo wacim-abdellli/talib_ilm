@@ -20,6 +20,8 @@ class HomeQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,6 +35,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.menu_book_rounded,
                 label: 'القرآن',
+                accentColor: palette.gold,
                 onTap: onOpenQuran,
               ),
             ),
@@ -41,6 +44,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.auto_stories_rounded,
                 label: 'العلم',
+                accentColor: palette.primary,
                 onTap: onOpenIlm,
               ),
             ),
@@ -49,6 +53,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.spa_rounded,
                 label: 'الأذكار',
+                accentColor: palette.prayer('الفجر'),
                 onTap: onOpenAdhkar,
               ),
             ),
@@ -57,6 +62,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.explore_rounded,
                 label: 'القبلة',
+                accentColor: palette.prayer('المغرب'),
                 onTap: onOpenQibla,
               ),
             ),
