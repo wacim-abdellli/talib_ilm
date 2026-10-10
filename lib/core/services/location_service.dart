@@ -10,11 +10,15 @@ class LocationResult {
   final double latitude;
   final double longitude;
   final String city;
+  final String? country;
+  final String? countryCode;
 
   const LocationResult({
     required this.latitude,
     required this.longitude,
     required this.city,
+    this.country,
+    this.countryCode,
   });
 }
 
@@ -24,10 +28,14 @@ class LocationService {
   static const _defaultLon = 39.8579;
 
   static const _keyCity = 'last_city';
+  static const _keyCountry = 'last_country';
+  static const _keyCountryCode = 'last_country_code';
   static const _keyLat = 'last_lat';
   static const _keyLon = 'last_lon';
   static const _keyManualEnabled = 'manual_location_enabled';
   static const _keyManualCity = 'manual_city';
+  static const _keyManualCountry = 'manual_country';
+  static const _keyManualCountryCode = 'manual_country_code';
   static const _keyManualLat = 'manual_lat';
   static const _keyManualLon = 'manual_lon';
   static bool _localeReady = false;
@@ -47,6 +55,8 @@ class LocationService {
         await _saveLastKnown(
           prefs,
           city: ip.city,
+          country: ip.country,
+          countryCode: ip.countryCode,
           latitude: ip.latitude,
           longitude: ip.longitude,
         );
@@ -70,7 +80,12 @@ class LocationService {
 
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null) {
-        best = await _resolvePosition(lastKnown, best.city);
+        best = await _resolvePosition(
+          lastKnown,
+          best.city,
+          fallbackCountry: best.country,
+          fallbackCountryCode: best.countryCode,
+        );
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -80,10 +95,17 @@ class LocationService {
         ),
       );
 
-      final resolved = await _resolvePosition(position, best.city);
+      final resolved = await _resolvePosition(
+        position,
+        best.city,
+        fallbackCountry: best.country,
+        fallbackCountryCode: best.countryCode,
+      );
       await _saveLastKnown(
         prefs,
         city: resolved.city,
+        country: resolved.country,
+        countryCode: resolved.countryCode,
         latitude: resolved.latitude,
         longitude: resolved.longitude,
       );
@@ -98,7 +120,15 @@ class LocationService {
     final lat = prefs.getDouble(_keyLat) ?? _defaultLat;
     final lon = prefs.getDouble(_keyLon) ?? _defaultLon;
     final city = prefs.getString(_keyCity) ?? _defaultCity;
-    return LocationResult(latitude: lat, longitude: lon, city: city);
+    final country = prefs.getString(_keyCountry);
+    final countryCode = prefs.getString(_keyCountryCode);
+    return LocationResult(
+      latitude: lat,
+      longitude: lon,
+      city: city,
+      country: country,
+      countryCode: countryCode,
+    );
   }
 
   LocationResult? _loadManual(SharedPreferences prefs) {
@@ -109,16 +139,28 @@ class LocationService {
     if (lat == null || lon == null) return null;
     final city =
         prefs.getString(_keyManualCity) ?? AppStrings.locationManualDefault;
-    return LocationResult(latitude: lat, longitude: lon, city: city);
+    final country = prefs.getString(_keyManualCountry);
+    final countryCode = prefs.getString(_keyManualCountryCode);
+    return LocationResult(
+      latitude: lat,
+      longitude: lon,
+      city: city,
+      country: country,
+      countryCode: countryCode,
+    );
   }
 
   Future<void> _saveLastKnown(
     SharedPreferences prefs, {
     required String city,
+    String? country,
+    String? countryCode,
     required double latitude,
     required double longitude,
   }) async {
     await prefs.setString(_keyCity, city);
+    if (country != null) await prefs.setString(_keyCountry, country);
+    if (countryCode != null) await prefs.setString(_keyCountryCode, countryCode);
     await prefs.setDouble(_keyLat, latitude);
     await prefs.setDouble(_keyLon, longitude);
   }
@@ -132,6 +174,12 @@ class LocationService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyManualEnabled, true);
     await prefs.setString(_keyManualCity, location.city);
+    if (location.country != null) {
+      await prefs.setString(_keyManualCountry, location.country!);
+    }
+    if (location.countryCode != null) {
+      await prefs.setString(_keyManualCountryCode, location.countryCode!);
+    }
     await prefs.setDouble(_keyManualLat, location.latitude);
     await prefs.setDouble(_keyManualLon, location.longitude);
   }
@@ -140,6 +188,8 @@ class LocationService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyManualEnabled, false);
     await prefs.remove(_keyManualCity);
+    await prefs.remove(_keyManualCountry);
+    await prefs.remove(_keyManualCountryCode);
     await prefs.remove(_keyManualLat);
     await prefs.remove(_keyManualLon);
   }
@@ -152,66 +202,166 @@ class LocationService {
     _localeReady = true;
   }
 
-  Future<LocationResult?> _tryIpLocation() async {
+  Future<Map<String, String>?> _reverseGeocodeHttp(double latitude, double longitude) async {
     try {
       final client = HttpClient();
-      final request = await client.getUrl(Uri.parse('https://ipapi.co/json/'));
-      final response = await request.close().timeout(
-        const Duration(seconds: 4),
+      final uri = Uri.parse(
+        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$latitude&longitude=$longitude&localityLanguage=ar',
       );
-      if (response.statusCode != HttpStatus.ok) {
+      final request = await client.getUrl(uri);
+      final response = await request.close().timeout(const Duration(seconds: 3));
+      if (response.statusCode == HttpStatus.ok) {
+        final payload = await response.transform(utf8.decoder).join();
         client.close();
-        return null;
+        final data = jsonDecode(payload);
+        if (data is Map<String, dynamic>) {
+          final res = <String, String>{};
+          final c = data['city'] ?? data['locality'] ?? data['principalSubdivision'];
+          if (c is String && c.trim().isNotEmpty) {
+            res['city'] = c.trim();
+          }
+          if (data['countryName'] is String && (data['countryName'] as String).trim().isNotEmpty) {
+            res['country'] = (data['countryName'] as String).trim();
+          }
+          if (data['countryCode'] is String && (data['countryCode'] as String).trim().isNotEmpty) {
+            res['countryCode'] = (data['countryCode'] as String).trim().toUpperCase();
+          }
+          return res;
+        }
+      } else {
+        client.close();
       }
-      final payload = await response.transform(utf8.decoder).join();
-      client.close();
-      final data = jsonDecode(payload);
-      if (data is! Map<String, dynamic>) return null;
+    } catch (_) {}
+    return null;
+  }
 
-      final latRaw = data['latitude'] ?? data['lat'];
-      final lonRaw = data['longitude'] ?? data['lon'];
-      final cityRaw = data['city'];
-      if (latRaw == null || lonRaw == null) return null;
+  Future<LocationResult?> _tryIpLocation() async {
+    // 1. Try ipwho.is (fast, unthrottled, detailed JSON)
+    try {
+      final client = HttpClient();
+      final request = await client.getUrl(Uri.parse('https://ipwho.is/'));
+      final response = await request.close().timeout(const Duration(seconds: 4));
+      if (response.statusCode == HttpStatus.ok) {
+        final payload = await response.transform(utf8.decoder).join();
+        client.close();
+        final data = jsonDecode(payload);
+        if (data is Map<String, dynamic> && data['success'] != false) {
+          final latRaw = data['latitude'];
+          final lonRaw = data['longitude'];
+          final cityRaw = data['city'];
+          final countryRaw = data['country'];
+          final codeRaw = data['country_code'];
+          if (latRaw != null && lonRaw != null) {
+            final lat = (latRaw as num).toDouble();
+            final lon = (lonRaw as num).toDouble();
+            var city = (cityRaw is String && cityRaw.trim().isNotEmpty) ? cityRaw.trim() : '';
+            var country = countryRaw is String ? countryRaw.trim() : null;
+            var code = codeRaw is String ? codeRaw.toUpperCase().trim() : null;
 
-      final latitude = (latRaw as num).toDouble();
-      final longitude = (lonRaw as num).toDouble();
-      final city = (cityRaw is String && cityRaw.trim().isNotEmpty)
-          ? cityRaw.trim()
-          : AppStrings.locationCurrent;
+            // Resolve Arabic city name via BigDataCloud
+            final arabicGeo = await _reverseGeocodeHttp(lat, lon);
+            if (arabicGeo != null) {
+              if (arabicGeo['city'] != null) city = arabicGeo['city']!;
+              if (arabicGeo['country'] != null) country = arabicGeo['country'];
+              if (arabicGeo['countryCode'] != null) code = arabicGeo['countryCode'];
+            }
 
-      return LocationResult(
-        latitude: latitude,
-        longitude: longitude,
-        city: city,
-      );
-    } catch (_) {
-      return null;
-    }
+            return LocationResult(
+              latitude: lat,
+              longitude: lon,
+              city: city.isNotEmpty ? city : (country ?? AppStrings.locationCurrent),
+              country: country,
+              countryCode: code,
+            );
+          }
+        }
+      } else {
+        client.close();
+      }
+    } catch (_) {}
+
+    // 2. Fallback: ip-api.com
+    try {
+      final client = HttpClient();
+      final request = await client.getUrl(Uri.parse('http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon'));
+      final response = await request.close().timeout(const Duration(seconds: 3));
+      if (response.statusCode == HttpStatus.ok) {
+        final payload = await response.transform(utf8.decoder).join();
+        client.close();
+        final data = jsonDecode(payload);
+        if (data is Map<String, dynamic> && data['status'] == 'success') {
+          final lat = (data['lat'] as num).toDouble();
+          final lon = (data['lon'] as num).toDouble();
+          var city = (data['city'] as String?)?.trim() ?? '';
+          var country = data['country'] as String?;
+          var code = (data['countryCode'] as String?)?.toUpperCase();
+
+          // Resolve Arabic city name via BigDataCloud
+          final arabicGeo = await _reverseGeocodeHttp(lat, lon);
+          if (arabicGeo != null) {
+            if (arabicGeo['city'] != null) city = arabicGeo['city']!;
+            if (arabicGeo['country'] != null) country = arabicGeo['country'];
+            if (arabicGeo['countryCode'] != null) code = arabicGeo['countryCode'];
+          }
+
+          return LocationResult(
+            latitude: lat,
+            longitude: lon,
+            city: city.isNotEmpty ? city : (country ?? AppStrings.locationCurrent),
+            country: country,
+            countryCode: code,
+          );
+        }
+      } else {
+        client.close();
+      }
+    } catch (_) {}
+
+    return null;
   }
 
   Future<LocationResult> _resolvePosition(
     Position position,
-    String fallbackCity,
-  ) async {
+    String fallbackCity, {
+    String? fallbackCountry,
+    String? fallbackCountryCode,
+  }) async {
     var city = fallbackCity;
+    String? country = fallbackCountry;
+    String? countryCode = fallbackCountryCode;
+
+    // 1. Try native geocoder
     try {
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
-      city = _pickCity(placemarks) ?? fallbackCity;
+      final picked = _pickCity(placemarks);
+      if (picked != null) city = picked;
+      if (placemarks.isNotEmpty) {
+        country = placemarks.first.country?.trim() ?? country;
+        countryCode = placemarks.first.isoCountryCode?.trim().toUpperCase() ?? countryCode;
+      }
     } catch (_) {
-      city = fallbackCity;
+      // 2. Fallback: HTTP reverse geocode in Arabic (fixes Android OEM Geocoder bugs)
+      final arabicGeo = await _reverseGeocodeHttp(position.latitude, position.longitude);
+      if (arabicGeo != null) {
+        if (arabicGeo['city'] != null) city = arabicGeo['city']!;
+        if (arabicGeo['country'] != null) country = arabicGeo['country'];
+        if (arabicGeo['countryCode'] != null) countryCode = arabicGeo['countryCode'];
+      }
     }
 
     if (city == _defaultCity && (position.latitude != _defaultLat)) {
-      city = AppStrings.locationCurrent;
+      city = country ?? AppStrings.locationCurrent;
     }
 
     return LocationResult(
       latitude: position.latitude,
       longitude: position.longitude,
       city: city,
+      country: country,
+      countryCode: countryCode,
     );
   }
 

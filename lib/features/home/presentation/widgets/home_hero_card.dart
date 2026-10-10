@@ -40,23 +40,9 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(_getTimerDuration(), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _updateTimeLeft();
-      if (_timeLeft.inMinutes < 1 && _timer.tick % 60 != 0) {
-        _resetTimer();
-      }
     });
-  }
-
-  Duration _getTimerDuration() {
-    return _timeLeft.inMinutes < 1
-        ? const Duration(seconds: 1)
-        : const Duration(minutes: 1);
-  }
-
-  void _resetTimer() {
-    _timer.cancel();
-    _startTimer();
   }
 
   void _updateTimeLeft() {
@@ -263,30 +249,54 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       ),
                       const SizedBox(width: AppSpace.lg),
 
-                      // End: 3 Modern Time Badges (LTR: 05 س : 46 د : 13 ث)
+                      // End: Digital Precision Countdown Clock (05 : 46 : 13)
                       Directionality(
                         textDirection: TextDirection.ltr,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _CountdownDigitCapsule(
-                              value: hours,
-                              unit: 'س',
-                              accentColor: prayerColor,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs + 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.surfaceRaised,
+                            borderRadius: AppRadius.smRadius,
+                            border: Border.all(
+                              color: prayerColor.withValues(alpha: 0.35),
+                              width: 1.2,
                             ),
-                            _CountdownSeparator(color: prayerColor),
-                            _CountdownDigitCapsule(
-                              value: minutes,
-                              unit: 'د',
-                              accentColor: prayerColor,
-                            ),
-                            _CountdownSeparator(color: prayerColor),
-                            _CountdownDigitCapsule(
-                              value: seconds,
-                              unit: 'ث',
-                              accentColor: prayerColor,
-                            ),
-                          ],
+                            boxShadow: palette.shadow,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                hours,
+                                style: textTheme.titleSmall.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: palette.text,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                              _CountdownColon(color: prayerColor),
+                              Text(
+                                minutes,
+                                style: textTheme.titleSmall.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: palette.text,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                              _CountdownColon(color: prayerColor),
+                              Text(
+                                seconds,
+                                style: textTheme.titleSmall.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: prayerColor,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -311,10 +321,11 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 ),
                 child: Row(
                   children: AppStrings.prayerOrder.map((prayerName) {
-                    final isCurrent = widget.nextPrayerName == prayerName;
+                    final isSameDay = widget.nextPrayerTime.day == DateTime.now().day;
+                    final isCurrent = widget.nextPrayerName == prayerName && isSameDay;
                     final prayerTime = widget.allPrayers?[prayerName];
                     final isPast = prayerTime != null &&
-                        prayerTime.isBefore(DateTime.now());
+                        (prayerTime.isBefore(DateTime.now()) || !isSameDay);
 
                     return _buildTimelineStation(
                       context: context,
@@ -488,102 +499,36 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
   String _getNearnessLabel() {
     final minutes = _timeLeft.inMinutes;
-    if (minutes <= 0) {
+    final seconds = _timeLeft.inSeconds;
+    if (minutes <= 0 && seconds <= 0) {
       return 'حان وقت الأذان';
     }
     if (minutes <= 5) {
-      return 'يقترب جداً (5 دقائق)';
+      return 'يقترب وقت الصلاة';
     }
-    if (minutes <= 15) {
-      return 'خلال 15 دقيقة';
-    }
-    if (minutes <= 30) {
-      return 'خلال 30 دقيقة';
-    }
-    return 'الصلاة القادمة';
+    return 'بقي على الأذان';
   }
 
   String _getReadableDuration() {
     final hours = _timeLeft.inHours;
     final minutes = _timeLeft.inMinutes % 60;
+    final seconds = _timeLeft.inSeconds % 60;
     if (hours > 0) {
-      return '$hours س و $minutes د';
+      return '$hours:$minutes:$seconds';
     }
-    return '$minutes دقيقة';
+    return '$minutes:$seconds';
   }
 }
 
-class _CountdownDigitCapsule extends StatelessWidget {
-  final String value;
-  final String unit;
-  final Color accentColor;
-
-  const _CountdownDigitCapsule({
-    required this.value,
-    required this.unit,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return Container(
-      constraints: const BoxConstraints(
-        minWidth: 44,
-        minHeight: 32,
-      ),
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        borderRadius: AppRadius.smRadius,
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.4),
-          width: 1.2,
-        ),
-        boxShadow: palette.shadow,
-      ),
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Text(
-            value,
-            style: textTheme.titleSmall.copyWith(
-              fontWeight: FontWeight.w800,
-              color: palette.text,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(width: AppSpace.xs / 2),
-          Text(
-            unit,
-            style: textTheme.caption.copyWith(
-              color: accentColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountdownSeparator extends StatelessWidget {
+class _CountdownColon extends StatelessWidget {
   final Color color;
 
-  const _CountdownSeparator({required this.color});
+  const _CountdownColon({required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
       child: Text(
         ':',
         style: context.text.titleSmall.copyWith(

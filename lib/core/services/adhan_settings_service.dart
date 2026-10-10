@@ -69,9 +69,10 @@ class AdhanSettingsService {
 
   static const List<String> prayerNames = AppStrings.prayerOrder;
   static const Map<String, String> calculationMethods = {
+    'auto': 'تلقائي (حسب الدولة الحالية)',
+    'mwl': 'رابطة العالم الإسلامي (الجزائر والمغرب العربي)',
+    'umm_al_qura': 'جامعة أم القرى (مكة المكرمة)',
     'egyptian': 'الهيئة المصرية العامة للمساحة',
-    'mwl': 'رابطة العالم الإسلامي',
-    'umm_al_qura': 'جامعة أم القرى',
   };
 
   Future<AdhanSettings> getSettings() async {
@@ -79,7 +80,7 @@ class AdhanSettingsService {
     final enabled = prefs.getBool(_keyEnabled) ?? false;
     final soundIndex = prefs.getInt(_keySound) ?? 0;
     final silent = prefs.getBool(_keySilent) ?? false;
-    final calcMethod = prefs.getString(_keyCalcMethod) ?? 'egyptian';
+    final calcMethod = prefs.getString(_keyCalcMethod) ?? 'auto';
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
     final iqama = prefs.getBool(_keyIqama) ?? false;

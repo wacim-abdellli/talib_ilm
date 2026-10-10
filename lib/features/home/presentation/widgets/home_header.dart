@@ -82,6 +82,7 @@ class HomeHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.location_on_rounded,
@@ -89,11 +90,9 @@ class HomeHeader extends StatelessWidget {
                           color: palette.primary,
                         ),
                         const SizedBox(width: AppSpace.xs / 2),
-                        Expanded(
+                        Flexible(
                           child: Text(
-                            greetingSubtitle != null
-                                ? '$greetingSubtitle • $city'
-                                : city,
+                            city,
                             style: textTheme.caption.copyWith(
                               color: palette.textMuted,
                               fontWeight: FontWeight.w600,

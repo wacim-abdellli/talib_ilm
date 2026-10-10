@@ -42,12 +42,14 @@ class PrayerTimesDay {
   final DateTime date;
   final Map<String, DateTime> prayers;
   final String nextPrayer;
+  final DateTime? nextPrayerTime;
 
   const PrayerTimesDay({
     required this.city,
     required this.date,
     required this.prayers,
     required this.nextPrayer,
+    this.nextPrayerTime,
   });
 }
 

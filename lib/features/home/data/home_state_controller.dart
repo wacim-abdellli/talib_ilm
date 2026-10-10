@@ -161,18 +161,18 @@ class HomeStateController extends ChangeNotifier {
   String? getPresenceMessage() {
     switch (_currentState) {
       case HomeEmotionalState.prayerWindow:
-        return 'حيّ على الصلاة • أقبل على مناجاة ربك';
+        return 'حيّ على الصلاة • أقبل على ربك';
       case HomeEmotionalState.approachingPrayer:
-        if (_minutesToNextPrayer <= 5) return 'أرحنا بها يا بلال • على مشارف النداء';
-        if (_minutesToNextPrayer <= 10) return 'أرحنا بها يا بلال • اقترب وقت الفريضة';
-        return 'اقترب وقت الصلاة • تهيأ للوقوف بين يدي الله';
+        if (_minutesToNextPrayer <= 5) return 'أرحنا بها يا بلال';
+        if (_minutesToNextPrayer <= 10) return 'اقترب وقت الفريضة';
+        return 'اقترب وقت الصلاة';
       case HomeEmotionalState.postPrayerCalm:
-        return 'تقبّل الله طاعتكم • أقبل على زاد العلم';
+        return 'تقبّل الله طاعتكم';
       case HomeEmotionalState.userProgressed:
-        if (_lastAction == 'learning') return 'طاب مسعاك في تحصيل العلم النافع';
-        if (_lastAction == 'quran') return 'أنار الله قلبك بآيات الذكر الحكيم';
-        if (_lastAction == 'adhkar') return 'جعل الله لسانك رطباً بذكره دوماً';
-        return 'طبت وطاب ممشاك يا طالب العلم';
+        if (_lastAction == 'learning') return 'بارك الله في سعيك وطلبك';
+        if (_lastAction == 'quran') return 'أنار الله دربك بالقرآن';
+        if (_lastAction == 'adhkar') return 'ثبّتك الله على ذكره';
+        return 'بوركت جهودك في الخير';
       case HomeEmotionalState.userAbsent:
         return null; // Silent, no guilt
     }
