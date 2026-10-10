@@ -483,12 +483,12 @@ FAILED (54 violations)
 - **Status:** Complete
 - **Authentic Celestial Sky Prayer Color System (`AppPalette.prayer`):**
   - Completely re-engineered prayer colors to reflect real celestial sky phenomena with rich pigmentation, sublime jewel aesthetics, and guaranteed WCAG AA compliance across all card surfaces:
-    - **الفجر (Fajr - Dawn Twilight):** Luminous celestial dawn sapphire-indigo (`#818CF8` dark, `#3730A3` light, 5.92:1 / 9.93:1 contrast).
+    - **الفجر (Fajr - Dawn Twilight):** Tranquil dawn sky blue (`#60A5FA` dark, `#0369A1` light, 6.94:1 / 5.93:1 contrast) — peaceful, calm morning twilight, eliminating harsh purples.
     - **الشروق (Shuruq - Sunrise):** Radiant sunrise coral-amber (`#FB923C` dark, `#C2410C` light, 7.79:1 / 5.18:1 contrast).
-    - **الظهر (Dhuhr - Midday Zenith):** Brilliant high noon sky azure blue (`#38BDF8` dark, `#0369A1` light, 8.24:1 / 5.93:1 contrast) — clear, vivid, expansive celestial blue.
-    - **العصر (Asr - Golden Hour):** Warm honey-amber gold (`#FBBF24` dark, `#B45309` light, 10.57:1 / 5.02:1 contrast).
+    - **الظهر (Dhuhr - Midday Zenith):** Radiant high noon solar gold (`#FBBF24` dark, `#9E640B` light, 10.58:1 / 4.90:1 contrast) — true celestial zenith sun, seamlessly harmonizing with the dark & gold design without artificial blues.
+    - **العصر (Asr - Golden Hour):** Warm afternoon copper-amber (`#F97316` dark, `#B45309` light, 6.30:1 / 5.02:1 contrast).
     - **المغرب (Maghrib - Sunset Dusk):** Glowing sunset ruby crimson-rose (`#F43F5E` dark, `#BE123C` light, 4.81:1 / 6.29:1 contrast).
-    - **العشاء (Isha - Velvet Nocturnal Sky):** Royal velvet celestial amethyst purple (`#C084FC` dark, `#6D28D9` light, 6.69:1 / 7.10:1 contrast) — deeply rich, starlit royal purple.
+    - **العشاء (Isha - Velvet Nocturnal Sky):** Royal velvet celestial amethyst purple (`#C084FC` dark, `#6D28D9` light, 6.69:1 / 7.10:1 contrast) — deeply rich, starlit royal night sky.
 - **Prestige "Velvet Obsidian & Imperial Gold" Color Architecture (`AppPalette`):**
   - **Dark Mode (`AppPalette.dark`):**
     - Pure deep obsidian `#090807` background, eliminating washed-out greys.

@@ -169,27 +169,27 @@ class AppPalette extends ThemeExtension<AppPalette> {
   Color prayer(String? name) {
     final p = (name ?? '').toLowerCase().trim();
     if (p.contains('fajr') || p.contains('فجر')) {
-      // Celestial Dawn Sapphire-Indigo
-      return isDark ? const Color(0xFF818CF8) : const Color(0xFF3730A3);
+      // Tranquil Dawn Sky Blue (peaceful morning twilight, not purple)
+      return isDark ? const Color(0xFF60A5FA) : const Color(0xFF0369A1);
     }
     if (p.contains('sunrise') || p.contains('شروق')) {
-      // Radiant Sunrise Coral-Amber
+      // Radiant Sunrise Coral-Amber (first rays)
       return isDark ? const Color(0xFFFB923C) : const Color(0xFFC2410C);
     }
     if (p.contains('dhuhr') || p.contains('ظهر')) {
-      // High Noon Sky Azure Blue (clear, vivid blue)
-      return isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1);
+      // Zenith Midday Sun (blazing solar gold, perfectly harmonious with dark & gold)
+      return isDark ? const Color(0xFFFBBF24) : const Color(0xFF9E640B);
     }
     if (p.contains('asr') || p.contains('عصر')) {
-      // Golden Hour Honey-Amber
-      return isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
+      // Afternoon Golden Hour Copper-Amber
+      return isDark ? const Color(0xFFF97316) : const Color(0xFFB45309);
     }
     if (p.contains('maghrib') || p.contains('مغرب')) {
-      // Sunset Ruby Crimson-Rose
+      // Sunset Ruby Crimson-Rose (dusk twilight)
       return isDark ? const Color(0xFFF43F5E) : const Color(0xFFBE123C);
     }
     if (p.contains('isha') || p.contains('عشاء')) {
-      // Velvet Nocturnal Celestial Amethyst Purple
+      // Velvet Nocturnal Celestial Purple (deep starlit night sky)
       return isDark ? const Color(0xFFC084FC) : const Color(0xFF6D28D9);
     }
     return gold;
