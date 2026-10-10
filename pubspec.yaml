@@ -47,14 +47,34 @@ dev_dependencies:
 
   
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/ios_icon_1024.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "assets/branding/android_background_432.png"
+  adaptive_icon_foreground: "assets/branding/android_foreground_432.png"
+  adaptive_icon_monochrome: "assets/branding/android_monochrome_432.png"
 
-
+flutter_native_splash:
+  color: "#F7F4EE"
+  color_dark: "#0A0A0C"
+  image: "assets/branding/symbol_on_light.png"
+  image_dark: "assets/branding/symbol_on_dark.png"
+  android_12:
+    color: "#F7F4EE"
+    color_dark: "#0A0A0C"
+    image: "assets/branding/symbol_on_light.png"
+    image_dark: "assets/branding/symbol_on_dark.png"
 
 flutter:
   uses-material-design: true
 
   assets:
+    - assets/branding/
     - assets/data/mutun_program.json
     - assets/data/
     - assets/audio/
