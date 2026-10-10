@@ -15,6 +15,7 @@ import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
 import 'location_settings_sheet.dart';
+import 'prayer_settings_sheet.dart';
 import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
 import 'widgets/prayer_header.dart';
@@ -146,6 +147,7 @@ class _PrayerPageState extends State<PrayerPage> {
                           city: city,
                           gregorianDate: gregorianDate,
                           onOpenLocationSettings: () => _openLocationSettings(context),
+                          onOpenPrayerSettings: () => _openPrayerSettings(context),
                           onOpenQibla: () => _openQibla(context),
                         ),
 
@@ -171,6 +173,8 @@ class _PrayerPageState extends State<PrayerPage> {
                                   item: times[i],
                                   onBeforeAdhkar: () => _openDuas(context),
                                   onAfterAdhkar: () =>
+                                      _openAfterPrayer(context, times[i].name),
+                                  onTap: () =>
                                       _openAfterPrayer(context, times[i].name),
                                 ),
                                 if (i != times.length - 1)
@@ -209,7 +213,10 @@ class _PrayerPageState extends State<PrayerPage> {
         prayer: prayer,
         countdownText: _formatCountdown(remaining),
         progress: progress,
-        onTap: () {},
+        onTap: () => _openPrayerSettings(context),
+        onOpenQibla: () => _openQibla(context),
+        onOpenAdhkar: () => _openDuas(context),
+        onOpenSettings: () => _openPrayerSettings(context),
       );
     }
 
@@ -231,7 +238,10 @@ class _PrayerPageState extends State<PrayerPage> {
           prayer: prayer,
           countdownText: _formatCountdown(state.remaining),
           progress: progress,
-          onTap: () {},
+          onTap: () => _openPrayerSettings(context),
+          onOpenQibla: () => _openQibla(context),
+          onOpenAdhkar: () => _openDuas(context),
+          onOpenSettings: () => _openPrayerSettings(context),
         );
       },
     );
@@ -363,6 +373,15 @@ class _PrayerPageState extends State<PrayerPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => LocationSettingsSheet(onSaved: _reloadPrayer),
+    );
+  }
+
+  void _openPrayerSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PrayerSettingsSheet(onSettingsChanged: _reloadPrayer),
     );
   }
 

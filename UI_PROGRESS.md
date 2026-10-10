@@ -354,7 +354,42 @@ FAILED (54 violations)
 ```
 
 ### 6. Open Issues
-- `adhkar_golden_test.dart` has golden mismatches (0.32% and 0.25%) because the actual Cairo font is now rendering Arabic glyphs rather than the previous unstyled fallback font. Will re-approve in R1 when resolving lint issues.
-- 54 UI lint v2 violations to be resolved in R1.
+- 53 UI lint v2 violations to be resolved in R1 (reduced from 54 baseline after fixing `prayer_settings_sheet.dart`).
 - 10 `@Deprecated` shims to be removed in R1 Phase 6.
+
+---
+
+## Prayer Times Page Overhaul
+- **Status:** Complete
+- **Refined Color Palette (`AppPalette`):**
+  - Replaced saturated/garish prayer colors with serene celestial hues matching Islamic astronomy aesthetics:
+    - Fajr: `#3730A3` (light) / `#818CF8` (dark) (9.49:1 & 6.34:1 contrast)
+    - Sunrise: `#92400E` (light) / `#FBBF24` (dark) (6.78:1 & 11.34:1 contrast)
+    - Dhuhr: `#0369A1` (light) / `#38BDF8` (dark) (5.67:1 & 8.83:1 contrast)
+    - Asr: `#9A3412` (light) / `#FB923C` (dark) (6.98:1 & 8.36:1 contrast)
+    - Maghrib: `#9F1239` (light) / `#FB7185` (dark) (7.66:1 & 7.03:1 contrast)
+    - Isha: `#5B21B6` (light) / `#A78BFA` (dark) (8.59:1 & 6.95:1 contrast)
+  - All 12 values verified WCAG AA compliant on background and surfaces via `tool/contrast.py`.
+- **Hero Timepiece Card (`NextPrayerCard`):**
+  - Removed bright linear background gradients.
+  - Built an elegant Islamic timepiece aesthetic using `palette.surfaceRaised` with a subtle hairline border.
+  - Tabular countdown with gold progress bar indicator.
+  - 3 quick-action interactive buttons: Qibla Compass, Adhkar, and Prayer Notifications with ripple feedback and semantic tooltips.
+- **Prayer List Tiles (`PrayerTimeCard`):**
+  - Replaced overwhelming full-green card fill on the active prayer with a subtle gold accent border (`1.5px`) and gold badge tag ("الآن").
+  - Jewel icon badge per prayer using individual celestial palette accents.
+  - Interactive Adhkar link chip with arrow indicator.
+  - Interactive Adhan notification bell with toggle state and tooltip.
+- **Prayer Header (`PrayerHeader`):**
+  - Rebuilt chip row with balanced flex ratios (`flex: 3` for City selector, `flex: 2` for Date display) with text overflow protection, preventing any RenderFlex overflows up to 2.0x text scale.
+  - Added direct Qibla Compass and Settings action buttons in the header bar.
+- **Settings Sheet Integration (`PrayerPage`):**
+  - Connected `PrayerSettingsSheet` to header settings button and hero card shortcuts.
+  - Fixed brightness branching in `prayer_settings_sheet.dart` to use `palette.isDark`, reducing v2 lint failures from 54 to 53.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (1 violation fixed, 0 regressions).
+  - `flutter test`: 36/36 tests passed (including all golden tests).
+  - `flutter build apk --debug`: Built cleanly.
+
 

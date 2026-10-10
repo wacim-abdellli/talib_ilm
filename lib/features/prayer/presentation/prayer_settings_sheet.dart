@@ -118,7 +118,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     }
 
     final settings = _settings!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = palette.isDark;
 
     return Container(
       decoration: BoxDecoration(

@@ -26,12 +26,14 @@ class PrayerTimeCard extends StatelessWidget {
   final PrayerTimeEntry item;
   final VoidCallback? onBeforeAdhkar;
   final VoidCallback? onAfterAdhkar;
+  final VoidCallback? onTap;
 
   const PrayerTimeCard({
     super.key,
     required this.item,
     this.onBeforeAdhkar,
     this.onAfterAdhkar,
+    this.onTap,
   });
 
   @override
@@ -39,6 +41,7 @@ class PrayerTimeCard extends StatelessWidget {
     final palette = context.palette;
     final isCurrent = item.isCurrent;
     final isCompleted = item.isCompleted;
+    final prayerColor = palette.prayer(item.name);
 
     final statusIcon = isCurrent
         ? Icons.notifications_active_rounded
@@ -47,59 +50,50 @@ class PrayerTimeCard extends StatelessWidget {
             : Icons.notifications_none_rounded);
 
     final statusColor = isCurrent
-        ? palette.primary
+        ? palette.gold
         : palette.textSubtle;
 
     return AppCard(
-      color: isCurrent ? palette.primarySoft : palette.surface,
+      color: isCurrent ? palette.surfaceRaised : palette.surface,
       border: Border.all(
-        color: isCurrent ? palette.primary : palette.border,
+        color: isCurrent ? palette.gold : palette.border,
+        width: isCurrent ? 1.5 : 1.0,
       ),
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.lg,
         vertical: AppSpace.md,
       ),
+      onTap: onTap,
       child: Row(
         children: [
-          // Prayer color 8px dot + current prayer gold 8px dot
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: AppSpace.sm,
-                height: AppSpace.sm,
-                decoration: BoxDecoration(
-                  color: palette.prayer(item.name),
-                  shape: BoxShape.circle,
-                ),
+          // Prayer Jewel Icon Badge
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCurrent ? palette.goldSoft : palette.surfaceMuted,
+              border: Border.all(
+                color: isCurrent
+                    ? palette.gold.withValues(alpha: 0.4)
+                    : palette.border,
               ),
-              if (isCurrent) ...[
-                const SizedBox(width: AppSpace.xs),
-                Container(
-                  width: AppSpace.sm,
-                  height: AppSpace.sm,
-                  decoration: BoxDecoration(
-                    color: palette.gold,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ],
+            ),
+            child: Center(
+              child: Icon(
+                _iconFor(item.name),
+                size: AppIcon.sm,
+                color: isCurrent ? palette.gold : prayerColor,
+              ),
+            ),
           ),
           const SizedBox(width: AppSpace.md),
 
-          // Prayer Icon
-          Icon(
-            _iconFor(item.name),
-            size: AppIcon.md,
-            color: isCurrent ? palette.onPrimarySoft : palette.textMuted,
-          ),
-          const SizedBox(width: AppSpace.md),
-
-          // Prayer Details
+          // Prayer Details (Name, Tags, Adhkar Link)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -108,6 +102,8 @@ class PrayerTimeCard extends StatelessWidget {
                         item.name,
                         style: context.text.titleSmall.copyWith(
                           color: palette.text,
+                          fontWeight:
+                              isCurrent ? FontWeight.w800 : FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -116,8 +112,8 @@ class PrayerTimeCard extends StatelessWidget {
                       const SizedBox(width: AppSpace.sm),
                       AppTag(
                         label: 'الآن',
-                        fg: palette.onPrimarySoft,
-                        bg: palette.surfaceRaised,
+                        fg: palette.onGold,
+                        bg: palette.goldFill,
                       ),
                     ] else if (item.isNext) ...[
                       const SizedBox(width: AppSpace.sm),
@@ -131,25 +127,12 @@ class PrayerTimeCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                if (onBeforeAdhkar != null || onAfterAdhkar != null) ...[
+                if (onAfterAdhkar != null) ...[
                   const SizedBox(height: AppSpace.xs),
-                  Wrap(
-                    spacing: AppSpace.sm,
-                    runSpacing: AppSpace.xs,
-                    children: [
-                      if (onBeforeAdhkar != null)
-                        AdhkarLink(
-                          label: AppStrings.beforePrayerDhikr,
-                          isCurrent: isCurrent,
-                          onTap: onBeforeAdhkar,
-                        ),
-                      if (onAfterAdhkar != null)
-                        AdhkarLink(
-                          label: AppStrings.afterPrayerDhikr,
-                          isCurrent: isCurrent,
-                          onTap: onAfterAdhkar,
-                        ),
-                    ],
+                  AdhkarLink(
+                    label: 'أذكار الصلاة',
+                    isCurrent: isCurrent,
+                    onTap: onAfterAdhkar,
                   ),
                 ],
               ],
@@ -161,19 +144,26 @@ class PrayerTimeCard extends StatelessWidget {
           // Prayer Time & Status Icon
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 item.timeLabel,
                 style: context.text.titleSmall.copyWith(
                   color: palette.text,
+                  fontWeight: FontWeight.w800,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
               const SizedBox(height: AppSpace.xs),
-              Icon(
-                statusIcon,
-                size: AppIcon.md,
-                color: statusColor,
+              Tooltip(
+                message: isCurrent
+                    ? 'حان وقت الصلاة'
+                    : (isCompleted ? 'مكتملة' : 'التنبيه مفعل'),
+                child: Icon(
+                  statusIcon,
+                  size: AppIcon.sm,
+                  color: statusColor,
+                ),
               ),
             ],
           ),
@@ -222,8 +212,8 @@ class AdhkarLink extends StatelessWidget {
     final palette = context.palette;
     return AppTag(
       label: label,
-      fg: isCurrent ? palette.onPrimarySoft : palette.primary,
-      bg: isCurrent ? palette.surfaceRaised : palette.primarySoft,
+      fg: isCurrent ? palette.gold : palette.textMuted,
+      bg: isCurrent ? palette.goldSoft : palette.surfaceMuted,
       onTap: onTap,
     );
   }

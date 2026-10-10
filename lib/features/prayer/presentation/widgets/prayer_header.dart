@@ -9,6 +9,7 @@ class PrayerHeader extends StatelessWidget {
   final String city;
   final String gregorianDate;
   final VoidCallback onOpenLocationSettings;
+  final VoidCallback? onOpenPrayerSettings;
   final VoidCallback onOpenQibla;
 
   const PrayerHeader({
@@ -16,23 +17,26 @@ class PrayerHeader extends StatelessWidget {
     required this.city,
     required this.gregorianDate,
     required this.onOpenLocationSettings,
+    this.onOpenPrayerSettings,
     required this.onOpenQibla,
   });
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       padding: const EdgeInsetsDirectional.fromSTEB(
         AppSpace.xl,
         AppSpace.lg,
         AppSpace.xl,
-        AppSpace.xl,
+        AppSpace.lg,
       ),
       decoration: BoxDecoration(
-        color: context.palette.surfaceRaised,
+        color: palette.surfaceRaised,
         border: Border(
           bottom: BorderSide(
-            color: context.palette.border,
+            color: palette.border,
           ),
         ),
       ),
@@ -40,7 +44,7 @@ class PrayerHeader extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            // Top row: Title + Settings
+            // Top row: Title with Mosque badge + Quick Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -53,7 +57,8 @@ class PrayerHeader extends StatelessWidget {
                         child: Text(
                           'مواقيت الصلاة',
                           style: context.text.titleSmall.copyWith(
-                            color: context.palette.text,
+                            color: palette.text,
+                            fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -61,20 +66,34 @@ class PrayerHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                AppIconButton(
-                  icon: Icons.settings_outlined,
-                  tooltip: 'إعدادات الصلاة',
-                  color: context.palette.textMuted,
-                  onPressed: onOpenLocationSettings,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIconButton(
+                      icon: Icons.explore_outlined,
+                      tooltip: 'بوصلة القبلة',
+                      color: palette.textMuted,
+                      onPressed: onOpenQibla,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    AppIconButton(
+                      icon: Icons.tune_rounded,
+                      tooltip: 'إعدادات الصلاة والتنبيهات',
+                      color: palette.textMuted,
+                      onPressed: onOpenPrayerSettings ?? onOpenLocationSettings,
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: AppSpace.lg),
-            // Chips: City, Date, Qibla
+            const SizedBox(height: AppSpace.md),
+
+            // Chips Sub-bar: City Selector Chip + Date Chip
             Row(
               children: [
-                // City Selector Chip
+                // City Selector Chip with dropdown indicator
                 Expanded(
+                  flex: 3,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -82,35 +101,43 @@ class PrayerHeader extends StatelessWidget {
                       borderRadius: AppRadius.mdRadius,
                       child: Container(
                         padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.md,
+                          horizontal: AppSpace.sm,
                           vertical: AppSpace.sm,
                         ),
                         constraints: const BoxConstraints(
                           minHeight: AppSize.tap,
                         ),
                         decoration: BoxDecoration(
-                          color: context.palette.surfaceMuted,
+                          color: palette.surfaceMuted,
                           borderRadius: AppRadius.mdRadius,
                           border: Border.all(
-                            color: context.palette.border,
+                            color: palette.border,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.location_on_rounded,
-                              color: context.palette.primary,
-                              size: AppIcon.md,
+                              color: palette.gold,
+                              size: AppIcon.sm,
                             ),
-                            const SizedBox(width: AppSpace.sm),
+                            const SizedBox(width: AppSpace.xs),
                             Expanded(
                               child: Text(
                                 city,
                                 style: context.text.label.copyWith(
-                                  color: context.palette.text,
+                                  color: palette.text,
+                                  fontWeight: FontWeight.w700,
                                 ),
                                 overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: palette.textSubtle,
+                              size: AppIcon.sm,
                             ),
                           ],
                         ),
@@ -119,75 +146,46 @@ class PrayerHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpace.sm),
+
                 // Date Chip
-                FittedBox(
-                  fit: BoxFit.scaleDown,
+                Expanded(
+                  flex: 2,
                   child: Container(
                     padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
+                      horizontal: AppSpace.sm,
                       vertical: AppSpace.sm,
                     ),
                     constraints: const BoxConstraints(
                       minHeight: AppSize.tap,
                     ),
                     decoration: BoxDecoration(
-                      color: context.palette.surfaceMuted,
+                      color: palette.surfaceMuted,
                       borderRadius: AppRadius.mdRadius,
                       border: Border.all(
-                        color: context.palette.border,
+                        color: palette.border,
                       ),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.calendar_today_rounded,
-                          color: context.palette.textSubtle,
+                          color: palette.textSubtle,
                           size: AppIcon.sm,
                         ),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          gregorianDate,
-                          style: context.text.label.copyWith(
-                            color: context.palette.text,
+                        const SizedBox(width: AppSpace.xs),
+                        Flexible(
+                          child: Text(
+                            gregorianDate,
+                            style: context.text.label.copyWith(
+                              color: palette.text,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                // Qibla Button
-                Semantics(
-                  button: true,
-                  label: 'القبلة',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onOpenQibla,
-                      borderRadius: AppRadius.mdRadius,
-                      child: Tooltip(
-                        message: 'القبلة',
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minWidth: AppSize.tap,
-                            minHeight: AppSize.tap,
-                          ),
-                          decoration: BoxDecoration(
-                            color: context.palette.primarySoft,
-                            borderRadius: AppRadius.mdRadius,
-                            border: Border.all(
-                              color: context.palette.border,
-                            ),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.explore_rounded,
-                              color: context.palette.onPrimarySoft,
-                              size: AppIcon.md,
-                            ),
-                          ),
-                        ),
-                      ),
                     ),
                   ),
                 ),

@@ -169,24 +169,24 @@ class AppPalette extends ThemeExtension<AppPalette> {
   Color prayer(String? name) {
     final p = (name ?? '').toLowerCase().trim();
     if (p.contains('fajr') || p.contains('فجر')) {
-      return isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5);
+      return isDark ? const Color(0xFF818CF8) : const Color(0xFF3730A3);
     }
     if (p.contains('sunrise') || p.contains('شروق')) {
-      return isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
+      return isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
     }
     if (p.contains('dhuhr') || p.contains('ظهر')) {
-      return isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
+      return isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1);
     }
     if (p.contains('asr') || p.contains('عصر')) {
-      return isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C);
+      return isDark ? const Color(0xFFFB923C) : const Color(0xFF9A3412);
     }
     if (p.contains('maghrib') || p.contains('مغرب')) {
-      return isDark ? const Color(0xFFFB7185) : const Color(0xFFE11D48);
+      return isDark ? const Color(0xFFFB7185) : const Color(0xFF9F1239);
     }
     if (p.contains('isha') || p.contains('عشاء')) {
-      return isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
+      return isDark ? const Color(0xFFA78BFA) : const Color(0xFF5B21B6);
     }
-    return primary;
+    return gold;
   }
 
   @override

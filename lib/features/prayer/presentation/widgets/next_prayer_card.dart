@@ -12,6 +12,9 @@ class NextPrayerCard extends StatelessWidget {
   final VoidCallback onTap;
   final String? countdownText;
   final double progress;
+  final VoidCallback? onOpenQibla;
+  final VoidCallback? onOpenAdhkar;
+  final VoidCallback? onOpenSettings;
 
   const NextPrayerCard({
     super.key,
@@ -19,6 +22,9 @@ class NextPrayerCard extends StatelessWidget {
     required this.onTap,
     this.countdownText,
     this.progress = 0.0,
+    this.onOpenQibla,
+    this.onOpenAdhkar,
+    this.onOpenSettings,
   });
 
   @override
@@ -30,29 +36,16 @@ class NextPrayerCard extends StatelessWidget {
 
     return AppCard(
       padding: EdgeInsets.zero,
-      onTap: onTap,
+      color: palette.surfaceRaised,
       border: Border.all(
-        color: prayerColor.withValues(alpha: 0.32),
-        width: 1.5,
+        color: palette.border,
       ),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-        decoration: BoxDecoration(
-          borderRadius: AppRadius.lgRadius,
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              prayerColor.withValues(alpha: 0.10),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.45],
-          ),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Row: Next Prayer Badge & Time Pill
+            // Header Row: Next Prayer Pill & Time Badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -66,29 +59,28 @@ class NextPrayerCard extends StatelessWidget {
                         vertical: AppSpace.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: prayerColor.withValues(alpha: 0.14),
+                        color: palette.surfaceMuted,
                         borderRadius: AppRadius.pillRadius,
                         border: Border.all(
-                          color: prayerColor.withValues(alpha: 0.35),
-                          width: 1,
+                          color: palette.border,
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 6,
-                            height: 6,
+                            width: AppSpace.sm,
+                            height: AppSpace.sm,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: prayerColor,
                             ),
                           ),
-                          const SizedBox(width: AppSpace.xs),
+                          const SizedBox(width: AppSpace.sm),
                           Text(
                             AppStrings.prayerNext,
-                            style: context.text.caption.copyWith(
-                              color: prayerColor,
+                            style: context.text.label.copyWith(
+                              color: palette.textMuted,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -107,16 +99,10 @@ class NextPrayerCard extends StatelessWidget {
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          prayerColor.withValues(alpha: 0.16),
-                          prayerColor.withValues(alpha: 0.08),
-                        ],
-                      ),
+                      color: palette.surfaceMuted,
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: prayerColor.withValues(alpha: 0.4),
-                        width: 1.2,
+                        color: palette.border,
                       ),
                     ),
                     child: Row(
@@ -125,7 +111,7 @@ class NextPrayerCard extends StatelessWidget {
                         Icon(
                           Icons.access_time_rounded,
                           size: AppIcon.sm,
-                          color: prayerColor,
+                          color: palette.gold,
                         ),
                         const SizedBox(width: AppSpace.xs),
                         Text(
@@ -144,26 +130,38 @@ class NextPrayerCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpace.lg),
 
-            // Prayer Title with Accent Color
+            // Prayer Title
             Center(
               child: Text(
                 'صلاة ${prayer.prayer.labelAr}',
                 style: context.text.sacredLarge.copyWith(
                   color: palette.text,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             const SizedBox(height: AppSpace.xs),
 
-            // Countdown text with Tabular Figures
+            // Subtitle
+            Center(
+              child: Text(
+                'الوقت المتبقي حتى الأذان',
+                style: context.text.caption.copyWith(
+                  color: palette.textMuted,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+
+            // Tabular Digital Countdown
             Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   countdown,
                   style: context.text.display.copyWith(
-                    color: prayerColor,
-                    letterSpacing: 1.5,
+                    color: palette.text,
+                    letterSpacing: 2.0,
                     fontWeight: FontWeight.w800,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
@@ -172,12 +170,112 @@ class NextPrayerCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpace.lg),
 
-            // Progress Bar with Prayer Color
+            // Progress Bar with Gold accent fill
             AppProgress(
               progress: progress.clamp(0.0, 1.0),
-              color: prayerColor,
+              color: palette.gold,
             ),
+
+            // Optional Quick Actions row
+            if (onOpenQibla != null || onOpenAdhkar != null || onOpenSettings != null) ...[
+              const SizedBox(height: AppSpace.lg),
+              Row(
+                children: [
+                  if (onOpenQibla != null)
+                    Expanded(
+                      child: _HeroActionButton(
+                        icon: Icons.explore_outlined,
+                        label: 'القبلة',
+                        onTap: onOpenQibla!,
+                      ),
+                    ),
+                  if (onOpenQibla != null && (onOpenAdhkar != null || onOpenSettings != null))
+                    const SizedBox(width: AppSpace.sm),
+                  if (onOpenAdhkar != null)
+                    Expanded(
+                      child: _HeroActionButton(
+                        icon: Icons.auto_stories_outlined,
+                        label: 'الأذكار',
+                        onTap: onOpenAdhkar!,
+                      ),
+                    ),
+                  if (onOpenAdhkar != null && onOpenSettings != null)
+                    const SizedBox(width: AppSpace.sm),
+                  if (onOpenSettings != null)
+                    Expanded(
+                      child: _HeroActionButton(
+                        icon: Icons.tune_rounded,
+                        label: 'التنبيهات',
+                        onTap: onOpenSettings!,
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _HeroActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.mdRadius,
+        child: Container(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.sm,
+          ),
+          constraints: const BoxConstraints(
+            minHeight: AppSize.tap,
+          ),
+          decoration: BoxDecoration(
+            color: palette.surfaceMuted,
+            borderRadius: AppRadius.mdRadius,
+            border: Border.all(
+              color: palette.border,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: palette.textMuted,
+                size: AppIcon.sm,
+              ),
+              const SizedBox(width: AppSpace.xs),
+              Flexible(
+                child: Text(
+                  label,
+                  style: context.text.label.copyWith(
+                    color: palette.text,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
