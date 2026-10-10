@@ -124,7 +124,7 @@ void main() {
       );
     });
 
-    testWidgets('HomeHeader - light 1.0 and dark 1.5', (tester) async {
+    testWidgets('HomeHeader - light 1.0', (tester) async {
       const widget = HomeHeader(
         city: 'مكة المكرمة',
         greeting: 'أصبحنا وأصبح الملك لله',
@@ -137,6 +137,14 @@ void main() {
         fileName: 'goldens/home_header_light_1_0',
         isDark: false,
         textScale: 1.0,
+      );
+    });
+
+    testWidgets('HomeHeader - dark 1.5', (tester) async {
+      const widget = HomeHeader(
+        city: 'مكة المكرمة',
+        greeting: 'أصبحنا وأصبح الملك لله',
+        greetingSubtitle: 'طاب مسعاك يا طالب العلم',
       );
 
       await testGoldenWidget(

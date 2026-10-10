@@ -392,4 +392,26 @@ FAILED (54 violations)
   - `flutter test`: 36/36 tests passed (including all golden tests).
   - `flutter build apk --debug`: Built cleanly.
 
+---
+
+## Home Header Overhaul
+- **Status:** Complete
+- **Adaptive Brand Emblem (`HomeHeader`):**
+  - Replaced hardcoded `brandDark` badge container with theme-adaptive `palette.surfaceRaised` + `palette.border`.
+  - In light mode: pure white elevated tile `#FFFFFF` with `#E2E8F0` hairline border displaying `symbol_on_light.png` (crisp deep ink star with gold Quran book).
+  - In dark mode: obsidian slate tile `#1A232C` with dark border displaying `symbol_on_dark.png` (luminous ivory star with gold Quran book).
+  - Added accessibility semantics (`Semantics(label: 'شعار طالب العلم', image: true)`).
+- **Hijri Date Badge:**
+  - Removed star/sparkle icon (`Icons.auto_awesome_rounded`) beside the date per user request.
+  - Redesigned date pill into an editorial scholarly jewel badge using `palette.surfaceRaised`, `palette.border`, and tabular figures `palette.textMuted`.
+  - Added `Flexible` with `FittedBox(fit: BoxFit.scaleDown)` to ensure overflow immunity across 1.0, 1.5, and 2.0 text scaling.
+- **Location & Typography Refinement:**
+  - Switched location icon to brand accent `palette.gold`.
+  - Eliminated literal SizedBox spacing warning in `tool/ui_lint_v2.py`.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (SizedBox warning reduced by 1).
+  - `flutter test`: 37/37 tests passed (all goldens green).
+
+
 

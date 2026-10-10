@@ -32,35 +32,39 @@ class HomeHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Start: Official Black Emblem + Spiritual Greeting + Location
+        // Start: Brand Emblem + Contextual Greeting + Location
         Expanded(
           child: Row(
             children: [
-              // Premium Obsidian Emblem Badge with Subtle Gold Accent
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: palette.brandDark,
-                  borderRadius: AppRadius.mdRadius,
-                  border: Border.all(
-                    color: palette.gold.withValues(alpha: 0.35),
-                    width: 1.2,
+              // Premium Emblem Badge (Adapts seamlessly to Light & Dark)
+              Semantics(
+                label: 'شعار طالب العلم',
+                image: true,
+                child: Container(
+                  width: AppSize.tap,
+                  height: AppSize.tap,
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: palette.border,
+                      width: 1,
+                    ),
+                    boxShadow: palette.shadow,
                   ),
-                  boxShadow: palette.shadow,
-                ),
-                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                child: ClipRRect(
-                  borderRadius: AppRadius.smRadius,
-                  child: Image.asset(
-                    palette.logoSymbol,
-                    fit: BoxFit.contain,
+                  padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                  child: ClipRRect(
+                    borderRadius: AppRadius.smRadius,
+                    child: Image.asset(
+                      palette.logoSymbol,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpace.md),
 
-              // Dignified Islamic Greeting & Contextual Subtitle
+              // Dignified Islamic Greeting & Location
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,14 +80,14 @@ class HomeHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xs / 2),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.location_on_rounded,
                           size: AppIcon.sm,
-                          color: palette.primary,
+                          color: palette.gold,
                         ),
                         const SizedBox(width: AppSpace.xs / 2),
                         Flexible(
@@ -108,48 +112,37 @@ class HomeHeader extends StatelessWidget {
 
         const SizedBox(width: AppSpace.sm),
 
-        // End: Hijri Date Illuminated Jewel Pill
+        // End: Hijri Date Pill (Clean typography, no star icon, luxury jewel finish)
         if (hijriStr.isNotEmpty)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 130),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Container(
+          Flexible(
+            child: Container(
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpace.md,
-                vertical: AppSpace.xs + 2,
+                vertical: AppSpace.xs,
               ),
               decoration: BoxDecoration(
-                color: palette.primarySoft,
+                color: palette.surfaceRaised,
                 borderRadius: AppRadius.pillRadius,
                 border: Border.all(
-                  color: palette.primary.withValues(alpha: 0.3),
+                  color: palette.border,
                   width: 1,
                 ),
                 boxShadow: palette.shadow,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.auto_awesome_rounded,
-                    size: AppIcon.sm,
-                    color: palette.onPrimarySoft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  hijriStr,
+                  style: textTheme.caption.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.textMuted,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    hijriStr,
-                    style: textTheme.caption.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: palette.onPrimarySoft,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
