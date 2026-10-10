@@ -413,5 +413,29 @@ FAILED (54 violations)
   - `python tool/ui_lint_v2.py`: 53 violations (SizedBox warning reduced by 1).
   - `flutter test`: 37/37 tests passed (all goldens green).
 
+---
+
+## Sacred Emblem & Landing Splash Page Overhaul
+- **Status:** Complete
+- **Unique Sacred Logo & Emblem:**
+  - Generated and crafted a deeply emotional, unique brand emblem for *Talib Ilm*: An illuminated Holy Quran in gold calligraphy illuminations, resting beneath a radiant celestial crescent and glowing 8-pointed star of sacred wisdom, encased within a 3D brushed gold Andalusian Rub el Hizb frame.
+  - Processed and exported master assets:
+    - `assets/branding/symbol_on_dark.png` & `symbol_on_light.png` (clean transparent cutout)
+    - `assets/branding/icon_dark_rounded.png` & `icon_light_rounded.png` (1024x1024)
+    - `assets/branding/ios_icon_1024.png` & Android adaptive foreground
+    - `assets/images/logo.png`
+  - Regenerated platform launcher icons (`dart run flutter_launcher_icons`) and native splash screens (`dart run flutter_native_splash:create`).
+- **In-App Landing / Splash Screen (`SplashPage`):**
+  - Added sacred Basmalah at the top with full shakl/tashkeel: `بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ` using `context.text.sacredLarge` in classical `Amiri` calligraphy font in luminous gold.
+  - Centered glowing emblem with smooth breathing fade/scale animation, title `طالبُ العِلْمِ`, and subtitle `زادُ المسلمِ في طَلَبِ العِلمِ النَّافِعِ`.
+  - Added gold progress bar and hadith citation: `«مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الْجَنَّةِ»`.
+  - Tap-to-proceed functionality or smooth auto-transition to `AppShell` via `AppMotion.splash`.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 regressions).
+  - `flutter test`: 39/39 tests passed (all golden tests green, including light 1.0 & dark 1.5 splash tests).
+  - `flutter build apk --debug`: Built cleanly.
+
+
 
 

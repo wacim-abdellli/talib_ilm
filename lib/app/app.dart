@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
 import 'theme/app_ui.dart';
-import '../shared/navigation/app_shell.dart';
+import '../features/splash/presentation/splash_page.dart';
 import '../shared/widgets/app_scroll_behavior.dart';
 import '../core/services/theme_service.dart';
 
@@ -64,7 +64,7 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
               ),
             );
           },
-          home: const AppShell(),
+          home: const SplashPage(),
         );
       },
     );
