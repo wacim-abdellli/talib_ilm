@@ -476,3 +476,33 @@ FAILED (54 violations)
   - `python tool/ui_lint_v2.py`: 53 violations (0 new violations, 3 warnings removed).
   - `flutter test`: 39/39 tests passed (updated and approved `home_header_light_1_0` and `home_header_dark_1_5` goldens).
   - `flutter build apk --debug`: Built cleanly in 34.8s.
+
+---
+
+## Luxury Velvet Obsidian & Imperial Gold System + Authentic Celestial Sky Prayer Colors
+- **Status:** Complete
+- **Authentic Celestial Sky Prayer Color System (`AppPalette.prayer`):**
+  - Completely re-engineered prayer colors to reflect real celestial sky phenomena with rich pigmentation, sublime jewel aesthetics, and guaranteed WCAG AA compliance across all card surfaces:
+    - **الفجر (Fajr - Dawn Twilight):** Luminous celestial dawn sapphire-indigo (`#818CF8` dark, `#3730A3` light, 5.92:1 / 9.93:1 contrast).
+    - **الشروق (Shuruq - Sunrise):** Radiant sunrise coral-amber (`#FB923C` dark, `#C2410C` light, 7.79:1 / 5.18:1 contrast).
+    - **الظهر (Dhuhr - Midday Zenith):** Brilliant high noon sky azure blue (`#38BDF8` dark, `#0369A1` light, 8.24:1 / 5.93:1 contrast) — clear, vivid, expansive celestial blue.
+    - **العصر (Asr - Golden Hour):** Warm honey-amber gold (`#FBBF24` dark, `#B45309` light, 10.57:1 / 5.02:1 contrast).
+    - **المغرب (Maghrib - Sunset Dusk):** Glowing sunset ruby crimson-rose (`#F43F5E` dark, `#BE123C` light, 4.81:1 / 6.29:1 contrast).
+    - **العشاء (Isha - Velvet Nocturnal Sky):** Royal velvet celestial amethyst purple (`#C084FC` dark, `#6D28D9` light, 6.69:1 / 7.10:1 contrast) — deeply rich, starlit royal purple.
+- **Prestige "Velvet Obsidian & Imperial Gold" Color Architecture (`AppPalette`):**
+  - **Dark Mode (`AppPalette.dark`):**
+    - Pure deep obsidian `#090807` background, eliminating washed-out greys.
+    - Rich layered obsidian onyx cards (`#14110E` surface, `#1C1813` surfaceRaised).
+    - Antique burnished bronze/gold hairline border (`#382F22`) creating an authentic gold-leaf inlay framing around cards.
+    - Radiant imperial solar gold (`#F59E0B`), celestial 24K gold (`#FBBF24`), deep velvet amber backing (`#2C200C`), and champagne gold accents (`#FDE68A`).
+    - Warm alabaster ivory text (`#FAF8F5`) and cashmere sand muted text (`#A8A096`).
+  - **Light Mode (`AppPalette.light`):**
+    - Warm Moroccan ivory parchment `#FAF8F5` background with pure alabaster `#FFFFFF` elevated cards.
+    - Imperial burnished gold `#8C580B` and royal gold `#9E640B`.
+    - Deep ink stone `#1C1917` and warm umber slate `#5E574E`.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 new violations, 0 allow markers used).
+  - `flutter test`: 39/39 tests passed (100% pass across all 39 test suites, all golden baselines re-verified).
+  - `flutter build apk --debug`: Built cleanly in 47.1s.
+

@@ -62,23 +62,23 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.logoLockup,
   });
 
-  /// Light theme palette — Warm Ivory Parchment & Imperial Amber Gold
+  /// Light theme palette — Warm Ivory Parchment & Imperial Burnished Gold
   static const light = AppPalette(
     bg: Color(0xFFFAF8F5),
     surface: Color(0xFFFFFFFF),
     surfaceRaised: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFF4F0E8),
-    border: Color(0xFFE7E0D3),
+    surfaceMuted: Color(0xFFF4EFE6),
+    border: Color(0xFFE5DDD0),
     text: Color(0xFF1C1917),
-    textMuted: Color(0xFF57534E),
-    textSubtle: Color(0xFF78716C),
-    primary: Color(0xFF8D5B0E),
+    textMuted: Color(0xFF5E574E),
+    textSubtle: Color(0xFF787169),
+    primary: Color(0xFF8C580B),
     onPrimary: Color(0xFFFFFFFF),
     primarySoft: Color(0xFFFEF3C7),
-    onPrimarySoft: Color(0xFF784D09),
-    gold: Color(0xFFB45309),
-    goldFill: Color(0xFFD97706),
-    onGold: Color(0xFF451A03),
+    onPrimarySoft: Color(0xFF713F08),
+    gold: Color(0xFF9E640B),
+    goldFill: Color(0xFFB45309),
+    onGold: Color(0xFFFFFFFF),
     goldSoft: Color(0xFFFEF3C7),
     success: Color(0xFF047857),
     error: Color(0xFFB91C1C),
@@ -96,28 +96,28 @@ class AppPalette extends ThemeExtension<AppPalette> {
     logoLockup: 'assets/branding/lockup_on_light.png',
   );
 
-  /// Dark theme palette — Warm Obsidian & Radiant Luminous Gold
+  /// Dark theme palette — Velvet Obsidian & Imperial Radiant Gold
   static const dark = AppPalette(
-    bg: Color(0xFF0C0A09),
-    surface: Color(0xFF171412),
-    surfaceRaised: Color(0xFF211C19),
-    surfaceMuted: Color(0xFF13100E),
-    border: Color(0xFF2E2721),
+    bg: Color(0xFF090807),
+    surface: Color(0xFF14110E),
+    surfaceRaised: Color(0xFF1C1813),
+    surfaceMuted: Color(0xFF0F0D0A),
+    border: Color(0xFF382F22),
     text: Color(0xFFFAF8F5),
-    textMuted: Color(0xFFA8A29E),
-    textSubtle: Color(0xFF78716C),
+    textMuted: Color(0xFFA8A096),
+    textSubtle: Color(0xFF7A7268),
     primary: Color(0xFFF59E0B),
-    onPrimary: Color(0xFF1C1917),
-    primarySoft: Color(0xFF2D2310),
+    onPrimary: Color(0xFF171203),
+    primarySoft: Color(0xFF2C200C),
     onPrimarySoft: Color(0xFFFDE68A),
     gold: Color(0xFFFBBF24),
     goldFill: Color(0xFFF59E0B),
-    onGold: Color(0xFF451A03),
-    goldSoft: Color(0xFF2D2310),
+    onGold: Color(0xFF2C1300),
+    goldSoft: Color(0xFF2C200C),
     success: Color(0xFF34D399),
     error: Color(0xFFF87171),
     errorSoft: Color(0xFF3B1414),
-    brandDark: Color(0xFF0C0A09),
+    brandDark: Color(0xFF090807),
     shadow: [],
     isDark: true,
     logoSymbol: 'assets/branding/symbol_on_dark.png',
@@ -165,26 +165,32 @@ class AppPalette extends ThemeExtension<AppPalette> {
         : const CategoryColors(fg: Color(0xFF334155), bg: Color(0xFFF1F5F9));
   }
 
-  /// Canonical prayer dot/ring color with >= 3.0:1 contrast on surface
+  /// Canonical prayer celestial sky color with >= 4.5:1 AA contrast on card surface
   Color prayer(String? name) {
     final p = (name ?? '').toLowerCase().trim();
     if (p.contains('fajr') || p.contains('فجر')) {
+      // Celestial Dawn Sapphire-Indigo
       return isDark ? const Color(0xFF818CF8) : const Color(0xFF3730A3);
     }
     if (p.contains('sunrise') || p.contains('شروق')) {
-      return isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
+      // Radiant Sunrise Coral-Amber
+      return isDark ? const Color(0xFFFB923C) : const Color(0xFFC2410C);
     }
     if (p.contains('dhuhr') || p.contains('ظهر')) {
+      // High Noon Sky Azure Blue (clear, vivid blue)
       return isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1);
     }
     if (p.contains('asr') || p.contains('عصر')) {
-      return isDark ? const Color(0xFFFB923C) : const Color(0xFF9A3412);
+      // Golden Hour Honey-Amber
+      return isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
     }
     if (p.contains('maghrib') || p.contains('مغرب')) {
-      return isDark ? const Color(0xFFFB7185) : const Color(0xFF9F1239);
+      // Sunset Ruby Crimson-Rose
+      return isDark ? const Color(0xFFF43F5E) : const Color(0xFFBE123C);
     }
     if (p.contains('isha') || p.contains('عشاء')) {
-      return isDark ? const Color(0xFFA78BFA) : const Color(0xFF5B21B6);
+      // Velvet Nocturnal Celestial Amethyst Purple
+      return isDark ? const Color(0xFFC084FC) : const Color(0xFF6D28D9);
     }
     return gold;
   }
