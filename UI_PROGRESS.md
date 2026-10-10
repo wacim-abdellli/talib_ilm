@@ -506,3 +506,18 @@ FAILED (54 violations)
   - `flutter test`: 39/39 tests passed (100% pass across all 39 test suites, all golden baselines re-verified).
   - `flutter build apk --debug`: Built cleanly in 47.1s.
 
+---
+
+## Minimalist Islamic Section Header («تذكرة اليوم»)
+- **Status:** Complete
+- **Header Purification & Minimalism:**
+  - Removed bloated, non-standard phrases («قبس من الوحي»، «هدايات وتأمّلات»، «آيات وبصائر») and their ad-hoc container rows on the home page.
+  - Unified with the app-wide design system using classical, authentic Quranic terminology: `SectionHeader(title: 'تذكرة اليوم')` (based on «وَذَكِّرْ فَإِنَّ الذِّكْرَىٰ تَنفَعُ الْمُؤْمِنِينَ»).
+  - Cleaned up 65+ lines of ad-hoc widgets and fixed 3 lint warning items.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (WARN count decreased from 96 to 93).
+  - `flutter test`: 39/39 tests passed.
+  - `flutter build apk --debug`: Built cleanly in 22.3s.
+
+

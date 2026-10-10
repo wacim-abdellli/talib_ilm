@@ -327,74 +327,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 34,
-                                          height: 34,
-                                          decoration: BoxDecoration(
-                                            color: context.palette.goldSoft,
-                                            borderRadius: AppRadius.smRadius,
-                                            border: Border.all(
-                                              color: context.palette.gold.withValues(alpha: 0.3),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.auto_awesome_rounded,
-                                            size: AppIcon.sm,
-                                            color: context.palette.gold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppSpace.sm),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'قبس من الوحي',
-                                              style: context.text.titleSmall.copyWith(
-                                                color: context.palette.text,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            Text(
-                                              'هدايات وتأمّلات',
-                                              style: context.text.caption.copyWith(
-                                                color: context.palette.textMuted,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsetsDirectional.symmetric(
-                                        horizontal: AppSpace.sm,
-                                        vertical: AppSpace.xs / 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: context.palette.surfaceRaised,
-                                        borderRadius: AppRadius.pillRadius,
-                                        border: Border.all(
-                                          color: context.palette.border,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'آيات وبصائر',
-                                        style: context.text.caption.copyWith(
-                                          color: context.palette.gold,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                const SectionHeader(
+                                  title: 'تذكرة اليوم',
+                                  padding: EdgeInsetsDirectional.only(bottom: AppSpace.sm),
                                 ),
-                                const SizedBox(height: AppSpace.sm),
                                 DailyMotivationCard(
                                   quote: _dailyQuote!,
                                   onReload: _cycleQuote,
