@@ -91,67 +91,6 @@ class AdhkarSessionCard extends StatelessWidget {
                     height: 1.85,
                   ),
                 ),
-
-                // Virtue / Fadl callout
-                if (item.fadl.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Container(
-                    padding: AppSpace.insetMd,
-                    decoration: BoxDecoration(
-                      color: palette.surfaceMuted,
-                      borderRadius: AppRadius.mdRadius,
-                      border: Border.all(color: palette.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          size: AppIcon.sm,
-                          color: palette.gold,
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Expanded(
-                          child: Text(
-                            item.fadl,
-                            textAlign: TextAlign.right,
-                            style: context.text.caption.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.w600,
-                              height: 1.45,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Hadith Source
-                if (item.source.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.sm),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.menu_book_rounded,
-                        size: AppIcon.sm,
-                        color: palette.textMuted,
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Flexible(
-                        child: Text(
-                          item.source,
-                          textAlign: TextAlign.center,
-                          style: context.text.caption.copyWith(
-                            color: palette.textMuted,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),

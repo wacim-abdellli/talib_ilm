@@ -48,8 +48,6 @@ void main() {
 
       expect(find.text('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ'), findsOneWidget);
       expect(find.text('٣٣ مرة'), findsOneWidget);
-      expect(find.textContaining('حُطَّتْ خَطَايَاهُ'), findsOneWidget);
-      expect(find.text('صحيح مسلم'), findsOneWidget);
       expect(find.text(sampleItem.meaning), findsNothing);
     });
 
