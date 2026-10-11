@@ -90,14 +90,14 @@ void main() {
       expect(manual.isAccurate, isTrue);
       expect(manual.sourceLabel, contains('يدوياً'));
 
-      const ipEst = LocationResult(
-        latitude: 35.28,
-        longitude: 10.38,
-        city: 'المهدية',
-        source: LocationSource.ipEstimate,
+      const defCity = LocationResult(
+        latitude: 21.3891,
+        longitude: 39.8579,
+        city: 'مكة المكرمة',
+        source: LocationSource.defaultCity,
       );
-      expect(ipEst.isAccurate, isFalse);
-      expect(ipEst.sourceLabel, contains('تقديري'));
+      expect(defCity.isAccurate, isFalse);
+      expect(defCity.sourceLabel, contains('الافتراضي'));
     });
 
     test('setVerifiedCity updates SharedPreferences and sets manual location', () async {

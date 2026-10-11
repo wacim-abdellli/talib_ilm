@@ -11,7 +11,6 @@ enum LocationSource {
   gps,
   manual,
   savedGps,
-  ipEstimate,
   defaultCity,
 }
 
@@ -44,13 +43,11 @@ class LocationResult {
   String get sourceLabel {
     switch (source) {
       case LocationSource.gps:
-        return 'موقع GPS دقيق ومؤكد';
+        return 'موقع GPS دقيق وتلقائي';
       case LocationSource.manual:
         return 'مدينة محددة يدوياً';
       case LocationSource.savedGps:
         return 'موقع GPS محفوظ';
-      case LocationSource.ipEstimate:
-        return 'موقع تقديري (شبكة الإنترنت)';
       case LocationSource.defaultCity:
         return 'الموقع الافتراضي';
     }
@@ -83,24 +80,33 @@ class LocationService {
 
   static bool _localeReady = false;
 
-  /// Retrieves the best location in prioritized order:
-  /// 1. Manual user choice (verified city or coordinates)
-  /// 2. Hardware GPS (real physical satellites)
-  /// 3. Cached verified GPS position
-  /// 4. IP estimate (last resort only)
-  Future<LocationResult> getLocation() async {
+  /// Retrieves the location strictly prioritizing phone hardware GPS automatically:
+  /// 1. Manual user override (if user explicitly selected a city/coordinates)
+  /// 2. Phone hardware GPS satellites (automatically requested & resolved)
+  /// 3. Cached verified GPS fix from previous satellite acquisition
+  /// 4. Default fallback (Makkah) — NEVER guesses random IP nodes like Chorbane/Mahdia
+  Future<LocationResult> getLocation({bool autoPrompt = true}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Manual location takes absolute priority if enabled by user
+    // Clean up any stale unverified IP estimates from previous app sessions
+    final isGpsVerified = prefs.getBool(_keyIsVerifiedGps) ?? false;
+    final isManual = prefs.getBool(_keyManualEnabled) ?? false;
+    final savedCity = prefs.getString(_keyCity);
+    if (!isGpsVerified && !isManual && (savedCity == 'شربان' || savedCity == 'المهدية' || savedCity == 'Chorbane')) {
+      await prefs.remove(_keyCity);
+      await prefs.remove(_keyProvince);
+      await prefs.remove(_keyLat);
+      await prefs.remove(_keyLon);
+    }
+
+    // 1. Manual user choice takes priority if enabled
     final manual = _loadManual(prefs);
     if (manual != null) return manual;
 
-    final fallback = _loadFallback(prefs);
-
-    // 2. Try physical Hardware GPS first
+    // 2. Hardware GPS: automatically requested & acquired from the phone
     try {
       var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied && autoPrompt) {
         permission = await Geolocator.requestPermission();
       }
 
@@ -110,20 +116,18 @@ class LocationService {
         if (isServiceEnabled) {
           await _ensureLocale();
 
-          // Try quick last known position for instant cache
+          // 2a. Quick last known hardware position for zero-latency startup
           final lastKnown = await Geolocator.getLastKnownPosition();
           LocationResult? quickBest;
           if (lastKnown != null) {
             quickBest = await _resolvePosition(
               lastKnown,
-              fallback.city,
-              fallbackCountry: fallback.country,
-              fallbackCountryCode: fallback.countryCode,
+              _defaultCity,
               source: LocationSource.savedGps,
             );
           }
 
-          // Fetch fresh high-accuracy position (up to 8s timeout)
+          // 2b. High accuracy fresh position from satellite GPS
           try {
             final position = await Geolocator.getCurrentPosition(
               locationSettings: LocationSettings(
@@ -134,9 +138,7 @@ class LocationService {
 
             final resolved = await _resolvePosition(
               position,
-              quickBest?.city ?? fallback.city,
-              fallbackCountry: quickBest?.country ?? fallback.country,
-              fallbackCountryCode: quickBest?.countryCode ?? fallback.countryCode,
+              quickBest?.city ?? _defaultCity,
               source: LocationSource.gps,
             );
 
@@ -159,33 +161,17 @@ class LocationService {
       }
     } catch (_) {}
 
-    // 3. If GPS is unavailable/denied, check if we already have a saved verified GPS location
+    // 3. If fresh GPS satellite fix wasn't ready yet, use previously cached verified GPS
+    final fallback = _loadFallback(prefs);
     if (fallback.source == LocationSource.savedGps) {
       return fallback;
     }
 
-    // 4. Last resort: Try IP geolocation (marked as estimate, never overrides verified GPS)
-    try {
-      final ip = await _tryIpLocation();
-      if (ip != null) {
-        await _saveLastKnown(
-          prefs,
-          city: ip.city,
-          province: ip.province,
-          country: ip.country,
-          countryCode: ip.countryCode,
-          latitude: ip.latitude,
-          longitude: ip.longitude,
-          isVerifiedGps: false,
-        );
-        return ip;
-      }
-    } catch (_) {}
-
+    // 4. Default fallback (Makkah Al-Mukarramah) until GPS is granted
     return fallback;
   }
 
-  /// Explicitly triggers high-accuracy GPS detection with full error reporting
+  /// Explicitly triggers high-accuracy GPS detection with full error handling and settings prompt
   Future<LocationResult> refreshGpsLocation() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -196,7 +182,10 @@ class LocationService {
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      throw Exception('تم رفض إذن الوصول إلى الموقع. يرجى منحه من إعدادات الهاتف.');
+      try {
+        await Geolocator.openAppSettings();
+      } catch (_) {}
+      throw Exception('يرجى السماح بالوصول إلى الموقع (GPS) من إعدادات التطبيق لتحديد مدينتك بدقة.');
     }
 
     final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -204,7 +193,7 @@ class LocationService {
       try {
         await Geolocator.openLocationSettings();
       } catch (_) {}
-      throw Exception('خدمة الموقع (GPS) غير مفعلة على هاتفك. يرجى تفعيلها لتحديد موقعك.');
+      throw Exception('خدمة الموقع (GPS) مغلقة على هاتفك. يرجى تفعيلها من شريط الإعدادات السريعة.');
     }
 
     await _ensureLocale();
@@ -411,140 +400,6 @@ class LocationService {
     return null;
   }
 
-  Future<LocationResult?> _tryIpLocation() async {
-    // 1. Try ipwho.is
-    try {
-      final client = HttpClient();
-      final request = await client.getUrl(Uri.parse('https://ipwho.is/'));
-      final response = await request.close().timeout(_sec(4));
-      if (response.statusCode == HttpStatus.ok) {
-        final payload = await response.transform(utf8.decoder).join();
-        client.close();
-        final data = jsonDecode(payload);
-        if (data is Map<String, dynamic> && data['success'] != false) {
-          final latRaw = data['latitude'];
-          final lonRaw = data['longitude'];
-          final regionRaw = data['region'];
-          final countryRaw = data['country'];
-          final codeRaw = data['country_code'];
-          if (latRaw != null && lonRaw != null) {
-            final lat = (latRaw as num).toDouble();
-            final lon = (lonRaw as num).toDouble();
-
-            // Check if coordinates correspond to a verified city within 40km
-            final nearest = VerifiedCitiesCatalog.findNearest(lat, lon, maxDistanceKm: 40.0);
-            if (nearest != null) {
-              return LocationResult(
-                latitude: lat,
-                longitude: lon,
-                city: nearest.name,
-                province: nearest.province,
-                country: nearest.country,
-                countryCode: nearest.countryCode,
-                source: LocationSource.ipEstimate,
-                calculationMethod: nearest.calculationMethod,
-              );
-            }
-
-            var city = '';
-            var province = (regionRaw is String && regionRaw.trim().isNotEmpty)
-                ? _cleanAdministrativeName(regionRaw.trim())
-                : null;
-            var country = countryRaw is String ? countryRaw.trim() : null;
-            var code = codeRaw is String ? codeRaw.toUpperCase().trim() : null;
-
-            final arabicGeo = await _reverseGeocodeHttp(lat, lon);
-            if (arabicGeo != null) {
-              if (arabicGeo['city'] != null) city = arabicGeo['city']!;
-              if (arabicGeo['province'] != null) province = arabicGeo['province'];
-              if (arabicGeo['country'] != null) country = arabicGeo['country'];
-              if (arabicGeo['countryCode'] != null) code = arabicGeo['countryCode'];
-            }
-
-            final displayCity = city.isNotEmpty
-                ? city
-                : (province ?? country ?? AppStrings.locationCurrent);
-
-            return LocationResult(
-              latitude: lat,
-              longitude: lon,
-              city: displayCity,
-              province: province,
-              country: country,
-              countryCode: code,
-              source: LocationSource.ipEstimate,
-            );
-          }
-        }
-      } else {
-        client.close();
-      }
-    } catch (_) {}
-
-    // 2. Fallback: ip-api.com
-    try {
-      final client = HttpClient();
-      final request = await client.getUrl(
-        Uri.parse('http://ip-api.com/json/?fields=status,country,countryCode,regionName,city,lat,lon'),
-      );
-      final response = await request.close().timeout(_sec(3));
-      if (response.statusCode == HttpStatus.ok) {
-        final payload = await response.transform(utf8.decoder).join();
-        client.close();
-        final data = jsonDecode(payload);
-        if (data is Map<String, dynamic> && data['status'] == 'success') {
-          final lat = (data['lat'] as num).toDouble();
-          final lon = (data['lon'] as num).toDouble();
-
-          final nearest = VerifiedCitiesCatalog.findNearest(lat, lon, maxDistanceKm: 40.0);
-          if (nearest != null) {
-            return LocationResult(
-              latitude: lat,
-              longitude: lon,
-              city: nearest.name,
-              province: nearest.province,
-              country: nearest.country,
-              countryCode: nearest.countryCode,
-              source: LocationSource.ipEstimate,
-              calculationMethod: nearest.calculationMethod,
-            );
-          }
-
-          var city = (data['city'] as String?)?.trim() ?? '';
-          var province = (data['regionName'] as String?)?.trim();
-          var country = data['country'] as String?;
-          var code = (data['countryCode'] as String?)?.toUpperCase();
-
-          final arabicGeo = await _reverseGeocodeHttp(lat, lon);
-          if (arabicGeo != null) {
-            if (arabicGeo['city'] != null) city = arabicGeo['city']!;
-            if (arabicGeo['province'] != null) province = arabicGeo['province'];
-            if (arabicGeo['country'] != null) country = arabicGeo['country'];
-            if (arabicGeo['countryCode'] != null) code = arabicGeo['countryCode'];
-          }
-
-          final displayCity = city.isNotEmpty
-              ? city
-              : (province ?? country ?? AppStrings.locationCurrent);
-
-          return LocationResult(
-            latitude: lat,
-            longitude: lon,
-            city: displayCity,
-            province: province,
-            country: country,
-            countryCode: code,
-            source: LocationSource.ipEstimate,
-          );
-        }
-      } else {
-        client.close();
-      }
-    } catch (_) {}
-
-    return null;
-  }
-
   Future<LocationResult> _resolvePosition(
     Position position,
     String fallbackCity, {
@@ -553,11 +408,11 @@ class LocationService {
     LocationSource source = LocationSource.gps,
   }) async {
     // 1. Cross-reference exact GPS coordinates with VerifiedCitiesCatalog
-    // (within 25km of an official Wilaya/City center)
+    // Within 45km of an official Wilaya/City center to cover the entire governorate/wilaya!
     final nearest = VerifiedCitiesCatalog.findNearest(
       position.latitude,
       position.longitude,
-      maxDistanceKm: 25.0,
+      maxDistanceKm: 45.0,
     );
 
     if (nearest != null) {
@@ -624,18 +479,15 @@ class LocationService {
 
   String? _pickCleanCity(List<Placemark> placemarks) {
     for (final place in placemarks) {
-      // If administrativeArea exists (e.g. Wilaya / Governorate), it is often the most recognizable
       final admin = place.administrativeArea?.trim();
       final locality = place.locality?.trim();
       final sub = place.subAdministrativeArea?.trim();
 
-      // If locality and admin are both present and distinct, format nicely
       if (locality != null && locality.isNotEmpty) {
         final cleanLocality = _cleanAdministrativeName(locality);
         if (admin != null && admin.isNotEmpty) {
           final cleanAdmin = _cleanAdministrativeName(admin);
           if (cleanAdmin != cleanLocality) {
-            // E.g. "الجزائر (الدار البيضاء)" or "المهدية"
             return cleanAdmin;
           }
         }
