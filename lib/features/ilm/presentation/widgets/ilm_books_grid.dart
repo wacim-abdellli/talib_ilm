@@ -10,6 +10,7 @@ class IlmBooksGrid extends StatelessWidget {
   final List<IlmBook> books;
   final Map<String, BookProgress> progressById;
   final String? recommendedBookId;
+  final Map<String, String>? matchSnippets;
   final ValueChanged<IlmBook> onNavigateToBook;
   final ValueChanged<String> onToggleFavorite;
 
@@ -18,6 +19,7 @@ class IlmBooksGrid extends StatelessWidget {
     required this.books,
     required this.progressById,
     required this.recommendedBookId,
+    this.matchSnippets,
     required this.onNavigateToBook,
     required this.onToggleFavorite,
   });
@@ -27,7 +29,10 @@ class IlmBooksGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmall = constraints.maxWidth < 360;
-        final aspectRatio = isSmall ? 0.62 : 0.68;
+        final hasSnippets = matchSnippets != null && matchSnippets!.isNotEmpty;
+        final baseRatio = isSmall ? 0.60 : (hasSnippets ? 0.64 : 0.68);
+        final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+        final aspectRatio = textScale > 1.25 ? (baseRatio * 0.8) : baseRatio;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -48,6 +53,7 @@ class IlmBooksGrid extends StatelessWidget {
               book: book,
               progress: progress,
               isRecommended: isRecommended,
+              matchSnippet: matchSnippets?[book.id],
               onNavigateToBook: onNavigateToBook,
               onToggleFavorite: onToggleFavorite,
             );

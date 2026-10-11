@@ -23,6 +23,7 @@ import 'widgets/ilm_search_bar.dart';
 import 'widgets/ilm_search_filter_bar.dart';
 import 'widgets/motivation_widgets.dart';
 import 'widgets/study_resume_pill.dart';
+import 'logic/ilm_search_engine.dart';
 
 class IlmPage extends StatefulWidget {
   const IlmPage({super.key});
@@ -52,7 +53,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   Map<String, BookProgress> _progressById = {};
   Map<String, IlmLevel> _levelByTab = {};
   List<IlmLevel> _sortedLevels = [];
-  Map<String, String> _searchIndex = {};
+  List<IlmSearchResult> _searchResults = [];
+  Map<String, String> _searchSnippets = {};
 
   // Navigation & Search State
   IlmViewMode _currentMode = IlmViewMode.levels;
@@ -131,28 +133,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       _levelByTab = levelByTab;
       _sortedLevels = visibleLevels;
 
-      final searchIndex = <String, String>{};
-      for (final book in allBooks) {
-        final b = StringBuffer()
-          ..write(_normalizeArabic(book.title))
-          ..write(' ')
-          ..write(_normalizeArabic(book.author))
-          ..write(' ')
-          ..write(_normalizeArabic(book.subject))
-          ..write(' ')
-          ..write(_normalizeArabic(book.description))
-          ..write(' ')
-          ..write(_normalizeArabic(book.level));
-        for (final s in book.shuruh) {
-          b.write(' ');
-          b.write(_normalizeArabic(s.title));
-          b.write(' ');
-          b.write(_normalizeArabic(s.scholar));
-        }
-        searchIndex[book.id] = b.toString();
-      }
-      _searchIndex = searchIndex;
-
       if (_selectedLevelId == null ||
           !_levelByTab.containsKey(_selectedLevelId)) {
         _selectedLevelId = visibleLevels.first.id;
@@ -218,16 +198,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   // ── Helper computations ──────────────────────────────────────────
 
-  String _normalizeArabic(String text) {
-    return text
-        .replaceAll(RegExp(r'[\u064B-\u0652]'), '') // remove tashkeel
-        .replaceAll(RegExp(r'[أإآ]'), 'ا')
-        .replaceAll('ة', 'ه')
-        .replaceAll('ى', 'ي')
-        .toLowerCase()
-        .trim();
-  }
-
   List<String> get _disciplines {
     final set = <String>{};
     for (final book in _allBooks) {
@@ -265,13 +235,40 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     return map;
   }
 
+  void _onSearchChanged(String query) {
+    if (_searchQuery != query) {
+      setState(() {
+        _searchQuery = query;
+        if (query.trim().isNotEmpty) {
+          _searchResults = IlmSearchEngine.search(
+            books: _allBooks,
+            query: query.trim(),
+          );
+          _searchSnippets = {
+            for (final r in _searchResults)
+              if (r.matchSnippet != null) r.book.id: r.matchSnippet!,
+          };
+        } else {
+          _searchResults = [];
+          _searchSnippets = {};
+        }
+      });
+    }
+  }
+
+  void _onClearSearch() {
+    if (_searchQuery.isNotEmpty) {
+      setState(() {
+        _searchQuery = '';
+        _searchResults = [];
+        _searchSnippets = {};
+      });
+    }
+  }
+
   List<IlmBook> get _filteredBooks {
     if (_searchQuery.isNotEmpty) {
-      final q = _normalizeArabic(_searchQuery);
-      return _allBooks.where((book) {
-        final indexed = _searchIndex[book.id];
-        return indexed != null && indexed.contains(q);
-      }).toList();
+      return _searchResults.map((r) => r.book).toList();
     }
 
     if (_currentMode == IlmViewMode.disciplines) {
@@ -414,16 +411,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                     // ── Dedicated Minimalist Search Bar ───────────
                     IlmSearchBar(
                       controller: _searchController,
-                      onSearchChanged: (query) {
-                        if (_searchQuery != query) {
-                          setState(() => _searchQuery = query);
-                        }
-                      },
-                      onClear: () {
-                        if (_searchQuery.isNotEmpty) {
-                          setState(() => _searchQuery = '');
-                        }
-                      },
+                      onSearchChanged: _onSearchChanged,
+                      onClear: _onClearSearch,
                     ),
 
                     const SizedBox(height: AppSpace.md),
@@ -445,7 +434,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                             InkWell(
                               onTap: () {
                                 _searchController.clear();
-                                setState(() => _searchQuery = '');
+                                _onClearSearch();
                               },
                               borderRadius: AppRadius.pillRadius,
                               child: Padding(
@@ -554,6 +543,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                           books: displayedBooks,
                           progressById: _progressById,
                           recommendedBookId: _recommendedFirstBook?.id,
+                          matchSnippets: isSearching ? _searchSnippets : null,
                           onNavigateToBook: _navigateToBook,
                           onToggleFavorite: _toggleFavorite,
                         ),

@@ -64,7 +64,7 @@
             "id": "bk_nawaqid_islam",
             "title": "نواقض الإسلام",
             "author": "محمد بن عبد الوهاب",
-            "subject": "العقيدة ",
+            "subject": "العقيدة",
             "description": "بيان الأمور التي تُخرج المسلم من الإسلام.",
             "totalPages": 15,
             "pdf_path": "assets/pdfs/mutun/bk_nawaqid_islam.pdf",
@@ -118,7 +118,7 @@
             "title": "الأصول الثلاثة وأدلتها",
             "author": "محمد بن عبد الوهاب",
             "subject": "العقيدة",
-            "description": "يتناول ثلاثة أسئلة: من ربك؟ ما دينك؟ من نبيك؟ مع الأدلة.",
+            "description": "الأصل الأصيل في تقرير أصول التوحيد والإيمان ومعرفة العبد ربه ودينه ونبيه بالأدلة.",
             "totalPages": 30,
             "pdf_path": "assets/pdfs/mutun/bk_usul_thalatha.pdf",
             "resources": {
@@ -305,8 +305,8 @@
             "id": "bk_manzumah_albiri",
             "title": "منظومة أبي إسحاق الإلبيري",
             "author": "أبو إسحاق الإلبيري",
-            "subject": "العقيدة",
-            "description": "منظومة في العقيدة السلفية.",
+            "subject": "الآداب والطلب",
+            "description": "المنظومة التائية الشهيرة في الحث على طلب العلم والترغيب فيه ومكارم الأخلاق.",
             "totalPages": 30,
             "pdf_path": "assets/pdfs/mutun/bk_manzumah_albiri.pdf",
             "resources": {
@@ -417,9 +417,9 @@
           {
             "id": "bk_unwan_al_hukm",
             "title": "عنوان الحكم",
-            "author": "غير محدد",
-            "subject": "غير محدد",
-            "description": "كتاب في الفقه أو الأصول (يحتاج تحديد دقيق).",
+            "author": "أبو الفتح البستي",
+            "subject": "الآداب والحكم",
+            "description": "قصيدة بليغة مشهورة في الحكم والآداب والمواعظ السائرة (زيادة المرء في دنياه نقصان).",
             "totalPages": 100,
             "pdf_path": "assets/pdfs/mutun/bk_unwan_al_hukm.pdf",
             "resources": {
