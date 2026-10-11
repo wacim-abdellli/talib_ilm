@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import '../../../app/constants/app_strings.dart';
 
 enum AdhkarCategory {
@@ -177,3 +178,20 @@ class AthkarCatalog {
     return null;
   }
 }
+
+class DailyDhikrPayload {
+  final AthkarItem item;
+  final String categoryLabel;
+  final AdhkarCategory category;
+  final int categoryTotal;
+  final IconData categoryIcon;
+
+  const DailyDhikrPayload({
+    required this.item,
+    required this.categoryLabel,
+    required this.category,
+    required this.categoryTotal,
+    required this.categoryIcon,
+  });
+}
+

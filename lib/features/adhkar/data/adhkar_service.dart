@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'adhkar_models.dart';
 import '../../../app/constants/app_assets.dart';
@@ -56,6 +57,48 @@ class AthkarService {
 
   void resetCache() {
     _cache = null;
+  }
+
+  Future<DailyDhikrPayload?> getDailyDhikr() async {
+    final catalog = await loadCatalog();
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    final String catId;
+    final String catLabel;
+    final AdhkarCategory categoryEnum;
+    final IconData icon;
+
+    if (hour >= 4 && hour < 12) {
+      catId = 'morning';
+      catLabel = 'أذكار الصباح';
+      categoryEnum = AdhkarCategory.morning;
+      icon = Icons.wb_sunny_rounded;
+    } else if (hour >= 12 && hour < 20) {
+      catId = 'evening';
+      catLabel = 'أذكار المساء';
+      categoryEnum = AdhkarCategory.evening;
+      icon = Icons.nights_stay_rounded;
+    } else {
+      catId = 'sleeping';
+      catLabel = 'أذكار النوم';
+      categoryEnum = AdhkarCategory.sleeping;
+      icon = Icons.bedtime_rounded;
+    }
+
+    final cat = catalog.byId(catId) ?? catalog.categories.firstOrNull;
+    if (cat == null || cat.items.isEmpty) return null;
+
+    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+    final item = cat.items[dayOfYear % cat.items.length];
+
+    return DailyDhikrPayload(
+      item: item,
+      categoryLabel: catLabel,
+      category: categoryEnum,
+      categoryTotal: cat.items.length,
+      categoryIcon: icon,
+    );
   }
 
   List<AthkarCategoryData> _categoriesFromItems(List<AthkarItem> items) {

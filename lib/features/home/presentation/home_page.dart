@@ -28,6 +28,10 @@ import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
 import '../../quran/presentation/quran_page.dart';
+import '../../adhkar/data/adhkar_models.dart';
+import '../../adhkar/data/adhkar_service.dart';
+import '../../adhkar/presentation/adhkar_session_page.dart';
+import 'widgets/home_daily_dhikr_card.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../data/home_state_controller.dart';
@@ -49,6 +53,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   PrayerTimesDay? _prayerDay;
   ContinueData? _continueData;
   DailyQuote? _dailyQuote;
+  DailyDhikrPayload? _dailyDhikr;
 
   // Emotional state controller
   final HomeStateController _stateController = HomeStateController();
@@ -80,8 +85,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final results = await Future.wait([
       _prayerTimeService.getPrayerTimesDay(),
       _loadContinueData(),
-      _loadDailyQuoteData(), // Helper method returning data instead of setting state
+      _loadDailyQuoteData(),
       _stateController.initialize(),
+      AthkarService().getDailyDhikr(),
     ]);
 
     if (!mounted) return;
@@ -90,6 +96,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _prayerDay = results[0] as PrayerTimesDay;
       _continueData = results[1] as ContinueData?;
       _dailyQuote = results[2] as DailyQuote?;
+      _dailyDhikr = results[4] as DailyDhikrPayload?;
       _isLoading = false;
     });
   }
@@ -346,6 +353,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ],
 
+                  // Daily Dhikr
+                  if (_dailyDhikr != null) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xl,
+                        ),
+                        child: HomeDailyDhikrCard(
+                          payload: _dailyDhikr!,
+                          onOpenSession: () => _openAdhkarSession(_dailyDhikr!.category),
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: AppSpace.xl),
+                    ),
+                  ],
+
                   // Continue Learning
                   SliverToBoxAdapter(
                     child: AnimatedOpacity(
@@ -452,7 +477,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     AppShell.switchToTab(context, 3);
   }
 
-
+  void _openAdhkarSession(AdhkarCategory category) {
+    _stateController.recordAdhkarOpened();
+    Navigator.push(
+      context,
+      buildFadeRoute(page: AdhkarSessionPage(category: category)),
+    );
+  }
 
   void _openPrayerDetails(BuildContext context) {
     final handled = AppShell.switchToTab(context, 1);
@@ -494,30 +525,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
       isEstimated = false;
     } else {
-      // Fallback: estimate next prayer based on current time
       isEstimated = true;
       final now = DateTime.now();
-      final hour = now.hour;
-
-      if (hour < 5) {
-        nextPrayerName = AppStrings.prayerFajr;
-        nextPrayerTime = DateTime(now.year, now.month, now.day, 5, 0);
-      } else if (hour < 12) {
-        nextPrayerName = AppStrings.prayerDhuhr;
-        nextPrayerTime = DateTime(now.year, now.month, now.day, 12, 0);
-      } else if (hour < 15) {
-        nextPrayerName = AppStrings.prayerAsr;
-        nextPrayerTime = DateTime(now.year, now.month, now.day, 15, 0);
-      } else if (hour < 18) {
-        nextPrayerName = AppStrings.prayerMaghrib;
-        nextPrayerTime = DateTime(now.year, now.month, now.day, 18, 0);
-      } else if (hour < 20) {
-        nextPrayerName = AppStrings.prayerIsha;
-        nextPrayerTime = DateTime(now.year, now.month, now.day, 20, 0);
-      } else {
-        nextPrayerName = AppStrings.prayerFajr;
-        nextPrayerTime = DateTime(now.year, now.month, now.day + 1, 5, 0);
-      }
+      final (pName, pHour, dayOffset) = switch (now.hour) {
+        < 5 => (AppStrings.prayerFajr, 5, 0),
+        < 12 => (AppStrings.prayerDhuhr, 12, 0),
+        < 15 => (AppStrings.prayerAsr, 15, 0),
+        < 18 => (AppStrings.prayerMaghrib, 18, 0),
+        < 20 => (AppStrings.prayerIsha, 20, 0),
+        _ => (AppStrings.prayerFajr, 5, 1),
+      };
+      nextPrayerName = pName;
+      nextPrayerTime = DateTime(now.year, now.month, now.day + dayOffset, pHour, 0);
     }
 
     return HomeHeroCard(
