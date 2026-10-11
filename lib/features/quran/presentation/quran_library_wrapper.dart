@@ -12,7 +12,7 @@ import '../../../app/theme/app_spacing.dart';
 /// - Search
 /// - Font management
 /// - Medina Mushaf identical layout
-class ProfessionalQuranScreen extends StatelessWidget {
+class ProfessionalQuranScreen extends StatefulWidget {
   final int? initialSurah;
   final int? initialAyah;
   final int? initialPage;
@@ -25,20 +25,34 @@ class ProfessionalQuranScreen extends StatelessWidget {
   });
 
   @override
+  State<ProfessionalQuranScreen> createState() =>
+      _ProfessionalQuranScreenState();
+}
+
+class _ProfessionalQuranScreenState extends State<ProfessionalQuranScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initAndJump();
+  }
+
+  Future<void> _initAndJump() async {
+    await QuranLibrary.init();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.initialSurah != null) {
+        QuranLibrary().jumpToSurah(widget.initialSurah!);
+      } else if (widget.initialPage != null) {
+        QuranLibrary().jumpToPage(widget.initialPage!);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final isDark = palette.isDark;
-
-    // Navigate to specific location if provided
-    if (initialSurah != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        QuranLibrary().jumpToSurah(initialSurah!);
-      });
-    } else if (initialPage != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        QuranLibrary().jumpToPage(initialPage!);
-      });
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // HARMONIZED MUSHAF THEME (Calm Scholar Design System)
@@ -127,7 +141,7 @@ class ProfessionalQuranScreen extends StatelessWidget {
           thumbColor: goldColor,
           inactiveTrackColor: goldColor.withValues(alpha: 0.2),
           valueIndicatorColor: goldColor,
-          valueIndicatorTextStyle: TextStyle(
+          valueIndicatorTextStyle: context.text.caption.copyWith(
             color: palette.onGold,
           ),
         ),

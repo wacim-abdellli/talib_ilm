@@ -102,6 +102,8 @@ class SurahCard extends StatelessWidget {
     final place = quran.getPlaceOfRevelation(surahNumber);
     final isMakki = place == 'Makkah';
 
+    final startPage = quran.getSurahPages(surahNumber)[0];
+
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
       child: AppCard(
@@ -159,7 +161,7 @@ class SurahCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: AppSpace.sm,
-                          vertical: 2,
+                          vertical: AppSpace.xs,
                         ),
                         decoration: BoxDecoration(
                           color: isMakki
@@ -182,6 +184,20 @@ class SurahCard extends StatelessWidget {
                         '$versesCount آية',
                         style: context.text.caption.copyWith(
                           color: palette.textMuted,
+                        ),
+                      ),
+                      Text(
+                        '•',
+                        style: context.text.caption.copyWith(
+                          color: palette.textSubtle,
+                        ),
+                      ),
+                      // Mushaf page number
+                      Text(
+                        'ص $startPage',
+                        style: context.text.caption.copyWith(
+                          color: palette.gold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

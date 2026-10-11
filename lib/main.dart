@@ -6,11 +6,14 @@ import 'utils/ssl_helper_web.dart'
 
 import 'package:quran_library/quran_library.dart';
 
+import 'dart:async';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await QuranLibrary.init();
   if (kDebugMode) {
     enableBadCertificateCatcher();
   }
+  // Initialize QuranLibrary in the background without blocking initial app frame render
+  unawaited(QuranLibrary.init());
   runApp(const TalibIlmApp());
 }
