@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quran/quran.dart' as quran;
+
 import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../data/services/bookmark_service.dart';
+import 'widgets/ayah_details_sheet.dart';
 import 'widgets/mushaf_page_viewer.dart';
-import 'widgets/surah_card.dart';
 
 class BookmarksPage extends StatefulWidget {
   const BookmarksPage({super.key});
@@ -17,9 +20,8 @@ class BookmarksPage extends StatefulWidget {
 }
 
 class _BookmarksPageState extends State<BookmarksPage> {
-  List<int> _bookmarkedSurahs = [];
+  List<Bookmark> _bookmarks = [];
   bool _isLoading = true;
-  static const String _kBookmarksKey = 'dashboard_fav_surahs';
 
   @override
   void initState() {
@@ -28,25 +30,37 @@ class _BookmarksPageState extends State<BookmarksPage> {
   }
 
   Future<void> _loadBookmarks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_kBookmarksKey) ?? [];
+    final list = await BookmarkService.getBookmarks();
     if (mounted) {
       setState(() {
-        _bookmarkedSurahs = list.map((e) => int.parse(e)).toList();
+        _bookmarks = list;
         _isLoading = false;
       });
     }
   }
 
-  Future<void> _removeBookmark(int surahNum) async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> _removeBookmark(Bookmark bookmark) async {
+    HapticFeedback.selectionClick();
+    await BookmarkService.removeBookmark(bookmark.surah, bookmark.ayah);
     setState(() {
-      _bookmarkedSurahs.remove(surahNum);
+      _bookmarks.removeWhere((b) => b.surah == bookmark.surah && b.ayah == bookmark.ayah);
     });
-    await prefs.setStringList(
-      _kBookmarksKey,
-      _bookmarkedSurahs.map((e) => e.toString()).toList(),
-    );
+    if (!mounted) return;
+    AppSnackbar.info(context, 'تمت إزالة الآية من المحفوظات');
+  }
+
+  void _openBookmark(Bookmark bookmark) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MushafPageViewer(
+          initialPage: bookmark.page,
+          initialSurah: bookmark.surah,
+          initialAyah: bookmark.ayah,
+        ),
+      ),
+    ).then((_) => _loadBookmarks());
   }
 
   @override
@@ -57,15 +71,15 @@ class _BookmarksPageState extends State<BookmarksPage> {
     return Scaffold(
       backgroundColor: palette.bg,
       appBar: PrimaryAppBar(
-        title: 'المحفوظات',
+        title: 'المحفوظات والتدبر',
         showBack: true,
-        bottom: (!_isLoading && _bookmarkedSurahs.isNotEmpty)
+        bottom: (!_isLoading && _bookmarks.isNotEmpty)
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(24),
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: AppSpace.xs),
                   child: Text(
-                    '${_bookmarkedSurahs.length} سور محفوظة',
+                    '${_bookmarks.length} علامة وملاحظة محفوظة',
                     style: textTheme.caption.copyWith(
                       color: palette.gold,
                       fontWeight: FontWeight.w600,
@@ -77,12 +91,12 @@ class _BookmarksPageState extends State<BookmarksPage> {
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: palette.gold))
-          : _bookmarkedSurahs.isEmpty
+          : _bookmarks.isEmpty
               ? EmptyState(
                   icon: Icons.bookmark_border_rounded,
-                  title: 'لا توجد سور محفوظة بعد',
+                  title: 'لا توجد آيات أو ملاحظات محفوظة بعد',
                   subtitle:
-                      'قم بحفظ السور المفضلة لديك بالضغط على أيقونة الحفظ في شاشة القرآن لتصل إليها سريعاً هنا.',
+                      'اضغط على أيقونة الحفظ عند قراءة أي آية لإضافتها إلى قائمة المحفوظات وتدوين خواطرك حولها.',
                   actionLabel: 'تصفح القرآن الكريم',
                   onAction: () => Navigator.pop(context),
                 )
@@ -91,76 +105,146 @@ class _BookmarksPageState extends State<BookmarksPage> {
                     top: AppSpace.sm,
                     bottom: AppSpace.xxl,
                   ),
-                  itemCount: _bookmarkedSurahs.length,
+                  itemCount: _bookmarks.length,
                   itemBuilder: (context, index) {
-                    final surahNum = _bookmarkedSurahs[index];
+                    final b = _bookmarks[index];
+                    final surahName = quran.getSurahNameArabic(b.surah);
+                    final verseText = quran.getVerse(b.surah, b.ayah, verseEndSymbol: false);
 
                     return Dismissible(
-                      key: ValueKey(surahNum),
+                      key: ValueKey('${b.surah}_${b.ayah}_${b.timestamp.millisecondsSinceEpoch}'),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        margin: const EdgeInsets.only(bottom: AppSpace.sm),
-                        alignment: AlignmentDirectional.centerStart,
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                        alignment: AlignmentDirectional.centerEnd,
+                        padding: const EdgeInsetsDirectional.only(end: AppSpace.lg),
                         decoration: BoxDecoration(
-                          color: palette.errorSoft,
-                          borderRadius: AppRadius.lgRadius,
-                          border: Border.all(
-                            color: palette.error.withValues(alpha: 0.3),
-                          ),
+                          color: palette.error.withValues(alpha: 0.15),
+                          borderRadius: AppRadius.mdRadius,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'إزالة',
-                              style: textTheme.label.copyWith(
-                                color: palette.error,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            Icon(
-                              Icons.delete_outline_rounded,
-                              color: palette.error,
-                              size: AppIcon.md,
-                            ),
-                          ],
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          color: palette.error,
+                          size: AppIcon.md,
                         ),
                       ),
-                      onDismissed: (direction) {
-                        _removeBookmark(surahNum);
-                        AppSnackbar.info(context, 'تمت إزالة السورة من المحفوظات');
-                      },
-                      child: SurahCard(
-                        surahNumber: surahNum,
-                        isBookmarked: true,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MushafPageViewer(
-                                initialSurah: surahNum,
+                      onDismissed: (_) => _removeBookmark(b),
+                      child: Container(
+                        margin: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+                        decoration: BoxDecoration(
+                          color: palette.surfaceRaised,
+                          borderRadius: AppRadius.mdRadius,
+                          border: Border.all(color: palette.border),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: AppRadius.mdRadius,
+                            onTap: () => _openBookmark(b),
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: palette.goldSoft,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        alignment: AlignmentDirectional.center,
+                                        child: Text(
+                                          '${b.ayah}',
+                                          style: textTheme.caption.copyWith(
+                                            color: palette.gold,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpace.sm),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'سورة $surahName',
+                                              style: textTheme.titleSmall.copyWith(
+                                                color: palette.text,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              'الصفحة ${b.page}',
+                                              style: textTheme.caption.copyWith(
+                                                color: palette.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      AppIconButton(
+                                        icon: Icons.menu_book_rounded,
+                                        tooltip: 'التفسير والتدبر',
+                                        color: palette.textMuted,
+                                        onPressed: () {
+                                          AyahDetailsSheet.show(
+                                            context,
+                                            surahNumber: b.surah,
+                                            ayahNumber: b.ayah,
+                                            onBookmarkChanged: _loadBookmarks,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppSpace.xs),
+                                  Text(
+                                    verseText,
+                                    style: textTheme.sacred.copyWith(
+                                      color: palette.text,
+                                      height: 1.6,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (b.note != null && b.note!.trim().isNotEmpty) ...[
+                                    const SizedBox(height: AppSpace.xs),
+                                    Container(
+                                      padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+                                      decoration: BoxDecoration(
+                                        color: palette.surfaceMuted,
+                                        borderRadius: AppRadius.smRadius,
+                                        border: Border.all(color: palette.border),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.edit_note_rounded,
+                                            size: AppIcon.sm,
+                                            color: palette.primary,
+                                          ),
+                                          const SizedBox(width: AppSpace.xs),
+                                          Expanded(
+                                            child: Text(
+                                              b.note!,
+                                              style: textTheme.caption.copyWith(
+                                                color: palette.text,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                          ).then((_) => _loadBookmarks());
-                        },
-                        onBookmarkTap: () {
-                          _removeBookmark(surahNum);
-                          AppSnackbar.info(context, 'تمت إزالة السورة من المحفوظات');
-                        },
-                        trailing: AppIconButton(
-                          icon: Icons.delete_outline_rounded,
-                          tooltip: 'إزالة من المحفوظات',
-                          color: palette.textMuted,
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            _removeBookmark(surahNum);
-                            AppSnackbar.info(
-                              context,
-                              'تمت إزالة السورة من المحفوظات',
-                            );
-                          },
+                          ),
                         ),
                       ),
                     );

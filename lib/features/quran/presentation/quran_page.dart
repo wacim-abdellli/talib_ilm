@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_ui.dart';
 import '../../../core/utils/arabic_search_utils.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../data/services/bookmark_service.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
 import 'widgets/juz_card.dart';
 import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
+import 'widgets/quran_bookmarks_tab_view.dart';
+import 'widgets/quran_stats_banner.dart';
 import 'widgets/surah_card.dart';
 
 class QuranPage extends StatefulWidget {
@@ -29,19 +31,16 @@ class _QuranPageState extends State<QuranPage> {
 
   List<int> _filteredSurahs = List.generate(114, (i) => i + 1);
   List<int> _filteredJuzs = List.generate(30, (i) => i + 1);
-  int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs
+  int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs, 2: Bookmarks
   bool _isLoading = true;
 
   // Stats
   int _minutesToday = 0;
   int _streak = 0;
   final int _dailyGoal = 20; // minutes
-  // Keys used by quran_library
-  static const String _kMyLastSurahKey = 'dashboard_last_surah';
-  static const String _kBookmarksKey = 'dashboard_fav_surahs';
 
-  int? _lastOpenedSurah;
-  List<String> _bookmarkedSurahsStr = [];
+  LastRead? _lastRead;
+  List<Bookmark> _bookmarks = [];
 
   @override
   void initState() {
@@ -59,17 +58,15 @@ class _QuranPageState extends State<QuranPage> {
   Future<void> _loadData() async {
     final daily = await _statsService.getDailyStats();
     final streak = await _statsService.getStreak();
-
-    final prefs = await SharedPreferences.getInstance();
-    final lastSurah = prefs.getInt(_kMyLastSurahKey);
-    final bookmarks = prefs.getStringList(_kBookmarksKey) ?? [];
+    final lastRead = await BookmarkService.getLastRead();
+    final bookmarks = await BookmarkService.getBookmarks();
 
     if (mounted) {
       setState(() {
         _minutesToday = daily['minutes'] ?? 0;
         _streak = streak;
-        _lastOpenedSurah = lastSurah;
-        _bookmarkedSurahsStr = bookmarks;
+        _lastRead = lastRead;
+        _bookmarks = bookmarks;
         _isLoading = false;
       });
     }
@@ -114,24 +111,12 @@ class _QuranPageState extends State<QuranPage> {
   }
 
   Future<void> _toggleBookmark(int surahNum) async {
-    final prefs = await SharedPreferences.getInstance();
-    final strNum = surahNum.toString();
-    setState(() {
-      if (_bookmarkedSurahsStr.contains(strNum)) {
-        _bookmarkedSurahsStr.remove(strNum);
-      } else {
-        _bookmarkedSurahsStr.add(strNum);
-      }
-    });
-    await prefs.setStringList(_kBookmarksKey, _bookmarkedSurahsStr);
+    HapticFeedback.selectionClick();
+    await BookmarkService.toggleBookmark(surahNum, 1);
+    _loadData();
   }
 
-  Future<void> _openSurah(int surahNum) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kMyLastSurahKey, surahNum);
-
-    setState(() => _lastOpenedSurah = surahNum);
-
+  Future<void> _openSurah(int surahNum, {int? ayah}) async {
     final startTime = DateTime.now();
 
     if (!mounted) return;
@@ -139,7 +124,10 @@ class _QuranPageState extends State<QuranPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MushafPageViewer(initialSurah: surahNum),
+        builder: (_) => MushafPageViewer(
+          initialSurah: surahNum,
+          initialAyah: ayah ?? 1,
+        ),
       ),
     );
 
@@ -172,7 +160,7 @@ class _QuranPageState extends State<QuranPage> {
       await _statsService.recordSession(
         durationSeconds: duration,
         versesRead: 0,
-        surahNumber: _lastOpenedSurah ?? 1,
+        surahNumber: _lastRead?.surah ?? 1,
       );
     }
 
@@ -195,19 +183,6 @@ class _QuranPageState extends State<QuranPage> {
       appBar: PrimaryAppBar(
         title: 'القرآن الكريم',
         showBack: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(24),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: AppSpace.xs),
-            child: Text(
-              _selectedTabIndex == 0 ? '١١٤ سورة' : '٣٠ جزء',
-              style: textTheme.caption.copyWith(
-                color: palette.gold,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
         actions: [
           AppIconButton(
             icon: Icons.explore_rounded,
@@ -233,7 +208,6 @@ class _QuranPageState extends State<QuranPage> {
           ? Center(child: CircularProgressIndicator(color: palette.gold))
           : Column(
               children: [
-                // Stats Dashboard & Last Read Card (Collapsed during active search)
                 if (!isSearching) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -245,8 +219,7 @@ class _QuranPageState extends State<QuranPage> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: _buildStatCard(
-                            context: context,
+                          child: QuranStatCard(
                             label: 'أيام التتابع',
                             value: '$_streak',
                             icon: Icons.local_fire_department_rounded,
@@ -255,8 +228,7 @@ class _QuranPageState extends State<QuranPage> {
                         ),
                         const SizedBox(width: AppSpace.sm),
                         Expanded(
-                          child: _buildStatCard(
-                            context: context,
+                          child: QuranStatCard(
                             label: 'قراءة اليوم',
                             value: '$_minutesToday د',
                             icon: Icons.timer_outlined,
@@ -267,10 +239,9 @@ class _QuranPageState extends State<QuranPage> {
                         ),
                         const SizedBox(width: AppSpace.sm),
                         Expanded(
-                          child: _buildStatCard(
-                            context: context,
+                          child: QuranStatCard(
                             label: 'المحفوظات',
-                            value: '${_bookmarkedSurahsStr.length}',
+                            value: '${_bookmarks.length}',
                             icon: Icons.bookmark_rounded,
                             iconColor: palette.gold,
                             onTap: () {
@@ -288,19 +259,19 @@ class _QuranPageState extends State<QuranPage> {
                     ),
                   ),
 
-                  // Last Read Card (If exists)
-                  if (_lastOpenedSurah != null)
+                  if (_lastRead != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpace.lg,
                         vertical: AppSpace.xs,
                       ),
-                      child: _buildLastReadCard(context, _lastOpenedSurah!),
+                      child: QuranLastReadBanner(
+                        lastRead: _lastRead!,
+                        onTap: () => _openSurah(_lastRead!.surah, ayah: _lastRead!.ayah),
+                      ),
                     ),
 
                   const SizedBox(height: AppSpace.xs),
-
-                  // Wahi-Style Tabs: Surahs vs Juzs
                   _buildIndexTabs(context),
                 ],
 
@@ -319,7 +290,9 @@ class _QuranPageState extends State<QuranPage> {
                     decoration: InputDecoration(
                       hintText: _selectedTabIndex == 0
                           ? 'ابحث عن سورة بالاسم أو الرقم...'
-                          : 'ابحث عن جزء بالاسم أو الرقم أو الآية...',
+                          : _selectedTabIndex == 1
+                              ? 'ابحث عن جزء بالاسم أو الرقم أو الآية...'
+                              : 'ابحث في المحفوظات والتدبر...',
                       hintStyle: textTheme.bodySmall.copyWith(
                         color: palette.textMuted,
                       ),
@@ -333,9 +306,7 @@ class _QuranPageState extends State<QuranPage> {
                               icon: Icons.clear_rounded,
                               tooltip: 'مسح البحث',
                               color: palette.textMuted,
-                              onPressed: () {
-                                _searchController.clear();
-                              },
+                              onPressed: () => _searchController.clear(),
                             )
                           : null,
                       filled: true,
@@ -363,11 +334,17 @@ class _QuranPageState extends State<QuranPage> {
                   ),
                 ),
 
-                // Content List (Surahs or Juzs) with Scrollable EmptyState to prevent ANY overflow
+                // Content List (Surahs, Juzs, or Bookmarks)
                 Expanded(
                   child: _selectedTabIndex == 0
                       ? _buildSurahsList(context)
-                      : _buildJuzsList(context),
+                      : _selectedTabIndex == 1
+                          ? _buildJuzsList(context)
+                          : QuranBookmarksTabView(
+                              bookmarks: _bookmarks,
+                              onEmptyAction: () => setState(() => _selectedTabIndex = 0),
+                              onReload: _loadData,
+                            ),
                 ),
               ],
             ),
@@ -390,7 +367,7 @@ class _QuranPageState extends State<QuranPage> {
           children: [
             Expanded(
               child: _buildTabButton(
-                title: 'فهرس السور (١١٤)',
+                title: 'السور (١١٤)',
                 isSelected: _selectedTabIndex == 0,
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -400,11 +377,21 @@ class _QuranPageState extends State<QuranPage> {
             ),
             Expanded(
               child: _buildTabButton(
-                title: 'فهرس الأجزاء (٣٠)',
+                title: 'الأجزاء (٣٠)',
                 isSelected: _selectedTabIndex == 1,
                 onTap: () {
                   HapticFeedback.selectionClick();
                   setState(() => _selectedTabIndex = 1);
+                },
+              ),
+            ),
+            Expanded(
+              child: _buildTabButton(
+                title: 'المحفوظات (${_bookmarks.length})',
+                isSelected: _selectedTabIndex == 2,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedTabIndex = 2);
                 },
               ),
             ),
@@ -427,7 +414,7 @@ class _QuranPageState extends State<QuranPage> {
         onTap: onTap,
         borderRadius: AppRadius.pillRadius,
         child: AnimatedContainer(
-          duration: AppMotion.fast,
+          duration: AppMotion.base,
           padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
           decoration: BoxDecoration(
             color: isSelected ? palette.surfaceRaised : Colors.transparent,
@@ -459,9 +446,7 @@ class _QuranPageState extends State<QuranPage> {
           subtitle:
               'لم نتمكن من العثور على سورة تطابق بحثك. جرّب كتابة اسم السورة أو رقمها.',
           actionLabel: 'إعادة ضبط البحث',
-          onAction: () {
-            _searchController.clear();
-          },
+          onAction: () => _searchController.clear(),
         ),
       );
     }
@@ -476,8 +461,7 @@ class _QuranPageState extends State<QuranPage> {
       ),
       itemBuilder: (context, index) {
         final surahNum = _filteredSurahs[index];
-        final isBookmarked =
-            _bookmarkedSurahsStr.contains(surahNum.toString());
+        final isBookmarked = _bookmarks.any((b) => b.surah == surahNum);
 
         return SurahCard(
           surahNumber: surahNum,
@@ -500,9 +484,7 @@ class _QuranPageState extends State<QuranPage> {
           subtitle:
               'لم نتمكن من العثور على جزء يطابق بحثك. جرّب كتابة رقم الجزء أو اسم السورة.',
           actionLabel: 'إعادة ضبط البحث',
-          onAction: () {
-            _searchController.clear();
-          },
+          onAction: () => _searchController.clear(),
         ),
       );
     }
@@ -528,183 +510,6 @@ class _QuranPageState extends State<QuranPage> {
           },
         );
       },
-    );
-  }
-
-  Widget _buildLastReadCard(BuildContext context, int lastSurah) {
-    final palette = context.palette;
-    final textTheme = context.text;
-    final startPage = quran.getSurahPages(lastSurah)[0];
-
-    return AppCard(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _openSurah(lastSurah);
-      },
-      padding: const EdgeInsets.all(AppSpace.lg),
-      border: Border.all(
-        color: palette.gold.withValues(alpha: 0.35),
-        width: 1.2,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: palette.goldSoft,
-              border: Border.all(
-                color: palette.gold.withValues(alpha: 0.4),
-                width: 1.2,
-              ),
-            ),
-            child: Icon(
-              Icons.auto_stories_rounded,
-              color: palette.gold,
-              size: AppIcon.md,
-            ),
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.goldSoft,
-                        borderRadius: AppRadius.pillRadius,
-                      ),
-                      child: Text(
-                        'آخر قراءة',
-                        style: textTheme.caption.copyWith(
-                          color: palette.onGold,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      'صفحة $startPage',
-                      style: textTheme.caption.copyWith(
-                        color: palette.gold,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  'سورة ${quran.getSurahNameArabic(lastSurah)}',
-                  style: textTheme.sacred.copyWith(
-                    color: palette.text,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
-            ),
-            decoration: BoxDecoration(
-              color: palette.goldSoft,
-              borderRadius: AppRadius.pillRadius,
-              border: Border.all(
-                color: palette.gold.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'تابع القراءة',
-                  style: textTheme.caption.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: palette.gold,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: AppIcon.sm,
-                  color: palette.gold,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color iconColor,
-    String? subtitle,
-    VoidCallback? onTap,
-  }) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.md,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpace.xs),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: iconColor.withValues(alpha: 0.25),
-                width: 1,
-              ),
-            ),
-            child: Icon(icon, color: iconColor, size: AppIcon.sm),
-          ),
-          const SizedBox(height: AppSpace.xs),
-          Text(
-            value,
-            style: textTheme.titleSmall.copyWith(
-              color: palette.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: textTheme.caption.copyWith(
-              color: palette.textMuted,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              subtitle,
-              style: textTheme.caption.copyWith(
-                color: iconColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

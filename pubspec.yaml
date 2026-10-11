@@ -39,6 +39,7 @@ dependencies:
   path_provider: ^2.1.2
   quran: ^1.4.1
   cached_network_image: ^3.3.1
+  qcf_quran: ^0.0.5
 
 dev_dependencies:
   flutter_test:

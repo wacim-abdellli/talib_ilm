@@ -571,12 +571,15 @@ class MushafColors {
 
   static const Color whiteBg = Color(0xFFFFFFFF);
   static const Color whiteText = Color(0xFF1A1A1A);
+  static const Color whiteVerseNumber = Color(0xFF8B4513);
 
   static const Color sepiaBg = Color(0xFFFBF7EE);
   static const Color sepiaText = Color(0xFF2B2520);
+  static const Color sepiaVerseNumber = Color(0xFF8B5A2B);
 
   static const Color darkBg = Color(0xFF141618);
   static const Color darkText = Color(0xFFE8E6E3);
+  static const Color darkVerseNumber = Color(0xFFD4AF37);
 }
 
 /// Ergonomic theme context extensions

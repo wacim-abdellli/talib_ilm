@@ -7,6 +7,9 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/icon_badge.dart';
+import '../../data/services/quran_audio_service.dart';
+import '../../data/services/quran_tafsir_service.dart';
+import 'mushaf_settings_widgets.dart';
 
 enum MushafThemeMode {
   white, // Classic White
@@ -14,43 +17,88 @@ enum MushafThemeMode {
   dark, // Twilight AMOLED Dark
 }
 
+enum QuranReadingMode {
+  mushafPage, // 604 authentic Medina pages
+  ayahList, // Continuous scrolling verses
+}
+
 class MushafSettingsSheet extends StatefulWidget {
   final MushafThemeMode currentTheme;
+  final QuranReadingMode currentReadingMode;
   final bool isTajweedEnabled;
+  final bool showTranslation;
+  final bool keepScreenAwake;
   final double fontSize;
+  final QuranReciter selectedReciter;
+  final TafsirScholar selectedTafsir;
   final ValueChanged<MushafThemeMode> onThemeChanged;
+  final ValueChanged<QuranReadingMode> onReadingModeChanged;
   final ValueChanged<bool> onTajweedChanged;
+  final ValueChanged<bool> onTranslationChanged;
+  final ValueChanged<bool> onKeepScreenAwakeChanged;
   final ValueChanged<double> onFontSizeChanged;
+  final ValueChanged<QuranReciter> onReciterChanged;
+  final ValueChanged<TafsirScholar> onTafsirChanged;
 
   const MushafSettingsSheet({
     super.key,
     required this.currentTheme,
+    required this.currentReadingMode,
     required this.isTajweedEnabled,
+    required this.showTranslation,
+    required this.keepScreenAwake,
     required this.fontSize,
+    required this.selectedReciter,
+    required this.selectedTafsir,
     required this.onThemeChanged,
+    required this.onReadingModeChanged,
     required this.onTajweedChanged,
+    required this.onTranslationChanged,
+    required this.onKeepScreenAwakeChanged,
     required this.onFontSizeChanged,
+    required this.onReciterChanged,
+    required this.onTafsirChanged,
   });
 
   static Future<void> show(
     BuildContext context, {
     required MushafThemeMode currentTheme,
+    required QuranReadingMode currentReadingMode,
     required bool isTajweedEnabled,
+    required bool showTranslation,
+    required bool keepScreenAwake,
     required double fontSize,
+    required QuranReciter selectedReciter,
+    required TafsirScholar selectedTafsir,
     required ValueChanged<MushafThemeMode> onThemeChanged,
+    required ValueChanged<QuranReadingMode> onReadingModeChanged,
     required ValueChanged<bool> onTajweedChanged,
+    required ValueChanged<bool> onTranslationChanged,
+    required ValueChanged<bool> onKeepScreenAwakeChanged,
     required ValueChanged<double> onFontSizeChanged,
+    required ValueChanged<QuranReciter> onReciterChanged,
+    required ValueChanged<TafsirScholar> onTafsirChanged,
   }) {
     return AppSheet.show<void>(
       context: context,
-      maxHeightFactor: 0.75,
+      maxHeightFactor: 0.88,
       builder: (_) => MushafSettingsSheet(
         currentTheme: currentTheme,
+        currentReadingMode: currentReadingMode,
         isTajweedEnabled: isTajweedEnabled,
+        showTranslation: showTranslation,
+        keepScreenAwake: keepScreenAwake,
         fontSize: fontSize,
+        selectedReciter: selectedReciter,
+        selectedTafsir: selectedTafsir,
         onThemeChanged: onThemeChanged,
+        onReadingModeChanged: onReadingModeChanged,
         onTajweedChanged: onTajweedChanged,
+        onTranslationChanged: onTranslationChanged,
+        onKeepScreenAwakeChanged: onKeepScreenAwakeChanged,
         onFontSizeChanged: onFontSizeChanged,
+        onReciterChanged: onReciterChanged,
+        onTafsirChanged: onTafsirChanged,
       ),
     );
   }
@@ -61,15 +109,25 @@ class MushafSettingsSheet extends StatefulWidget {
 
 class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
   late MushafThemeMode _theme;
+  late QuranReadingMode _readingMode;
   late bool _tajweed;
+  late bool _showTranslation;
+  late bool _keepScreenAwake;
   late double _fontSize;
+  late QuranReciter _reciter;
+  late TafsirScholar _tafsir;
 
   @override
   void initState() {
     super.initState();
     _theme = widget.currentTheme;
+    _readingMode = widget.currentReadingMode;
     _tajweed = widget.isTajweedEnabled;
+    _showTranslation = widget.showTranslation;
+    _keepScreenAwake = widget.keepScreenAwake;
     _fontSize = widget.fontSize;
+    _reciter = widget.selectedReciter;
+    _tafsir = widget.selectedTafsir;
   }
 
   @override
@@ -93,7 +151,6 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Drag handle
           Center(
             child: Container(
               width: 36,
@@ -106,7 +163,6 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
           ),
           const SizedBox(height: AppSpace.md),
 
-          // Header
           Padding(
             padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
             child: Row(
@@ -125,7 +181,7 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                         ),
                       ),
                       Text(
-                        'تحكم في ألوان المصحف وأحكام التجويد وحجم الخط',
+                        'نمط العرض، ألوان الصفحات، التجويد، والقارئ',
                         style: textTheme.caption.copyWith(
                           color: palette.textMuted,
                         ),
@@ -151,7 +207,48 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(AppSpace.xl),
               children: [
-                // 1. Reading Theme Selection (matching Screenshot 1)
+                Text(
+                  'نمط القراءة',
+                  style: textTheme.caption.copyWith(
+                    color: palette.text,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MushafReadingModeCard(
+                        label: 'صفحات المصحف',
+                        sublabel: '٦٠٤ صفحة طبق الأصل',
+                        icon: Icons.menu_book_rounded,
+                        mode: QuranReadingMode.mushafPage,
+                        isSelected: _readingMode == QuranReadingMode.mushafPage,
+                        onSelected: (mode) {
+                          setState(() => _readingMode = mode);
+                          widget.onReadingModeChanged(mode);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Expanded(
+                      child: MushafReadingModeCard(
+                        label: 'قائمة الآيات',
+                        sublabel: 'تمرير مستمر وترجمة',
+                        icon: Icons.format_list_bulleted_rounded,
+                        mode: QuranReadingMode.ayahList,
+                        isSelected: _readingMode == QuranReadingMode.ayahList,
+                        onSelected: (mode) {
+                          setState(() => _readingMode = mode);
+                          widget.onReadingModeChanged(mode);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpace.xl),
+
                 Text(
                   'لون صفحة المصحف',
                   style: textTheme.caption.copyWith(
@@ -162,43 +259,107 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                 const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
-                    _buildThemeCard(
+                    MushafThemeCard(
                       label: 'أبيض ناصع',
                       color: MushafColors.whiteBg,
                       textColor: MushafColors.whiteText,
                       mode: MushafThemeMode.white,
-                      palette: palette,
-                      textTheme: textTheme,
+                      isSelected: _theme == MushafThemeMode.white,
+                      onSelected: (mode) {
+                        setState(() => _theme = mode);
+                        widget.onThemeChanged(mode);
+                      },
                     ),
                     const SizedBox(width: AppSpace.sm),
-                    _buildThemeCard(
+                    MushafThemeCard(
                       label: 'ورقي بيج',
                       color: MushafColors.sepiaBg,
                       textColor: MushafColors.sepiaText,
                       mode: MushafThemeMode.sepia,
-                      palette: palette,
-                      textTheme: textTheme,
+                      isSelected: _theme == MushafThemeMode.sepia,
+                      onSelected: (mode) {
+                        setState(() => _theme = mode);
+                        widget.onThemeChanged(mode);
+                      },
                     ),
                     const SizedBox(width: AppSpace.sm),
-                    _buildThemeCard(
+                    MushafThemeCard(
                       label: 'ليلي داكن',
                       color: MushafColors.darkBg,
                       textColor: MushafColors.darkText,
                       mode: MushafThemeMode.dark,
-                      palette: palette,
-                      textTheme: textTheme,
+                      isSelected: _theme == MushafThemeMode.dark,
+                      onSelected: (mode) {
+                        setState(() => _theme = mode);
+                        widget.onThemeChanged(mode);
+                      },
                     ),
                   ],
                 ),
 
                 const SizedBox(height: AppSpace.xl),
 
-                // 2. Tajweed Toggle Card
+                // Tajweed Toggle & Rules Legend
+                AppCard(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.palette_rounded,
+                            color: palette.primary,
+                            size: AppIcon.md,
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'تلوين أحكام التجويد',
+                                  style: textTheme.body.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'تمييز الغنة، القلقلة، الإخفاء، والمدود',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch.adaptive(
+                            value: _tajweed,
+                            activeColor: palette.primary,
+                            onChanged: (val) {
+                              HapticFeedback.selectionClick();
+                              setState(() => _tajweed = val);
+                              widget.onTajweedChanged(val);
+                            },
+                          ),
+                        ],
+                      ),
+                      if (_tajweed) ...[
+                        const SizedBox(height: AppSpace.md),
+                        Divider(height: 1, color: palette.border),
+                        const SizedBox(height: AppSpace.sm),
+                        const MushafTajweedLegendWidget(),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: AppSpace.md),
+
+                // Translation Toggle
                 AppCard(
                   child: Row(
                     children: [
                       Icon(
-                        Icons.palette_rounded,
+                        Icons.translate_rounded,
                         color: palette.primary,
                         size: AppIcon.md,
                       ),
@@ -208,14 +369,14 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'تلوين أحكام التجويد',
+                              'إظهار الترجمة الإنجليزية',
                               style: textTheme.body.copyWith(
                                 color: palette.text,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              'تلوين الغنة، القلقلة، الإخفاء، والمدود بألوان المصحف',
+                              'عرض نص الترجمة أسفل كل آية في قائمة الآيات',
                               style: textTheme.caption.copyWith(
                                 color: palette.textMuted,
                               ),
@@ -224,21 +385,86 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                         ),
                       ),
                       Switch.adaptive(
-                        value: _tajweed,
+                        value: _showTranslation,
                         activeColor: palette.primary,
                         onChanged: (val) {
                           HapticFeedback.selectionClick();
-                          setState(() => _tajweed = val);
-                          widget.onTajweedChanged(val);
+                          setState(() => _showTranslation = val);
+                          widget.onTranslationChanged(val);
                         },
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: AppSpace.lg),
+                const SizedBox(height: AppSpace.md),
 
-                // 3. Font Size Slider
+                // Keep Screen Awake Toggle
+                AppCard(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.light_mode_rounded,
+                        color: palette.gold,
+                        size: AppIcon.md,
+                      ),
+                      const SizedBox(width: AppSpace.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'إبقاء الشاشة مضاءة أثناء القراءة',
+                              style: textTheme.body.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'منع قفل الشاشة تلقائياً أثناء تلاوة القرآن',
+                              style: textTheme.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: _keepScreenAwake,
+                        activeColor: palette.gold,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _keepScreenAwake = val);
+                          widget.onKeepScreenAwakeChanged(val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: AppSpace.md),
+
+                MushafReciterDropdownCard(
+                  selectedReciter: _reciter,
+                  onSelected: (val) {
+                    setState(() => _reciter = val);
+                    widget.onReciterChanged(val);
+                  },
+                ),
+
+                const SizedBox(height: AppSpace.md),
+
+                MushafTafsirDropdownCard(
+                  selectedTafsir: _tafsir,
+                  onSelected: (val) {
+                    setState(() => _tafsir = val);
+                    widget.onTafsirChanged(val);
+                  },
+                ),
+
+                const SizedBox(height: AppSpace.md),
+
+                // Font Size Slider
                 AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,8 +492,8 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                       Slider.adaptive(
                         value: _fontSize,
                         min: 18.0,
-                        max: 32.0,
-                        divisions: 7,
+                        max: 34.0,
+                        divisions: 8,
                         activeColor: palette.primary,
                         inactiveColor: palette.border,
                         onChanged: (val) {
@@ -282,53 +508,6 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildThemeCard({
-    required String label,
-    required Color color,
-    required Color textColor,
-    required MushafThemeMode mode,
-    required AppPalette palette,
-    required AppTextTheme textTheme,
-  }) {
-    final isSelected = _theme == mode;
-
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _theme = mode);
-            widget.onThemeChanged(mode);
-          },
-          borderRadius: AppRadius.mdRadius,
-          child: Container(
-            height: 72,
-            padding: const EdgeInsets.all(AppSpace.xs),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(
-                color: isSelected ? palette.primary : palette.border,
-                width: isSelected ? 2.5 : 1,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: textTheme.caption.copyWith(
-                  color: textColor,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

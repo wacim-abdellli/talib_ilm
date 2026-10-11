@@ -7,6 +7,7 @@ enum TafsirScholar {
   muyassar, // التفسير الميسر (مجمع الملك فهد)
   saadi, // تفسير السعدي
   ibnKathir, // تفسير ابن كثير
+  englishIbnKathir, // English Ibn Kathir & Translation
 }
 
 class WordMeaning {
@@ -32,6 +33,8 @@ class QuranTafsirService {
         return 'تفسير السعدي';
       case TafsirScholar.ibnKathir:
         return 'تفسير ابن كثير';
+      case TafsirScholar.englishIbnKathir:
+        return 'English (Tafsir & Translation)';
     }
   }
 
@@ -43,6 +46,8 @@ class QuranTafsirService {
         return 'الشيخ عبد الرحمن بن ناصر السعدي';
       case TafsirScholar.ibnKathir:
         return 'الحافظ ابن كثير الدمشقي';
+      case TafsirScholar.englishIbnKathir:
+        return 'Hafiz Ibn Kathir (English translation)';
     }
   }
 
@@ -54,6 +59,8 @@ class QuranTafsirService {
         return 14;
       case TafsirScholar.ibnKathir:
         return 170;
+      case TafsirScholar.englishIbnKathir:
+        return 169;
     }
   }
 
@@ -87,7 +94,7 @@ class QuranTafsirService {
 
       final response = await http
           .get(url, headers: {'Accept': 'application/json'})
-          .timeout(const Duration(seconds: 4));
+          .timeout(const Duration(seconds: 4)); // ui-lint: allow network timeout
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
