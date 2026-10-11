@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../core/services/adhan_settings_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
@@ -10,6 +12,7 @@ import '../../../core/utils/prayer_countdown.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
@@ -18,8 +21,10 @@ import 'location_settings_sheet.dart';
 import 'prayer_settings_sheet.dart';
 import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
+import 'widgets/prayer_dua_card.dart';
 import 'widgets/prayer_header.dart';
 import 'widgets/prayer_time_card.dart';
+import 'widgets/sunan_rawatib_card.dart';
 
 class PrayerPage extends StatefulWidget {
   const PrayerPage({super.key});
@@ -32,17 +37,28 @@ class _PrayerPageState extends State<PrayerPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
   final PrayerScheduleService _prayerScheduleService = PrayerScheduleService();
+  final AdhanSettingsService _adhanSettingsService = AdhanSettingsService();
   final LocationService _locationService = LocationService();
   late Future<PrayerTimesDay> _prayerFuture;
   late Future<_LocationInfo> _locationFuture;
   PrayerCountdownController? _countdownController;
   PrayerTimesDay? _cachedDay;
+  AdhanSettings? _adhanSettings;
 
   @override
   void initState() {
     super.initState();
     _loadPrayer();
     _locationFuture = _loadLocation();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final settings = await _adhanSettingsService.getSettings();
+    if (!mounted) return;
+    setState(() {
+      _adhanSettings = settings;
+    });
   }
 
   @override
@@ -181,6 +197,10 @@ class _PrayerPageState extends State<PrayerPage> {
                                   const SizedBox(height: AppSpace.sm),
                               ],
                               const SizedBox(height: AppSpace.lg),
+                              const SunanRawatibCard(),
+                              const SizedBox(height: AppSpace.lg),
+                              const PrayerDuaCard(),
+                              const SizedBox(height: AppSpace.lg),
                               SizedBox(height: AppSize.navClearance(context)),
                             ],
                           ),
@@ -292,14 +312,67 @@ class _PrayerPageState extends State<PrayerPage> {
       final time = day.prayers[name]!;
       final isCurrent = currentName != null && name == currentName;
       final isNext = nextName != null && name == nextName;
+      final isSunrise = name.contains('الشروق');
+      final isNotificationEnabled = !isSunrise &&
+          (_adhanSettings?.enabled ?? false) &&
+          (_adhanSettings?.isPrayerEnabled(name) ?? true);
+
       return PrayerTimeEntry(
         name: name,
         timeLabel: formatPrayerTime12h(time),
         isNext: isNext,
         isCurrent: isCurrent,
         isCompleted: !isCurrent && time.isBefore(now),
+        isNotificationEnabled: isNotificationEnabled,
+        onToggleNotification:
+            isSunrise ? null : () => _togglePrayerNotification(name),
       );
     }).toList();
+  }
+
+  Future<void> _togglePrayerNotification(String prayerName) async {
+    final currentSettings =
+        _adhanSettings ?? await _adhanSettingsService.getSettings();
+    final isMasterEnabled = currentSettings.enabled;
+    final isPrayerActive = currentSettings.isPrayerEnabled(prayerName);
+
+    // If master is disabled, turning on any prayer enables master and this prayer
+    final bool nextPrayerActive;
+    final bool nextMasterEnabled;
+    if (!isMasterEnabled) {
+      nextMasterEnabled = true;
+      nextPrayerActive = true;
+    } else {
+      nextPrayerActive = !isPrayerActive;
+      nextMasterEnabled = true;
+    }
+
+    final updatedToggles =
+        Map<String, bool>.from(currentSettings.prayerToggles);
+    updatedToggles[prayerName] = nextPrayerActive;
+
+    final updatedSettings = currentSettings.copyWith(
+      enabled: nextMasterEnabled,
+      prayerToggles: updatedToggles,
+    );
+
+    await _adhanSettingsService.saveSettings(updatedSettings);
+    await _prayerScheduleService.refreshSchedulesIfNeeded(force: true);
+
+    if (!mounted) return;
+    setState(() {
+      _adhanSettings = updatedSettings;
+    });
+
+    HapticFeedback.selectionClick();
+    if (mounted) {
+      AppSnackbar.info(
+        context,
+        nextPrayerActive
+            ? 'تم تفعيل أذان صلاة $prayerName'
+            : 'تم إيقاف أذان صلاة $prayerName',
+      );
+    }
   }
 
   String? _findNextPrayerName(Map<String, DateTime> prayers) {
@@ -364,6 +437,7 @@ class _PrayerPageState extends State<PrayerPage> {
     setState(() {
       _loadPrayer();
       _locationFuture = _loadLocation();
+      _loadSettings();
     });
   }
 

@@ -177,16 +177,28 @@ class PrayerAdhanSection extends StatelessWidget {
 
             const SizedBox(height: AppSpace.md),
 
-            // Test button
-            AppButton.tonal(
-              label: 'تجربة صوت الأذان',
-              icon: Icons.play_circle_outline_rounded,
-              width: double.infinity,
-              onPressed: () async {
-                HapticFeedback.lightImpact();
-                await adhanService.test(
-                  settings.sound,
-                  volume: settings.volume,
+            // Test / Stop button
+            StreamBuilder<PlayerState>(
+              stream: adhanService.playerStateStream,
+              builder: (context, snapshot) {
+                final isPlaying = adhanService.isPlaying;
+                return AppButton.tonal(
+                  label: isPlaying ? 'إيقاف صوت الأذان' : 'تجربة صوت الأذان',
+                  icon: isPlaying
+                      ? Icons.stop_circle_rounded
+                      : Icons.play_circle_outline_rounded,
+                  width: double.infinity,
+                  onPressed: () async {
+                    HapticFeedback.lightImpact();
+                    if (isPlaying) {
+                      await adhanService.stop();
+                    } else {
+                      await adhanService.test(
+                        settings.sound,
+                        volume: settings.volume,
+                      );
+                    }
+                  },
                 );
               },
             ),

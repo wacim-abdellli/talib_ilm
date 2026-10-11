@@ -12,6 +12,8 @@ class PrayerTimeEntry {
   final bool isNext;
   final bool isCurrent;
   final bool isCompleted;
+  final bool isNotificationEnabled;
+  final VoidCallback? onToggleNotification;
 
   const PrayerTimeEntry({
     required this.name,
@@ -19,6 +21,8 @@ class PrayerTimeEntry {
     required this.isNext,
     required this.isCurrent,
     required this.isCompleted,
+    this.isNotificationEnabled = true,
+    this.onToggleNotification,
   });
 }
 
@@ -40,18 +44,7 @@ class PrayerTimeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final isCurrent = item.isCurrent;
-    final isCompleted = item.isCompleted;
     final prayerColor = palette.prayer(item.name);
-
-    final statusIcon = isCurrent
-        ? Icons.notifications_active_rounded
-        : (isCompleted
-            ? Icons.check_circle_rounded
-            : Icons.notifications_none_rounded);
-
-    final statusColor = isCurrent
-        ? palette.gold
-        : palette.textSubtle;
 
     return AppCard(
       color: isCurrent ? palette.surfaceRaised : palette.surface,
@@ -141,7 +134,7 @@ class PrayerTimeCard extends StatelessWidget {
 
           const SizedBox(width: AppSpace.md),
 
-          // Prayer Time & Status Icon
+          // Prayer Time & Status / Ring Action Button
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
@@ -155,16 +148,57 @@ class PrayerTimeCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpace.xs),
-              Tooltip(
-                message: isCurrent
-                    ? 'حان وقت الصلاة'
-                    : (isCompleted ? 'مكتملة' : 'التنبيه مفعل'),
-                child: Icon(
-                  statusIcon,
-                  size: AppIcon.sm,
-                  color: statusColor,
+              if (item.name == 'الشروق')
+                Tooltip(
+                  message: 'وقت شروق الشمس',
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                    child: Icon(
+                      Icons.wb_sunny_rounded,
+                      size: AppIcon.sm,
+                      color: palette.textSubtle,
+                    ),
+                  ),
+                )
+              else
+                Semantics(
+                  button: true,
+                  label: item.isNotificationEnabled
+                      ? 'إلغاء تنبيه ${item.name}'
+                      : 'تفعيل تنبيه ${item.name}',
+                  child: Tooltip(
+                    message: item.isNotificationEnabled
+                        ? 'التنبيه مفعل (انقر للكتم)'
+                        : 'التنبيه مكتوم (انقر للتفعيل)',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: item.onToggleNotification,
+                        borderRadius: AppRadius.pillRadius,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            color: item.isNotificationEnabled
+                                ? (isCurrent ? palette.goldSoft : palette.surfaceMuted)
+                                : Colors.transparent,
+                            borderRadius: AppRadius.pillRadius,
+                          ),
+                          child: Icon(
+                            item.isNotificationEnabled
+                                ? (isCurrent
+                                    ? Icons.notifications_active_rounded
+                                    : Icons.notifications_active_outlined)
+                                : Icons.notifications_off_outlined,
+                            size: AppIcon.sm,
+                            color: item.isNotificationEnabled
+                                ? (isCurrent ? palette.gold : prayerColor)
+                                : palette.textSubtle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ],

@@ -2,6 +2,8 @@ import 'package:just_audio/just_audio.dart';
 import '../../app/constants/app_assets.dart';
 import 'adhan_settings_service.dart';
 
+export 'package:just_audio/just_audio.dart' show PlayerState;
+
 class AdhanService {
   final AudioPlayer _player;
   AudioSource? _preloadedMakkah;
@@ -23,7 +25,10 @@ class AdhanService {
     }
   }
 
-  /// Play adhan with fade-in and volume control
+  bool get isPlaying => _player.playing;
+  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
+
+  /// Play adhan with volume control
   Future<void> play(AdhanSound sound, {double volume = 80.0}) async {
     try {
       await preload();
@@ -33,21 +38,11 @@ class AdhanService {
       final normalizedVolume = (volume / 100).clamp(0.0, 1.0);
 
       await _player.stop();
-      await _player.setVolume(0.0); // Start silent for fade-in
       await _player.setAudioSource(source);
+      await _player.setVolume(normalizedVolume);
       await _player.play();
-
-      // Fade-in over 400ms
-      final steps = 20;
-      final stepDelay = 400 ~/ steps;
-      final volumeStep = normalizedVolume / steps;
-
-      for (var i = 1; i <= steps; i++) {
-        await Future.delayed(Duration(milliseconds: stepDelay));
-        await _player.setVolume(volumeStep * i);
-      }
     } catch (e) {
-      // Fall back to direct play without fade
+      // Fall back to direct asset play
       final asset = _assetFor(sound);
       await _player.stop();
       await _player.setAudioSource(AudioSource.asset(asset));
