@@ -115,108 +115,35 @@ class AdhkarSessionCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpace.sm),
-
-                    // Quick controls: Tashkeel toggle, Font size, Share
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (onToggleTashkeel != null)
-                          Tooltip(
-                            message: showTashkeel ? 'إخفاء التشكيل' : 'إظهار التشكيل',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: onToggleTashkeel,
-                                borderRadius: AppRadius.pillRadius,
-                                child: Container(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.sm,
-                                    vertical: AppSpace.xs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: showTashkeel
-                                        ? palette.primarySoft
-                                        : palette.surfaceMuted,
-                                    borderRadius: AppRadius.pillRadius,
-                                  ),
-                                  child: Text(
-                                    'تَشْكِيل',
-                                    style: textTheme.caption.copyWith(
-                                      color: showTashkeel
-                                          ? palette.primary
-                                          : palette.textSubtle,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                    // Quick share button
+                    if (onShare != null) ...[
+                      const SizedBox(width: AppSpace.sm),
+                      Tooltip(
+                        message: 'مشاركة الذكر',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onShare,
+                            borderRadius: AppRadius.pillRadius,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.all(
+                                AppSpace.xs,
+                              ),
+                              child: Icon(
+                                Icons.share_outlined,
+                                size: AppIcon.sm,
+                                color: palette.textMuted,
                               ),
                             ),
                           ),
-                        if (onCycleFontSize != null) ...[
-                          const SizedBox(width: AppSpace.xs),
-                          Tooltip(
-                            message: 'تعديل حجم الخط',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: onCycleFontSize,
-                                borderRadius: AppRadius.pillRadius,
-                                child: Container(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.sm,
-                                    vertical: AppSpace.xs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: fontScale > 1.0
-                                        ? palette.primarySoft
-                                        : palette.surfaceMuted,
-                                    borderRadius: AppRadius.pillRadius,
-                                  ),
-                                  child: Text(
-                                    '${(fontScale * 100).round()}%',
-                                    style: textTheme.caption.copyWith(
-                                      color: fontScale > 1.0
-                                          ? palette.primary
-                                          : palette.textSubtle,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (onShare != null) ...[
-                          const SizedBox(width: AppSpace.xs),
-                          Tooltip(
-                            message: 'مشاركة الذكر',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: onShare,
-                                borderRadius: AppRadius.pillRadius,
-                                child: Padding(
-                                  padding: const EdgeInsetsDirectional.all(
-                                    AppSpace.xs,
-                                  ),
-                                  child: Icon(
-                                    Icons.share_outlined,
-                                    size: AppIcon.sm,
-                                    color: palette.textMuted,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: AppSpace.md),
 
-                // Arabic Sacred Text with responsive scaling
+                // Arabic Sacred Text with responsive scaling and generous line height
                 Text(
                   arabicText,
                   textAlign: TextAlign.center,
@@ -224,7 +151,7 @@ class AdhkarSessionCard extends StatelessWidget {
                   style: textTheme.sacredLarge.copyWith(
                     color: palette.text,
                     fontWeight: FontWeight.bold,
-                    height: 1.85,
+                    height: 2.3,
                   ),
                 ),
 

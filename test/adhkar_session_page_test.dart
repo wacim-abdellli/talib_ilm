@@ -121,9 +121,7 @@ void main() {
       expect(count, 6);
     });
 
-    testWidgets('AdhkarSessionCard toggles tashkeel and cycles font scale', (tester) async {
-      bool tashkeelToggled = false;
-      bool fontCycled = false;
+    testWidgets('AdhkarSessionCard renders share button, text, and virtue', (tester) async {
       bool shared = false;
 
       await tester.pumpWidget(
@@ -134,8 +132,6 @@ void main() {
             isDone: false,
             fontScale: 1.15,
             showTashkeel: false,
-            onToggleTashkeel: () => tashkeelToggled = true,
-            onCycleFontSize: () => fontCycled = true,
             onShare: () => shared = true,
           ),
         ),
@@ -143,15 +139,7 @@ void main() {
 
       // Without tashkeel: 'سبحان الله وبحمده'
       expect(find.text('سبحان الله وبحمده'), findsOneWidget);
-      expect(find.text('115%'), findsOneWidget);
-
-      // Tap tashkeel toggle
-      await tester.tap(find.text('تَشْكِيل'));
-      expect(tashkeelToggled, isTrue);
-
-      // Tap font scale
-      await tester.tap(find.text('115%'));
-      expect(fontCycled, isTrue);
+      expect(find.text('٣٣ مرة'), findsOneWidget);
 
       // Tap share
       await tester.tap(find.byIcon(Icons.share_outlined));

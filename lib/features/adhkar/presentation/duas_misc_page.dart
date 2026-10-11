@@ -352,7 +352,7 @@ class _DuaCardState extends State<_DuaCard> {
               style: context.text.sacred.copyWith(
                 color: palette.text,
                 fontWeight: FontWeight.w700,
-                height: 1.7,
+                height: 2.1,
               ),
             ),
           ),
