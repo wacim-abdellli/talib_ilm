@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 
-import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/constants/verified_cities.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
@@ -24,7 +25,7 @@ class LocationSettingsSheet extends StatefulWidget {
   }) {
     return AppSheet.show<void>(
       context: context,
-      maxHeightFactor: 0.90,
+      maxHeightFactor: 0.85,
       builder: (_) => LocationSettingsSheet(onSaved: onSaved),
     );
   }
@@ -36,25 +37,11 @@ class LocationSettingsSheet extends StatefulWidget {
 class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   final LocationService _locationService = LocationService();
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _latController = TextEditingController();
-  final TextEditingController _lonController = TextEditingController();
 
   LocationResult? _currentLocation;
   bool _loading = true;
   bool _locatingGps = false;
-  bool _showCustomCoordinates = false;
-  String _selectedCountryFilter = 'ALL';
   String _searchQuery = '';
-
-  static const List<Map<String, String>> _countryFilters = [
-    {'code': 'ALL', 'label': 'الكل'},
-    {'code': 'DZ', 'label': 'الجزائر 🇩🇿'},
-    {'code': 'TN', 'label': 'تونس 🇹🇳'},
-    {'code': 'MA', 'label': 'المغرب 🇲🇦'},
-    {'code': 'EG', 'label': 'مصر 🇪🇬'},
-    {'code': 'SA', 'label': 'السعودية 🇸🇦'},
-  ];
 
   @override
   void initState() {
@@ -65,33 +52,49 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   @override
   void dispose() {
     _searchController.dispose();
-    _cityController.dispose();
-    _latController.dispose();
-    _lonController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     final loc = await _locationService.getLocation();
-    final manual = await _locationService.getManualLocation();
     if (!mounted) return;
     setState(() {
       _currentLocation = loc;
-      _cityController.text = manual?.city ?? '';
-      _latController.text =
-          manual != null ? manual.latitude.toStringAsFixed(4) : '';
-      _lonController.text =
-          manual != null ? manual.longitude.toStringAsFixed(4) : '';
-      _showCustomCoordinates =
-          manual != null && manual.source == LocationSource.manual;
       _loading = false;
     });
   }
 
   Future<void> _refreshGps() async {
     HapticFeedback.mediumImpact();
-    setState(() => _locatingGps = true);
 
+    // 1. Native permission check — prompts the Android system dialog if not yet decided
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      _showPermissionDeniedDialog();
+      return;
+    }
+
+    if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      AppSnackbar.info(context, 'لم يتم منح إذن الموقع');
+      return;
+    }
+
+    // 2. Hardware GPS service check on phone
+    final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!isServiceEnabled) {
+      if (!mounted) return;
+      _showGpsDisabledDialog();
+      return;
+    }
+
+    // 3. Acquire location smoothly from satellites
+    setState(() => _locatingGps = true);
     try {
       final result = await _locationService.refreshGpsLocation();
       if (!mounted) return;
@@ -106,6 +109,9 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
         'تم تحديد موقعك بدقة عالية عبر GPS: ${result.city}',
       );
       widget.onSaved?.call();
+
+      await Future<void>.delayed(AppMotion.base);
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _locatingGps = false);
@@ -114,13 +120,87 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     }
   }
 
+  void _showGpsDisabledDialog() {
+    AppDialog.show(
+      context: context,
+      builder: (dialogCtx) => AppDialog(
+        title: 'تفعيل خدمة الموقع (GPS)',
+        icon: Icons.location_off_rounded,
+        iconColor: context.palette.gold,
+        content: Text(
+          'خدمة تحديد الموقع (GPS) مغلقة على هاتفك. يرجى تفعيلها من شريط الإشعارات السريعة لتحديد موقعك تلقائياً وبدقة.',
+          style: context.text.body.copyWith(
+            color: context.palette.text,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          AppButton.text(
+            label: 'إلغاء',
+            onPressed: () => Navigator.pop(dialogCtx),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          AppButton(
+            label: 'فتح الإعدادات',
+            icon: Icons.settings_rounded,
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              Geolocator.openLocationSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDeniedDialog() {
+    AppDialog.show(
+      context: context,
+      builder: (dialogCtx) => AppDialog(
+        title: 'إذن الوصول إلى الموقع',
+        icon: Icons.security_rounded,
+        iconColor: context.palette.primary,
+        content: Text(
+          'يتطلب تحديد الموقع تلقائياً إذن الـ GPS. يمكنك تفعيل الإذن من إعدادات التطبيق على هاتفك.',
+          style: context.text.body.copyWith(
+            color: context.palette.text,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          AppButton.text(
+            label: 'إلغاء',
+            onPressed: () => Navigator.pop(dialogCtx),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          AppButton(
+            label: 'إعدادات التطبيق',
+            icon: Icons.settings_rounded,
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              Geolocator.openAppSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _selectVerifiedCity(VerifiedCity city) async {
     HapticFeedback.selectionClick();
     await _locationService.setVerifiedCity(city);
     if (!mounted) return;
 
-    final loc = await _locationService.getLocation();
-    if (!mounted) return;
+    final loc = LocationResult(
+      latitude: city.latitude,
+      longitude: city.longitude,
+      city: city.name,
+      province: city.province,
+      country: city.country,
+      countryCode: city.countryCode,
+      source: LocationSource.manual,
+      calculationMethod: city.calculationMethod,
+    );
 
     setState(() {
       _currentLocation = loc;
@@ -132,42 +212,16 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     );
     widget.onSaved?.call();
 
-    // Auto-close sheet after selection for seamless UX
     await Future<void>.delayed(AppMotion.base);
     if (mounted) Navigator.pop(context);
-  }
-
-  Future<void> _saveCustomCoordinates() async {
-    final lat = double.tryParse(_latController.text.trim());
-    final lon = double.tryParse(_lonController.text.trim());
-    if (lat == null || lon == null) {
-      AppSnackbar.error(context, AppStrings.locationInvalidMessage);
-      return;
-    }
-    final city = _cityController.text.trim().isEmpty
-        ? AppStrings.locationManualDefault
-        : _cityController.text.trim();
-
-    await _locationService.setManualLocation(
-      LocationResult(
-        latitude: lat,
-        longitude: lon,
-        city: city,
-        source: LocationSource.manual,
-      ),
-    );
-
-    widget.onSaved?.call();
-    if (mounted) {
-      AppSnackbar.success(context, 'تم حفظ الإحداثيات المخصصة');
-      Navigator.pop(context);
-    }
   }
 
   Future<void> _clearManual() async {
     await _locationService.clearManualLocation();
     await _load();
     widget.onSaved?.call();
+    if (!mounted) return;
+    AppSnackbar.info(context, 'تمت العودة للوضع التلقائي');
   }
 
   @override
@@ -176,7 +230,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
 
     if (_loading) {
       return Container(
-        height: 320,
+        height: 280,
         decoration: BoxDecoration(
           color: palette.surfaceRaised,
           borderRadius: const BorderRadius.vertical(
@@ -213,10 +267,9 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
       );
     }
 
-    final filteredCities = VerifiedCitiesCatalog.search(
-      _searchQuery,
-      countryCode: _selectedCountryFilter,
-    );
+    final searchResults = _searchQuery.trim().isEmpty
+        ? const <VerifiedCity>[]
+        : VerifiedCitiesCatalog.search(_searchQuery.trim());
 
     return Container(
       padding: const EdgeInsetsDirectional.only(
@@ -266,7 +319,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                         ),
                       ),
                       Text(
-                        'مصدر دقيق ومؤكد للمدينة وأوقات الأذان',
+                        'تحديد دقيق لحساب أوقات الصلاة والأذان',
                         style: context.text.caption.copyWith(
                           color: palette.textMuted,
                         ),
@@ -287,67 +340,62 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
           const SizedBox(height: AppSpace.md),
           Divider(height: 1, color: palette.border),
 
-          // Scrollable body
+          // Body
           Flexible(
             child: ListView(
+              shrinkWrap: true,
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(AppSpace.xl),
               children: [
-                // 1. Current Active Location Status Card
+                // 1. Current Active Location Card
                 _buildActiveLocationCard(palette),
 
-                const SizedBox(height: AppSpace.md),
+                const SizedBox(height: AppSpace.lg),
 
-                // 2. High-Accuracy Hardware GPS Trigger Button
+                // 2. High-Accuracy Hardware GPS Button
                 _buildGpsButton(palette),
+
+                const SizedBox(height: AppSpace.xs),
+                Center(
+                  child: Text(
+                    'يتم طلب إذن الموقع من النظام مباشرة لتحديد أوقات الأذان بدقة',
+                    textAlign: TextAlign.center,
+                    style: context.text.caption.copyWith(
+                      color: palette.textSubtle,
+                    ),
+                  ),
+                ),
 
                 const SizedBox(height: AppSpace.xl),
 
-                // 3. Section Header for Verified City Selection
+                // 3. Clean Search Header
                 Row(
                   children: [
                     Icon(
-                      Icons.verified_rounded,
+                      Icons.search_rounded,
                       size: AppIcon.sm,
                       color: palette.primary,
                     ),
                     const SizedBox(width: AppSpace.xs),
                     Text(
-                      'اختر مدينتك أو ولايتك المعتمدة',
-                      style: context.text.titleSmall.copyWith(
+                      'أو ابحث عن مدينتك يدوياً',
+                      style: context.text.caption.copyWith(
                         color: palette.text,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  'قائمة رسمية للمدن والولايات لضمان دقة مواقيت الصلاة والأذان 100%',
-                  style: context.text.caption.copyWith(
-                    color: palette.textMuted,
-                  ),
-                ),
-
-                const SizedBox(height: AppSpace.md),
+                const SizedBox(height: AppSpace.sm),
 
                 // 4. Search Bar
                 _buildSearchBar(palette),
 
-                const SizedBox(height: AppSpace.sm),
-
-                // 5. Country Filter Pills
-                _buildCountryFilters(palette),
-
-                const SizedBox(height: AppSpace.md),
-
-                // 6. Verified Cities List
-                _buildCitiesList(palette, filteredCities),
-
-                const SizedBox(height: AppSpace.lg),
-
-                // 7. Expandable Custom Coordinates Accordion
-                _buildCustomCoordinatesAccordion(palette),
+                // 5. Search Results (only displayed when actively searching)
+                if (_searchQuery.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.md),
+                  _buildSearchResults(palette, searchResults),
+                ],
               ],
             ),
           ),
@@ -415,7 +463,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                         vertical: AppSpace.xs / 2,
                       ),
                       child: Text(
-                        'العودة للتلقائي',
+                        'العودة للـ GPS',
                         style: context.text.caption.copyWith(
                           color: palette.primary,
                           fontWeight: FontWeight.w600,
@@ -450,38 +498,6 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
               color: palette.textSubtle,
             ),
           ),
-          if (!isAccurate) ...[
-            const SizedBox(height: AppSpace.sm),
-            Container(
-              padding: const EdgeInsets.all(AppSpace.sm),
-              decoration: BoxDecoration(
-                color: palette.gold.withValues(alpha: 0.08),
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(
-                  color: palette.gold.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    size: AppIcon.sm,
-                    color: palette.gold,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Expanded(
-                    child: Text(
-                      'الموقع تقديري عبر الإنترنت. اضغط الزر أدناه لتحديد موقع GPS بدقة، أو اختر مدينتك من القائمة.',
-                      style: context.text.caption.copyWith(
-                        color: palette.text,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -489,7 +505,9 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
 
   Widget _buildGpsButton(AppPalette palette) {
     return AppButton(
-      label: _locatingGps ? 'جاري الاتصال بالأقمار الاصطناعية (GPS)...' : 'تحديد موقعي الدقيق عبر GPS',
+      label: _locatingGps
+          ? 'جاري الاتصال بالأقمار الاصطناعية (GPS)...'
+          : 'تحديد موقعي الدقيق عبر GPS',
       icon: _locatingGps ? null : Icons.my_location_rounded,
       width: double.infinity,
       onPressed: _locatingGps ? null : _refreshGps,
@@ -505,7 +523,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
-        hintText: 'ابحث عن مدينتك أو ولايتك...',
+        hintText: 'اكتب اسم مدينتك أو ولايتك...',
         hintStyle: context.text.body.copyWith(
           color: palette.textSubtle,
         ),
@@ -547,52 +565,13 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     );
   }
 
-  Widget _buildCountryFilters(AppPalette palette) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: _countryFilters.map((c) {
-          final isSelected = _selectedCountryFilter == c['code'];
-          return Padding(
-            padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
-            child: ChoiceChip(
-              label: Text(
-                c['label']!,
-                style: context.text.caption.copyWith(
-                  color: isSelected ? palette.onPrimary : palette.text,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              selected: isSelected,
-              selectedColor: palette.primary,
-              backgroundColor: palette.surfaceMuted,
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.pillRadius,
-                side: BorderSide(
-                  color: isSelected ? palette.primary : palette.border,
-                ),
-              ),
-              onSelected: (val) {
-                if (val) {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedCountryFilter = c['code']!);
-                }
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildCitiesList(AppPalette palette, List<VerifiedCity> cities) {
+  Widget _buildSearchResults(AppPalette palette, List<VerifiedCity> cities) {
     if (cities.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(AppSpace.xl),
         alignment: Alignment.center,
         child: Text(
-          'لم يتم العثور على مدينة مطابقة. يمكنك كتابة إحداثيات مخصصة أدناه.',
+          'لم يتم العثور على مدينة مطابقة. تأكد من صحة الاسم أو استخدم زر GPS أعلاه.',
           textAlign: TextAlign.center,
           style: context.text.caption.copyWith(
             color: palette.textMuted,
@@ -601,8 +580,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
       );
     }
 
-    // Limit visible list items to max 25 for ultra-fast smooth scrolling
-    final displayList = cities.take(25).toList();
+    final displayList = cities.take(15).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -679,154 +657,6 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildCustomCoordinatesAccordion(AppPalette palette) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Material(
-          color: palette.surfaceRaised,
-          borderRadius: AppRadius.mdRadius,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _showCustomCoordinates = !_showCustomCoordinates;
-              });
-            },
-            borderRadius: AppRadius.mdRadius,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.sm,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: palette.border),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.tune_rounded,
-                    size: AppIcon.sm,
-                    color: palette.primary,
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Expanded(
-                    child: Text(
-                      'إدخال إحداثيات مخصصة (متقدم)',
-                      style: context.text.body.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    _showCustomCoordinates
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: palette.textMuted,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (_showCustomCoordinates) ...[
-          const SizedBox(height: AppSpace.md),
-          _buildField(
-            controller: _cityController,
-            label: AppStrings.locationManualCityLabel,
-            icon: Icons.location_city_rounded,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpace.sm),
-          _buildField(
-            controller: _latController,
-            label: AppStrings.locationLatitudeLabel,
-            icon: Icons.north_rounded,
-            textInputAction: TextInputAction.next,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-            ],
-          ),
-          const SizedBox(height: AppSpace.sm),
-          _buildField(
-            controller: _lonController,
-            label: AppStrings.locationLongitudeLabel,
-            icon: Icons.east_rounded,
-            textInputAction: TextInputAction.done,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[-0-9.]')),
-            ],
-          ),
-          const SizedBox(height: AppSpace.md),
-          AppButton(
-            label: AppStrings.locationSave,
-            width: double.infinity,
-            onPressed: _saveCustomCoordinates,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputAction? textInputAction,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    final palette = context.palette;
-    return TextField(
-      controller: controller,
-      textInputAction: textInputAction,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      style: context.text.body.copyWith(
-        color: palette.text,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: context.text.caption.copyWith(
-          color: palette.textMuted,
-        ),
-        prefixIcon: Icon(
-          icon,
-          size: AppIcon.md,
-          color: palette.primary,
-        ),
-        filled: true,
-        fillColor: palette.surfaceMuted,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.lg,
-          vertical: AppSpace.md,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: palette.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: palette.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: palette.primary, width: 2),
-        ),
       ),
     );
   }

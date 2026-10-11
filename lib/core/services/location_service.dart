@@ -171,8 +171,8 @@ class LocationService {
     return fallback;
   }
 
-  /// Explicitly triggers high-accuracy GPS detection with full error handling and settings prompt
-  Future<LocationResult> refreshGpsLocation() async {
+  /// Explicitly triggers high-accuracy GPS detection with native system prompts
+  Future<LocationResult> refreshGpsLocation({bool autoOpenSettings = false}) async {
     final prefs = await SharedPreferences.getInstance();
 
     var permission = await Geolocator.checkPermission();
@@ -182,18 +182,22 @@ class LocationService {
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      try {
-        await Geolocator.openAppSettings();
-      } catch (_) {}
-      throw Exception('يرجى السماح بالوصول إلى الموقع (GPS) من إعدادات التطبيق لتحديد مدينتك بدقة.');
+      if (autoOpenSettings) {
+        try {
+          await Geolocator.openAppSettings();
+        } catch (_) {}
+      }
+      throw Exception('لم يتم منح إذن الوصول إلى الموقع (GPS).');
     }
 
     final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!isServiceEnabled) {
-      try {
-        await Geolocator.openLocationSettings();
-      } catch (_) {}
-      throw Exception('خدمة الموقع (GPS) مغلقة على هاتفك. يرجى تفعيلها من شريط الإعدادات السريعة.');
+      if (autoOpenSettings) {
+        try {
+          await Geolocator.openLocationSettings();
+        } catch (_) {}
+      }
+      throw Exception('خدمة الموقع (GPS) مغلقة على هاتفك.');
     }
 
     await _ensureLocale();
