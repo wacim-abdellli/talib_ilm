@@ -128,10 +128,24 @@ class CategoryTile extends StatelessWidget {
         return Icons.nights_stay_rounded;
       case 'after_prayer':
         return Icons.mosque_rounded;
+      case 'waking':
+        return Icons.wb_twilight_rounded;
+      case 'distress':
+        return Icons.shield_outlined;
+      case 'mosque_adhan':
+        return Icons.campaign_outlined;
+      case 'home':
+        return Icons.home_outlined;
+      case 'wudu_food':
+        return Icons.water_drop_outlined;
+      case 'travel':
+        return Icons.flight_takeoff_outlined;
       case 'duas':
         return Icons.menu_book_rounded;
       case 'tasbeeh':
         return Icons.fingerprint_rounded;
+      case 'istighfar':
+        return Icons.autorenew_rounded;
       case 'sleeping':
         return Icons.bedtime_rounded;
       default:
@@ -141,6 +155,7 @@ class CategoryTile extends StatelessWidget {
 
   String _subtitleLabel(String id, int total) {
     if (id == 'tasbeeh') return 'تسبيح';
+    if (id == 'istighfar') return 'استغفار';
     if (id == 'duas') return '$total دعاء';
     return '$total ذكراً';
   }

@@ -298,24 +298,36 @@ class _DuaCardState extends State<_DuaCard> {
                 ),
                 const SizedBox(width: AppSpace.sm),
                 if (widget.item.source.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.sm,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.primarySoft,
-                      borderRadius: AppRadius.smRadius,
-                    ),
-                    child: Text(
-                      widget.item.source,
-                      style: context.text.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: palette.onPrimarySoft,
+                  Expanded(
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Tooltip(
+                        message: widget.item.source,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: Text(
+                            widget.item.source,
+                            style: context.text.caption.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: palette.onPrimarySoft,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                const Spacer(),
+                  )
+                else
+                  const Spacer(),
+                const SizedBox(width: AppSpace.xs),
                 // Actions
                 AppIconButton(
                   icon: Icons.copy_rounded,
@@ -357,6 +369,24 @@ class _DuaCardState extends State<_DuaCard> {
               ),
             ),
           ),
+
+          // Source attribution if present
+          if (widget.item.source.isNotEmpty)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpace.xl,
+                0,
+                AppSpace.xl,
+                AppSpace.sm,
+              ),
+              child: Text(
+                'المصدر: ${widget.item.source}',
+                textAlign: TextAlign.right,
+                style: context.text.caption.copyWith(
+                  color: palette.textMuted,
+                ),
+              ),
+            ),
 
           // Fadl
           if (widget.item.fadl.isNotEmpty) ...[

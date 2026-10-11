@@ -64,44 +64,58 @@ class AdhkarSessionCard extends StatelessWidget {
               children: [
                 // Top header: Repetition badge + Quick action controls
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Target repetition badge
-                    Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDone ? palette.goldSoft : palette.surfaceMuted,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(
-                          color: isDone
-                              ? palette.gold.withValues(alpha: 0.4)
-                              : palette.border,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isDone ? Icons.check_circle_rounded : Icons.repeat_rounded,
-                            size: AppIcon.sm,
-                            color: isDone ? palette.gold : palette.textMuted,
+                    // Target repetition badge (Safely constrained to prevent horizontal overflow)
+                    Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Tooltip(
+                          message: item.countDescription.isNotEmpty
+                              ? item.countDescription
+                              : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
+                          child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
                           ),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            item.countDescription.isNotEmpty
-                                ? item.countDescription
-                                : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
-                            style: textTheme.caption.copyWith(
-                              color: isDone ? palette.gold : palette.textMuted,
-                              fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: isDone ? palette.goldSoft : palette.surfaceMuted,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: isDone
+                                  ? palette.gold.withValues(alpha: 0.4)
+                                  : palette.border,
                             ),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isDone ? Icons.check_circle_rounded : Icons.repeat_rounded,
+                                size: AppIcon.sm,
+                                color: isDone ? palette.gold : palette.textMuted,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Flexible(
+                                child: Text(
+                                  item.countDescription.isNotEmpty
+                                      ? item.countDescription
+                                      : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
+                                  style: textTheme.caption.copyWith(
+                                    color: isDone ? palette.gold : palette.textMuted,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: AppSpace.sm),
 
                     // Quick controls: Tashkeel toggle, Font size, Share
                     Row(
