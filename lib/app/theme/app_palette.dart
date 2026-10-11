@@ -572,14 +572,26 @@ class MushafColors {
   static const Color whiteBg = Color(0xFFFFFFFF);
   static const Color whiteText = Color(0xFF1A1A1A);
   static const Color whiteVerseNumber = Color(0xFF8B4513);
+  static const Color whiteBannerBg = Color(0xFFF7F5EE);
+  static const Color whiteBannerBorder = Color(0xFFC7BBAA);
+  static const Color whiteBannerText = Color(0xFF2E1C0C);
+  static const Color whiteBannerSubtext = Color(0xFF5D4037);
 
   static const Color sepiaBg = Color(0xFFFBF7EE);
   static const Color sepiaText = Color(0xFF2B2520);
   static const Color sepiaVerseNumber = Color(0xFF8B5A2B);
+  static const Color sepiaBannerBg = Color(0xFFF2E9DA);
+  static const Color sepiaBannerBorder = Color(0xFFBCA685);
+  static const Color sepiaBannerText = Color(0xFF332014);
+  static const Color sepiaBannerSubtext = Color(0xFF6B4E38);
 
-  static const Color darkBg = Color(0xFF141618);
-  static const Color darkText = Color(0xFFE8E6E3);
-  static const Color darkVerseNumber = Color(0xFFD4AF37);
+  static const Color darkBg = Color(0xFF121316);
+  static const Color darkText = Color(0xFFE8E5DD);
+  static const Color darkVerseNumber = Color(0xFFE5C07B);
+  static const Color darkBannerBg = Color(0xFF1A1D23);
+  static const Color darkBannerBorder = Color(0xFF997D3D);
+  static const Color darkBannerText = Color(0xFFF5D78E);
+  static const Color darkBannerSubtext = Color(0xFFC7AA64);
 }
 
 /// Ergonomic theme context extensions

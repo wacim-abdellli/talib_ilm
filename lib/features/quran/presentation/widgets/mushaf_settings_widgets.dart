@@ -159,25 +159,38 @@ class MushafThemeCard extends StatelessWidget {
           },
           borderRadius: AppRadius.mdRadius,
           child: Container(
-            height: 72,
+            height: 64,
             padding: AppSpace.insetXs,
             decoration: BoxDecoration(
               color: color,
               borderRadius: AppRadius.mdRadius,
               border: Border.all(
                 color: isSelected ? palette.primary : palette.border,
-                width: isSelected ? 2.5 : 1,
+                width: isSelected ? 2.0 : 1.0,
               ),
             ),
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: textTheme.caption.copyWith(
-                  color: textColor,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: textTheme.caption.copyWith(
+                    color: textColor,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  ),
                 ),
-              ),
+                if (isSelected)
+                  PositionedDirectional(
+                    top: 2,
+                    end: 2,
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: palette.primary,
+                      size: AppIcon.sm,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -231,27 +244,45 @@ class MushafReciterDropdownCard extends StatelessWidget {
               ],
             ),
           ),
-          DropdownButton<QuranReciter>(
-            value: selectedReciter,
-            dropdownColor: palette.surfaceRaised,
-            underline: const SizedBox.shrink(),
-            items: QuranAudioService.reciters.map((r) {
-              return DropdownMenuItem<QuranReciter>(
-                value: r,
-                child: Text(
-                  r.name,
-                  style: textTheme.bodySmall.copyWith(
-                    color: palette.text,
-                  ),
+          Container(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.smRadius,
+              border: Border.all(color: palette.border, width: 0.8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<QuranReciter>(
+                value: selectedReciter,
+                icon: Icon(
+                  Icons.unfold_more_rounded,
+                  color: palette.primary,
+                  size: AppIcon.sm,
                 ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                HapticFeedback.selectionClick();
-                onSelected(val);
-              }
-            },
+                dropdownColor: palette.surfaceRaised,
+                borderRadius: AppRadius.mdRadius,
+                selectedItemBuilder: (_) => QuranAudioService.reciters
+                    .map((r) => const SizedBox.shrink())
+                    .toList(),
+                items: QuranAudioService.reciters.map((r) {
+                  return DropdownMenuItem<QuranReciter>(
+                    value: r,
+                    child: Text(
+                      r.name,
+                      style: textTheme.bodySmall.copyWith(
+                        color: palette.text,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    HapticFeedback.selectionClick();
+                    onSelected(val);
+                  }
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -304,27 +335,45 @@ class MushafTafsirDropdownCard extends StatelessWidget {
               ],
             ),
           ),
-          DropdownButton<TafsirScholar>(
-            value: selectedTafsir,
-            dropdownColor: palette.surfaceRaised,
-            underline: const SizedBox.shrink(),
-            items: TafsirScholar.values.map((s) {
-              return DropdownMenuItem<TafsirScholar>(
-                value: s,
-                child: Text(
-                  QuranTafsirService.getScholarName(s),
-                  style: textTheme.bodySmall.copyWith(
-                    color: palette.text,
-                  ),
+          Container(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.smRadius,
+              border: Border.all(color: palette.border, width: 0.8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<TafsirScholar>(
+                value: selectedTafsir,
+                icon: Icon(
+                  Icons.unfold_more_rounded,
+                  color: palette.gold,
+                  size: AppIcon.sm,
                 ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                HapticFeedback.selectionClick();
-                onSelected(val);
-              }
-            },
+                dropdownColor: palette.surfaceRaised,
+                borderRadius: AppRadius.mdRadius,
+                selectedItemBuilder: (_) => TafsirScholar.values
+                    .map((s) => const SizedBox.shrink())
+                    .toList(),
+                items: TafsirScholar.values.map((s) {
+                  return DropdownMenuItem<TafsirScholar>(
+                    value: s,
+                    child: Text(
+                      QuranTafsirService.getScholarName(s),
+                      style: textTheme.bodySmall.copyWith(
+                        color: palette.text,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    HapticFeedback.selectionClick();
+                    onSelected(val);
+                  }
+                },
+              ),
+            ),
           ),
         ],
       ),

@@ -205,7 +205,12 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
           Flexible(
             child: ListView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpace.xl),
+              padding: const EdgeInsetsDirectional.only(
+                start: AppSpace.xl,
+                end: AppSpace.xl,
+                top: AppSpace.md,
+                bottom: AppSpace.xxl + 48,
+              ),
               children: [
                 Text(
                   'نمط القراءة',

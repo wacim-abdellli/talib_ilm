@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qcf_quran/qcf_quran.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -13,6 +12,7 @@ import '../../data/services/reading_stats_service.dart';
 import 'ayah_details_sheet.dart';
 import 'mushaf_reader_overlays.dart';
 import 'mushaf_settings_sheet.dart';
+import 'mushaf_single_page.dart';
 import 'quran_ayah_list_view.dart';
 
 /// Unified Dual-Mode Quran Reader
@@ -247,35 +247,6 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     }
   }
 
-  QcfThemeData _buildQcfTheme() {
-    switch (_themeMode) {
-      case MushafThemeMode.white:
-        return const QcfThemeData(
-          pageBackgroundColor: MushafColors.whiteBg,
-          verseTextColor: MushafColors.whiteText,
-          verseNumberColor: MushafColors.whiteVerseNumber,
-          basmalaColor: MushafColors.whiteText,
-          headerTextColor: MushafColors.whiteText,
-        );
-      case MushafThemeMode.sepia:
-        return const QcfThemeData(
-          pageBackgroundColor: MushafColors.sepiaBg,
-          verseTextColor: MushafColors.sepiaText,
-          verseNumberColor: MushafColors.sepiaVerseNumber,
-          basmalaColor: MushafColors.sepiaText,
-          headerTextColor: MushafColors.sepiaText,
-        );
-      case MushafThemeMode.dark:
-        return const QcfThemeData(
-          pageBackgroundColor: MushafColors.darkBg,
-          verseTextColor: MushafColors.darkText,
-          verseNumberColor: MushafColors.darkVerseNumber,
-          basmalaColor: MushafColors.darkText,
-          headerTextColor: MushafColors.darkText,
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -288,14 +259,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
           children: [
             // Main Reader Content
             Positioned.fill(
-              child: InkWell(
-                onTap: _toggleOverlays,
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                child: _readingMode == QuranReadingMode.mushafPage
-                    ? _buildMushafPageMode(palette)
-                    : _buildAyahListMode(),
-              ),
+              child: _readingMode == QuranReadingMode.mushafPage
+                  ? _buildMushafPageMode(palette)
+                  : _buildAyahListMode(),
             ),
 
             // Top Bar Overlay
@@ -344,27 +310,37 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       builder: (context, activeAyah, _) {
         final activeSurah = _audioService.activeSurahNotifier.value;
 
-        return PageviewQuran(
-          controller: _pageController,
-          initialPageNumber: _currentPage,
-          theme: _buildQcfTheme(),
-          onPageChanged: _onPageChanged,
-          verseBackgroundColor: (surahNumber, verseNumber) {
-            if (activeSurah == surahNumber && activeAyah == verseNumber) {
-              return palette.gold.withValues(alpha: 0.28);
-            }
-            return null;
-          },
-          onTap: (surah, verse) {
-            HapticFeedback.selectionClick();
-            _currentSurah = surah;
-            _currentAyah = verse;
-            AyahDetailsSheet.show(
-              context,
-              surahNumber: surah,
-              ayahNumber: verse,
-            );
-          },
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: PageView.builder(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            itemCount: 604,
+            onPageChanged: (index) => _onPageChanged(index + 1),
+            itemBuilder: (context, index) {
+              final pageNumber = index + 1;
+              return MushafSinglePage(
+                pageNumber: pageNumber,
+                themeMode: _themeMode,
+                isTajweedEnabled: _isTajweedEnabled,
+                activeSurah: activeSurah,
+                activeAyah: activeAyah,
+                onAyahTap: (surah, ayah) {
+                  HapticFeedback.selectionClick();
+                  _currentSurah = surah;
+                  _currentAyah = ayah;
+                  AyahDetailsSheet.show(
+                    context,
+                    surahNumber: surah,
+                    ayahNumber: ayah,
+                  );
+                },
+                onToggleOverlays: _toggleOverlays,
+              );
+            },
+          ),
         );
       },
     );
