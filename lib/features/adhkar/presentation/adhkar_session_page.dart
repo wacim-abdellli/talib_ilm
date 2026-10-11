@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../core/services/adhkar_session_service.dart';
@@ -40,6 +41,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   int _count = 0;
   bool _loading = true;
   bool _showSuccessRipple = false;
+
+  double _fontScale = 1.0;
+  bool _showTashkeel = true;
 
   @override
   void initState() {
@@ -116,6 +120,45 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         }
       });
     }
+  }
+
+  void _cycleFontSize() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_fontScale == 1.0) {
+        _fontScale = 1.15;
+      } else if (_fontScale == 1.15) {
+        _fontScale = 1.30;
+      } else {
+        _fontScale = 1.0;
+      }
+    });
+  }
+
+  void _toggleTashkeel() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _showTashkeel = !_showTashkeel;
+    });
+  }
+
+  void _shareCurrentDhikr() {
+    if (_items.isEmpty || _index >= _items.length) return;
+    HapticFeedback.selectionClick();
+    final item = _items[_index];
+    final buffer = StringBuffer();
+    buffer.writeln(item.arabic);
+    if (item.fadl.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('الفضل: ${item.fadl}');
+    }
+    if (item.source.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('المصدر: ${item.source}');
+    }
+    buffer.writeln();
+    buffer.writeln('— من تطبيق طالب علم');
+    Share.share(buffer.toString());
   }
 
   void _resetCount() {
@@ -228,38 +271,46 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                       ),
                     ),
                   )
-                : Stack(
-                    children: [
-                      Column(
-                        children: [
-                          // ── 1. Dhikr Card Carousel & Floating Side Arrows ──
-                          Expanded(
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // PageView
-                                PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: totalItems,
-                                  onPageChanged: _onPageChanged,
-                                  physics: const PageScrollPhysics(
-                                    parent: BouncingScrollPhysics(),
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final item = _items[index];
-                                    final itemRepeat = _repeatFor(_items, index);
-                                    final itemKey = _favoriteIdFor(item);
-                                    final itemCount = _counts[itemKey] ?? 0;
-                                    final isDone = itemRepeat > 0 && itemCount >= itemRepeat;
+                : GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _handleTap,
+                    child: Stack(
+                      children: [
+                        Column(
+                          children: [
+                            // ── 1. Dhikr Card Carousel & Floating Side Arrows ──
+                            Expanded(
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // PageView
+                                  PageView.builder(
+                                    controller: _pageController,
+                                    itemCount: totalItems,
+                                    onPageChanged: _onPageChanged,
+                                    physics: const PageScrollPhysics(
+                                      parent: BouncingScrollPhysics(),
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      final item = _items[index];
+                                      final itemRepeat = _repeatFor(_items, index);
+                                      final itemKey = _favoriteIdFor(item);
+                                      final itemCount = _counts[itemKey] ?? 0;
+                                      final isDone = itemRepeat > 0 && itemCount >= itemRepeat;
 
-                                    return AdhkarSessionCard(
-                                      item: item,
-                                      repeat: itemRepeat,
-                                      isDone: isDone,
-                                      onTap: _handleTap,
-                                    );
-                                  },
-                                ),
+                                      return AdhkarSessionCard(
+                                        item: item,
+                                        repeat: itemRepeat,
+                                        isDone: isDone,
+                                        onTap: _handleTap,
+                                        fontScale: _fontScale,
+                                        showTashkeel: _showTashkeel,
+                                        onShare: _shareCurrentDhikr,
+                                        onToggleTashkeel: _toggleTashkeel,
+                                        onCycleFontSize: _cycleFontSize,
+                                      );
+                                    },
+                                  ),
 
                                 // Floating Previous Arrow (Right side in RTL)
                                 if (_index > 0)
@@ -413,21 +464,34 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         ),
                     ],
                   ),
+                ),
       ),
     );
   }
 
   String _catalogIdFor(AdhkarCategory category) {
-    if (category == AdhkarCategory.sleeping) {
-      return 'sleeping';
+    switch (category) {
+      case AdhkarCategory.sleeping:
+        return 'sleeping';
+      case AdhkarCategory.afterPrayer:
+        return 'after_prayer';
+      case AdhkarCategory.beforePrayer:
+        return 'before_prayer';
+      case AdhkarCategory.waking:
+        return 'waking';
+      case AdhkarCategory.home:
+        return 'home';
+      case AdhkarCategory.mosqueAdhan:
+        return 'mosque_adhan';
+      case AdhkarCategory.wuduFood:
+        return 'wudu_food';
+      case AdhkarCategory.distress:
+        return 'distress';
+      case AdhkarCategory.travel:
+        return 'travel';
+      default:
+        return category.name;
     }
-    if (category == AdhkarCategory.afterPrayer) {
-      return 'after_prayer';
-    }
-    if (category == AdhkarCategory.beforePrayer) {
-      return 'before_prayer';
-    }
-    return category.name;
   }
 
   String _favoriteIdFor(AthkarItem item) {

@@ -7,7 +7,7 @@ void main() {
   group('AthkarCatalog Authentic Sunnah Data Tests', () {
     final service = AthkarService();
 
-    test('loads all 7 authentic categories from assets/data/adhkar.json', () async {
+    test('loads all 13 authentic categories from assets/data/adhkar.json', () async {
       final catalog = await service.loadCatalog();
 
       expect(catalog.categories.isNotEmpty, isTrue);
@@ -19,6 +19,12 @@ void main() {
       final duas = catalog.byId('duas');
       final tasbeeh = catalog.byId('tasbeeh');
       final istighfar = catalog.byId('istighfar');
+      final waking = catalog.byId('waking');
+      final home = catalog.byId('home');
+      final mosqueAdhan = catalog.byId('mosque_adhan');
+      final wuduFood = catalog.byId('wudu_food');
+      final distress = catalog.byId('distress');
+      final travel = catalog.byId('travel');
 
       expect(morning, isNotNull, reason: 'Morning adhkar category must exist');
       expect(evening, isNotNull, reason: 'Evening adhkar category must exist');
@@ -27,6 +33,12 @@ void main() {
       expect(duas, isNotNull, reason: 'Duas category must exist');
       expect(tasbeeh, isNotNull, reason: 'Tasbeeh category must exist');
       expect(istighfar, isNotNull, reason: 'Istighfar category must exist');
+      expect(waking, isNotNull, reason: 'Waking adhkar category must exist');
+      expect(home, isNotNull, reason: 'Home category must exist');
+      expect(mosqueAdhan, isNotNull, reason: 'Mosque and Adhan category must exist');
+      expect(wuduFood, isNotNull, reason: 'Wudu and food category must exist');
+      expect(distress, isNotNull, reason: 'Distress and Ruqyah category must exist');
+      expect(travel, isNotNull, reason: 'Travel category must exist');
 
       // Verify authentic counts
       expect(morning!.items.length, greaterThanOrEqualTo(20));
@@ -36,6 +48,12 @@ void main() {
       expect(duas!.items.length, greaterThanOrEqualTo(10));
       expect(tasbeeh!.items.length, greaterThanOrEqualTo(5));
       expect(istighfar!.items.length, greaterThanOrEqualTo(5));
+      expect(waking!.items.length, greaterThanOrEqualTo(4));
+      expect(home!.items.length, greaterThanOrEqualTo(4));
+      expect(mosqueAdhan!.items.length, greaterThanOrEqualTo(5));
+      expect(wuduFood!.items.length, greaterThanOrEqualTo(4));
+      expect(distress!.items.length, greaterThanOrEqualTo(5));
+      expect(travel!.items.length, greaterThanOrEqualTo(3));
 
       // Verify content integrity
       for (final category in catalog.categories) {

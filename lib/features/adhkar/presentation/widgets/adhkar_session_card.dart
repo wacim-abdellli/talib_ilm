@@ -6,10 +6,17 @@ import '../../data/adhkar_models.dart';
 
 /// Luxury presentation card for an AthkarItem in a recitation session.
 class AdhkarSessionCard extends StatelessWidget {
+  static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u0652\u0670\u0640]');
+
   final AthkarItem item;
   final int repeat;
   final bool isDone;
   final VoidCallback? onTap;
+  final double fontScale;
+  final bool showTashkeel;
+  final VoidCallback? onShare;
+  final VoidCallback? onToggleTashkeel;
+  final VoidCallback? onCycleFontSize;
 
   const AdhkarSessionCard({
     super.key,
@@ -17,11 +24,23 @@ class AdhkarSessionCard extends StatelessWidget {
     required this.repeat,
     required this.isDone,
     this.onTap,
+    this.fontScale = 1.0,
+    this.showTashkeel = true,
+    this.onShare,
+    this.onToggleTashkeel,
+    this.onCycleFontSize,
   });
+
+  String _cleanText(String text) {
+    if (showTashkeel) return text;
+    return text.replaceAll(_tashkeelRegex, '');
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
+    final arabicText = _cleanText(item.arabic);
 
     return Padding(
       padding: const EdgeInsetsDirectional.symmetric(
@@ -43,49 +62,152 @@ class AdhkarSessionCard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Target repetition badge
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDone ? palette.goldSoft : palette.surfaceMuted,
-                    borderRadius: AppRadius.pillRadius,
-                    border: Border.all(
-                      color: isDone
-                          ? palette.gold.withValues(alpha: 0.4)
-                          : palette.border,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isDone ? Icons.check_circle_rounded : Icons.repeat_rounded,
-                        size: AppIcon.sm,
-                        color: isDone ? palette.gold : palette.textMuted,
+                // Top header: Repetition badge + Quick action controls
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Target repetition badge
+                    Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xs,
                       ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        item.countDescription.isNotEmpty
-                            ? item.countDescription
-                            : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
-                        style: context.text.caption.copyWith(
-                          color: isDone ? palette.gold : palette.textMuted,
-                          fontWeight: FontWeight.bold,
+                      decoration: BoxDecoration(
+                        color: isDone ? palette.goldSoft : palette.surfaceMuted,
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: isDone
+                              ? palette.gold.withValues(alpha: 0.4)
+                              : palette.border,
                         ),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isDone ? Icons.check_circle_rounded : Icons.repeat_rounded,
+                            size: AppIcon.sm,
+                            color: isDone ? palette.gold : palette.textMuted,
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            item.countDescription.isNotEmpty
+                                ? item.countDescription
+                                : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
+                            style: textTheme.caption.copyWith(
+                              color: isDone ? palette.gold : palette.textMuted,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Quick controls: Tashkeel toggle, Font size, Share
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (onToggleTashkeel != null)
+                          Tooltip(
+                            message: showTashkeel ? 'إخفاء التشكيل' : 'إظهار التشكيل',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: onToggleTashkeel,
+                                borderRadius: AppRadius.pillRadius,
+                                child: Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.xs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: showTashkeel
+                                        ? palette.primarySoft
+                                        : palette.surfaceMuted,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    'تَشْكِيل',
+                                    style: textTheme.caption.copyWith(
+                                      color: showTashkeel
+                                          ? palette.primary
+                                          : palette.textSubtle,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (onCycleFontSize != null) ...[
+                          const SizedBox(width: AppSpace.xs),
+                          Tooltip(
+                            message: 'تعديل حجم الخط',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: onCycleFontSize,
+                                borderRadius: AppRadius.pillRadius,
+                                child: Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.xs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: fontScale > 1.0
+                                        ? palette.primarySoft
+                                        : palette.surfaceMuted,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    '${(fontScale * 100).round()}%',
+                                    style: textTheme.caption.copyWith(
+                                      color: fontScale > 1.0
+                                          ? palette.primary
+                                          : palette.textSubtle,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (onShare != null) ...[
+                          const SizedBox(width: AppSpace.xs),
+                          Tooltip(
+                            message: 'مشاركة الذكر',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: onShare,
+                                borderRadius: AppRadius.pillRadius,
+                                child: Padding(
+                                  padding: const EdgeInsetsDirectional.all(
+                                    AppSpace.xs,
+                                  ),
+                                  child: Icon(
+                                    Icons.share_outlined,
+                                    size: AppIcon.sm,
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpace.md),
 
-                // Arabic Sacred Text
+                // Arabic Sacred Text with responsive scaling
                 Text(
-                  item.arabic,
+                  arabicText,
                   textAlign: TextAlign.center,
-                  style: context.text.sacredLarge.copyWith(
+                  textScaler: TextScaler.linear(fontScale),
+                  style: textTheme.sacredLarge.copyWith(
                     color: palette.text,
                     fontWeight: FontWeight.bold,
                     height: 1.85,

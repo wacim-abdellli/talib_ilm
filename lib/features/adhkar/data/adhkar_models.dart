@@ -11,6 +11,12 @@ enum AdhkarCategory {
   istighfar,
   duas,
   sleeping,
+  waking,
+  home,
+  mosqueAdhan,
+  wuduFood,
+  distress,
+  travel,
 }
 
 extension AdhkarCategoryLabel on AdhkarCategory {
@@ -34,6 +40,18 @@ extension AdhkarCategoryLabel on AdhkarCategory {
         return AppStrings.duasTitle;
       case AdhkarCategory.sleeping:
         return 'أذكار النوم';
+      case AdhkarCategory.waking:
+        return 'أذكار الاستيقاظ';
+      case AdhkarCategory.home:
+        return 'أذكار المنزل';
+      case AdhkarCategory.mosqueAdhan:
+        return 'أذكار المسجد والأذان';
+      case AdhkarCategory.wuduFood:
+        return 'أذكار الوضوء والطعام';
+      case AdhkarCategory.distress:
+        return 'أذكار الكرب والهم';
+      case AdhkarCategory.travel:
+        return 'أذكار السفر';
     }
   }
 
@@ -64,6 +82,20 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
       return AdhkarCategory.general;
     case 'sleeping':
       return AdhkarCategory.sleeping;
+    case 'waking':
+      return AdhkarCategory.waking;
+    case 'home':
+      return AdhkarCategory.home;
+    case 'mosque_adhan':
+    case 'mosqueAdhan':
+      return AdhkarCategory.mosqueAdhan;
+    case 'wudu_food':
+    case 'wuduFood':
+      return AdhkarCategory.wuduFood;
+    case 'distress':
+      return AdhkarCategory.distress;
+    case 'travel':
+      return AdhkarCategory.travel;
   }
   return null;
 }

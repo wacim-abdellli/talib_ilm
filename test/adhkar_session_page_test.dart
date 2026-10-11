@@ -120,5 +120,42 @@ void main() {
       await tester.tap(find.byType(DhikrCounterDial));
       expect(count, 6);
     });
+
+    testWidgets('AdhkarSessionCard toggles tashkeel and cycles font scale', (tester) async {
+      bool tashkeelToggled = false;
+      bool fontCycled = false;
+      bool shared = false;
+
+      await tester.pumpWidget(
+        wrapWithTheme(
+          AdhkarSessionCard(
+            item: sampleItem,
+            repeat: 33,
+            isDone: false,
+            fontScale: 1.15,
+            showTashkeel: false,
+            onToggleTashkeel: () => tashkeelToggled = true,
+            onCycleFontSize: () => fontCycled = true,
+            onShare: () => shared = true,
+          ),
+        ),
+      );
+
+      // Without tashkeel: 'سبحان الله وبحمده'
+      expect(find.text('سبحان الله وبحمده'), findsOneWidget);
+      expect(find.text('115%'), findsOneWidget);
+
+      // Tap tashkeel toggle
+      await tester.tap(find.text('تَشْكِيل'));
+      expect(tashkeelToggled, isTrue);
+
+      // Tap font scale
+      await tester.tap(find.text('115%'));
+      expect(fontCycled, isTrue);
+
+      // Tap share
+      await tester.tap(find.byIcon(Icons.share_outlined));
+      expect(shared, isTrue);
+    });
   });
 }

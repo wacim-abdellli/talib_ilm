@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../core/services/adhkar_session_service.dart';
@@ -19,6 +20,12 @@ import 'widgets/adhkar_category_tile.dart';
 import 'widgets/adhkar_contextual_hero.dart';
 import 'widgets/adhkar_header.dart';
 
+class _DhikrSearchResult {
+  final AthkarItem item;
+  final AthkarCategoryData category;
+  const _DhikrSearchResult({required this.item, required this.category});
+}
+
 class AdhkarPage extends StatefulWidget {
   const AdhkarPage({super.key});
 
@@ -27,10 +34,13 @@ class AdhkarPage extends StatefulWidget {
 }
 
 class _AdhkarPageState extends State<AdhkarPage> {
+  static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u0652\u0670\u0640]');
+
   final AthkarService _service = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
   late Future<AthkarCatalog> _future;
   String _selectedCategory = 'all';
+  String _searchQuery = '';
   int _streak = 1;
 
   @override
@@ -62,6 +72,26 @@ class _AdhkarPageState extends State<AdhkarPage> {
     });
   }
 
+  List<_DhikrSearchResult> _searchCatalog(AthkarCatalog catalog, String query) {
+    final cleanQuery = query.toLowerCase().replaceAll(_tashkeelRegex, '').trim();
+    if (cleanQuery.isEmpty) return const [];
+
+    final results = <_DhikrSearchResult>[];
+    for (final cat in catalog.categories) {
+      for (final item in cat.items) {
+        final cleanArabic = item.arabic.toLowerCase().replaceAll(_tashkeelRegex, '');
+        final cleanFadl = item.fadl.toLowerCase().replaceAll(_tashkeelRegex, '');
+        final cleanCat = cat.title.toLowerCase().replaceAll(_tashkeelRegex, '');
+        if (cleanArabic.contains(cleanQuery) ||
+            cleanFadl.contains(cleanQuery) ||
+            cleanCat.contains(cleanQuery)) {
+          results.add(_DhikrSearchResult(item: item, category: cat));
+        }
+      }
+    }
+    return results;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -73,6 +103,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
             streak: _streak,
             selectedCategory: _selectedCategory,
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
+            onSearch: (q) => setState(() => _searchQuery = q.trim()),
           ),
           Expanded(
             child: FutureBuilder<AthkarCatalog>(
@@ -104,6 +135,85 @@ class _AdhkarPageState extends State<AdhkarPage> {
                       label: AppStrings.actionRetry,
                       onPressed: _reload,
                     ),
+                  );
+                }
+
+                // If searching, show search results list
+                if (_searchQuery.isNotEmpty) {
+                  final searchResults = _searchCatalog(catalog, _searchQuery);
+                  if (searchResults.isEmpty) {
+                    return AppEmptyState(
+                      icon: Icons.search_off_rounded,
+                      title: 'لا توجد نتائج',
+                      subtitle: 'لم نجد أذكاراً تطابق "$_searchQuery"',
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpace.lg,
+                      AppSpace.md,
+                      AppSpace.lg,
+                      AppSize.navClearance(context),
+                    ),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: searchResults.length,
+                    itemBuilder: (context, index) {
+                      final res = searchResults[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: AppCard(
+                          onTap: () => _openCategory(context, res.category),
+                          padding: AppSpace.cardPadding,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.sm,
+                                      vertical: AppSpace.xs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: palette.primarySoft,
+                                      borderRadius: AppRadius.pillRadius,
+                                    ),
+                                    child: Text(
+                                      res.category.title,
+                                      style: context.text.caption.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  if (res.item.countDescription.isNotEmpty)
+                                    Text(
+                                      res.item.countDescription,
+                                      style: context.text.caption.copyWith(
+                                        color: palette.textMuted,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpace.sm),
+                              Text(
+                                res.item.arabic,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.text.sacred.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.7,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 }
 
@@ -176,9 +286,38 @@ class _AdhkarPageState extends State<AdhkarPage> {
     if (_selectedCategory == 'after_prayer') {
       return all.where((i) => i.id == 'after_prayer').toList();
     }
+    if (_selectedCategory == 'daily') {
+      return all
+          .where((i) => [
+                'waking',
+                'sleeping',
+                'home',
+                'mosque_adhan',
+                'wudu_food',
+                'travel'
+              ].contains(i.id))
+          .toList();
+    }
+    if (_selectedCategory == 'distress') {
+      return all.where((i) => ['distress', 'duas'].contains(i.id)).toList();
+    }
+    if (_selectedCategory == 'tasbeeh') {
+      return all.where((i) => ['tasbeeh', 'istighfar'].contains(i.id)).toList();
+    }
     if (_selectedCategory == 'misc') {
       return all
-          .where((i) => ['duas', 'tasbeeh', 'sleeping'].contains(i.id))
+          .where((i) => [
+                'waking',
+                'sleeping',
+                'home',
+                'mosque_adhan',
+                'wudu_food',
+                'travel',
+                'distress',
+                'duas',
+                'tasbeeh',
+                'istighfar'
+              ].contains(i.id))
           .toList();
     }
     return all;
@@ -193,10 +332,17 @@ class _AdhkarPageState extends State<AdhkarPage> {
     final morning = byId('morning');
     final evening = byId('evening');
     final afterPrayer = byId('after_prayer');
-    final duas = byId('duas');
-    final tasbeeh = byId('tasbeeh');
+    final waking = byId('waking');
     final sleeping =
         byId('sleeping') ?? byId('general') ?? byId('before_prayer');
+    final distress = byId('distress');
+    final mosqueAdhan = byId('mosque_adhan');
+    final home = byId('home');
+    final wuduFood = byId('wudu_food');
+    final travel = byId('travel');
+    final duas = byId('duas');
+    final tasbeeh = byId('tasbeeh');
+    final istighfar = byId('istighfar');
 
     return [
       CategoryCardData(
@@ -219,8 +365,57 @@ class _AdhkarPageState extends State<AdhkarPage> {
         id: 'after_prayer',
         title: afterPrayer?.title ?? 'أذكار بعد الصلاة',
         total: afterPrayer?.items.length ?? 0,
-        icon: Icons.auto_awesome_outlined,
+        icon: Icons.mosque_outlined,
         onTap: () => _openCategory(context, afterPrayer),
+      ),
+      CategoryCardData(
+        id: 'waking',
+        title: waking?.title ?? 'أذكار الاستيقاظ',
+        total: waking?.items.length ?? 0,
+        icon: Icons.wb_twilight_rounded,
+        onTap: () => _openCategory(context, waking),
+      ),
+      CategoryCardData(
+        id: sleeping?.id ?? 'sleeping',
+        title: sleeping?.title ?? 'أذكار النوم',
+        total: sleeping?.items.length ?? 0,
+        icon: Icons.bedtime_outlined,
+        onTap: () => _openSleeping(context, sleeping),
+      ),
+      CategoryCardData(
+        id: 'distress',
+        title: distress?.title ?? 'أذكار الكرب والهم',
+        total: distress?.items.length ?? 0,
+        icon: Icons.shield_outlined,
+        onTap: () => _openCategory(context, distress),
+      ),
+      CategoryCardData(
+        id: 'mosque_adhan',
+        title: mosqueAdhan?.title ?? 'أذكار المسجد والأذان',
+        total: mosqueAdhan?.items.length ?? 0,
+        icon: Icons.campaign_outlined,
+        onTap: () => _openCategory(context, mosqueAdhan),
+      ),
+      CategoryCardData(
+        id: 'home',
+        title: home?.title ?? 'أذكار المنزل',
+        total: home?.items.length ?? 0,
+        icon: Icons.home_outlined,
+        onTap: () => _openCategory(context, home),
+      ),
+      CategoryCardData(
+        id: 'wudu_food',
+        title: wuduFood?.title ?? 'أذكار الوضوء والطعام',
+        total: wuduFood?.items.length ?? 0,
+        icon: Icons.water_drop_outlined,
+        onTap: () => _openCategory(context, wuduFood),
+      ),
+      CategoryCardData(
+        id: 'travel',
+        title: travel?.title ?? 'أذكار السفر',
+        total: travel?.items.length ?? 0,
+        icon: Icons.flight_takeoff_outlined,
+        onTap: () => _openCategory(context, travel),
       ),
       CategoryCardData(
         id: 'duas',
@@ -237,11 +432,11 @@ class _AdhkarPageState extends State<AdhkarPage> {
         onTap: () => _openTasbeeh(context),
       ),
       CategoryCardData(
-        id: sleeping?.id ?? 'sleeping',
-        title: sleeping?.title ?? 'أذكار النوم',
-        total: sleeping?.items.length ?? 0,
-        icon: Icons.bedtime_outlined,
-        onTap: () => _openSleeping(context, sleeping),
+        id: 'istighfar',
+        title: istighfar?.title ?? 'الاستغفار والتوبة',
+        total: istighfar?.items.length ?? 0,
+        icon: Icons.autorenew_rounded,
+        onTap: () => _openIstighfar(context),
       ),
     ];
   }
@@ -309,6 +504,13 @@ class _AdhkarPageState extends State<AdhkarPage> {
     );
   }
 
+  void _openIstighfar(BuildContext context) {
+    Navigator.push(
+      context,
+      buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 1)),
+    );
+  }
+
   void _openSleeping(BuildContext context, AthkarCategoryData? category) {
     Navigator.push(context, buildFadeRoute(page: const SleepingAthkarPage()));
   }
@@ -330,32 +532,11 @@ class _AdhkarPageState extends State<AdhkarPage> {
     return normalized;
   }
 
-  Future<CategoryProgress> _progressFor(CategoryCardData data) async {
-    final total = data.total;
-    final parsed = adhkarCategoryFromId(data.id);
-    if (parsed == null || total == 0) {
-      return CategoryProgress(0, total);
-    }
-    final counts = await _sessionService.loadCounts(parsed);
-    final items = await _itemsForCategory(parsed);
-    final completed = _completedCount(items, counts);
-    return CategoryProgress(completed, total);
-  }
-
-  Future<List<AthkarItem>> _itemsForCategory(AdhkarCategory category) async {
-    final catalog = await _future;
-    final categoryId = _normalizeId(category.id);
-    return catalog.byId(categoryId)?.items ?? const [];
-  }
-
-  int _completedCount(List<AthkarItem> items, Map<String, int> counts) {
-    var completed = 0;
-    for (final item in items) {
-      final key = item.id.isNotEmpty ? item.id : item.arabic;
-      final target = item.target <= 0 ? 1 : item.target;
-      final value = counts[key] ?? 0;
-      if (value >= target) completed++;
-    }
-    return completed;
+  Future<CategoryProgress> _progressFor(CategoryCardData item) async {
+    final category = adhkarCategoryFromId(item.id);
+    if (category == null) return CategoryProgress(0, item.total);
+    final counts = await _sessionService.loadCounts(category);
+    final completed = counts.values.where((c) => c > 0).length;
+    return CategoryProgress(completed, item.total);
   }
 }
