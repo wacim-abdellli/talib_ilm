@@ -49,9 +49,15 @@ class _AdhkarPageState extends State<AdhkarPage> {
     }
   }
 
-  void _reload() {
+  @override
+  void reassemble() {
+    super.reassemble();
+    _reload();
+  }
+
+  Future<void> _reload() async {
+    _service.resetCache();
     setState(() {
-      _service.resetCache();
       _future = _service.loadCatalog();
     });
   }
@@ -104,49 +110,52 @@ class _AdhkarPageState extends State<AdhkarPage> {
                 final allItems = _dashboardItems(context, catalog);
                 final items = _filteredItems(allItems);
 
-                return CustomScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                    // Contextual Hero Recommendation (Visible on 'all' tab)
-                    if (_selectedCategory == 'all')
-                      SliverToBoxAdapter(
-                        child: AdhkarContextualHero(
-                          catalog: catalog,
-                          onOpenCategory: _openCategory,
-                        ),
-                      ),
-
-                    // Grid of Adhkar Categories
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppSpace.lg,
-                        AppSpace.sm,
-                        AppSpace.lg,
-                        AppSize.navClearance(context),
-                      ),
-                      sliver: SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: AppSpace.md,
-                          mainAxisSpacing: AppSpace.md,
-                          childAspectRatio: 0.95,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            return CategoryTile(
-                              data: items[index],
-                              progressLoader: items[index].showProgress
-                                  ? () => _progressFor(items[index])
-                                  : null,
-                            );
-                          },
-                          childCount: items.length,
-                        ),
-                      ),
+                return RefreshIndicator(
+                  onRefresh: _reload,
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
                     ),
-                  ],
+                    slivers: [
+                      // Contextual Hero Recommendation (Visible on 'all' tab)
+                      if (_selectedCategory == 'all')
+                        SliverToBoxAdapter(
+                          child: AdhkarContextualHero(
+                            catalog: catalog,
+                            onOpenCategory: _openCategory,
+                          ),
+                        ),
+
+                      // Grid of Adhkar Categories
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpace.lg,
+                          AppSpace.sm,
+                          AppSpace.lg,
+                          AppSize.navClearance(context),
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: AppSpace.md,
+                            mainAxisSpacing: AppSpace.md,
+                            childAspectRatio: 0.95,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              return CategoryTile(
+                                data: items[index],
+                                progressLoader: items[index].showProgress
+                                    ? () => _progressFor(items[index])
+                                    : null,
+                              );
+                            },
+                            childCount: items.length,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

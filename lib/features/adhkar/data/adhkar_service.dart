@@ -57,6 +57,7 @@ class AthkarService {
 
   void resetCache() {
     _cache = null;
+    rootBundle.evict(AppAssets.adhkarData);
   }
 
   Future<DailyDhikrPayload?> getDailyDhikr() async {
