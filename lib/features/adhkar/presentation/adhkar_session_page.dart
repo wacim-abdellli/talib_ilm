@@ -252,6 +252,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                       item: item,
                                       repeat: itemRepeat,
                                       isDone: isDone,
+                                      onTap: _handleTap,
                                     );
                                   },
                                 ),
@@ -369,13 +370,40 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         ],
                       ),
 
-                      // Completion Ripple Accent
+                      // Completion Golden Aurora Halo
                       if (_showSuccessRipple)
                         Positioned.fill(
                           child: IgnorePointer(
-                            child: AnimatedContainer(
-                              duration: AppMotion.slow,
-                              color: palette.success.withValues(alpha: 0.12),
+                            child: Center(
+                              child: TweenAnimationBuilder<double>(
+                                duration: AppMotion.slow * 1.5,
+                                curve: Curves.easeOutCubic,
+                                tween: Tween(begin: 0.8, end: 1.8),
+                                builder: (context, scale, child) {
+                                  final opacity =
+                                      ((1.8 - scale) / 1.0).clamp(0.0, 1.0);
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Opacity(
+                                      opacity: opacity,
+                                      child: Container(
+                                        width: 220,
+                                        height: 220,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: palette.goldSoft
+                                              .withValues(alpha: 0.35),
+                                          border: Border.all(
+                                            color: palette.gold
+                                                .withValues(alpha: 0.6),
+                                            width: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),

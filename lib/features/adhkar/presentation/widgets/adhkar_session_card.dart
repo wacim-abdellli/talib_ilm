@@ -9,12 +9,14 @@ class AdhkarSessionCard extends StatelessWidget {
   final AthkarItem item;
   final int repeat;
   final bool isDone;
+  final VoidCallback? onTap;
 
   const AdhkarSessionCard({
     super.key,
     required this.item,
     required this.repeat,
     required this.isDone,
+    this.onTap,
   });
 
   @override
@@ -30,7 +32,14 @@ class AdhkarSessionCard extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: AppCard(
+            onTap: onTap,
             padding: AppSpace.cardPadding,
+            border: Border.all(
+              color: isDone
+                  ? palette.gold.withValues(alpha: 0.5)
+                  : palette.border,
+              width: isDone ? 1.5 : 1,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -41,8 +50,13 @@ class AdhkarSessionCard extends StatelessWidget {
                     vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: isDone ? palette.primarySoft : palette.goldSoft,
+                    color: isDone ? palette.goldSoft : palette.surfaceMuted,
                     borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: isDone
+                          ? palette.gold.withValues(alpha: 0.4)
+                          : palette.border,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -50,7 +64,7 @@ class AdhkarSessionCard extends StatelessWidget {
                       Icon(
                         isDone ? Icons.check_circle_rounded : Icons.repeat_rounded,
                         size: AppIcon.sm,
-                        color: isDone ? palette.success : palette.gold,
+                        color: isDone ? palette.gold : palette.textMuted,
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Text(
@@ -58,7 +72,7 @@ class AdhkarSessionCard extends StatelessWidget {
                             ? item.countDescription
                             : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
                         style: context.text.caption.copyWith(
-                          color: isDone ? palette.success : palette.gold,
+                          color: isDone ? palette.gold : palette.textMuted,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
