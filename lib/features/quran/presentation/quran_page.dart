@@ -11,8 +11,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
-import 'quran_library_wrapper.dart';
 import 'widgets/juz_card.dart';
+import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
 import 'widgets/surah_card.dart';
 
@@ -139,7 +139,7 @@ class _QuranPageState extends State<QuranPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ProfessionalQuranScreen(initialSurah: surahNum),
+        builder: (_) => MushafPageViewer(initialSurah: surahNum),
       ),
     );
 
@@ -163,7 +163,7 @@ class _QuranPageState extends State<QuranPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ProfessionalQuranScreen(initialPage: pageNumber),
+        builder: (_) => MushafPageViewer(initialPage: pageNumber),
       ),
     );
 

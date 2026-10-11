@@ -6,7 +6,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
-import 'quran_library_wrapper.dart';
+import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/surah_card.dart';
 
 class BookmarksPage extends StatefulWidget {
@@ -139,7 +139,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ProfessionalQuranScreen(
+                              builder: (_) => MushafPageViewer(
                                 initialSurah: surahNum,
                               ),
                             ),

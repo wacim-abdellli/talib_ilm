@@ -553,6 +553,32 @@ class AppSize {
   }
 }
 
+/// Standard Tajweed color tokens (Medina Mushaf rules)
+class TajweedPalette {
+  TajweedPalette._();
+
+  static const Color ghunnah = Color(0xFFB45309); // Amber Gold
+  static const Color qalqalah = Color(0xFF2563EB); // Royal Blue
+  static const Color ikhfaa = Color(0xFF059669); // Emerald Green
+  static const Color idgham = Color(0xFF7C3AED); // Regal Purple
+  static const Color iqlab = Color(0xFF1E40AF); // Deep Indigo
+  static const Color madd = Color(0xFFDC2626); // Crimson Red
+}
+
+/// Reading surfaces for Mushaf
+class MushafColors {
+  MushafColors._();
+
+  static const Color whiteBg = Color(0xFFFFFFFF);
+  static const Color whiteText = Color(0xFF1A1A1A);
+
+  static const Color sepiaBg = Color(0xFFFBF7EE);
+  static const Color sepiaText = Color(0xFF2B2520);
+
+  static const Color darkBg = Color(0xFF141618);
+  static const Color darkText = Color(0xFFE8E6E3);
+}
+
 /// Ergonomic theme context extensions
 extension AppThemeContextX on BuildContext {
   AppPalette get palette =>
