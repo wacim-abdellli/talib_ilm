@@ -30,7 +30,7 @@ class AdhkarSessionCard extends StatelessWidget {
       ),
       child: Center(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: AppCard(
             onTap: onTap,
             padding: AppSpace.cardPadding,
@@ -150,21 +150,6 @@ class AdhkarSessionCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ],
-
-                // Meaning translation
-                if (item.meaning.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Divider(color: palette.border),
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    item.meaning,
-                    textAlign: TextAlign.center,
-                    style: context.text.bodySmall.copyWith(
-                      color: palette.textMuted,
-                      height: 1.55,
-                    ),
                   ),
                 ],
               ],

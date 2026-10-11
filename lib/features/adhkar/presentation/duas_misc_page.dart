@@ -53,7 +53,6 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
     final query = _searchQuery.trim().toLowerCase();
     return _allItems.where((item) {
       return item.arabic.toLowerCase().contains(query) ||
-          item.meaning.toLowerCase().contains(query) ||
           item.source.toLowerCase().contains(query) ||
           item.fadl.toLowerCase().contains(query);
     }).toList();
@@ -219,7 +218,7 @@ class _DuaCardState extends State<_DuaCard> {
       title: widget.item.arabic,
       subtitle: widget.item.source.isNotEmpty
           ? widget.item.source
-          : widget.item.meaning,
+          : widget.item.fadl,
     );
     final nowFav = await _favService.toggle(favItem);
     if (mounted) {
@@ -235,8 +234,8 @@ class _DuaCardState extends State<_DuaCard> {
   void _copy() {
     HapticFeedback.lightImpact();
     final text = StringBuffer()..writeln(widget.item.arabic);
-    if (widget.item.meaning.isNotEmpty) {
-      text.writeln('\n${widget.item.meaning}');
+    if (widget.item.fadl.isNotEmpty) {
+      text.writeln('\n${widget.item.fadl}');
     }
     if (widget.item.source.isNotEmpty) {
       text.writeln('\n— ${widget.item.source}');
@@ -248,8 +247,8 @@ class _DuaCardState extends State<_DuaCard> {
   void _share() {
     HapticFeedback.lightImpact();
     final text = StringBuffer()..writeln(widget.item.arabic);
-    if (widget.item.meaning.isNotEmpty) {
-      text.writeln('\n${widget.item.meaning}');
+    if (widget.item.fadl.isNotEmpty) {
+      text.writeln('\n${widget.item.fadl}');
     }
     if (widget.item.source.isNotEmpty) {
       text.writeln('\n— ${widget.item.source}');
@@ -359,8 +358,8 @@ class _DuaCardState extends State<_DuaCard> {
             ),
           ),
 
-          // Meaning & Fadl
-          if (widget.item.meaning.isNotEmpty || widget.item.fadl.isNotEmpty) ...[
+          // Fadl
+          if (widget.item.fadl.isNotEmpty) ...[
             Container(
               padding: const EdgeInsetsDirectional.fromSTEB(
                 AppSpace.lg,
@@ -374,42 +373,25 @@ class _DuaCardState extends State<_DuaCard> {
                   bottom: Radius.circular(AppRadius.lg),
                 ),
               ),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.item.meaning.isNotEmpty)
-                    Text(
-                      widget.item.meaning,
-                      style: context.text.bodySmall.copyWith(
-                        color: palette.textMuted,
-                        height: 1.5,
+                  Icon(
+                    Icons.stars_rounded,
+                    size: AppIcon.sm,
+                    color: palette.gold,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Expanded(
+                    child: Text(
+                      widget.item.fadl,
+                      style: context.text.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: palette.gold,
+                        height: 1.4,
                       ),
                     ),
-                  if (widget.item.fadl.isNotEmpty) ...[
-                    if (widget.item.meaning.isNotEmpty)
-                      const SizedBox(height: AppSpace.xs),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.stars_rounded,
-                          size: AppIcon.sm,
-                          color: palette.gold,
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Expanded(
-                          child: Text(
-                            widget.item.fadl,
-                            style: context.text.caption.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: palette.gold,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),

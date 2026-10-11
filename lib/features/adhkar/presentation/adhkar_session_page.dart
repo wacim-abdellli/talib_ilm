@@ -107,7 +107,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
     if (repeat > 0 && nextCount >= repeat) {
       HapticFeedback.mediumImpact();
-      Future.delayed(AppMotion.slow * 2, () {
+      Future.delayed(AppMotion.base, () {
         if (mounted) {
           setState(() => _showSuccessRipple = false);
           if (_index + 1 < _items.length) {
@@ -130,19 +130,21 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   void _goNext() {
     if (_loading || _index + 1 >= _items.length) return;
+    if (!_pageController.hasClients) return;
     HapticFeedback.selectionClick();
     _pageController.nextPage(
-      duration: AppMotion.slow,
-      curve: Curves.easeInOut,
+      duration: AppMotion.base,
+      curve: AppMotion.easeOut,
     );
   }
 
   void _goPrev() {
     if (_loading || _index <= 0) return;
+    if (!_pageController.hasClients) return;
     HapticFeedback.selectionClick();
     _pageController.previousPage(
-      duration: AppMotion.slow,
-      curve: Curves.easeInOut,
+      duration: AppMotion.base,
+      curve: AppMotion.easeOut,
     );
   }
 
@@ -240,7 +242,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                   controller: _pageController,
                                   itemCount: totalItems,
                                   onPageChanged: _onPageChanged,
-                                  physics: const BouncingScrollPhysics(),
+                                  physics: const PageScrollPhysics(
+                                    parent: BouncingScrollPhysics(),
+                                  ),
                                   itemBuilder: (context, index) {
                                     final item = _items[index];
                                     final itemRepeat = _repeatFor(_items, index);
@@ -376,8 +380,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                           child: IgnorePointer(
                             child: Center(
                               child: TweenAnimationBuilder<double>(
-                                duration: AppMotion.slow * 1.5,
-                                curve: Curves.easeOutCubic,
+                                duration: AppMotion.slow,
+                                curve: AppMotion.easeOut,
                                 tween: Tween(begin: 0.8, end: 1.8),
                                 builder: (context, scale, child) {
                                   final opacity =
