@@ -6,7 +6,6 @@ import '../../../../shared/navigation/app_shell.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../favorites/presentation/favorites_page.dart';
-import '../../../prayer/presentation/qibla_page.dart';
 
 /// Re-architected Home Header: Dual-tier luxury Islamic editorial layout
 /// Tier 1: Brand emblem badge + Personalized greeting & du'a + Quick actions (Search & Qibla)
@@ -236,31 +235,15 @@ class HomeHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          greeting,
-                          style: textTheme.titleSmall.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Container(
-                        width: AppSpace.xs,
-                        height: AppSpace.xs,
-                        decoration: BoxDecoration(
-                          color: palette.gold,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    greeting,
+                    style: textTheme.titleSmall.copyWith(
+                      color: palette.text,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.2,
+                      height: 1.25,
+                    ),
+                    softWrap: true,
                   ),
                   const SizedBox(height: AppSpace.xs / 2),
                   Text(
@@ -268,16 +251,16 @@ class HomeHeader extends StatelessWidget {
                     style: textTheme.caption.copyWith(
                       color: palette.textMuted,
                       fontWeight: FontWeight.normal,
+                      height: 1.3,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: AppSpace.sm),
 
-            // Quick Action Buttons (Search, Favorites & Qibla)
+            // Quick Action Buttons (Search & Favorites)
             _HeaderCircleAction(
               icon: Icons.search_rounded,
               tooltip: 'البحث في المتون والكتب',
@@ -292,14 +275,6 @@ class HomeHeader extends StatelessWidget {
                   context,
                   buildFadeRoute(page: const FavoritesPage()),
                 );
-              },
-            ),
-            const SizedBox(width: AppSpace.xs),
-            _HeaderCircleAction(
-              icon: Icons.explore_outlined,
-              tooltip: 'اتجاه القبلة',
-              onTap: onQiblaTap ?? () {
-                Navigator.push(context, buildFadeRoute(page: const QiblaPage()));
               },
             ),
           ],

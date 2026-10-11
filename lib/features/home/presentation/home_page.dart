@@ -287,7 +287,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         greetingSubtitle: _getGreetingSubtitle(),
                         onLocationTap: () => _openPrayerDetails(context),
                         onSearchTap: () => _openIlm(context),
-                        onQiblaTap: () => _openQibla(context),
                       ),
                     ),
                   ),
