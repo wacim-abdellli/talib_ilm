@@ -44,6 +44,7 @@ class CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final catColors = palette.adhkarCategory(data.id);
 
     return AppCard(
       onTap: () {
@@ -59,6 +60,8 @@ class CategoryTile extends StatelessWidget {
             children: [
               IconBadge(
                 icon: _getCategoryIcon(data.id),
+                bg: catColors.bg,
+                fg: catColors.fg,
               ),
               const SizedBox(width: AppSpace.xs),
               Flexible(
@@ -68,14 +71,14 @@ class CategoryTile extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: palette.primarySoft,
+                    color: catColors.bg,
                     borderRadius: AppRadius.smRadius,
                   ),
                   child: Text(
                     _subtitleLabel(data.id, data.total),
                     style: context.text.caption.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: palette.onPrimarySoft,
+                      color: catColors.fg,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -111,7 +114,7 @@ class CategoryTile extends StatelessWidget {
               Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: AppIcon.sm,
-                color: palette.textMuted,
+                color: catColors.fg,
               ),
             ],
           ),
@@ -131,21 +134,21 @@ class CategoryTile extends StatelessWidget {
       case 'waking':
         return Icons.wb_twilight_rounded;
       case 'distress':
-        return Icons.shield_outlined;
+        return Icons.shield_rounded;
       case 'mosque_adhan':
-        return Icons.campaign_outlined;
+        return Icons.notifications_active_rounded;
       case 'home':
-        return Icons.home_outlined;
+        return Icons.cottage_rounded;
       case 'wudu_food':
-        return Icons.water_drop_outlined;
+        return Icons.water_drop_rounded;
       case 'travel':
-        return Icons.flight_takeoff_outlined;
+        return Icons.explore_rounded;
       case 'duas':
         return Icons.menu_book_rounded;
       case 'tasbeeh':
         return Icons.fingerprint_rounded;
       case 'istighfar':
-        return Icons.autorenew_rounded;
+        return Icons.restart_alt_rounded;
       case 'sleeping':
         return Icons.bedtime_rounded;
       default:

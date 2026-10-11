@@ -297,37 +297,24 @@ class _DuaCardState extends State<_DuaCard> {
                   ),
                 ),
                 const SizedBox(width: AppSpace.sm),
-                if (widget.item.source.isNotEmpty)
-                  Expanded(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Tooltip(
-                        message: widget.item.source,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.primarySoft,
-                            borderRadius: AppRadius.smRadius,
-                          ),
-                          child: Text(
-                            widget.item.source,
-                            style: context.text.caption.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: palette.onPrimarySoft,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.sm,
+                    vertical: AppSpace.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.primarySoft,
+                    borderRadius: AppRadius.smRadius,
+                  ),
+                  child: Text(
+                    'دعاء نبوي',
+                    style: context.text.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: palette.onPrimarySoft,
                     ),
-                  )
-                else
-                  const Spacer(),
-                const SizedBox(width: AppSpace.xs),
+                  ),
+                ),
+                const Spacer(),
                 // Actions
                 AppIconButton(
                   icon: Icons.copy_rounded,
@@ -370,20 +357,48 @@ class _DuaCardState extends State<_DuaCard> {
             ),
           ),
 
-          // Source attribution if present
+          // Full Rawi & Hadith Source Attribution (Never clipped, No dots)
           if (widget.item.source.isNotEmpty)
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpace.xl,
+                AppSpace.lg,
                 0,
-                AppSpace.xl,
-                AppSpace.sm,
+                AppSpace.lg,
+                AppSpace.md,
               ),
-              child: Text(
-                'المصدر: ${widget.item.source}',
-                textAlign: TextAlign.right,
-                style: context.text.caption.copyWith(
-                  color: palette.textMuted,
+              child: Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.surfaceMuted,
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: palette.border,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.menu_book_rounded,
+                      size: AppIcon.sm,
+                      color: palette.primary,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Expanded(
+                      child: Text(
+                        'المصدر: ${widget.item.source}',
+                        textAlign: TextAlign.right,
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

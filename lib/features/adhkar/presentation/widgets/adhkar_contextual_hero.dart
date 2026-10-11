@@ -43,6 +43,7 @@ class AdhkarContextualHero extends StatelessWidget {
     }
 
     final cat = catalog.byId(recId) ?? catalog.byId('sleeping');
+    final catColors = palette.adhkarCategory(recId);
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(
@@ -63,6 +64,8 @@ class AdhkarContextualHero extends StatelessWidget {
             children: [
               IconBadge(
                 icon: recIcon,
+                bg: catColors.bg,
+                fg: catColors.fg,
               ),
               const SizedBox(width: AppSpace.md),
               Expanded(
@@ -75,13 +78,13 @@ class AdhkarContextualHero extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: palette.primarySoft,
+                        color: catColors.bg,
                         borderRadius: AppRadius.smRadius,
                       ),
                       child: Text(
                         'أذكار الوقت الحالي',
                         style: context.text.caption.copyWith(
-                          color: palette.onPrimarySoft,
+                          color: catColors.fg,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -110,7 +113,7 @@ class AdhkarContextualHero extends StatelessWidget {
               Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: AppIcon.md,
-                color: palette.primary,
+                color: catColors.fg,
               ),
           ],
         ),
