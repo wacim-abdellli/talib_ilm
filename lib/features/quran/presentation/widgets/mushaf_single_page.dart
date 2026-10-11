@@ -420,21 +420,27 @@ class MushafSinglePage extends StatelessWidget {
       }
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final contentWidth = screenWidth - (AppSpace.md * 2);
+
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text.rich(
-        TextSpan(children: verseSpans),
-        locale: const Locale('ar'),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.rtl,
-        style: TextStyle(
-          fontFamily: pageFont,
-          package: 'qcf_quran',
-          fontSize: baseFontSize,
-          color: verseTextColor,
-          height: (pageNumber == 1 || pageNumber == 2) ? 2.2 : 2.05,
-          letterSpacing: 0.0,
-          wordSpacing: 0.0,
+      child: SizedBox(
+        width: contentWidth,
+        child: Text.rich(
+          TextSpan(children: verseSpans),
+          locale: const Locale('ar'),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.rtl,
+          style: TextStyle(
+            fontFamily: pageFont,
+            package: 'qcf_quran',
+            fontSize: baseFontSize,
+            color: verseTextColor,
+            height: (pageNumber == 1 || pageNumber == 2) ? 2.2 : 2.05,
+            letterSpacing: 0.0,
+            wordSpacing: 0.0,
+          ),
         ),
       ),
     );
@@ -524,13 +530,19 @@ class MushafSinglePage extends StatelessWidget {
       }
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final contentWidth = screenWidth - (AppSpace.md * 2);
+
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text.rich(
-        TextSpan(children: verseSpans),
-        locale: const Locale('ar'),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.rtl,
+      child: SizedBox(
+        width: contentWidth,
+        child: Text.rich(
+          TextSpan(children: verseSpans),
+          locale: const Locale('ar'),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.rtl,
+        ),
       ),
     );
   }
