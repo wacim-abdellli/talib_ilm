@@ -5,6 +5,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/app_shell.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../favorites/presentation/favorites_page.dart';
 import '../../../prayer/presentation/qibla_page.dart';
 
 /// Re-architected Home Header: Dual-tier luxury Islamic editorial layout
@@ -16,6 +17,7 @@ class HomeHeader extends StatelessWidget {
   final String? greetingSubtitle;
   final VoidCallback? onLocationTap;
   final VoidCallback? onSearchTap;
+  final VoidCallback? onFavoritesTap;
   final VoidCallback? onQiblaTap;
   final VoidCallback? onEmblemTap;
   final VoidCallback? onDateTap;
@@ -27,6 +29,7 @@ class HomeHeader extends StatelessWidget {
     this.greetingSubtitle,
     this.onLocationTap,
     this.onSearchTap,
+    this.onFavoritesTap,
     this.onQiblaTap,
     this.onEmblemTap,
     this.onDateTap,
@@ -274,11 +277,22 @@ class HomeHeader extends StatelessWidget {
             ),
             const SizedBox(width: AppSpace.sm),
 
-            // Quick Action Buttons (Search & Qibla)
+            // Quick Action Buttons (Search, Favorites & Qibla)
             _HeaderCircleAction(
               icon: Icons.search_rounded,
               tooltip: 'البحث في المتون والكتب',
               onTap: onSearchTap ?? () => AppShell.switchToTab(context, 2),
+            ),
+            const SizedBox(width: AppSpace.xs),
+            _HeaderCircleAction(
+              icon: Icons.bookmark_border_rounded,
+              tooltip: 'المفضلة والمحفوظات',
+              onTap: onFavoritesTap ?? () {
+                Navigator.push(
+                  context,
+                  buildFadeRoute(page: const FavoritesPage()),
+                );
+              },
             ),
             const SizedBox(width: AppSpace.xs),
             _HeaderCircleAction(

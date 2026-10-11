@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../app/app.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
 import '../../quran/data/services/reading_stats_service.dart';
@@ -48,6 +50,16 @@ class _MorePageState extends State<MorePage> {
       listenable: themeService,
       builder: (context, _) {
         final sections = <MoreSection>[
+          MoreSection(
+            title: 'المفضلة والمحفوظات',
+            subtitle: 'جميع الأذكار، المتون، الأحاديث، والفوائد المحفوظة',
+            icon: Icons.bookmark_rounded,
+            color: palette.gold,
+            onTap: () => Navigator.push(
+              context,
+              buildFadeRoute(page: const FavoritesPage()),
+            ),
+          ),
           MoreSection(
             title: 'إعدادات الصلاة',
             subtitle: 'تنبيهات الأذان وطرق الحساب ومواقيت الصلاة',

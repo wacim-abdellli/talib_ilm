@@ -3,7 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../core/models/favorite_item.dart';
 import '../../../core/services/asset_service.dart';
+import '../../../core/services/favorites_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -66,16 +68,10 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   bool _showEncouragement = false;
   late String _dailyMicrocopy;
 
-  // Scholarly quotes rotation
-  final List<String> _scholarlyQuotes = [
-    'العلم يؤتى ولا يأتي',
-    'من أدمن الطرق ولج',
-    'قليل دائم خير من كثير منقطع',
-    'العلم صيد والكتابة قيد',
-    'زكاة العلم تعليمه',
-    'إنما العلم بالتعلم',
-    'بداية الغيث قطرة',
-    'العلماء ورثة الأنبياء',
+  static const List<String> _scholarlyQuotes = [
+    'العلم يؤتى ولا يأتي', 'من أدمن الطرق ولج', 'قليل دائم خير من كثير منقطع',
+    'العلم صيد والكتابة قيد', 'زكاة العلم تعليمه', 'إنما العلم بالتعلم',
+    'بداية الغيث قطرة', 'العلماء ورثة الأنبياء',
   ];
 
   @override
@@ -295,8 +291,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   Future<void> _toggleFavorite(String bookId) async {
     final existing = _progressById[bookId];
+    final book = _bookCatalog[bookId];
     if (existing == null) {
-      final book = _bookCatalog[bookId];
       if (book != null) {
         await _progressService?.initializeBook(
           bookId: bookId,
@@ -307,6 +303,17 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       }
     }
     await _progressService?.toggleFavorite(bookId);
+    if (book != null) {
+      final favService = FavoritesService();
+      await favService.toggle(
+        FavoriteItem(
+          type: FavoriteType.book,
+          id: book.id,
+          title: book.title,
+          subtitle: book.author,
+        ),
+      );
+    }
     if (!mounted) return;
     await _loadData();
   }
