@@ -531,6 +531,7 @@ class AppMotion {
   static const Duration base = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 320);
   static const Duration splash = Duration(milliseconds: 1400);
+  static const Duration toast = Duration(milliseconds: 2500);
 
   static const Curve easeIn = Curves.easeInCubic;
   static const Curve easeOut = Curves.easeOutCubic;
