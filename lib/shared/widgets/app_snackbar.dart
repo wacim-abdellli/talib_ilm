@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -185,7 +186,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 
     _controller = AnimationController(
       vsync: this,
-      duration: AppMotion.base,
+      duration: AppMotion.slow,
     );
 
     _slideAnimation = Tween<Offset>(
@@ -286,21 +287,29 @@ class _ToastWidgetState extends State<_ToastWidget>
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                       constraints: const BoxConstraints(maxWidth: 440),
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        AppSpace.lg,
-                        AppSpace.sm,
-                        AppSpace.md,
-                        AppSpace.sm,
-                      ),
                       decoration: BoxDecoration(
-                        color: palette.surfaceRaised,
                         borderRadius: AppRadius.pillRadius,
-                        border: Border.all(color: borderColor, width: 1.2),
                         boxShadow: palette.shadow,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                      child: ClipRRect(
+                        borderRadius: AppRadius.pillRadius,
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                              AppSpace.lg,
+                              AppSpace.sm,
+                              AppSpace.md,
+                              AppSpace.sm,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.surfaceRaised.withValues(alpha: 0.92),
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(color: borderColor, width: 1.2),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
                           Container(
                             width: 32,
                             height: 32,
@@ -339,6 +348,9 @@ class _ToastWidgetState extends State<_ToastWidget>
           ),
         ),
       ),
-    );
+    ),
+  ),
+),
+);
   }
 }
