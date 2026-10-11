@@ -9,6 +9,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
 import 'app_button.dart';
+import 'app_dialog.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String assetPath;
@@ -457,6 +458,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
         return Align(
           alignment: Alignment.bottomCenter,
           child: Container(
+            constraints: const BoxConstraints(maxWidth: 420),
             margin: const EdgeInsets.only(
               bottom: AppSize.navH + AppSpace.xl,
               left: AppSpace.xl,
@@ -513,23 +515,18 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     final palette = context.palette;
     final textTheme = context.text;
     final controller = TextEditingController(text: _currentPage.toString());
-    final requested = await showDialog<int>(
+    final requested = await AppDialog.show<int>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: palette.surfaceRaised,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.xlRadius,
-          ),
-          title: Text(
-            AppStrings.pdfJumpTitle,
-            style: textTheme.titleSmall.copyWith(color: palette.text),
-          ),
+        return AppDialog(
+          title: AppStrings.pdfJumpTitle,
+          icon: Icons.find_in_page_rounded,
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textInputAction: TextInputAction.done,
+            autofocus: true,
             onSubmitted: (value) {
               final parsed = int.tryParse(value);
               Navigator.pop(dialogContext, parsed);
@@ -541,22 +538,18 @@ class PdfViewerPageState extends State<PdfViewerPage> {
             ),
           ),
           actions: [
-            TextButton(
+            AppButton.text(
+              label: AppStrings.pdfJumpCancel,
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                AppStrings.pdfJumpCancel,
-                style: textTheme.label.copyWith(color: palette.textMuted),
-              ),
+              size: AppButtonSize.sm,
             ),
-            TextButton(
+            AppButton(
+              label: AppStrings.pdfJumpGo,
               onPressed: () {
                 final value = int.tryParse(controller.text);
                 Navigator.pop(dialogContext, value);
               },
-              child: Text(
-                AppStrings.pdfJumpGo,
-                style: textTheme.label.copyWith(color: palette.primary),
-              ),
+              size: AppButtonSize.sm,
             ),
           ],
         );

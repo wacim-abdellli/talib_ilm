@@ -14,6 +14,16 @@ class QuickJumpSheet extends StatefulWidget {
     required this.onJumpToPage,
   });
 
+  static Future<void> show(
+    BuildContext context, {
+    required ValueChanged<int> onJumpToPage,
+  }) {
+    return AppSheet.show<void>(
+      context: context,
+      builder: (_) => QuickJumpSheet(onJumpToPage: onJumpToPage),
+    );
+  }
+
   static const List<QuickPreset> presets = [
     QuickPreset(label: 'الفاتحة', page: 1, subtitle: 'ص ١'),
     QuickPreset(label: 'آية الكرسي', page: 42, subtitle: 'ص ٤٢'),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_sheet.dart';
 
 class BookmarkEntry {
   final String title;
@@ -22,11 +24,9 @@ class BookViewBookmarksSheet extends StatelessWidget {
     required this.entries,
   });
 
-  static void show(BuildContext context, List<BookmarkEntry> entries) {
-    showModalBottomSheet(
+  static Future<void> show(BuildContext context, List<BookmarkEntry> entries) {
+    return AppSheet.show<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => BookViewBookmarksSheet(entries: entries),
     );
   }
@@ -35,46 +35,26 @@ class BookViewBookmarksSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.lg,
-        vertical: AppSpace.md,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sheet handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: palette.border,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+    return AppSheet(
+      titleText: 'الإشارات المرجعية',
+      icon: Icons.bookmark_rounded,
+      padding: EdgeInsets.zero,
+      child: entries.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(AppSpace.xxl),
+              child: Center(
+                child: Text(
+                  'لا توجد إشارات مرجعية محفوظة بعد',
+                  style: context.text.bodySmall.copyWith(
+                    color: palette.textMuted,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Text(
-            'الإشارات المرجعية',
-            style: context.text.titleSmall.copyWith(
-              color: palette.text,
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Flexible(
-            child: ListView.separated(
+            )
+          : ListView.separated(
               shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsetsDirectional.all(AppSpace.lg),
               itemCount: entries.length,
               separatorBuilder: (_, _) => Divider(
                 height: AppSpace.lg,
@@ -112,10 +92,6 @@ class BookViewBookmarksSheet extends StatelessWidget {
                 );
               },
             ),
-          ),
-          SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpace.md),
-        ],
-      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 
 class IlmDailyProgressCard extends StatelessWidget {
@@ -176,41 +177,14 @@ class IlmDailyProgressCard extends StatelessWidget {
     final palette = context.palette;
     int localGoal = dailyGoal;
 
-    showModalBottomSheet(
+    AppSheet.show<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.xl,
-            vertical: AppSpace.lg,
-          ),
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppRadius.xl),
-            ),
-          ),
+        builder: (context, setModalState) => AppSheet(
+          titleText: 'تعديل الهدف اليومي',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Sheet handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: palette.border,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              Text(
-                'تعديل الهدف اليومي',
-                style: context.text.titleSmall,
-              ),
-              const SizedBox(height: AppSpace.xs),
               Text(
                 'كم صفحة تخطط لقراءتها يومياً؟',
                 style: context.text.bodySmall.copyWith(
@@ -259,9 +233,6 @@ class IlmDailyProgressCard extends StatelessWidget {
                   if (!context.mounted) return;
                   Navigator.pop(context);
                 },
-              ),
-              SizedBox(
-                height: MediaQuery.paddingOf(context).bottom + AppSpace.md,
               ),
             ],
           ),

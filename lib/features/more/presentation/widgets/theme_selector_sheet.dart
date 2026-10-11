@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_sheet.dart';
 
 class ThemeOption extends StatelessWidget {
   final IconData icon;
@@ -88,86 +89,55 @@ class ThemeSelectorSheet extends StatelessWidget {
   const ThemeSelectorSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    final palette = context.palette;
-    return showModalBottomSheet<void>(
+    return AppSheet.show<void>(
       context: context,
-      backgroundColor: palette.surfaceRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
       builder: (_) => const ThemeSelectorSheet(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: palette.border,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpace.xl),
-            Text(
-              'اختر المظهر',
-              style: textTheme.titleSmall.copyWith(
-                fontWeight: FontWeight.w700,
-                color: palette.text,
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            ThemeOption(
-              icon: Icons.brightness_auto_rounded,
-              title: 'تلقائي',
-              subtitle: 'حسب إعدادات النظام',
-              isSelected: themeService.isSystem,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.system);
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: AppSpace.sm),
-            ThemeOption(
-              icon: Icons.light_mode_rounded,
-              title: 'الوضع الفاتح',
-              subtitle: 'مظهر فاتح وناصع',
-              isSelected: themeService.isLight,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.light);
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: AppSpace.sm),
-            ThemeOption(
-              icon: Icons.dark_mode_rounded,
-              title: 'الوضع الداكن',
-              subtitle: 'مظهر ليلي مريح للعين',
-              isSelected: themeService.isDark,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.dark);
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: AppSpace.md),
-          ],
-        ),
+    return AppSheet(
+      titleText: 'اختر المظهر',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ThemeOption(
+            icon: Icons.brightness_auto_rounded,
+            title: 'تلقائي',
+            subtitle: 'حسب إعدادات النظام',
+            isSelected: themeService.isSystem,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              themeService.setThemeMode(ThemeMode.system);
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: AppSpace.sm),
+          ThemeOption(
+            icon: Icons.light_mode_rounded,
+            title: 'الوضع الفاتح',
+            subtitle: 'مظهر فاتح وناصع',
+            isSelected: themeService.isLight,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              themeService.setThemeMode(ThemeMode.light);
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: AppSpace.sm),
+          ThemeOption(
+            icon: Icons.dark_mode_rounded,
+            title: 'الوضع الداكن',
+            subtitle: 'مظهر ليلي مريح للعين',
+            isSelected: themeService.isDark,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              themeService.setThemeMode(ThemeMode.dark);
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     );
   }

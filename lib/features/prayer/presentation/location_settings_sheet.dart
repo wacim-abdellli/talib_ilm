@@ -8,6 +8,7 @@ import '../../../core/constants/verified_cities.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
@@ -16,6 +17,17 @@ class LocationSettingsSheet extends StatefulWidget {
   final VoidCallback? onSaved;
 
   const LocationSettingsSheet({super.key, this.onSaved});
+
+  static Future<void> show(
+    BuildContext context, {
+    VoidCallback? onSaved,
+  }) {
+    return AppSheet.show<void>(
+      context: context,
+      maxHeightFactor: 0.90,
+      builder: (_) => LocationSettingsSheet(onSaved: onSaved),
+    );
+  }
 
   @override
   State<LocationSettingsSheet> createState() => _LocationSettingsSheetState();
@@ -207,11 +219,8 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     );
 
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
-      padding: EdgeInsetsDirectional.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.lg,
+      padding: const EdgeInsetsDirectional.only(
+        bottom: AppSpace.md,
         top: AppSpace.md,
       ),
       decoration: BoxDecoration(

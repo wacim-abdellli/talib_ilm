@@ -280,15 +280,18 @@ class MilestoneCelebrationDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
         padding: const EdgeInsets.all(AppSpace.xxl),
         decoration: BoxDecoration(
           color: palette.surfaceRaised,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: AppRadius.xlRadius,
           border: Border.all(
             color: palette.border,
           ),
+          boxShadow: palette.shadow,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -340,7 +343,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: palette.primarySoft,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: AppRadius.mdRadius,
                   border: Border.all(
                     color: palette.primary.withValues(alpha: 0.2),
                   ),
@@ -383,6 +386,7 @@ class MilestoneCelebrationDialog extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: context.palette.brandDark.withValues(alpha: 0.55),
       builder: (context) => MilestoneCelebrationDialog(milestone: milestone),
     );
   }
@@ -428,7 +432,7 @@ class EncouragementBanner extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: AppRadius.mdRadius,
         border: Border.all(color: textColor.withValues(alpha: 0.2)),
       ),
       child: Row(

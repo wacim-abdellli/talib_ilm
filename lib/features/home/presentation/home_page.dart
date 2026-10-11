@@ -486,13 +486,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _openLocationSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => LocationSettingsSheet(
-        onSaved: _loadAllData,
-      ),
+    LocationSettingsSheet.show(
+      context,
+      onSaved: _loadAllData,
     );
   }
 

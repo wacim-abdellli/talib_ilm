@@ -442,21 +442,11 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _openLocationSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => LocationSettingsSheet(onSaved: _reloadPrayer),
-    );
+    LocationSettingsSheet.show(context, onSaved: _reloadPrayer);
   }
 
   void _openPrayerSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PrayerSettingsSheet(onSettingsChanged: _reloadPrayer),
-    );
+    PrayerSettingsSheet.show(context, onSettingsChanged: _reloadPrayer);
   }
 
   void _openAfterPrayer(BuildContext context, String prayerName) {

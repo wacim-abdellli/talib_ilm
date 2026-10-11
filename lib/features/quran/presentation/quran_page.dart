@@ -181,12 +181,7 @@ class _QuranPageState extends State<QuranPage> {
 
   void _openQuickJump(BuildContext context) {
     HapticFeedback.lightImpact();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => QuickJumpSheet(onJumpToPage: _openPage),
-    );
+    QuickJumpSheet.show(context, onJumpToPage: _openPage);
   }
 
   @override

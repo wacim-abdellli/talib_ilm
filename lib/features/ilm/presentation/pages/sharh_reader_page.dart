@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../core/services/last_activity_service.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../data/models/sharh_model.dart';
@@ -101,11 +102,11 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
     _noteController.text = _notes[_currentPage] ?? '';
     final palette = context.palette;
 
-    showDialog(
+    AppDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: palette.surfaceRaised,
-        title: Text('إضافة ملاحظة', style: context.text.titleSmall),
+      builder: (dialogContext) => AppDialog(
+        title: 'إضافة ملاحظة',
+        icon: Icons.edit_note_rounded,
         content: TextField(
           controller: _noteController,
           style: context.text.body,

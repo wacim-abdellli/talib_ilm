@@ -7,6 +7,7 @@ import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
@@ -19,6 +20,17 @@ class PrayerSettingsSheet extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
 
   const PrayerSettingsSheet({super.key, this.onSettingsChanged});
+
+  static Future<void> show(
+    BuildContext context, {
+    VoidCallback? onSettingsChanged,
+  }) {
+    return AppSheet.show<void>(
+      context: context,
+      maxHeightFactor: 0.90,
+      builder: (_) => PrayerSettingsSheet(onSettingsChanged: onSettingsChanged),
+    );
+  }
 
   @override
   State<PrayerSettingsSheet> createState() => _PrayerSettingsSheetState();

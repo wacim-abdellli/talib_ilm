@@ -377,35 +377,10 @@ class _MorePageState extends State<MorePage> {
   }
 
   void _openPrayerSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
-      ),
-      builder: (_) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        child: const PrayerSettingsSheet(),
-      ),
-    );
+    PrayerSettingsSheet.show(context);
   }
 
   void _openLocationSettings(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
-      ),
-      builder: (_) => LocationSettingsSheet(
-        onSaved: () {},
-      ),
-    );
+    LocationSettingsSheet.show(context);
   }
 }

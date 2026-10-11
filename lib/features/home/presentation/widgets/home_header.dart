@@ -5,6 +5,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/app_shell.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_sheet.dart';
 import '../../../favorites/presentation/favorites_page.dart';
 
 /// Re-architected Home Header: Dual-tier luxury Islamic editorial layout
@@ -38,70 +39,58 @@ class HomeHeader extends StatelessWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
-    showModalBottomSheet<void>(
+    AppSheet.show<void>(
       context: context,
-      backgroundColor: palette.surfaceRaised,
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: AppSize.buttonH,
-                height: AppSpace.xs,
-                decoration: BoxDecoration(
-                  color: palette.border,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              Container(
-                width: AppSize.navH,
-                height: AppSize.navH,
-                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                decoration: BoxDecoration(
-                  color: palette.surface,
-                  borderRadius: AppRadius.lgRadius,
-                  border: Border.all(
-                    color: palette.gold,
-                    width: 1.5,
-                  ),
-                  boxShadow: palette.shadow,
-                ),
-                child: ClipRRect(
-                  borderRadius: AppRadius.mdRadius,
-                  child: Image.asset(palette.logoSymbol, fit: BoxFit.contain),
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'طالب العلم',
-                style: textTheme.title.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: palette.text,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                '«مَن سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الجَنَّةِ»',
-                textAlign: TextAlign.center,
-                style: textTheme.sacred.copyWith(
+      builder: (ctx) => AppSheet(
+        showHandle: true,
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: AppSize.navH,
+              height: AppSize.navH,
+              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: AppRadius.lgRadius,
+                border: Border.all(
                   color: palette.gold,
+                  width: 1.5,
                 ),
+                boxShadow: palette.shadow,
               ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                'تطبيق إسلامي شامل لطلب العلم الشرعي، حفظ المتون، القرآن الكريم، ومواقيت الصلاة.',
-                textAlign: TextAlign.center,
-                style: textTheme.caption.copyWith(
-                  color: palette.textMuted,
-                ),
+              child: ClipRRect(
+                borderRadius: AppRadius.mdRadius,
+                child: Image.asset(palette.logoSymbol, fit: BoxFit.contain),
               ),
-              const SizedBox(height: AppSpace.lg),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              'طالب العلم',
+              style: textTheme.title.copyWith(
+                fontWeight: FontWeight.bold,
+                color: palette.text,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              '«مَن سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الجَنَّةِ»',
+              textAlign: TextAlign.center,
+              style: textTheme.sacred.copyWith(
+                color: palette.gold,
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'تطبيق إسلامي شامل لطلب العلم الشرعي، حفظ المتون، القرآن الكريم، ومواقيت الصلاة.',
+              textAlign: TextAlign.center,
+              style: textTheme.caption.copyWith(
+                color: palette.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpace.md),
+          ],
         ),
       ),
     );
@@ -113,56 +102,44 @@ class HomeHeader extends StatelessWidget {
     final now = DateTime.now();
     final gregorian = '${now.day}/${now.month}/${now.year} م';
 
-    showModalBottomSheet<void>(
+    AppSheet.show<void>(
       context: context,
-      backgroundColor: palette.surfaceRaised,
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: AppSize.buttonH,
-                height: AppSpace.xs,
-                decoration: BoxDecoration(
-                  color: palette.border,
-                  borderRadius: AppRadius.pillRadius,
-                ),
+      builder: (ctx) => AppSheet(
+        showHandle: true,
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.calendar_month_rounded,
+              size: AppIcon.hero,
+              color: palette.gold,
+            ),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              'التاريخ اليوم',
+              style: textTheme.titleSmall.copyWith(
+                fontWeight: FontWeight.bold,
+                color: palette.text,
               ),
-              const SizedBox(height: AppSpace.lg),
-              Icon(
-                Icons.calendar_month_rounded,
-                size: AppIcon.hero,
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              hijri,
+              style: textTheme.title.copyWith(
+                fontWeight: FontWeight.bold,
                 color: palette.gold,
               ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'التاريخ اليوم',
-                style: textTheme.titleSmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: palette.text,
-                ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              'الموافق ميلادياً: $gregorian',
+              style: textTheme.caption.copyWith(
+                color: palette.textMuted,
               ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                hijri,
-                style: textTheme.title.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: palette.gold,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                'الموافق ميلادياً: $gregorian',
-                style: textTheme.caption.copyWith(
-                  color: palette.textMuted,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpace.md),
+          ],
         ),
       ),
     );

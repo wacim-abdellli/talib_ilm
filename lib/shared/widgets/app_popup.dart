@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../app/theme/app_palette.dart';
+import '../../app/theme/app_ui.dart';
 import 'app_button.dart';
 
 class AppPopup {
@@ -12,89 +13,87 @@ class AppPopup {
     IconData icon = Icons.check_circle_rounded,
     String buttonText = 'حسناً',
     bool autoDismiss = true,
-    Duration dismissAfter = const Duration(seconds: 2),
+    Duration dismissAfter = const Duration(seconds: 2), // ui-lint: allow service timeout
     bool haptic = true,
   }) {
     if (haptic) {
       HapticFeedback.lightImpact();
     }
 
-    // Prevent stacking multiple popups
-    Navigator.of(context).popUntil((route) => route.isFirst);
-
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: false,
-      builder: (sheetContext) {
-        final palette = sheetContext.palette;
-        final textTheme = sheetContext.text;
+      barrierColor: context.palette.brandDark.withValues(alpha: 0.50),
+      builder: (dialogContext) {
+        final palette = dialogContext.palette;
+        final textTheme = dialogContext.text;
 
         if (autoDismiss) {
           Timer(dismissAfter, () {
-            if (Navigator.of(sheetContext).canPop()) {
-              Navigator.of(sheetContext).pop();
+            if (Navigator.of(dialogContext).canPop()) {
+              Navigator.of(dialogContext).pop();
             }
           });
         }
 
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            child: AnimatedScale(
-              scale: 1,
-              duration: AppMotion.fast,
-              curve: AppMotion.easeOut,
-              child: Container(
-                padding: const EdgeInsets.all(AppSpace.xl),
-                decoration: BoxDecoration(
-                  color: palette.surfaceRaised,
-                  borderRadius: AppRadius.xlRadius,
-                  border: Border.all(color: palette.border, width: 1),
-                  boxShadow: palette.shadow,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: palette.primarySoft,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          icon,
-                          color: palette.onPrimarySoft,
-                          size: AppIcon.xl,
-                        ),
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 320,
+              margin: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
+              padding: const EdgeInsets.all(AppSpace.xl),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                borderRadius: AppRadius.xlRadius,
+                border: Border.all(color: palette.border, width: 1),
+                boxShadow: palette.shadow,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        color: palette.primary,
+                        size: AppIcon.lg,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  Text(
+                    title,
+                    style: textTheme.titleSmall.copyWith(
+                      color: palette.text,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    message,
+                    style: textTheme.bodySmall.copyWith(
+                      color: palette.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (!autoDismiss) ...[
                     const SizedBox(height: AppSpace.lg),
-                    Text(
-                      title,
-                      style: textTheme.titleSmall.copyWith(color: palette.text),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpace.xs),
-                    Text(
-                      message,
-                      style: textTheme.bodySmall.copyWith(color: palette.textMuted),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (!autoDismiss) ...[
-                      const SizedBox(height: AppSpace.xl),
-                      SizedBox(
-                        width: double.infinity,
-                        child: AppButton(
-                          label: buttonText,
-                          onPressed: () => Navigator.pop(sheetContext),
-                        ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppButton(
+                        label: buttonText,
+                        onPressed: () => Navigator.pop(dialogContext),
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),

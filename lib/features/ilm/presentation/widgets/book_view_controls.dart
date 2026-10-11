@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 
 class BookViewControls extends StatelessWidget {
   final bool isBookmarked;
@@ -83,7 +84,7 @@ class BookNoteDialog extends StatelessWidget {
     required TextEditingController controller,
     required VoidCallback onSave,
   }) {
-    return showDialog(
+    return AppDialog.show(
       context: context,
       builder: (context) => BookNoteDialog(
         controller: controller,
@@ -96,9 +97,9 @@ class BookNoteDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    return AlertDialog(
-      backgroundColor: palette.surfaceRaised,
-      title: Text('إضافة ملاحظة', style: context.text.titleSmall),
+    return AppDialog(
+      title: 'إضافة ملاحظة',
+      icon: Icons.edit_note_rounded,
       content: TextField(
         controller: controller,
         style: context.text.body,
