@@ -27,13 +27,13 @@ class PrayerTimeService {
       adjustments[name] = prefs.getInt('$_keyAdjPrefix$name') ?? 0;
     }
 
-    // Load method (auto-detected by country if not manually set)
+    // Load method (auto-detected by country or location if not manually set)
     final savedMethodStr = prefs.getString(_keyCalcMethod);
 
     try {
       final location = await _locationService.getLocation();
       final method = _resolveMethod(
-        savedMethodStr,
+        savedMethodStr ?? location.calculationMethod,
         countryCode: location.countryCode,
         latitude: location.latitude,
       );
@@ -68,7 +68,7 @@ class PrayerTimeService {
     String? countryCode,
     double? latitude,
   }) {
-    if (savedMethod != null) {
+    if (savedMethod != null && savedMethod != 'auto') {
       switch (savedMethod) {
         case 'mwl':
           return CalculationMethod.muslim_world_league;
@@ -127,9 +127,9 @@ class PrayerTimeService {
       case 'MY': // Malaysia
       case 'ID': // Indonesia
         return CalculationMethod.singapore;
-      case 'DZ': // Algeria
-      case 'MA': // Morocco
-      case 'TN': // Tunisia
+      case 'DZ': // Algeria (وزارة الشؤون الدينية والأوقاف)
+      case 'MA': // Morocco (وزارة الأوقاف والشؤون الإسلامية)
+      case 'TN': // Tunisia (وزارة الشؤون الدينية)
       case 'FR': // France
       case 'GB': // UK
       case 'DE': // Germany
@@ -147,7 +147,7 @@ class PrayerTimeService {
     required double latitude,
     required double longitude,
     DateTime? date,
-    CalculationMethod method = CalculationMethod.egyptian,
+    CalculationMethod method = CalculationMethod.muslim_world_league,
     Map<String, int> adjustments = const {},
   }) {
     final safeLat = latitude.clamp(-90.0, 90.0);

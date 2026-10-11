@@ -27,6 +27,7 @@ import '../../ilm/presentation/pages/book_view_page.dart';
 import '../../prayer/data/models/prayer_models.dart';
 import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
+import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../quran/presentation/quran_page.dart';
 import '../../adhkar/data/adhkar_models.dart';
 import '../../adhkar/data/adhkar_service.dart';
@@ -285,7 +286,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         city: _prayerDay?.city ?? 'مكة المكرمة',
                         greeting: _getGreeting(),
                         greetingSubtitle: _getGreetingSubtitle(),
-                        onLocationTap: () => _openPrayerDetails(context),
+                        onLocationTap: () => _openLocationSettings(context),
                         onSearchTap: () => _openIlm(context),
                       ),
                     ),
@@ -481,6 +482,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Navigator.push(
       context,
       buildFadeRoute(page: AdhkarSessionPage(category: category)),
+    );
+  }
+
+  void _openLocationSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LocationSettingsSheet(
+        onSaved: _loadAllData,
+      ),
     );
   }
 
