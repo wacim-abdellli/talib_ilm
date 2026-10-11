@@ -18,7 +18,6 @@ class ScholarlyBookCard extends StatelessWidget {
   final IlmBook book;
   final BookProgress? progress;
   final bool isRecommended;
-  final String? matchSnippet;
   final ValueChanged<IlmBook> onNavigateToBook;
   final ValueChanged<String> onToggleFavorite;
 
@@ -27,7 +26,6 @@ class ScholarlyBookCard extends StatelessWidget {
     required this.book,
     required this.progress,
     this.isRecommended = false,
-    this.matchSnippet,
     required this.onNavigateToBook,
     required this.onToggleFavorite,
   });
@@ -151,44 +149,6 @@ class ScholarlyBookCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
-
-          // ── Contextual Search Match Snippet ─────────────────────
-          if (matchSnippet != null && matchSnippet!.isNotEmpty) ...[
-            const SizedBox(height: AppSpace.xs),
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surfaceMuted,
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(
-                  color: palette.border,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search_rounded,
-                    size: AppIcon.sm,
-                    color: palette.primary,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Expanded(
-                    child: Text(
-                      matchSnippet!,
-                      style: context.text.caption.copyWith(
-                        color: palette.primary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
 

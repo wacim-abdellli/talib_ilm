@@ -3,7 +3,7 @@ import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/presentation/logic/ilm_search_engine.dart';
 
 void main() {
-  group('IlmSearchEngine', () {
+  group('IlmSearchEngine (Title-only search)', () {
     final book1 = IlmBook(
       id: 'bk_kitab_tawheed',
       title: 'كتاب التوحيد',
@@ -54,37 +54,35 @@ void main() {
 
     final allBooks = [book2, book1, book3, book4];
 
-    test('Searching "التوحيد" ranks "كتاب التوحيد" at #1', () {
+    test('Searching "التوحيد" matches ONLY books with "التوحيد" in the title', () {
       final results = IlmSearchEngine.search(
         books: allBooks,
         query: 'التوحيد',
       );
 
-      expect(results.length, 3);
-      expect(results[0].book.id, 'bk_kitab_tawheed');
-      expect(results[0].score, greaterThan(results[1].score));
-      expect(results[0].matchSource, 'title');
+      // Only book1 ("كتاب التوحيد") has "التوحيد" in its title
+      expect(results.length, 1);
+      expect(results[0].id, 'bk_kitab_tawheed');
     });
 
-    test('Non-title matches provide descriptive snippets', () {
+    test('Words in description do NOT match', () {
+      // "تمييز" appears only in the description of bk_qawaid_arba
       final results = IlmSearchEngine.search(
         books: allBooks,
-        query: 'التوحيد',
+        query: 'تمييز',
       );
 
-      final qawaid = results.firstWhere((r) => r.book.id == 'bk_qawaid_arba');
-      expect(qawaid.matchSnippet, contains('في الوصف:'));
-      expect(qawaid.matchSnippet, contains('التوحيد'));
+      expect(results, isEmpty);
     });
 
-    test('Searching by subject ranks related books', () {
+    test('Searching "الأصول" matches "الأصول الثلاثة وأدلتها"', () {
       final results = IlmSearchEngine.search(
         books: allBooks,
-        query: 'اللغة العربية',
+        query: 'الأصول',
       );
 
       expect(results.length, 1);
-      expect(results[0].book.id, 'bk_ajrumiyyah');
+      expect(results[0].id, 'bk_usul_thalatha');
     });
 
     test('Empty query returns empty list', () {

@@ -53,8 +53,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   Map<String, BookProgress> _progressById = {};
   Map<String, IlmLevel> _levelByTab = {};
   List<IlmLevel> _sortedLevels = [];
-  List<IlmSearchResult> _searchResults = [];
-  Map<String, String> _searchSnippets = {};
+  List<IlmBook> _searchResults = [];
 
   // Navigation & Search State
   IlmViewMode _currentMode = IlmViewMode.levels;
@@ -244,13 +243,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
             books: _allBooks,
             query: query.trim(),
           );
-          _searchSnippets = {
-            for (final r in _searchResults)
-              if (r.matchSnippet != null) r.book.id: r.matchSnippet!,
-          };
         } else {
           _searchResults = [];
-          _searchSnippets = {};
         }
       });
     }
@@ -261,14 +255,13 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       setState(() {
         _searchQuery = '';
         _searchResults = [];
-        _searchSnippets = {};
       });
     }
   }
 
   List<IlmBook> get _filteredBooks {
     if (_searchQuery.isNotEmpty) {
-      return _searchResults.map((r) => r.book).toList();
+      return _searchResults;
     }
 
     if (_currentMode == IlmViewMode.disciplines) {
@@ -543,7 +536,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                           books: displayedBooks,
                           progressById: _progressById,
                           recommendedBookId: _recommendedFirstBook?.id,
-                          matchSnippets: isSearching ? _searchSnippets : null,
                           onNavigateToBook: _navigateToBook,
                           onToggleFavorite: _toggleFavorite,
                         ),
