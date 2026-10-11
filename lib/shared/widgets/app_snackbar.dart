@@ -38,12 +38,19 @@ class AppSnackbar {
       return;
     }
 
+    // Calculate ergonomic bottom clearance above navigation bar or screen bottom
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomMargin = keyboardInset > 0
+        ? keyboardInset + AppSpace.md
+        : AppSize.navClearance(context) + AppSpace.sm;
+
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (ctx) => _ToastWidget(
         key: UniqueKey(),
         message: message,
         type: type,
+        bottomMargin: bottomMargin,
         displayDuration: duration ?? AppMotion.toast,
         onStateCreated: (state) => _currentState = state,
         onDismissed: () {
@@ -104,6 +111,11 @@ class AppSnackbar {
         break;
     }
 
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomMargin = keyboardInset > 0
+        ? keyboardInset + AppSpace.md
+        : AppSize.navClearance(context) + AppSpace.sm;
+
     ScaffoldMessenger.maybeOf(context)
       ?..clearSnackBars()
       ..showSnackBar(
@@ -112,9 +124,10 @@ class AppSnackbar {
           duration: duration ?? AppMotion.toast,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          margin: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg,
-            vertical: AppSpace.md,
+          margin: EdgeInsets.only(
+            bottom: bottomMargin,
+            left: AppSpace.lg,
+            right: AppSpace.lg,
           ),
           padding: EdgeInsets.zero,
           content: Container(
@@ -154,6 +167,7 @@ class AppSnackbar {
 class _ToastWidget extends StatefulWidget {
   final String message;
   final AppSnackbarType type;
+  final double bottomMargin;
   final Duration displayDuration;
   final ValueChanged<_ToastWidgetState> onStateCreated;
   final VoidCallback onDismissed;
@@ -162,6 +176,7 @@ class _ToastWidget extends StatefulWidget {
     super.key,
     required this.message,
     required this.type,
+    required this.bottomMargin,
     required this.displayDuration,
     required this.onStateCreated,
     required this.onDismissed,
@@ -190,7 +205,7 @@ class _ToastWidgetState extends State<_ToastWidget>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.65),
+      begin: const Offset(0, 0.65),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -261,84 +276,86 @@ class _ToastWidgetState extends State<_ToastWidget>
         break;
     }
 
-    final topPadding = MediaQuery.paddingOf(context).top + AppSpace.sm;
-
     return SafeArea(
       top: false,
       bottom: false,
       child: Align(
-        alignment: Alignment.topCenter,
+        alignment: Alignment.bottomCenter,
         child: Padding(
-          padding: EdgeInsets.only(top: topPadding),
+          padding: EdgeInsets.only(bottom: widget.bottomMargin),
           child: SlideTransition(
             position: _slideAnimation,
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Dismissible(
                 key: const ValueKey('app_toast_dismissible'),
-                direction: DismissDirection.up,
+                direction: DismissDirection.down,
                 onDismissed: (_) => dismiss(),
                 child: Material(
                   color: Colors.transparent,
                   elevation: 0,
-                  child: InkWell(
-                    onTap: dismiss,
-                    borderRadius: AppRadius.pillRadius,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                      constraints: const BoxConstraints(maxWidth: 440),
-                      decoration: BoxDecoration(
-                        borderRadius: AppRadius.pillRadius,
-                        boxShadow: palette.shadow,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: AppRadius.pillRadius,
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                          child: Container(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                              AppSpace.lg,
-                              AppSpace.sm,
-                              AppSpace.md,
-                              AppSpace.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              color: palette.surfaceRaised.withValues(alpha: 0.92),
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(color: borderColor, width: 1.2),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: badgeColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Icon(
-                                icon,
-                                size: AppIcon.sm,
-                                color: iconColor,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.pillRadius,
+                      boxShadow: palette.shadow,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: AppRadius.pillRadius,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Material(
+                          color: palette.surfaceRaised.withValues(alpha: 0.92),
+                          child: InkWell(
+                            onTap: dismiss,
+                            child: Container(
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                AppSpace.lg,
+                                AppSpace.sm,
+                                AppSpace.md,
+                                AppSpace.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(color: borderColor, width: 1.2),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: badgeColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        icon,
+                                        size: AppIcon.sm,
+                                        color: iconColor,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.md),
+                                  Flexible(
+                                    child: Text(
+                                      widget.message,
+                                      style: textTheme.label.copyWith(
+                                        color: palette.text,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: AppSpace.md),
-                          Flexible(
-                            child: Text(
-                              widget.message,
-                              style: textTheme.label.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -348,9 +365,6 @@ class _ToastWidgetState extends State<_ToastWidget>
           ),
         ),
       ),
-    ),
-  ),
-),
-);
+    );
   }
 }
