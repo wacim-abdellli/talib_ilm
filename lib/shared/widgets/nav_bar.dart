@@ -70,7 +70,9 @@ class NavBar extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
+                          AnimatedContainer(
+                            duration: AppMotion.base,
+                            curve: AppMotion.easeOut,
                             width: 56,
                             height: 32,
                             decoration: BoxDecoration(
