@@ -99,15 +99,15 @@ class LocationService {
 
     // 2. Try physical Hardware GPS first
     try {
-      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (isServiceEnabled) {
-        var permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-        if (permission == LocationPermission.whileInUse ||
-            permission == LocationPermission.always) {
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (isServiceEnabled) {
           await _ensureLocale();
 
           // Try quick last known position for instant cache
@@ -189,11 +189,6 @@ class LocationService {
   Future<LocationResult> refreshGpsLocation() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!isServiceEnabled) {
-      throw Exception('خدمة الموقع (GPS) غير مفعلة على جهازك. يرجى تفعيلها من الإعدادات.');
-    }
-
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -202,6 +197,14 @@ class LocationService {
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       throw Exception('تم رفض إذن الوصول إلى الموقع. يرجى منحه من إعدادات الهاتف.');
+    }
+
+    final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!isServiceEnabled) {
+      try {
+        await Geolocator.openLocationSettings();
+      } catch (_) {}
+      throw Exception('خدمة الموقع (GPS) غير مفعلة على هاتفك. يرجى تفعيلها لتحديد موقعك.');
     }
 
     await _ensureLocale();
