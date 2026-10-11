@@ -8,11 +8,8 @@ enum IlmViewMode {
   disciplines,
 }
 
-/// A unified search, dual-lens view switcher, and filter bar for the Ilm library.
-class IlmSearchFilterBar extends StatelessWidget {
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearchChanged;
-  final VoidCallback onClearSearch;
+/// A dual-lens view switcher and category/level filter bar for the Ilm library.
+class IlmFilterBar extends StatelessWidget {
   final IlmViewMode currentMode;
   final ValueChanged<IlmViewMode> onModeChanged;
   final List<IlmLevel> levels;
@@ -24,11 +21,8 @@ class IlmSearchFilterBar extends StatelessWidget {
   final ValueChanged<String> onSelectDiscipline;
   final Map<String, int> disciplineBookCounts;
 
-  const IlmSearchFilterBar({
+  const IlmFilterBar({
     super.key,
-    required this.searchController,
-    required this.onSearchChanged,
-    required this.onClearSearch,
     required this.currentMode,
     required this.onModeChanged,
     required this.levels,
@@ -44,70 +38,43 @@ class IlmSearchFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final isSearching = searchController.text.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Search Input ──────────────────────────────────────────
+        // ── Dual-Lens Mode Switcher ───────────────────────────────
         Padding(
           padding: AppSpace.screenPadding,
           child: Container(
-            height: AppSize.inputH,
+            height: 44,
+            padding: AppSpace.insetXs,
             decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(
-                color: isSearching ? palette.primary : palette.border,
-                width: isSearching ? 1.5 : 1,
-              ),
-              boxShadow: palette.shadow,
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(color: palette.border),
             ),
             child: Row(
               children: [
-                const SizedBox(width: AppSpace.md),
-                Icon(
-                  Icons.search_rounded,
-                  color: isSearching ? palette.primary : palette.textMuted,
-                  size: AppIcon.md,
-                ),
-                const SizedBox(width: AppSpace.sm),
                 Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    onChanged: onSearchChanged,
-                    textDirection: TextDirection.rtl,
-                    style: context.text.body,
-                    decoration: InputDecoration(
-                      hintText: 'ابحث في المتون والكتب والشروح...',
-                      hintStyle: context.text.body.copyWith(
-                        color: palette.textMuted,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                  child: _buildModeTab(
+                    context: context,
+                    palette: palette,
+                    title: 'سُلم المستويات',
+                    icon: Icons.stairs_rounded,
+                    isSelected: currentMode == IlmViewMode.levels,
+                    onTap: () => onModeChanged(IlmViewMode.levels),
                   ),
                 ),
-                if (isSearching)
-                  Semantics(
-                    label: 'مسح البحث',
-                    button: true,
-                    child: SizedBox(
-                      width: AppSize.tap,
-                      height: AppSize.tap,
-                      child: IconButton(
-                        tooltip: 'مسح البحث',
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          Icons.clear_rounded,
-                          color: palette.textMuted,
-                          size: AppIcon.md,
-                        ),
-                        onPressed: onClearSearch,
-                      ),
-                    ),
+                Expanded(
+                  child: _buildModeTab(
+                    context: context,
+                    palette: palette,
+                    title: 'الفنون والعلوم',
+                    icon: Icons.category_rounded,
+                    isSelected: currentMode == IlmViewMode.disciplines,
+                    onTap: () => onModeChanged(IlmViewMode.disciplines),
                   ),
-                const SizedBox(width: AppSpace.xs),
+                ),
               ],
             ),
           ),
@@ -115,53 +82,11 @@ class IlmSearchFilterBar extends StatelessWidget {
 
         const SizedBox(height: AppSpace.md),
 
-        // ── Dual-Lens Mode Switcher (Visible when not actively searching) ─
-        if (!isSearching) ...[
-          Padding(
-            padding: AppSpace.screenPadding,
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.all(AppSpace.xs),
-              decoration: BoxDecoration(
-                color: palette.surfaceMuted,
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildModeTab(
-                      context: context,
-                      palette: palette,
-                      title: 'سُلم المستويات',
-                      icon: Icons.stairs_rounded,
-                      isSelected: currentMode == IlmViewMode.levels,
-                      onTap: () => onModeChanged(IlmViewMode.levels),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildModeTab(
-                      context: context,
-                      palette: palette,
-                      title: 'الفنون والعلوم',
-                      icon: Icons.category_rounded,
-                      isSelected: currentMode == IlmViewMode.disciplines,
-                      onTap: () => onModeChanged(IlmViewMode.disciplines),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AppSpace.md),
-
-          // ── Sub-navigation filter chips ─────────────────────────
-          if (currentMode == IlmViewMode.levels)
-            _buildLevelChips(context, palette)
-          else
-            _buildDisciplineChips(context, palette),
-        ],
+        // ── Sub-navigation filter chips ───────────────────────────
+        if (currentMode == IlmViewMode.levels)
+          _buildLevelChips(context, palette)
+        else
+          _buildDisciplineChips(context, palette),
       ],
     );
   }
@@ -184,7 +109,7 @@ class IlmSearchFilterBar extends StatelessWidget {
             color: isSelected ? palette.surface : Colors.transparent,
             borderRadius: AppRadius.pillRadius,
             border: isSelected
-                ? Border.all(color: palette.gold.withAlpha(90), width: 1)
+                ? Border.all(color: palette.gold.withAlpha(90))
                 : null,
             boxShadow: isSelected ? palette.shadow : null,
           ),
@@ -234,7 +159,7 @@ class IlmSearchFilterBar extends StatelessWidget {
               borderRadius: AppRadius.pillRadius,
               child: AnimatedContainer(
                 duration: AppMotion.base,
-                padding: const EdgeInsets.symmetric(
+                padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.md,
                   vertical: AppSpace.xs,
                 ),
@@ -268,10 +193,7 @@ class IlmSearchFilterBar extends StatelessWidget {
                     ] else if (completion > 0) ...[
                       const SizedBox(width: AppSpace.xs),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpace.xs,
-                          vertical: 2,
-                        ),
+                        padding: AppSpace.insetXs,
                         decoration: BoxDecoration(
                           color: palette.surfaceRaised,
                           borderRadius: AppRadius.smRadius,
@@ -317,7 +239,7 @@ class IlmSearchFilterBar extends StatelessWidget {
               borderRadius: AppRadius.pillRadius,
               child: AnimatedContainer(
                 duration: AppMotion.base,
-                padding: const EdgeInsets.symmetric(
+                padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.md,
                   vertical: AppSpace.xs,
                 ),

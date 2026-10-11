@@ -9,18 +9,19 @@ import '../../../core/services/favorites_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
-import '../../../shared/widgets/shimmer_loading.dart';
+import 'widgets/ilm_loading_view.dart';
 import '../data/models/book_progress_model.dart';
 import '../data/models/mutun_models.dart';
 import '../data/services/book_progress_service.dart';
 import '../data/services/daily_reading_service.dart';
 import '../data/services/motivation_service.dart';
 import 'pages/book_view_page.dart';
+import 'widgets/ilm_books_grid.dart';
 import 'widgets/ilm_header.dart';
 import 'widgets/ilm_level_header_card.dart';
+import 'widgets/ilm_search_bar.dart';
 import 'widgets/ilm_search_filter_bar.dart';
 import 'widgets/motivation_widgets.dart';
-import 'widgets/scholarly_book_card.dart';
 import 'widgets/study_resume_pill.dart';
 
 class IlmPage extends StatefulWidget {
@@ -51,6 +52,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   Map<String, BookProgress> _progressById = {};
   Map<String, IlmLevel> _levelByTab = {};
   List<IlmLevel> _sortedLevels = [];
+  Map<String, String> _searchIndex = {};
 
   // Navigation & Search State
   IlmViewMode _currentMode = IlmViewMode.levels;
@@ -128,6 +130,28 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       _allBooks = allBooks;
       _levelByTab = levelByTab;
       _sortedLevels = visibleLevels;
+
+      final searchIndex = <String, String>{};
+      for (final book in allBooks) {
+        final b = StringBuffer()
+          ..write(_normalizeArabic(book.title))
+          ..write(' ')
+          ..write(_normalizeArabic(book.author))
+          ..write(' ')
+          ..write(_normalizeArabic(book.subject))
+          ..write(' ')
+          ..write(_normalizeArabic(book.description))
+          ..write(' ')
+          ..write(_normalizeArabic(book.level));
+        for (final s in book.shuruh) {
+          b.write(' ');
+          b.write(_normalizeArabic(s.title));
+          b.write(' ');
+          b.write(_normalizeArabic(s.scholar));
+        }
+        searchIndex[book.id] = b.toString();
+      }
+      _searchIndex = searchIndex;
 
       if (_selectedLevelId == null ||
           !_levelByTab.containsKey(_selectedLevelId)) {
@@ -245,21 +269,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     if (_searchQuery.isNotEmpty) {
       final q = _normalizeArabic(_searchQuery);
       return _allBooks.where((book) {
-        final title = _normalizeArabic(book.title);
-        final author = _normalizeArabic(book.author);
-        final subject = _normalizeArabic(book.subject);
-        final desc = _normalizeArabic(book.description);
-        final level = _normalizeArabic(book.level);
-        final matchesShuruh = book.shuruh.any((s) {
-          return _normalizeArabic(s.title).contains(q) ||
-              _normalizeArabic(s.scholar).contains(q);
-        });
-        return title.contains(q) ||
-            author.contains(q) ||
-            subject.contains(q) ||
-            desc.contains(q) ||
-            level.contains(q) ||
-            matchesShuruh;
+        final indexed = _searchIndex[book.id];
+        return indexed != null && indexed.contains(q);
       }).toList();
     }
 
@@ -360,36 +371,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     final palette = context.palette;
 
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: palette.bg,
-        body: SafeArea(
-          child: Padding(
-            padding: AppSpace.screenPadding,
-            child: ListView(
-              children: [
-                const SizedBox(height: AppSpace.md),
-                const ShimmerBookCard(),
-                const SizedBox(height: AppSpace.lg),
-                SizedBox(
-                  height: 500,
-                  child: GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: AppSpace.md,
-                      mainAxisSpacing: AppSpace.md,
-                      childAspectRatio: 0.68,
-                    ),
-                    itemCount: 6,
-                    itemBuilder: (context, index) => const ShimmerBookCard(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return const IlmLoadingView();
     }
 
     final activeLevel = _levelByTab[_selectedLevelId] ?? _sortedLevels.first;
@@ -429,8 +411,73 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                   children: [
                     const SizedBox(height: AppSpace.md),
 
-                    // ── Hero Study Resume Pill ────────────────────
-                    if (!isSearching) ...[
+                    // ── Dedicated Minimalist Search Bar ───────────
+                    IlmSearchBar(
+                      controller: _searchController,
+                      onSearchChanged: (query) {
+                        if (_searchQuery != query) {
+                          setState(() => _searchQuery = query);
+                        }
+                      },
+                      onClear: () {
+                        if (_searchQuery.isNotEmpty) {
+                          setState(() => _searchQuery = '');
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: AppSpace.md),
+
+                    if (isSearching) ...[
+                      // ── Search Results Badge & Clear ────────────
+                      Padding(
+                        padding: AppSpace.screenPadding,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'نتائج البحث: ${displayedBooks.length} متون',
+                              style: context.text.titleSmall.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              borderRadius: AppRadius.pillRadius,
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xs,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.close_rounded,
+                                      size: AppIcon.sm,
+                                      color: palette.textMuted,
+                                    ),
+                                    const SizedBox(width: AppSpace.xs),
+                                    Text(
+                                      'إلغاء البحث',
+                                      style: context.text.caption.copyWith(
+                                        color: palette.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.sm),
+                    ] else ...[
+                      // ── Hero Study Resume Pill ──────────────────
                       StudyResumePill(
                         continueReadingBook: _continueReadingBook,
                         recommendedFirstBook: _recommendedFirstBook,
@@ -441,62 +488,38 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         onNavigateToBook: _navigateToBook,
                       ),
                       const SizedBox(height: AppSpace.md),
-                    ],
 
-                    // ── Unified Search & Dual-Lens Filter Bar ─────
-                    IlmSearchFilterBar(
-                      searchController: _searchController,
-                      onSearchChanged: (query) {
-                        setState(() => _searchQuery = query.trim());
-                      },
-                      onClearSearch: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                      currentMode: _currentMode,
-                      onModeChanged: (mode) {
-                        setState(() => _currentMode = mode);
-                      },
-                      levels: _sortedLevels,
-                      selectedLevelId: _selectedLevelId ?? activeLevel.id,
-                      onSelectLevel: (lvlId) {
-                        setState(() => _selectedLevelId = lvlId);
-                      },
-                      levelCompletion: _levelCompletions,
-                      disciplines: _disciplines,
-                      selectedDiscipline: _selectedDiscipline,
-                      onSelectDiscipline: (disc) {
-                        setState(() => _selectedDiscipline = disc);
-                      },
-                      disciplineBookCounts: _disciplineBookCounts,
-                    ),
-
-                    const SizedBox(height: AppSpace.md),
-
-                    // ── Active Level Header Card (Levels mode only)
-                    if (!isSearching && _currentMode == IlmViewMode.levels) ...[
-                      IlmLevelHeaderCard(
-                        level: activeLevel,
-                        completion: levelCompletionRatio,
-                        totalBooks: levelBooks.length,
-                        completedBooks: completedInLevel,
+                      // ── Dual-Lens Mode & Level/Discipline Filter ─
+                      IlmFilterBar(
+                        currentMode: _currentMode,
+                        onModeChanged: (mode) {
+                          setState(() => _currentMode = mode);
+                        },
+                        levels: _sortedLevels,
+                        selectedLevelId: _selectedLevelId ?? activeLevel.id,
+                        onSelectLevel: (lvlId) {
+                          setState(() => _selectedLevelId = lvlId);
+                        },
+                        levelCompletion: _levelCompletions,
+                        disciplines: _disciplines,
+                        selectedDiscipline: _selectedDiscipline,
+                        onSelectDiscipline: (disc) {
+                          setState(() => _selectedDiscipline = disc);
+                        },
+                        disciplineBookCounts: _disciplineBookCounts,
                       ),
                       const SizedBox(height: AppSpace.md),
-                    ],
 
-                    // ── Search Results Subtitle ───────────────────
-                    if (isSearching) ...[
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: Text(
-                          'نتائج البحث: ${displayedBooks.length} متون',
-                          style: context.text.titleSmall.copyWith(
-                            color: palette.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // ── Active Level Header Card (Levels mode only)
+                      if (_currentMode == IlmViewMode.levels) ...[
+                        IlmLevelHeaderCard(
+                          level: activeLevel,
+                          completion: levelCompletionRatio,
+                          totalBooks: levelBooks.length,
+                          completedBooks: completedInLevel,
                         ),
-                      ),
-                      const SizedBox(height: AppSpace.sm),
+                        const SizedBox(height: AppSpace.md),
+                      ],
                     ],
 
                     // ── Books Section (2-Column Luxury Grid) ──────
@@ -527,38 +550,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                     else
                       Padding(
                         padding: AppSpace.screenPadding,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isSmall = constraints.maxWidth < 360;
-                            final aspectRatio = isSmall ? 0.62 : 0.68;
-
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: AppSpace.md,
-                                mainAxisSpacing: AppSpace.md,
-                                childAspectRatio: aspectRatio,
-                              ),
-                              itemCount: displayedBooks.length,
-                              itemBuilder: (context, index) {
-                                final book = displayedBooks[index];
-                                final progress = _progressById[book.id];
-                                final isRecommended =
-                                    book.id == _recommendedFirstBook?.id;
-
-                                return ScholarlyBookCard(
-                                  book: book,
-                                  progress: progress,
-                                  isRecommended: isRecommended,
-                                  onNavigateToBook: _navigateToBook,
-                                  onToggleFavorite: _toggleFavorite,
-                                );
-                              },
-                            );
-                          },
+                        child: IlmBooksGrid(
+                          books: displayedBooks,
+                          progressById: _progressById,
+                          recommendedBookId: _recommendedFirstBook?.id,
+                          onNavigateToBook: _navigateToBook,
+                          onToggleFavorite: _toggleFavorite,
                         ),
                       ),
 
