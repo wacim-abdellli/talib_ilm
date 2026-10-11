@@ -540,5 +540,34 @@ FAILED (54 violations)
   - `flutter test`: 40/40 tests passed (100% pass across all 40 test suites, including new `ScholarlyBookCard` goldens).
   - `flutter build apk --debug`: Built cleanly in 41.3s.
 
+---
+
+## Authentic Prophetic Adhkar Catalog Overhaul («حصن المسلم والسنن الثابتة»)
+- **Status:** Complete
+- **Deep Hadith Verification & Catalog Architectural Transformation:**
+  - **Comprehensive Categorization (`assets/data/adhkar.json`):**
+    - Transitioned from an incomplete flat list of 34 mixed items to a fully categorized prophetic database with **85 authentic items** across all 7 essential categories:
+      1. **`morning` (أذكار الصباح):** 22 authentic prophetic morning adhkar with sahih takhrij, exact targets (1x, 3x, 4x, 7x, 100x), and noble virtues (Ayat al-Kursi, Al-Mu'awwidhat, Asbahna wa asbaha al-mulk, Sayyid al-Istighfar, Allahumma bika asbahna, Raditu billah, Bismillahilladhi la yadurru, Ya Hayyu Ya Qayyum, Subhanallahi wa bihamdihi 'adada khalqihi, La ilaha illallah 100x, Subhanallahi wa bihamdihi 100x, Astaghfirullah wa atubu ilayh 100x, etc.).
+      2. **`evening` (أذكار المساء):** 19 authentic prophetic evening adhkar (Amsayna wa amsa al-mulk, Khawatim Surat al-Baqarah, A'udhu bikalimatillahit-tammati min sharri ma khalaq 3x, Allahumma bika amsayna, etc.).
+      3. **`after_prayer` (أذكار بعد الصلاة):** 11 authentic prophetic adhkar recited immediately after obligatory prayers (Astaghfirullah 3x + Allahumma Antas-Salam, La ilaha illallahu wahdahu... Allahumma la mani'a, Tasbeeh 33x, Tahmeed 33x, Takbeer 33x, Tamam al-Miah, Ayat al-Kursi, Al-Mu'awwidhat, Allahumma a'inni 'ala dhikrika, Fajr & Maghrib 10x).
+      4. **`sleeping` (أذكار النوم والاستيقاظ):** 10 authentic bedtime and waking adhkar (Cupping hands with blowing and Mu'awwidhat 3x, Ayat al-Kursi before sleep, Bismika Rabbi wada'tu janbi, Tasbeeh of Fatima 33/33/34, Al-Hamdu lillahilladhi at'amana wa saqana, Du'a al-Fitrah, Waking praise: Al-Hamdu lillahilladhi ahyana...).
+      5. **`duas` (الأدعية النبوية المأثورة):** 12 comprehensive prophetic supplications (Jawami' al-Du'a from Sahih al-Bukhari & Sahih Muslim: Rabbana atina fid-dunya hasanah, Du'a Dhi an-Nun in the whale, Du'a al-Karb, Al-Hamm wal-Hazan, Al-Huda wat-Tuqa, Ya Muqallib al-Qulub, Kaffarat al-Majlis, etc.).
+      6. **`tasbeeh` (التسبيح والتحميد):** 6 authentic formulas with verified merits (Kalimatan habibatan lir-Rahman, Subhanallah wal-hamdulillah..., La hawla wa la quwwata illa billah, Salat upon the Prophet ﷺ).
+      7. **`istighfar` (الاستغفار والتوبة):** 5 authentic prophetic formulas of seeking forgiveness (Astaghfirullah wa atubu ilayh 100x, Sayyid al-Istighfar, Rabbi-ghfir li wa tub 'alayya 100x in one sitting, Astaghfirullahal-ladhi la ilaha illa Huwal-Hayyul-Qayyum, Du'a Abi Bakr in prayer).
+  - **Authentic Hadith Takhrij & Full Vocalization:**
+    - Every single dhikr contains precise, verified Arabic text with full tashkeel.
+    - Verified scholarly takhrij from *Sahih al-Bukhari*, *Sahih Muslim*, *Sunan Abi Dawud*, *Jami' at-Tirmidhi*, *Sunan an-Nasa'i*, *Sunan Ibn Majah*, and authentications by classical and contemporary muhadditheen (Imam an-Nawawi, Ibn Hajar, Al-Albani in *Sahih al-Jami'* and *Sahih al-Kalim al-Tayyib*).
+  - **Enhanced Presentation Layer (`adhkar_session_page.dart`):**
+    - Beautiful count pills displaying exact targets.
+    - Prominent virtue cards (`item.fadl`) styled with refined gold badges and stars.
+    - Clear scholarly attribution labels (`item.source`).
+    - Maintained file modularity under 580 lines (well under the 600-line threshold).
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 53 violations (0 new violations, 0 allow markers used).
+  - `flutter test`: 42/42 tests passed (100% pass across all 42 tests, including new `test/adhkar_catalog_test.dart`).
+  - `flutter build apk --debug`: Built cleanly in 23.6s (`build\app\outputs\flutter-apk\app-debug.apk`).
+
+
 
 

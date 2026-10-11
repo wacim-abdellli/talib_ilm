@@ -220,6 +220,26 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
+                                            if (item.countDescription.isNotEmpty) ...[
+                                              Container(
+                                                padding: const EdgeInsetsDirectional.symmetric(
+                                                  horizontal: AppSpace.md,
+                                                  vertical: AppSpace.xs,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: palette.goldSoft,
+                                                  borderRadius: AppRadius.smRadius,
+                                                ),
+                                                child: Text(
+                                                  item.countDescription,
+                                                  style: context.text.caption.copyWith(
+                                                    color: palette.gold,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: AppSpace.md),
+                                            ],
                                             // Arabic Sacred Text
                                             Text(
                                               item.arabic,
@@ -230,6 +250,54 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                                 height: 1.8,
                                               ),
                                             ),
+                                            if (item.fadl.isNotEmpty) ...[
+                                              const SizedBox(height: AppSpace.md),
+                                              Container(
+                                                padding: const EdgeInsetsDirectional.all(
+                                                  AppSpace.md,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: palette.surfaceMuted,
+                                                  borderRadius: AppRadius.smRadius,
+                                                  border: Border.all(
+                                                    color: palette.border,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.stars_rounded,
+                                                      size: AppIcon.sm,
+                                                      color: palette.gold,
+                                                    ),
+                                                    const SizedBox(width: AppSpace.xs),
+                                                    Expanded(
+                                                      child: Text(
+                                                        item.fadl,
+                                                        textAlign: TextAlign.right,
+                                                        style: context.text.caption.copyWith(
+                                                          color: palette.text,
+                                                          fontWeight: FontWeight.w600,
+                                                          height: 1.4,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            if (item.source.isNotEmpty) ...[
+                                              const SizedBox(height: AppSpace.sm),
+                                              Text(
+                                                item.source,
+                                                textAlign: TextAlign.center,
+                                                style: context.text.caption.copyWith(
+                                                  color: palette.textMuted,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ],
                                             if (item.meaning.isNotEmpty) ...[
                                               const SizedBox(height: AppSpace.md),
                                               Divider(
