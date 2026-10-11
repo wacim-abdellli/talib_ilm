@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
+
 import '../../../app/theme/app_palette.dart';
 import '../../../core/services/adhkar_session_service.dart';
-import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
+import 'widgets/adhkar_session_card.dart';
+import 'widgets/dhikr_counter_dial.dart';
 
+/// Immersive, scholarly recitation session for Adhkar with tactile counting
+/// and ergonomically placed RTL navigation arrows.
 class AdhkarSessionPage extends StatefulWidget {
   final AdhkarCategory category;
   final String? titleOverride;
@@ -105,7 +107,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
     if (repeat > 0 && nextCount >= repeat) {
       HapticFeedback.mediumImpact();
-      Future.delayed(const Duration(milliseconds: 650), () {
+      Future.delayed(AppMotion.slow * 2, () {
         if (mounted) {
           setState(() => _showSuccessRipple = false);
           if (_index + 1 < _items.length) {
@@ -158,24 +160,56 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     final title =
         widget.titleOverride ?? _categoryTitle ?? widget.category.label;
     final palette = context.palette;
+    final totalItems = _items.length;
+    final progressRatio = totalItems > 0 ? (_index + 1) / totalItems : 0.0;
+
+    final repeat = _repeatFor(_items, _index);
+    final isCurrentComplete = repeat > 0 && _count >= repeat;
 
     return Scaffold(
       backgroundColor: palette.bg,
       appBar: PrimaryAppBar(
         title: title,
         showBack: true,
-        bottom: _items.isNotEmpty
+        bottom: totalItems > 0
             ? PreferredSize(
-                preferredSize: const Size.fromHeight(20),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-                  child: Text(
-                    'الذكر ${_index + 1} من ${_items.length}',
-                    style: context.text.caption.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: palette.gold,
+                preferredSize: const Size.fromHeight(28),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                        vertical: AppSpace.xs,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'الذكر ${_index + 1} من $totalItems',
+                            style: context.text.caption.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: palette.gold,
+                            ),
+                          ),
+                          Text(
+                            '${(progressRatio * 100).round()}%',
+                            style: context.text.caption.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    ClipRRect(
+                      child: LinearProgressIndicator(
+                        value: progressRatio,
+                        minHeight: 3,
+                        backgroundColor: palette.surfaceMuted,
+                        valueColor: AlwaysStoppedAnimation<Color>(palette.gold),
+                      ),
+                    ),
+                  ],
                 ),
               )
             : null,
@@ -196,179 +230,146 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                     children: [
                       Column(
                         children: [
-                          // Dhikr Text Carousel
+                          // ── 1. Dhikr Card Carousel & Floating Side Arrows ──
                           Expanded(
-                            child: PageView.builder(
-                              controller: _pageController,
-                              itemCount: _items.length,
-                              onPageChanged: _onPageChanged,
-                              physics: const BouncingScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                final item = _items[index];
-                                return Padding(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.xl,
-                                    vertical: AppSpace.sm,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // PageView
+                                PageView.builder(
+                                  controller: _pageController,
+                                  itemCount: totalItems,
+                                  onPageChanged: _onPageChanged,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemBuilder: (context, index) {
+                                    final item = _items[index];
+                                    final itemRepeat = _repeatFor(_items, index);
+                                    final itemKey = _favoriteIdFor(item);
+                                    final itemCount = _counts[itemKey] ?? 0;
+                                    final isDone = itemRepeat > 0 && itemCount >= itemRepeat;
+
+                                    return AdhkarSessionCard(
+                                      item: item,
+                                      repeat: itemRepeat,
+                                      isDone: isDone,
+                                    );
+                                  },
+                                ),
+
+                                // Floating Previous Arrow (Right side in RTL)
+                                if (_index > 0)
+                                  PositionedDirectional(
+                                    end: AppSpace.xs,
+                                    child: FloatingChevronButton(
+                                      icon: Icons.chevron_right_rounded,
+                                      tooltip: 'الذكر السابق',
+                                      onTap: _goPrev,
+                                    ),
                                   ),
-                                  child: Center(
-                                    child: SingleChildScrollView(
-                                      physics: const BouncingScrollPhysics(),
-                                      child: AppCard(
-                                        padding: const EdgeInsetsDirectional.all(
-                                          AppSpace.xxl,
+
+                                // Floating Next Arrow (Left side in RTL)
+                                if (_index + 1 < totalItems)
+                                  PositionedDirectional(
+                                    start: AppSpace.xs,
+                                    child: FloatingChevronButton(
+                                      icon: Icons.chevron_left_rounded,
+                                      tooltip: 'الذكر التالي',
+                                      isHighlighted: isCurrentComplete,
+                                      onTap: _goNext,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: AppSpace.xs),
+
+                          // ── 2. Tactile Counter Dial ────────────────────────
+                          DhikrCounterDial(
+                            count: _count,
+                            total: repeat,
+                            isComplete: isCurrentComplete,
+                            onTap: _handleTap,
+                          ),
+
+                          const SizedBox(height: AppSpace.md),
+
+                          // ── 3. Ergonomic Bottom Navigation Dock ────────────
+                          Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xl,
+                              vertical: AppSpace.sm,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Previous Dhikr Button (Right in RTL)
+                                NavigationPillButton(
+                                  icon: Icons.chevron_right_rounded,
+                                  label: 'السابق',
+                                  isLeadingIcon: true,
+                                  isEnabled: _index > 0,
+                                  onTap: _index > 0 ? _goPrev : null,
+                                ),
+
+                                // Reset Counter Button (Center)
+                                Tooltip(
+                                  message: 'إعادة العداد',
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _resetCount,
+                                      borderRadius: AppRadius.pillRadius,
+                                      child: Container(
+                                        padding: const EdgeInsetsDirectional.symmetric(
+                                          horizontal: AppSpace.md,
+                                          vertical: AppSpace.sm,
                                         ),
-                                        child: Column(
+                                        decoration: BoxDecoration(
+                                          color: palette.surfaceMuted,
+                                          borderRadius: AppRadius.pillRadius,
+                                          border: Border.all(color: palette.border),
+                                        ),
+                                        child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            if (item.countDescription.isNotEmpty) ...[
-                                              Container(
-                                                padding: const EdgeInsetsDirectional.symmetric(
-                                                  horizontal: AppSpace.md,
-                                                  vertical: AppSpace.xs,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: palette.goldSoft,
-                                                  borderRadius: AppRadius.smRadius,
-                                                ),
-                                                child: Text(
-                                                  item.countDescription,
-                                                  style: context.text.caption.copyWith(
-                                                    color: palette.gold,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(height: AppSpace.md),
-                                            ],
-                                            // Arabic Sacred Text
+                                            Icon(
+                                              Icons.refresh_rounded,
+                                              size: AppIcon.sm,
+                                              color: palette.textMuted,
+                                            ),
+                                            const SizedBox(width: AppSpace.xs),
                                             Text(
-                                              item.arabic,
-                                              textAlign: TextAlign.center,
-                                              style: context.text.sacredLarge.copyWith(
-                                                color: palette.text,
-                                                fontWeight: FontWeight.w700,
-                                                height: 1.8,
+                                              'إعادة',
+                                              style: context.text.caption.copyWith(
+                                                color: palette.textMuted,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            if (item.fadl.isNotEmpty) ...[
-                                              const SizedBox(height: AppSpace.md),
-                                              Container(
-                                                padding: const EdgeInsetsDirectional.all(
-                                                  AppSpace.md,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: palette.surfaceMuted,
-                                                  borderRadius: AppRadius.smRadius,
-                                                  border: Border.all(
-                                                    color: palette.border,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.stars_rounded,
-                                                      size: AppIcon.sm,
-                                                      color: palette.gold,
-                                                    ),
-                                                    const SizedBox(width: AppSpace.xs),
-                                                    Expanded(
-                                                      child: Text(
-                                                        item.fadl,
-                                                        textAlign: TextAlign.right,
-                                                        style: context.text.caption.copyWith(
-                                                          color: palette.text,
-                                                          fontWeight: FontWeight.w600,
-                                                          height: 1.4,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                            if (item.source.isNotEmpty) ...[
-                                              const SizedBox(height: AppSpace.sm),
-                                              Text(
-                                                item.source,
-                                                textAlign: TextAlign.center,
-                                                style: context.text.caption.copyWith(
-                                                  color: palette.textMuted,
-                                                  height: 1.4,
-                                                ),
-                                              ),
-                                            ],
-                                            if (item.meaning.isNotEmpty) ...[
-                                              const SizedBox(height: AppSpace.md),
-                                              Divider(
-                                                color: palette.border,
-                                              ),
-                                              const SizedBox(height: AppSpace.sm),
-                                              Text(
-                                                item.meaning,
-                                                textAlign: TextAlign.center,
-                                                style: context.text.bodySmall.copyWith(
-                                                  color: palette.textMuted,
-                                                  height: 1.6,
-                                                ),
-                                              ),
-                                            ],
                                           ],
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-
-                          const SizedBox(height: AppSpace.sm),
-
-                          // Counter Dial
-                          _buildCounterArea(_items[_index]),
-
-                          const SizedBox(height: AppSpace.lg),
-
-                          // Bottom Navigation Bar
-                          Padding(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xxl,
-                              vertical: AppSpace.md,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Previous
-                                AppIconButton(
-                                  icon: Icons.arrow_forward_ios_rounded,
-                                  tooltip: 'السابق',
-                                  onPressed: _index > 0 ? _goPrev : null,
                                 ),
 
-                                // Reset
-                                AppButton(
-                                  label: 'إعادة العداد',
-                                  icon: Icons.replay_rounded,
-                                  variant: AppButtonVariant.outline,
-                                  size: AppButtonSize.sm,
-                                  onPressed: _resetCount,
-                                ),
-
-                                // Next
-                                AppIconButton(
-                                  icon: Icons.arrow_back_ios_new_rounded,
-                                  tooltip: 'التالي',
-                                  onPressed: _index + 1 < _items.length ? _goNext : null,
+                                // Next Dhikr Button (Left in RTL)
+                                NavigationPillButton(
+                                  icon: Icons.chevron_left_rounded,
+                                  label: 'التالي',
+                                  isLeadingIcon: false,
+                                  isHighlighted: isCurrentComplete,
+                                  isEnabled: _index + 1 < totalItems,
+                                  onTap: _index + 1 < totalItems ? _goNext : null,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: AppSpace.sm),
+                          const SizedBox(height: AppSpace.xs),
                         ],
                       ),
 
-                      // Completion Ripple
+                      // Completion Ripple Accent
                       if (_showSuccessRipple)
                         Positioned.fill(
                           child: IgnorePointer(
@@ -380,114 +381,6 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                         ),
                     ],
                   ),
-      ),
-    );
-  }
-
-  Widget _buildCounterArea(AthkarItem item) {
-    final repeat = _repeatFor(_items, _index);
-    final isComplete = repeat > 0 && _count >= repeat;
-    final palette = context.palette;
-
-    return Semantics(
-      button: true,
-      label: 'عداد الذكر، اضغط للعد',
-      child: InkWell(
-        onTap: _handleTap,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Circular Progress Dial
-            SizedBox(
-              width: 210,
-              height: 210,
-              child: CustomPaint(
-                painter: _DhikrProgressPainter(
-                  count: _count,
-                  total: repeat,
-                  trackColor: palette.border,
-                  progressColor: isComplete ? palette.success : palette.gold,
-                ),
-              ),
-            ),
-
-            // Inner Numbers & Details
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedSwitcher(
-                  duration: AppMotion.fast,
-                  transitionBuilder: (child, anim) =>
-                      ScaleTransition(scale: anim, child: child),
-                  child: Text(
-                    '$_count',
-                    key: ValueKey(_count),
-                    textScaler: const TextScaler.linear(2.5),
-                    style: context.text.display.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: isComplete
-                          ? palette.success
-                          : palette.text,
-                      height: 1,
-                    ),
-                  ),
-                ),
-                if (repeat > 0) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    'من $repeat',
-                    style: context.text.label.copyWith(
-                      color: palette.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                if (isComplete) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.sm,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.primarySoft,
-                      borderRadius: AppRadius.smRadius,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_rounded,
-                          color: palette.success,
-                          size: AppIcon.sm,
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Text(
-                          'اكتمل',
-                          style: context.text.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: palette.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    'المس للعد',
-                    style: context.text.caption.copyWith(
-                      color: palette.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -517,63 +410,5 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-}
-
-class _DhikrProgressPainter extends CustomPainter {
-  final int count;
-  final int total;
-  final Color trackColor;
-  final Color progressColor;
-
-  _DhikrProgressPainter({
-    required this.count,
-    required this.total,
-    required this.trackColor,
-    required this.progressColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = (size.width - 14) / 2;
-
-    // Track circle
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, trackPaint);
-
-    if (total <= 0) return;
-
-    // Progress arc
-    final progress = (count / total).clamp(0.0, 1.0);
-    if (progress > 0) {
-      final rect = Rect.fromCircle(center: center, radius: radius);
-      final progressPaint = Paint()
-        ..color = progressColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 10
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(
-        rect,
-        -math.pi / 2,
-        2 * math.pi * progress,
-        false,
-        progressPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DhikrProgressPainter oldDelegate) {
-    return count != oldDelegate.count ||
-        total != oldDelegate.total ||
-        trackColor != oldDelegate.trackColor ||
-        progressColor != oldDelegate.progressColor;
   }
 }
