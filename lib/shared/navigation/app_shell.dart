@@ -96,7 +96,7 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-/// Smoothly transitions between persistent stacked pages preserving state
+/// Fast, smooth transitions between persistent stacked pages preserving state
 class AnimatedIndexedStack extends StatefulWidget {
   final int index;
   final List<Widget> children;
@@ -106,7 +106,7 @@ class AnimatedIndexedStack extends StatefulWidget {
     super.key,
     required this.index,
     required this.children,
-    this.duration = AppMotion.base,
+    this.duration = AppMotion.fast,
   });
 
   @override
@@ -118,28 +118,21 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
   late AnimationController _controller;
   late Animation<double> _animation;
   late int _currentIndex;
-  int? _previousIndex;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.index;
-    _previousIndex = null;
     _controller = AnimationController(
       vsync: this,
       duration: widget.duration,
     );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: AppMotion.easeOut,
+    _animation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: AppMotion.easeOut,
+      ),
     );
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        setState(() {
-          _previousIndex = null;
-        });
-      }
-    });
     _controller.value = 1.0;
   }
 
@@ -147,7 +140,6 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
   void didUpdateWidget(AnimatedIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.index != _currentIndex) {
-      _previousIndex = _currentIndex;
       _currentIndex = widget.index;
       _controller.forward(from: 0.0);
     }
@@ -161,74 +153,12 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
 
   @override
   Widget build(BuildContext context) {
-    final orderedIndices = <int>[];
-    for (var i = 0; i < widget.children.length; i++) {
-      if (i != _currentIndex && i != _previousIndex) {
-        orderedIndices.add(i);
-      }
-    }
-    if (_previousIndex != null && _previousIndex != _currentIndex) {
-      orderedIndices.add(_previousIndex!);
-    }
-    orderedIndices.add(_currentIndex);
-
-    return Stack(
-      fit: StackFit.expand,
-      children: orderedIndices.map((i) {
-        final isCurrent = i == _currentIndex;
-        final isPrevious = i == _previousIndex;
-
-        if (!isCurrent && !isPrevious) {
-          return KeyedSubtree(
-            key: ValueKey(i),
-            child: Offstage(
-              offstage: true,
-              child: TickerMode(
-                enabled: false,
-                child: widget.children[i],
-              ),
-            ),
-          );
-        }
-
-        if (isCurrent) {
-          Widget child = widget.children[i];
-          if (_previousIndex != null) {
-            child = FadeTransition(
-              opacity: _animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.0, 0.012),
-                  end: Offset.zero,
-                ).animate(_animation),
-                child: child,
-              ),
-            );
-          }
-          return KeyedSubtree(
-            key: ValueKey(i),
-            child: IgnorePointer(
-              ignoring: false,
-              child: TickerMode(
-                enabled: true,
-                child: child,
-              ),
-            ),
-          );
-        }
-
-        // Previous index is visible underneath during animation, with touches disabled
-        return KeyedSubtree(
-          key: ValueKey(i),
-          child: IgnorePointer(
-            ignoring: true,
-            child: TickerMode(
-              enabled: false,
-              child: widget.children[i],
-            ),
-          ),
-        );
-      }).toList(),
+    return FadeTransition(
+      opacity: _animation,
+      child: IndexedStack(
+        index: _currentIndex,
+        children: widget.children,
+      ),
     );
   }
 }

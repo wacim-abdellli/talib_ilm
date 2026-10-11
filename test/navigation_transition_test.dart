@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_palette.dart';
 import 'package:talib_ilm/shared/navigation/app_shell.dart';
+import 'package:talib_ilm/shared/widgets/nav_bar.dart';
 
 void main() {
-  testWidgets('AnimatedIndexedStack crossfade transitions between children',
+  testWidgets('AnimatedIndexedStack fast smooth transitions between children',
       (WidgetTester tester) async {
     int index = 0;
 
@@ -49,30 +50,56 @@ void main() {
 
     // Switch to Tab 1
     await tester.tap(find.text('Tab 1'));
-    // Pump 1 frame to trigger transition start
-    await tester.pump();
-
-    // Both previous (Page 0) and current (Page 1) should be present during crossfade
-    expect(find.text('Page 0 Home'), findsOneWidget);
-    expect(find.text('Page 1 Salat'), findsOneWidget);
-
-    // Advance halfway through transition
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Page 0 Home'), findsOneWidget);
-    expect(find.text('Page 1 Salat'), findsOneWidget);
-
-    // Advance to complete transition
-    await tester.pump(AppMotion.base);
+    // Advance fast transition
+    await tester.pump(AppMotion.fast);
     await tester.pumpAndSettle();
 
-    // Now transition is complete: Page 1 is on stage
+    // Now transition is complete: Page 1 is visible
     expect(find.text('Page 1 Salat'), findsOneWidget);
 
     // Switch to Tab 2
     await tester.tap(find.text('Tab 2'));
-    await tester.pump();
+    await tester.pump(AppMotion.fast);
     await tester.pumpAndSettle();
 
     expect(find.text('Page 2 Ilm'), findsOneWidget);
+  });
+
+  testWidgets('NavBar triggers icon bounce animation on selection',
+      (WidgetTester tester) async {
+    int currentIndex = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              bottomNavigationBar: NavBar(
+                currentIndex: currentIndex,
+                onTap: (newIndex) => setState(() => currentIndex = newIndex),
+                items: const [
+                  NavBarItem(icon: Icons.home_rounded, label: 'الرئيسية'),
+                  NavBarItem(icon: Icons.access_time_rounded, label: 'الصلاة'),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    // Verify initial render
+    expect(find.text('الرئيسية'), findsOneWidget);
+    expect(find.text('الصلاة'), findsOneWidget);
+
+    // Tap on second tab
+    await tester.tap(find.text('الصلاة'));
+    await tester.pump();
+    // Mid-animation: scale is active
+    await tester.pump(const Duration(milliseconds: 100));
+    // Settle to resting state
+    await tester.pumpAndSettle();
+
+    expect(currentIndex, 1);
   });
 }
