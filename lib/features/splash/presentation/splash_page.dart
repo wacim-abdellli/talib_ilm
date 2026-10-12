@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/app_shell.dart';
@@ -26,10 +27,13 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _scaleAnimation;
   Timer? _timer;
   bool _navigated = false;
+  double _fontProgress = 0.0;
+  DateTime? _startTime;
 
   @override
   void initState() {
     super.initState();
+    _startTime = DateTime.now();
     _animController = AnimationController(
       vsync: this,
       duration: AppMotion.slow,
@@ -50,8 +54,35 @@ class _SplashPageState extends State<SplashPage>
     _animController.forward();
 
     if (widget.autoNavigate) {
-      _timer = Timer(AppMotion.splash, _proceedToHome);
+      _startStartupInitialization();
     }
+  }
+
+  Future<void> _startStartupInitialization() async {
+    try {
+      await Future.wait([
+        QuranRepository.instance.ensureLoaded(604),
+        QcfFontLoader.setupFontsAtStartup(
+          onProgress: (progress) {
+            if (mounted) {
+              setState(() {
+                _fontProgress = progress;
+              });
+            }
+          },
+        ),
+      ]);
+    } catch (e) {
+      debugPrint('Startup font preloading note: $e');
+    }
+
+    final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
+    final remaining = AppMotion.splash - elapsed;
+    if (remaining > Duration.zero) {
+      await Future.delayed(remaining);
+    }
+
+    _proceedToHome();
   }
 
   void _proceedToHome() {
@@ -195,7 +226,9 @@ class _SplashPageState extends State<SplashPage>
                               child: AnimatedBuilder(
                                 animation: _animController,
                                 builder: (context, _) => LinearProgressIndicator(
-                                  value: _animController.value,
+                                  value: _fontProgress > 0.0
+                                      ? _fontProgress
+                                      : _animController.value,
                                   backgroundColor: palette.surfaceMuted,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     palette.gold,

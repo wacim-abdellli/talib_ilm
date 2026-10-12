@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -100,6 +101,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
     _loadSavedSettings();
     _applyWakelock(_keepScreenAwake);
+    QcfFontLoader.preloadPages(_currentPage, radius: 3);
   }
 
   @override
@@ -205,6 +207,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       page: _currentPage,
       juz: quran.getJuzNumber(_currentSurah, _currentAyah),
     );
+    QcfFontLoader.preloadPages(page, radius: 3);
     _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
   }
 

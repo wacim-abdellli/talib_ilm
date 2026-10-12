@@ -18,6 +18,7 @@ dependencies:
   timezone: ^0.9.2
   flutter_timezone: ^5.0.1
   just_audio: ^0.10.5
+  just_audio_background: ^0.0.1-beta.17
   share_plus: ^10.0.2
   flutter:
     sdk: flutter
@@ -39,7 +40,12 @@ dependencies:
   path_provider: ^2.1.2
   quran: ^1.4.1
   cached_network_image: ^3.3.1
-  qcf_quran: ^0.0.5
+  # Vendored locally because upstream qcf_quran_plus (^0.1.0 on pub.dev) specifies
+  # sdk: ^3.11.0, while Flutter stable (3.38.7) runs on Dart 3.10.7. The package code
+  # is fully compatible with Dart 3.10. Remove local path and switch to pub.dev version
+  # once upstream relaxes its SDK constraint or when local Flutter/Dart is updated to 3.11+.
+  qcf_quran_plus:
+    path: packages/qcf_quran_plus
 
 dev_dependencies:
   flutter_test:

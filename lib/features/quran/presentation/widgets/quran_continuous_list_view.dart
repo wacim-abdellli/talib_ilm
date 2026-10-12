@@ -272,26 +272,32 @@ class QuranContinuousListViewState extends State<QuranContinuousListView> {
 
               switch (item) {
                 case QuranReaderSurahHeaderItem header:
-                  return MushafSurahBanner(
-                    key: ValueKey('surah_header_${header.surahNumber}'),
-                    surahNumber: header.surahNumber,
-                    themeMode: widget.themeMode,
+                  return RepaintBoundary(
+                    child: MushafSurahBanner(
+                      key: ValueKey('surah_header_${header.surahNumber}'),
+                      surahNumber: header.surahNumber,
+                      themeMode: widget.themeMode,
+                    ),
                   );
 
                 case QuranReaderBasmalahItem basmalah:
-                  return QuranBasmalahBanner(
-                    key: ValueKey('basmalah_${basmalah.surahNumber}'),
-                    themeMode: widget.themeMode,
-                    fontSize: widget.fontSize,
+                  return RepaintBoundary(
+                    child: QuranBasmalahBanner(
+                      key: ValueKey('basmalah_${basmalah.surahNumber}'),
+                      themeMode: widget.themeMode,
+                      fontSize: widget.fontSize,
+                    ),
                   );
 
                 case QuranReaderJuzHeaderItem juzHeader:
-                  return QuranJuzSectionHeader(
-                    key: ValueKey(
-                      'juz_${juzHeader.juzNumber}_${juzHeader.surahNumber}_${juzHeader.ayahNumber}',
+                  return RepaintBoundary(
+                    child: QuranJuzSectionHeader(
+                      key: ValueKey(
+                        'juz_${juzHeader.juzNumber}_${juzHeader.surahNumber}_${juzHeader.ayahNumber}',
+                      ),
+                      juzNumber: juzHeader.juzNumber,
+                      themeMode: widget.themeMode,
                     ),
-                    juzNumber: juzHeader.juzNumber,
-                    themeMode: widget.themeMode,
                   );
 
                 case QuranReaderAyahItem ayahItem:
@@ -368,7 +374,7 @@ class QuranContinuousListViewState extends State<QuranContinuousListView> {
 }
 
 /// Tokenized verse card inside the continuous stream.
-class _ContinuousAyahCard extends StatelessWidget {
+class _ContinuousAyahCard extends StatefulWidget {
   final QuranReaderAyahItem item;
   final MushafThemeMode themeMode;
   final double fontSize;
@@ -401,23 +407,42 @@ class _ContinuousAyahCard extends StatelessWidget {
   });
 
   @override
+  State<_ContinuousAyahCard> createState() => _ContinuousAyahCardState();
+}
+
+class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => widget.isPlaying || widget.isBookmarked;
+
+  @override
+  void didUpdateWidget(covariant _ContinuousAyahCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isPlaying != widget.isPlaying ||
+        oldWidget.isBookmarked != widget.isBookmarked) {
+      updateKeepAlive();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final palette = context.palette;
     final textTheme = context.text;
     final verseText = quran.getVerse(
-      item.surahNumber,
-      item.ayahNumber,
+      widget.item.surahNumber,
+      widget.item.ayahNumber,
       verseEndSymbol: false,
     );
-    final hasSajdah = quran.isSajdahVerse(item.surahNumber, item.ayahNumber);
+    final hasSajdah = quran.isSajdahVerse(widget.item.surahNumber, widget.item.ayahNumber);
 
-    final cardBg = isPlaying
+    final cardBg = widget.isPlaying
         ? palette.primarySoft.withValues(alpha: 0.14)
         : palette.surfaceRaised;
 
-    final borderColor = isPlaying
+    final borderColor = widget.isPlaying
         ? palette.primary
-        : isBookmarked
+        : widget.isBookmarked
             ? palette.gold.withValues(alpha: 0.5)
             : palette.border;
 
@@ -428,15 +453,15 @@ class _ContinuousAyahCard extends StatelessWidget {
         borderRadius: AppRadius.mdRadius,
         border: Border.all(
           color: borderColor,
-          width: isPlaying ? 1.5 : 1.0,
+          width: widget.isPlaying ? 1.5 : 1.0,
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: AppRadius.mdRadius,
-          onTap: onTap,
-          onLongPress: onLongPress,
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
           child: Padding(
             padding: const EdgeInsetsDirectional.all(AppSpace.md),
             child: Column(
@@ -450,17 +475,17 @@ class _ContinuousAyahCard extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isPlaying ? palette.primary : palette.surfaceMuted,
+                        color: widget.isPlaying ? palette.primary : palette.surfaceMuted,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isPlaying ? palette.primary : palette.border,
+                          color: widget.isPlaying ? palette.primary : palette.border,
                         ),
                       ),
                       alignment: AlignmentDirectional.center,
                       child: Text(
-                        '${item.ayahNumber}',
+                        '${widget.item.ayahNumber}',
                         style: textTheme.caption.copyWith(
-                          color: isPlaying ? palette.onPrimary : palette.textMuted,
+                          color: widget.isPlaying ? palette.onPrimary : palette.textMuted,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -488,26 +513,26 @@ class _ContinuousAyahCard extends StatelessWidget {
                     const Spacer(),
                     // Recitation Play / Pause
                     AppIconButton(
-                      icon: isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      icon: widget.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                       tooltip: 'استماع للآية',
-                      color: isPlaying ? palette.primary : palette.textMuted,
-                      onPressed: onPlayToggle,
+                      color: widget.isPlaying ? palette.primary : palette.textMuted,
+                      onPressed: widget.onPlayToggle,
                     ),
                     // Bookmark toggle
                     AppIconButton(
-                      icon: isBookmarked
+                      icon: widget.isBookmarked
                           ? Icons.bookmark_added_rounded
                           : Icons.bookmark_add_outlined,
                       tooltip: 'حفظ العلامة',
-                      color: isBookmarked ? palette.gold : palette.textMuted,
-                      onPressed: onBookmarkToggle,
+                      color: widget.isBookmarked ? palette.gold : palette.textMuted,
+                      onPressed: widget.onBookmarkToggle,
                     ),
                     // Tafsir & details sheet
                     AppIconButton(
                       icon: Icons.menu_book_rounded,
                       tooltip: 'التفسير والتدبر',
                       color: palette.textMuted,
-                      onPressed: onOpenDetails,
+                      onPressed: widget.onOpenDetails,
                     ),
                   ],
                 ),
@@ -527,20 +552,20 @@ class _ContinuousAyahCard extends StatelessWidget {
                         children: [
                           ...TajweedService.buildVerseSpans(
                             plainUthmani: verseText,
-                            quranComMarkup: tajweedMarkup,
+                            quranComMarkup: widget.tajweedMarkup,
                             baseStyle: textTheme.sacredLarge.copyWith(
                               color: palette.text,
-                              fontSize: fontSize,
+                              fontSize: widget.fontSize,
                               height: 1.8,
                             ),
-                            isTajweedEnabled: isTajweedEnabled,
+                            isTajweedEnabled: widget.isTajweedEnabled,
                           ),
                           WidgetSpan(
                             alignment: PlaceholderAlignment.middle,
                             child: AyahNumberBadge(
-                              ayahNumber: item.ayahNumber,
+                              ayahNumber: widget.item.ayahNumber,
                               color: palette.gold,
-                              fontSize: fontSize * 0.85,
+                              fontSize: widget.fontSize * 0.85,
                             ),
                           ),
                         ],
@@ -550,14 +575,14 @@ class _ContinuousAyahCard extends StatelessWidget {
                 ),
 
                 // Optional English Translation
-                if (showTranslation) ...[
+                if (widget.showTranslation) ...[
                   const SizedBox(height: AppSpace.xs),
                   Divider(height: 1, color: palette.border.withValues(alpha: 0.5)),
                   const SizedBox(height: AppSpace.xs),
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      quran.getVerseTranslation(item.surahNumber, item.ayahNumber),
+                      quran.getVerseTranslation(widget.item.surahNumber, widget.item.ayahNumber),
                       style: textTheme.bodySmall.copyWith(
                         color: palette.textMuted,
                         height: 1.45,

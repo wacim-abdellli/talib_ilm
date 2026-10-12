@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qcf_quran/qcf_quran.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart' show getArabicJuzName;
-import '../utils/mushaf_verse_gestures.dart';
 
 import 'quran_section_header.dart';
 export 'quran_section_header.dart';
 
 /// A complete, authentic King Fahd Complex Medina Mushaf single page
+/// rendered using [qcf_quran_plus] with Uthmani Tajweed font support.
 class MushafSinglePage extends StatefulWidget {
   final int pageNumber;
   final MushafThemeMode themeMode;
@@ -41,11 +41,26 @@ class MushafSinglePage extends StatefulWidget {
 }
 
 class _MushafSinglePageState extends State<MushafSinglePage> {
-  final MushafVerseRecognizerPool _recognizers = MushafVerseRecognizerPool();
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.pageNumber - 1);
+    QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
+  }
+
+  @override
+  void didUpdateWidget(covariant MushafSinglePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pageNumber != widget.pageNumber) {
+      QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
+    }
+  }
 
   @override
   void dispose() {
-    _recognizers.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -141,22 +156,13 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
             ),
           ),
 
-          // 2. Middle Mushaf Page Content
+          // 2. Middle Mushaf Page Content with Tajweed font rendering
           Expanded(
             child: InkWell(
               onTap: widget.onToggleOverlays,
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
-                child: _buildQcfPage(
-                  context,
-                  ranges,
-                  verseTextColor,
-                  verseNumColor,
-                  palette,
-                ),
-              ),
+              child: _buildQcfPlusPage(context, palette),
             ),
           ),
 
@@ -191,172 +197,65 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     );
   }
 
-  Widget _buildQcfPage(
-    BuildContext context,
-    List ranges,
-    Color verseTextColor,
-    Color verseNumColor,
-    AppPalette palette,
-  ) {
+  Widget _buildQcfPlusPage(BuildContext context, AppPalette palette) {
+    if (!QuranRepository.instance.isReady) {
+      return FutureBuilder<void>(
+        future: QuranRepository.instance.ensureLoaded(604),
+        builder: (context, snapshot) {
+          if (!QuranRepository.instance.isReady) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return _buildPageWidget(context, palette);
+        },
+      );
+    }
+    return _buildPageWidget(context, palette);
+  }
+
+  Widget _buildPageWidget(BuildContext context, AppPalette palette) {
     final pageNumber = widget.pageNumber;
     final themeMode = widget.themeMode;
-    final pageFont = "QCF_P${pageNumber.toString().padLeft(3, '0')}";
+    final pageIndex = pageNumber - 1;
+    final pages = QuranRepository.instance.pages;
+    if (pageIndex < 0 || pageIndex >= pages.length) {
+      return const SizedBox.shrink();
+    }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
+    final page = pages[pageIndex];
+    final wordOffsets = QuranRepository.instance.wordOffsets[pageIndex] ?? const {};
 
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            size: const Size(392.72, 800.0),
-            textScaler: TextScaler.noScaling,
-          ),
-          child: Builder(
-            builder: (refContext) {
-              final baseFontSize = getFontSize(pageNumber, refContext);
-              final scaleFactor = (widget.fontSize / 24.0).clamp(0.85, 1.35);
+    BookmarkIndex bookmarkIndex = BookmarkIndex.empty;
+    if (widget.activeSurah != null && widget.activeAyah != null) {
+      bookmarkIndex = BookmarkIndex.build([
+        HighlightVerse(
+          surah: widget.activeSurah!,
+          verseNumber: widget.activeAyah!,
+          page: pageNumber,
+          color: palette.gold.withValues(alpha: 0.28),
+        ),
+      ]);
+    }
 
-              // Target width fills the available horizontal area with minimal margin
-              const referenceBaseWidth = 360.0;
-              final targetWidth = availableWidth;
-
-              // Target font size is proportional to width so lines preserve 15-line layout without wrapping
-              final targetFontSize = baseFontSize * (targetWidth / referenceBaseWidth) * scaleFactor;
-              final layoutWidth = targetWidth * scaleFactor;
-
-              // Dynamically adjust line height to eliminate vertical gaps between top bar and bottom bar
-              final lineCount = (pageNumber == 1 || pageNumber == 2)
-                  ? (pageNumber == 1 ? 7 : 6)
-                  : 15;
-              final baseLineHeight = (pageNumber == 1 || pageNumber == 2) ? 2.2 : 1.95;
-              final dynamicLineHeight = (availableHeight / (lineCount * targetFontSize)).clamp(1.75, 2.30);
-              final effectiveLineHeight = scaleFactor == 1.0 ? dynamicLineHeight : baseLineHeight;
-
-              final verseSpans = <InlineSpan>[];
-              for (final r in ranges) {
-                final surah = int.parse(r['surah'].toString());
-                final start = int.parse(r['start'].toString());
-                final end = int.parse(r['end'].toString());
-
-                for (int v = start; v <= end; v++) {
-                  if (v == start && v == 1) {
-                    verseSpans.add(
-                      WidgetSpan(
-                        child: MushafSurahBanner(
-                          surahNumber: surah,
-                          themeMode: themeMode,
-                        ),
-                      ),
-                    );
-
-                    if (pageNumber != 1 && pageNumber != 187) {
-                      verseSpans.add(
-                        WidgetSpan(
-                          child: QuranBasmalahBanner(
-                            themeMode: themeMode,
-                            fontSize: targetFontSize,
-                          ),
-                        ),
-                      );
-                    }
-                  }
-
-                  final isHighlighted =
-                      widget.activeSurah == surah && widget.activeAyah == v;
-                  final verseBg = isHighlighted ? palette.gold.withValues(alpha: 0.28) : null;
-
-                  final tapRecognizer = _recognizers.tap(
-                    surah: surah,
-                    ayah: v,
-                    onTap: () => _openAyah(surah, v),
-                  );
-                  final longPressRecognizer = _recognizers.longPress(
-                    surah: surah,
-                    ayah: v,
-                    onLongPress: () => _openAyahLongPress(surah, v),
-                  );
-
-                  final verseNumberSpan = TextSpan(
-                    text: getVerseNumberQCF(surah, v),
-                    recognizer: longPressRecognizer,
-                    style: TextStyle( // ui-lint: allow — per-page QCF package font
-                      fontFamily: pageFont,
-                      package: 'qcf_quran',
-                      color: verseNumColor,
-                      height: 1.35,
-                      backgroundColor: verseBg,
-                    ),
-                  );
-
-                  final verseText = v == ranges[0]['start']
-                      ? "${getVerseQCF(surah, v, verseEndSymbol: false).substring(0, 1)}\u200A${getVerseQCF(surah, v, verseEndSymbol: false).substring(1)}"
-                      : getVerseQCF(surah, v, verseEndSymbol: false);
-
-                  final wordSpans = [
-                    TextSpan(
-                      text: verseText,
-                      style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
-                        color: verseTextColor,
-                        backgroundColor: verseBg,
-                      ),
-                    ),
-                  ];
-
-                  verseSpans.add(
-                    TextSpan(
-                      recognizer: tapRecognizer,
-                      children: [
-                        ...wordSpans,
-                        verseNumberSpan,
-                      ],
-                    ),
-                  );
-                }
-              }
-
-              final textWidget = SizedBox(
-                width: layoutWidth,
-                child: Text.rich(
-                  TextSpan(children: verseSpans),
-                  locale: const Locale('ar'),
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle( // ui-lint: allow — per-page QCF package font
-                    fontFamily: pageFont,
-                    package: 'qcf_quran',
-                    fontSize: targetFontSize,
-                    color: verseTextColor,
-                    height: effectiveLineHeight,
-                    letterSpacing: 0.0,
-                    wordSpacing: 0.0,
-                  ),
-                ),
-              );
-
-              final estimatedHeight = lineCount * targetFontSize * effectiveLineHeight;
-              if (estimatedHeight > availableHeight) {
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: textWidget,
-                    ),
-                  ),
-                );
-              }
-
-              return Center(
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: textWidget,
-                ),
-              );
-            },
-          ),
-        );
-      },
+    return QuranSinglePageWidget(
+      key: ValueKey('qcf_plus_page_$pageNumber'),
+      page: page,
+      pageIndex: pageNumber,
+      isTajweed: widget.isTajweedEnabled,
+      isDark: themeMode == MushafThemeMode.dark,
+      pageController: _pageController,
+      lineOffsets: wordOffsets,
+      wordHighlightIndex: WordHighlightIndex.empty,
+      bookmarkIndex: bookmarkIndex,
+      onWordTap: (surah, ayah, wordIdx, word) => _openAyah(surah, ayah),
+      onLongPress: (surah, ayah, details) => _openAyahLongPress(surah, ayah),
+      surahHeaderBuilder: (context, surah) => MushafSurahBanner(
+        surahNumber: surah,
+        themeMode: themeMode,
+      ),
+      basmallahBuilder: (context, surah) => QuranBasmalahBanner(
+        themeMode: themeMode,
+      ),
+      forceFitConstraints: false,
     );
   }
 }

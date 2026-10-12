@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:quran/quran.dart' as quran;
 
 enum AudioRepeatMode {
@@ -122,7 +123,17 @@ class QuranAudioService {
 
     try {
       final url = getAudioUrl(surah, ayah, reciter: r);
-      await _player.setUrl(url);
+      final surahName = quran.getSurahNameArabic(surah);
+      final audioSource = AudioSource.uri(
+        Uri.parse(url),
+        tag: MediaItem(
+          id: '${surah}_$ayah',
+          album: 'سورة $surahName',
+          title: 'الآية $ayah - سورة $surahName',
+          artist: r.name,
+        ),
+      );
+      await _player.setAudioSource(audioSource);
       await _player.setSpeed(speedNotifier.value);
       await _player.play();
     } catch (e) {

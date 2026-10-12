@@ -136,7 +136,13 @@ class QuranTafsirService {
 
   static final Map<String, List<WordMeaning>> _wordsCache = {};
 
+  /// Returns word meanings from in-memory cache if already fetched, or null.
+  static List<WordMeaning>? getCachedWordMeanings(int surahNumber, int ayahNumber) {
+    return _wordsCache['wbw_${surahNumber}_$ayahNumber'];
+  }
+
   /// Fetches real word-by-word data from Quran.com API with dual RAM + storage caching.
+  /// Never invents or generates fake placeholder translations.
   static Future<List<WordMeaning>> fetchWordMeanings(
     int surahNumber,
     int ayahNumber,
@@ -167,7 +173,7 @@ class QuranTafsirService {
 
     try {
       final url = Uri.parse(
-        'https://api.quran.com/api/v4/verses/by_key/$surahNumber:$ayahNumber?words=true&word_fields=text_uthmani,translation',
+        'https://api.quran.com/api/v4/verses/by_key/$surahNumber:$ayahNumber?words=true&word_fields=text_uthmani,translation&language=en',
       );
       final response = await http.get(url, headers: {
         'Accept': 'application/json',
@@ -184,10 +190,10 @@ class QuranTafsirService {
           if (w['char_type_name'] == 'end') continue;
           final arabic =
               w['text_uthmani'] as String? ?? w['text'] as String? ?? '';
-          final translation = w['translation']?['text'] as String? ?? '';
+          final translation = _cleanHtml(w['translation']?['text'] as String? ?? '');
           final translit = w['transliteration']?['text'] as String?;
 
-          if (arabic.isNotEmpty) {
+          if (arabic.isNotEmpty && translation.isNotEmpty) {
             result.add(WordMeaning(
               word: arabic,
               meaning: translation,
@@ -205,27 +211,7 @@ class QuranTafsirService {
       }
     } catch (_) {}
 
-    return getWordMeanings(surahNumber, ayahNumber);
-  }
-
-  /// Extracts word-by-word list for an Ayah (sync fallback)
-  static List<WordMeaning> getWordMeanings(int surahNumber, int ayahNumber) {
-    final cacheKey = 'wbw_${surahNumber}_$ayahNumber';
-    if (_wordsCache.containsKey(cacheKey)) {
-      return _wordsCache[cacheKey]!;
-    }
-
-    final verse = quran.getVerse(surahNumber, ayahNumber, verseEndSymbol: false);
-    final words = verse.split(' ');
-    final translation = quran.getVerseTranslation(surahNumber, ayahNumber);
-
-    return words.map((w) {
-      return WordMeaning(
-        word: w,
-        meaning: translation,
-        morphology: 'سورة ${quran.getSurahNameArabic(surahNumber)}: آية $ayahNumber',
-      );
-    }).toList();
+    return const [];
   }
 
   static String _cleanHtml(String html) {

@@ -22,9 +22,9 @@ class AppTextStyles {
   /// UI font family - Cairo (modern Arabic sans-serif)
   static const String _uiFontFamily = 'Cairo';
 
-  /// Content font family - Amiri (traditional Arabic serif)
+  /// Content font family - ScheherazadeNew (traditional Arabic serif)
   /// Used for Quran, Hadith, and other religious texts
-  static const String _contentFontFamily = 'Amiri';
+  static const String _contentFontFamily = 'ScheherazadeNew';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HEADING STYLES - Scale: 24/20/18/16/14sp

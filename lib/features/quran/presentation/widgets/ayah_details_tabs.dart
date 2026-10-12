@@ -127,7 +127,7 @@ class AyahTafsirTabView extends StatelessWidget {
   }
 }
 
-class AyahWordsTabView extends StatelessWidget {
+class AyahWordsTabView extends StatefulWidget {
   final int surahNumber;
   final int ayahNumber;
 
@@ -138,21 +138,118 @@ class AyahWordsTabView extends StatelessWidget {
   });
 
   @override
+  State<AyahWordsTabView> createState() => _AyahWordsTabViewState();
+}
+
+class _AyahWordsTabViewState extends State<AyahWordsTabView> {
+  late Future<List<WordMeaning>> _wordsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWords();
+  }
+
+  @override
+  void didUpdateWidget(covariant AyahWordsTabView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.surahNumber != widget.surahNumber ||
+        oldWidget.ayahNumber != widget.ayahNumber) {
+      _loadWords();
+    }
+  }
+
+  void _loadWords() {
+    _wordsFuture = QuranTafsirService.fetchWordMeanings(
+      widget.surahNumber,
+      widget.ayahNumber,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
 
     return FutureBuilder<List<WordMeaning>>(
-      future: QuranTafsirService.fetchWordMeanings(surahNumber, ayahNumber),
-      initialData: QuranTafsirService.getWordMeanings(surahNumber, ayahNumber),
+      future: _wordsFuture,
+      initialData: QuranTafsirService.getCachedWordMeanings(
+        widget.surahNumber,
+        widget.ayahNumber,
+      ),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            (snapshot.data == null || snapshot.data!.isEmpty)) {
+          return ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  vertical: AppSpace.sm,
+                  horizontal: AppSpace.md,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.surfaceMuted,
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: palette.border.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    AppSkeleton(width: 80, height: 22),
+                    Spacer(),
+                    AppSkeleton(width: 130, height: 18),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+
         final words = snapshot.data ?? const [];
 
         if (words.isEmpty) {
           return Center(
-            child: Text(
-              'لا تتوفر معاني الكلمات حالياً',
-              style: textTheme.caption.copyWith(color: palette.textMuted),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: AppIcon.lg,
+                    color: palette.textMuted,
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Text(
+                    'تعذر تحميل معاني الكلمات',
+                    style: textTheme.bodySmall.copyWith(
+                      color: palette.text,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    'تأكد من الاتصال بالإنترنت ثم حاول مرة أخرى',
+                    style: textTheme.caption.copyWith(color: palette.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  AppButton.outline(
+                    label: 'إعادة المحاولة',
+                    icon: Icons.refresh_rounded,
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _loadWords();
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -318,6 +415,51 @@ class AyahAudioTabView extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: AppSpace.sm),
+
+              // Playback Speed Selector
+              ValueListenableBuilder<double>(
+                valueListenable: audioService.speedNotifier,
+                builder: (context, currentSpeed, _) {
+                  const speeds = [0.75, 1.0, 1.25, 1.5];
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: speeds.map((speed) {
+                      final isSelected = (currentSpeed - speed).abs() < 0.01;
+                      return Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xxs,
+                        ),
+                        child: ChoiceChip(
+                          label: Text(
+                            '${speed == 1.0 ? "1" : speed}×',
+                            style: textTheme.caption.copyWith(
+                              color: isSelected ? palette.onPrimary : palette.text,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: palette.primary,
+                          backgroundColor: palette.surfaceRaised,
+                          visualDensity: VisualDensity.compact,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.pillRadius,
+                            side: BorderSide(
+                              color: isSelected ? palette.primary : palette.border,
+                            ),
+                          ),
+                          onSelected: (val) {
+                            if (val) {
+                              HapticFeedback.selectionClick();
+                              audioService.setPlaybackSpeed(speed);
+                            }
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
               const SizedBox(height: AppSpace.md),
 

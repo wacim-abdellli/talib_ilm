@@ -417,7 +417,7 @@ class AppTextTheme {
 
   factory AppTextTheme.fromPalette(AppPalette palette) {
     const cairo = 'Cairo';
-    const amiri = 'Amiri';
+    const scheherazadeNew = 'ScheherazadeNew';
 
     return AppTextTheme(
       display: TextStyle(
@@ -470,21 +470,21 @@ class AppTextTheme {
         color: palette.textSubtle,
       ),
       sacred: TextStyle(
-        fontFamily: amiri,
+        fontFamily: scheherazadeNew,
         fontSize: 22,
         fontWeight: FontWeight.w400,
         height: 2.0,
         color: palette.text,
       ),
       sacredLarge: TextStyle(
-        fontFamily: amiri,
+        fontFamily: scheherazadeNew,
         fontSize: 26,
         fontWeight: FontWeight.w400,
         height: 2.0,
         color: palette.text,
       ),
       mushafChrome: TextStyle(
-        fontFamily: amiri,
+        fontFamily: scheherazadeNew,
         fontSize: 13,
         fontWeight: FontWeight.w700,
         height: 1.4,
