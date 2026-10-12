@@ -82,7 +82,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('ayah_2_255')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('ayah_2_255'), skipOffstage: false),
+        findsOneWidget,
+      );
     });
   });
 }

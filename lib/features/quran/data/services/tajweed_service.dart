@@ -20,15 +20,6 @@ class TajweedService {
     dotAll: true,
   );
 
-  static final RegExp _qalqalahRegex = RegExp(r'[قطبجد][ْۡ]');
-  static final RegExp _ghunnahRegex = RegExp(r'[نم][ّ]');
-  static final RegExp _maddRegex = RegExp(r'[\u0653\u0670\u06E1]');
-  static final RegExp _iqlabRegex = RegExp(r'[\u06E2\u0658]');
-  static final RegExp _idghamRegex = RegExp(r'[نًٌٍْ][يرملون]');
-  static final RegExp _ikhfaaRegex = RegExp(
-    r'[نًٌٍْ][ءهعحغخشجصضسزفقتك]',
-  );
-
   static final RegExp _tajweedClassAttr = RegExp(
     r'class=(?:"([\w_-]+)"|([\w_-]+))',
   );
@@ -176,68 +167,15 @@ class TajweedService {
     return null;
   }
 
-  /// Heuristic fallback when markup is unavailable (offline).
+  /// Offline fallback: renders clean Uthmani text. Letter-level Hafs Tajweed
+  /// coloring is applied accurately whenever Quran.com markup is available.
   static List<TextSpan> buildTajweedSpans(
     String verseText, {
     required TextStyle baseStyle,
     required bool isTajweedEnabled,
   }) {
-    if (!isTajweedEnabled) {
-      return [
-        TextSpan(text: verseText, style: baseStyle),
-      ];
-    }
-
-    final spans = <TextSpan>[];
-    final words = verseText.split(' ');
-
-    for (int i = 0; i < words.length; i++) {
-      final word = words[i];
-      spans.addAll(_parseWordTajweed(word, baseStyle: baseStyle));
-      if (i < words.length - 1) {
-        spans.add(TextSpan(text: ' ', style: baseStyle));
-      }
-    }
-
-    return spans;
-  }
-
-  /// Returns the specific Tajweed rule color for a given Uthmani word, if any.
-  static Color? ruleColorForWord(String word) {
-    if (_maddRegex.hasMatch(word)) {
-      return TajweedPalette.madd;
-    }
-    if (_ghunnahRegex.hasMatch(word)) {
-      return TajweedPalette.ghunnah;
-    }
-    if (_qalqalahRegex.hasMatch(word)) {
-      return TajweedPalette.qalqalah;
-    }
-    if (_iqlabRegex.hasMatch(word)) {
-      return TajweedPalette.iqlab;
-    }
-    if (_idghamRegex.hasMatch(word)) {
-      return TajweedPalette.idgham;
-    }
-    if (_ikhfaaRegex.hasMatch(word)) {
-      return TajweedPalette.ikhfaa;
-    }
-    return null;
-  }
-
-  static List<TextSpan> _parseWordTajweed(
-    String word, {
-    required TextStyle baseStyle,
-  }) {
-    final color = ruleColorForWord(word);
-    if (color != null) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: color),
-        ),
-      ];
-    }
-    return [TextSpan(text: word, style: baseStyle)];
+    return [
+      TextSpan(text: verseText, style: baseStyle),
+    ];
   }
 }

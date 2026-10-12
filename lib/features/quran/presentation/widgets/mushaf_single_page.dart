@@ -6,7 +6,6 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart' show getArabicJuzName;
-import '../../data/services/tajweed_service.dart';
 import '../utils/mushaf_verse_gestures.dart';
 
 import 'quran_section_header.dart';
@@ -258,54 +257,15 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
             ? "${getVerseQCF(surah, v, verseEndSymbol: false).substring(0, 1)}\u200A${getVerseQCF(surah, v, verseEndSymbol: false).substring(1)}"
             : getVerseQCF(surah, v, verseEndSymbol: false);
 
-        final List<InlineSpan> wordSpans;
-        if (widget.isTajweedEnabled) {
-          final uthmaniWords = quran
-              .getVerse(surah, v, verseEndSymbol: false)
-              .split(' ')
-              .where((w) => w.trim().isNotEmpty)
-              .toList();
-
-          wordSpans = [];
-          int wordIndex = 0;
-          final runes = verseText.runes.toList();
-
-          for (int ri = 0; ri < runes.length; ri++) {
-            final rune = runes[ri];
-            final char = String.fromCharCode(rune);
-
-            if (char == '\n' || char == ' ' || char == '\u200A') {
-              wordSpans.add(TextSpan(text: char));
-              continue;
-            }
-
-            Color? color;
-            if (wordIndex < uthmaniWords.length) {
-              color = TajweedService.ruleColorForWord(uthmaniWords[wordIndex]);
-              wordIndex++;
-            }
-
-            wordSpans.add(
-              TextSpan(
-                text: char,
-                style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
-                  color: color ?? verseTextColor,
-                  backgroundColor: verseBg,
-                ),
-              ),
-            );
-          }
-        } else {
-          wordSpans = [
-            TextSpan(
-              text: verseText,
-              style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
-                color: verseTextColor,
-                backgroundColor: verseBg,
-              ),
+        final wordSpans = [
+          TextSpan(
+            text: verseText,
+            style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
+              color: verseTextColor,
+              backgroundColor: verseBg,
             ),
-          ];
-        }
+          ),
+        ];
 
         verseSpans.add(
           TextSpan(

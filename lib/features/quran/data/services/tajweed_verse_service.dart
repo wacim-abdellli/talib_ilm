@@ -32,7 +32,7 @@ class TajweedVerseService {
       );
       final response = await http
           .get(uri, headers: {'Accept': 'application/json'})
-          .timeout(const Duration(seconds: 8)); // ui-lint: allow network timeout
+          .timeout(const Duration(seconds: 4)); // ui-lint: allow network timeout
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;

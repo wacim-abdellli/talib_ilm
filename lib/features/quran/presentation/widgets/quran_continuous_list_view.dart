@@ -13,6 +13,7 @@ import '../../data/services/quran_audio_service.dart';
 import '../../data/services/tajweed_service.dart';
 import '../../data/services/tajweed_verse_service.dart';
 import 'ayah_details_sheet.dart';
+import 'ayah_number_badge.dart';
 import 'quran_section_header.dart';
 
 /// Gold-standard continuous vertical reader for all 6,236 verses across 114 Surahs (Mode B).
@@ -397,7 +398,6 @@ class _ContinuousAyahCard extends StatelessWidget {
       verseEndSymbol: false,
     );
     final hasSajdah = quran.isSajdahVerse(item.surahNumber, item.ayahNumber);
-    final verseSymbol = '\uFD3E${item.ayahNumber}\uFD3F';
 
     final cardBg = isPlaying
         ? palette.primarySoft.withValues(alpha: 0.14)
@@ -522,12 +522,12 @@ class _ContinuousAyahCard extends StatelessWidget {
                             ),
                             isTajweedEnabled: isTajweedEnabled,
                           ),
-                          const TextSpan(text: ' '),
-                          TextSpan(
-                            text: verseSymbol,
-                            style: textTheme.sacredLarge.copyWith(
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: AyahNumberBadge(
+                              ayahNumber: item.ayahNumber,
                               color: palette.gold,
-                              fontSize: fontSize * 0.9,
+                              fontSize: fontSize * 0.85,
                             ),
                           ),
                         ],

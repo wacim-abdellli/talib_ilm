@@ -57,6 +57,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   Timer? _saveLastReadDebounceTimer;
 
   QuranReadingMode _readingMode = QuranReadingMode.mushafPage;
+  bool _isListModeLoaded = false;
   MushafThemeMode _themeMode = MushafThemeMode.sepia;
   bool _isTajweedEnabled = true;
   bool _showTranslation = false;
@@ -135,6 +136,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     if (!mounted) return;
     setState(() {
       _readingMode = snapshot.readingMode;
+      if (snapshot.readingMode == QuranReadingMode.ayahList) {
+        _isListModeLoaded = true;
+      }
       _isTajweedEnabled = snapshot.isTajweedEnabled;
       _themeMode = snapshot.themeMode;
       _fontSize = snapshot.fontSize;
@@ -206,7 +210,13 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   void _setReadingMode(QuranReadingMode mode) {
     if (_readingMode == mode) return;
-    setState(() => _readingMode = mode);
+    final isSwitchingToList = mode == QuranReadingMode.ayahList;
+    setState(() {
+      _readingMode = mode;
+      if (isSwitchingToList) {
+        _isListModeLoaded = true;
+      }
+    });
     if (mode == QuranReadingMode.mushafPage) {
       final page = quran
           .getPageNumber(_currentSurah, _currentAyah)
@@ -216,7 +226,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
         _pageController.jumpToPage(page - 1);
       }
     } else {
-      _continuousListKey.currentState?.jumpToAyah(_currentSurah, _currentAyah);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _continuousListKey.currentState?.jumpToAyah(_currentSurah, _currentAyah);
+      });
     }
     _saveSettings();
   }
@@ -310,7 +322,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                 index: _readingMode == QuranReadingMode.mushafPage ? 0 : 1,
                 children: [
                   _buildMushafPageMode(palette),
-                  _buildAyahListMode(),
+                  _isListModeLoaded
+                      ? _buildAyahListMode()
+                      : const SizedBox.shrink(),
                 ],
               ),
             ),
