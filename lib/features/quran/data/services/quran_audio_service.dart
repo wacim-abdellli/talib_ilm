@@ -147,30 +147,41 @@ class QuranAudioService {
 
     if (surah == null || ayah == null) return;
 
+    // 1. Single Ayah Repeat Mode (repeats the exact same verse infinitely)
     if (repeatModeNotifier.value == AudioRepeatMode.singleAyah) {
-      playVerse(surah, ayah);
+      _startPlay(surah, ayah);
       return;
     }
 
+    final totalVerses = quran.getVerseCount(surah);
+
+    // 2. Surah Repeat Mode (Infinite repeat: plays sequentially, loops back to ayah 1)
+    if (repeatModeNotifier.value == AudioRepeatMode.surah) {
+      if (ayah < totalVerses) {
+        _startPlay(surah, ayah + 1);
+      } else {
+        // Loop back to verse 1 infinitely!
+        _startPlay(surah, 1);
+      }
+      return;
+    }
+
+    // 3. Continuous / Standard Playback
     if (_isContinuous) {
-      final totalVerses = quran.getVerseCount(surah);
       if (ayah < _endAyah && ayah < totalVerses) {
-        // Next verse in same surah
         _startPlay(surah, ayah + 1);
       } else if (ayah >= totalVerses && surah < 114) {
-        // Next surah
-        if (repeatModeNotifier.value == AudioRepeatMode.surah) {
-          playContinuous(surah: surah, startAyah: 1);
-        } else {
-          playContinuous(surah: surah + 1, startAyah: 1);
-        }
-      } else if (repeatModeNotifier.value == AudioRepeatMode.surah) {
-        playContinuous(surah: surah, startAyah: 1);
+        playContinuous(surah: surah + 1, startAyah: 1);
       } else {
         stop();
       }
     } else {
-      stop();
+      // By default in modern Quran apps, playing verse N advances to N+1
+      if (ayah < totalVerses) {
+        _startPlay(surah, ayah + 1);
+      } else {
+        stop();
+      }
     }
   }
 

@@ -13,7 +13,7 @@ import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_reader_preferences.dart';
 import '../../data/services/quran_tafsir_service.dart';
 import '../../data/services/reading_stats_service.dart';
-import 'ayah_details_sheet.dart';
+import 'ayah_action_menu_sheet.dart';
 import 'mushaf_reader_overlays.dart';
 import 'mushaf_settings_sheet.dart';
 import 'mushaf_single_page.dart';
@@ -53,6 +53,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   int _currentPage = 1;
   int _currentSurah = 1;
   int _currentAyah = 1;
+
+  int? _selectedSurah;
+  int? _selectedAyah;
 
   late final ValueNotifier<QuranPosition> _positionNotifier;
   Timer? _saveLastReadDebounceTimer;
@@ -296,15 +299,29 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     );
   }
 
-  void _openAyahDetails(int surah, int ayah) {
-    _currentSurah = surah;
-    _currentAyah = ayah;
-    AyahDetailsSheet.show(
+  Future<void> _handleAyahLongPress(int surah, int ayah) async {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _currentSurah = surah;
+      _currentAyah = ayah;
+      _selectedSurah = surah;
+      _selectedAyah = ayah;
+    });
+
+    await AyahActionMenuSheet.show(
       context,
       surahNumber: surah,
       ayahNumber: ayah,
-      initialTafsirScholar: _defaultTafsir,
+      audioService: _audioService,
+      defaultTafsir: _defaultTafsir,
     );
+
+    if (mounted) {
+      setState(() {
+        _selectedSurah = null;
+        _selectedAyah = null;
+      });
+    }
   }
 
   Color _getBackgroundColor() => MushafColors.bgFor(_themeMode);
@@ -386,6 +403,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       valueListenable: _audioService.activeAyahNotifier,
       builder: (context, activeAyah, _) {
         final activeSurah = _audioService.activeSurahNotifier.value;
+        final effectiveSurah = activeAyah != null ? activeSurah : _selectedSurah;
+        final effectiveAyah = activeAyah ?? _selectedAyah;
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -404,10 +423,10 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   themeMode: _themeMode,
                   isTajweedEnabled: _isTajweedEnabled,
                   fontSize: _fontSize,
-                  activeSurah: activeSurah,
-                  activeAyah: activeAyah,
+                  activeSurah: effectiveSurah,
+                  activeAyah: effectiveAyah,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
-                  onAyahLongPress: _openAyahDetails,
+                  onAyahLongPress: _handleAyahLongPress,
                   onToggleOverlays: _toggleOverlays,
                 ),
               );
@@ -427,6 +446,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       themeMode: _themeMode,
       isTajweedEnabled: _isTajweedEnabled,
       showTranslation: _showTranslation,
+      selectedSurah: _selectedSurah,
+      selectedAyah: _selectedAyah,
       onPositionChanged: (surah, ayah, page) {
         if (_currentSurah == surah && _currentAyah == ayah && _currentPage == page) {
           return;
@@ -443,7 +464,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
         _scheduleSaveLastRead(surah, ayah, page);
       },
       onAyahTap: (surah, ayah) => _toggleOverlays(),
-      onAyahLongPress: _openAyahDetails,
+      onAyahLongPress: _handleAyahLongPress,
       onToggleOverlays: _toggleOverlays,
     );
   }

@@ -24,12 +24,15 @@ class AyahDetailsSheet extends StatefulWidget {
   final TafsirScholar? initialTafsirScholar;
   final VoidCallback? onBookmarkChanged;
 
+  final int initialTabIndex;
+
   const AyahDetailsSheet({
     super.key,
     required this.surahNumber,
     required this.ayahNumber,
     this.initialTafsirScholar,
     this.onBookmarkChanged,
+    this.initialTabIndex = 0,
   });
 
   static Future<void> show(
@@ -38,6 +41,7 @@ class AyahDetailsSheet extends StatefulWidget {
     required int ayahNumber,
     TafsirScholar? initialTafsirScholar,
     VoidCallback? onBookmarkChanged,
+    int initialTabIndex = 0,
   }) {
     return AppSheet.show<void>(
       context: context,
@@ -48,6 +52,7 @@ class AyahDetailsSheet extends StatefulWidget {
         ayahNumber: ayahNumber,
         initialTafsirScholar: initialTafsirScholar,
         onBookmarkChanged: onBookmarkChanged,
+        initialTabIndex: initialTabIndex,
       ),
     );
   }
@@ -73,7 +78,11 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
     super.initState();
     _selectedScholar =
         widget.initialTafsirScholar ?? TafsirScholar.muyassar;
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 3),
+    );
     _loadBookmarkState();
     _loadTajweedMarkup();
     if (widget.initialTafsirScholar != null) {
@@ -305,29 +314,35 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
           Divider(height: 1, color: palette.border),
           const SizedBox(height: AppSpace.xs),
 
-          // Pinned Verse Text Card
+          // Pinned Verse Text Card with Compact Constraint
           Padding(
             padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-            child: AppCard(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.sm,
-              ),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: SelectableText.rich(
-                  TextSpan(
-                    children: TajweedService.buildVerseSpans(
-                      plainUthmani: verseText,
-                      quranComMarkup: _tajweedMarkup,
-                      baseStyle: textTheme.sacred.copyWith(
-                        color: palette.text,
-                        height: 1.6,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 110),
+              child: AppCard(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text.rich(
+                      TextSpan(
+                        children: TajweedService.buildVerseSpans(
+                          plainUthmani: verseText,
+                          quranComMarkup: _tajweedMarkup,
+                          baseStyle: textTheme.sacred.copyWith(
+                            color: palette.text,
+                            height: 1.6,
+                          ),
+                          isTajweedEnabled: true,
+                        ),
                       ),
-                      isTajweedEnabled: true,
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),

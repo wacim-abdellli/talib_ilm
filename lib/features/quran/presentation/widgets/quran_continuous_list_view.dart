@@ -32,6 +32,8 @@ class QuranContinuousListView extends StatefulWidget {
   final bool showTranslation;
   final double fontSize;
   final MushafThemeMode themeMode;
+  final int? selectedSurah;
+  final int? selectedAyah;
   final void Function(int surah, int ayah, int page)? onPositionChanged;
   final void Function(int surah, int ayah)? onAyahTap;
   final void Function(int surah, int ayah)? onAyahLongPress;
@@ -45,6 +47,8 @@ class QuranContinuousListView extends StatefulWidget {
     this.showTranslation = false,
     this.fontSize = 24.0,
     this.themeMode = MushafThemeMode.white,
+    this.selectedSurah,
+    this.selectedAyah,
     this.onPositionChanged,
     this.onAyahTap,
     this.onAyahLongPress,
@@ -309,18 +313,22 @@ class QuranContinuousListViewState extends State<QuranContinuousListView> {
                   );
                   final markup = _tajweedMarkups[ayahItem.surahNumber]?[ayahItem.ayahNumber];
 
+                  final isSelected = widget.selectedSurah == ayahItem.surahNumber &&
+                      widget.selectedAyah == ayahItem.ayahNumber;
+
                   return RepaintBoundary(
                     key: ValueKey('ayah_${ayahItem.surahNumber}_${ayahItem.ayahNumber}'),
                     child: _ContinuousAyahCard(
                       key: ValueKey('ayah_card_${ayahItem.surahNumber}_${ayahItem.ayahNumber}'),
                       item: ayahItem,
-                    themeMode: widget.themeMode,
-                    fontSize: widget.fontSize,
-                    isTajweedEnabled: widget.isTajweedEnabled,
-                    showTranslation: widget.showTranslation,
-                    isPlaying: isPlaying,
-                    isBookmarked: isBookmarked,
-                    tajweedMarkup: markup,
+                      themeMode: widget.themeMode,
+                      fontSize: widget.fontSize,
+                      isTajweedEnabled: widget.isTajweedEnabled,
+                      showTranslation: widget.showTranslation,
+                      isPlaying: isPlaying,
+                      isSelected: isSelected,
+                      isBookmarked: isBookmarked,
+                      tajweedMarkup: markup,
                     onTap: () {
                       if (widget.onAyahTap != null) {
                         widget.onAyahTap!(ayahItem.surahNumber, ayahItem.ayahNumber);
@@ -382,6 +390,7 @@ class _ContinuousAyahCard extends StatefulWidget {
   final bool isTajweedEnabled;
   final bool showTranslation;
   final bool isPlaying;
+  final bool isSelected;
   final bool isBookmarked;
   final String? tajweedMarkup;
   final VoidCallback onTap;
@@ -398,6 +407,7 @@ class _ContinuousAyahCard extends StatefulWidget {
     required this.isTajweedEnabled,
     required this.showTranslation,
     required this.isPlaying,
+    this.isSelected = false,
     required this.isBookmarked,
     required this.tajweedMarkup,
     required this.onTap,
@@ -414,12 +424,13 @@ class _ContinuousAyahCard extends StatefulWidget {
 class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => widget.isPlaying || widget.isBookmarked;
+  bool get wantKeepAlive => widget.isPlaying || widget.isBookmarked || widget.isSelected;
 
   @override
   void didUpdateWidget(covariant _ContinuousAyahCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isPlaying != widget.isPlaying ||
+        oldWidget.isSelected != widget.isSelected ||
         oldWidget.isBookmarked != widget.isBookmarked) {
       updateKeepAlive();
     }
@@ -449,13 +460,17 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
         ? (isDark
             ? palette.primary.withValues(alpha: 0.20)
             : palette.primarySoft.withValues(alpha: 0.14))
-        : baseCardBg;
+        : widget.isSelected
+            ? palette.gold.withValues(alpha: 0.18)
+            : baseCardBg;
 
     final borderColor = widget.isPlaying
         ? palette.primary
-        : widget.isBookmarked
-            ? palette.gold.withValues(alpha: 0.6)
-            : baseBorder;
+        : widget.isSelected
+            ? palette.gold
+            : widget.isBookmarked
+                ? palette.gold.withValues(alpha: 0.6)
+                : baseBorder;
 
     final badgeBg = widget.isPlaying ? palette.primary : baseBadgeBg;
 
