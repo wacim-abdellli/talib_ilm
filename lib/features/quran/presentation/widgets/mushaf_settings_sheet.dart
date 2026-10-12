@@ -319,7 +319,7 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                                   ),
                                 ),
                                 Text(
-                                  'تمييز الغنة، القلقلة، الإخفاء، والمدود',
+                                  'تمييز الغنة، القلقلة، والمدود حرفياً في قائمة الآيات',
                                   style: textTheme.caption.copyWith(
                                     color: palette.textMuted,
                                   ),
@@ -351,6 +351,16 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                         Divider(height: 1, color: palette.border),
                         const SizedBox(height: AppSpace.sm),
                         const MushafTajweedLegendWidget(),
+                        if (_readingMode == QuranReadingMode.mushafPage) ...[
+                          const SizedBox(height: AppSpace.sm),
+                          Text(
+                            'تنويه: التلوين الحرفي المعتمد يعمل في «قائمة الآيات». صفحات المصحف تُعرض بالرسم العثماني الأصلي لمجمع الملك فهد.',
+                            style: textTheme.caption.copyWith(
+                              color: palette.gold,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),
