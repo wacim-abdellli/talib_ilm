@@ -10,17 +10,8 @@ import '../../../../shared/widgets/icon_badge.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_tafsir_service.dart';
 import 'mushaf_settings_widgets.dart';
-
-enum MushafThemeMode {
-  white, // Classic White
-  sepia, // Warm Cream / Parchment
-  dark, // Twilight AMOLED Dark
-}
-
-enum QuranReadingMode {
-  mushafPage, // 604 authentic Medina pages
-  ayahList, // Continuous scrolling verses
-}
+// MushafThemeMode & QuranReadingMode enums live in app_palette.dart; re-export for compatibility.
+export '../../../../app/theme/app_palette.dart' show MushafThemeMode, QuranReadingMode;
 
 class MushafSettingsSheet extends StatefulWidget {
   final MushafThemeMode currentTheme;

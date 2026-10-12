@@ -4,9 +4,9 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../core/utils/arabic_digits.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../data/services/quran_audio_service.dart';
-import 'mushaf_settings_sheet.dart';
 import 'quick_jump_sheet.dart';
 
 class MushafReaderTopBar extends StatelessWidget {
@@ -42,7 +42,7 @@ class MushafReaderTopBar extends StatelessWidget {
         vertical: AppSpace.xs,
       ),
       decoration: BoxDecoration(
-        color: palette.surfaceRaised.withValues(alpha: 0.94),
+        color: palette.surfaceRaised,
         border: Border(bottom: BorderSide(color: palette.border)),
         boxShadow: palette.shadow,
       ),
@@ -66,9 +66,9 @@ class MushafReaderTopBar extends StatelessWidget {
               },
               borderRadius: AppRadius.smRadius,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.xs,
-                  vertical: 2,
+                  vertical: AppSpace.xxs,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +92,7 @@ class MushafReaderTopBar extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      'الجزء $juzNum • الصفحة $currentPage',
+                      '${getArabicJuzName(juzNum)} • الصفحة $currentPage',
                       style: textTheme.caption.copyWith(
                         color: palette.textMuted,
                       ),
@@ -224,7 +224,7 @@ class MushafReaderBottomBar extends StatelessWidget {
             vertical: AppSpace.xs,
           ),
           decoration: BoxDecoration(
-            color: palette.surfaceRaised.withValues(alpha: 0.95),
+            color: palette.surfaceRaised,
             border: Border(top: BorderSide(color: palette.border)),
             boxShadow: palette.shadow,
           ),
@@ -247,18 +247,45 @@ class MushafReaderBottomBar extends StatelessWidget {
 
     return Row(
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: palette.primarySoft.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.graphic_eq_rounded,
-            color: palette.primary,
-            size: AppIcon.sm,
-          ),
+        ValueListenableBuilder<AudioRepeatMode>(
+          valueListenable: audioService.repeatModeNotifier,
+          builder: (context, repeatMode, _) {
+            final IconData icon = switch (repeatMode) {
+              AudioRepeatMode.none => Icons.repeat_rounded,
+              AudioRepeatMode.singleAyah => Icons.repeat_one_rounded,
+              AudioRepeatMode.surah => Icons.all_inclusive_rounded,
+            };
+            final bool active = repeatMode != AudioRepeatMode.none;
+            return InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                final next = switch (repeatMode) {
+                  AudioRepeatMode.none => AudioRepeatMode.singleAyah,
+                  AudioRepeatMode.singleAyah => AudioRepeatMode.surah,
+                  AudioRepeatMode.surah => AudioRepeatMode.none,
+                };
+                audioService.setRepeatMode(next);
+              },
+              borderRadius: AppRadius.pillRadius,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: active ? palette.primarySoft : palette.surfaceMuted,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: active ? palette.primary : palette.border,
+                    width: 0.8,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: active ? palette.primary : palette.textMuted,
+                  size: AppIcon.sm,
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(width: AppSpace.sm),
         Expanded(
@@ -274,12 +301,52 @@ class MushafReaderBottomBar extends StatelessWidget {
                 ),
                 maxLines: 1,
               ),
-              Text(
-                audioService.selectedReciter.name,
-                style: textTheme.caption.copyWith(
-                  color: palette.textMuted,
-                ),
-                maxLines: 1,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      audioService.selectedReciter.name,
+                      style: textTheme.caption.copyWith(
+                        color: palette.textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  ValueListenableBuilder<double>(
+                    valueListenable: audioService.speedNotifier,
+                    builder: (context, speed, _) {
+                      return InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          const speeds = [0.75, 1.0, 1.25, 1.5];
+                          final idx = (speeds.indexOf(speed) + 1) % speeds.length;
+                          audioService.setPlaybackSpeed(speeds[idx]);
+                        },
+                        borderRadius: AppRadius.pillRadius,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xs,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.surfaceMuted,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(color: palette.border, width: 0.8),
+                          ),
+                          child: Text(
+                            '${speed == 1.0 ? "1" : speed}×',
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -346,7 +413,7 @@ class MushafReaderBottomBar extends StatelessWidget {
           ),
         ),
         Text(
-          '٦٠٤',
+          '604',
           style: textTheme.caption.copyWith(
             color: palette.textMuted,
           ),

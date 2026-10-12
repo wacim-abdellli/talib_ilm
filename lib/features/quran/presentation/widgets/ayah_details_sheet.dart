@@ -12,19 +12,23 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 import '../../data/services/bookmark_service.dart';
 import '../../data/services/quran_audio_service.dart';
+import '../../data/services/quran_reader_preferences.dart';
 import '../../data/services/quran_tafsir_service.dart';
 import '../../data/services/tajweed_service.dart';
+import '../../data/services/tajweed_verse_service.dart';
 import 'ayah_details_tabs.dart';
 
 class AyahDetailsSheet extends StatefulWidget {
   final int surahNumber;
   final int ayahNumber;
+  final TafsirScholar? initialTafsirScholar;
   final VoidCallback? onBookmarkChanged;
 
   const AyahDetailsSheet({
     super.key,
     required this.surahNumber,
     required this.ayahNumber,
+    this.initialTafsirScholar,
     this.onBookmarkChanged,
   });
 
@@ -32,6 +36,7 @@ class AyahDetailsSheet extends StatefulWidget {
     BuildContext context, {
     required int surahNumber,
     required int ayahNumber,
+    TafsirScholar? initialTafsirScholar,
     VoidCallback? onBookmarkChanged,
   }) {
     return AppSheet.show<void>(
@@ -40,6 +45,7 @@ class AyahDetailsSheet extends StatefulWidget {
       builder: (_) => AyahDetailsSheet(
         surahNumber: surahNumber,
         ayahNumber: ayahNumber,
+        initialTafsirScholar: initialTafsirScholar,
         onBookmarkChanged: onBookmarkChanged,
       ),
     );
@@ -55,7 +61,8 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
   final QuranAudioService _audioService = QuranAudioService();
   final TextEditingController _noteController = TextEditingController();
 
-  TafsirScholar _selectedScholar = TafsirScholar.muyassar;
+  late TafsirScholar _selectedScholar;
+  String? _tajweedMarkup;
   String _tafsirText = '';
   bool _loadingTafsir = true;
   bool _isBookmarked = false;
@@ -63,9 +70,32 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
   @override
   void initState() {
     super.initState();
+    _selectedScholar =
+        widget.initialTafsirScholar ?? TafsirScholar.muyassar;
     _tabController = TabController(length: 4, vsync: this);
     _loadBookmarkState();
-    _fetchTafsir();
+    _loadTajweedMarkup();
+    if (widget.initialTafsirScholar != null) {
+      _fetchTafsir();
+    } else {
+      _initScholarFromPrefs();
+    }
+  }
+
+  Future<void> _initScholarFromPrefs() async {
+    final snapshot = await QuranReaderPreferences.load();
+    if (!mounted) return;
+    setState(() => _selectedScholar = snapshot.defaultTafsir);
+    await _fetchTafsir();
+  }
+
+  Future<void> _loadTajweedMarkup() async {
+    final markup = await TajweedVerseService.getAyahMarkup(
+      widget.surahNumber,
+      widget.ayahNumber,
+    );
+    if (!mounted) return;
+    setState(() => _tajweedMarkup = markup);
   }
 
   @override
@@ -276,15 +306,16 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
           Flexible(
             child: ListView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpace.xl),
+              padding: const EdgeInsetsDirectional.all(AppSpace.xl),
               children: [
                 AppCard(
                   child: Directionality(
                     textDirection: TextDirection.rtl,
                     child: SelectableText.rich(
                       TextSpan(
-                        children: TajweedService.buildTajweedSpans(
-                          verseText,
+                        children: TajweedService.buildVerseSpans(
+                          plainUthmani: verseText,
+                          quranComMarkup: _tajweedMarkup,
                           baseStyle: textTheme.sacredLarge.copyWith(
                             color: palette.text,
                             height: 1.8,
@@ -342,6 +373,7 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                         loadingTafsir: _loadingTafsir,
                         onScholarChanged: (scholar) {
                           setState(() => _selectedScholar = scholar);
+                          QuranReaderPreferences.saveTafsirScholar(scholar);
                           _fetchTafsir();
                         },
                       ),

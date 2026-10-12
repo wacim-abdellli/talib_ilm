@@ -59,7 +59,7 @@ class SurahNumberMedallion extends StatelessWidget {
           ),
           // Center Surah number
           Padding(
-            padding: const EdgeInsets.all(AppSpace.xs),
+            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(

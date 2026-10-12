@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+/// Mushaf reader theme variants.
+enum MushafThemeMode {
+  white, // Classic White
+  sepia, // Warm Cream / Parchment
+  dark, // Twilight AMOLED Dark
+}
+
+/// Quran reading mode.
+enum QuranReadingMode {
+  mushafPage, // 604 authentic Medina pages
+  ayahList, // Continuous scrolling verses
+}
+
 /// Semantic colors for category chips & indicators
 class CategoryColors {
   final Color fg;
@@ -387,6 +400,7 @@ class AppTextTheme {
   final TextStyle caption;
   final TextStyle sacred;
   final TextStyle sacredLarge;
+  final TextStyle mushafChrome;
 
   const AppTextTheme({
     required this.display,
@@ -398,6 +412,7 @@ class AppTextTheme {
     required this.caption,
     required this.sacred,
     required this.sacredLarge,
+    required this.mushafChrome,
   });
 
   factory AppTextTheme.fromPalette(AppPalette palette) {
@@ -468,6 +483,13 @@ class AppTextTheme {
         height: 2.0,
         color: palette.text,
       ),
+      mushafChrome: TextStyle(
+        fontFamily: amiri,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        height: 1.4,
+        color: palette.text,
+      ),
     );
   }
 }
@@ -476,6 +498,7 @@ class AppTextTheme {
 class AppSpace {
   AppSpace._();
 
+  static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;
@@ -532,6 +555,7 @@ class AppMotion {
   static const Duration slow = Duration(milliseconds: 320);
   static const Duration splash = Duration(milliseconds: 1400);
   static const Duration toast = Duration(milliseconds: 2500);
+  static const Duration debounce = Duration(milliseconds: 500);
 
   static const Curve easeIn = Curves.easeInCubic;
   static const Curve easeOut = Curves.easeOutCubic;
@@ -557,11 +581,11 @@ class AppSize {
 class TajweedPalette {
   TajweedPalette._();
 
-  static const Color ghunnah = Color(0xFFB45309); // Amber Gold
-  static const Color qalqalah = Color(0xFF2563EB); // Royal Blue
-  static const Color ikhfaa = Color(0xFF059669); // Emerald Green
+  static const Color ghunnah = Color(0xFFB45309); // Warm Amber Gold
+  static const Color qalqalah = Color(0xFF0284C7); // Ocean Blue
+  static const Color ikhfaa = Color(0xFF059669); // Emerald Forest
   static const Color idgham = Color(0xFF7C3AED); // Regal Purple
-  static const Color iqlab = Color(0xFF1E40AF); // Deep Indigo
+  static const Color iqlab = Color(0xFFEA580C); // Vivid Coral
   static const Color madd = Color(0xFFDC2626); // Crimson Red
 }
 
@@ -592,6 +616,40 @@ class MushafColors {
   static const Color darkBannerBorder = Color(0xFF997D3D);
   static const Color darkBannerText = Color(0xFFF5D78E);
   static const Color darkBannerSubtext = Color(0xFFC7AA64);
+
+  /// Theme-based background lookup — eliminates switch duplication.
+  // ignore: import_of_legacy_library_into_null_safe
+  static Color bgFor(MushafThemeMode mode) {
+    switch (mode) {
+      case MushafThemeMode.white: return whiteBg;
+      case MushafThemeMode.sepia: return sepiaBg;
+      case MushafThemeMode.dark:  return darkBg;
+    }
+  }
+
+  static Color textFor(MushafThemeMode mode) {
+    switch (mode) {
+      case MushafThemeMode.white: return whiteText;
+      case MushafThemeMode.sepia: return sepiaText;
+      case MushafThemeMode.dark:  return darkText;
+    }
+  }
+
+  static Color verseNumberFor(MushafThemeMode mode) {
+    switch (mode) {
+      case MushafThemeMode.white: return whiteVerseNumber;
+      case MushafThemeMode.sepia: return sepiaVerseNumber;
+      case MushafThemeMode.dark:  return darkVerseNumber;
+    }
+  }
+
+  static Color bannerBorderFor(MushafThemeMode mode) {
+    switch (mode) {
+      case MushafThemeMode.white: return whiteBannerBorder;
+      case MushafThemeMode.sepia: return sepiaBannerBorder;
+      case MushafThemeMode.dark:  return darkBannerBorder;
+    }
+  }
 }
 
 /// Ergonomic theme context extensions

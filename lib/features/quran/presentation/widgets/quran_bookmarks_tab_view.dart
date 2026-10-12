@@ -29,7 +29,7 @@ class QuranBookmarksTabView extends StatelessWidget {
     if (bookmarks.isEmpty) {
       return SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpace.lg),
+        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
         child: EmptyState(
           icon: Icons.bookmark_border_rounded,
           title: 'لا توجد آيات أو ملاحظات محفوظة',
@@ -42,11 +42,10 @@ class QuranBookmarksTabView extends StatelessWidget {
 
     return ListView.builder(
       itemCount: bookmarks.length,
-      padding: EdgeInsets.fromLTRB(
-        AppSpace.lg,
-        0,
-        AppSpace.lg,
-        AppSize.navClearance(context),
+      padding: EdgeInsetsDirectional.only(
+        start: AppSpace.lg,
+        end: AppSpace.lg,
+        bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
         final b = bookmarks[index];
@@ -69,7 +68,7 @@ class QuranBookmarksTabView extends StatelessWidget {
                 ),
               ).then((_) => onReload());
             },
-            padding: const EdgeInsets.all(AppSpace.md),
+            padding: const EdgeInsetsDirectional.all(AppSpace.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

@@ -210,7 +210,7 @@ class _QuranPageState extends State<QuranPage> {
               children: [
                 if (!isSearching) ...[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
                       AppSpace.lg,
                       AppSpace.xs,
                       AppSpace.lg,
@@ -261,7 +261,7 @@ class _QuranPageState extends State<QuranPage> {
 
                   if (_lastRead != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(
+                      padding: const EdgeInsetsDirectional.symmetric(
                         horizontal: AppSpace.lg,
                         vertical: AppSpace.xs,
                       ),
@@ -277,7 +277,7 @@ class _QuranPageState extends State<QuranPage> {
 
                 // Search Bar
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     AppSpace.lg,
                     AppSpace.sm,
                     AppSpace.lg,
@@ -326,7 +326,7 @@ class _QuranPageState extends State<QuranPage> {
                           width: 1.5,
                         ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsetsDirectional.symmetric(
                         horizontal: AppSpace.lg,
                         vertical: AppSpace.md,
                       ),
@@ -355,9 +355,9 @@ class _QuranPageState extends State<QuranPage> {
     final palette = context.palette;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
       child: Container(
-        padding: const EdgeInsets.all(AppSpace.xs),
+        padding: const EdgeInsetsDirectional.all(AppSpace.xs),
         decoration: BoxDecoration(
           color: palette.surfaceMuted,
           borderRadius: AppRadius.pillRadius,
@@ -367,7 +367,7 @@ class _QuranPageState extends State<QuranPage> {
           children: [
             Expanded(
               child: _buildTabButton(
-                title: 'السور (١١٤)',
+                title: 'السور (114)',
                 isSelected: _selectedTabIndex == 0,
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -377,7 +377,7 @@ class _QuranPageState extends State<QuranPage> {
             ),
             Expanded(
               child: _buildTabButton(
-                title: 'الأجزاء (٣٠)',
+                title: 'الأجزاء (30)',
                 isSelected: _selectedTabIndex == 1,
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -415,7 +415,7 @@ class _QuranPageState extends State<QuranPage> {
         borderRadius: AppRadius.pillRadius,
         child: AnimatedContainer(
           duration: AppMotion.base,
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+          padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
           decoration: BoxDecoration(
             color: isSelected ? palette.surfaceRaised : Colors.transparent,
             borderRadius: AppRadius.pillRadius,
@@ -439,7 +439,7 @@ class _QuranPageState extends State<QuranPage> {
     if (_filteredSurahs.isEmpty) {
       return SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpace.lg),
+        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
         child: EmptyState(
           icon: Icons.search_off_rounded,
           title: 'لا توجد نتائج',
@@ -453,11 +453,10 @@ class _QuranPageState extends State<QuranPage> {
 
     return ListView.builder(
       itemCount: _filteredSurahs.length,
-      padding: EdgeInsets.fromLTRB(
-        AppSpace.lg,
-        0,
-        AppSpace.lg,
-        AppSize.navClearance(context),
+      padding: EdgeInsetsDirectional.only(
+        start: AppSpace.lg,
+        end: AppSpace.lg,
+        bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
         final surahNum = _filteredSurahs[index];
@@ -477,7 +476,7 @@ class _QuranPageState extends State<QuranPage> {
     if (_filteredJuzs.isEmpty) {
       return SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpace.lg),
+        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
         child: EmptyState(
           icon: Icons.search_off_rounded,
           title: 'لا توجد نتائج',
@@ -491,11 +490,10 @@ class _QuranPageState extends State<QuranPage> {
 
     return ListView.builder(
       itemCount: _filteredJuzs.length,
-      padding: EdgeInsets.fromLTRB(
-        AppSpace.lg,
-        0,
-        AppSpace.lg,
-        AppSize.navClearance(context),
+      padding: EdgeInsetsDirectional.only(
+        start: AppSpace.lg,
+        end: AppSpace.lg,
+        bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
         final juzNum = _filteredJuzs[index];

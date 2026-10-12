@@ -77,7 +77,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(24),
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpace.xs),
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
                   child: Text(
                     '${_bookmarks.length} علامة وملاحظة محفوظة',
                     style: textTheme.caption.copyWith(

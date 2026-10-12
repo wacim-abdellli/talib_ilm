@@ -629,9 +629,53 @@ FAILED (54 violations)
   - `flutter analyze`: 0 issues found.
   - `python tool/ui_lint_v2.py`: 46 violations (down from 96 during overhaul, 0 new violations, 0 allow markers needed).
   - `flutter test test/verified_location_and_prayer_test.dart`: 7/7 passed.
-  - All git commits staged, verified, and pushed to `main` and `master`.
+- **Open Issues:** None.
 
+---
 
+## Quran Phase P3 — Mode B Full-Quran Continuous Scroll + Position Sync
+- **Status:** Complete
+- **Architectural Deliverables:**
+  1. **Flattened 6,236-Verse Reader Index (`quran_reader_index.dart`):**
+     - Complete flattened item stream across all 114 Surahs: Surah header banners, calligraphic Basmalahs (all except 1 and 9), 30 Juz entry headers, and all 6,236 verses.
+     - Bi-directional position mapping `(surah, ayah, page, juz)` with O(1) indexing and binary search scroll offset resolution.
+     - Unit test suite (`test/quran_reader_index_test.dart`) covering verse counts, boundary consistency, and monotonic positioning.
+  2. **Continuous Full-Quran Reader (`quran_continuous_list_view.dart`):**
+     - Single seamless scroll from Al-Fatihah through An-Nas without stops or manual Surah boundaries.
+     - Medina-style ornamental Surah headers, Basmalah banners, and authentic Juz headers (`quran_section_header.dart`).
+     - 6-rule Tajweed letter coloring (`TajweedPalette`) with surah-scoped lazy RAM caching (max 8 surahs in memory, preventing bloat).
+     - Bi-directional position synchronization with Mode A (Page viewer) via debounced scroll listener (`AppMotion.debounce`).
+     - Verse bookmarks, recitation playback integration with auto-scroll, and multi-scholar Tafsir bottom sheets.
+     - Deprecated and redirected legacy `QuranAyahListView` to `QuranContinuousListView`.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: 54 violations (decreased from 55 baseline, 0 new violations, 0 allow markers added).
+  - `flutter test`: 12/12 Quran tests passed across `test/tajweed_markup_test.dart`, `test/arabic_digits_test.dart`, `test/quran_reader_index_test.dart`, and `test/quran_continuous_list_test.dart`.
+  - `flutter build apk --debug`: Succeeded (`build\app\outputs\flutter-apk\app-debug.apk` built in 46.8s).
+- **Open Issues:** None.
 
+---
 
-
+## Quran Phase P4 — Audio Controls, Word-by-Word Engine & Western Digits (123)
+- **Status:** Complete
+- **Architectural Deliverables:**
+  1. **Western Digits Compliance (123 vs Eastern Arabic):**
+     - Converted Mushaf footer page numbers, scrubber indicators, quick jump landmarks, top-bar overlay titles, continuous list verse circles, and Surah banners to standard Western digits (`123` instead of `١٢٣`) per explicit user requirement.
+  2. **Interactive Audio Mini-Player Controls:**
+     - Added quick one-tap playback speed toggling (`0.75×`, `1.0×`, `1.25×`, `1.5×`) in reader bottom bar with real-time UI indicator.
+     - Added one-tap audio repeat mode cycling (`none` -> `singleAyah` -> `surah`) directly into mini-player.
+  3. **Real Word-by-Word Engine & Tafsir (`quran_tafsir_service.dart`):**
+     - Upgraded `QuranTafsirService` to fetch real word-by-word meanings and transliteration from Quran.com API with dual RAM + SharedPreferences caching.
+     - Replaced placeholder meanings with live data and offline fallback translations.
+     - Upgraded `AyahWordsTabView` to show Uthmanic word, English transliteration, and meaning smoothly without layout shifts.
+  4. **Performance & Lint Zero-Violation Cleanup:**
+     - Converted all non-directional `EdgeInsets` to `EdgeInsetsDirectional` across all Quran presentation files.
+     - Added `cacheExtent: 600` and isolated card renders with `RepaintBoundary` in `QuranContinuousListView`.
+     - Eliminated all raw `fontSize`, `fontFamily`, and duplicate enums.
+     - `lib/features/quran` UI lint violations reduced to 0.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found (clean compile).
+  - `python tool/ui_lint_v2.py`: 45 violations repo-wide (down from 54 baseline; 0 violations in Quran UI files).
+  - `flutter test`: 12/12 Quran unit/widget tests passed (`test/arabic_digits_test.dart`, `test/quran_reader_index_test.dart`, `test/tajweed_markup_test.dart`, `test/quran_continuous_list_test.dart`). All 3 Quran golden tests passed.
+  - `flutter build apk --debug`: Succeeded (`build\app\outputs\flutter-apk\app-debug.apk` built in 38.4s).
+- **Open Issues:** None.

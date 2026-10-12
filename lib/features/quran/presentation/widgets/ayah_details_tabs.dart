@@ -79,7 +79,7 @@ class AyahTafsirTabView extends StatelessWidget {
                   ],
                 )
               : Container(
-                  padding: const EdgeInsets.all(AppSpace.md),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
                   decoration: BoxDecoration(
                     color: palette.surfaceMuted,
                     borderRadius: AppRadius.mdRadius,
@@ -116,53 +116,78 @@ class AyahWordsTabView extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final words = QuranTafsirService.getWordMeanings(surahNumber, ayahNumber);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.surfaceMuted,
-        borderRadius: AppRadius.mdRadius,
-        border: Border.all(color: palette.border),
-      ),
-      child: ListView.separated(
-        padding: const EdgeInsets.all(AppSpace.sm),
-        itemCount: words.length,
-        separatorBuilder: (_, index) => Divider(
-          height: 1,
-          color: palette.border.withValues(alpha: 0.5),
-        ),
-        itemBuilder: (context, index) {
-          final item = words[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppSpace.xs,
-              horizontal: AppSpace.sm,
+    return FutureBuilder<List<WordMeaning>>(
+      future: QuranTafsirService.fetchWordMeanings(surahNumber, ayahNumber),
+      initialData: QuranTafsirService.getWordMeanings(surahNumber, ayahNumber),
+      builder: (context, snapshot) {
+        final words = snapshot.data ?? const [];
+
+        return Container(
+          decoration: BoxDecoration(
+            color: palette.surfaceMuted,
+            borderRadius: AppRadius.mdRadius,
+            border: Border.all(color: palette.border),
+          ),
+          child: ListView.separated(
+            padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+            itemCount: words.length,
+            separatorBuilder: (_, index) => Divider(
+              height: 1,
+              color: palette.border.withValues(alpha: 0.5),
             ),
-            child: Row(
-              children: [
-                Text(
-                  item.word,
-                  style: textTheme.sacred.copyWith(
-                    color: palette.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+            itemBuilder: (context, index) {
+              final item = words[index];
+              final hasTranslit = item.transliteration != null &&
+                  item.transliteration!.isNotEmpty;
+
+              return Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  vertical: AppSpace.xs,
+                  horizontal: AppSpace.sm,
                 ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Text(
-                    item.morphology ?? '',
-                    style: textTheme.caption.copyWith(
-                      color: palette.textMuted,
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.word,
+                          style: textTheme.sacred.copyWith(
+                            color: palette.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (hasTranslit)
+                          Text(
+                            item.transliteration!,
+                            style: textTheme.caption.copyWith(
+                              color: palette.gold,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Text(
+                        item.meaning,
+                        textAlign: TextAlign.end,
+                        style: textTheme.caption.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -194,7 +219,7 @@ class AyahAudioTabView extends StatelessWidget {
             activeAyah == ayahNumber;
 
         return Container(
-          padding: const EdgeInsets.all(AppSpace.md),
+          padding: const EdgeInsetsDirectional.all(AppSpace.md),
           decoration: BoxDecoration(
             color: palette.surfaceMuted,
             borderRadius: AppRadius.mdRadius,
@@ -303,7 +328,7 @@ class AyahNotesTabView extends StatelessWidget {
     final textTheme = context.text;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpace.md),
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
       decoration: BoxDecoration(
         color: palette.surfaceMuted,
         borderRadius: AppRadius.mdRadius,

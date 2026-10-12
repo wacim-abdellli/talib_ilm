@@ -25,12 +25,12 @@ class QuickJumpSheet extends StatefulWidget {
   }
 
   static const List<QuickPreset> presets = [
-    QuickPreset(label: 'الفاتحة', page: 1, subtitle: 'ص ١'),
-    QuickPreset(label: 'آية الكرسي', page: 42, subtitle: 'ص ٤٢'),
-    QuickPreset(label: 'سورة الكهف', page: 293, subtitle: 'ص ٢٩٣'),
-    QuickPreset(label: 'سورة يس', page: 440, subtitle: 'ص ٤٤٠'),
-    QuickPreset(label: 'سورة الملك', page: 562, subtitle: 'ص ٥٦٢'),
-    QuickPreset(label: 'جزء عم', page: 582, subtitle: 'ص ٥٨٢'),
+    QuickPreset(label: 'الفاتحة', page: 1, subtitle: 'ص 1'),
+    QuickPreset(label: 'آية الكرسي', page: 42, subtitle: 'ص 42'),
+    QuickPreset(label: 'سورة الكهف', page: 293, subtitle: 'ص 293'),
+    QuickPreset(label: 'سورة يس', page: 440, subtitle: 'ص 440'),
+    QuickPreset(label: 'سورة الملك', page: 562, subtitle: 'ص 562'),
+    QuickPreset(label: 'جزء عم', page: 582, subtitle: 'ص 582'),
   ];
 
   @override
@@ -52,7 +52,7 @@ class _QuickJumpSheetState extends State<QuickJumpSheet> {
     final page = int.tryParse(text);
     if (page == null || page < 1 || page > 604) {
       setState(() {
-        _errorMessage = 'الرجاء إدخال رقم صفحة بين ١ و ٦٠٤';
+        _errorMessage = 'الرجاء إدخال رقم صفحة بين 1 و 604';
       });
       return;
     }

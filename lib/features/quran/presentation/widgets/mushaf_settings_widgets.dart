@@ -6,7 +6,6 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_tafsir_service.dart';
-import 'mushaf_settings_sheet.dart';
 
 class MushafReadingModeCard extends StatelessWidget {
   final String label;

@@ -28,7 +28,7 @@ class QuranLastReadBanner extends StatelessWidget {
         HapticFeedback.lightImpact();
         onTap();
       },
-      padding: const EdgeInsets.all(AppSpace.lg),
+      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
       border: Border.all(
         color: palette.gold.withValues(alpha: 0.35),
         width: 1.2,
@@ -60,7 +60,7 @@ class QuranLastReadBanner extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: const EdgeInsetsDirectional.symmetric(
                         horizontal: AppSpace.sm,
                         vertical: AppSpace.xs,
                       ),
@@ -98,7 +98,7 @@ class QuranLastReadBanner extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
+            padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.md,
               vertical: AppSpace.xs,
             ),
@@ -159,7 +159,7 @@ class QuranStatCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.symmetric(
+      padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.sm,
         vertical: AppSpace.md,
       ),
@@ -167,7 +167,7 @@ class QuranStatCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpace.xs),
+            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
