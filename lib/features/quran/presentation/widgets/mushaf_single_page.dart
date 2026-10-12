@@ -198,113 +198,131 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final pageNumber = widget.pageNumber;
     final themeMode = widget.themeMode;
     final pageFont = "QCF_P${pageNumber.toString().padLeft(3, '0')}";
+
+    // Reference layout width for the King Fahd Complex 15-line Medina Mushaf font.
+    // Locking pageLayoutWidth and layoutFontSize in exact lockstep ensures the
+    // line-breaking capacity ratio remains constant under any screen width, display
+    // DPI, or font slider setting, guaranteeing authentic 15-line rendering without
+    // orphan words.
+    const double referenceWidth = 392.72;
     final scaleFactor = (widget.fontSize / 24.0).clamp(0.85, 1.35);
-    final baseFontSize = getFontSize(pageNumber, context) * scaleFactor;
-    final verseSpans = <InlineSpan>[];
+    final pageLayoutWidth = referenceWidth * scaleFactor;
 
-    for (final r in ranges) {
-      final surah = int.parse(r['surah'].toString());
-      final start = int.parse(r['start'].toString());
-      final end = int.parse(r['end'].toString());
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        size: const Size(referenceWidth, 800.0),
+        textScaler: TextScaler.noScaling,
+      ),
+      child: Builder(
+        builder: (refContext) {
+          final baseFontSize = getFontSize(pageNumber, refContext);
+          final layoutFontSize = baseFontSize * scaleFactor;
+          final verseSpans = <InlineSpan>[];
 
-      for (int v = start; v <= end; v++) {
-        if (v == start && v == 1) {
-          verseSpans.add(
-            WidgetSpan(
-              child: MushafSurahBanner(
-                surahNumber: surah,
-                themeMode: themeMode,
+          for (final r in ranges) {
+            final surah = int.parse(r['surah'].toString());
+            final start = int.parse(r['start'].toString());
+            final end = int.parse(r['end'].toString());
+
+            for (int v = start; v <= end; v++) {
+              if (v == start && v == 1) {
+                verseSpans.add(
+                  WidgetSpan(
+                    child: MushafSurahBanner(
+                      surahNumber: surah,
+                      themeMode: themeMode,
+                    ),
+                  ),
+                );
+
+                if (pageNumber != 1 && pageNumber != 187) {
+                  verseSpans.add(
+                    WidgetSpan(
+                      child: QuranBasmalahBanner(
+                        themeMode: themeMode,
+                        fontSize: layoutFontSize,
+                      ),
+                    ),
+                  );
+                }
+              }
+
+              final isHighlighted =
+                  widget.activeSurah == surah && widget.activeAyah == v;
+              final verseBg = isHighlighted ? palette.gold.withValues(alpha: 0.28) : null;
+
+              final tapRecognizer = _recognizers.tap(
+                surah: surah,
+                ayah: v,
+                onTap: () => _openAyah(surah, v),
+              );
+              final longPressRecognizer = _recognizers.longPress(
+                surah: surah,
+                ayah: v,
+                onLongPress: () => _openAyahLongPress(surah, v),
+              );
+
+              final verseNumberSpan = TextSpan(
+                text: getVerseNumberQCF(surah, v),
+                recognizer: longPressRecognizer,
+                style: TextStyle( // ui-lint: allow — per-page QCF package font
+                  fontFamily: pageFont,
+                  package: 'qcf_quran',
+                  color: verseNumColor,
+                  height: 1.35,
+                  backgroundColor: verseBg,
+                ),
+              );
+
+              final verseText = v == ranges[0]['start']
+                  ? "${getVerseQCF(surah, v, verseEndSymbol: false).substring(0, 1)}\u200A${getVerseQCF(surah, v, verseEndSymbol: false).substring(1)}"
+                  : getVerseQCF(surah, v, verseEndSymbol: false);
+
+              final wordSpans = [
+                TextSpan(
+                  text: verseText,
+                  style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
+                    color: verseTextColor,
+                    backgroundColor: verseBg,
+                  ),
+                ),
+              ];
+
+              verseSpans.add(
+                TextSpan(
+                  recognizer: tapRecognizer,
+                  children: [
+                    ...wordSpans,
+                    verseNumberSpan,
+                  ],
+                ),
+              );
+            }
+          }
+
+          return FittedBox(
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: pageLayoutWidth,
+              child: Text.rich(
+                TextSpan(children: verseSpans),
+                locale: const Locale('ar'),
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                style: TextStyle( // ui-lint: allow — per-page QCF package font
+                  fontFamily: pageFont,
+                  package: 'qcf_quran',
+                  fontSize: layoutFontSize,
+                  color: verseTextColor,
+                  height: (pageNumber == 1 || pageNumber == 2) ? 2.2 : 2.05,
+                  letterSpacing: 0.0,
+                  wordSpacing: 0.0,
+                ),
               ),
             ),
           );
-
-          if (pageNumber != 1 && pageNumber != 187) {
-            verseSpans.add(
-              WidgetSpan(
-                child: QuranBasmalahBanner(
-                  themeMode: themeMode,
-                  fontSize: baseFontSize,
-                ),
-              ),
-            );
-          }
-        }
-
-        final isHighlighted =
-            widget.activeSurah == surah && widget.activeAyah == v;
-        final verseBg = isHighlighted ? palette.gold.withValues(alpha: 0.28) : null;
-
-        final tapRecognizer = _recognizers.tap(
-          surah: surah,
-          ayah: v,
-          onTap: () => _openAyah(surah, v),
-        );
-        final longPressRecognizer = _recognizers.longPress(
-          surah: surah,
-          ayah: v,
-          onLongPress: () => _openAyahLongPress(surah, v),
-        );
-
-        final verseNumberSpan = TextSpan(
-          text: getVerseNumberQCF(surah, v),
-          recognizer: longPressRecognizer,
-          style: TextStyle( // ui-lint: allow — per-page QCF package font
-            fontFamily: pageFont,
-            package: 'qcf_quran',
-            color: verseNumColor,
-            height: 1.35,
-            backgroundColor: verseBg,
-          ),
-        );
-
-        final verseText = v == ranges[0]['start']
-            ? "${getVerseQCF(surah, v, verseEndSymbol: false).substring(0, 1)}\u200A${getVerseQCF(surah, v, verseEndSymbol: false).substring(1)}"
-            : getVerseQCF(surah, v, verseEndSymbol: false);
-
-        final wordSpans = [
-          TextSpan(
-            text: verseText,
-            style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
-              color: verseTextColor,
-              backgroundColor: verseBg,
-            ),
-          ),
-        ];
-
-        verseSpans.add(
-          TextSpan(
-            recognizer: tapRecognizer,
-            children: [
-              ...wordSpans,
-              verseNumberSpan,
-            ],
-          ),
-        );
-      }
-    }
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth - (AppSpace.md * 2);
-
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: SizedBox(
-        width: contentWidth,
-        child: Text.rich(
-          TextSpan(children: verseSpans),
-          locale: const Locale('ar'),
-          textAlign: TextAlign.center,
-          textDirection: TextDirection.rtl,
-          style: TextStyle( // ui-lint: allow — per-page QCF package font
-            fontFamily: pageFont,
-            package: 'qcf_quran',
-            fontSize: baseFontSize,
-            color: verseTextColor,
-            height: (pageNumber == 1 || pageNumber == 2) ? 2.2 : 2.05,
-            letterSpacing: 0.0,
-            wordSpacing: 0.0,
-          ),
-        ),
+        },
       ),
     );
   }
