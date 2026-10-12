@@ -330,40 +330,53 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
                 const SizedBox(height: AppSpace.md),
 
-                TabBar(
-                  controller: _tabController,
-                  labelColor: palette.primary,
-                  unselectedLabelColor: palette.textMuted,
-                  indicatorColor: palette.primary,
-                  indicatorWeight: 3,
-                  labelStyle: textTheme.label.copyWith(
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceMuted,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(color: palette.border),
                   ),
-                  unselectedLabelStyle: textTheme.label,
-                  tabs: const [
-                    Tab(
-                      icon: Icon(Icons.auto_stories_rounded, size: AppIcon.sm),
-                      text: 'التفسير',
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: palette.primary,
+                    unselectedLabelColor: palette.textMuted,
+                    indicator: BoxDecoration(
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
+                      boxShadow: palette.shadow,
                     ),
-                    Tab(
-                      icon: Icon(Icons.spellcheck_rounded, size: AppIcon.sm),
-                      text: 'المعاني',
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelStyle: textTheme.label.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    Tab(
-                      icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
-                      text: 'التلاوة',
-                    ),
-                    Tab(
-                      icon: Icon(Icons.edit_note_rounded, size: AppIcon.sm),
-                      text: 'تدبر وملاحظات',
-                    ),
-                  ],
+                    unselectedLabelStyle: textTheme.label,
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.auto_stories_rounded, size: AppIcon.sm),
+                        text: 'التفسير',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.spellcheck_rounded, size: AppIcon.sm),
+                        text: 'المعاني',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
+                        text: 'التلاوة',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.edit_note_rounded, size: AppIcon.sm),
+                        text: 'التدبر',
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: AppSpace.md),
 
                 SizedBox(
-                  height: 240,
+                  height: 280,
                   child: TabBarView(
                     controller: _tabController,
                     children: [

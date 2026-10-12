@@ -87,12 +87,37 @@ class AyahTafsirTabView extends StatelessWidget {
                   ),
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    child: Text(
-                      tafsirText,
-                      style: textTheme.body.copyWith(
-                        color: palette.text,
-                        height: 1.6,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.menu_book_rounded,
+                              size: AppIcon.sm,
+                              color: palette.gold,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              QuranTafsirService.getScholarName(selectedScholar),
+                              style: textTheme.caption.copyWith(
+                                color: palette.gold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.xs),
+                        Divider(height: 1, color: palette.border.withValues(alpha: 0.5)),
+                        const SizedBox(height: AppSpace.xs),
+                        SelectableText(
+                          tafsirText,
+                          style: textTheme.body.copyWith(
+                            color: palette.text,
+                            height: 1.75,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -123,69 +148,91 @@ class AyahWordsTabView extends StatelessWidget {
       builder: (context, snapshot) {
         final words = snapshot.data ?? const [];
 
-        return Container(
-          decoration: BoxDecoration(
-            color: palette.surfaceMuted,
-            borderRadius: AppRadius.mdRadius,
-            border: Border.all(color: palette.border),
-          ),
-          child: ListView.separated(
-            padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-            itemCount: words.length,
-            separatorBuilder: (_, index) => Divider(
-              height: 1,
-              color: palette.border.withValues(alpha: 0.5),
+        if (words.isEmpty) {
+          return Center(
+            child: Text(
+              'لا تتوفر معاني الكلمات حالياً',
+              style: textTheme.caption.copyWith(color: palette.textMuted),
             ),
-            itemBuilder: (context, index) {
-              final item = words[index];
-              final hasTranslit = item.transliteration != null &&
-                  item.transliteration!.isNotEmpty;
+          );
+        }
 
-              return Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  vertical: AppSpace.xs,
-                  horizontal: AppSpace.sm,
+        return ListView.builder(
+          physics: const BouncingScrollPhysics(),
+          itemCount: words.length,
+          itemBuilder: (context, index) {
+            final item = words[index];
+            final hasTranslit = item.transliteration != null &&
+                item.transliteration!.isNotEmpty;
+
+            return Container(
+              margin: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
+              padding: const EdgeInsetsDirectional.symmetric(
+                vertical: AppSpace.sm,
+                horizontal: AppSpace.md,
+              ),
+              decoration: BoxDecoration(
+                color: palette.surfaceMuted,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(
+                  color: palette.border.withValues(alpha: 0.6),
                 ),
-                child: Row(
-                  children: [
-                    Column(
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           item.word,
                           style: textTheme.sacred.copyWith(
-                            color: palette.primary,
+                            color: palette.text,
                             fontWeight: FontWeight.bold,
+                            height: 1.3,
                           ),
                         ),
-                        if (hasTranslit)
-                          Text(
-                            item.transliteration!,
-                            style: textTheme.caption.copyWith(
-                              color: palette.gold,
-                              fontStyle: FontStyle.italic,
+                        if (hasTranslit) ...[
+                          const SizedBox(height: AppSpace.xxs),
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xs,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.goldSoft,
+                              borderRadius: AppRadius.smRadius,
+                            ),
+                            child: Text(
+                              item.transliteration!,
+                              style: textTheme.caption.copyWith(
+                                color: palette.gold,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
+                        ],
                       ],
                     ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Text(
-                        item.meaning,
-                        textAlign: TextAlign.end,
-                        style: textTheme.caption.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    flex: 6,
+                    child: Text(
+                      item.meaning,
+                      textAlign: TextAlign.end,
+                      style: textTheme.bodySmall.copyWith(
+                        color: palette.text,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -228,48 +275,58 @@ class AyahAudioTabView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.record_voice_over_rounded,
-                    size: AppIcon.sm,
-                    color: palette.primary,
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  DropdownButton<QuranReciter>(
-                    value: audioService.selectedReciter,
-                    dropdownColor: palette.surfaceRaised,
-                    underline: const SizedBox.shrink(),
-                    items: QuranAudioService.reciters.map((r) {
-                      return DropdownMenuItem<QuranReciter>(
-                        value: r,
-                        child: Text(
-                          r.name,
-                          style: textTheme.bodySmall.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.surfaceRaised,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(color: palette.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.record_voice_over_rounded,
+                      size: AppIcon.sm,
+                      color: palette.primary,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    DropdownButton<QuranReciter>(
+                      value: audioService.selectedReciter,
+                      dropdownColor: palette.surfaceRaised,
+                      underline: const SizedBox.shrink(),
+                      items: QuranAudioService.reciters.map((r) {
+                        return DropdownMenuItem<QuranReciter>(
+                          value: r,
+                          child: Text(
+                            r.name,
+                            style: textTheme.bodySmall.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        audioService.setSelectedReciter(val);
-                      }
-                    },
-                  ),
-                ],
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          audioService.setSelectedReciter(val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpace.sm),
+              const SizedBox(height: AppSpace.md),
 
-              Center(
-                child: FloatingActionButton(
-                  heroTag: 'ayah_audio_tab_fab_extracted',
-                  backgroundColor: palette.primary,
-                  foregroundColor: palette.onPrimary,
-                  elevation: 0,
-                  onPressed: () {
+              Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () {
                     HapticFeedback.mediumImpact();
                     if (isThisPlaying) {
                       audioService.pause();
@@ -277,9 +334,20 @@ class AyahAudioTabView extends StatelessWidget {
                       audioService.playVerse(surahNumber, ayahNumber);
                     }
                   },
-                  child: Icon(
-                    isThisPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    size: AppIcon.lg,
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: palette.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: palette.shadow,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      isThisPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      size: AppIcon.lg,
+                      color: palette.onPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -293,7 +361,11 @@ class AyahAudioTabView extends StatelessWidget {
                     startAyah: ayahNumber,
                   );
                 },
-                icon: Icon(Icons.playlist_play_rounded, size: AppIcon.sm, color: palette.primary),
+                icon: Icon(
+                  Icons.playlist_play_rounded,
+                  size: AppIcon.sm,
+                  color: palette.primary,
+                ),
                 label: Text(
                   'تلاوة مستمرة من هذه الآية',
                   style: textTheme.caption.copyWith(
@@ -337,29 +409,64 @@ class AyahNotesTabView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: TextField(
-              controller: noteController,
-              maxLines: 5,
-              style: textTheme.body.copyWith(color: palette.text),
-              decoration: InputDecoration(
-                hintText: 'أضف تدبرك أو خواطرك حول هذه الآية الكريمة...',
-                hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
-                border: InputBorder.none,
-              ),
-              onChanged: onChanged,
-            ),
-          ),
-          const SizedBox(height: AppSpace.xs),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              AppButton(
-                label: 'حفظ التدبر',
-                icon: Icons.check_rounded,
-                onPressed: onSaveNote,
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                size: AppIcon.sm,
+                color: palette.gold,
+              ),
+              const SizedBox(width: AppSpace.xs),
+              Text(
+                'تدبر شخصي وخواطر إيمانية',
+                style: textTheme.caption.copyWith(
+                  color: palette.gold,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
+          ),
+          const SizedBox(height: AppSpace.xs),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                borderRadius: AppRadius.smRadius,
+                border: Border.all(
+                  color: palette.border.withValues(alpha: 0.6),
+                ),
+              ),
+              child: TextField(
+                controller: noteController,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: textTheme.body.copyWith(
+                  color: palette.text,
+                  height: 1.5,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'اكتب تدبرك أو ما ألهمتك به هذه الآية الكريمة...',
+                  hintStyle: textTheme.bodySmall.copyWith(
+                    color: palette.textMuted,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsetsDirectional.zero,
+                ),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: AppButton(
+              label: 'حفظ التدبر',
+              icon: Icons.check_rounded,
+              onPressed: onSaveNote,
+            ),
           ),
         ],
       ),
