@@ -332,8 +332,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
             // Top Bar Overlay
             AnimatedPositioned(
               duration: AppMotion.slow,
-              curve: Curves.easeInOut,
-              top: _showOverlays ? 0 : -85,
+              curve: AppMotion.easeOut,
+              top: _showOverlays ? 0 : -100,
               left: 0,
               right: 0,
               child: ValueListenableBuilder<QuranPosition>(
@@ -355,8 +355,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
             // Bottom Bar Overlay & Floating Audio Player
             AnimatedPositioned(
               duration: AppMotion.slow,
-              curve: Curves.easeInOut,
-              bottom: _showOverlays ? 0 : -100,
+              curve: AppMotion.easeOut,
+              bottom: _showOverlays ? 0 : -120,
               left: 0,
               right: 0,
               child: ValueListenableBuilder<QuranPosition>(
@@ -401,7 +401,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   fontSize: _fontSize,
                   activeSurah: activeSurah,
                   activeAyah: activeAyah,
-                  onAyahTap: _openAyahDetails,
+                  onAyahTap: (surah, ayah) => _toggleOverlays(),
                   onAyahLongPress: _openAyahDetails,
                   onToggleOverlays: _toggleOverlays,
                 ),
@@ -437,7 +437,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
         );
         _scheduleSaveLastRead(surah, ayah, page);
       },
-      onAyahTap: _openAyahDetails,
+      onAyahTap: (surah, ayah) => _toggleOverlays(),
+      onAyahLongPress: _openAyahDetails,
       onToggleOverlays: _toggleOverlays,
     );
   }

@@ -34,6 +34,7 @@ class QuranContinuousListView extends StatefulWidget {
   final MushafThemeMode themeMode;
   final void Function(int surah, int ayah, int page)? onPositionChanged;
   final void Function(int surah, int ayah)? onAyahTap;
+  final void Function(int surah, int ayah)? onAyahLongPress;
   final VoidCallback? onToggleOverlays;
 
   const QuranContinuousListView({
@@ -46,6 +47,7 @@ class QuranContinuousListView extends StatefulWidget {
     this.themeMode = MushafThemeMode.white,
     this.onPositionChanged,
     this.onAyahTap,
+    this.onAyahLongPress,
     this.onToggleOverlays,
   });
 
@@ -315,6 +317,14 @@ class QuranContinuousListViewState extends State<QuranContinuousListView> {
                     onTap: () {
                       if (widget.onAyahTap != null) {
                         widget.onAyahTap!(ayahItem.surahNumber, ayahItem.ayahNumber);
+                      } else if (widget.onToggleOverlays != null) {
+                        widget.onToggleOverlays!();
+                      }
+                    },
+                    onLongPress: () {
+                      HapticFeedback.mediumImpact();
+                      if (widget.onAyahLongPress != null) {
+                        widget.onAyahLongPress!(ayahItem.surahNumber, ayahItem.ayahNumber);
                       } else {
                         AyahDetailsSheet.show(
                           context,
@@ -368,6 +378,7 @@ class _ContinuousAyahCard extends StatelessWidget {
   final bool isBookmarked;
   final String? tajweedMarkup;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback onBookmarkToggle;
   final VoidCallback onPlayToggle;
   final VoidCallback onOpenDetails;
@@ -383,6 +394,7 @@ class _ContinuousAyahCard extends StatelessWidget {
     required this.isBookmarked,
     required this.tajweedMarkup,
     required this.onTap,
+    this.onLongPress,
     required this.onBookmarkToggle,
     required this.onPlayToggle,
     required this.onOpenDetails,
@@ -424,6 +436,7 @@ class _ContinuousAyahCard extends StatelessWidget {
         child: InkWell(
           borderRadius: AppRadius.mdRadius,
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsetsDirectional.all(AppSpace.md),
             child: Column(

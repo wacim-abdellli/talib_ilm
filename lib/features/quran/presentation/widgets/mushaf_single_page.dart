@@ -58,17 +58,16 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
   Color _getBorderColor(MushafThemeMode themeMode) => MushafColors.bannerBorderFor(themeMode);
 
   void _openAyah(int surah, int ayah) {
-    HapticFeedback.selectionClick();
-    widget.onAyahTap?.call(surah, ayah);
+    if (widget.onAyahTap != null) {
+      widget.onAyahTap!(surah, ayah);
+    } else {
+      widget.onToggleOverlays?.call();
+    }
   }
 
   void _openAyahLongPress(int surah, int ayah) {
     HapticFeedback.mediumImpact();
-    if (widget.onAyahLongPress != null) {
-      widget.onAyahLongPress!(surah, ayah);
-    } else {
-      _openAyah(surah, ayah);
-    }
+    widget.onAyahLongPress?.call(surah, ayah);
   }
 
   @override
@@ -137,17 +136,22 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
             ),
           ),
 
-          // 2. Middle Mushaf Page Content (QCF only — no greedy tap wrapper; PageView owns horizontal drag)
+          // 2. Middle Mushaf Page Content
           Expanded(
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.sm),
-              child: Center(
-                child: _buildQcfPage(
-                  context,
-                  ranges,
-                  verseTextColor,
-                  verseNumColor,
-                  palette,
+            child: InkWell(
+              onTap: widget.onToggleOverlays,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.sm),
+                child: Center(
+                  child: _buildQcfPage(
+                    context,
+                    ranges,
+                    verseTextColor,
+                    verseNumColor,
+                    palette,
+                  ),
                 ),
               ),
             ),
