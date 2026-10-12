@@ -401,6 +401,8 @@ class AppTextTheme {
   final TextStyle sacred;
   final TextStyle sacredLarge;
   final TextStyle mushafChrome;
+  final TextStyle surahCalligraphy;
+  final TextStyle basmallahCalligraphy;
 
   const AppTextTheme({
     required this.display,
@@ -413,6 +415,8 @@ class AppTextTheme {
     required this.sacred,
     required this.sacredLarge,
     required this.mushafChrome,
+    required this.surahCalligraphy,
+    required this.basmallahCalligraphy,
   });
 
   factory AppTextTheme.fromPalette(AppPalette palette) {
@@ -489,6 +493,20 @@ class AppTextTheme {
         fontWeight: FontWeight.w700,
         height: 1.4,
         color: palette.text,
+      ),
+      surahCalligraphy: const TextStyle(
+        fontFamily: 'arsura',
+        package: 'qcf_quran_plus',
+        fontSize: 34,
+        fontWeight: FontWeight.w400,
+        height: 1.1,
+      ),
+      basmallahCalligraphy: const TextStyle(
+        fontFamily: 'QCF4_BSML',
+        package: 'qcf_quran_plus',
+        fontSize: 30,
+        fontWeight: FontWeight.w400,
+        height: 1.2,
       ),
     );
   }
@@ -711,6 +729,12 @@ class MushafColors {
     MushafThemeMode.white => palette.surfaceMuted,
     MushafThemeMode.sepia => sepiaBadgeBg,
     MushafThemeMode.dark => darkBadgeBg,
+  };
+
+  static Color? bannerFrameTint(MushafThemeMode mode) => switch (mode) {
+    MushafThemeMode.white => null,
+    MushafThemeMode.sepia => const Color(0xFF8B5A2B),
+    MushafThemeMode.dark => const Color(0xFFD4AF37),
   };
 }
 

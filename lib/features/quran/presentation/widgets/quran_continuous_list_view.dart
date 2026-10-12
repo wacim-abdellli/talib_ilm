@@ -284,6 +284,7 @@ class QuranContinuousListViewState extends State<QuranContinuousListView> {
                   return RepaintBoundary(
                     child: QuranBasmalahBanner(
                       key: ValueKey('basmalah_${basmalah.surahNumber}'),
+                      surahNumber: basmalah.surahNumber,
                       themeMode: widget.themeMode,
                       fontSize: widget.fontSize,
                     ),

@@ -16,106 +16,112 @@ class MushafSurahBanner extends StatelessWidget {
     required this.themeMode,
   });
 
+  static const String _bannerAsset = 'assets/surah_banner.png';
+  static const AssetImage _assetImage = AssetImage(
+    _bannerAsset,
+    package: 'qcf_quran_plus',
+  );
+
   @override
   Widget build(BuildContext context) {
     final textTheme = context.text;
-    final surahName = quran.getSurahNameArabic(surahNumber);
     final verseCount = quran.getVerseCount(surahNumber);
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
     final revelationType = isMakki ? 'مَكِّيَّةٌ' : 'مَدَنِيَّةٌ';
 
-    Color bannerBg;
-    Color borderColor;
-    Color textColor;
-    Color subtextColor;
+    final Color textColor = switch (themeMode) {
+      MushafThemeMode.white => MushafColors.whiteText,
+      MushafThemeMode.sepia => MushafColors.sepiaText,
+      MushafThemeMode.dark => MushafColors.darkBannerText,
+    };
 
-    switch (themeMode) {
-      case MushafThemeMode.white:
-        bannerBg = MushafColors.whiteBannerBg;
-        borderColor = MushafColors.whiteBannerBorder;
-        textColor = MushafColors.whiteBannerText;
-        subtextColor = MushafColors.whiteBannerSubtext;
-        break;
-      case MushafThemeMode.sepia:
-        bannerBg = MushafColors.sepiaBannerBg;
-        borderColor = MushafColors.sepiaBannerBorder;
-        textColor = MushafColors.sepiaBannerText;
-        subtextColor = MushafColors.sepiaBannerSubtext;
-        break;
-      case MushafThemeMode.dark:
-        bannerBg = MushafColors.darkBannerBg;
-        borderColor = MushafColors.darkBannerBorder;
-        textColor = MushafColors.darkBannerText;
-        subtextColor = MushafColors.darkBannerSubtext;
-        break;
-    }
+    final Color subtextColor = switch (themeMode) {
+      MushafThemeMode.white => MushafColors.whiteBannerSubtext,
+      MushafThemeMode.sepia => MushafColors.sepiaBannerSubtext,
+      MushafThemeMode.dark => MushafColors.darkBannerSubtext,
+    };
+
+    final Color? frameColor = MushafColors.bannerFrameTint(themeMode);
 
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Container(
         width: 380,
+        height: 46,
         margin: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
-        padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.md,
-          vertical: AppSpace.xs,
-        ),
-        decoration: BoxDecoration(
-          color: bannerBg,
-          borderRadius: AppRadius.smRadius,
-          border: Border.all(color: borderColor, width: 1.4),
-        ),
-        child: Container(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xxs,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.smRadius,
-            border: Border.all(
-              color: borderColor.withValues(alpha: 0.45),
-              width: 0.8,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // 1. Authentic King Fahd Complex Medina Mushaf Ornamental Frame
+            Image(
+              image: const ResizeImage(
+                _assetImage,
+                width: 1024,
+                allowUpscaling: false,
+              ),
+              width: 380,
+              height: 46,
+              fit: BoxFit.fill,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.medium,
+              color: frameColor,
+              colorBlendMode: frameColor != null ? BlendMode.srcIn : BlendMode.srcOver,
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+            // 2. Classical Medina Cartouche Metadata and Authentic Calligraphic Title
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xxl),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    '۞',
-                    style: textTheme.caption.copyWith(
-                      color: borderColor,
-                      fontWeight: FontWeight.bold,
+                  // Right in RTL: Ayah count
+                  SizedBox(
+                    width: 72,
+                    child: Text(
+                      'آيَاتُهَا $verseCount',
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: textTheme.caption.copyWith(
+                        color: subtextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: AppSpace.sm),
-                  Text(
-                    'سُورَةُ $surahName',
-                    style: textTheme.sacred.copyWith(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
+
+                  // Center: Authentic KFGQPC Calligraphic Surah Name (arsura font)
+                  Expanded(
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '$surahNumber',
+                          textAlign: TextAlign.center,
+                          style: textTheme.surahCalligraphy.copyWith(
+                            color: textColor,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: AppSpace.sm),
-                  Text(
-                    '۞',
-                    style: textTheme.caption.copyWith(
-                      color: borderColor,
-                      fontWeight: FontWeight.bold,
+
+                  // Left in RTL: Revelation location
+                  SizedBox(
+                    width: 72,
+                    child: Text(
+                      revelationType,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: textTheme.caption.copyWith(
+                        color: subtextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
-              Text(
-                'آيَاتُهَا $verseCount  •  $revelationType',
-                style: textTheme.caption.copyWith(
-                  color: subtextColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -217,44 +223,49 @@ class QuranJuzSectionHeader extends StatelessWidget {
   }
 }
 
-/// Calligraphic Basmalah banner preceding Surah verses.
+/// Authentic Medina Mushaf Calligraphic Basmalah
 class QuranBasmalahBanner extends StatelessWidget {
+  final int? surahNumber;
   final MushafThemeMode themeMode;
   final double fontSize;
 
   const QuranBasmalahBanner({
     super.key,
+    this.surahNumber,
     this.themeMode = MushafThemeMode.white,
-    this.fontSize = 24.0,
+    this.fontSize = 28.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = context.text;
-
-    Color textColor;
-    switch (themeMode) {
-      case MushafThemeMode.white:
-        textColor = MushafColors.whiteText;
-        break;
-      case MushafThemeMode.sepia:
-        textColor = MushafColors.sepiaText;
-        break;
-      case MushafThemeMode.dark:
-        textColor = MushafColors.darkText;
-        break;
+    if (surahNumber == 9) {
+      return const SizedBox.shrink();
     }
 
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Container(
-        padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
-        alignment: AlignmentDirectional.center,
+    final textTheme = context.text;
+    final Color textColor = switch (themeMode) {
+      MushafThemeMode.white => MushafColors.whiteText,
+      MushafThemeMode.sepia => MushafColors.sepiaText,
+      MushafThemeMode.dark => MushafColors.darkText,
+    };
+
+    // Authentic King Fahd Complex Uthman Taha Medina Basmalah calligraphy glyphs
+    final String basmalahGlyphs =
+        (surahNumber == 97 || surahNumber == 95) ? '齃𧻓𥳐龎' : '齃𧻓𥳐𥉉';
+
+    return Container(
+      padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
+      alignment: AlignmentDirectional.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
         child: Text(
-          quran.basmala,
-          style: textTheme.sacredLarge.copyWith(
+          basmalahGlyphs,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+          style: textTheme.basmallahCalligraphy.copyWith(
             color: textColor,
-            fontSize: fontSize,
           ),
         ),
       ),

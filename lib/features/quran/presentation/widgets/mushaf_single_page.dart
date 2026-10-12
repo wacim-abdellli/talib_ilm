@@ -253,6 +253,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
         themeMode: themeMode,
       ),
       basmallahBuilder: (context, surah) => QuranBasmalahBanner(
+        surahNumber: surah,
         themeMode: themeMode,
       ),
       forceFitConstraints: false,
