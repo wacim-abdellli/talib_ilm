@@ -1,18 +1,5 @@
-/// Western digits → Arabic-Indic (٠–٩), as used in Medina Mushaf page numbers.
-String toArabicDigits(int number) {
-  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  final str = number.toString();
-  final buffer = StringBuffer();
-  for (int i = 0; i < str.length; i++) {
-    final code = str.codeUnitAt(i) - 48;
-    if (code >= 0 && code <= 9) {
-      buffer.write(digits[code]);
-    } else {
-      buffer.write(str[i]);
-    }
-  }
-  return buffer.toString();
-}
+/// Formats numbers using standard Western numerals (1, 2, 3) per app guidelines.
+String toArabicDigits(int number) => number.toString();
 
 /// Formal Arabic juz ordinal titles (Medina Mushaf style).
 String getArabicJuzName(int juzNumber) {
@@ -27,5 +14,5 @@ String getArabicJuzName(int juzNumber) {
   if (juzNumber >= 1 && juzNumber <= 30) {
     return 'الجُزْءُ ${juzNames[juzNumber - 1]}';
   }
-  return 'الجزء ${toArabicDigits(juzNumber)}';
+  return 'الجزء $juzNumber';
 }

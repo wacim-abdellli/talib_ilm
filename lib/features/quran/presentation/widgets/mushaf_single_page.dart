@@ -6,6 +6,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart' show getArabicJuzName;
+import '../../data/services/tajweed_service.dart';
 import '../utils/mushaf_verse_gestures.dart';
 
 import 'quran_section_header.dart';
@@ -16,6 +17,7 @@ class MushafSinglePage extends StatefulWidget {
   final int pageNumber;
   final MushafThemeMode themeMode;
   final bool isTajweedEnabled;
+  final double fontSize;
   final int? activeSurah;
   final int? activeAyah;
   final void Function(int surah, int ayah)? onAyahTap;
@@ -27,6 +29,7 @@ class MushafSinglePage extends StatefulWidget {
     required this.pageNumber,
     required this.themeMode,
     required this.isTajweedEnabled,
+    this.fontSize = 24.0,
     this.activeSurah,
     this.activeAyah,
     this.onAyahTap,
@@ -192,7 +195,8 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final pageNumber = widget.pageNumber;
     final themeMode = widget.themeMode;
     final pageFont = "QCF_P${pageNumber.toString().padLeft(3, '0')}";
-    final baseFontSize = getFontSize(pageNumber, context);
+    final scaleFactor = (widget.fontSize / 24.0).clamp(0.85, 1.35);
+    final baseFontSize = getFontSize(pageNumber, context) * scaleFactor;
     final verseSpans = <InlineSpan>[];
 
     for (final r in ranges) {
@@ -254,14 +258,62 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
             ? "${getVerseQCF(surah, v, verseEndSymbol: false).substring(0, 1)}\u200A${getVerseQCF(surah, v, verseEndSymbol: false).substring(1)}"
             : getVerseQCF(surah, v, verseEndSymbol: false);
 
+        final List<InlineSpan> wordSpans;
+        if (widget.isTajweedEnabled) {
+          final uthmaniWords = quran
+              .getVerse(surah, v, verseEndSymbol: false)
+              .split(' ')
+              .where((w) => w.trim().isNotEmpty)
+              .toList();
+
+          wordSpans = [];
+          int wordIndex = 0;
+          final runes = verseText.runes.toList();
+
+          for (int ri = 0; ri < runes.length; ri++) {
+            final rune = runes[ri];
+            final char = String.fromCharCode(rune);
+
+            if (char == '\n' || char == ' ' || char == '\u200A') {
+              wordSpans.add(TextSpan(text: char));
+              continue;
+            }
+
+            Color? color;
+            if (wordIndex < uthmaniWords.length) {
+              color = TajweedService.ruleColorForWord(uthmaniWords[wordIndex]);
+              wordIndex++;
+            }
+
+            wordSpans.add(
+              TextSpan(
+                text: char,
+                style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
+                  color: color ?? verseTextColor,
+                  backgroundColor: verseBg,
+                ),
+              ),
+            );
+          }
+        } else {
+          wordSpans = [
+            TextSpan(
+              text: verseText,
+              style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
+                color: verseTextColor,
+                backgroundColor: verseBg,
+              ),
+            ),
+          ];
+        }
+
         verseSpans.add(
           TextSpan(
-            text: verseText,
             recognizer: tapRecognizer,
-            style: TextStyle( // ui-lint: allow — dynamic highlight bg per verse
-              backgroundColor: verseBg,
-            ),
-            children: [verseNumberSpan],
+            children: [
+              ...wordSpans,
+              verseNumberSpan,
+            ],
           ),
         );
       }

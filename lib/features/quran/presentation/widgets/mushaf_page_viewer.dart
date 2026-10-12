@@ -384,6 +384,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   pageNumber: pageNumber,
                   themeMode: _themeMode,
                   isTajweedEnabled: _isTajweedEnabled,
+                  fontSize: _fontSize,
                   activeSurah: activeSurah,
                   activeAyah: activeAyah,
                   onAyahTap: _openAyahDetails,

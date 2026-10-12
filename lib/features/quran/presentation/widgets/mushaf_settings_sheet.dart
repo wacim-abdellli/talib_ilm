@@ -216,7 +216,7 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                     Expanded(
                       child: MushafReadingModeCard(
                         label: 'صفحات المصحف',
-                        sublabel: '٦٠٤ صفحة طبق الأصل',
+                        sublabel: '604 صفحة طبق الأصل',
                         icon: Icons.menu_book_rounded,
                         mode: QuranReadingMode.mushafPage,
                         isSelected: _readingMode == QuranReadingMode.mushafPage,
@@ -327,9 +327,17 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                               ],
                             ),
                           ),
-                          Switch.adaptive(
+                          Switch(
                             value: _tajweed,
-                            activeColor: palette.primary,
+                            activeColor: palette.onPrimary,
+                            activeTrackColor: palette.primary,
+                            inactiveThumbColor: palette.textMuted,
+                            inactiveTrackColor: palette.surfaceMuted,
+                            trackOutlineColor: WidgetStateProperty.resolveWith(
+                              (states) => states.contains(WidgetState.selected)
+                                  ? Colors.transparent
+                                  : palette.border,
+                            ),
                             onChanged: (val) {
                               HapticFeedback.selectionClick();
                               setState(() => _tajweed = val);
@@ -380,9 +388,17 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                           ],
                         ),
                       ),
-                      Switch.adaptive(
+                      Switch(
                         value: _showTranslation,
-                        activeColor: palette.primary,
+                        activeColor: palette.onPrimary,
+                        activeTrackColor: palette.primary,
+                        inactiveThumbColor: palette.textMuted,
+                        inactiveTrackColor: palette.surfaceMuted,
+                        trackOutlineColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.selected)
+                              ? Colors.transparent
+                              : palette.border,
+                        ),
                         onChanged: (val) {
                           HapticFeedback.selectionClick();
                           setState(() => _showTranslation = val);
@@ -425,9 +441,17 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                           ],
                         ),
                       ),
-                      Switch.adaptive(
+                      Switch(
                         value: _keepScreenAwake,
-                        activeColor: palette.gold,
+                        activeColor: palette.onPrimary,
+                        activeTrackColor: palette.gold,
+                        inactiveThumbColor: palette.textMuted,
+                        inactiveTrackColor: palette.surfaceMuted,
+                        trackOutlineColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.selected)
+                              ? Colors.transparent
+                              : palette.border,
+                        ),
                         onChanged: (val) {
                           HapticFeedback.selectionClick();
                           setState(() => _keepScreenAwake = val);
@@ -460,42 +484,92 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
 
                 const SizedBox(height: AppSpace.md),
 
-                // Font Size Slider
+                // Font Size Slider with interactive buttons and live preview
                 AppCard(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'حجم الخط القرآني',
-                            style: textTheme.body.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.format_size_rounded,
+                                color: palette.primary,
+                                size: AppIcon.md,
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Text(
+                                'حجم الخط القرآني',
+                                style: textTheme.body.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${_fontSize.round()} sp',
-                            style: textTheme.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.primarySoft.withValues(alpha: 0.15),
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            child: Text(
+                              '${_fontSize.round()} sp',
+                              style: textTheme.caption.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpace.xs),
-                      Slider.adaptive(
-                        value: _fontSize,
-                        min: 18.0,
-                        max: 34.0,
-                        divisions: 8,
-                        activeColor: palette.primary,
-                        inactiveColor: palette.border,
-                        onChanged: (val) {
-                          setState(() => _fontSize = val);
-                          widget.onFontSizeChanged(val);
-                        },
+                      const SizedBox(height: AppSpace.md),
+                      Row(
+                        children: [
+                          AppIconButton(
+                            icon: Icons.remove_circle_outline_rounded,
+                            tooltip: 'تصغير الخط',
+                            color: _fontSize > 18.0 ? palette.primary : palette.textMuted,
+                            onPressed: _fontSize > 18.0
+                                ? () {
+                                    final next = (_fontSize - 2.0).clamp(18.0, 34.0);
+                                    setState(() => _fontSize = next);
+                                    widget.onFontSizeChanged(next);
+                                  }
+                                : null,
+                          ),
+                          Expanded(
+                            child: Slider(
+                              value: _fontSize,
+                              min: 18.0,
+                              max: 34.0,
+                              divisions: 8,
+                              activeColor: palette.primary,
+                              inactiveColor: palette.border,
+                              onChanged: (val) {
+                                setState(() => _fontSize = val);
+                                widget.onFontSizeChanged(val);
+                              },
+                            ),
+                          ),
+                          AppIconButton(
+                            icon: Icons.add_circle_outline_rounded,
+                            tooltip: 'تكبير الخط',
+                            color: _fontSize < 34.0 ? palette.primary : palette.textMuted,
+                            onPressed: _fontSize < 34.0
+                                ? () {
+                                    final next = (_fontSize + 2.0).clamp(18.0, 34.0);
+                                    setState(() => _fontSize = next);
+                                    widget.onFontSizeChanged(next);
+                                  }
+                                : null,
+                          ),
+                        ],
                       ),
                     ],
                   ),

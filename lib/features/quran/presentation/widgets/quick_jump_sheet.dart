@@ -100,7 +100,7 @@ class _QuickJumpSheetState extends State<QuickJumpSheet> {
                       ),
                     ),
                     Text(
-                      'اختر صفحة بين ١ و ٦٠٤ أو محطة مشهورة',
+                      'اختر صفحة بين 1 و 604 أو محطة مشهورة',
                       style: context.text.caption.copyWith(
                         color: palette.textMuted,
                       ),
@@ -126,7 +126,7 @@ class _QuickJumpSheetState extends State<QuickJumpSheet> {
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'رقم الصفحة (١ - ٦٠٤)',
+                    hintText: 'رقم الصفحة (1 - 604)',
                     hintStyle: context.text.bodySmall.copyWith(
                       color: palette.textMuted,
                     ),

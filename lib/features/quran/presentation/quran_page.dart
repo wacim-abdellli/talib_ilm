@@ -270,23 +270,25 @@ class _QuranPageState extends State<QuranPage> {
                         onTap: () => _openSurah(_lastRead!.surah, ayah: _lastRead!.ayah),
                       ),
                     ),
-
-                  const SizedBox(height: AppSpace.xs),
-                  _buildIndexTabs(context),
                 ],
 
-                // Search Bar
+                const SizedBox(height: AppSpace.xs),
+                _buildIndexTabs(context),
+
+                // Search Bar with native RTL support and compact clear button
                 Padding(
                   padding: const EdgeInsetsDirectional.fromSTEB(
                     AppSpace.lg,
-                    AppSpace.sm,
+                    AppSpace.xs,
                     AppSpace.lg,
                     AppSpace.sm,
                   ),
                   child: TextField(
                     controller: _searchController,
-                    textAlign: TextAlign.right,
+                    textDirection: TextDirection.rtl,
+                    textInputAction: TextInputAction.search,
                     style: textTheme.body.copyWith(color: palette.text),
+                    cursorColor: palette.primary,
                     decoration: InputDecoration(
                       hintText: _selectedTabIndex == 0
                           ? 'ابحث عن سورة بالاسم أو الرقم...'
@@ -302,33 +304,41 @@ class _QuranPageState extends State<QuranPage> {
                         size: AppIcon.md,
                       ),
                       suffixIcon: _searchController.text.isNotEmpty
-                          ? AppIconButton(
-                              icon: Icons.clear_rounded,
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: palette.textMuted,
+                                size: AppIcon.sm,
+                              ),
                               tooltip: 'مسح البحث',
-                              color: palette.textMuted,
-                              onPressed: () => _searchController.clear(),
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onPressed: () {
+                                _searchController.clear();
+                                _filterIndex();
+                              },
                             )
                           : null,
                       filled: true,
                       fillColor: palette.surfaceMuted,
+                      contentPadding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.sm,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: AppRadius.lgRadius,
+                        borderRadius: AppRadius.mdRadius,
                         borderSide: BorderSide(color: palette.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.lgRadius,
+                        borderRadius: AppRadius.mdRadius,
                         borderSide: BorderSide(color: palette.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.lgRadius,
+                        borderRadius: AppRadius.mdRadius,
                         borderSide: BorderSide(
                           color: palette.gold,
                           width: 1.5,
                         ),
-                      ),
-                      contentPadding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.lg,
-                        vertical: AppSpace.md,
                       ),
                     ),
                   ),

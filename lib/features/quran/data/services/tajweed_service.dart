@@ -202,55 +202,39 @@ class TajweedService {
     return spans;
   }
 
+  /// Returns the specific Tajweed rule color for a given Uthmani word, if any.
+  static Color? ruleColorForWord(String word) {
+    if (_maddRegex.hasMatch(word)) {
+      return TajweedPalette.madd;
+    }
+    if (_ghunnahRegex.hasMatch(word)) {
+      return TajweedPalette.ghunnah;
+    }
+    if (_qalqalahRegex.hasMatch(word)) {
+      return TajweedPalette.qalqalah;
+    }
+    if (_iqlabRegex.hasMatch(word)) {
+      return TajweedPalette.iqlab;
+    }
+    if (_idghamRegex.hasMatch(word)) {
+      return TajweedPalette.idgham;
+    }
+    if (_ikhfaaRegex.hasMatch(word)) {
+      return TajweedPalette.ikhfaa;
+    }
+    return null;
+  }
+
   static List<TextSpan> _parseWordTajweed(
     String word, {
     required TextStyle baseStyle,
   }) {
-    if (_maddRegex.hasMatch(word)) {
+    final color = ruleColorForWord(word);
+    if (color != null) {
       return [
         TextSpan(
           text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.madd),
-        ),
-      ];
-    }
-    if (_ghunnahRegex.hasMatch(word)) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.ghunnah),
-        ),
-      ];
-    }
-    if (_qalqalahRegex.hasMatch(word)) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.qalqalah),
-        ),
-      ];
-    }
-    if (_iqlabRegex.hasMatch(word)) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.iqlab),
-        ),
-      ];
-    }
-    if (_idghamRegex.hasMatch(word)) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.idgham),
-        ),
-      ];
-    }
-    if (_ikhfaaRegex.hasMatch(word)) {
-      return [
-        TextSpan(
-          text: word,
-          style: baseStyle.copyWith(color: TajweedPalette.ikhfaa),
+          style: baseStyle.copyWith(color: color),
         ),
       ];
     }
