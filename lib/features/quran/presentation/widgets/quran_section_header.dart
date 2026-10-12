@@ -50,69 +50,72 @@ class MushafSurahBanner extends StatelessWidget {
         break;
     }
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: bannerBg,
-        borderRadius: AppRadius.smRadius,
-        border: Border.all(color: borderColor, width: 1.4),
-      ),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
       child: Container(
+        width: 380,
+        margin: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
         padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.sm,
+          horizontal: AppSpace.md,
           vertical: AppSpace.xs,
         ),
         decoration: BoxDecoration(
+          color: bannerBg,
           borderRadius: AppRadius.smRadius,
-          border: Border.all(
-            color: borderColor.withValues(alpha: 0.45),
-            width: 0.8,
-          ),
+          border: Border.all(color: borderColor, width: 1.4),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '۞',
-                  style: textTheme.caption.copyWith(
-                    color: borderColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Text(
-                  'سُورَةُ $surahName',
-                  style: textTheme.sacred.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Text(
-                  '۞',
-                  style: textTheme.caption.copyWith(
-                    color: borderColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+        child: Container(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.xxs,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.smRadius,
+            border: Border.all(
+              color: borderColor.withValues(alpha: 0.45),
+              width: 0.8,
             ),
-            Text(
-              'آيَاتُهَا $verseCount  •  $revelationType',
-              style: textTheme.caption.copyWith(
-                color: subtextColor,
-                fontWeight: FontWeight.w600,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '۞',
+                    style: textTheme.caption.copyWith(
+                      color: borderColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Text(
+                    'سُورَةُ $surahName',
+                    style: textTheme.sacred.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Text(
+                    '۞',
+                    style: textTheme.caption.copyWith(
+                      color: borderColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              Text(
+                'آيَاتُهَا $verseCount  •  $revelationType',
+                style: textTheme.caption.copyWith(
+                  color: subtextColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -242,15 +245,17 @@ class QuranBasmalahBanner extends StatelessWidget {
         break;
     }
 
-    return Container(
-      margin: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-      padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
-      alignment: AlignmentDirectional.center,
-      child: Text(
-        quran.basmala,
-        style: textTheme.sacredLarge.copyWith(
-          color: textColor,
-          fontSize: fontSize,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Container(
+        padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
+        alignment: AlignmentDirectional.center,
+        child: Text(
+          quran.basmala,
+          style: textTheme.sacredLarge.copyWith(
+            color: textColor,
+            fontSize: fontSize,
+          ),
         ),
       ),
     );

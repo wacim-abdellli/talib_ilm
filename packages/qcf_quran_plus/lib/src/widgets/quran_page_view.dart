@@ -516,7 +516,15 @@ class _QuranSinglePageWidgetState extends State<QuranSinglePageWidget> {
           SurahHeaderWidget(suraNumber: widget.page.ayahs[0].surahNumber);
 
       flexChildren.add(
-        shouldFit ? Expanded(child: Center(child: sHeader)) : sHeader,
+        shouldFit
+            ? Expanded(
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  child: sHeader,
+                ),
+              )
+            : sHeader,
       );
       flexCount++;
 
@@ -529,7 +537,15 @@ class _QuranSinglePageWidgetState extends State<QuranSinglePageWidget> {
             BasmallahWidget(widget.page.ayahs[0].surahNumber);
 
         flexChildren.add(
-          shouldFit ? Expanded(child: Center(child: bHeader)) : bHeader,
+          shouldFit
+              ? Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    child: bHeader,
+                  ),
+                )
+              : bHeader,
         );
         flexCount++;
       }
@@ -638,7 +654,15 @@ class _QuranSinglePageWidgetState extends State<QuranSinglePageWidget> {
             SurahHeaderWidget(suraNumber: line.ayahs[0].surahNumber);
 
         children.add(
-          shouldFit ? Expanded(child: Center(child: sHeader)) : sHeader,
+          shouldFit
+              ? Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    child: sHeader,
+                  ),
+                )
+              : sHeader,
         );
 
         if (line.ayahs[0].surahNumber != 9) {
@@ -650,7 +674,15 @@ class _QuranSinglePageWidgetState extends State<QuranSinglePageWidget> {
               BasmallahWidget(line.ayahs[0].surahNumber);
 
           children.add(
-            shouldFit ? Expanded(child: Center(child: bHeader)) : bHeader,
+            shouldFit
+                ? Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      child: bHeader,
+                    ),
+                  )
+                : bHeader,
           );
         }
       }

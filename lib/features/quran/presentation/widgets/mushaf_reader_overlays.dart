@@ -14,6 +14,7 @@ class MushafReaderTopBar extends StatelessWidget {
   final int currentPage;
   final int currentAyah;
   final QuranReadingMode readingMode;
+  final MushafThemeMode themeMode;
   final ValueChanged<int> onJumpToPage;
   final ValueChanged<QuranReadingMode> onModeChanged;
   final VoidCallback onOpenSettings;
@@ -24,6 +25,7 @@ class MushafReaderTopBar extends StatelessWidget {
     required this.currentPage,
     required this.currentAyah,
     required this.readingMode,
+    this.themeMode = MushafThemeMode.white,
     required this.onJumpToPage,
     required this.onModeChanged,
     required this.onOpenSettings,
@@ -36,14 +38,20 @@ class MushafReaderTopBar extends StatelessWidget {
     final surahName = quran.getSurahNameArabic(currentSurah);
     final juzNum = quran.getJuzNumber(currentSurah, currentAyah);
 
+    final barBg = MushafColors.overlayBgFor(themeMode, palette);
+    final barBorder = MushafColors.overlayBorderFor(themeMode, palette);
+    final textColor = MushafColors.overlayTextFor(themeMode, palette);
+    final textMutedColor = MushafColors.overlayTextMutedFor(themeMode, palette);
+    final toggleBg = MushafColors.overlayPillFor(themeMode, palette);
+
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.md,
         vertical: AppSpace.xs,
       ),
       decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        border: Border(bottom: BorderSide(color: palette.border)),
+        color: barBg,
+        border: Border(bottom: BorderSide(color: barBorder)),
         boxShadow: palette.shadow,
       ),
       child: Row(
@@ -52,7 +60,7 @@ class MushafReaderTopBar extends StatelessWidget {
           AppIconButton(
             icon: Icons.arrow_back_rounded,
             tooltip: 'رجوع',
-            color: palette.text,
+            color: textColor,
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: AppSpace.xs),
@@ -79,7 +87,7 @@ class MushafReaderTopBar extends StatelessWidget {
                         Text(
                           'سورة $surahName',
                           style: textTheme.titleSmall.copyWith(
-                            color: palette.text,
+                            color: textColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -94,7 +102,7 @@ class MushafReaderTopBar extends StatelessWidget {
                     Text(
                       '${getArabicJuzName(juzNum)} • الصفحة $currentPage',
                       style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
+                        color: textMutedColor,
                       ),
                     ),
                   ],
@@ -107,9 +115,9 @@ class MushafReaderTopBar extends StatelessWidget {
           Container(
             padding: AppSpace.insetXs,
             decoration: BoxDecoration(
-              color: palette.surfaceMuted,
+              color: toggleBg,
               borderRadius: AppRadius.pillRadius,
-              border: Border.all(color: palette.border),
+              border: Border.all(color: barBorder),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -123,6 +131,7 @@ class MushafReaderTopBar extends StatelessWidget {
                   },
                   palette: palette,
                   textTheme: textTheme,
+                  textMutedColor: textMutedColor,
                 ),
                 _buildModeTabButton(
                   title: 'قائمة',
@@ -133,6 +142,7 @@ class MushafReaderTopBar extends StatelessWidget {
                   },
                   palette: palette,
                   textTheme: textTheme,
+                  textMutedColor: textMutedColor,
                 ),
               ],
             ),
@@ -155,7 +165,7 @@ class MushafReaderTopBar extends StatelessWidget {
           AppIconButton(
             icon: Icons.tune_rounded,
             tooltip: 'الإعدادات',
-            color: palette.text,
+            color: textColor,
             onPressed: onOpenSettings,
           ),
         ],
@@ -169,6 +179,7 @@ class MushafReaderTopBar extends StatelessWidget {
     required VoidCallback onTap,
     required AppPalette palette,
     required AppTextTheme textTheme,
+    required Color textMutedColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -185,7 +196,7 @@ class MushafReaderTopBar extends StatelessWidget {
         child: Text(
           title,
           style: textTheme.caption.copyWith(
-            color: isSelected ? palette.onPrimary : palette.textMuted,
+            color: isSelected ? palette.onPrimary : textMutedColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           ),
         ),
@@ -198,18 +209,26 @@ class MushafReaderBottomBar extends StatelessWidget {
   final int currentPage;
   final ValueChanged<int> onPageChanged;
   final QuranAudioService audioService;
+  final MushafThemeMode themeMode;
 
   const MushafReaderBottomBar({
     super.key,
     required this.currentPage,
     required this.onPageChanged,
     required this.audioService,
+    this.themeMode = MushafThemeMode.white,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+
+    final barBg = MushafColors.overlayBgFor(themeMode, palette);
+    final barBorder = MushafColors.overlayBorderFor(themeMode, palette);
+    final textColor = MushafColors.overlayTextFor(themeMode, palette);
+    final textMutedColor = MushafColors.overlayTextMutedFor(themeMode, palette);
+    final pillBg = MushafColors.overlayPillFor(themeMode, palette);
 
     return ValueListenableBuilder<bool>(
       valueListenable: audioService.isPlayingNotifier,
@@ -224,25 +243,44 @@ class MushafReaderBottomBar extends StatelessWidget {
             vertical: AppSpace.xs,
           ),
           decoration: BoxDecoration(
-            color: palette.surfaceRaised,
-            border: Border(top: BorderSide(color: palette.border)),
+            color: barBg,
+            border: Border(top: BorderSide(color: barBorder)),
             boxShadow: palette.shadow,
           ),
           child: hasActiveAudio
-              ? _buildMiniAudioPlayer(palette, textTheme, isPlaying, activeSurah, activeAyah)
-              : _buildPageScrubber(palette, textTheme),
+              ? _buildMiniAudioPlayer(
+                  palette: palette,
+                  textTheme: textTheme,
+                  isPlaying: isPlaying,
+                  surah: activeSurah,
+                  ayah: activeAyah,
+                  textColor: textColor,
+                  textMutedColor: textMutedColor,
+                  pillBg: pillBg,
+                  barBorder: barBorder,
+                )
+              : _buildPageScrubber(
+                  palette: palette,
+                  textTheme: textTheme,
+                  textMutedColor: textMutedColor,
+                  barBorder: barBorder,
+                ),
         );
       },
     );
   }
 
-  Widget _buildMiniAudioPlayer(
-    AppPalette palette,
-    AppTextTheme textTheme,
-    bool isPlaying,
-    int surah,
-    int ayah,
-  ) {
+  Widget _buildMiniAudioPlayer({
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+    required bool isPlaying,
+    required int surah,
+    required int ayah,
+    required Color textColor,
+    required Color textMutedColor,
+    required Color pillBg,
+    required Color barBorder,
+  }) {
     final playingSurahName = quran.getSurahNameArabic(surah);
 
     return Row(
@@ -271,16 +309,16 @@ class MushafReaderBottomBar extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: active ? palette.primarySoft : palette.surfaceMuted,
+                  color: active ? palette.primarySoft : pillBg,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: active ? palette.primary : palette.border,
+                    color: active ? palette.primary : barBorder,
                     width: 0.8,
                   ),
                 ),
                 child: Icon(
                   icon,
-                  color: active ? palette.primary : palette.textMuted,
+                  color: active ? palette.primary : textMutedColor,
                   size: AppIcon.sm,
                 ),
               ),
@@ -296,7 +334,7 @@ class MushafReaderBottomBar extends StatelessWidget {
               Text(
                 'سورة $playingSurahName - آية $ayah',
                 style: textTheme.bodySmall.copyWith(
-                  color: palette.text,
+                  color: textColor,
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
@@ -307,7 +345,7 @@ class MushafReaderBottomBar extends StatelessWidget {
                     child: Text(
                       audioService.selectedReciter.name,
                       style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
+                        color: textMutedColor,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -331,9 +369,9 @@ class MushafReaderBottomBar extends StatelessWidget {
                             vertical: AppSpace.xxs,
                           ),
                           decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
+                            color: pillBg,
                             borderRadius: AppRadius.pillRadius,
-                            border: Border.all(color: palette.border, width: 0.8),
+                            border: Border.all(color: barBorder, width: 0.8),
                           ),
                           child: Text(
                             '${speed == 1.0 ? "1" : speed}×',
@@ -354,7 +392,7 @@ class MushafReaderBottomBar extends StatelessWidget {
         AppIconButton(
           icon: Icons.skip_previous_rounded,
           tooltip: 'الآية السابقة',
-          color: palette.text,
+          color: textColor,
           onPressed: audioService.previousAyah,
         ),
         FloatingActionButton.small(
@@ -377,20 +415,25 @@ class MushafReaderBottomBar extends StatelessWidget {
         AppIconButton(
           icon: Icons.skip_next_rounded,
           tooltip: 'الآية التالية',
-          color: palette.text,
+          color: textColor,
           onPressed: audioService.nextAyah,
         ),
         AppIconButton(
           icon: Icons.close_rounded,
           tooltip: 'إيقاف',
-          color: palette.textMuted,
+          color: textMutedColor,
           onPressed: audioService.stop,
         ),
       ],
     );
   }
 
-  Widget _buildPageScrubber(AppPalette palette, AppTextTheme textTheme) {
+  Widget _buildPageScrubber({
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+    required Color textMutedColor,
+    required Color barBorder,
+  }) {
     return Row(
       children: [
         Text(
@@ -406,7 +449,7 @@ class MushafReaderBottomBar extends StatelessWidget {
             min: 1.0,
             max: 604.0,
             activeColor: palette.gold,
-            inactiveColor: palette.border,
+            inactiveColor: barBorder,
             onChanged: (val) {
               onPageChanged(val.round());
             },
@@ -415,7 +458,7 @@ class MushafReaderBottomBar extends StatelessWidget {
         Text(
           '604',
           style: textTheme.caption.copyWith(
-            color: palette.textMuted,
+            color: textMutedColor,
           ),
         ),
       ],

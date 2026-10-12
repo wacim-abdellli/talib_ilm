@@ -43,42 +43,45 @@ class SurahHeaderWidget extends StatelessWidget {
         final double fontSize = headerWidth * 0.085;
 
         return RepaintBoundary(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+          child: FittedBox(
+            fit: BoxFit.contain,
             alignment: Alignment.center,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image(
-                  image: ResizeImage(
-                    _asset,
-                    width: (headerWidth * dpr).round(),
-                    allowUpscaling: false,
+            child: SizedBox(
+              width: headerWidth,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image(
+                    image: ResizeImage(
+                      _asset,
+                      width: (headerWidth * dpr).round(),
+                      allowUpscaling: false,
+                    ),
+                    width: headerWidth,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.medium,
                   ),
-                  width: headerWidth,
-                  fit: BoxFit.fill,
-                  gaplessPlayback: true,
-                  filterQuality: FilterQuality.medium,
-                ),
 
-                SizedBox(
-                  width: headerWidth * 0.65,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.center,
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        text: '$suraNumber',
-                        style: QuranTextStyles.surahHeaderStyle(
-                          fontSize: fontSize,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                  SizedBox(
+                    width: headerWidth * 0.65,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          text: '$suraNumber',
+                          style: QuranTextStyles.surahHeaderStyle(
+                            fontSize: fontSize,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

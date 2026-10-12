@@ -5,6 +5,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_tafsir_service.dart';
 
@@ -26,6 +27,8 @@ class AyahTafsirTabView extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final scholarName = QuranTafsirService.getScholarName(selectedScholar);
+    final scholarAuthor = QuranTafsirService.getScholarAuthor(selectedScholar);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,6 +36,7 @@ class AyahTafsirTabView extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
           child: Row(
             children: TafsirScholar.values.map((scholar) {
               final isSelected = selectedScholar == scholar;
@@ -43,12 +47,13 @@ class AyahTafsirTabView extends StatelessWidget {
                     QuranTafsirService.getScholarName(scholar),
                     style: textTheme.caption.copyWith(
                       color: isSelected ? palette.onPrimary : palette.text,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     ),
                   ),
                   selected: isSelected,
                   selectedColor: palette.primary,
                   backgroundColor: palette.surfaceMuted,
+                  visualDensity: VisualDensity.compact,
                   shape: RoundedRectangleBorder(
                     borderRadius: AppRadius.pillRadius,
                     side: BorderSide(
@@ -66,58 +71,122 @@ class AyahTafsirTabView extends StatelessWidget {
             }).toList(),
           ),
         ),
-        const SizedBox(height: AppSpace.sm),
+        const SizedBox(height: AppSpace.xs),
         Expanded(
           child: loadingTafsir
-              ? const Column(
-                  children: [
-                    AppSkeleton(width: double.infinity, height: 20),
-                    SizedBox(height: AppSpace.sm),
-                    AppSkeleton(width: double.infinity, height: 20),
-                    SizedBox(height: AppSpace.sm),
-                    AppSkeleton(width: 200, height: 20),
-                  ],
-                )
-              : Container(
+              ? Container(
                   padding: const EdgeInsetsDirectional.all(AppSpace.md),
                   decoration: BoxDecoration(
                     color: palette.surfaceMuted,
                     borderRadius: AppRadius.mdRadius,
                     border: Border.all(color: palette.border),
                   ),
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppSkeleton(width: 140, height: 18),
+                      SizedBox(height: AppSpace.md),
+                      AppSkeleton(width: double.infinity, height: 16),
+                      SizedBox(height: AppSpace.xs),
+                      AppSkeleton(width: double.infinity, height: 16),
+                      SizedBox(height: AppSpace.xs),
+                      AppSkeleton(width: double.infinity, height: 16),
+                      SizedBox(height: AppSpace.xs),
+                      AppSkeleton(width: 220, height: 16),
+                    ],
+                  ),
+                )
+              : Container(
+                  decoration: BoxDecoration(
+                    color: palette.surfaceMuted,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: palette.border.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: AppRadius.mdRadius,
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(
-                              Icons.menu_book_rounded,
-                              size: AppIcon.sm,
-                              color: palette.gold,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                                  decoration: BoxDecoration(
+                                    color: palette.gold.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.auto_stories_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.gold,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        scholarName,
+                                        style: textTheme.titleSmall.copyWith(
+                                          color: palette.gold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        scholarAuthor,
+                                        style: textTheme.caption.copyWith(
+                                          color: palette.textMuted,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                AppIconButton(
+                                  icon: Icons.copy_rounded,
+                                  tooltip: 'نسخ التفسير',
+                                  color: palette.textMuted,
+                                  onPressed: () {
+                                    HapticFeedback.selectionClick();
+                                    Clipboard.setData(ClipboardData(text: tafsirText));
+                                    AppSnackbar.success(context, 'تم نسخ التفسير');
+                                  },
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: AppSpace.xs),
-                            Text(
-                              QuranTafsirService.getScholarName(selectedScholar),
-                              style: textTheme.caption.copyWith(
-                                color: palette.gold,
-                                fontWeight: FontWeight.bold,
+                            const SizedBox(height: AppSpace.xs),
+                            Divider(
+                              height: 1,
+                              color: palette.border.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(height: AppSpace.sm),
+                            Directionality(
+                              textDirection: selectedScholar == TafsirScholar.englishIbnKathir
+                                  ? TextDirection.ltr
+                                  : TextDirection.rtl,
+                              child: SelectableText(
+                                tafsirText,
+                                style: textTheme.body.copyWith(
+                                  color: palette.text,
+                                  height: 1.85,
+                                ),
                               ),
                             ),
+                            const SizedBox(height: AppSpace.md),
                           ],
                         ),
-                        const SizedBox(height: AppSpace.xs),
-                        Divider(height: 1, color: palette.border.withValues(alpha: 0.5)),
-                        const SizedBox(height: AppSpace.xs),
-                        SelectableText(
-                          tafsirText,
-                          style: textTheme.body.copyWith(
-                            color: palette.text,
-                            height: 1.75,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

@@ -436,15 +436,27 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
     );
     final hasSajdah = quran.isSajdahVerse(widget.item.surahNumber, widget.item.ayahNumber);
 
+    final bool isDark = widget.themeMode == MushafThemeMode.dark;
+
+    final baseCardBg = MushafColors.cardBgFor(widget.themeMode, palette);
+    final baseBorder = MushafColors.cardBorderFor(widget.themeMode, palette);
+    final textColor = MushafColors.overlayTextFor(widget.themeMode, palette);
+    final textMutedColor = MushafColors.overlayTextMutedFor(widget.themeMode, palette);
+    final baseBadgeBg = MushafColors.badgeBgFor(widget.themeMode, palette);
+
     final cardBg = widget.isPlaying
-        ? palette.primarySoft.withValues(alpha: 0.14)
-        : palette.surfaceRaised;
+        ? (isDark
+            ? palette.primary.withValues(alpha: 0.20)
+            : palette.primarySoft.withValues(alpha: 0.14))
+        : baseCardBg;
 
     final borderColor = widget.isPlaying
         ? palette.primary
         : widget.isBookmarked
-            ? palette.gold.withValues(alpha: 0.5)
-            : palette.border;
+            ? palette.gold.withValues(alpha: 0.6)
+            : baseBorder;
+
+    final badgeBg = widget.isPlaying ? palette.primary : baseBadgeBg;
 
     return Container(
       margin: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
@@ -475,17 +487,17 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: widget.isPlaying ? palette.primary : palette.surfaceMuted,
+                        color: badgeBg,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: widget.isPlaying ? palette.primary : palette.border,
+                          color: widget.isPlaying ? palette.primary : borderColor,
                         ),
                       ),
                       alignment: AlignmentDirectional.center,
                       child: Text(
                         '${widget.item.ayahNumber}',
                         style: textTheme.caption.copyWith(
-                          color: widget.isPlaying ? palette.onPrimary : palette.textMuted,
+                          color: widget.isPlaying ? palette.onPrimary : textColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -515,7 +527,7 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
                     AppIconButton(
                       icon: widget.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                       tooltip: 'استماع للآية',
-                      color: widget.isPlaying ? palette.primary : palette.textMuted,
+                      color: widget.isPlaying ? palette.primary : textMutedColor,
                       onPressed: widget.onPlayToggle,
                     ),
                     // Bookmark toggle
@@ -524,14 +536,14 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
                           ? Icons.bookmark_added_rounded
                           : Icons.bookmark_add_outlined,
                       tooltip: 'حفظ العلامة',
-                      color: widget.isBookmarked ? palette.gold : palette.textMuted,
+                      color: widget.isBookmarked ? palette.gold : textMutedColor,
                       onPressed: widget.onBookmarkToggle,
                     ),
                     // Tafsir & details sheet
                     AppIconButton(
                       icon: Icons.menu_book_rounded,
                       tooltip: 'التفسير والتدبر',
-                      color: palette.textMuted,
+                      color: textMutedColor,
                       onPressed: widget.onOpenDetails,
                     ),
                   ],
@@ -554,7 +566,7 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
                             plainUthmani: verseText,
                             quranComMarkup: widget.tajweedMarkup,
                             baseStyle: textTheme.sacredLarge.copyWith(
-                              color: palette.text,
+                              color: textColor,
                               fontSize: widget.fontSize,
                               height: 1.8,
                             ),
@@ -577,14 +589,14 @@ class _ContinuousAyahCardState extends State<_ContinuousAyahCard>
                 // Optional English Translation
                 if (widget.showTranslation) ...[
                   const SizedBox(height: AppSpace.xs),
-                  Divider(height: 1, color: palette.border.withValues(alpha: 0.5)),
+                  Divider(height: 1, color: borderColor.withValues(alpha: 0.6)),
                   const SizedBox(height: AppSpace.xs),
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
                       quran.getVerseTranslation(widget.item.surahNumber, widget.item.ayahNumber),
                       style: textTheme.bodySmall.copyWith(
-                        color: palette.textMuted,
+                        color: textMutedColor,
                         height: 1.45,
                       ),
                     ),

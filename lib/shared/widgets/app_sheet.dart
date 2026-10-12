@@ -32,10 +32,12 @@ class AppSheet extends StatelessWidget {
     required WidgetBuilder builder,
     bool isScrollControlled = true,
     double maxHeightFactor = 0.90,
+    bool enableDrag = true,
   }) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
+      enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
       elevation: 0,
       barrierColor: context.palette.brandDark.withValues(alpha: 0.55),

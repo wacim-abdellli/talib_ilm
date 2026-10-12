@@ -42,6 +42,7 @@ class AyahDetailsSheet extends StatefulWidget {
     return AppSheet.show<void>(
       context: context,
       maxHeightFactor: 0.92,
+      enableDrag: false,
       builder: (_) => AyahDetailsSheet(
         surahNumber: surahNumber,
         ayahNumber: ayahNumber,
@@ -300,138 +301,152 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
             ),
           ),
 
-          const SizedBox(height: AppSpace.sm),
+          const SizedBox(height: AppSpace.xs),
           Divider(height: 1, color: palette.border),
+          const SizedBox(height: AppSpace.xs),
 
-          Flexible(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+          // Pinned Verse Text Card
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            child: AppCard(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.sm,
+              ),
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: SelectableText.rich(
+                  TextSpan(
+                    children: TajweedService.buildVerseSpans(
+                      plainUthmani: verseText,
+                      quranComMarkup: _tajweedMarkup,
+                      baseStyle: textTheme.sacred.copyWith(
+                        color: palette.text,
+                        height: 1.6,
+                      ),
+                      isTajweedEnabled: true,
+                    ),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppSpace.xs),
+
+          // Pinned Tab Bar
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            child: Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+              decoration: BoxDecoration(
+                color: palette.surfaceMuted,
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(color: palette.border),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                labelColor: palette.primary,
+                unselectedLabelColor: palette.textMuted,
+                indicator: BoxDecoration(
+                  color: palette.surfaceRaised,
+                  borderRadius: AppRadius.pillRadius,
+                  boxShadow: palette.shadow,
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelStyle: textTheme.label.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: textTheme.label,
+                tabs: const [
+                  Tab(
+                    icon: Icon(Icons.auto_stories_rounded, size: AppIcon.sm),
+                    text: 'التفسير',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.spellcheck_rounded, size: AppIcon.sm),
+                    text: 'المعاني',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
+                    text: 'التلاوة',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.edit_note_rounded, size: AppIcon.sm),
+                    text: 'التدبر',
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppSpace.xs),
+
+          // Expanded TabBarView: Takes full height, allowing inner tabs to scroll freely
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  AyahTafsirTabView(
+                    selectedScholar: _selectedScholar,
+                    tafsirText: _tafsirText,
+                    loadingTafsir: _loadingTafsir,
+                    onScholarChanged: (scholar) {
+                      setState(() => _selectedScholar = scholar);
+                      QuranReaderPreferences.saveTafsirScholar(scholar);
+                      _fetchTafsir();
+                    },
+                  ),
+                  AyahWordsTabView(
+                    surahNumber: widget.surahNumber,
+                    ayahNumber: widget.ayahNumber,
+                  ),
+                  AyahAudioTabView(
+                    surahNumber: widget.surahNumber,
+                    ayahNumber: widget.ayahNumber,
+                    audioService: _audioService,
+                  ),
+                  AyahNotesTabView(
+                    noteController: _noteController,
+                    onSaveNote: _saveNote,
+                    onChanged: (_) {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppSpace.xs),
+          Divider(height: 1, color: palette.border),
+          const SizedBox(height: AppSpace.xs),
+
+          // Pinned Bottom Action Bar
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            child: Row(
               children: [
-                AppCard(
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: SelectableText.rich(
-                      TextSpan(
-                        children: TajweedService.buildVerseSpans(
-                          plainUthmani: verseText,
-                          quranComMarkup: _tajweedMarkup,
-                          baseStyle: textTheme.sacredLarge.copyWith(
-                            color: palette.text,
-                            height: 1.8,
-                          ),
-                          isTajweedEnabled: true,
-                        ),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                Expanded(
+                  child: AppButton(
+                    label: 'حفظ كموضع قراءة',
+                    icon: Icons.bookmark_rounded,
+                    onPressed: _saveAsLastRead,
                   ),
                 ),
-
-                const SizedBox(height: AppSpace.md),
-
-                Container(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
-                    borderRadius: AppRadius.pillRadius,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    labelColor: palette.primary,
-                    unselectedLabelColor: palette.textMuted,
-                    indicator: BoxDecoration(
-                      color: palette.surfaceRaised,
-                      borderRadius: AppRadius.pillRadius,
-                      boxShadow: palette.shadow,
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    labelStyle: textTheme.label.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    unselectedLabelStyle: textTheme.label,
-                    tabs: const [
-                      Tab(
-                        icon: Icon(Icons.auto_stories_rounded, size: AppIcon.sm),
-                        text: 'التفسير',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.spellcheck_rounded, size: AppIcon.sm),
-                        text: 'المعاني',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
-                        text: 'التلاوة',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.edit_note_rounded, size: AppIcon.sm),
-                        text: 'التدبر',
-                      ),
-                    ],
-                  ),
+                const SizedBox(width: AppSpace.sm),
+                AppIconButton(
+                  icon: Icons.copy_rounded,
+                  tooltip: 'نسخ الآية',
+                  onPressed: _copyVerse,
                 ),
-
-                const SizedBox(height: AppSpace.md),
-
-                SizedBox(
-                  height: 280,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      AyahTafsirTabView(
-                        selectedScholar: _selectedScholar,
-                        tafsirText: _tafsirText,
-                        loadingTafsir: _loadingTafsir,
-                        onScholarChanged: (scholar) {
-                          setState(() => _selectedScholar = scholar);
-                          QuranReaderPreferences.saveTafsirScholar(scholar);
-                          _fetchTafsir();
-                        },
-                      ),
-                      AyahWordsTabView(
-                        surahNumber: widget.surahNumber,
-                        ayahNumber: widget.ayahNumber,
-                      ),
-                      AyahAudioTabView(
-                        surahNumber: widget.surahNumber,
-                        ayahNumber: widget.ayahNumber,
-                        audioService: _audioService,
-                      ),
-                      AyahNotesTabView(
-                        noteController: _noteController,
-                        onSaveNote: _saveNote,
-                        onChanged: (_) {},
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSpace.lg),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        label: 'حفظ كموضع قراءة',
-                        icon: Icons.bookmark_rounded,
-                        onPressed: _saveAsLastRead,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    AppIconButton(
-                      icon: Icons.copy_rounded,
-                      tooltip: 'نسخ الآية',
-                      onPressed: _copyVerse,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    AppIconButton(
-                      icon: Icons.share_rounded,
-                      tooltip: 'مشاركة',
-                      onPressed: _shareVerse,
-                    ),
-                  ],
+                const SizedBox(width: AppSpace.xs),
+                AppIconButton(
+                  icon: Icons.share_rounded,
+                  tooltip: 'مشاركة',
+                  onPressed: _shareVerse,
                 ),
               ],
             ),

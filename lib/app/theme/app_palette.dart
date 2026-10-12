@@ -617,6 +617,20 @@ class MushafColors {
   static const Color darkBannerText = Color(0xFFF5D78E);
   static const Color darkBannerSubtext = Color(0xFFC7AA64);
 
+  static const Color darkOverlayBg = Color(0xFF181B22);
+  static const Color darkOverlayBorder = Color(0xFF282C36);
+  static const Color darkOverlayPill = Color(0xFF22252D);
+  static const Color darkMuted = Color(0xFFA2A7B4);
+  static const Color darkCardBorder = Color(0xFF2C3038);
+  static const Color darkBadgeBg = Color(0xFF242730);
+
+  static const Color sepiaOverlayBg = Color(0xFFF4ECE0);
+  static const Color sepiaOverlayBorder = Color(0xFFDFD4C4);
+  static const Color sepiaOverlayPill = Color(0xFFEBE0D0);
+  static const Color sepiaCardBg = Color(0xFFFAF5EC);
+  static const Color sepiaCardBorder = Color(0xFFDFD4C4);
+  static const Color sepiaBadgeBg = Color(0xFFEFE6D6);
+
   /// Theme-based background lookup — eliminates switch duplication.
   // ignore: import_of_legacy_library_into_null_safe
   static Color bgFor(MushafThemeMode mode) {
@@ -650,6 +664,54 @@ class MushafColors {
       case MushafThemeMode.dark:  return darkBannerBorder;
     }
   }
+
+  static Color overlayBgFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.surfaceRaised,
+    MushafThemeMode.sepia => sepiaOverlayBg,
+    MushafThemeMode.dark => darkOverlayBg,
+  };
+
+  static Color overlayBorderFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.border,
+    MushafThemeMode.sepia => sepiaOverlayBorder,
+    MushafThemeMode.dark => darkOverlayBorder,
+  };
+
+  static Color overlayTextFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.text,
+    MushafThemeMode.sepia => sepiaText,
+    MushafThemeMode.dark => darkText,
+  };
+
+  static Color overlayTextMutedFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.textMuted,
+    MushafThemeMode.sepia => sepiaBannerSubtext,
+    MushafThemeMode.dark => darkMuted,
+  };
+
+  static Color overlayPillFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.surfaceMuted,
+    MushafThemeMode.sepia => sepiaOverlayPill,
+    MushafThemeMode.dark => darkOverlayPill,
+  };
+
+  static Color cardBgFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.surfaceRaised,
+    MushafThemeMode.sepia => sepiaCardBg,
+    MushafThemeMode.dark => darkBannerBg,
+  };
+
+  static Color cardBorderFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.border,
+    MushafThemeMode.sepia => sepiaCardBorder,
+    MushafThemeMode.dark => darkCardBorder,
+  };
+
+  static Color badgeBgFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
+    MushafThemeMode.white => palette.surfaceMuted,
+    MushafThemeMode.sepia => sepiaBadgeBg,
+    MushafThemeMode.dark => darkBadgeBg,
+  };
 }
 
 /// Ergonomic theme context extensions

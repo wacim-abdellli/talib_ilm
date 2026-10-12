@@ -347,6 +347,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                     currentPage: pos.page,
                     currentAyah: pos.ayah,
                     readingMode: _readingMode,
+                    themeMode: _themeMode,
                     onJumpToPage: _jumpToPage,
                     onModeChanged: _setReadingMode,
                     onOpenSettings: _openSettings,
@@ -367,6 +368,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                 builder: (context, pos, _) {
                   return MushafReaderBottomBar(
                     currentPage: pos.page,
+                    themeMode: _themeMode,
                     onPageChanged: _jumpToPage,
                     audioService: _audioService,
                   );
