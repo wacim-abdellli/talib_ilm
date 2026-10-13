@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -79,13 +80,24 @@ class LocationService {
   static const _keyManualCalcMethod = 'manual_calc_method';
 
   static bool _localeReady = false;
+  static LocationResult? _memoryCache;
+  static DateTime? _cacheTime;
+  static const Duration _cacheDuration = Duration(minutes: 15);
 
   /// Retrieves the location strictly prioritizing phone hardware GPS automatically:
-  /// 1. Manual user override (if user explicitly selected a city/coordinates)
-  /// 2. Phone hardware GPS satellites (automatically requested & resolved)
-  /// 3. Cached verified GPS fix from previous satellite acquisition
-  /// 4. Default fallback (Makkah) — NEVER guesses random IP nodes like Chorbane/Mahdia
+  /// 1. In-memory fast cache (zero allocation)
+  /// 2. Manual user override (if user explicitly selected a city/coordinates)
+  /// 3. Cached verified GPS fix from previous satellite acquisition (instant 0ms startup)
+  /// 4. Phone hardware GPS satellites (with background refresh)
+  /// 5. Default fallback (Makkah)
   Future<LocationResult> getLocation({bool autoPrompt = true}) async {
+    // 0. Instant in-memory cache
+    if (_memoryCache != null && _cacheTime != null) {
+      if (DateTime.now().difference(_cacheTime!) < _cacheDuration) {
+        return _memoryCache!;
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
 
     // Clean up any stale unverified IP estimates from previous app sessions
@@ -101,9 +113,23 @@ class LocationService {
 
     // 1. Manual user choice takes priority if enabled
     final manual = _loadManual(prefs);
-    if (manual != null) return manual;
+    if (manual != null) {
+      _memoryCache = manual;
+      _cacheTime = DateTime.now();
+      return manual;
+    }
 
-    // 2. Hardware GPS: automatically requested & acquired from the phone
+    // 2. Previously verified GPS fix available: return instantly for zero-latency startup
+    final saved = _loadFallback(prefs);
+    if (saved.source == LocationSource.savedGps) {
+      _memoryCache = saved;
+      _cacheTime = DateTime.now();
+      // Background non-blocking refresh of fresh satellites
+      unawaited(_backgroundGpsRefresh(prefs));
+      return saved;
+    }
+
+    // 3. Hardware GPS: automatically requested & acquired if no verified fix exists yet
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied && autoPrompt) {
@@ -116,7 +142,7 @@ class LocationService {
         if (isServiceEnabled) {
           await _ensureLocale();
 
-          // 2a. Quick last known hardware position for zero-latency startup
+          // 3a. Quick last known hardware position
           final lastKnown = await Geolocator.getLastKnownPosition();
           LocationResult? quickBest;
           if (lastKnown != null) {
@@ -127,12 +153,12 @@ class LocationService {
             );
           }
 
-          // 2b. High accuracy fresh position from satellite GPS
+          // 3b. High accuracy fresh position from satellite GPS
           try {
             final position = await Geolocator.getCurrentPosition(
               locationSettings: LocationSettings(
                 accuracy: LocationAccuracy.high,
-                timeLimit: _sec(8),
+                timeLimit: _sec(6),
               ),
             );
 
@@ -153,22 +179,54 @@ class LocationService {
               isVerifiedGps: true,
             );
 
+            _memoryCache = resolved;
+            _cacheTime = DateTime.now();
             return resolved;
           } catch (_) {
-            if (quickBest != null) return quickBest;
+            if (quickBest != null) {
+              _memoryCache = quickBest;
+              _cacheTime = DateTime.now();
+              return quickBest;
+            }
           }
         }
       }
     } catch (_) {}
 
-    // 3. If fresh GPS satellite fix wasn't ready yet, use previously cached verified GPS
-    final fallback = _loadFallback(prefs);
-    if (fallback.source == LocationSource.savedGps) {
-      return fallback;
-    }
-
     // 4. Default fallback (Makkah Al-Mukarramah) until GPS is granted
-    return fallback;
+    _memoryCache = saved;
+    _cacheTime = DateTime.now();
+    return saved;
+  }
+
+  Future<void> _backgroundGpsRefresh(SharedPreferences prefs) async {
+    try {
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) return;
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: _sec(5),
+        ),
+      );
+      final resolved = await _resolvePosition(
+        position,
+        _defaultCity,
+        source: LocationSource.gps,
+      );
+      await _saveLastKnown(
+        prefs,
+        city: resolved.city,
+        province: resolved.province,
+        country: resolved.country,
+        countryCode: resolved.countryCode,
+        latitude: resolved.latitude,
+        longitude: resolved.longitude,
+        isVerifiedGps: true,
+      );
+      _memoryCache = resolved;
+      _cacheTime = DateTime.now();
+    } catch (_) {}
   }
 
   /// Explicitly triggers high-accuracy GPS detection with native system prompts

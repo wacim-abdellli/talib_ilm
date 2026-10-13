@@ -34,27 +34,58 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
+  final Set<int> _loadedTabs = <int>{};
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex.clamp(0, 4);
+    _loadedTabs.add(_currentIndex);
   }
 
   void selectTab(int index) {
-    if (_currentIndex != index && mounted) {
-      setState(() => _currentIndex = index.clamp(0, 4));
+    final clamped = index.clamp(0, 4);
+    if (_currentIndex != clamped && mounted) {
+      setState(() {
+        _currentIndex = clamped;
+        _loadedTabs.add(clamped);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomePage(isActive: _currentIndex == 0),
-      const PrayerPage(),
-      const IlmPage(),
-      const AdhkarPage(),
-      const MorePage(),
+      _loadedTabs.contains(0)
+          ? TickerMode(
+              enabled: _currentIndex == 0,
+              child: HomePage(isActive: _currentIndex == 0),
+            )
+          : const SizedBox.shrink(),
+      _loadedTabs.contains(1)
+          ? TickerMode(
+              enabled: _currentIndex == 1,
+              child: const PrayerPage(),
+            )
+          : const SizedBox.shrink(),
+      _loadedTabs.contains(2)
+          ? TickerMode(
+              enabled: _currentIndex == 2,
+              child: const IlmPage(),
+            )
+          : const SizedBox.shrink(),
+      _loadedTabs.contains(3)
+          ? TickerMode(
+              enabled: _currentIndex == 3,
+              child: const AdhkarPage(),
+            )
+          : const SizedBox.shrink(),
+      _loadedTabs.contains(4)
+          ? TickerMode(
+              enabled: _currentIndex == 4,
+              child: const MorePage(),
+            )
+          : const SizedBox.shrink(),
     ];
 
     return Scaffold(

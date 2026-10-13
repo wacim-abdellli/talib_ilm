@@ -6,19 +6,19 @@ import '../../../app/constants/app_assets.dart';
 import '../../../app/constants/app_strings.dart';
 
 class AthkarService {
-  Future<AthkarCatalog>? _cache;
+  static Future<AthkarCatalog>? _globalCache;
 
   Future<AthkarCatalog> loadCatalog() {
-    final cached = _cache;
+    final cached = _globalCache;
     if (cached != null) {
       return cached.catchError((error) {
-        _cache = null;
+        _globalCache = null;
         return _fallbackCatalog();
       });
     }
-    _cache = _loadFromAssets();
-    return _cache!.catchError((error) {
-      _cache = null;
+    _globalCache = _loadFromAssets();
+    return _globalCache!.catchError((error) {
+      _globalCache = null;
       return _fallbackCatalog();
     });
   }
@@ -56,7 +56,7 @@ class AthkarService {
   }
 
   void resetCache() {
-    _cache = null;
+    _globalCache = null;
     rootBundle.evict(AppAssets.adhkarData);
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -39,10 +40,13 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   }
 
   Future<void> _checkDownloadedBooks() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final map = <int, bool>{};
     for (final book in ShamelaService.curatedClassics) {
-      final isDown = await ShamelaService.isBookDownloaded(book.id);
-      if (mounted) setState(() => _downloadedMap[book.id] = isDown);
+      map[book.id] = prefs.getBool('shamela_downloaded_${book.id}') ?? false;
     }
+    setState(() => _downloadedMap.addAll(map));
   }
 
   Future<void> _downloadBook(ShamelaBook book) async {
@@ -216,6 +220,8 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: true,
             padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
             itemCount: books.length,
             separatorBuilder: (_, index) => const SizedBox(height: AppSpace.sm),

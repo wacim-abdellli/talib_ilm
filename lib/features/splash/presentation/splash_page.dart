@@ -27,7 +27,6 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _scaleAnimation;
   Timer? _timer;
   bool _navigated = false;
-  double _fontProgress = 0.0;
   DateTime? _startTime;
 
   @override
@@ -59,22 +58,8 @@ class _SplashPageState extends State<SplashPage>
   }
 
   Future<void> _startStartupInitialization() async {
-    try {
-      await Future.wait([
-        QuranRepository.instance.ensureLoaded(604),
-        QcfFontLoader.setupFontsAtStartup(
-          onProgress: (progress) {
-            if (mounted) {
-              setState(() {
-                _fontProgress = progress;
-              });
-            }
-          },
-        ),
-      ]);
-    } catch (e) {
-      debugPrint('Startup font preloading note: $e');
-    }
+    // Warm up repository in background without stalling main UI isolate
+    unawaited(QuranRepository.instance.ensureLoaded(604).catchError((_) {}));
 
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
     final remaining = AppMotion.splash - elapsed;
@@ -226,9 +211,7 @@ class _SplashPageState extends State<SplashPage>
                               child: AnimatedBuilder(
                                 animation: _animController,
                                 builder: (context, _) => LinearProgressIndicator(
-                                  value: _fontProgress > 0.0
-                                      ? _fontProgress
-                                      : _animController.value,
+                                  value: _animController.value,
                                   backgroundColor: palette.surfaceMuted,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     palette.gold,
