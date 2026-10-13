@@ -3,8 +3,7 @@ import 'app_palette.dart';
 export 'app_palette.dart';
 
 /// Legacy radius & icon size shim.
-/// @Deprecated: Use [AppRadius] and [AppIcon] instead.
-@Deprecated('Use AppRadius and AppIcon instead')
+/// Use [AppRadius] and [AppIcon] instead.
 class AppIconSize {
   AppIconSize._();
 

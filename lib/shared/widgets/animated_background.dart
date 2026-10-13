@@ -6,13 +6,13 @@ import '../../app/theme/app_palette.dart';
 /// A star element with its properties
 class _StarElement {
   final Offset position;
-  final double size;
+  final double starSize;
   final double rotationSpeed;
   final double initialRotation;
 
   _StarElement({
     required this.position,
-    required this.size,
+    required this.starSize,
     required this.rotationSpeed,
     required this.initialRotation,
   });
@@ -45,7 +45,7 @@ class _AnimatedGeometricBackgroundState
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 60),
+      duration: AppMotion.ambient,
       vsync: this,
     )..repeat();
   }
@@ -69,7 +69,7 @@ class _AnimatedGeometricBackgroundState
           random.nextDouble() * size.width,
           random.nextDouble() * size.height,
         ),
-        size: 50 + random.nextDouble() * 150, // 50-200
+        starSize: 50 + random.nextDouble() * 150, // 50-200
         rotationSpeed: 0.5 + random.nextDouble() * 1.5, // Different speeds
         initialRotation: random.nextDouble() * math.pi * 2,
       );
@@ -129,7 +129,7 @@ class _GeometricPatternPainter extends CustomPainter {
       canvas.translate(star.position.dx, star.position.dy);
       canvas.rotate(rotation);
 
-      _draw8PointStar(canvas, paint, star.size);
+      _draw8PointStar(canvas, paint, star.starSize);
 
       canvas.restore();
     }

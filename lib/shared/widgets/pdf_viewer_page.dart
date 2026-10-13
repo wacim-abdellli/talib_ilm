@@ -89,7 +89,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
 
   void _startHideTimer() {
     _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 3), () {
+    _hideTimer = Timer(AppMotion.controlsHide, () {
       if (mounted && _controlsVisible) {
         setState(() => _controlsVisible = false);
       }

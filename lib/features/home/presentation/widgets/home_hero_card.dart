@@ -40,7 +40,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer = Timer.periodic(AppMotion.oneSecond, (_) {
       _updateTimeLeft();
     });
   }
@@ -401,7 +401,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 margin: const EdgeInsets.only(bottom: AppSpace.xs),
                 child: Icon(
                   Icons.check_rounded,
-                  size: 8,
+                  size: AppIcon.xs,
                   color: palette.success,
                 ),
               )

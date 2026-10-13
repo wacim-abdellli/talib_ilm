@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_spacing.dart';
+import '../../app/theme/app_palette.dart';
 
 class PressableScale extends StatefulWidget {
   final Widget child;
@@ -11,8 +11,8 @@ class PressableScale extends StatefulWidget {
   const PressableScale({
     super.key,
     required this.child,
-    this.pressedScale = AppSpacing.pressScale,
-    this.duration = AppSpacing.animFast,
+    this.pressedScale = 0.98,
+    this.duration = AppMotion.fast,
     this.curve = Curves.easeOut,
     this.enabled = true,
   });

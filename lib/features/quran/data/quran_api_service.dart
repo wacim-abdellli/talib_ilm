@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import '../../../app/theme/app_palette.dart';
 import 'models/quran_models.dart';
 
 /// Quran API Service using alquran.cloud
@@ -31,7 +32,7 @@ class QuranApiService {
       // Use quran.com API v4 (more reliable)
       final response = await http
           .get(Uri.parse('https://api.quran.com/api/v4/chapters'))
-          .timeout(const Duration(seconds: 20));
+          .timeout(AppMotion.networkMedium);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -494,7 +495,7 @@ class QuranApiService {
         final response = await http
             .get(Uri.parse('$_baseUrl/surah/$number/$edition'))
             .timeout(
-              Duration(seconds: attempts == 0 ? 3 : 10),
+              attempts == 0 ? AppMotion.controlsHide : AppMotion.networkRetry,
             ); // FAST TIMEOUT FIRST
 
         if (response.statusCode == 200) {
@@ -508,7 +509,7 @@ class QuranApiService {
       } catch (e) {
         attempts++;
         if (attempts >= 2) break;
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(AppMotion.debounce);
       }
     }
 
@@ -590,7 +591,7 @@ class QuranApiService {
             'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber',
           ),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(AppMotion.networkMedium);
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -651,7 +652,7 @@ class QuranApiService {
       final encodedQuery = Uri.encodeComponent(query);
       final response = await http
           .get(Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'))
-          .timeout(const Duration(seconds: 30));
+          .timeout(AppMotion.networkLong);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -705,7 +706,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/ayah/$reference/$edition'))
-          .timeout(const Duration(seconds: 30));
+          .timeout(AppMotion.networkLong);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -733,7 +734,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz'))
-          .timeout(const Duration(seconds: 20));
+          .timeout(AppMotion.networkMedium);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -753,7 +754,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/juz/$number/$edition'))
-          .timeout(const Duration(seconds: 30));
+          .timeout(AppMotion.networkLong);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -777,7 +778,7 @@ class QuranApiService {
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/page/$pageNumber/$edition'))
-          .timeout(const Duration(seconds: 30));
+          .timeout(AppMotion.networkLong);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

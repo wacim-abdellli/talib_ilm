@@ -57,7 +57,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
+    _debounce = Timer(AppMotion.searchDebounce, () {
       widget.onSearch(query);
     });
   }

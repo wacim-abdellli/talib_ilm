@@ -16,7 +16,7 @@ class AchievementToast extends StatefulWidget {
     required this.title,
     required this.description,
     this.onDismiss,
-    this.duration = const Duration(seconds: 4),
+    this.duration = AppMotion.toastLong,
   });
 
   /// Static helper to overlay the toast on top of the screen

@@ -401,6 +401,7 @@ class AppTextTheme {
   final TextStyle sacred;
   final TextStyle sacredLarge;
   final TextStyle mushafChrome;
+  final TextStyle surahHeaderTitle;
   final TextStyle surahCalligraphy;
   final TextStyle basmallahCalligraphy;
 
@@ -415,6 +416,7 @@ class AppTextTheme {
     required this.sacred,
     required this.sacredLarge,
     required this.mushafChrome,
+    required this.surahHeaderTitle,
     required this.surahCalligraphy,
     required this.basmallahCalligraphy,
   });
@@ -422,6 +424,7 @@ class AppTextTheme {
   factory AppTextTheme.fromPalette(AppPalette palette) {
     const cairo = 'Cairo';
     const scheherazadeNew = 'ScheherazadeNew';
+    const amiri = 'Amiri';
 
     return AppTextTheme(
       display: TextStyle(
@@ -494,6 +497,13 @@ class AppTextTheme {
         height: 1.4,
         color: palette.text,
       ),
+      surahHeaderTitle: TextStyle(
+        fontFamily: amiri,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        color: palette.text,
+      ),
       surahCalligraphy: const TextStyle(
         fontFamily: 'arsura',
         package: 'qcf_quran_plus',
@@ -557,6 +567,7 @@ class AppRadius {
 class AppIcon {
   AppIcon._();
 
+  static const double xs = 8;
   static const double sm = 16;
   static const double md = 20;
   static const double lg = 24;
@@ -575,6 +586,45 @@ class AppMotion {
   static const Duration toast = Duration(milliseconds: 2500);
   static const Duration debounce = Duration(milliseconds: 500);
 
+  /// 16ms (~60fps frame ticker)
+  static const Duration frame60Fps = Duration(milliseconds: 16);
+
+  /// 50ms (micro yield/pause)
+  static const Duration microPause = Duration(milliseconds: 50);
+
+  /// 300ms (search debounce & filter settling)
+  static const Duration searchDebounce = Duration(milliseconds: 300);
+
+  /// 600ms (extended micro-interaction transition)
+  static const Duration deliberate = Duration(milliseconds: 600);
+
+  /// 1 second (interval timers, clocks)
+  static const Duration oneSecond = Duration(seconds: 1);
+
+  /// 2 seconds (quick toasts / auto dismiss)
+  static const Duration twoSeconds = Duration(seconds: 2);
+
+  /// 3 seconds (HUD / controls auto-hide)
+  static const Duration controlsHide = Duration(seconds: 3);
+
+  /// 4 seconds (long toasts / undo bars)
+  static const Duration toastLong = Duration(seconds: 4);
+
+  /// 10 seconds (standard network retry)
+  static const Duration networkRetry = Duration(seconds: 10);
+
+  /// 15 seconds (reading history throttle / standard network timeout)
+  static const Duration networkTimeout = Duration(seconds: 15);
+
+  /// 20 seconds (medium network operations)
+  static const Duration networkMedium = Duration(seconds: 20);
+
+  /// 30 seconds (heavy API / data sync operations)
+  static const Duration networkLong = Duration(seconds: 30);
+
+  /// 60 seconds (ambient visual cycles, deep network timeouts)
+  static const Duration ambient = Duration(seconds: 60);
+
   static const Curve easeIn = Curves.easeInCubic;
   static const Curve easeOut = Curves.easeOutCubic;
 }
@@ -582,6 +632,10 @@ class AppMotion {
 /// Size & touch targets
 class AppSize {
   AppSize._();
+
+  static const double textScaleBaseWidth = 360;
+  static const double textScaleMin = 0.9;
+  static const double textScaleMax = 1.5;
 
   static const double tap = 48;
   static const double buttonH = 48;

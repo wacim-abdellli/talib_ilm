@@ -6,8 +6,7 @@ import 'app_radius.dart';
 export 'app_palette.dart';
 
 /// Legacy UI constants shim.
-/// @Deprecated: Use [AppSpace], [AppRadius], [AppIcon], [AppMotion], [AppSize] instead.
-@Deprecated('Use AppSpace, AppRadius, AppIcon, AppMotion, AppSize instead')
+/// Use [AppSpace], [AppRadius], [AppIcon], [AppMotion], [AppSize] instead.
 class AppUi {
   static const double gapXXS = AppSpace.xs;
   static const double gapXXSPlus = AppSpace.xs;

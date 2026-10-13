@@ -172,7 +172,7 @@ class LearningPulseCard extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.arrow_forward_ios_rounded,
-                      size: 12,
+                      size: AppIcon.sm,
                       color: catColors.fg,
                     ),
                   ),

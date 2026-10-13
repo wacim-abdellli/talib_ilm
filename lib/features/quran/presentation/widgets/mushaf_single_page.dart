@@ -4,8 +4,8 @@ import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
-import '../../../../app/theme/app_ui.dart';
-import '../../../../core/utils/arabic_digits.dart' show getArabicJuzName;
+import '../../../../core/utils/arabic_digits.dart'
+    show getArabicJuzName, getVocalizedSurahName;
 
 import 'quran_section_header.dart';
 export 'quran_section_header.dart';
@@ -101,6 +101,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final firstAyah = ranges.isNotEmpty ? int.parse(ranges.first['start'].toString()) : 1;
     final juzNumber = quran.getJuzNumber(firstSurah, firstAyah);
     final surahName = quran.getSurahNameArabic(firstSurah);
+    final vocalizedSurahName = getVocalizedSurahName(firstSurah, fallback: surahName);
     final juzName = getArabicJuzName(juzNumber);
 
     return Container(
@@ -123,26 +124,30 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                   ),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Flexible(
+                  PositionedDirectional(
+                    start: 0,
                     child: Text(
-                      'سُورَةُ $surahName',
+                      vocalizedSurahName,
                       style: textTheme.mushafChrome.copyWith(
                         color: verseTextColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    '۞',
-                    style: textTheme.caption.copyWith(
-                      color: palette.gold,
-                      fontWeight: FontWeight.bold,
+                  Center(
+                    child: Text(
+                      '۞',
+                      style: textTheme.caption.copyWith(
+                        color: palette.gold,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  Flexible(
+                  PositionedDirectional(
+                    end: 0,
                     child: Text(
                       juzName,
                       style: textTheme.mushafChrome.copyWith(

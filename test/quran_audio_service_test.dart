@@ -48,5 +48,37 @@ void main() {
       service.setRepeatMode(AudioRepeatMode.none);
       expect(service.repeatModeNotifier.value, AudioRepeatMode.none);
     });
+
+    test('classifyError distinguishes network failure from missing file', () {
+      final netErr = QuranAudioService.classifyError('SocketException: Failed host lookup');
+      expect(netErr.type, AudioPlaybackErrorType.network);
+      expect(netErr.message, contains('يرجى التحقق من الاتصال بالإنترنت'));
+
+      final notFoundErr = QuranAudioService.classifyError('HTTP 404: Not Found');
+      expect(notFoundErr.type, AudioPlaybackErrorType.sourceNotFound);
+      expect(notFoundErr.message, contains('ملف التلاوة غير متوفر'));
+
+      final unknownErr = QuranAudioService.classifyError('CodecException: Invalid sample format');
+      expect(unknownErr.type, AudioPlaybackErrorType.unknown);
+      expect(unknownErr.message, contains('تعذر تشغيل التلاوة'));
+    });
+
+    test('errorNotifier clears on stop and returns player to idle state', () async {
+      service.errorNotifier.value = const AudioPlaybackError(
+        type: AudioPlaybackErrorType.network,
+        message: 'تعذر تشغيل التلاوة. يرجى التحقق من الاتصال بالإنترنت',
+      );
+      service.activeSurahNotifier.value = 1;
+      service.activeAyahNotifier.value = 1;
+
+      expect(service.errorNotifier.value, isNotNull);
+
+      await service.stop();
+
+      expect(service.errorNotifier.value, isNull);
+      expect(service.activeSurahNotifier.value, isNull);
+      expect(service.activeAyahNotifier.value, isNull);
+      expect(service.isPlayingNotifier.value, isFalse);
+    });
   });
 }

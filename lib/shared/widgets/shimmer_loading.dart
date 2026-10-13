@@ -56,7 +56,7 @@ class ShimmerPrayerTile extends StatelessWidget {
           height: 48,
           child: Row(
             children: [
-              const AppSkeleton.circle(size: 32),
+              const AppSkeleton.circle(diameter: 32),
               const SizedBox(width: AppSpace.lg),
               Expanded(
                 child: Column(
@@ -133,7 +133,7 @@ class ShimmerHeroCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpace.xxl),
         child: Column(
           children: [
-            const AppSkeleton.circle(size: 64),
+            const AppSkeleton.circle(diameter: 64),
             const SizedBox(height: AppSpace.lg),
             AppSkeleton.line(width: 100, height: 20),
             const SizedBox(height: AppSpace.sm),

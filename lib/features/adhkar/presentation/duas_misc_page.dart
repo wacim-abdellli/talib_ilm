@@ -103,6 +103,7 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear_rounded, size: AppIcon.sm),
+                              tooltip: 'مسح البحث',
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');

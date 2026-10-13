@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_palette.dart';
 
 class AppBackButton extends StatelessWidget {
   final VoidCallback? onTap;
@@ -17,7 +17,7 @@ class AppBackButton extends StatelessWidget {
         isRtl
             ? Icons.arrow_forward_ios_rounded
             : Icons.arrow_back_ios_new_rounded,
-        size: AppUi.iconSizeMD,
+        size: AppIcon.md,
       ),
     );
   }

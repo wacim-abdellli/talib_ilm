@@ -203,6 +203,11 @@ class BookmarkService {
     }
   }
 
+  /// Save all bookmarks list directly
+  static Future<void> saveAllBookmarks(List<Bookmark> bookmarks) async {
+    await _saveBookmarks(bookmarks);
+  }
+
   static Future<void> _saveBookmarks(List<Bookmark> bookmarks) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = bookmarks.map((b) => b.toJson()).toList();

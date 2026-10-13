@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
-import 'theme/app_ui.dart';
+import 'theme/app_palette.dart';
 import '../features/splash/presentation/splash_page.dart';
 import '../shared/widgets/app_scroll_behavior.dart';
 import '../core/services/theme_service.dart';
@@ -50,8 +50,8 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
           builder: (context, child) {
             final mediaQuery = MediaQuery.of(context);
             final shortestSide = mediaQuery.size.shortestSide;
-            final sizeScale = (shortestSide / AppUi.textScaleBaseWidth)
-                .clamp(AppUi.textScaleMin, AppUi.textScaleMax)
+            final sizeScale = (shortestSide / AppSize.textScaleBaseWidth)
+                .clamp(AppSize.textScaleMin, AppSize.textScaleMax)
                 .toDouble();
             final baseScale = mediaQuery.textScaler.scale(1.0);
             final scaled = TextScaler.linear((baseScale * sizeScale).clamp(0.9, 1.5));

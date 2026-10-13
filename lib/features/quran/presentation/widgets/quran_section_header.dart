@@ -3,7 +3,8 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
-import '../../../../core/utils/arabic_digits.dart' show getArabicJuzName;
+import '../../../../core/utils/arabic_digits.dart'
+    show getArabicJuzName, getVocalizedSurahName;
 
 /// Authentic Medina Mushaf Surah Header Banner
 class MushafSurahBanner extends StatelessWidget {
@@ -30,6 +31,7 @@ class MushafSurahBanner extends StatelessWidget {
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
     final revelationType = isMakki ? 'مَكِّيَّةٌ' : 'مَدَنِيَّةٌ';
     final surahName = quran.getSurahNameArabic(surahNumber);
+    final vocalizedTitle = getVocalizedSurahName(surahNumber, fallback: surahName);
 
     final Color textColor = switch (themeMode) {
       MushafThemeMode.white => MushafColors.whiteText,
@@ -67,93 +69,84 @@ class MushafSurahBanner extends StatelessWidget {
               colorBlendMode: frameColor != null ? BlendMode.srcIn : BlendMode.srcOver,
             ),
 
-            // 2. Classical Medina Cartouche Metadata and Authentic Calligraphic Title
-            Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Right in RTL: Ayah count with high contrast plaque
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.xs,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (themeMode == MushafThemeMode.dark
-                              ? palette.surfaceRaised
-                              : Colors.white)
-                          .withValues(alpha: 0.90),
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: palette.gold.withValues(alpha: 0.6),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      'آيَاتُهَا $verseCount',
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      style: textTheme.caption.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
+            // 2. Dead-Center Authentic Classical Surah Calligraphic Title
+            Center(
+              child: SizedBox(
+                width: 196,
+                height: 38,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    vocalizedTitle,
+                    textAlign: TextAlign.center,
+                    style: textTheme.surahHeaderTitle.copyWith(
+                      color: textColor,
                     ),
                   ),
+                ),
+              ),
+            ),
 
-                  // Center: Authentic Sacred Surah Name
-                  Expanded(
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
-                          child: Text(
-                            'سُورَةُ $surahName',
-                            textAlign: TextAlign.center,
-                            style: textTheme.sacred.copyWith(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              height: 1.1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+            // 3. Right in RTL (Start): Ayah count with high contrast plaque
+            PositionedDirectional(
+              start: AppSpace.lg,
+              child: Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.xs,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: (themeMode == MushafThemeMode.dark
+                          ? palette.surfaceRaised
+                          : palette.surface)
+                      .withValues(alpha: 0.90),
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: palette.gold.withValues(alpha: 0.6),
+                    width: 0.8,
                   ),
+                ),
+                child: Text(
+                  'آيَاتُهَا $verseCount',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: textTheme.caption.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
 
-                  // Left in RTL: Revelation location with high contrast plaque
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.xs,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (themeMode == MushafThemeMode.dark
-                              ? palette.surfaceRaised
-                              : Colors.white)
-                          .withValues(alpha: 0.90),
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: palette.gold.withValues(alpha: 0.6),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      revelationType,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      style: textTheme.caption.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
+            // 4. Left in RTL (End): Revelation location with high contrast plaque
+            PositionedDirectional(
+              end: AppSpace.lg,
+              child: Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.xs,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: (themeMode == MushafThemeMode.dark
+                          ? palette.surfaceRaised
+                          : palette.surface)
+                      .withValues(alpha: 0.90),
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: palette.gold.withValues(alpha: 0.6),
+                    width: 0.8,
                   ),
-                ],
+                ),
+                child: Text(
+                  revelationType,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: textTheme.caption.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
@@ -306,7 +299,6 @@ class QuranBasmalahBanner extends StatelessWidget {
             overflow: TextOverflow.visible,
             style: textTheme.basmallahCalligraphy.copyWith(
               color: textColor,
-              fontSize: 26,
             ),
           ),
         ),

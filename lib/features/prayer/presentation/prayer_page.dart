@@ -69,7 +69,7 @@ class _PrayerPageState extends State<PrayerPage> {
 
   Future<_LocationInfo> _loadLocation() async {
     // Add small delay to prevent startup resource contention on emulators
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(AppMotion.debounce);
     try {
       final manual = await _locationService.getManualLocation();
       final location = await _locationService.getLocation();

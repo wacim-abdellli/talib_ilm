@@ -271,8 +271,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                       ),
                     ),
                   )
-                : GestureDetector(
-                    behavior: HitTestBehavior.translucent,
+                : InkWell(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
                     onTap: _handleTap,
                     child: Stack(
                       children: [

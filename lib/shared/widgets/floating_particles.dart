@@ -8,7 +8,7 @@ class _Particle {
   double y;
   double dx; // Horizontal drift velocity
   double dy; // Upward velocity
-  double size;
+  double radius;
   double opacity;
   double fadeDirection; // 1 = fading in, -1 = fading out
   Color color;
@@ -18,7 +18,7 @@ class _Particle {
     required this.y,
     required this.dx,
     required this.dy,
-    required this.size,
+    required this.radius,
     required this.opacity,
     required this.fadeDirection,
     required this.color,
@@ -56,7 +56,7 @@ class _FloatingParticlesState extends State<FloatingParticles>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 16), // ~60fps
+      duration: AppMotion.frame60Fps, // ~60fps
       vsync: this,
     )..addListener(_updateParticles);
 
@@ -105,7 +105,7 @@ class _FloatingParticlesState extends State<FloatingParticles>
           : _screenSize.height + _random.nextDouble() * 50,
       dx: (_random.nextDouble() - 0.5) * 0.3, // Slight horizontal drift
       dy: -(0.3 + _random.nextDouble() * 0.5), // Upward movement
-      size: 2 + _random.nextDouble() * 4, // 2-6
+      radius: 2 + _random.nextDouble() * 4, // 2-6
       opacity: 0.1 + _random.nextDouble() * 0.2, // 0.1-0.3
       fadeDirection: 1,
       color: isTeal ? primary : secondary,
@@ -188,7 +188,7 @@ class _ParticlePainter extends CustomPainter {
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
 
-      canvas.drawCircle(Offset(particle.x, particle.y), particle.size, paint);
+      canvas.drawCircle(Offset(particle.x, particle.y), particle.radius, paint);
     }
   }
 

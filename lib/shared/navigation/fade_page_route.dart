@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_palette.dart';
 
 PageRouteBuilder<T> buildFadeRoute<T>({
   required Widget page,
-  Duration duration = AppUi.animationShort,
+  Duration duration = AppMotion.base,
 }) {
   return PageRouteBuilder<T>(
     transitionDuration: duration,
@@ -16,7 +16,7 @@ PageRouteBuilder<T> buildFadeRoute<T>({
         reverseCurve: Curves.easeOut,
       );
       final offsetTween = Tween<Offset>(
-        begin: Offset(0, AppUi.routeSlideOffset),
+        begin: const Offset(0, 0.03),
         end: Offset.zero,
       );
       return FadeTransition(

@@ -13,7 +13,6 @@ import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_text.dart';
-import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/sharh_model.dart';
@@ -627,7 +626,7 @@ class _BookViewPageState extends State<BookViewPage>
 
             widget.book.playlistId == null
                 ? Padding(
-                    padding: AppUi.cardPadding,
+                    padding: AppSpace.cardPadding,
                     child: EmptyState(
                       icon: Icons.ondemand_video_outlined,
                       title: AppStrings.bookLessonsEmptyTitle,

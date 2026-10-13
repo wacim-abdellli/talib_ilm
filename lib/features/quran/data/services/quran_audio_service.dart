@@ -1,13 +1,37 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:quran/quran.dart' as quran;
 
+import 'quran_audio_downloader.dart';
+
 enum AudioRepeatMode {
   none,
   singleAyah,
   surah,
+}
+
+enum AudioPlaybackErrorType {
+  network,
+  sourceNotFound,
+  unknown,
+}
+
+class AudioPlaybackError {
+  final AudioPlaybackErrorType type;
+  final String message;
+  final dynamic originalError;
+
+  const AudioPlaybackError({
+    required this.type,
+    required this.message,
+    this.originalError,
+  });
+
+  @override
+  String toString() => 'AudioPlaybackError($type: $message)';
 }
 
 class QuranReciter {
@@ -70,6 +94,8 @@ class QuranAudioService {
   final ValueNotifier<double> speedNotifier = ValueNotifier<double>(1.0);
   final ValueNotifier<AudioRepeatMode> repeatModeNotifier =
       ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
+  final ValueNotifier<AudioPlaybackError?> errorNotifier =
+      ValueNotifier<AudioPlaybackError?>(null);
 
   Timer? _sleepTimer;
   final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
@@ -80,13 +106,62 @@ class QuranAudioService {
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   bool get isPlaying => _player.playing;
 
+  void clearError() {
+    errorNotifier.value = null;
+  }
+
+  static AudioPlaybackError classifyError(dynamic e) {
+    final str = e.toString().toLowerCase();
+    if (str.contains('socketexception') ||
+        str.contains('failed host lookup') ||
+        str.contains('network') ||
+        str.contains('connection') ||
+        str.contains('timed out') ||
+        str.contains('timeout')) {
+      return const AudioPlaybackError(
+        type: AudioPlaybackErrorType.network,
+        message: 'تعذر تشغيل التلاوة. يرجى التحقق من الاتصال بالإنترنت',
+      );
+    } else if (str.contains('404') ||
+        str.contains('not found') ||
+        str.contains('filenotfound')) {
+      return const AudioPlaybackError(
+        type: AudioPlaybackErrorType.sourceNotFound,
+        message: 'ملف التلاوة غير متوفر لهذا القارئ حالياً',
+      );
+    } else {
+      return AudioPlaybackError(
+        type: AudioPlaybackErrorType.unknown,
+        message: 'تعذر تشغيل التلاوة، يرجى المحاولة مرة أخرى',
+        originalError: e,
+      );
+    }
+  }
+
+  Future<void> _handlePlaybackError(dynamic e) async {
+    final err = classifyError(e);
+    activeSurahNotifier.value = null;
+    activeAyahNotifier.value = null;
+    isPlayingNotifier.value = false;
+    _isContinuous = false;
+    errorNotifier.value = err;
+    try {
+      await _player.stop();
+    } catch (_) {}
+  }
+
   void _initAudioListener() {
-    _player.playerStateStream.listen((state) {
-      isPlayingNotifier.value = state.playing;
-      if (state.processingState == ProcessingState.completed) {
-        _handleTrackCompleted();
-      }
-    });
+    _player.playerStateStream.listen(
+      (state) {
+        isPlayingNotifier.value = state.playing;
+        if (state.processingState == ProcessingState.completed) {
+          _handleTrackCompleted();
+        }
+      },
+      onError: (Object e) {
+        _handlePlaybackError(e);
+      },
+    );
   }
 
   String _formatNumber(int n) => n.toString().padLeft(3, '0');
@@ -116,28 +191,43 @@ class QuranAudioService {
     await _startPlay(surah, startAyah, reciter: reciter);
   }
 
+  /// Resolves the audio source: uses locally downloaded file if exists, otherwise streams from URL.
+  Future<AudioSource> getAudioSource(int surah, int ayah, {QuranReciter? reciter}) async {
+    final r = reciter ?? _selectedReciter;
+    final surahName = quran.getSurahNameArabic(surah);
+    final tag = MediaItem(
+      id: '${surah}_$ayah',
+      album: 'سورة $surahName',
+      title: 'الآية $ayah - سورة $surahName',
+      artist: r.name,
+    );
+
+    try {
+      final localPath = await QuranAudioDownloader.getLocalAyahPath(surah, ayah, reciter: r);
+      final localFile = File(localPath);
+      if (localFile.existsSync() && localFile.lengthSync() > 0) {
+        return AudioSource.file(localPath, tag: tag);
+      }
+    } catch (_) {}
+
+    final url = getAudioUrl(surah, ayah, reciter: r);
+    return AudioSource.uri(Uri.parse(url), tag: tag);
+  }
+
   Future<void> _startPlay(int surah, int ayah, {QuranReciter? reciter}) async {
+    clearError();
     final r = reciter ?? _selectedReciter;
     activeSurahNotifier.value = surah;
     activeAyahNotifier.value = ayah;
 
     try {
-      final url = getAudioUrl(surah, ayah, reciter: r);
-      final surahName = quran.getSurahNameArabic(surah);
-      final audioSource = AudioSource.uri(
-        Uri.parse(url),
-        tag: MediaItem(
-          id: '${surah}_$ayah',
-          album: 'سورة $surahName',
-          title: 'الآية $ayah - سورة $surahName',
-          artist: r.name,
-        ),
-      );
+      final audioSource = await getAudioSource(surah, ayah, reciter: r);
       await _player.setAudioSource(audioSource);
       await _player.setSpeed(speedNotifier.value);
       await _player.play();
     } catch (e) {
       debugPrint('QuranAudioService play error: $e');
+      await _handlePlaybackError(e);
     }
   }
 
@@ -242,11 +332,13 @@ class QuranAudioService {
     _isContinuous = false;
     _sleepTimer?.cancel();
     sleepTimerMinutesNotifier.value = null;
+    clearError();
     await _player.stop();
   }
 
   void dispose() {
     _sleepTimer?.cancel();
+    errorNotifier.dispose();
     _player.dispose();
   }
 }

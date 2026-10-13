@@ -8,14 +8,18 @@ import '../../../core/utils/arabic_search_utils.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import '../data/models/hizb_catalog.dart';
 import '../data/services/bookmark_service.dart';
+import '../data/services/reading_history_service.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
+import 'widgets/hizb_card.dart';
 import 'widgets/juz_card.dart';
 import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
 import 'widgets/quran_bookmarks_tab_view.dart';
 import 'widgets/quran_stats_banner.dart';
+import 'widgets/reading_history_sheet.dart';
 import 'widgets/surah_card.dart';
 
 class QuranPage extends StatefulWidget {
@@ -31,7 +35,8 @@ class _QuranPageState extends State<QuranPage> {
 
   List<int> _filteredSurahs = List.generate(114, (i) => i + 1);
   List<int> _filteredJuzs = List.generate(30, (i) => i + 1);
-  int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs, 2: Bookmarks
+  List<int> _filteredHizbs = List.generate(60, (i) => i + 1);
+  int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs, 2: Hizbs, 3: Bookmarks
   bool _isLoading = true;
 
   // Stats
@@ -79,6 +84,7 @@ class _QuranPageState extends State<QuranPage> {
         setState(() {
           _filteredSurahs = List.generate(114, (i) => i + 1);
           _filteredJuzs = List.generate(30, (i) => i + 1);
+          _filteredHizbs = List.generate(60, (i) => i + 1);
         });
       }
       return;
@@ -106,6 +112,14 @@ class _QuranPageState extends State<QuranPage> {
               ArabicSearchUtils.matches(snippet, query) ||
               juzNum.toString().contains(query);
         }).toList();
+
+        _filteredHizbs = List.generate(60, (i) => i + 1).where((hizbNum) {
+          final hizb = HizbCatalog.getHizb(hizbNum);
+          return ArabicSearchUtils.matches(hizb.nameArabic, query) ||
+              ArabicSearchUtils.matches(hizb.surahNameArabic, query) ||
+              ArabicSearchUtils.matches(hizb.firstVerseSnippet, query) ||
+              hizbNum.toString().contains(query);
+        }).toList();
       });
     }
   }
@@ -118,6 +132,15 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _openSurah(int surahNum, {int? ayah}) async {
     final startTime = DateTime.now();
+    final effectiveAyah = ayah ?? 1;
+    final targetPage = quran.getPageNumber(surahNum, effectiveAyah);
+
+    // Record reading history (throttled)
+    ReadingHistoryService.recordReading(
+      surah: surahNum,
+      ayah: effectiveAyah,
+      page: targetPage,
+    );
 
     if (!mounted) return;
 
@@ -126,7 +149,7 @@ class _QuranPageState extends State<QuranPage> {
       MaterialPageRoute(
         builder: (_) => MushafPageViewer(
           initialSurah: surahNum,
-          initialAyah: ayah ?? 1,
+          initialAyah: effectiveAyah,
         ),
       ),
     );
@@ -145,6 +168,13 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _openPage(int pageNumber) async {
     final startTime = DateTime.now();
+
+    // Record reading history (throttled)
+    ReadingHistoryService.recordReading(
+      surah: _lastRead?.surah ?? 1,
+      ayah: _lastRead?.ayah ?? 1,
+      page: pageNumber,
+    );
 
     if (!mounted) return;
 
@@ -184,6 +214,15 @@ class _QuranPageState extends State<QuranPage> {
         title: 'القرآن الكريم',
         showBack: false,
         actions: [
+          AppIconButton(
+            icon: Icons.history_rounded,
+            tooltip: 'سجل القراءة',
+            color: palette.gold,
+            onPressed: () => ReadingHistorySheet.show(
+              context,
+              onOpenPage: _openPage,
+            ),
+          ),
           AppIconButton(
             icon: Icons.explore_rounded,
             tooltip: 'الانتقال السريع',
@@ -344,17 +383,20 @@ class _QuranPageState extends State<QuranPage> {
                   ),
                 ),
 
-                // Content List (Surahs, Juzs, or Bookmarks)
+                // Content List (Surahs, Juzs, Hizbs, or Bookmarks)
                 Expanded(
                   child: _selectedTabIndex == 0
                       ? _buildSurahsList(context)
                       : _selectedTabIndex == 1
                           ? _buildJuzsList(context)
-                          : QuranBookmarksTabView(
-                              bookmarks: _bookmarks,
-                              onEmptyAction: () => setState(() => _selectedTabIndex = 0),
-                              onReload: _loadData,
-                            ),
+                          : _selectedTabIndex == 2
+                              ? _buildHizbsList(context)
+                              : QuranBookmarksTabView(
+                                  bookmarks: _bookmarks,
+                                  onEmptyAction: () =>
+                                      setState(() => _selectedTabIndex = 0),
+                                  onReload: _loadData,
+                                ),
                 ),
               ],
             ),
@@ -397,11 +439,21 @@ class _QuranPageState extends State<QuranPage> {
             ),
             Expanded(
               child: _buildTabButton(
-                title: 'المحفوظات (${_bookmarks.length})',
+                title: 'الأحزاب (60)',
                 isSelected: _selectedTabIndex == 2,
                 onTap: () {
                   HapticFeedback.selectionClick();
                   setState(() => _selectedTabIndex = 2);
+                },
+              ),
+            ),
+            Expanded(
+              child: _buildTabButton(
+                title: 'المحفوظات (${_bookmarks.length})',
+                isSelected: _selectedTabIndex == 3,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedTabIndex = 3);
                 },
               ),
             ),
@@ -516,6 +568,40 @@ class _QuranPageState extends State<QuranPage> {
             final page = quran.getPageNumber(firstSurah, firstVerse);
             _openPage(page);
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildHizbsList(BuildContext context) {
+    if (_filteredHizbs.isEmpty) {
+      return SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+        child: EmptyState(
+          icon: Icons.search_off_rounded,
+          title: 'لا توجد نتائج',
+          subtitle:
+              'لم نتمكن من العثور على حزب يطابق بحثك. جرّب كتابة رقم الحزب أو اسم السورة.',
+          actionLabel: 'إعادة ضبط البحث',
+          onAction: () => _searchController.clear(),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: _filteredHizbs.length,
+      padding: EdgeInsetsDirectional.only(
+        start: AppSpace.lg,
+        end: AppSpace.lg,
+        bottom: AppSize.navClearance(context),
+      ),
+      itemBuilder: (context, index) {
+        final hizbNum = _filteredHizbs[index];
+        final hizb = HizbCatalog.getHizb(hizbNum);
+        return HizbCard(
+          hizb: hizb,
+          onOpenPage: _openPage,
         );
       },
     );

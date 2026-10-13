@@ -7,11 +7,13 @@ import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/quran_reader_index.dart';
 import '../../data/services/bookmark_service.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_reader_preferences.dart';
 import '../../data/services/quran_tafsir_service.dart';
+import '../../data/services/reading_history_service.dart';
 import '../../data/services/reading_stats_service.dart';
 import 'ayah_action_menu_sheet.dart';
 import 'mushaf_reader_overlays.dart';
@@ -97,10 +99,19 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     _loadSavedSettings();
     _applyWakelock(_keepScreenAwake);
     QcfFontLoader.preloadPages(_currentPage, radius: 3);
+    _audioService.errorNotifier.addListener(_onAudioError);
+  }
+
+  void _onAudioError() {
+    final err = _audioService.errorNotifier.value;
+    if (err != null && mounted) {
+      AppSnackbar.error(context, err.message);
+    }
   }
 
   @override
   void dispose() {
+    _audioService.errorNotifier.removeListener(_onAudioError);
     _saveLastReadDebounceTimer?.cancel();
     BookmarkService.saveLastRead(
       surah: _currentSurah,
@@ -120,6 +131,11 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     _saveLastReadDebounceTimer?.cancel();
     _saveLastReadDebounceTimer = Timer(AppMotion.toast, () {
       BookmarkService.saveLastRead(
+        surah: surah,
+        ayah: ayah,
+        page: page,
+      );
+      ReadingHistoryService.recordReading(
         surah: surah,
         ayah: ayah,
         page: page,

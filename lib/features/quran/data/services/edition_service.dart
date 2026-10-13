@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../app/theme/app_palette.dart';
 import '../models/quran_models.dart';
 
 /// Edition Service - Manages downloadable Quran editions (Riwayat)
@@ -78,7 +79,7 @@ class EditionService {
 
       final response = await http
           .get(Uri.parse(apiUrl))
-          .timeout(const Duration(seconds: 60));
+          .timeout(AppMotion.ambient);
 
       if (response.statusCode != 200) {
         yield DownloadProgress(

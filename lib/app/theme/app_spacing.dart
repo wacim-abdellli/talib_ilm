@@ -4,8 +4,7 @@ import 'app_palette.dart';
 export 'app_palette.dart';
 
 /// Legacy spacing shim.
-/// @Deprecated: Use [AppSpace], [AppMotion], [AppSize] instead.
-@Deprecated('Use AppSpace, AppMotion, AppSize instead')
+/// Use [AppSpace], [AppMotion], [AppSize] instead.
 class AppSpacing {
   AppSpacing._();
 
@@ -102,7 +101,6 @@ class AppSpacing {
 }
 
 /// Legacy shadows shim
-@Deprecated('Use AppPalette.light.shadow instead')
 class AppShadows {
   AppShadows._();
 

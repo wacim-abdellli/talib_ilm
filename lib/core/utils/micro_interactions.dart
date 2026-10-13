@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../app/theme/app_palette.dart';
 
 /// A utility class for calm, minimal, and spiritually respectful micro-interactions.
 /// Design Philosophy:
@@ -35,11 +36,9 @@ class MicroInteractions {
   // ═══════════════════════════════════════════
 
   // Slower than standard material durations to induce calmness.
-  static const Duration fast = Duration(milliseconds: 300); // Standard is 200
-  static const Duration medium = Duration(milliseconds: 600); // Standard is 400
-  static const Duration slow = Duration(
-    milliseconds: 1000,
-  ); // For contemplative fades
+  static const Duration fast = AppMotion.searchDebounce; // Standard is 200
+  static const Duration medium = AppMotion.deliberate; // Standard is 400
+  static const Duration slow = AppMotion.oneSecond; // For contemplative fades
 
   // ═══════════════════════════════════════════
   // 3. CURVES (Organic Motion)

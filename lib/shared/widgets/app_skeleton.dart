@@ -20,9 +20,10 @@ class AppSkeleton extends StatelessWidget {
 
   const AppSkeleton.circle({
     super.key,
-    required double size,
-  })  : width = size,
-        height = size,
+    double? diameter,
+    double? size,
+  })  : width = diameter ?? size ?? AppSize.tap,
+        height = diameter ?? size ?? AppSize.tap,
         borderRadius = null,
         shape = BoxShape.circle,
         child = null;

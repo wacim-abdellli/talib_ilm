@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import '../services/prayer_time_service.dart';
+import '../../app/theme/app_palette.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 
 class PrayerCountdownState {
@@ -43,7 +44,7 @@ class PrayerCountdownController {
 
   void start() {
     _tick();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    _timer = Timer.periodic(AppMotion.oneSecond, (_) => _tick());
   }
 
   void dispose() {

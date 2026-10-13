@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme/app_palette.dart';
 
 class FadeScaleAnimation extends StatefulWidget {
   final Widget child;
@@ -9,7 +10,7 @@ class FadeScaleAnimation extends StatefulWidget {
   const FadeScaleAnimation({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 220),
+    this.duration = AppMotion.base,
     this.curve = Curves.easeOut,
     this.startScale = 0.98,
   });

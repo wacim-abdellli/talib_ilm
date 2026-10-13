@@ -153,16 +153,12 @@ class AppDrawer extends StatelessWidget {
                 ListenableBuilder(
                   listenable: themeService,
                   builder: (context, _) {
-                    final isDark = themeService.isDark ||
-                        (themeService.isSystem &&
-                            Theme.of(context).brightness == Brightness.dark);
+                    final darkModeActive = themeService.themeMode == ThemeMode.dark;
                     return _DrawerItem(
-                      icon: isDark
-                          ? Icons.dark_mode_rounded
-                          : Icons.light_mode_rounded,
+                      icon: themeService.themeIcon,
                       label: 'الوضع الداكن',
                       trailing: Switch(
-                        value: isDark,
+                        value: darkModeActive,
                         onChanged: (_) => themeService.toggleTheme(),
                       ),
                       onTap: () => themeService.toggleTheme(),

@@ -78,7 +78,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     AppSnackbar.success(context, 'تم حفظ إعدادات الصلاة');
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(AppMotion.searchDebounce);
     if (mounted) Navigator.pop(context);
   }
 

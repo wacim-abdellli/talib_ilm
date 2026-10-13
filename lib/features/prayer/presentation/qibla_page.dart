@@ -36,7 +36,7 @@ class _QiblaPageState extends State<QiblaPage>
     super.initState();
     _calibrationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: AppMotion.twoSeconds,
     )..repeat(reverse: true);
 
     _checkPermissionsAndStart();

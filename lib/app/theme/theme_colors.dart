@@ -5,8 +5,7 @@ import 'app_colors.dart';
 export 'app_palette.dart';
 
 /// Legacy ThemeColors extension shim.
-/// @Deprecated: Use `context.palette` instead.
-@Deprecated('Use context.palette instead')
+/// Use `context.palette` instead.
 extension ThemeColors on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
   AppPalette get _p => palette;

@@ -5,7 +5,6 @@ export 'app_palette.dart';
 
 /// Legacy color access shim.
 /// Use [AppPalette] via `context.palette` instead.
-@Deprecated('Use AppPalette via context.palette')
 class AppColors {
   // Primary
   static const primary = Color(0xFF0F766E);

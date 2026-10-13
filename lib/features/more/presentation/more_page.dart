@@ -8,6 +8,9 @@ import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
 import '../../quran/data/services/reading_stats_service.dart';
+import '../../quran/presentation/quran_audio_downloads_page.dart';
+import 'credits_and_licenses_page.dart';
+import 'widgets/backup_restore_sheet.dart';
 import 'widgets/more_section_card.dart';
 import 'widgets/theme_selector_sheet.dart';
 
@@ -80,6 +83,16 @@ class _MorePageState extends State<MorePage> {
             onTap: () => _showThemeSelector(context),
           ),
           MoreSection(
+            title: 'المصادر والتراخيص',
+            subtitle: 'بيانات مجمع الملك فهد، القراء، التفاسير، والرخص البرمجية',
+            icon: Icons.verified_user_rounded,
+            color: palette.primary,
+            onTap: () => Navigator.push(
+              context,
+              buildFadeRoute(page: const CreditsAndLicensesPage()),
+            ),
+          ),
+          MoreSection(
             title: AppStrings.moreLanguageTitle,
             subtitle: AppStrings.moreLanguageSubtitle,
             icon: Icons.translate_rounded,
@@ -87,11 +100,21 @@ class _MorePageState extends State<MorePage> {
             onTap: () => _showInfo(context, AppStrings.moreLanguageInfo),
           ),
           MoreSection(
+            title: 'التنزيلات الصوتية',
+            subtitle: 'إدارة التلاوات المحملة للاستماع دون اتصال بالإنترنت',
+            icon: Icons.download_for_offline_rounded,
+            color: palette.primary,
+            onTap: () => Navigator.push(
+              context,
+              buildFadeRoute(page: const QuranAudioDownloadsPage()),
+            ),
+          ),
+          MoreSection(
             title: AppStrings.moreBackupTitle,
-            subtitle: AppStrings.moreBackupSubtitle,
+            subtitle: 'تصدير واستيراد الفواصل والملاحظات الإيمانية محلياً',
             icon: Icons.cloud_sync_rounded,
             color: palette.gold,
-            onTap: () => _showInfo(context, AppStrings.moreBackupInfo),
+            onTap: () => BackupRestoreSheet.show(context),
           ),
         ];
 
