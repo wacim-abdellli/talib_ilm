@@ -24,21 +24,17 @@ class MushafSurahBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final textTheme = context.text;
     final verseCount = quran.getVerseCount(surahNumber);
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
     final revelationType = isMakki ? 'مَكِّيَّةٌ' : 'مَدَنِيَّةٌ';
+    final surahName = quran.getSurahNameArabic(surahNumber);
 
     final Color textColor = switch (themeMode) {
       MushafThemeMode.white => MushafColors.whiteText,
       MushafThemeMode.sepia => MushafColors.sepiaText,
       MushafThemeMode.dark => MushafColors.darkBannerText,
-    };
-
-    final Color subtextColor = switch (themeMode) {
-      MushafThemeMode.white => MushafColors.whiteBannerSubtext,
-      MushafThemeMode.sepia => MushafColors.sepiaBannerSubtext,
-      MushafThemeMode.dark => MushafColors.darkBannerSubtext,
     };
 
     final Color? frameColor = MushafColors.bannerFrameTint(themeMode);
@@ -47,8 +43,11 @@ class MushafSurahBanner extends StatelessWidget {
       fit: BoxFit.scaleDown,
       child: Container(
         width: 380,
-        height: 46,
-        margin: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
+        height: 48,
+        margin: const EdgeInsetsDirectional.only(
+          top: AppSpace.xs,
+          bottom: AppSpace.xs,
+        ),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -60,7 +59,7 @@ class MushafSurahBanner extends StatelessWidget {
                 allowUpscaling: false,
               ),
               width: 380,
-              height: 46,
+              height: 48,
               fit: BoxFit.fill,
               gaplessPlayback: true,
               filterQuality: FilterQuality.medium,
@@ -70,51 +69,87 @@ class MushafSurahBanner extends StatelessWidget {
 
             // 2. Classical Medina Cartouche Metadata and Authentic Calligraphic Title
             Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xxl),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Right in RTL: Ayah count
-                  SizedBox(
-                    width: 72,
+                  // Right in RTL: Ayah count with high contrast plaque
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (themeMode == MushafThemeMode.dark
+                              ? palette.surfaceRaised
+                              : Colors.white)
+                          .withValues(alpha: 0.90),
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: palette.gold.withValues(alpha: 0.6),
+                        width: 0.8,
+                      ),
+                    ),
                     child: Text(
                       'آيَاتُهَا $verseCount',
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       style: textTheme.caption.copyWith(
-                        color: subtextColor,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
+                        fontSize: 10,
                       ),
                     ),
                   ),
 
-                  // Center: Authentic KFGQPC Calligraphic Surah Name (arsura font)
+                  // Center: Authentic Sacred Surah Name
                   Expanded(
                     child: Center(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(
-                          '$surahNumber',
-                          textAlign: TextAlign.center,
-                          style: textTheme.surahCalligraphy.copyWith(
-                            color: textColor,
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
+                          child: Text(
+                            'سُورَةُ $surahName',
+                            textAlign: TextAlign.center,
+                            style: textTheme.sacred.copyWith(
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              height: 1.1,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
 
-                  // Left in RTL: Revelation location
-                  SizedBox(
-                    width: 72,
+                  // Left in RTL: Revelation location with high contrast plaque
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (themeMode == MushafThemeMode.dark
+                              ? palette.surfaceRaised
+                              : Colors.white)
+                          .withValues(alpha: 0.90),
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: palette.gold.withValues(alpha: 0.6),
+                        width: 0.8,
+                      ),
+                    ),
                     child: Text(
                       revelationType,
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       style: textTheme.caption.copyWith(
-                        color: subtextColor,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
+                        fontSize: 10,
                       ),
                     ),
                   ),
@@ -254,18 +289,25 @@ class QuranBasmalahBanner extends StatelessWidget {
         (surahNumber == 97 || surahNumber == 95) ? '齃𧻓𥳐龎' : '齃𧻓𥳐𥉉';
 
     return Container(
-      padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xxs),
+      margin: const EdgeInsetsDirectional.only(
+        top: AppSpace.sm,
+        bottom: AppSpace.xs,
+      ),
       alignment: AlignmentDirectional.center,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          basmalahGlyphs,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.visible,
-          style: textTheme.basmallahCalligraphy.copyWith(
-            color: textColor,
+      child: SizedBox(
+        height: 36,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            basmalahGlyphs,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+            style: textTheme.basmallahCalligraphy.copyWith(
+              color: textColor,
+              fontSize: 26,
+            ),
           ),
         ),
       ),

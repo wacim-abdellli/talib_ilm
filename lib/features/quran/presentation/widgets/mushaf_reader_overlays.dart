@@ -13,10 +13,8 @@ class MushafReaderTopBar extends StatelessWidget {
   final int currentSurah;
   final int currentPage;
   final int currentAyah;
-  final QuranReadingMode readingMode;
   final MushafThemeMode themeMode;
   final ValueChanged<int> onJumpToPage;
-  final ValueChanged<QuranReadingMode> onModeChanged;
   final VoidCallback onOpenSettings;
 
   const MushafReaderTopBar({
@@ -24,10 +22,8 @@ class MushafReaderTopBar extends StatelessWidget {
     required this.currentSurah,
     required this.currentPage,
     required this.currentAyah,
-    required this.readingMode,
     this.themeMode = MushafThemeMode.white,
     required this.onJumpToPage,
-    required this.onModeChanged,
     required this.onOpenSettings,
   });
 
@@ -42,7 +38,6 @@ class MushafReaderTopBar extends StatelessWidget {
     final barBorder = MushafColors.overlayBorderFor(themeMode, palette);
     final textColor = MushafColors.overlayTextFor(themeMode, palette);
     final textMutedColor = MushafColors.overlayTextMutedFor(themeMode, palette);
-    final toggleBg = MushafColors.overlayPillFor(themeMode, palette);
 
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
@@ -65,7 +60,7 @@ class MushafReaderTopBar extends StatelessWidget {
           ),
           const SizedBox(width: AppSpace.xs),
 
-          // Surah & Page Title
+          // Surah & Page Title (Tap to Jump)
           Expanded(
             child: InkWell(
               onTap: () {
@@ -111,49 +106,10 @@ class MushafReaderTopBar extends StatelessWidget {
             ),
           ),
 
-          // Reading Mode Segmented Switch
-          Container(
-            padding: AppSpace.insetXs,
-            decoration: BoxDecoration(
-              color: toggleBg,
-              borderRadius: AppRadius.pillRadius,
-              border: Border.all(color: barBorder),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildModeTabButton(
-                  title: 'مصحف',
-                  isSelected: readingMode == QuranReadingMode.mushafPage,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onModeChanged(QuranReadingMode.mushafPage);
-                  },
-                  palette: palette,
-                  textTheme: textTheme,
-                  textMutedColor: textMutedColor,
-                ),
-                _buildModeTabButton(
-                  title: 'قائمة',
-                  isSelected: readingMode == QuranReadingMode.ayahList,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onModeChanged(QuranReadingMode.ayahList);
-                  },
-                  palette: palette,
-                  textTheme: textTheme,
-                  textMutedColor: textMutedColor,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: AppSpace.xs),
-
           // Quick Jump Button
           AppIconButton(
             icon: Icons.explore_rounded,
-            tooltip: 'انتقال سريع',
+            tooltip: 'انتقال سريع وفهرس السور',
             color: palette.gold,
             onPressed: () {
               HapticFeedback.lightImpact();
@@ -169,37 +125,6 @@ class MushafReaderTopBar extends StatelessWidget {
             onPressed: onOpenSettings,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildModeTabButton({
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required AppPalette palette,
-    required AppTextTheme textTheme,
-    required Color textMutedColor,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadius.pillRadius,
-      child: Container(
-        padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.sm,
-          vertical: AppSpace.xs,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? palette.primary : Colors.transparent,
-          borderRadius: AppRadius.pillRadius,
-        ),
-        child: Text(
-          title,
-          style: textTheme.caption.copyWith(
-            color: isSelected ? palette.onPrimary : textMutedColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
@@ -285,6 +210,87 @@ class MushafReaderBottomBar extends StatelessWidget {
 
     return Row(
       children: [
+        // 1. Audio Icon Indicator
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: palette.primarySoft.withValues(alpha: 0.18),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            isPlaying ? Icons.graphic_eq_rounded : Icons.headphones_rounded,
+            color: palette.primary,
+            size: AppIcon.sm,
+          ),
+        ),
+        const SizedBox(width: AppSpace.xs),
+
+        // 2. Surah & Reciter Details
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'سورة $playingSurahName • آية $ayah',
+                style: textTheme.bodySmall.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                audioService.selectedReciter.name,
+                style: textTheme.caption.copyWith(
+                  color: textMutedColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: AppSpace.xs),
+
+        // 3. Playback Speed Selector Pill
+        ValueListenableBuilder<double>(
+          valueListenable: audioService.speedNotifier,
+          builder: (context, speed, _) {
+            return InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                const speeds = [0.75, 1.0, 1.25, 1.5];
+                final idx = (speeds.indexOf(speed) + 1) % speeds.length;
+                audioService.setPlaybackSpeed(speeds[idx]);
+              },
+              borderRadius: AppRadius.pillRadius,
+              child: Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.xs,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: pillBg,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(color: barBorder, width: 0.8),
+                ),
+                child: Text(
+                  '${speed == 1.0 ? "1" : speed}×',
+                  style: textTheme.caption.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+
+        // 4. Repeat Mode Toggle
         ValueListenableBuilder<AudioRepeatMode>(
           valueListenable: audioService.repeatModeNotifier,
           builder: (context, repeatMode, _) {
@@ -293,9 +299,18 @@ class MushafReaderBottomBar extends StatelessWidget {
               AudioRepeatMode.singleAyah => Icons.repeat_one_rounded,
               AudioRepeatMode.surah => Icons.all_inclusive_rounded,
             };
+            final String tooltip = switch (repeatMode) {
+              AudioRepeatMode.none => 'بدون تكرار',
+              AudioRepeatMode.singleAyah => 'تكرار الآية الحالية',
+              AudioRepeatMode.surah => 'تكرار السورة مستمر (∞)',
+            };
             final bool active = repeatMode != AudioRepeatMode.none;
-            return InkWell(
-              onTap: () {
+
+            return AppIconButton(
+              icon: icon,
+              tooltip: tooltip,
+              color: active ? palette.gold : textMutedColor,
+              onPressed: () {
                 HapticFeedback.selectionClick();
                 final next = switch (repeatMode) {
                   AudioRepeatMode.none => AudioRepeatMode.singleAyah,
@@ -304,125 +319,66 @@ class MushafReaderBottomBar extends StatelessWidget {
                 };
                 audioService.setRepeatMode(next);
               },
-              borderRadius: AppRadius.pillRadius,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: active ? palette.primarySoft : pillBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: active ? palette.primary : barBorder,
-                    width: 0.8,
-                  ),
-                ),
-                child: Icon(
-                  icon,
-                  color: active ? palette.primary : textMutedColor,
-                  size: AppIcon.sm,
-                ),
-              ),
             );
           },
         ),
-        const SizedBox(width: AppSpace.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'سورة $playingSurahName - آية $ayah',
-                style: textTheme.bodySmall.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      audioService.selectedReciter.name,
-                      style: textTheme.caption.copyWith(
-                        color: textMutedColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  ValueListenableBuilder<double>(
-                    valueListenable: audioService.speedNotifier,
-                    builder: (context, speed, _) {
-                      return InkWell(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          const speeds = [0.75, 1.0, 1.25, 1.5];
-                          final idx = (speeds.indexOf(speed) + 1) % speeds.length;
-                          audioService.setPlaybackSpeed(speeds[idx]);
-                        },
-                        borderRadius: AppRadius.pillRadius,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: pillBg,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(color: barBorder, width: 0.8),
-                          ),
-                          child: Text(
-                            '${speed == 1.0 ? "1" : speed}×',
-                            style: textTheme.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+
+        // 5. Previous Ayah Button
         AppIconButton(
-          icon: Icons.skip_previous_rounded,
+          icon: Icons.skip_next_rounded,
           tooltip: 'الآية السابقة',
           color: textColor,
           onPressed: audioService.previousAyah,
         ),
-        FloatingActionButton.small(
-          heroTag: 'mini_player_play_pause_overlay',
-          backgroundColor: palette.primary,
-          foregroundColor: palette.onPrimary,
-          elevation: 0,
-          onPressed: () {
-            if (isPlaying) {
-              audioService.pause();
-            } else {
-              audioService.resume();
-            }
-          },
-          child: Icon(
-            isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            size: AppIcon.sm,
+
+        // 6. Center Circular Play/Pause Button
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (isPlaying) {
+                audioService.pause();
+              } else {
+                audioService.resume();
+              }
+            },
+            borderRadius: AppRadius.pillRadius,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: palette.primary,
+                shape: BoxShape.circle,
+                boxShadow: palette.shadow,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: palette.onPrimary,
+                size: AppIcon.md,
+              ),
+            ),
           ),
         ),
+
+        // 7. Next Ayah Button
         AppIconButton(
-          icon: Icons.skip_next_rounded,
+          icon: Icons.skip_previous_rounded,
           tooltip: 'الآية التالية',
           color: textColor,
           onPressed: audioService.nextAyah,
         ),
+
+        // 8. Close Button
         AppIconButton(
           icon: Icons.close_rounded,
-          tooltip: 'إيقاف',
+          tooltip: 'إغلاق المشغل',
           color: textMutedColor,
-          onPressed: audioService.stop,
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            audioService.stop();
+          },
         ),
       ],
     );

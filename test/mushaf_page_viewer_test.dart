@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/mushaf_page_viewer.dart';
-import 'package:talib_ilm/features/quran/presentation/widgets/quran_continuous_list_view.dart';
+import 'package:talib_ilm/features/quran/presentation/widgets/mushaf_single_page.dart';
 
 void main() {
   setUp(() {
@@ -23,8 +23,8 @@ void main() {
     );
   }
 
-  group('MushafPageViewer Dual-Mode Fast Switching Tests', () {
-    testWidgets('Renders with IndexedStack keeping both modes active', (tester) async {
+  group('MushafPageViewer Authentic Medina Mushaf Tests', () {
+    testWidgets('Renders PageView with 604 authentic Mushaf pages', (tester) async {
       await tester.pumpWidget(
         buildTestApp(
           const MushafPageViewer(
@@ -34,20 +34,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // IndexedStack holds both Page mode and Continuous list mode
-      final indexedStackFinder = find.byType(IndexedStack);
-      expect(indexedStackFinder, findsOneWidget);
+      // PageView holds the 604 authentic pages
+      expect(find.byType(PageView), findsOneWidget);
+      expect(find.byType(MushafSinglePage), findsOneWidget);
 
-      final indexedStack = tester.widget<IndexedStack>(indexedStackFinder);
-      expect(indexedStack.index, 0); // starts in Mushaf page mode
-      expect(indexedStack.children.length, 2);
-
-      // Top bar mode switch buttons
-      expect(find.text('مصحف'), findsOneWidget);
-      expect(find.text('قائمة'), findsOneWidget);
+      // Top bar title displays current Surah and Page
+      expect(find.textContaining('سورة الفاتحة'), findsOneWidget);
+      expect(find.textContaining('الصفحة 1'), findsOneWidget);
     });
 
-    testWidgets('Instant smooth switch between Page mode and List mode', (tester) async {
+    testWidgets('Quick jump changes page correctly', (tester) async {
       await tester.pumpWidget(
         buildTestApp(
           const MushafPageViewer(
@@ -57,22 +53,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Tap 'قائمة' (Continuous list mode)
-      await tester.tap(find.text('قائمة'));
-      await tester.pumpAndSettle();
-
-      // IndexedStack switched index to 1 instantly
-      final indexedStack1 = tester.widget<IndexedStack>(find.byType(IndexedStack));
-      expect(indexedStack1.index, 1);
-      expect(find.byType(QuranContinuousListView), findsOneWidget);
-
-      // Tap 'مصحف' (Page mode)
-      await tester.tap(find.text('مصحف'));
-      await tester.pumpAndSettle();
-
-      // IndexedStack switched index back to 0 instantly without destroying state
-      final indexedStack0 = tester.widget<IndexedStack>(find.byType(IndexedStack));
-      expect(indexedStack0.index, 0);
+      // Check initial page is Al-Fatihah
+      expect(find.textContaining('سورة الفاتحة'), findsOneWidget);
     });
   });
 }

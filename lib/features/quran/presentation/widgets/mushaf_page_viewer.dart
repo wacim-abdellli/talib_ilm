@@ -17,15 +17,13 @@ import 'ayah_action_menu_sheet.dart';
 import 'mushaf_reader_overlays.dart';
 import 'mushaf_settings_sheet.dart';
 import 'mushaf_single_page.dart';
-import 'quran_continuous_list_view.dart';
 
-/// Unified Dual-Mode Quran Reader
+/// Authentic King Fahd Complex 604-Page Medina Mushaf Reader
 ///
-/// Supports:
-/// - Mode A: Authentic 604-page King Fahd Complex Medina Mushaf ([MushafSinglePage])
-/// - Mode B: Smooth scrolling continuous Ayah list view ([QuranContinuousListView])
-/// - Instant 0ms switching with IndexedStack and synchronized position
-/// - Floating / Docked Mini Audio Player
+/// Features:
+/// - 604 authentic Medina Mushaf pages with Uthmani Tajweed rendering ([MushafSinglePage])
+/// - Floating / Docked Mini Audio Player with Surah & Ayah controls
+/// - Hold/Long-press interactive Quick Action Menu (Tafsir, Meanings, Repeat, Bookmark, etc.)
 /// - Auto-saved last read position (debounced)
 /// - Keep screen awake via WakelockPlus
 class MushafPageViewer extends StatefulWidget {
@@ -48,8 +46,6 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   late final PageController _pageController;
   final ReadingStatsService _statsService = ReadingStatsService();
   final QuranAudioService _audioService = QuranAudioService();
-  final GlobalKey<QuranContinuousListViewState> _continuousListKey = GlobalKey();
-
   int _currentPage = 1;
   int _currentSurah = 1;
   int _currentAyah = 1;
@@ -60,13 +56,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   late final ValueNotifier<QuranPosition> _positionNotifier;
   Timer? _saveLastReadDebounceTimer;
 
-  QuranReadingMode _readingMode = QuranReadingMode.mushafPage;
-  bool _isListModeLoaded = false;
   MushafThemeMode _themeMode = MushafThemeMode.sepia;
   bool _isTajweedEnabled = true;
-  bool _showTranslation = false;
   bool _keepScreenAwake = true;
-  double _fontSize = 24.0;
   bool _showOverlays = true;
   TafsirScholar _defaultTafsir = TafsirScholar.muyassar;
 
@@ -140,14 +132,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
     if (!mounted) return;
     setState(() {
-      _readingMode = snapshot.readingMode;
-      if (snapshot.readingMode == QuranReadingMode.ayahList) {
-        _isListModeLoaded = true;
-      }
       _isTajweedEnabled = snapshot.isTajweedEnabled;
       _themeMode = snapshot.themeMode;
-      _fontSize = snapshot.fontSize;
-      _showTranslation = snapshot.showTranslation;
       _keepScreenAwake = snapshot.keepScreenAwake;
       _defaultTafsir = snapshot.defaultTafsir;
     });
@@ -168,11 +154,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   Future<void> _saveSettings() async {
     await Future.wait([
-      QuranReaderPreferences.saveReadingMode(_readingMode),
       QuranReaderPreferences.saveTajweedEnabled(_isTajweedEnabled),
       QuranReaderPreferences.saveThemeMode(_themeMode),
-      QuranReaderPreferences.saveFontSize(_fontSize),
-      QuranReaderPreferences.saveShowTranslation(_showTranslation),
       QuranReaderPreferences.saveKeepScreenAwake(_keepScreenAwake),
       QuranReaderPreferences.saveLastPage(_currentPage),
     ]);
@@ -214,37 +197,10 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
   }
 
-  void _setReadingMode(QuranReadingMode mode) {
-    if (_readingMode == mode) return;
-    final isSwitchingToList = mode == QuranReadingMode.ayahList;
-    setState(() {
-      _readingMode = mode;
-      if (isSwitchingToList) {
-        _isListModeLoaded = true;
-      }
-    });
-    if (mode == QuranReadingMode.mushafPage) {
-      final page = quran
-          .getPageNumber(_currentSurah, _currentAyah)
-          .clamp(1, 604);
-      _currentPage = page;
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(page - 1);
-      }
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _continuousListKey.currentState?.jumpToAyah(_currentSurah, _currentAyah);
-      });
-    }
-    _saveSettings();
-  }
-
   void _jumpToPage(int page) {
     _onPageChanged(page);
-    if (_readingMode == QuranReadingMode.mushafPage && _pageController.hasClients) {
+    if (_pageController.hasClients) {
       _pageController.jumpToPage(page - 1);
-    } else if (_readingMode == QuranReadingMode.ayahList) {
-      _continuousListKey.currentState?.jumpToPage(page);
     }
   }
 
@@ -257,35 +213,21 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     MushafSettingsSheet.show(
       context,
       currentTheme: _themeMode,
-      currentReadingMode: _readingMode,
       isTajweedEnabled: _isTajweedEnabled,
-      showTranslation: _showTranslation,
       keepScreenAwake: _keepScreenAwake,
-      fontSize: _fontSize,
       selectedReciter: _audioService.selectedReciter,
       selectedTafsir: _defaultTafsir,
       onThemeChanged: (mode) {
         setState(() => _themeMode = mode);
         _saveSettings();
       },
-      onReadingModeChanged: (mode) {
-        _setReadingMode(mode);
-      },
       onTajweedChanged: (val) {
         setState(() => _isTajweedEnabled = val);
-        _saveSettings();
-      },
-      onTranslationChanged: (val) {
-        setState(() => _showTranslation = val);
         _saveSettings();
       },
       onKeepScreenAwakeChanged: (val) {
         setState(() => _keepScreenAwake = val);
         _applyWakelock(val);
-        _saveSettings();
-      },
-      onFontSizeChanged: (val) {
-        setState(() => _fontSize = val);
         _saveSettings();
       },
       onReciterChanged: (r) {
@@ -336,17 +278,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Main Reader Content: Instant 0ms IndexedStack keeping state alive
+            // Pure Authentic Medina Mushaf Page View
             Positioned.fill(
-              child: IndexedStack(
-                index: _readingMode == QuranReadingMode.mushafPage ? 0 : 1,
-                children: [
-                  _buildMushafPageMode(palette),
-                  _isListModeLoaded
-                      ? _buildAyahListMode()
-                      : const SizedBox.shrink(),
-                ],
-              ),
+              child: _buildMushafPageMode(palette),
             ),
 
             // Top Bar Overlay
@@ -363,17 +297,15 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                     currentSurah: pos.surah,
                     currentPage: pos.page,
                     currentAyah: pos.ayah,
-                    readingMode: _readingMode,
                     themeMode: _themeMode,
                     onJumpToPage: _jumpToPage,
-                    onModeChanged: _setReadingMode,
                     onOpenSettings: _openSettings,
                   );
                 },
               ),
             ),
 
-            // Bottom Bar Overlay & Floating Audio Player
+            // Bottom Bar Overlay & Mini Audio Player
             AnimatedPositioned(
               duration: AppMotion.slow,
               curve: AppMotion.easeOut,
@@ -422,7 +354,6 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   pageNumber: pageNumber,
                   themeMode: _themeMode,
                   isTajweedEnabled: _isTajweedEnabled,
-                  fontSize: _fontSize,
                   activeSurah: effectiveSurah,
                   activeAyah: effectiveAyah,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
@@ -434,38 +365,6 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAyahListMode() {
-    return QuranContinuousListView(
-      key: _continuousListKey,
-      initialSurah: _currentSurah,
-      initialAyah: _currentAyah,
-      fontSize: _fontSize,
-      themeMode: _themeMode,
-      isTajweedEnabled: _isTajweedEnabled,
-      showTranslation: _showTranslation,
-      selectedSurah: _selectedSurah,
-      selectedAyah: _selectedAyah,
-      onPositionChanged: (surah, ayah, page) {
-        if (_currentSurah == surah && _currentAyah == ayah && _currentPage == page) {
-          return;
-        }
-        _currentSurah = surah;
-        _currentAyah = ayah;
-        _currentPage = page;
-        _positionNotifier.value = QuranPosition(
-          surah: surah,
-          ayah: ayah,
-          page: page,
-          juz: quran.getJuzNumber(surah, ayah),
-        );
-        _scheduleSaveLastRead(surah, ayah, page);
-      },
-      onAyahTap: (surah, ayah) => _toggleOverlays(),
-      onAyahLongPress: _handleAyahLongPress,
-      onToggleOverlays: _toggleOverlays,
     );
   }
 }
