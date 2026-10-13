@@ -27,9 +27,9 @@ class IlmBooksGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmall = constraints.maxWidth < 360;
-        final baseRatio = isSmall ? 0.62 : 0.68;
+        final baseRatio = isSmall ? 0.60 : 0.65;
         final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-        final aspectRatio = textScale > 1.25 ? (baseRatio * 0.8) : baseRatio;
+        final aspectRatio = (baseRatio / textScale.clamp(1.0, 2.0)).clamp(0.48, 0.70);
 
         return GridView.builder(
           shrinkWrap: true,
@@ -83,9 +83,9 @@ class SliverIlmBooksGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isSmall = screenWidth < 360;
-    final baseRatio = isSmall ? 0.62 : 0.68;
+    final baseRatio = isSmall ? 0.60 : 0.65;
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final aspectRatio = textScale > 1.25 ? (baseRatio * 0.8) : baseRatio;
+    final aspectRatio = (baseRatio / textScale.clamp(1.0, 2.0)).clamp(0.48, 0.70);
 
     return SliverPadding(
       padding: AppSpace.screenPadding,

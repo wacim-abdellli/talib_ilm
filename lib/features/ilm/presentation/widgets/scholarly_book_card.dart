@@ -138,45 +138,49 @@ class ScholarlyBookCard extends StatelessWidget {
             const SizedBox(height: AppSpace.xs),
             Row(
               children: [
-                if (MutunDigitalCatalog.hasDigitalText(book.id)) ...[
-                  Icon(
-                    Icons.auto_stories_rounded,
-                    size: AppIcon.sm,
-                    color: palette.gold,
-                  ),
-                  const SizedBox(width: AppSpace.xxs),
-                  Text(
-                    'نص محقق',
-                    style: context.text.caption.copyWith(
-                      color: palette.gold,
-                      fontWeight: FontWeight.bold,
+                Icon(
+                  MutunDigitalCatalog.hasDigitalText(book.id)
+                      ? Icons.auto_stories_rounded
+                      : Icons.menu_book_outlined,
+                  size: AppIcon.sm,
+                  color: MutunDigitalCatalog.hasDigitalText(book.id)
+                      ? palette.gold
+                      : palette.textSubtle,
+                ),
+                const SizedBox(width: AppSpace.xxs),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (MutunDigitalCatalog.hasDigitalText(book.id))
+                          TextSpan(
+                            text: 'نص محقق',
+                            style: context.text.caption.copyWith(
+                              color: palette.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        if (MutunDigitalCatalog.hasDigitalText(book.id) &&
+                            book.shuruh.isNotEmpty)
+                          TextSpan(
+                            text: ' • ',
+                            style: context.text.caption.copyWith(
+                              color: palette.textSubtle,
+                            ),
+                          ),
+                        if (book.shuruh.isNotEmpty)
+                          TextSpan(
+                            text: '${book.shuruh.length} شروح',
+                            style: context.text.caption.copyWith(
+                              color: palette.textSubtle,
+                            ),
+                          ),
+                      ],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (book.shuruh.isNotEmpty) ...[
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      '•',
-                      style: context.text.caption.copyWith(
-                        color: palette.textSubtle,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                  ],
-                ],
-                if (book.shuruh.isNotEmpty) ...[
-                  Icon(
-                    Icons.menu_book_outlined,
-                    size: AppIcon.sm,
-                    color: palette.textSubtle,
-                  ),
-                  const SizedBox(width: AppSpace.xxs),
-                  Text(
-                    '${book.shuruh.length} شروح ميسرة',
-                    style: context.text.caption.copyWith(
-                      color: palette.textSubtle,
-                    ),
-                  ),
-                ],
+                ),
               ],
             ),
           ],
