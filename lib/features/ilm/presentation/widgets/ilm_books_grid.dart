@@ -61,3 +61,60 @@ class IlmBooksGrid extends StatelessWidget {
     );
   }
 }
+
+/// Fully virtualized sliver 2-column grid for Ilm library books.
+class SliverIlmBooksGrid extends StatelessWidget {
+  final List<IlmBook> books;
+  final Map<String, BookProgress> progressById;
+  final String? recommendedBookId;
+  final ValueChanged<IlmBook> onNavigateToBook;
+  final ValueChanged<String> onToggleFavorite;
+
+  const SliverIlmBooksGrid({
+    super.key,
+    required this.books,
+    required this.progressById,
+    required this.recommendedBookId,
+    required this.onNavigateToBook,
+    required this.onToggleFavorite,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isSmall = screenWidth < 360;
+    final baseRatio = isSmall ? 0.62 : 0.68;
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final aspectRatio = textScale > 1.25 ? (baseRatio * 0.8) : baseRatio;
+
+    return SliverPadding(
+      padding: AppSpace.screenPadding,
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: AppSpace.md,
+          mainAxisSpacing: AppSpace.md,
+          childAspectRatio: aspectRatio,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final book = books[index];
+            final progress = progressById[book.id];
+            final isRecommended = book.id == recommendedBookId;
+
+            return ScholarlyBookCard(
+              book: book,
+              progress: progress,
+              isRecommended: isRecommended,
+              onNavigateToBook: onNavigateToBook,
+              onToggleFavorite: onToggleFavorite,
+            );
+          },
+          childCount: books.length,
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: true,
+        ),
+      ),
+    );
+  }
+}

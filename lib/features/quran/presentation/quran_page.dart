@@ -513,8 +513,15 @@ class _QuranPageState extends State<QuranPage> {
       );
     }
 
+    final bookmarkedSurahSet = _bookmarks
+        .where((b) => b.isSurah)
+        .map((b) => b.surah)
+        .toSet();
+
     return ListView.builder(
       itemCount: _filteredSurahs.length,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
         start: AppSpace.lg,
         end: AppSpace.lg,
@@ -522,7 +529,7 @@ class _QuranPageState extends State<QuranPage> {
       ),
       itemBuilder: (context, index) {
         final surahNum = _filteredSurahs[index];
-        final isBookmarked = _bookmarks.any((b) => b.surah == surahNum && b.isSurah);
+        final isBookmarked = bookmarkedSurahSet.contains(surahNum);
 
         return SurahCard(
           surahNumber: surahNum,
@@ -552,6 +559,8 @@ class _QuranPageState extends State<QuranPage> {
 
     return ListView.builder(
       itemCount: _filteredJuzs.length,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
         start: AppSpace.lg,
         end: AppSpace.lg,
@@ -591,6 +600,8 @@ class _QuranPageState extends State<QuranPage> {
 
     return ListView.builder(
       itemCount: _filteredHizbs.length,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
         start: AppSpace.lg,
         end: AppSpace.lg,

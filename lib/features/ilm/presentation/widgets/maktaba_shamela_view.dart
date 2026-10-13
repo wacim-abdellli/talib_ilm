@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +24,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   int _selectedCategoryId = 0;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   final Map<int, bool> _downloadedMap = {};
   final Map<int, double> _downloadProgress = {};
@@ -35,6 +37,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -108,279 +111,299 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
     final textTheme = context.text;
     final books = _filteredBooks;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // ── Search & Filter Input ────────────────────────────────
-        Padding(
-          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-          child: Container(
-            decoration: BoxDecoration(
-              color: palette.surfaceRaised,
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(color: palette.border),
-            ),
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
-            child: Row(
-              children: [
-                Icon(Icons.search_rounded, color: palette.textMuted, size: AppIcon.md),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                    style: textTheme.body.copyWith(color: palette.text),
-                    decoration: InputDecoration(
-                      hintText: 'ابحث في أمهات كتب التراث ومصنفات الأئمة...',
-                      hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
-                      border: InputBorder.none,
-                    ),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpace.sm),
+              // ── Search & Filter Input ────────────────────────────────
+              Padding(
+                padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(color: palette.border),
+                  ),
+                  padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search_rounded, color: palette.textMuted, size: AppIcon.md),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (val) {
+                            _searchDebounce?.cancel();
+                            _searchDebounce = Timer(AppMotion.searchDebounce, () {
+                              if (mounted) {
+                                setState(() => _searchQuery = val);
+                              }
+                            });
+                          },
+                          style: textTheme.body.copyWith(color: palette.text),
+                          decoration: InputDecoration(
+                            hintText: 'ابحث في أمهات كتب التراث ومصنفات الأئمة...',
+                            hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.clear_rounded, size: AppIcon.sm, color: palette.textMuted),
+                          tooltip: 'مسح البحث',
+                          onPressed: () {
+                            _searchDebounce?.cancel();
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        ),
+                    ],
                   ),
                 ),
-                if (_searchQuery.isNotEmpty)
-                  IconButton(
-                    icon: Icon(Icons.clear_rounded, size: AppIcon.sm, color: palette.textMuted),
-                    tooltip: 'مسح البحث',
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
+              ),
 
-        const SizedBox(height: AppSpace.md),
+              const SizedBox(height: AppSpace.md),
 
-        // ── Categories Horizontal Filter Chips ─────────────────────
-        SizedBox(
-          height: 38,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-            itemCount: ShamelaService.categories.length,
-            separatorBuilder: (_, index) => const SizedBox(width: AppSpace.xs),
-            itemBuilder: (context, index) {
-              final cat = ShamelaService.categories[index];
-              final isSelected = _selectedCategoryId == cat.id;
+              // ── Categories Horizontal Filter Chips ─────────────────────
+              SizedBox(
+                height: 38,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+                  itemCount: ShamelaService.categories.length,
+                  separatorBuilder: (_, index) => const SizedBox(width: AppSpace.xs),
+                  itemBuilder: (context, index) {
+                    final cat = ShamelaService.categories[index];
+                    final isSelected = _selectedCategoryId == cat.id;
 
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: AppRadius.pillRadius,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedCategoryId = cat.id);
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: AppRadius.pillRadius,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedCategoryId = cat.id);
+                        },
+                        child: AnimatedContainer(
+                          duration: AppMotion.fast,
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected ? palette.gold : palette.surfaceRaised,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: isSelected ? palette.gold : palette.border,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            cat.count > 0 && cat.id != 0
+                                ? '${cat.name} (${cat.count})'
+                                : cat.name,
+                            style: textTheme.caption.copyWith(
+                              color: isSelected ? palette.brandDark : palette.text,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  child: AnimatedContainer(
-                    duration: AppMotion.fast,
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? palette.gold : palette.surfaceRaised,
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: isSelected ? palette.gold : palette.border,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      cat.count > 0 && cat.id != 0
-                          ? '${cat.name} (${cat.count})'
-                          : cat.name,
-                      style: textTheme.caption.copyWith(
-                        color: isSelected ? palette.brandDark : palette.text,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
-              );
-            },
+              ),
+
+              const SizedBox(height: AppSpace.md),
+            ],
           ),
         ),
 
-        const SizedBox(height: AppSpace.md),
-
-        // ── Books Results List ────────────────────────────────────
+        // ── Books Results List (Virtualized SliverList) ──────────────
         if (books.isEmpty)
-          const Padding(
-            padding: EdgeInsetsDirectional.all(AppSpace.xl),
-            child: EmptyState(
-              icon: Icons.search_off_rounded,
-              title: 'لا توجد نتائج في خزانة التراث',
-              subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من الفنون والعلوم.',
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsetsDirectional.all(AppSpace.xl),
+              child: EmptyState(
+                icon: Icons.search_off_rounded,
+                title: 'لا توجد نتائج في خزانة التراث',
+                subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من الفنون والعلوم.',
+              ),
             ),
           )
         else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: true,
+          SliverPadding(
             padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-            itemCount: books.length,
-            separatorBuilder: (_, index) => const SizedBox(height: AppSpace.sm),
-            itemBuilder: (context, index) {
-              final book = books[index];
-              final isDownloaded = _downloadedMap[book.id] ?? false;
-              final progress = _downloadProgress[book.id];
+            sliver: SliverList.separated(
+              itemCount: books.length,
+              separatorBuilder: (_, index) => const SizedBox(height: AppSpace.sm),
+              itemBuilder: (context, index) {
+                final book = books[index];
+                final isDownloaded = _downloadedMap[book.id] ?? false;
+                final progress = _downloadProgress[book.id];
 
-              return AppCard(
-                onTap: () => _openBook(book),
-                padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: palette.goldSoft,
-                            borderRadius: AppRadius.smRadius,
-                            border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
+                return AppCard(
+                  onTap: () => _openBook(book),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: palette.goldSoft,
+                              borderRadius: AppRadius.smRadius,
+                              border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.auto_stories_rounded,
+                              color: palette.gold,
+                              size: AppIcon.lg,
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.auto_stories_rounded,
-                            color: palette.gold,
-                            size: AppIcon.lg,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                book.title,
-                                style: textTheme.titleSmall.copyWith(
-                                  color: palette.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpace.xxs),
-                              Row(
-                                children: [
-                                  Text(
-                                    book.author,
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  book.title,
+                                  style: textTheme.titleSmall.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  if (book.authorDeath != null) ...[
-                                    const SizedBox(width: AppSpace.xs),
+                                ),
+                                const SizedBox(height: AppSpace.xxs),
+                                Row(
+                                  children: [
                                     Text(
-                                      '(${book.authorDeath})',
-                                      style: textTheme.caption.copyWith(color: palette.textMuted),
+                                      book.author,
+                                      style: textTheme.caption.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
+                                    if (book.authorDeath != null) ...[
+                                      const SizedBox(width: AppSpace.xs),
+                                      Text(
+                                        '(${book.authorDeath})',
+                                        style: textTheme.caption.copyWith(color: palette.textMuted),
+                                      ),
+                                    ],
                                   ],
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Category Pill
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
-                            borderRadius: AppRadius.smRadius,
-                          ),
-                          child: Text(
-                            book.category,
-                            style: textTheme.caption.copyWith(color: palette.textMuted),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    if (book.description.isNotEmpty) ...[
-                      const SizedBox(height: AppSpace.sm),
-                      Text(
-                        book.description,
-                        style: textTheme.bodySmall.copyWith(
-                          color: palette.textMuted,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-
-                    const SizedBox(height: AppSpace.sm),
-                    Divider(color: palette.border, height: 1),
-                    const SizedBox(height: AppSpace.xs),
-
-                    // Actions Bar: Read vs Offline Download
-                    Row(
-                      children: [
-                        Text(
-                          '${book.totalPages} صفحة',
-                          style: textTheme.caption.copyWith(color: palette.textMuted),
-                        ),
-                        const Spacer(),
-                        if (progress != null) ...[
-                          SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              value: progress,
-                              color: palette.gold,
-                              strokeWidth: 2,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            'جاري التحميل ${(progress * 100).toInt()}%',
-                            style: textTheme.caption.copyWith(color: palette.gold),
-                          ),
-                        ] else if (isDownloaded) ...[
-                          Icon(Icons.cloud_done_rounded, color: palette.gold, size: AppIcon.sm),
-                          const SizedBox(width: AppSpace.xxs),
-                          Text(
-                            'محمّل بدون إنترنت',
-                            style: textTheme.caption.copyWith(
-                              color: palette.gold,
-                              fontWeight: FontWeight.w600,
+                          // Category Pill
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xs,
+                              vertical: AppSpace.xxs,
                             ),
-                          ),
-                        ] else ...[
-                          TextButton.icon(
-                            onPressed: () => _downloadBook(book),
-                            icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
-                            label: Text(
-                              'تحميل بدون إنترنت',
-                              style: textTheme.caption.copyWith(
-                                color: palette.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            decoration: BoxDecoration(
+                              color: palette.surfaceMuted,
+                              borderRadius: AppRadius.smRadius,
+                            ),
+                            child: Text(
+                              book.category,
+                              style: textTheme.caption.copyWith(color: palette.textMuted),
                             ),
                           ),
                         ],
-                        const SizedBox(width: AppSpace.sm),
-                        AppButton(
-                          size: AppButtonSize.sm,
-                          label: 'قراءة الكتاب',
-                          onPressed: () => _openBook(book),
+                      ),
+
+                      if (book.description.isNotEmpty) ...[
+                        const SizedBox(height: AppSpace.sm),
+                        Text(
+                          book.description,
+                          style: textTheme.bodySmall.copyWith(
+                            color: palette.textMuted,
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              );
-            },
+
+                      const SizedBox(height: AppSpace.sm),
+                      Divider(color: palette.border, height: 1),
+                      const SizedBox(height: AppSpace.xs),
+
+                      // Actions Bar: Read vs Offline Download
+                      Row(
+                        children: [
+                          Text(
+                            '${book.totalPages} صفحة',
+                            style: textTheme.caption.copyWith(color: palette.textMuted),
+                          ),
+                          const Spacer(),
+                          if (progress != null) ...[
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                value: progress,
+                                color: palette.gold,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              'جاري التحميل ${(progress * 100).toInt()}%',
+                              style: textTheme.caption.copyWith(color: palette.gold),
+                            ),
+                          ] else if (isDownloaded) ...[
+                            Icon(Icons.cloud_done_rounded, color: palette.gold, size: AppIcon.sm),
+                            const SizedBox(width: AppSpace.xxs),
+                            Text(
+                              'محمّل بدون إنترنت',
+                              style: textTheme.caption.copyWith(
+                                color: palette.gold,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ] else ...[
+                            TextButton.icon(
+                              onPressed: () => _downloadBook(book),
+                              icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
+                              label: Text(
+                                'تحميل بدون إنترنت',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(width: AppSpace.sm),
+                          AppButton(
+                            size: AppButtonSize.sm,
+                            label: 'قراءة الكتاب',
+                            onPressed: () => _openBook(book),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
+
+        SliverToBoxAdapter(
+          child: SizedBox(height: AppSize.navClearance(context)),
+        ),
       ],
     );
   }

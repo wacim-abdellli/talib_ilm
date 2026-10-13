@@ -360,178 +360,174 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
             // ── 3. Scrollable Library Content ─────────────────────
             Expanded(
               child: _selectedSection == IlmSection.shamela
-                  ? SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: AppSpace.sm),
-                          const MaktabaShamelaView(),
-                          SizedBox(height: AppSize.navClearance(context)),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
+                  ? const MaktabaShamelaView()
+                  : CustomScrollView(
                       controller: _scrollController,
                       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                    const SizedBox(height: AppSpace.md),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: AppSpace.md),
 
-                    // ── Dedicated Minimalist Search Bar ───────────
-                    IlmSearchBar(
-                      controller: _searchController,
-                      onSearchChanged: _onSearchChanged,
-                      onClear: _onClearSearch,
-                    ),
-
-                    const SizedBox(height: AppSpace.md),
-
-                    if (isSearching) ...[
-                      // ── Search Results Badge & Clear ────────────
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'نتائج البحث: ${displayedBooks.length} متون',
-                              style: context.text.titleSmall.copyWith(
-                                color: palette.primary,
-                                fontWeight: FontWeight.bold,
+                              // ── Dedicated Minimalist Search Bar ───────────
+                              IlmSearchBar(
+                                controller: _searchController,
+                                onSearchChanged: _onSearchChanged,
+                                onClear: _onClearSearch,
                               ),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                _searchController.clear();
-                                _onClearSearch();
-                              },
-                              borderRadius: AppRadius.pillRadius,
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xs,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.close_rounded,
-                                      size: AppIcon.sm,
-                                      color: palette.textMuted,
-                                    ),
-                                    const SizedBox(width: AppSpace.xs),
-                                    Text(
-                                      'إلغاء البحث',
-                                      style: context.text.caption.copyWith(
-                                        color: palette.textMuted,
+
+                              const SizedBox(height: AppSpace.md),
+
+                              if (isSearching) ...[
+                                // ── Search Results Badge & Clear ────────────
+                                Padding(
+                                  padding: AppSpace.screenPadding,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'نتائج البحث: ${displayedBooks.length} متون',
+                                        style: context.text.titleSmall.copyWith(
+                                          color: palette.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      InkWell(
+                                        onTap: () {
+                                          _searchController.clear();
+                                          _onClearSearch();
+                                        },
+                                        borderRadius: AppRadius.pillRadius,
+                                        child: Padding(
+                                          padding: const EdgeInsetsDirectional.symmetric(
+                                            horizontal: AppSpace.sm,
+                                            vertical: AppSpace.xs,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.close_rounded,
+                                                size: AppIcon.sm,
+                                                color: palette.textMuted,
+                                              ),
+                                              const SizedBox(width: AppSpace.xs),
+                                              Text(
+                                                'إلغاء البحث',
+                                                style: context.text.caption.copyWith(
+                                                  color: palette.textMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.sm),
-                    ] else ...[
-                      // ── Hero Study Resume Pill ──────────────────
-                      StudyResumePill(
-                        continueReadingBook: _continueReadingBook,
-                        recommendedFirstBook: _recommendedFirstBook,
-                        bookCatalog: _bookCatalog,
-                        dailyGoal: _dailyGoal,
-                        pagesReadToday: _pagesReadToday,
-                        currentStreak: _currentStreak,
-                        onNavigateToBook: _navigateToBook,
-                      ),
-                      const SizedBox(height: AppSpace.md),
+                                const SizedBox(height: AppSpace.sm),
+                              ] else ...[
+                                // ── Hero Study Resume Pill ──────────────────
+                                StudyResumePill(
+                                  continueReadingBook: _continueReadingBook,
+                                  recommendedFirstBook: _recommendedFirstBook,
+                                  bookCatalog: _bookCatalog,
+                                  dailyGoal: _dailyGoal,
+                                  pagesReadToday: _pagesReadToday,
+                                  currentStreak: _currentStreak,
+                                  onNavigateToBook: _navigateToBook,
+                                ),
+                                const SizedBox(height: AppSpace.md),
 
-                      // ── Level Selector Chips ────────────────────
-                      IlmFilterBar(
-                        levels: _sortedLevels,
-                        selectedLevelId: _selectedLevelId ?? activeLevel.id,
-                        onSelectLevel: (lvlId) {
-                          setState(() => _selectedLevelId = lvlId);
-                        },
-                        levelCompletion: _levelCompletions,
-                      ),
-                      const SizedBox(height: AppSpace.md),
+                                // ── Level Selector Chips ────────────────────
+                                IlmFilterBar(
+                                  levels: _sortedLevels,
+                                  selectedLevelId: _selectedLevelId ?? activeLevel.id,
+                                  onSelectLevel: (lvlId) {
+                                    setState(() => _selectedLevelId = lvlId);
+                                  },
+                                  levelCompletion: _levelCompletions,
+                                ),
+                                const SizedBox(height: AppSpace.md),
 
-                      // ── Active Level Header Card ────────────────
-                      IlmLevelHeaderCard(
-                        level: activeLevel,
-                        completion: levelCompletionRatio,
-                        totalBooks: levelBooks.length,
-                        completedBooks: completedInLevel,
-                      ),
-                      const SizedBox(height: AppSpace.md),
-                    ],
-
-                    // ── Books Section (2-Column Luxury Grid) ──────
-                    if (_hasLoadError)
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: AppEmptyState(
-                          icon: Icons.error_outline,
-                          title: AppStrings.ilmLoadErrorTitle,
-                          subtitle: AppStrings.ilmLoadErrorMessage,
-                          action: AppButton(
-                            label: AppStrings.actionRetry,
-                            onPressed: _loadData,
+                                // ── Active Level Header Card ────────────────
+                                IlmLevelHeaderCard(
+                                  level: activeLevel,
+                                  completion: levelCompletionRatio,
+                                  totalBooks: levelBooks.length,
+                                  completedBooks: completedInLevel,
+                                ),
+                                const SizedBox(height: AppSpace.md),
+                              ],
+                            ],
                           ),
                         ),
-                      )
-                    else if (displayedBooks.isEmpty)
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: AppEmptyState(
-                          icon: Icons.search_off_rounded,
-                          title: 'لم يتم العثور على نتائج',
-                          subtitle: isSearching
-                              ? 'لا يوجد متن أو كتاب يطابق عبارة البحث "$_searchQuery"'
-                              : 'لا توجد كتب مسجلة في هذا القسم حالياً',
-                        ),
-                      )
-                    else
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: IlmBooksGrid(
-                          books: displayedBooks,
-                          progressById: _progressById,
-                          recommendedBookId: _recommendedFirstBook?.id,
-                          onNavigateToBook: _navigateToBook,
-                          onToggleFavorite: _toggleFavorite,
-                        ),
-                      ),
 
-                    const SizedBox(height: AppSpace.lg),
-
-                    // ── Motivation Encouragement Banner ───────────
-                    if (_showEncouragement && _dailyEncouragement != null)
-                      Padding(
-                        padding: AppSpace.screenPadding,
-                        child: Column(
-                          children: [
-                            EncouragementBanner(
-                              encouragement: _dailyEncouragement!,
-                              onDismiss: () {
-                                setState(() {
-                                  _showEncouragement = false;
-                                });
-                              },
+                        // ── Books Section (Virtualized Sliver Grid) ───
+                        if (_hasLoadError)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: AppSpace.screenPadding,
+                              child: AppEmptyState(
+                                icon: Icons.error_outline,
+                                title: AppStrings.ilmLoadErrorTitle,
+                                subtitle: AppStrings.ilmLoadErrorMessage,
+                                action: AppButton(
+                                  label: AppStrings.actionRetry,
+                                  onPressed: _loadData,
+                                ),
+                              ),
                             ),
-                            const SizedBox(height: AppSpace.md),
-                          ],
-                        ),
-                      ),
+                          )
+                        else if (displayedBooks.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: AppSpace.screenPadding,
+                              child: AppEmptyState(
+                                icon: Icons.search_off_rounded,
+                                title: 'لم يتم العثور على نتائج',
+                                subtitle: isSearching
+                                    ? 'لا يوجد متن أو كتاب يطابق عبارة البحث "$_searchQuery"'
+                                    : 'لا توجد كتب مسجلة في هذا القسم حالياً',
+                              ),
+                            ),
+                          )
+                        else
+                          SliverIlmBooksGrid(
+                            books: displayedBooks,
+                            progressById: _progressById,
+                            recommendedBookId: _recommendedFirstBook?.id,
+                            onNavigateToBook: _navigateToBook,
+                            onToggleFavorite: _toggleFavorite,
+                          ),
 
-                    // ── Safe Bottom Clearance for Floating Nav ────
-                    SizedBox(height: AppSize.navClearance(context)),
-                  ],
-                ),
-              ),
+                        // ── Motivation & Nav Clearance ─────────────────
+                        SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: AppSpace.lg),
+                              if (_showEncouragement && _dailyEncouragement != null) ...[
+                                Padding(
+                                  padding: AppSpace.screenPadding,
+                                  child: EncouragementBanner(
+                                    encouragement: _dailyEncouragement!,
+                                    onDismiss: () {
+                                      setState(() {
+                                        _showEncouragement = false;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpace.md),
+                              ],
+                              SizedBox(height: AppSize.navClearance(context)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),

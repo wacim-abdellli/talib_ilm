@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../core/services/asset_service.dart';
@@ -255,19 +254,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final overlay = Theme.of(context).appBarTheme.systemOverlayStyle;
-    if (overlay != null) {
-      SystemChrome.setSystemUIOverlayStyle(overlay);
-    }
-
     return Scaffold(
       backgroundColor: context.palette.bg,
       body: SafeArea(
         child: ListenableBuilder(
           listenable: _stateController,
           builder: (context, child) {
-            final weights = _stateController.getHierarchyWeights();
-
             return RefreshIndicator(
               onRefresh: _handlePullRefresh,
               child: CustomScrollView(
@@ -298,19 +290,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                   // Hero card (Prayer Time)
                   SliverToBoxAdapter(
-                    child: AnimatedOpacity(
-                      opacity: weights['prayer'] ?? 1.0,
-                      duration: AppMotion.slow,
-                      child: AnimatedScale(
-                        scale: 0.95 + ((weights['prayer'] ?? 1.0) * 0.05),
-                        duration: AppMotion.slow,
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xl,
-                          ),
-                          child: _buildHeroGreetingCard(),
-                        ),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
                       ),
+                      child: _buildHeroGreetingCard(),
                     ),
                   ),
 
@@ -321,30 +305,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   // Daily Motivation with temporal framing
                   if (_dailyQuote != null) ...[
                     SliverToBoxAdapter(
-                      child: AnimatedOpacity(
-                        opacity: weights['quote'] ?? 1.0,
-                        duration: AppMotion.slow,
-                        child: AnimatedScale(
-                          scale: 0.95 + ((weights['quote'] ?? 1.0) * 0.05),
-                          duration: AppMotion.slow,
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xl,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xl,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SectionHeader(
+                              title: 'تذكرة اليوم',
+                              padding: EdgeInsetsDirectional.only(bottom: AppSpace.sm),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SectionHeader(
-                                  title: 'تذكرة اليوم',
-                                  padding: EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-                                ),
-                                DailyMotivationCard(
-                                  quote: _dailyQuote!,
-                                  onReload: _cycleQuote,
-                                ),
-                              ],
+                            DailyMotivationCard(
+                              quote: _dailyQuote!,
+                              onReload: _cycleQuote,
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),
@@ -373,27 +349,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                   // Continue Learning
                   SliverToBoxAdapter(
-                    child: AnimatedOpacity(
-                      opacity: weights['learning'] ?? 1.0,
-                      duration: AppMotion.slow,
-                      child: AnimatedScale(
-                        scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
-                        duration: AppMotion.slow,
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xl,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SectionHeader(
+                            title: 'زاد طالب العلم',
+                            padding: EdgeInsetsDirectional.only(bottom: AppSpace.xs),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SectionHeader(
-                                title: 'زاد طالب العلم',
-                                padding: EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-                              ),
-                              _buildPresenceMessage(context),
-                            ],
-                          ),
-                        ),
+                          _buildPresenceMessage(context),
+                        ],
                       ),
                     ),
                   ),
@@ -401,15 +369,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.md),
                   ),
                   SliverToBoxAdapter(
-                    child: AnimatedOpacity(
-                      opacity: weights['learning'] ?? 1.0,
-                      duration: AppMotion.slow,
-                      child: AnimatedScale(
-                        scale: 0.95 + ((weights['learning'] ?? 1.0) * 0.05),
-                        duration: AppMotion.slow,
-                        child: _buildContinueSection(context),
-                      ),
-                    ),
+                    child: _buildContinueSection(context),
                   ),
 
                   const SliverToBoxAdapter(
@@ -418,23 +378,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                   // Quick actions (Other Features)
                   SliverToBoxAdapter(
-                    child: AnimatedOpacity(
-                      opacity: weights['actions'] ?? 1.0,
-                      duration: AppMotion.slow,
-                      child: AnimatedScale(
-                        scale: 0.95 + ((weights['actions'] ?? 1.0) * 0.05),
-                        duration: AppMotion.slow,
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xl,
-                          ),
-                          child: HomeQuickActions(
-                            onOpenQuran: () => _openQuran(context),
-                            onOpenIlm: () => _openIlm(context),
-                            onOpenAdhkar: () => _openAdhkar(context),
-                            onOpenQibla: () => _openQibla(context),
-                          ),
-                        ),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: HomeQuickActions(
+                        onOpenQuran: () => _openQuran(context),
+                        onOpenIlm: () => _openIlm(context),
+                        onOpenAdhkar: () => _openAdhkar(context),
+                        onOpenQibla: () => _openQibla(context),
                       ),
                     ),
                   ),
