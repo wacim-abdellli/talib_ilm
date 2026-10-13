@@ -682,25 +682,31 @@ FAILED (54 violations)
 
 ---
 
-## Minimalist App Logo & Home Screen Icon Overhaul
+## Gold & Brown Islamic Heritage App Logo Overhaul (Mihrab & Lamp of Knowledge)
 - **Status:** Complete
 - **Deliverables:**
-  1. **Minimalist Geometric Vector Branding:**
-     - Replaced rasterized 3D illustrations with the pure geometric Rub el Hizb (8-pointed Islamic star in Ivory `#F4EFE6`) with the open book in scholarly Gold (`#E3B341`) on Obsidian (`#0A0A0C`).
-     - Rendered crystal-clear master assets directly from vector SVGs with headless antialiased Chromium engine:
-       - `assets/branding/ios_icon_1024.png` (1024x1024 square, zero alpha).
-       - `assets/branding/icon_dark_rounded.png` & `icon_light_rounded.png` (1024x1024 squircle rx=228).
-       - `assets/branding/android_background_432.png` (432x432 solid Obsidian).
-       - `assets/branding/android_foreground_432.png` (432x432 transparent, scaled at 0.75 inside Android safe zone).
-       - `assets/branding/android_monochrome_432.png` (432x432 Android 13+ themed icon).
-       - `assets/branding/symbol_on_dark.png` & `symbol_on_light.png` (transparent in-app headers/splash).
-       - `assets/images/logo.png`.
-  2. **Phone Home Screen Launcher Regeneration:**
-     - Ran `dart run flutter_launcher_icons` to generate all adaptive icons, mipmaps, and iOS bundles.
-     - Ran `dart run flutter_native_splash:create` to update native Android & iOS splash launch backgrounds.
+  1. **New Heritage Identity & Concept Selection:**
+     - Transitioned from plain black/white to the app's signature **Gold & Warm Saddle Espresso Brown** palette, compatible with both light and dark phone wallpapers.
+     - Selected & implemented the **Andalusian Mihrab Arch & Lamp of Knowledge** (محراب العلم وسراج النور):
+       - Moorish architectural horseshoe arch with outer cusped contours.
+       - The illuminated hanging lantern of sacred wisdom (*المشكاة*).
+       - Open classical manuscript resting on the Rihal base.
+       - Colors: Deep saddle espresso brown (`#2D1C12` to `#180E09`) + radiant multi-tonal gold (`#FEF08A`, `#FDE047`, `#F59E0B`, `#B45309`).
+  2. **Vector SVGs & Master PNG Generation:**
+     - `assets/branding/ios_icon_1024.png` & `.svg` (1024x1024 unrounded square).
+     - `assets/branding/icon_dark_rounded.png` & `icon_light_rounded.png` (1024x1024 squircle rx=228).
+     - `assets/branding/android_background_432.png` & `.svg` (432x432 saddle brown background).
+     - `assets/branding/android_foreground_432.png` & `.svg` (432x432 transparent, scaled at 0.72 inside Android safe zone).
+     - `assets/branding/android_monochrome_432.png` & `.svg` (432x432 Android 13+ themed icon).
+     - `assets/branding/symbol_on_dark.png` & `symbol_on_light.png` (transparent in-app symbols).
+     - `assets/images/logo.png`.
+  3. **Launcher & Native Splash Synchronization:**
+     - Ran `dart run flutter_launcher_icons` (100% clean generation across Android and iOS).
+     - Ran `dart run flutter_native_splash:create` (100% clean update of launch screens).
 - **Verification Results:**
-  - `flutter analyze`: 0 issues found (clean).
+  - `flutter analyze`: 0 issues found (clean compile in 18.6s).
   - `python tool/ui_lint_v2.py`: OK (0 regressions).
-  - `flutter test`: All unit/widget tests passing.
+  - `flutter test`: 10/10 test suites passed.
 - **Open Issues:** None.
+
 
