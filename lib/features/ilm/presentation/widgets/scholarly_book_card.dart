@@ -4,6 +4,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress.dart';
 import '../../../../shared/widgets/app_tag.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 
@@ -131,23 +132,51 @@ class ScholarlyBookCard extends StatelessWidget {
             ],
           ),
 
-          // ── Resources indicator if shuruh exist ─────────────────
-          if (book.shuruh.isNotEmpty) ...[
+          // ── Resources indicator if digital text or shuruh exist ─
+          if (MutunDigitalCatalog.hasDigitalText(book.id) ||
+              book.shuruh.isNotEmpty) ...[
             const SizedBox(height: AppSpace.xs),
             Row(
               children: [
-                Icon(
-                  Icons.menu_book_outlined,
-                  size: AppIcon.sm,
-                  color: palette.textSubtle,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  '${book.shuruh.length} شروح ميسرة',
-                  style: context.text.caption.copyWith(
+                if (MutunDigitalCatalog.hasDigitalText(book.id)) ...[
+                  Icon(
+                    Icons.auto_stories_rounded,
+                    size: AppIcon.sm,
+                    color: palette.gold,
+                  ),
+                  const SizedBox(width: AppSpace.xxs),
+                  Text(
+                    'نص محقق',
+                    style: context.text.caption.copyWith(
+                      color: palette.gold,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (book.shuruh.isNotEmpty) ...[
+                    const SizedBox(width: AppSpace.xs),
+                    Text(
+                      '•',
+                      style: context.text.caption.copyWith(
+                        color: palette.textSubtle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
+                ],
+                if (book.shuruh.isNotEmpty) ...[
+                  Icon(
+                    Icons.menu_book_outlined,
+                    size: AppIcon.sm,
                     color: palette.textSubtle,
                   ),
-                ),
+                  const SizedBox(width: AppSpace.xxs),
+                  Text(
+                    '${book.shuruh.length} شروح ميسرة',
+                    style: context.text.caption.copyWith(
+                      color: palette.textSubtle,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],

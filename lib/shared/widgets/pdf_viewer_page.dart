@@ -53,6 +53,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
   Timer? _hideTimer;
   double _brightness = 1.0; // 1.0 = full brightness, 0.0 = dark
   bool _nightMode = false;
+  bool _isContinuous = false;
   double _zoomLevel = 1.0;
 
   @override
@@ -77,6 +78,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
       setState(() {
         _brightness = prefs.getDouble('pdf_brightness') ?? 1.0;
         _nightMode = prefs.getBool('pdf_night_mode') ?? false;
+        _isContinuous = prefs.getBool('pdf_continuous_mode') ?? false;
       });
     }
   }
@@ -85,6 +87,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('pdf_brightness', _brightness);
     await prefs.setBool('pdf_night_mode', _nightMode);
+    await prefs.setBool('pdf_continuous_mode', _isContinuous);
   }
 
   void _startHideTimer() {
@@ -133,68 +136,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
       body: Stack(
         children: [
           // 1. PDF Viewer with Night Mode & Brightness
-          InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: _toggleControls,
-            child: ColorFiltered(
-              colorFilter: _nightMode
-                  ? const ColorFilter.matrix([
-                      -1, 0, 0, 0, 255, // Invert Red
-                      0, -1, 0, 0, 255, // Invert Green
-                      0, 0, -1, 0, 255, // Invert Blue
-                      0, 0, 0, 1, 0, // Alpha
-                    ])
-                  : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-              child: Stack(
-                children: [
-                  SfPdfViewer.asset(
-                    widget.assetPath,
-                    controller: _controller,
-                    initialPageNumber: _currentPage,
-                    scrollDirection: PdfScrollDirection.vertical,
-                    pageLayoutMode: PdfPageLayoutMode.continuous,
-                    enableDoubleTapZooming: true,
-                    canShowScrollHead: false,
-                    canShowScrollStatus: false,
-                    onDocumentLoaded: (details) {
-                      if (!mounted) return;
-                      final total = details.document.pages.count;
-                      final safePage = _currentPage < 1
-                          ? 1
-                          : (_currentPage > total ? total : _currentPage);
-                      if (safePage != _currentPage) {
-                        _controller.jumpToPage(safePage);
-                      }
-                      setState(() {
-                        _totalPages = total;
-                        _currentPage = safePage;
-                      });
-                    },
-                    onPageChanged: (details) {
-                      if (!mounted) return;
-                      setState(() => _currentPage = details.newPageNumber);
-                      widget.onPageChanged?.call(
-                        details.newPageNumber,
-                        _totalPages,
-                      );
-                    },
-                    onTap: (details) {
-                      _toggleControls();
-                    },
-                  ),
-                  // Brightness Overlay
-                  IgnorePointer(
-                    child: Container(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .scrim
-                          .withValues(alpha: 1.0 - _brightness),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          Positioned.fill(
+            child: _buildPdfViewerSurface(context),
           ),
 
           // 2. Custom Top Bar
@@ -218,6 +161,78 @@ class PdfViewerPageState extends State<PdfViewerPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildPdfViewerSurface(BuildContext context) {
+    Widget viewer = SfPdfViewer.asset(
+      widget.assetPath,
+      controller: _controller,
+      initialPageNumber: _currentPage,
+      scrollDirection: _isContinuous
+          ? PdfScrollDirection.vertical
+          : PdfScrollDirection.horizontal,
+      pageLayoutMode: _isContinuous
+          ? PdfPageLayoutMode.continuous
+          : PdfPageLayoutMode.single,
+      enableDoubleTapZooming: true,
+      canShowScrollHead: false,
+      canShowScrollStatus: false,
+      onDocumentLoaded: (details) {
+        if (!mounted) return;
+        final total = details.document.pages.count;
+        final safePage = _currentPage < 1
+            ? 1
+            : (_currentPage > total ? total : _currentPage);
+        if (safePage != _currentPage) {
+          _controller.jumpToPage(safePage);
+        }
+        setState(() {
+          _totalPages = total;
+          _currentPage = safePage;
+        });
+      },
+      onPageChanged: (details) {
+        if (!mounted) return;
+        setState(() => _currentPage = details.newPageNumber);
+        widget.onPageChanged?.call(
+          details.newPageNumber,
+          _totalPages,
+        );
+      },
+      onTap: (details) {
+        _toggleControls();
+      },
+    );
+
+    if (_nightMode) {
+      viewer = ColorFiltered(
+        colorFilter: const ColorFilter.matrix([
+          -1, 0, 0, 0, 255, // Invert Red
+          0, -1, 0, 0, 255, // Invert Green
+          0, 0, -1, 0, 255, // Invert Blue
+          0, 0, 0, 1, 0, // Alpha
+        ]),
+        child: viewer,
+      );
+    }
+
+    if (_brightness < 1.0) {
+      viewer = Stack(
+        children: [
+          Positioned.fill(child: viewer),
+          IgnorePointer(
+            child: Container(
+              color: Theme.of(context)
+                  .colorScheme
+                  .scrim
+                  .withValues(alpha: 1.0 - _brightness),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return viewer;
   }
 
   Widget _buildTopBar(double progress) {
@@ -428,7 +443,23 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                     },
                   ),
 
-                  // 5. Night Mode
+                  // 5. Layout mode (Single page vs Continuous)
+                  AppIconButton(
+                    icon: _isContinuous
+                        ? Icons.view_day_outlined
+                        : Icons.auto_stories_outlined,
+                    tooltip: _isContinuous
+                        ? 'صفحة واحدة (أفقي)'
+                        : 'تمرير مستمر (عمودي)',
+                    color: _isContinuous ? palette.primary : palette.textMuted,
+                    onPressed: () {
+                      _resetHideTimer();
+                      setState(() => _isContinuous = !_isContinuous);
+                      _saveSettings();
+                    },
+                  ),
+
+                  // 6. Night Mode
                   AppIconButton(
                     icon: _nightMode
                         ? Icons.wb_sunny_rounded
@@ -438,6 +469,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                     onPressed: () {
                       _resetHideTimer();
                       setState(() => _nightMode = !_nightMode);
+                      _saveSettings();
                     },
                   ),
                 ],

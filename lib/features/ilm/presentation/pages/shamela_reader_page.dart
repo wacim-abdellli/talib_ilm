@@ -7,10 +7,12 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
-import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/primary_app_bar.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
+import '../widgets/shamela_fihris_sheet.dart';
+import '../widgets/shamela_text_highlighter.dart';
+import '../widgets/shamela_typography_sheet.dart';
 
 class ShamelaReaderPage extends StatefulWidget {
   final ShamelaBook book;
@@ -31,8 +33,10 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   late int _currentPage;
   late int _totalPages;
 
-  double _fontSizeDelta = 2.0; // Added on top of theme body style
-  String _fontFamily = 'Amiri'; // 'Amiri' or 'Cairo'
+  double _fontSizeDelta = 2.0;
+  String _fontFamily = 'Amiri';
+  double _lineHeight = 1.85;
+  ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
   bool _isBookmarked = false;
 
   final Map<int, ShamelaPage> _pageCache = {};
@@ -113,7 +117,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           _loadingPages.remove(pageNum);
         });
       }
-      // Save last read position in background
       ShamelaService.saveLastReadPage(widget.book.id, pageNum);
     } catch (e) {
       if (mounted) {
@@ -133,7 +136,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _checkBookmark();
     _loadPage(pageNum);
 
-    // Pre-fetch adjacent pages for 0ms swipe transitions
     if (pageNum < _totalPages) _loadPage(pageNum + 1);
     if (pageNum > 1) _loadPage(pageNum - 1);
   }
@@ -168,119 +170,12 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     AppSheet.show<void>(
       context: context,
       maxHeightFactor: 0.85,
-      builder: (ctx) {
-        final palette = ctx.palette;
-        final textTheme = ctx.text;
-
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Container(
-            decoration: BoxDecoration(
-              color: palette.surfaceRaised,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.xl),
-              ),
-              border: Border.all(color: palette.border),
-            ),
-            child: Column(
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsetsDirectional.only(
-                      top: AppSpace.md,
-                      bottom: AppSpace.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.border,
-                      borderRadius: AppRadius.pillRadius,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.lg,
-                    vertical: AppSpace.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.list_alt_rounded, color: palette.gold, size: AppIcon.lg),
-                      const SizedBox(width: AppSpace.sm),
-                      Text(
-                        'فهرس موضوعات الكتاب',
-                        style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${_chapters.length} أبواب',
-                        style: textTheme.caption.copyWith(color: palette.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: palette.border, height: 1),
-                Expanded(
-                  child: _isLoadingChapters
-                      ? Center(child: CircularProgressIndicator(color: palette.gold))
-                      : _chapters.isEmpty
-                          ? const EmptyState(
-                              icon: Icons.menu_book_rounded,
-                              title: 'لا يتوفر فهرس تفصيلي',
-                              subtitle: 'يمكنك التنقل المباشر بين صفحات الكتاب باستخدام أرقام الصفحات.',
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                              itemCount: _chapters.length,
-                              separatorBuilder: (_, index) => Divider(color: palette.border, height: 1),
-                              itemBuilder: (context, i) {
-                                final ch = _chapters[i];
-                                final isCurrent = ch.pageNumber == _currentPage;
-
-                                return ListTile(
-                                  onTap: () {
-                                    Navigator.pop(ctx);
-                                    _jumpToPage(ch.pageNumber);
-                                  },
-                                  contentPadding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.sm,
-                                    vertical: AppSpace.xxs,
-                                  ),
-                                  title: Text(
-                                    ch.title,
-                                    style: textTheme.bodySmall.copyWith(
-                                      color: isCurrent ? palette.gold : palette.text,
-                                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
-                                    ),
-                                  ),
-                                  trailing: Container(
-                                    padding: const EdgeInsetsDirectional.symmetric(
-                                      horizontal: AppSpace.sm,
-                                      vertical: AppSpace.xxs,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isCurrent ? palette.goldSoft : palette.surfaceMuted,
-                                      borderRadius: AppRadius.smRadius,
-                                    ),
-                                    child: Text(
-                                      'ص ${ch.pageNumber}',
-                                      style: textTheme.caption.copyWith(
-                                        color: isCurrent ? palette.gold : palette.textMuted,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) => ShamelaFihrisSheet(
+        chapters: _chapters,
+        isLoading: _isLoadingChapters,
+        currentPage: _currentPage,
+        onPageSelected: (p) => _jumpToPage(p),
+      ),
     );
   }
 
@@ -288,162 +183,40 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     HapticFeedback.lightImpact();
     AppSheet.show<void>(
       context: context,
-      maxHeightFactor: 0.50,
-      builder: (ctx) {
-        final palette = ctx.palette;
-        final textTheme = ctx.text;
-
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  color: palette.surfaceRaised,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.xl),
-                  ),
-                  border: Border.all(color: palette.border),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                        decoration: BoxDecoration(
-                          color: palette.border,
-                          borderRadius: AppRadius.pillRadius,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'إعدادات الخط والقراءة',
-                      style: textTheme.titleSmall.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.lg),
-
-                    // Font Size Stepper
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('حجم الخط', style: textTheme.body.copyWith(color: palette.text)),
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: _fontSizeDelta > -2.0
-                                  ? () {
-                                      HapticFeedback.selectionClick();
-                                      setState(() => _fontSizeDelta -= 1.0);
-                                      setSheetState(() {});
-                                    }
-                                  : null,
-                              tooltip: 'تصغير الخط',
-                              icon: Icon(Icons.remove_circle_outline_rounded, color: palette.gold),
-                            ),
-                            Text(
-                              '${18 + _fontSizeDelta.toInt()}',
-                              style: textTheme.titleSmall.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: _fontSizeDelta < 10.0
-                                  ? () {
-                                      HapticFeedback.selectionClick();
-                                      setState(() => _fontSizeDelta += 1.0);
-                                      setSheetState(() {});
-                                    }
-                                  : null,
-                              tooltip: 'تكبير الخط',
-                              icon: Icon(Icons.add_circle_outline_rounded, color: palette.gold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.md),
-
-                    // Font Family Selector
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('نوع الخط', style: textTheme.body.copyWith(color: palette.text)),
-                        Row(
-                          children: [
-                            _buildFontOption('Amiri', 'الأميري', palette, textTheme, setSheetState),
-                            const SizedBox(width: AppSpace.sm),
-                            _buildFontOption('Cairo', 'القاهرة', palette, textTheme, setSheetState),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (ctx) => ShamelaTypographySheet(
+        fontSizeDelta: _fontSizeDelta,
+        fontFamily: _fontFamily,
+        lineHeight: _lineHeight,
+        surface: _surface,
+        onFontSizeChanged: (delta) => setState(() => _fontSizeDelta = delta),
+        onFontFamilyChanged: (family) => setState(() => _fontFamily = family),
+        onLineHeightChanged: (lh) => setState(() => _lineHeight = lh),
+        onSurfaceChanged: (surf) => setState(() => _surface = surf),
+      ),
     );
   }
 
-  Widget _buildFontOption(
-    String family,
-    String label,
-    AppPalette palette,
-    AppTextTheme textTheme,
-    StateSetter setSheetState,
-  ) {
-    final isSelected = _fontFamily == family;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: AppRadius.smRadius,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _fontFamily = family);
-          setSheetState(() {});
-        },
-        child: Container(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.md,
-            vertical: AppSpace.xs,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? palette.gold : palette.surfaceMuted,
-            borderRadius: AppRadius.smRadius,
-            border: Border.all(color: isSelected ? palette.gold : palette.border),
-          ),
-          child: Text(
-            label,
-            style: textTheme.caption.copyWith(
-              color: isSelected ? palette.brandDark : palette.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
+  Color _getBackgroundColor(AppPalette palette) {
+    switch (_surface) {
+      case ShamelaReaderSurface.normal:
+        return palette.bg;
+      case ShamelaReaderSurface.parchment:
+        return palette.goldSoft;
+      case ShamelaReaderSurface.night:
+        return palette.brandDark;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final bgColor = _getBackgroundColor(palette);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: palette.bg,
+        backgroundColor: bgColor,
         appBar: PrimaryAppBar(
           title: widget.book.title,
           showBack: true,
@@ -458,7 +231,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
             ),
             IconButton(
               icon: Icon(Icons.format_size_rounded, color: palette.text),
-              tooltip: 'تنسيق الخط',
+              tooltip: 'تنسيق الخط وخيارات القراءة',
               onPressed: _showTypographySheet,
             ),
             IconButton(
@@ -499,6 +272,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                 ],
               ),
             ),
+
             // Reader Content View
             Expanded(
               child: PageView.builder(
@@ -575,97 +349,105 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     AppPalette palette,
     AppTextTheme textTheme,
   ) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.lg,
-        vertical: AppSpace.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Chapter Header Pill
-          if (page.chapterTitle != null && page.chapterTitle!.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.goldSoft,
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                page.chapterTitle!,
-                style: textTheme.caption.copyWith(
-                  color: palette.gold,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: AppSpace.md),
-          ],
-
-          // Body Text with Custom Font Size and Selectable Text
-          SelectableText(
-            page.content,
-            style: textTheme.body.copyWith(
-              fontFamily: _fontFamily,
-              fontSize: (textTheme.body.fontSize ?? 18.0) + _fontSizeDelta,
-              height: 1.85,
-              color: palette.text,
-            ),
-            textAlign: TextAlign.justify,
+    // SelectionArea wraps the entire scrollable area allowing free vertical scrolling with zero gesture friction
+    return SelectionArea(
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.lg,
+            vertical: AppSpace.md,
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Chapter Header Pill if present
+              if (page.chapterTitle != null && page.chapterTitle!.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.smRadius,
+                    border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    page.chapterTitle!,
+                    style: textTheme.caption.copyWith(
+                      color: palette.gold,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+              ],
 
-          // Footnotes (الحواشي) Section if present
-          if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpace.lg),
-            Divider(color: palette.gold.withValues(alpha: 0.4), height: 1),
-            const SizedBox(height: AppSpace.sm),
-            Container(
-              padding: const EdgeInsetsDirectional.all(AppSpace.md),
-              decoration: BoxDecoration(
-                color: palette.surfaceRaised,
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(color: palette.border),
+              // Enhanced body text with scholarly syntax coloring
+              Text.rich(
+                ShamelaTextHighlighter.buildSpans(
+                  text: page.content,
+                  palette: palette,
+                  textTheme: textTheme,
+                  fontFamily: _fontFamily,
+                  fontSizeDelta: _fontSizeDelta,
+                  lineHeight: _lineHeight,
+                ),
+                textAlign: TextAlign.start,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+
+              // Footnotes (الحواشي والتحقيق) Section if present
+              if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
+                const SizedBox(height: AppSpace.lg),
+                Divider(color: palette.gold.withValues(alpha: 0.4), height: 1),
+                const SizedBox(height: AppSpace.sm),
+                Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    borderRadius: AppRadius.smRadius,
+                    border: Border.all(color: palette.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.notes_rounded, color: palette.primary, size: AppIcon.sm),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        'الحواشي والتحقيق:',
-                        style: textTheme.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.bold,
+                      Row(
+                        children: [
+                          Icon(Icons.notes_rounded, color: palette.primary, size: AppIcon.sm),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            'الحواشي والتحقيق:',
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.xs),
+                      Text.rich(
+                        ShamelaTextHighlighter.buildSpans(
+                          text: page.hamesh!,
+                          palette: palette,
+                          textTheme: textTheme,
+                          fontFamily: _fontFamily,
+                          fontSizeDelta: _fontSizeDelta * 0.7 - 2.0,
+                          lineHeight: 1.6,
                         ),
+                        textAlign: TextAlign.start,
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpace.xs),
-                  SelectableText(
-                    page.hamesh!,
-                    style: textTheme.bodySmall.copyWith(
-                      fontFamily: _fontFamily,
-                      fontSize: (textTheme.bodySmall.fontSize ?? 14.0) + _fontSizeDelta * 0.7,
-                      height: 1.6,
-                      color: palette.textMuted,
-                    ),
-                    textAlign: TextAlign.justify,
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
 
-          const SizedBox(height: AppSpace.xl),
-        ],
+              const SizedBox(height: AppSpace.xl),
+            ],
+          ),
+        ),
       ),
     );
   }

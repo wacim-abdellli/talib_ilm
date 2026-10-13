@@ -282,25 +282,29 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                     color: palette.text,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: AppSpace.xxs),
-                                Row(
-                                  children: [
-                                    Text(
-                                      book.author,
-                                      style: textTheme.caption.copyWith(
-                                        color: palette.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                Text.rich(
+                                  TextSpan(
+                                    text: book.author,
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    if (book.authorDeath != null) ...[
-                                      const SizedBox(width: AppSpace.xs),
-                                      Text(
-                                        '(${book.authorDeath})',
-                                        style: textTheme.caption.copyWith(color: palette.textMuted),
-                                      ),
+                                    children: [
+                                      if (book.authorDeath != null) ...[
+                                        const TextSpan(text: ' '),
+                                        TextSpan(
+                                          text: '(${book.authorDeath})',
+                                          style: textTheme.caption.copyWith(color: palette.textMuted),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -341,56 +345,64 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                       const SizedBox(height: AppSpace.xs),
 
                       // Actions Bar: Read vs Offline Download
-                      Row(
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpace.sm,
+                        runSpacing: AppSpace.xs,
                         children: [
                           Text(
                             '${book.totalPages} صفحة',
                             style: textTheme.caption.copyWith(color: palette.textMuted),
                           ),
-                          const Spacer(),
-                          if (progress != null) ...[
-                            SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                value: progress,
-                                color: palette.gold,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            Text(
-                              'جاري التحميل ${(progress * 100).toInt()}%',
-                              style: textTheme.caption.copyWith(color: palette.gold),
-                            ),
-                          ] else if (isDownloaded) ...[
-                            Icon(Icons.cloud_done_rounded, color: palette.gold, size: AppIcon.sm),
-                            const SizedBox(width: AppSpace.xxs),
-                            Text(
-                              'محمّل بدون إنترنت',
-                              style: textTheme.caption.copyWith(
-                                color: palette.gold,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ] else ...[
-                            TextButton.icon(
-                              onPressed: () => _downloadBook(book),
-                              icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
-                              label: Text(
-                                'تحميل بدون إنترنت',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.primary,
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (progress != null) ...[
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    value: progress,
+                                    color: palette.gold,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  'جاري التحميل ${(progress * 100).toInt()}%',
+                                  style: textTheme.caption.copyWith(color: palette.gold),
+                                ),
+                              ] else if (isDownloaded) ...[
+                                Icon(Icons.cloud_done_rounded, color: palette.gold, size: AppIcon.sm),
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  'محمّل بدون إنترنت',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.gold,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ] else ...[
+                                TextButton.icon(
+                                  onPressed: () => _downloadBook(book),
+                                  icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
+                                  label: Text(
+                                    'تحميل بدون إنترنت',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: AppSpace.sm),
+                              AppButton(
+                                size: AppButtonSize.sm,
+                                label: 'قراءة الكتاب',
+                                onPressed: () => _openBook(book),
                               ),
-                            ),
-                          ],
-                          const SizedBox(width: AppSpace.sm),
-                          AppButton(
-                            size: AppButtonSize.sm,
-                            label: 'قراءة الكتاب',
-                            onPressed: () => _openBook(book),
+                            ],
                           ),
                         ],
                       ),

@@ -87,12 +87,7 @@ class _BookViewPageState extends State<BookViewPage>
   bool _hasShownReadHint = false;
   bool get _canCompleteBook {
     if (_totalPages <= 0) return false;
-
-    final pageRatio = _maxPageReached / _totalPages;
-    final enoughPages = pageRatio >= 0.9;
-    final enoughTime = _readingSeconds >= 120; // 2 minutes (tweakable)
-
-    return enoughPages && enoughTime;
+    return (_maxPageReached / _totalPages) >= 0.9 && _readingSeconds >= 120;
   }
 
   void _updateReadingTime() {
@@ -215,7 +210,7 @@ class _BookViewPageState extends State<BookViewPage>
     final file = await _lastSharhService.get(widget.book.id);
     if (!mounted) return;
 
-    final sharh = widget.book.shuruh.where((s) => s.file == file).firstOrNull();
+    final sharh = widget.book.shuruh.where((s) => s.file == file).firstOrNull;
 
     PdfPageInfo? info;
     if (file != null) {
@@ -320,7 +315,7 @@ class _BookViewPageState extends State<BookViewPage>
     if (widget.autoOpenSharhFile != null) {
       final sharh = widget.book.shuruh
           .where((s) => s.file == widget.autoOpenSharhFile)
-          .firstOrNull();
+          .firstOrNull;
       if (sharh == null) return;
 
       await _openSharhPdf(sharh);
@@ -436,63 +431,10 @@ class _BookViewPageState extends State<BookViewPage>
 
   void _showGlobalBookmarksList() async {
     if (!_bookServiceReady) return;
-    final allProgress = await _bookProgressService.getAllProgress();
-    final sharhBookmarks = await _bookProgressService.getAllSharhBookmarks();
-    final sharhNotes = await _bookProgressService.getAllSharhNotes();
-    final program = await AssetService.loadMutunProgram();
-
-    final bookById = <String, IlmBook>{};
-    final sharhByKey = <String, Sharh>{};
-    for (final level in program.levels) {
-      for (final book in level.books) {
-        bookById[book.id] = book;
-        for (final sharh in book.shuruh) {
-          sharhByKey['${book.id}|${sharh.file}'] = sharh;
-        }
-      }
-    }
-
-    final entries = <BookmarkEntry>[];
-
-    for (final progress in allProgress) {
-      final bookTitle = progress.bookTitle.isNotEmpty
-          ? progress.bookTitle
-          : (bookById[progress.bookId]?.title ?? progress.bookId);
-      for (final page in progress.bookmarkedPages) {
-        final note = progress.notes[page];
-        entries.add(
-          BookmarkEntry(title: bookTitle, subtitle: 'صفحة $page', note: note),
-        );
-      }
-    }
-
-    for (final entry in sharhBookmarks.entries) {
-      final sharh = sharhByKey[entry.key];
-      final parts = entry.key.split('|');
-      final bookId = parts.isNotEmpty ? parts.first : entry.key;
-      final bookTitle = bookById[bookId]?.title ?? bookId;
-      final sharhTitle = sharh?.title ?? 'شرح';
-      final notes = sharhNotes[entry.key] ?? <int, String>{};
-      for (final page in entry.value) {
-        entries.add(
-          BookmarkEntry(
-            title: bookTitle,
-            subtitle: '$sharhTitle • صفحة $page',
-            note: notes[page],
-          ),
-        );
-      }
-    }
-
-    entries.sort((a, b) => a.title.compareTo(b.title));
-
-    if (!mounted) return;
-    if (entries.isEmpty) {
-      AppSnackbar.info(context, AppStrings.bookProgressSaved);
-      return;
-    }
-
-    BookViewBookmarksSheet.show(context, entries);
+    await BookViewBookmarksSheet.loadAndShow(
+      context: context,
+      progressService: _bookProgressService,
+    );
   }
 
   @override
@@ -557,6 +499,7 @@ class _BookViewPageState extends State<BookViewPage>
           physics: const NeverScrollableScrollPhysics(),
           children: [
             BookMutnTab(
+              book: widget.book,
               mutunPdfPath: _mutunPdfPath,
               mutunInitialPage: _mutunInitialPage,
               mutnPdfKey: _mutnPdfKey,
@@ -649,8 +592,4 @@ class _BookViewPageState extends State<BookViewPage>
       ),
     );
   }
-}
-
-extension on Iterable<Sharh> {
-  Sharh? firstOrNull() => isEmpty ? null : first;
 }
