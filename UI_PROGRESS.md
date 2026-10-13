@@ -679,3 +679,28 @@ FAILED (54 violations)
   - `flutter test`: 12/12 Quran unit/widget tests passed (`test/arabic_digits_test.dart`, `test/quran_reader_index_test.dart`, `test/tajweed_markup_test.dart`, `test/quran_continuous_list_test.dart`). All 3 Quran golden tests passed.
   - `flutter build apk --debug`: Succeeded (`build\app\outputs\flutter-apk\app-debug.apk` built in 38.4s).
 - **Open Issues:** None.
+
+---
+
+## Minimalist App Logo & Home Screen Icon Overhaul
+- **Status:** Complete
+- **Deliverables:**
+  1. **Minimalist Geometric Vector Branding:**
+     - Replaced rasterized 3D illustrations with the pure geometric Rub el Hizb (8-pointed Islamic star in Ivory `#F4EFE6`) with the open book in scholarly Gold (`#E3B341`) on Obsidian (`#0A0A0C`).
+     - Rendered crystal-clear master assets directly from vector SVGs with headless antialiased Chromium engine:
+       - `assets/branding/ios_icon_1024.png` (1024x1024 square, zero alpha).
+       - `assets/branding/icon_dark_rounded.png` & `icon_light_rounded.png` (1024x1024 squircle rx=228).
+       - `assets/branding/android_background_432.png` (432x432 solid Obsidian).
+       - `assets/branding/android_foreground_432.png` (432x432 transparent, scaled at 0.75 inside Android safe zone).
+       - `assets/branding/android_monochrome_432.png` (432x432 Android 13+ themed icon).
+       - `assets/branding/symbol_on_dark.png` & `symbol_on_light.png` (transparent in-app headers/splash).
+       - `assets/images/logo.png`.
+  2. **Phone Home Screen Launcher Regeneration:**
+     - Ran `dart run flutter_launcher_icons` to generate all adaptive icons, mipmaps, and iOS bundles.
+     - Ran `dart run flutter_native_splash:create` to update native Android & iOS splash launch backgrounds.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found (clean).
+  - `python tool/ui_lint_v2.py`: OK (0 regressions).
+  - `flutter test`: All unit/widget tests passing.
+- **Open Issues:** None.
+
