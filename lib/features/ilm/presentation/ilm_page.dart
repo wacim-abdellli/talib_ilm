@@ -21,6 +21,8 @@ import 'widgets/ilm_header.dart';
 import 'widgets/ilm_level_header_card.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/ilm_search_filter_bar.dart';
+import 'widgets/ilm_section_switcher.dart';
+import 'widgets/maktaba_shamela_view.dart';
 import 'widgets/motivation_widgets.dart';
 import 'widgets/study_resume_pill.dart';
 import 'logic/ilm_search_engine.dart';
@@ -56,6 +58,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   List<IlmBook> _searchResults = [];
 
   // Navigation & Search State
+  IlmSection _selectedSection = IlmSection.mutun;
   IlmViewMode _currentMode = IlmViewMode.levels;
   String? _selectedLevelId;
   String _selectedDiscipline = 'الكل';
@@ -360,19 +363,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    if (_isLoading) {
-      return const IlmLoadingView();
-    }
+    if (_isLoading) return const IlmLoadingView();
 
     final activeLevel = _levelByTab[_selectedLevelId] ?? _sortedLevels.first;
     final levelBooks = activeLevel.books;
-    final completedInLevel = levelBooks
-        .where((b) => _progressById[b.id]?.isCompleted ?? false)
-        .length;
-    final levelCompletionRatio = levelBooks.isNotEmpty
-        ? completedInLevel / levelBooks.length
-        : 0.0;
-
+    final completedInLevel = levelBooks.where((b) => _progressById[b.id]?.isCompleted ?? false).length;
+    final levelCompletionRatio = levelBooks.isNotEmpty ? completedInLevel / levelBooks.length : 0.0;
     final displayedBooks = _filteredBooks;
     final isSearching = _searchQuery.isNotEmpty;
 
@@ -389,16 +385,31 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
               completedBooksCount: _completedBooksCount,
             ),
 
-            // ── 2. Scrollable Library Content ─────────────────────
+            // ── 2. Library Section Switcher ───────────────────────
+            IlmSectionSwitcher(
+              selectedSection: _selectedSection,
+              onSectionChanged: (sec) => setState(() => _selectedSection = sec),
+            ),
+
+            // ── 3. Scrollable Library Content ─────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: _selectedSection == IlmSection.shamela
+                  ? SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: AppSpace.sm),
+                          const MaktabaShamelaView(),
+                          SizedBox(height: AppSize.navClearance(context)),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                     const SizedBox(height: AppSpace.md),
 
                     // ── Dedicated Minimalist Search Bar ───────────
