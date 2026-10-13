@@ -167,7 +167,10 @@ class BookmarkBackupService {
 
     for (final imported in importedBookmarks) {
       final existingIndex = current.indexWhere(
-        (b) => b.surah == imported.surah && b.ayah == imported.ayah,
+        (b) =>
+            b.surah == imported.surah &&
+            b.ayah == imported.ayah &&
+            b.isSurah == imported.isSurah,
       );
 
       if (existingIndex == -1) {
@@ -184,6 +187,7 @@ class BookmarkBackupService {
             page: imported.page,
             note: imported.note ?? existing.note,
             timestamp: imported.timestamp,
+            isSurah: imported.isSurah,
           );
           updated++;
         } else {

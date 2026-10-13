@@ -126,7 +126,7 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _toggleBookmark(int surahNum) async {
     HapticFeedback.selectionClick();
-    await BookmarkService.toggleBookmark(surahNum, 1);
+    await BookmarkService.toggleSurahBookmark(surahNum);
     _loadData();
   }
 
@@ -522,7 +522,7 @@ class _QuranPageState extends State<QuranPage> {
       ),
       itemBuilder: (context, index) {
         final surahNum = _filteredSurahs[index];
-        final isBookmarked = _bookmarks.any((b) => b.surah == surahNum);
+        final isBookmarked = _bookmarks.any((b) => b.surah == surahNum && b.isSurah);
 
         return SurahCard(
           surahNumber: surahNum,

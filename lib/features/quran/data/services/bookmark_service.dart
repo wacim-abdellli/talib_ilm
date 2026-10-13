@@ -8,6 +8,7 @@ class Bookmark {
   final int page;
   final String? note;
   final DateTime timestamp;
+  final bool isSurah;
 
   const Bookmark({
     required this.surah,
@@ -15,6 +16,7 @@ class Bookmark {
     required this.page,
     this.note,
     required this.timestamp,
+    this.isSurah = false,
   });
 
   factory Bookmark.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class Bookmark {
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'] as String)
           : DateTime.now(),
+      isSurah: json['isSurah'] as bool? ?? false,
     );
   }
 
@@ -37,6 +40,7 @@ class Bookmark {
         'page': page,
         'note': note,
         'timestamp': timestamp.toIso8601String(),
+        'isSurah': isSurah,
       };
 }
 
@@ -86,9 +90,14 @@ class BookmarkService {
   static const String _legacyBookmarksKey = 'bookmarks';
 
   /// Add or update a bookmark (Max 200)
-  static Future<void> addBookmark(int surah, int ayah, {String? note}) async {
+  static Future<void> addBookmark(
+    int surah,
+    int ayah, {
+    String? note,
+    bool isSurah = false,
+  }) async {
     final bookmarks = await getBookmarks();
-    bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah);
+    bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah && b.isSurah == isSurah);
 
     final page = quran.getPageNumber(surah, ayah);
     final newBookmark = Bookmark(
@@ -97,6 +106,7 @@ class BookmarkService {
       page: page,
       note: note,
       timestamp: DateTime.now(),
+      isSurah: isSurah,
     );
 
     bookmarks.insert(0, newBookmark);
@@ -108,16 +118,42 @@ class BookmarkService {
   }
 
   /// Remove a bookmark
-  static Future<void> removeBookmark(int surah, int ayah) async {
+  static Future<void> removeBookmark(int surah, int ayah, {bool isSurah = false}) async {
     final bookmarks = await getBookmarks();
-    bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah);
+    bookmarks.removeWhere(
+      (b) => b.surah == surah && (isSurah ? b.isSurah : (b.ayah == ayah && !b.isSurah)),
+    );
     await _saveBookmarks(bookmarks);
+  }
+
+  /// Toggle Surah bookmark
+  static Future<bool> toggleSurahBookmark(int surah) async {
+    final exists = await isSurahBookmarked(surah);
+    if (exists) {
+      await removeBookmark(surah, 1, isSurah: true);
+      return false;
+    } else {
+      await addBookmark(surah, 1, isSurah: true);
+      return true;
+    }
+  }
+
+  /// Check if a Surah is specifically bookmarked
+  static Future<bool> isSurahBookmarked(int surah) async {
+    final bookmarks = await getBookmarks();
+    return bookmarks.any((b) => b.surah == surah && b.isSurah);
+  }
+
+  /// Check if an Ayah is specifically bookmarked
+  static Future<bool> isAyahBookmarked(int surah, int ayah) async {
+    final bookmarks = await getBookmarks();
+    return bookmarks.any((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
   }
 
   /// Update note for a bookmark
   static Future<void> updateNote(int surah, int ayah, String? note) async {
     final bookmarks = await getBookmarks();
-    final index = bookmarks.indexWhere((b) => b.surah == surah && b.ayah == ayah);
+    final index = bookmarks.indexWhere((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
     if (index != -1) {
       final old = bookmarks[index];
       bookmarks[index] = Bookmark(
@@ -126,10 +162,11 @@ class BookmarkService {
         page: old.page,
         note: note,
         timestamp: DateTime.now(),
+        isSurah: false,
       );
       await _saveBookmarks(bookmarks);
     } else {
-      await addBookmark(surah, ayah, note: note);
+      await addBookmark(surah, ayah, note: note, isSurah: false);
     }
   }
 
@@ -172,6 +209,7 @@ class BookmarkService {
               page: quran.getPageNumber(sNum, 1),
               note: null,
               timestamp: DateTime.now(),
+              isSurah: true,
             ),
           );
         }
@@ -188,17 +226,17 @@ class BookmarkService {
   /// Check if an ayah is bookmarked
   static Future<bool> isBookmarked(int surah, int ayah) async {
     final bookmarks = await getBookmarks();
-    return bookmarks.any((b) => b.surah == surah && b.ayah == ayah);
+    return bookmarks.any((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
   }
 
-  /// Toggle bookmark status
+  /// Toggle bookmark status for an ayah
   static Future<bool> toggleBookmark(int surah, int ayah, {String? note}) async {
     final exists = await isBookmarked(surah, ayah);
     if (exists) {
-      await removeBookmark(surah, ayah);
+      await removeBookmark(surah, ayah, isSurah: false);
       return false;
     } else {
-      await addBookmark(surah, ayah, note: note);
+      await addBookmark(surah, ayah, note: note, isSurah: false);
       return true;
     }
   }

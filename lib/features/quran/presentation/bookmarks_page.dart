@@ -41,12 +41,23 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
   Future<void> _removeBookmark(Bookmark bookmark) async {
     HapticFeedback.selectionClick();
-    await BookmarkService.removeBookmark(bookmark.surah, bookmark.ayah);
+    await BookmarkService.removeBookmark(
+      bookmark.surah,
+      bookmark.ayah,
+      isSurah: bookmark.isSurah,
+    );
     setState(() {
-      _bookmarks.removeWhere((b) => b.surah == bookmark.surah && b.ayah == bookmark.ayah);
+      _bookmarks.removeWhere(
+        (b) =>
+            b.surah == bookmark.surah &&
+            (bookmark.isSurah ? b.isSurah : (b.ayah == bookmark.ayah && !b.isSurah)),
+      );
     });
     if (!mounted) return;
-    AppSnackbar.info(context, 'تمت إزالة الآية من المحفوظات');
+    AppSnackbar.info(
+      context,
+      bookmark.isSurah ? 'تمت إزالة السورة من المحفوظات' : 'تمت إزالة الآية من المحفوظات',
+    );
   }
 
   void _openBookmark(Bookmark bookmark) {
@@ -57,7 +68,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
         builder: (_) => MushafPageViewer(
           initialPage: bookmark.page,
           initialSurah: bookmark.surah,
-          initialAyah: bookmark.ayah,
+          initialAyah: bookmark.isSurah ? 1 : bookmark.ayah,
         ),
       ),
     ).then((_) => _loadBookmarks());
@@ -142,107 +153,178 @@ class _BookmarksPageState extends State<BookmarksPage> {
                             onTap: () => _openBookmark(b),
                             child: Padding(
                               padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          color: palette.goldSoft,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        alignment: AlignmentDirectional.center,
-                                        child: Text(
-                                          '${b.ayah}',
-                                          style: textTheme.caption.copyWith(
+                              child: b.isSurah
+                                  ? Row(
+                                      children: [
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: palette.goldSoft,
+                                            borderRadius: AppRadius.smRadius,
+                                            border: Border.all(
+                                              color: palette.gold.withValues(alpha: 0.3),
+                                            ),
+                                          ),
+                                          alignment: AlignmentDirectional.center,
+                                          child: Icon(
+                                            Icons.bookmark_rounded,
                                             color: palette.gold,
-                                            fontWeight: FontWeight.bold,
+                                            size: AppIcon.md,
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: AppSpace.sm),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                        const SizedBox(width: AppSpace.md),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    'سورة $surahName',
+                                                    style: textTheme.titleSmall.copyWith(
+                                                      color: palette.text,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: AppSpace.xs),
+                                                  Container(
+                                                    padding: const EdgeInsetsDirectional.symmetric(
+                                                      horizontal: AppSpace.xs,
+                                                      vertical: AppSpace.xxs,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: palette.goldSoft,
+                                                      borderRadius: AppRadius.smRadius,
+                                                    ),
+                                                    child: Text(
+                                                      'سورة محفوظة',
+                                                      style: textTheme.caption.copyWith(
+                                                        color: palette.gold,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: AppSpace.xxs),
+                                              Text(
+                                                '${quran.getPlaceOfRevelation(b.surah) == 'Makkah' ? 'مكية' : 'مدنية'} • ${quran.getVerseCount(b.surah)} آية • الصفحة ${b.page}',
+                                                style: textTheme.caption.copyWith(
+                                                  color: palette.textMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: AppIcon.xs,
+                                          color: palette.textMuted,
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
                                           children: [
-                                            Text(
-                                              'سورة $surahName',
-                                              style: textTheme.titleSmall.copyWith(
-                                                color: palette.text,
-                                                fontWeight: FontWeight.bold,
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                color: palette.goldSoft,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              alignment: AlignmentDirectional.center,
+                                              child: Text(
+                                                '${b.ayah}',
+                                                style: textTheme.caption.copyWith(
+                                                  color: palette.gold,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
                                             ),
-                                            Text(
-                                              'الصفحة ${b.page}',
-                                              style: textTheme.caption.copyWith(
-                                                color: palette.textMuted,
+                                            const SizedBox(width: AppSpace.sm),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'سورة $surahName',
+                                                    style: textTheme.titleSmall.copyWith(
+                                                      color: palette.text,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'الصفحة ${b.page}',
+                                                    style: textTheme.caption.copyWith(
+                                                      color: palette.textMuted,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
+                                            ),
+                                            AppIconButton(
+                                              icon: Icons.menu_book_rounded,
+                                              tooltip: 'التفسير والتدبر',
+                                              color: palette.textMuted,
+                                              onPressed: () {
+                                                AyahDetailsSheet.show(
+                                                  context,
+                                                  surahNumber: b.surah,
+                                                  ayahNumber: b.ayah,
+                                                  onBookmarkChanged: _loadBookmarks,
+                                                );
+                                              },
                                             ),
                                           ],
                                         ),
-                                      ),
-                                      AppIconButton(
-                                        icon: Icons.menu_book_rounded,
-                                        tooltip: 'التفسير والتدبر',
-                                        color: palette.textMuted,
-                                        onPressed: () {
-                                          AyahDetailsSheet.show(
-                                            context,
-                                            surahNumber: b.surah,
-                                            ayahNumber: b.ayah,
-                                            onBookmarkChanged: _loadBookmarks,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: AppSpace.xs),
-                                  Text(
-                                    verseText,
-                                    style: textTheme.sacred.copyWith(
-                                      color: palette.text,
-                                      height: 1.6,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (b.note != null && b.note!.trim().isNotEmpty) ...[
-                                    const SizedBox(height: AppSpace.xs),
-                                    Container(
-                                      padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-                                      decoration: BoxDecoration(
-                                        color: palette.surfaceMuted,
-                                        borderRadius: AppRadius.smRadius,
-                                        border: Border.all(color: palette.border),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.edit_note_rounded,
-                                            size: AppIcon.sm,
-                                            color: palette.primary,
+                                        const SizedBox(height: AppSpace.xs),
+                                        Text(
+                                          verseText,
+                                          style: textTheme.sacred.copyWith(
+                                            color: palette.text,
+                                            height: 1.6,
                                           ),
-                                          const SizedBox(width: AppSpace.xs),
-                                          Expanded(
-                                            child: Text(
-                                              b.note!,
-                                              style: textTheme.caption.copyWith(
-                                                color: palette.text,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (b.note != null && b.note!.trim().isNotEmpty) ...[
+                                          const SizedBox(height: AppSpace.xs),
+                                          Container(
+                                            padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+                                            decoration: BoxDecoration(
+                                              color: palette.surfaceMuted,
+                                              borderRadius: AppRadius.smRadius,
+                                              border: Border.all(color: palette.border),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.edit_note_rounded,
+                                                  size: AppIcon.sm,
+                                                  color: palette.primary,
+                                                ),
+                                                const SizedBox(width: AppSpace.xs),
+                                                Expanded(
+                                                  child: Text(
+                                                    b.note!,
+                                                    style: textTheme.caption.copyWith(
+                                                      color: palette.text,
+                                                      fontStyle: FontStyle.italic,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
-                                      ),
+                                      ],
                                     ),
-                                  ],
-                                ],
-                              ),
                             ),
                           ),
                         ),
