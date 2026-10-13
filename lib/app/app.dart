@@ -34,9 +34,10 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: AppStrings.appName,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
           themeMode: themeService.themeMode,
+          themeAnimationDuration: AppMotion.zero,
           scrollBehavior: const AppScrollBehavior(),
           locale: const Locale('ar'),
           supportedLocales: const [Locale('ar'), Locale('en')],

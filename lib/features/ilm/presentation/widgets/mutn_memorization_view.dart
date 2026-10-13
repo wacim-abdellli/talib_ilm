@@ -27,8 +27,24 @@ class MutnMemorizationView extends StatefulWidget {
 class _MutnMemorizationViewState extends State<MutnMemorizationView> {
   final Set<int> _revealed = <int>{};
 
-  List<String> get _paragraphs {
-    return widget.content
+  late List<String> _paragraphs;
+
+  @override
+  void initState() {
+    super.initState();
+    _computeParagraphs();
+  }
+
+  @override
+  void didUpdateWidget(MutnMemorizationView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.content != widget.content) {
+      _computeParagraphs();
+    }
+  }
+
+  void _computeParagraphs() {
+    _paragraphs = widget.content
         .split('\n')
         .map((p) => p.trim())
         .where((p) => p.isNotEmpty)

@@ -3,13 +3,12 @@ import 'app_palette.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+  static final ThemeData lightTheme = _buildTheme(AppPalette.light);
+  static final ThemeData darkTheme = _buildTheme(AppPalette.dark);
+
   static ThemeData light() => lightTheme;
 
   static ThemeData dark() => darkTheme;
-
-  static ThemeData get lightTheme => _buildTheme(AppPalette.light);
-
-  static ThemeData get darkTheme => _buildTheme(AppPalette.dark);
 
   static ThemeData _buildTheme(AppPalette palette) {
     final text = AppTextTheme.fromPalette(palette);

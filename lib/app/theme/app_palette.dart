@@ -579,6 +579,7 @@ class AppIcon {
 class AppMotion {
   AppMotion._();
 
+  static const Duration zero = Duration.zero;
   static const Duration fast = Duration(milliseconds: 120);
   static const Duration base = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 320);

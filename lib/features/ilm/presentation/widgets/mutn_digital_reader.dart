@@ -64,6 +64,42 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
 
   final ScrollController _scrollController = ScrollController();
 
+  TextSpan? _cachedSpans;
+  String? _cachedText;
+  double? _cachedDelta;
+  String? _cachedFamily;
+  double? _cachedLh;
+  Color? _cachedTextColor;
+
+  TextSpan _buildOrReuseSpans(
+    String text,
+    AppPalette palette,
+    AppTextTheme textTheme,
+  ) {
+    if (_cachedSpans != null &&
+        _cachedText == text &&
+        _cachedDelta == _fontSizeDelta &&
+        _cachedFamily == _fontFamily &&
+        _cachedLh == _lineHeight &&
+        _cachedTextColor == palette.text) {
+      return _cachedSpans!;
+    }
+    _cachedText = text;
+    _cachedDelta = _fontSizeDelta;
+    _cachedFamily = _fontFamily;
+    _cachedLh = _lineHeight;
+    _cachedTextColor = palette.text;
+    _cachedSpans = ShamelaTextHighlighter.buildSpans(
+      text: text,
+      palette: palette,
+      textTheme: textTheme,
+      fontSizeDelta: _fontSizeDelta,
+      fontFamily: _fontFamily,
+      lineHeight: _lineHeight,
+    );
+    return _cachedSpans!;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -311,14 +347,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                 )
               else
                 Text.rich(
-                  ShamelaTextHighlighter.buildSpans(
-                    text: content,
-                    palette: palette,
-                    textTheme: textTheme,
-                    fontSizeDelta: _fontSizeDelta,
-                    fontFamily: _fontFamily,
-                    lineHeight: _lineHeight,
-                  ),
+                  _buildOrReuseSpans(content, palette, textTheme),
                   textAlign: TextAlign.start,
                 ),
 
