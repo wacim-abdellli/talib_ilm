@@ -127,7 +127,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                     onChanged: (val) => setState(() => _searchQuery = val),
                     style: textTheme.body.copyWith(color: palette.text),
                     decoration: InputDecoration(
-                      hintText: 'ابحث في كتب ومؤلفي المكتبة الشاملة...',
+                      hintText: 'ابحث في أمهات كتب التراث ومصنفات الأئمة...',
                       hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
                       border: InputBorder.none,
                     ),
@@ -185,7 +185,9 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      cat.name,
+                      cat.count > 0 && cat.id != 0
+                          ? '${cat.name} (${cat.count})'
+                          : cat.name,
                       style: textTheme.caption.copyWith(
                         color: isSelected ? palette.brandDark : palette.text,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -206,8 +208,8 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
             padding: EdgeInsetsDirectional.all(AppSpace.xl),
             child: EmptyState(
               icon: Icons.search_off_rounded,
-              title: 'لا توجد نتائج في المكتبة',
-              subtitle: 'جرب البحث باسم كتاب آخر أو اختيار تصنيف مختلف.',
+              title: 'لا توجد نتائج في خزانة التراث',
+              subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من الفنون والعلوم.',
             ),
           )
         else
@@ -352,7 +354,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                             onPressed: () => _downloadBook(book),
                             icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
                             label: Text(
-                              'تحميل للمصحف بدون نت',
+                              'تحميل بدون إنترنت',
                               style: textTheme.caption.copyWith(
                                 color: palette.primary,
                                 fontWeight: FontWeight.bold,

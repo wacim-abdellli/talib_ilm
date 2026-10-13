@@ -41,7 +41,7 @@ class IlmSectionSwitcher extends StatelessWidget {
             child: _buildItem(
               context: context,
               section: IlmSection.mutun,
-              title: 'متون طالب العلم',
+              title: 'متون المنهج',
               icon: Icons.school_rounded,
               isSelected: selectedSection == IlmSection.mutun,
               palette: palette,
@@ -53,8 +53,8 @@ class IlmSectionSwitcher extends StatelessWidget {
             child: _buildItem(
               context: context,
               section: IlmSection.shamela,
-              title: 'المكتبة الشاملة',
-              icon: Icons.local_library_rounded,
+              title: 'خزانة التراث',
+              icon: Icons.auto_stories_rounded,
               isSelected: selectedSection == IlmSection.shamela,
               palette: palette,
               textTheme: textTheme,

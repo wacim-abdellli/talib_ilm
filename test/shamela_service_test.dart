@@ -24,9 +24,9 @@ void main() {
       final names = categories.map((c) => c.name).toList();
 
       expect(names, contains('الكل'));
-      expect(names, contains('العقيدة'));
-      expect(names, contains('كتب السنة'));
-      expect(names, contains('أصول الفقه'));
+      expect(names.any((n) => n.contains('العقيدة')), isTrue);
+      expect(names.any((n) => n.contains('السنة')), isTrue);
+      expect(names.any((n) => n.contains('أصول الفقه')), isTrue);
     });
 
     test('Search catalog by book title', () {

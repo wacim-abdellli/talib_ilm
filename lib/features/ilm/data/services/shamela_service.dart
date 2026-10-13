@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../app/theme/app_palette.dart';
-import '../../../../core/utils/arabic_search_utils.dart';
+import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
 
 class ShamelaService {
@@ -18,227 +18,11 @@ class ShamelaService {
 
   static final http.Client _httpClient = http.Client();
 
-  /// Curated Top Categories in Shamela
-  static const List<ShamelaCategory> categories = [
-    ShamelaCategory(id: 0, name: 'الكل'),
-    ShamelaCategory(id: 1, name: 'العقيدة', count: 808),
-    ShamelaCategory(id: 6, name: 'كتب السنة', count: 1245),
-    ShamelaCategory(id: 7, name: 'شروح الحديث', count: 265),
-    ShamelaCategory(id: 10, name: 'علوم الحديث', count: 320),
-    ShamelaCategory(id: 11, name: 'أصول الفقه', count: 253),
-    ShamelaCategory(id: 17, name: 'الفقه الحنبلي', count: 153),
-    ShamelaCategory(id: 16, name: 'الفقه الشافعي', count: 90),
-    ShamelaCategory(id: 15, name: 'الفقه المالكي', count: 89),
-    ShamelaCategory(id: 14, name: 'الفقه الحنفي', count: 87),
-    ShamelaCategory(id: 3, name: 'التفسير', count: 274),
-    ShamelaCategory(id: 4, name: 'علوم القرآن', count: 312),
-    ShamelaCategory(id: 23, name: 'الرقائق والآداب والأذكار', count: 625),
-    ShamelaCategory(id: 24, name: 'السيرة النبوية', count: 187),
-    ShamelaCategory(id: 31, name: 'النحو والصرف', count: 213),
-  ];
+  /// Curated Top Disciplines in the Heritage Library
+  static List<ShamelaCategory> get categories => TurathCatalog.disciplines;
 
-  /// Curated Starter Classics Library (Authentic Shamela Book IDs)
-  static final List<ShamelaBook> curatedClassics = [
-    // ── العقيدة ──
-    const ShamelaBook(
-      id: 21644,
-      title: 'الأصول الثلاثة وأدلتها',
-      author: 'محمد بن عبد الوهاب',
-      authorDeath: 'ت ١٢٠٦ هـ',
-      category: 'العقيدة',
-      categoryId: 1,
-      muhaqqiq: 'د. فهد بن عبد الرحمن الرومي',
-      publisher: 'مؤسسة الرسالة',
-      totalPages: 32,
-      description: 'رسالة نافعة في معرفة العبد ربه ودينه ونبيه محمد صلى الله عليه وسلم.',
-    ),
-    const ShamelaBook(
-      id: 9781,
-      title: 'كتاب التوحيد الذي هو حق الله على العبيد',
-      author: 'محمد بن عبد الوهاب',
-      authorDeath: 'ت ١٢٠٦ هـ',
-      category: 'العقيدة',
-      categoryId: 1,
-      muhaqqiq: 'د. دغش بن شبيب العجمي',
-      publisher: 'مكتبة أهل الأثر',
-      totalPages: 168,
-      description: 'عمدة كتب التوحيد المتضمن لآيات وأحاديث وآثار إفراد الله بالعبادة.',
-    ),
-    const ShamelaBook(
-      id: 21746,
-      title: 'العقيدة الواسطية',
-      author: 'ابن تيمية',
-      authorDeath: 'ت ٧٢٨ هـ',
-      category: 'العقيدة',
-      categoryId: 1,
-      muhaqqiq: 'أشرف بن عبد المقصود',
-      publisher: 'أضواء السلف',
-      totalPages: 60,
-      description: 'مختصر جليل في مجمل اعتقاد أهل السنة والجماعة في أسماء الله وصفاته.',
-    ),
-    const ShamelaBook(
-      id: 21748,
-      title: 'العقيدة الطحاوية',
-      author: 'أبو جعفر الطحاوي',
-      authorDeath: 'ت ٣٢١ هـ',
-      category: 'العقيدة',
-      categoryId: 1,
-      muhaqqiq: 'عبد الله بن عبد المحسن التركي',
-      publisher: 'مؤسسة الرسالة',
-      totalPages: 88,
-      description: 'بيان عقيدة أهل السنة والجماعة على مذهب فقهاء الملة.',
-    ),
-    const ShamelaBook(
-      id: 21745,
-      title: 'لمعة الاعتقاد الهادي إلى سبيل الرشاد',
-      author: 'ابن قدامة المقدسي',
-      authorDeath: 'ت ٦٢٠ هـ',
-      category: 'العقيدة',
-      categoryId: 1,
-      muhaqqiq: 'بدر بن عبد الله البدر',
-      publisher: 'الدار السلفية',
-      totalPages: 40,
-      description: 'متن نفيس في إثبات صفات الرب والإيمان بالقدر واليوم الآخر.',
-    ),
-
-    // ── كتب السنة والحديث ──
-    const ShamelaBook(
-      id: 21643,
-      title: 'الأربعون النووية',
-      author: 'يحيى بن شرف النووي',
-      authorDeath: 'ت ٦٧٦ هـ',
-      category: 'كتب السنة',
-      categoryId: 6,
-      muhaqqiq: 'قصي محمد نورس الحلاق',
-      publisher: 'دار المأمون للتراث',
-      totalPages: 64,
-      description: 'جوامع كلم النبي صلى الله عليه وسلم التي عليها مدار الإسلام.',
-    ),
-    const ShamelaBook(
-      id: 21749,
-      title: 'عمدة الأحكام من كلام خير الأنام',
-      author: 'عبد الغني المقدسي',
-      authorDeath: 'ت ٦٠٠ هـ',
-      category: 'كتب السنة',
-      categoryId: 6,
-      muhaqqiq: 'محمود الأرناؤوط',
-      publisher: 'دار الثقافة العربية',
-      totalPages: 180,
-      description: 'أحاديث الأحكام المتفق عليها في صحيحي البخاري ومسلم مرتبة على أبواب الفقه.',
-    ),
-    const ShamelaBook(
-      id: 21750,
-      title: 'بلوغ المرام من أدلة الأحكام',
-      author: 'ابن حجر العسقلاني',
-      authorDeath: 'ت ٨٥٢ هـ',
-      category: 'كتب السنة',
-      categoryId: 6,
-      muhaqqiq: 'سمير بن أمين الزهيري',
-      publisher: 'دار الفلق',
-      totalPages: 360,
-      description: 'جمع فيه الحافظ أدلة الأحكام الفقهية مع بيان درجتها وصحتها وضعفها.',
-    ),
-    const ShamelaBook(
-      id: 21751,
-      title: 'رياض الصالحين من كلام سيد المرسلين',
-      author: 'يحيى بن شرف النووي',
-      authorDeath: 'ت ٦٧٦ هـ',
-      category: 'الرقائق والآداب والأذكار',
-      categoryId: 23,
-      muhaqqiq: 'ماهر ياسين الفحل',
-      publisher: 'دار ابن كثير',
-      totalPages: 600,
-      description: 'كتاب جامع للأحاديث الصحيحة في الرقائق والأخلاق والمعاملات والسلوك.',
-    ),
-
-    // ── علوم الحديث ──
-    const ShamelaBook(
-      id: 21752,
-      title: 'المنظومة البيقونية',
-      author: 'عمر بن محمد البيقوني',
-      authorDeath: 'ت ١٠٨٠ هـ',
-      category: 'علوم الحديث',
-      categoryId: 10,
-      totalPages: 16,
-      description: 'منظومة لطيفة من أربعة وثلاثين بيتا في مصطلح الحديث وأنواعه.',
-    ),
-    const ShamelaBook(
-      id: 21753,
-      title: 'نخبة الفكر في مصطلح أهل الأثر',
-      author: 'ابن حجر العسقلاني',
-      authorDeath: 'ت ٨٥٢ هـ',
-      category: 'علوم الحديث',
-      categoryId: 10,
-      totalPages: 32,
-      description: 'أدق وأجمع متن مختصر في علوم الحديث وتقسيم طرقه ورتب رواته.',
-    ),
-
-    // ── الفقه وأصوله ──
-    const ShamelaBook(
-      id: 21754,
-      title: 'زاد المستقنع في اختصار المقنع',
-      author: 'موسى بن أحمد الحجاوي',
-      authorDeath: 'ت ٩٦٨ هـ',
-      category: 'الفقه الحنبلي',
-      categoryId: 17,
-      muhaqqiq: 'عبد الرحمن بن علي العسكر',
-      publisher: 'دار ابن الجوزي',
-      totalPages: 240,
-      description: 'المتن المعتمد للمتأخرين في الفقه الحنبلي المعول عليه في التدريس والإفتاء.',
-    ),
-    const ShamelaBook(
-      id: 21755,
-      title: 'عمدة الفقه',
-      author: 'ابن قدامة المقدسي',
-      authorDeath: 'ت ٦٢٠ هـ',
-      category: 'الفقه الحنبلي',
-      categoryId: 17,
-      totalPages: 160,
-      description: 'متن مبسط في الفقه يقتصر فيه المؤلف على قول واحد معتمد.',
-    ),
-    const ShamelaBook(
-      id: 21756,
-      title: 'الورقات في أصول الفقه',
-      author: 'أبو المعالي الجويني (إمام الحرمين)',
-      authorDeath: 'ت ٤٧٨ هـ',
-      category: 'أصول الفقه',
-      categoryId: 11,
-      totalPages: 24,
-      description: 'مقدمة موجزة محررة في مبادئ وأصول الفقه الإسلامي.',
-    ),
-    const ShamelaBook(
-      id: 21757,
-      title: 'القواعد والأصول الجامعة والفروق والتقاسيم البديعة النافعة',
-      author: 'عبد الرحمن بن ناصر السعدي',
-      authorDeath: 'ت ١٣٧٦ هـ',
-      category: 'أصول الفقه',
-      categoryId: 11,
-      totalPages: 90,
-      description: 'قواعد فقهية أصلية وضوابط جامعة تعين على ضبط الفروع الفقهية.',
-    ),
-
-    // ── الفرائض واللغة ──
-    const ShamelaBook(
-      id: 21758,
-      title: 'متن الرحبية في علم الفرائض',
-      author: 'محمد بن علي الرحبي',
-      authorDeath: 'ت ٥٧٧ هـ',
-      category: 'الفقه العام',
-      categoryId: 18,
-      totalPages: 28,
-      description: 'أشهر منظومة رائية في حساب المواريث وقسمة التركات.',
-    ),
-    const ShamelaBook(
-      id: 21759,
-      title: 'الآجرومية في قواعد الإعراب',
-      author: 'ابن آجروم الصنهاجي',
-      authorDeath: 'ت ٧٢٣ هـ',
-      category: 'النحو والصرف',
-      categoryId: 31,
-      totalPages: 30,
-      description: 'المدخل الأيسر والأرسخ لتعلم علم النحو وقواعد الإعراب للمبتدئين.',
-    ),
-  ];
+  /// Curated Classics Library across all disciplines
+  static List<ShamelaBook> get curatedClassics => TurathCatalog.books;
 
   /// Initialize local database for caching pages and table of contents
   static Future<Database> _getDatabase() async {
@@ -283,23 +67,7 @@ class ShamelaService {
     String query = '',
     int categoryId = 0,
   }) {
-    List<ShamelaBook> list = curatedClassics;
-
-    if (categoryId > 0) {
-      list = list.where((b) => b.categoryId == categoryId).toList();
-    }
-
-    if (query.trim().isEmpty) {
-      return list;
-    }
-
-    final q = query.trim();
-    return list.where((b) {
-      return ArabicSearchUtils.matches(b.title, q) ||
-          ArabicSearchUtils.matches(b.author, q) ||
-          ArabicSearchUtils.matches(b.category, q) ||
-          ArabicSearchUtils.matches(b.description, q);
-    }).toList();
+    return TurathCatalog.search(query: query, categoryId: categoryId);
   }
 
   /// Fetch single page content from local cache or stream from shamela.ws

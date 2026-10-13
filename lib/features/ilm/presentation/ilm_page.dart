@@ -59,9 +59,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   // Navigation & Search State
   IlmSection _selectedSection = IlmSection.mutun;
-  IlmViewMode _currentMode = IlmViewMode.levels;
   String? _selectedLevelId;
-  String _selectedDiscipline = 'الكل';
   String _searchQuery = '';
 
   // Daily reading state
@@ -198,27 +196,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     }
   }
 
-  // ── Helper computations ──────────────────────────────────────────
-
-  List<String> get _disciplines {
-    final set = <String>{};
-    for (final book in _allBooks) {
-      final s = book.subject.trim();
-      if (s.isNotEmpty) set.add(s);
-    }
-    final sorted = set.toList()..sort();
-    return ['الكل', ...sorted];
-  }
-
-  Map<String, int> get _disciplineBookCounts {
-    final map = <String, int>{'الكل': _allBooks.length};
-    for (final book in _allBooks) {
-      final s = book.subject.trim();
-      map[s] = (map[s] ?? 0) + 1;
-    }
-    return map;
-  }
-
   Map<String, double> get _levelCompletions {
     final map = <String, double>{};
     for (final level in _sortedLevels) {
@@ -266,17 +243,6 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
     if (_searchQuery.isNotEmpty) {
       return _searchResults;
     }
-
-    if (_currentMode == IlmViewMode.disciplines) {
-      if (_selectedDiscipline == 'الكل') {
-        return _allBooks;
-      }
-      return _allBooks
-          .where((b) => b.subject.trim() == _selectedDiscipline.trim())
-          .toList();
-    }
-
-    // Default: levels mode
     final currentLevel = _levelByTab[_selectedLevelId];
     return currentLevel?.books ?? [];
   }
@@ -482,37 +448,25 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                       ),
                       const SizedBox(height: AppSpace.md),
 
-                      // ── Dual-Lens Mode & Level/Discipline Filter ─
+                      // ── Level Selector Chips ────────────────────
                       IlmFilterBar(
-                        currentMode: _currentMode,
-                        onModeChanged: (mode) {
-                          setState(() => _currentMode = mode);
-                        },
                         levels: _sortedLevels,
                         selectedLevelId: _selectedLevelId ?? activeLevel.id,
                         onSelectLevel: (lvlId) {
                           setState(() => _selectedLevelId = lvlId);
                         },
                         levelCompletion: _levelCompletions,
-                        disciplines: _disciplines,
-                        selectedDiscipline: _selectedDiscipline,
-                        onSelectDiscipline: (disc) {
-                          setState(() => _selectedDiscipline = disc);
-                        },
-                        disciplineBookCounts: _disciplineBookCounts,
                       ),
                       const SizedBox(height: AppSpace.md),
 
-                      // ── Active Level Header Card (Levels mode only)
-                      if (_currentMode == IlmViewMode.levels) ...[
-                        IlmLevelHeaderCard(
-                          level: activeLevel,
-                          completion: levelCompletionRatio,
-                          totalBooks: levelBooks.length,
-                          completedBooks: completedInLevel,
-                        ),
-                        const SizedBox(height: AppSpace.md),
-                      ],
+                      // ── Active Level Header Card ────────────────
+                      IlmLevelHeaderCard(
+                        level: activeLevel,
+                        completion: levelCompletionRatio,
+                        totalBooks: levelBooks.length,
+                        completedBooks: completedInLevel,
+                      ),
+                      const SizedBox(height: AppSpace.md),
                     ],
 
                     // ── Books Section (2-Column Luxury Grid) ──────
