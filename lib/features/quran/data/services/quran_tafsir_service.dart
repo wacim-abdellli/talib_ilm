@@ -60,6 +60,21 @@ class QuranTafsirService {
     }
   }
 
+  static String _getCdnTafsirSlug(TafsirScholar scholar) {
+    switch (scholar) {
+      case TafsirScholar.muyassar:
+        return 'ar-tafsir-muyassar';
+      case TafsirScholar.saadi:
+        return 'ar-tafseer-al-saddi';
+      case TafsirScholar.ibnKathir:
+        return 'ar-tafsir-ibn-kathir';
+      case TafsirScholar.baghawi:
+        return 'ar-tafsir-al-baghawi';
+      case TafsirScholar.englishIbnKathir:
+        return 'en-tafisr-ibn-kathir';
+    }
+  }
+
   /// Quran.com v4 tafsir resource IDs (see /resources/tafsirs).
   static int _getTafsirId(TafsirScholar scholar) {
     switch (scholar) {
@@ -76,7 +91,7 @@ class QuranTafsirService {
     }
   }
 
-  /// Fetches Tafsir for an Ayah with multi-layer caching (RAM -> SharedPreferences -> Network)
+  /// Fetches Tafsir for an Ayah with multi-layer caching (RAM -> SharedPreferences -> CDN -> Network)
   static Future<String> getTafsir({
     required int surahNumber,
     required int ayahNumber,
@@ -98,7 +113,27 @@ class QuranTafsirService {
       return cached;
     }
 
-    // 3. High-speed Quran API with clean text parsing
+    // 3. Ultra-fast, unblocked Tafsir CDN source
+    try {
+      final slug = _getCdnTafsirSlug(scholar);
+      final cdnUrl = Uri.parse(
+        'https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/$slug/$surahNumber/$ayahNumber.json',
+      );
+      final response = await http.get(cdnUrl).timeout(_kApiTimeout);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final rawText = data['text'] as String? ?? '';
+        final cleanText = _cleanHtml(rawText);
+
+        if (cleanText.isNotEmpty) {
+          _memCache[cacheKey] = cleanText;
+          await prefs.setString(cacheKey, cleanText);
+          return cleanText;
+        }
+      }
+    } catch (_) {}
+
+    // 4. Fallback Quran API with clean text parsing
     try {
       final tafsirId = _getTafsirId(scholar);
       final url = Uri.parse(
@@ -125,7 +160,7 @@ class QuranTafsirService {
       }
     } catch (_) {}
 
-    // 4. Offline fallback using local bundled Quran translations
+    // 5. Offline fallback using local bundled Quran translations
     final fallback = quran.getVerseTranslation(surahNumber, ayahNumber);
     if (fallback.isNotEmpty) {
       return fallback;

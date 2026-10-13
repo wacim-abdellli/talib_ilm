@@ -26,6 +26,19 @@ class AppTextStyles {
   /// Used for Quran, Hadith, and other religious texts
   static const String _contentFontFamily = 'ScheherazadeNew';
 
+  /// Public font family tokens
+  static const String cairo = 'Cairo';
+  static const String amiri = 'Amiri';
+  static const String scheherazade = 'ScheherazadeNew';
+
+  /// Standard semantic typography aliases
+  static TextStyle get titleLarge => heading2;
+  static TextStyle get titleMedium => heading3;
+  static TextStyle get titleSmall => heading4;
+  static TextStyle get labelLarge => button;
+  static TextStyle get labelMedium => buttonSmall;
+  static TextStyle get labelSmall => overline;
+
   // ═══════════════════════════════════════════════════════════════════════════
   // HEADING STYLES - Scale: 24/20/18/16/14sp
   // ═══════════════════════════════════════════════════════════════════════════

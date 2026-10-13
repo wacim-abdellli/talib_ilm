@@ -32,6 +32,8 @@ import '../../adhkar/data/adhkar_models.dart';
 import '../../adhkar/data/adhkar_service.dart';
 import '../../adhkar/presentation/adhkar_session_page.dart';
 import 'widgets/home_daily_dhikr_card.dart';
+import 'widgets/home_daily_hadith_card.dart';
+import '../../radio/presentation/widgets/quran_radio_sheet.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../data/home_state_controller.dart';
@@ -329,6 +331,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ],
 
+                  // Daily Graded Hadith
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: HomeDailyHadithCard(),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
+
                   // Daily Dhikr
                   if (_dailyDhikr != null) ...[
                     SliverToBoxAdapter(
@@ -387,6 +402,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         onOpenIlm: () => _openIlm(context),
                         onOpenAdhkar: () => _openAdhkar(context),
                         onOpenQibla: () => _openQibla(context),
+                        onOpenRadio: () => QuranRadioSheet.show(context),
                       ),
                     ),
                   ),
