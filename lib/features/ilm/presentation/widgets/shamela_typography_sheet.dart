@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
@@ -235,6 +236,11 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
           HapticFeedback.selectionClick();
           setState(() => _surface = surface);
           widget.onSurfaceChanged(surface);
+          if (surface == ShamelaReaderSurface.night) {
+            themeService.setThemeMode(ThemeMode.dark);
+          } else if (surface == ShamelaReaderSurface.normal) {
+            themeService.setThemeMode(ThemeMode.light);
+          }
         },
         child: Container(
           padding: const EdgeInsetsDirectional.symmetric(

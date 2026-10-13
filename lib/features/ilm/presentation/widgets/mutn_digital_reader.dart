@@ -14,14 +14,19 @@ import 'shamela_fihris_sheet.dart';
 import 'shamela_text_highlighter.dart';
 import 'shamela_typography_sheet.dart';
 
-/// Lightning-fast, reflowable digital text reader for Islamic Mutun
-/// with scholarly syntax coloring, custom typography, reading surfaces,
-/// and an interactive Memorization / Self-Testing mode.
+/// Reflowable digital text reader for Islamic Mutun with distraction-free
+/// immersive mode, unified scholarly toolbar, syntax coloring, and self-testing recall.
 class MutnDigitalReaderView extends StatefulWidget {
   final IlmBook book;
   final MutunDigitalEntry digitalEntry;
   final int initialPage;
   final Future<void> Function(int page, int total) onPageChanged;
+  final bool showControls;
+  final VoidCallback onToggleControls;
+  final bool isBookmarked;
+  final VoidCallback onToggleBookmark;
+  final VoidCallback onAddNote;
+  final VoidCallback onShowBookmarks;
 
   const MutnDigitalReaderView({
     super.key,
@@ -29,6 +34,12 @@ class MutnDigitalReaderView extends StatefulWidget {
     required this.digitalEntry,
     required this.initialPage,
     required this.onPageChanged,
+    required this.showControls,
+    required this.onToggleControls,
+    required this.isBookmarked,
+    required this.onToggleBookmark,
+    required this.onAddNote,
+    required this.onShowBookmarks,
   });
 
   @override
@@ -199,7 +210,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
         bgColor = palette.goldSoft;
         break;
       case ShamelaReaderSurface.night:
-        bgColor = palette.bg;
+        bgColor = palette.surface;
         break;
       case ShamelaReaderSurface.normal:
         bgColor = palette.bg;
@@ -210,10 +221,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       color: bgColor,
       child: Column(
         children: [
-          // ── Quick Controls Bar ─────────────────────────────────
-          _buildQuickActionBar(palette, textTheme),
-
-          // ── Reader Body ────────────────────────────────────────
+          // ── Reader Body (Tap to toggle distraction-free mode) ──
           Expanded(
             child: _isLoading
                 ? Center(
@@ -224,123 +232,25 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                   )
                 : _errorMessage != null
                     ? _buildErrorView(palette, textTheme)
-                    : _buildContentArea(palette, textTheme),
+                    : InkWell(
+                        onTap: widget.onToggleControls,
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        child: _buildContentArea(palette, textTheme),
+                      ),
           ),
 
-          // ── Bottom Navigation HUD ──────────────────────────────
-          _buildBottomNavHud(palette, textTheme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionBar(AppPalette palette, AppTextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        border: Border(
-          bottom: BorderSide(color: palette.border, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Chapter / Index button
-          InkWell(
-            onTap: _openFihrisSheet,
-            borderRadius: AppRadius.smRadius,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.format_list_bulleted_rounded,
-                    size: AppIcon.sm,
-                    color: palette.text,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    'الفهرس',
-                    style: textTheme.caption.copyWith(
-                      color: palette.text,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+          // ── Unified Bottom Scholarly HUD ───────────────────────
+          AnimatedContainer(
+            duration: AppMotion.base,
+            height: widget.showControls ? 104.0 : 0.0,
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.topCenter,
+                maxHeight: 104.0,
+                child: _buildBottomNavHud(palette, textTheme),
               ),
             ),
-          ),
-
-          const Spacer(),
-
-          // Memorization Mode (وضع التحفيظ)
-          InkWell(
-            onTap: _toggleMemorizationMode,
-            borderRadius: AppRadius.smRadius,
-            child: Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: _memorizationMode
-                    ? palette.primarySoft
-                    : Colors.transparent,
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(
-                  color: _memorizationMode
-                      ? palette.primary
-                      : palette.border,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _memorizationMode
-                        ? Icons.visibility_off_rounded
-                        : Icons.psychology_outlined,
-                    size: AppIcon.sm,
-                    color: _memorizationMode
-                        ? palette.primary
-                        : palette.textMuted,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    'وضع التسميع',
-                    style: textTheme.caption.copyWith(
-                      color: _memorizationMode
-                          ? palette.primary
-                          : palette.textMuted,
-                      fontWeight: _memorizationMode
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(width: AppSpace.xs),
-
-          // Typography settings
-          IconButton(
-            icon: Icon(
-              Icons.text_format_rounded,
-              color: palette.text,
-              size: AppIcon.md,
-            ),
-            tooltip: 'تخصيص الخط والورق',
-            onPressed: _openTypographySheet,
           ),
         ],
       ),
@@ -383,7 +293,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                     chapter,
                     style: textTheme.titleSmall.copyWith(
                       color: palette.gold,
-                      fontWeight: FontWeight.bold,
                       fontFamily: _fontFamily,
                     ),
                     textAlign: TextAlign.center,
@@ -422,7 +331,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                   'الحاشية والتعليقات:',
                   style: textTheme.caption.copyWith(
                     color: palette.textMuted,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: AppSpace.xs),
@@ -444,55 +352,173 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
 
   Widget _buildBottomNavHud(AppPalette palette, AppTextTheme textTheme) {
     return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
-      ),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
         border: Border(
           top: BorderSide(color: palette.border, width: 1),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Previous page button (RTL forward)
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios_rounded, size: AppIcon.sm),
-            tooltip: 'الصفحة السابقة',
-            onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
-            color: palette.text,
-          ),
-
-          // Page counter pill
-          Container(
+          // Row 1: Fast Page Navigation
+          Padding(
             padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
+              vertical: AppSpace.xxs,
             ),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: AppRadius.pillRadius,
-              border: Border.all(color: palette.border, width: 1),
-            ),
-            child: Text(
-              'صفحة $_currentPage من $_totalPages',
-              style: textTheme.label.copyWith(
-                color: palette.text,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: AppIcon.sm),
+                  tooltip: 'الصفحة السابقة',
+                  onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+                  color: palette.text,
+                ),
+                InkWell(
+                  onTap: _openFihrisSheet,
+                  borderRadius: AppRadius.pillRadius,
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.surface,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(color: palette.border, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.menu_book_rounded,
+                          size: AppIcon.xs,
+                          color: palette.gold,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          'صفحة $_currentPage من $_totalPages',
+                          style: textTheme.label.copyWith(
+                            color: palette.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_rounded, size: AppIcon.sm),
+                  tooltip: 'الصفحة التالية',
+                  onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+                  color: palette.text,
+                ),
+              ],
             ),
           ),
 
-          // Next page button (RTL backward)
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded, size: AppIcon.sm),
-            tooltip: 'الصفحة التالية',
-            onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
-            color: palette.text,
+          Divider(height: 1, thickness: 1, color: palette.border),
+
+          // Row 2: Consolidated Scholarly Toolstrip
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+              vertical: AppSpace.xxs,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildToolItem(
+                  icon: widget.isBookmarked
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  label: widget.isBookmarked ? 'محفوظة' : 'إشارة',
+                  iconColor: widget.isBookmarked ? palette.gold : palette.text,
+                  onTap: widget.onToggleBookmark,
+                  onLongPress: widget.onShowBookmarks,
+                  palette: palette,
+                  textTheme: textTheme,
+                ),
+                _buildToolItem(
+                  icon: Icons.edit_note_rounded,
+                  label: 'ملاحظة',
+                  iconColor: palette.text,
+                  onTap: widget.onAddNote,
+                  palette: palette,
+                  textTheme: textTheme,
+                ),
+                _buildToolItem(
+                  icon: Icons.format_list_bulleted_rounded,
+                  label: 'الفهرس',
+                  iconColor: palette.text,
+                  onTap: _openFihrisSheet,
+                  palette: palette,
+                  textTheme: textTheme,
+                ),
+                _buildToolItem(
+                  icon: _memorizationMode
+                      ? Icons.visibility_off_rounded
+                      : Icons.psychology_outlined,
+                  label: 'تسميع',
+                  iconColor: _memorizationMode ? palette.primary : palette.text,
+                  bgColor: _memorizationMode ? palette.primarySoft : null,
+                  onTap: _toggleMemorizationMode,
+                  palette: palette,
+                  textTheme: textTheme,
+                ),
+                _buildToolItem(
+                  icon: Icons.text_format_rounded,
+                  label: 'الخط',
+                  iconColor: palette.text,
+                  onTap: _openTypographySheet,
+                  palette: palette,
+                  textTheme: textTheme,
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToolItem({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress,
+    Color? bgColor,
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      borderRadius: AppRadius.smRadius,
+      child: Container(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpace.sm,
+          vertical: AppSpace.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: bgColor ?? Colors.transparent,
+          borderRadius: AppRadius.smRadius,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppIcon.sm, color: iconColor),
+            const SizedBox(height: AppSpace.xxs),
+            Text(
+              label,
+              style: textTheme.caption.copyWith(
+                color: palette.text,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

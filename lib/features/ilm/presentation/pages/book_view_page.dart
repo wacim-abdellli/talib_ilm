@@ -25,8 +25,8 @@ import 'sharh_reader_page.dart';
 import '../widgets/book_mutn_tab.dart';
 import '../widgets/book_sharh_tab.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
-import '../widgets/book_view_controls.dart';
-import '../../../../shared/widgets/primary_app_bar.dart';
+import '../widgets/book_view_app_bar.dart';
+import '../widgets/book_view_controls.dart' show BookNoteDialog;
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/models/favorite_item.dart';
 import '../../../../core/services/asset_service.dart';
@@ -62,7 +62,7 @@ class _BookViewPageState extends State<BookViewPage>
   late BookProgressService _bookProgressService;
   late Timer _readingTimer;
   int _sessionMinutes = 0;
-  final bool _showControls = true;
+  bool _showControls = true;
   final TextEditingController _noteController = TextEditingController();
   final Set<int> _bookmarkedPages = <int>{};
   bool _bookServiceReady = false;
@@ -74,7 +74,6 @@ class _BookViewPageState extends State<BookViewPage>
   Sharh? _lastSharh;
   PdfPageInfo? _lastSharhPage;
   static const int _temporaryLessonsCount = 10; // 🔧 TEMP
-  late final String _mutunPdfPath;
   late final String _mutunPdfKey;
   late final Future<int> _mutunInitialPage;
   bool _isFavorite = false;
@@ -100,7 +99,6 @@ class _BookViewPageState extends State<BookViewPage>
   @override
   void initState() {
     super.initState();
-    _mutunPdfPath = widget.book.pdfPath ?? '';
     _mutunPdfKey = _lastActivityService.pdfKeyForMutn(widget.book.id);
     _mutunInitialPage = _lastActivityService.getPdfPage(_mutunPdfKey).then((
       info,
@@ -286,7 +284,14 @@ class _BookViewPageState extends State<BookViewPage>
     AppSnackbar.success(context, 'تمت إعادة تعيين تقدم الكتاب');
   }
 
+  void _toggleControls() {
+    setState(() => _showControls = !_showControls);
+  }
+
   void _handleTabChange() {
+    if (!_showControls) {
+      setState(() => _showControls = true);
+    }
     if (_tabController.index == _lastTabIndex) return;
     _lastTabIndex = _tabController.index;
     _lastActivityService.setLastTab(
@@ -437,61 +442,72 @@ class _BookViewPageState extends State<BookViewPage>
     );
   }
 
+  Future<void> _onMutnPageChanged(int page, int total) async {
+    if (total <= 0) return;
+
+    final safeTotal = total < page ? page : total;
+
+    setState(() {
+      _currentPage = page;
+      _totalPages = safeTotal;
+      _isBookmarked = _bookmarkedPages.contains(page);
+    });
+
+    _updateReadingTime();
+
+    if (page > _maxPageReached) {
+      _maxPageReached = page;
+    }
+
+    _ensureBookInitialized(totalPages: safeTotal);
+
+    _lastActivityService.savePdfPage(
+      key: _mutunPdfKey,
+      page: page,
+      total: safeTotal,
+    );
+    final reachedEnd = page >= safeTotal;
+
+    // hint (only once)
+    if (reachedEnd && !_canCompleteBook && !_hasShownReadHint) {
+      _hasShownReadHint = true;
+      AppSnackbar.info(
+        context,
+        'لإتمام الكتاب، يرجى قراءته بتأنٍ وعدم الاكتفاء بالانتقال السريع بين الصفحات 📖',
+      );
+    }
+
+    // completion (one-time)
+    if (reachedEnd && _canCompleteBook) {
+      final justCompleted = await _bookProgressService.markCompleted(
+        widget.book.id,
+      );
+
+      if (justCompleted && mounted) {
+        HapticFeedback.selectionClick();
+        AppPopup.show(
+          context: context,
+          title: 'اكتمل الكتاب',
+          message: AppStrings.bookProgressSaved,
+          icon: Icons.check_circle_rounded,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: UnifiedAppBar(
-        title: widget.book.title,
-        showBack: true,
-        actions: [
-          IconButton(
-            tooltip: _isFavorite
-                ? AppStrings.bookFavoriteRemove
-                : AppStrings.bookFavoriteAdd,
-            onPressed: _toggleFavorite,
-            icon: Icon(
-              _isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-              color: _isFavorite ? context.palette.gold : context.palette.text,
-            ),
-          ),
-          IconButton(
-            tooltip: AppStrings.bookResetProgress,
-            onPressed: _resetProgress,
-            icon: Icon(Icons.refresh_rounded, color: context.palette.text),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicator: BoxDecoration(
-            color: context.palette.primarySoft,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          labelColor: context.palette.onPrimarySoft,
-          unselectedLabelColor: context.palette.textMuted,
-          labelStyle: context.text.label,
-          unselectedLabelStyle: context.text.label.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-          indicatorPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.md,
-            vertical: AppSpace.xs,
-          ),
-          tabs: const [
-            Tab(text: AppStrings.bookMutnTab),
-            Tab(text: AppStrings.bookSharhTab),
-            Tab(text: AppStrings.bookLessonsTab),
-          ],
-        ),
-      ),
-      floatingActionButton: _showControls
-          ? BookViewControls(
-              isBookmarked: _isBookmarked,
-              onToggleBookmark: _toggleBookmark,
-              onAddNote: _showNoteDialog,
-              onShowBookmarks: _showGlobalBookmarksList,
+      appBar: _showControls
+          ? BookViewAppBar(
+              title: widget.book.title,
+              isFavorite: _isFavorite,
+              onToggleFavorite: _toggleFavorite,
+              onResetProgress: _resetProgress,
+              tabController: _tabController,
             )
           : null,
+      floatingActionButton: null,
       body: Container(
         color: context.backgroundColor,
         child: TabBarView(
@@ -500,62 +516,14 @@ class _BookViewPageState extends State<BookViewPage>
           children: [
             BookMutnTab(
               book: widget.book,
-              mutunPdfPath: _mutunPdfPath,
               mutunInitialPage: _mutunInitialPage,
-              mutnPdfKey: _mutnPdfKey,
-              onPageChanged: (page, total) async {
-                if (total <= 0) return;
-
-                final safeTotal = total < page ? page : total;
-
-                setState(() {
-                  _currentPage = page;
-                  _totalPages = safeTotal;
-                  _isBookmarked = _bookmarkedPages.contains(page);
-                });
-
-                _updateReadingTime();
-
-                if (page > _maxPageReached) {
-                  _maxPageReached = page;
-                }
-
-                _ensureBookInitialized(totalPages: safeTotal);
-
-                _lastActivityService.savePdfPage(
-                  key: _mutunPdfKey,
-                  page: page,
-                  total: safeTotal,
-                );
-                final reachedEnd = page >= safeTotal;
-
-                // hint (only once)
-                if (reachedEnd && !_canCompleteBook && !_hasShownReadHint) {
-                  _hasShownReadHint = true;
-
-                  AppSnackbar.info(
-                    context,
-                    'لإتمام الكتاب، يرجى قراءته بتأنٍ وعدم الاكتفاء بالانتقال السريع بين الصفحات 📖',
-                  );
-                }
-
-                // ✅ completion (one-time)
-                if (reachedEnd && _canCompleteBook) {
-                  final justCompleted = await _bookProgressService.markCompleted(
-                    widget.book.id,
-                  );
-
-                  if (justCompleted && context.mounted) {
-                    HapticFeedback.selectionClick();
-                    AppPopup.show(
-                      context: context,
-                      title: 'اكتمل الكتاب',
-                      message: AppStrings.bookProgressSaved,
-                      icon: Icons.check_circle_rounded,
-                    );
-                  }
-                }
-              },
+              onPageChanged: _onMutnPageChanged,
+              showControls: _showControls,
+              onToggleControls: _toggleControls,
+              isBookmarked: _isBookmarked,
+              onToggleBookmark: _toggleBookmark,
+              onAddNote: _showNoteDialog,
+              onShowBookmarks: _showGlobalBookmarksList,
             ),
 
             BookSharhTab(
