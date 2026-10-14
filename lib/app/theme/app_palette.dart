@@ -137,6 +137,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     logoLockup: 'assets/branding/lockup_on_dark.png',
   );
 
+  /// Default Mushaf theme mode aligning with palette brightness
+  MushafThemeMode get defaultMushafTheme =>
+      isDark ? MushafThemeMode.dark : MushafThemeMode.sepia;
+
   /// Canonical category color resolution with >= 4.5:1 contrast
   CategoryColors category(String? subject) {
     final s = (subject ?? '').toLowerCase().trim();
@@ -737,6 +741,24 @@ class MushafColors {
       case MushafThemeMode.dark:  return darkBannerBorder;
     }
   }
+
+  static Color bannerBgFor(MushafThemeMode mode) => switch (mode) {
+    MushafThemeMode.white => whiteBannerBg,
+    MushafThemeMode.sepia => sepiaBannerBg,
+    MushafThemeMode.dark => darkBannerBg,
+  };
+
+  static Color bannerTextFor(MushafThemeMode mode) => switch (mode) {
+    MushafThemeMode.white => whiteBannerText,
+    MushafThemeMode.sepia => sepiaBannerText,
+    MushafThemeMode.dark => darkBannerText,
+  };
+
+  static Color bannerSubtextFor(MushafThemeMode mode) => switch (mode) {
+    MushafThemeMode.white => whiteBannerSubtext,
+    MushafThemeMode.sepia => sepiaBannerSubtext,
+    MushafThemeMode.dark => darkBannerSubtext,
+  };
 
   static Color overlayBgFor(MushafThemeMode mode, AppPalette palette) => switch (mode) {
     MushafThemeMode.white => palette.surfaceRaised,

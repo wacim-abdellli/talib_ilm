@@ -63,6 +63,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   bool _keepScreenAwake = true;
   bool _showOverlays = true;
   TafsirScholar _defaultTafsir = TafsirScholar.muyassar;
+  bool _userExplicitlySelectedTheme = false;
+  MushafThemeMode? _lastDefaultMushafTheme;
 
   late final DateTime _sessionStartTime;
 
@@ -110,6 +112,20 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final defaultTheme = context.palette.defaultMushafTheme;
+    if (_lastDefaultMushafTheme != defaultTheme) {
+      _lastDefaultMushafTheme = defaultTheme;
+      if (!_userExplicitlySelectedTheme) {
+        if (_themeMode != defaultTheme) {
+          _themeMode = defaultTheme;
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _audioService.errorNotifier.removeListener(_onAudioError);
     _saveLastReadDebounceTimer?.cancel();
@@ -147,9 +163,14 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     final snapshot = await QuranReaderPreferences.load();
 
     if (!mounted) return;
+    final defaultTheme = context.palette.defaultMushafTheme;
     setState(() {
       _isTajweedEnabled = snapshot.isTajweedEnabled;
-      _themeMode = snapshot.themeMode;
+      if (!_userExplicitlySelectedTheme) {
+        _themeMode = defaultTheme;
+      } else {
+        _themeMode = snapshot.themeMode;
+      }
       _keepScreenAwake = snapshot.keepScreenAwake;
       _defaultTafsir = snapshot.defaultTafsir;
     });
@@ -224,6 +245,18 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     setState(() => _showOverlays = !_showOverlays);
   }
 
+  void _toggleTheme() {
+    _userExplicitlySelectedTheme = true;
+    setState(() {
+      _themeMode = switch (_themeMode) {
+        MushafThemeMode.dark => MushafThemeMode.sepia,
+        MushafThemeMode.sepia => MushafThemeMode.dark,
+        MushafThemeMode.white => MushafThemeMode.dark,
+      };
+    });
+    _saveSettings();
+  }
+
   void _openSettings() {
     HapticFeedback.lightImpact();
     MushafSettingsSheet.show(
@@ -234,6 +267,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       selectedReciter: _audioService.selectedReciter,
       selectedTafsir: _defaultTafsir,
       onThemeChanged: (mode) {
+        _userExplicitlySelectedTheme = true;
         setState(() => _themeMode = mode);
         _saveSettings();
       },
@@ -316,6 +350,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                     themeMode: _themeMode,
                     onJumpToPage: _jumpToPage,
                     onOpenSettings: _openSettings,
+                    onToggleTheme: _toggleTheme,
                   );
                 },
               ),

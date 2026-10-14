@@ -16,6 +16,7 @@ class MushafReaderTopBar extends StatelessWidget {
   final MushafThemeMode themeMode;
   final ValueChanged<int> onJumpToPage;
   final VoidCallback onOpenSettings;
+  final VoidCallback? onToggleTheme;
 
   const MushafReaderTopBar({
     super.key,
@@ -25,6 +26,7 @@ class MushafReaderTopBar extends StatelessWidget {
     this.themeMode = MushafThemeMode.white,
     required this.onJumpToPage,
     required this.onOpenSettings,
+    this.onToggleTheme,
   });
 
   @override
@@ -116,6 +118,22 @@ class MushafReaderTopBar extends StatelessWidget {
               QuickJumpSheet.show(context, onJumpToPage: onJumpToPage);
             },
           ),
+
+          // 1-Tap Theme Toggle Button (Day / Night)
+          if (onToggleTheme != null)
+            AppIconButton(
+              icon: themeMode == MushafThemeMode.dark
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+              tooltip: themeMode == MushafThemeMode.dark
+                  ? 'الوضع الورقي'
+                  : 'الوضع الليلي الداكن',
+              color: palette.gold,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                onToggleTheme!();
+              },
+            ),
 
           // Settings Button
           AppIconButton(

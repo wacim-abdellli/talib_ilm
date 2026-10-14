@@ -25,7 +25,6 @@ class MushafSurahBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final textTheme = context.text;
     final verseCount = quran.getVerseCount(surahNumber);
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
@@ -40,6 +39,10 @@ class MushafSurahBanner extends StatelessWidget {
     };
 
     final Color? frameColor = MushafColors.bannerFrameTint(themeMode);
+
+    final Color plaqueBg = MushafColors.bannerBgFor(themeMode);
+    final Color plaqueBorder = MushafColors.bannerBorderFor(themeMode);
+    final Color plaqueText = MushafColors.bannerSubtextFor(themeMode);
 
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -97,13 +100,10 @@ class MushafSurahBanner extends StatelessWidget {
                   vertical: 2,
                 ),
                 decoration: BoxDecoration(
-                  color: (themeMode == MushafThemeMode.dark
-                          ? palette.surfaceRaised
-                          : palette.surface)
-                      .withValues(alpha: 0.90),
+                  color: plaqueBg.withValues(alpha: 0.92),
                   borderRadius: AppRadius.pillRadius,
                   border: Border.all(
-                    color: palette.gold.withValues(alpha: 0.6),
+                    color: plaqueBorder,
                     width: 0.8,
                   ),
                 ),
@@ -112,7 +112,7 @@ class MushafSurahBanner extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   style: textTheme.caption.copyWith(
-                    color: textColor,
+                    color: plaqueText,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -128,13 +128,10 @@ class MushafSurahBanner extends StatelessWidget {
                   vertical: 2,
                 ),
                 decoration: BoxDecoration(
-                  color: (themeMode == MushafThemeMode.dark
-                          ? palette.surfaceRaised
-                          : palette.surface)
-                      .withValues(alpha: 0.90),
+                  color: plaqueBg.withValues(alpha: 0.92),
                   borderRadius: AppRadius.pillRadius,
                   border: Border.all(
-                    color: palette.gold.withValues(alpha: 0.6),
+                    color: plaqueBorder,
                     width: 0.8,
                   ),
                 ),
@@ -143,7 +140,7 @@ class MushafSurahBanner extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   style: textTheme.caption.copyWith(
-                    color: textColor,
+                    color: plaqueText,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
