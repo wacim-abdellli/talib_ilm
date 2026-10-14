@@ -650,9 +650,12 @@ class AppSize {
 
   /// Clearance required at the bottom of screens to sit comfortably above the floating nav
   static double navClearance(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final navBottom = bottomInset > 0 ? bottomInset : AppSpace.sm;
-    return navH + navBottom + AppSpace.sm;
+    final viewPaddingBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final paddingBottom = MediaQuery.paddingOf(context).bottom;
+    final effectiveInset =
+        viewPaddingBottom > 0 ? viewPaddingBottom : paddingBottom;
+    final navBottom = effectiveInset > 0 ? effectiveInset : AppSpace.sm;
+    return navH + navBottom + AppSpace.lg;
   }
 }
 

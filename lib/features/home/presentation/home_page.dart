@@ -14,6 +14,7 @@ import 'widgets/home_hero_card.dart';
 import 'widgets/continue_learning_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_quick_actions.dart';
+import 'widgets/home_quran_radio_card.dart';
 
 import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/models/sharh_model.dart';
@@ -244,6 +245,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     return Scaffold(
       backgroundColor: context.palette.bg,
+      extendBody: true,
       body: SafeArea(
         bottom: false,
         child: ListenableBuilder(
@@ -351,7 +353,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.xl),
                   ),
 
-                  // Quick actions (Other Features)
+                  // Quick actions (أبواب الخير)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsetsDirectional.symmetric(
@@ -362,7 +364,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         onOpenIlm: () => _openIlm(context),
                         onOpenAdhkar: () => _openAdhkar(context),
                         onOpenQibla: () => _openQibla(context),
-                        onOpenRadio: () => QuranRadioSheet.show(context),
+                      ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.md),
+                  ),
+
+                  // Live Quran Radio Card (إذاعة القرآن الكريم)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: HomeQuranRadioCard(
+                        onTap: () => QuranRadioSheet.show(context),
                       ),
                     ),
                   ),
