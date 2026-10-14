@@ -457,11 +457,23 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                       activeProgress?.errorMessage !=
                                           null) ...[
                                     const SizedBox(height: AppSpace.xxs),
-                                    Text(
-                                      activeProgress!.errorMessage!,
-                                      style: textTheme.bodySmall.copyWith(
-                                        color: palette.error,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline_rounded,
+                                          size: AppIcon.xs,
+                                          color: palette.error,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Expanded(
+                                          child: Text(
+                                            activeProgress!.errorMessage!,
+                                            style: textTheme.bodySmall.copyWith(
+                                              color: palette.error,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ],
@@ -574,7 +586,29 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       );
     }
 
-    // 4. Surah is idle (not downloaded)
+    // 4. Surah download failed - allow Retry or Cancel
+    if (progress != null && progress.status == SurahDownloadStatus.failed) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(Icons.refresh_rounded, color: palette.primary),
+            tooltip: 'إعادة المحاولة',
+            onPressed: () => _startDownload(surah),
+          ),
+          IconButton(
+            icon: Icon(Icons.close_rounded, color: palette.textMuted),
+            tooltip: 'إلغاء التنزيل',
+            onPressed: () => _downloader.cancelDownload(
+              surah,
+              reciter: _currentReciter,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 5. Surah is idle (not downloaded)
     return IconButton(
       icon: Icon(Icons.download_rounded, color: palette.primary),
       tooltip: 'تنزيل السورة للاستماع بدون إنترنت',

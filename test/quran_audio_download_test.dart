@@ -133,6 +133,84 @@ void main() {
       await QuranAudioDownloader.deleteAllDownloadedAudio();
       expect(await QuranAudioDownloader.getTotalStorageUsed(), equals(0));
     });
+
+    test('cancelDownload stops download, cleans up temp files, and leaves status idle without raw exception', () async {
+      final downloader = QuranAudioDownloader();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_108';
+
+      // Mock client that simulates active cancellation during stream
+      final mockClient = MockClient((request) async {
+        // Trigger cancellation on ayah 2
+        if (request.url.path.contains('108002')) {
+          downloader.cancelDownload(108);
+          throw http.ClientException('Connection closed while receiving data', request.url);
+        }
+        return http.Response.bytes(List.filled(50, 1), 200);
+      });
+
+      await downloader.downloadSurah(surah: 108, client: mockClient);
+
+      // Verify progress was reset to idle and not failed
+      final progress = downloader.downloadProgressNotifier.value[key];
+      expect(progress?.status, isNot(equals(SurahDownloadStatus.failed)));
+      expect(progress?.errorMessage, isNull);
+
+      // Verify no leftover .tmp files
+      final dir = await QuranAudioDownloader.getSurahDir(108, reciter.id);
+      if (dir.existsSync()) {
+        final tmpFiles = dir.listSync().where((f) => f.path.endsWith('.tmp'));
+        expect(tmpFiles, isEmpty);
+      }
+    });
+
+    test('network failure generates clean localized Arabic error message instead of raw ClientException', () async {
+      final downloader = QuranAudioDownloader();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_112';
+
+      final mockClient = MockClient((request) async {
+        throw http.ClientException('Connection closed while receiving data', request.url);
+      });
+
+      await downloader.downloadSurah(surah: 112, client: mockClient);
+
+      final progress = downloader.downloadProgressNotifier.value[key];
+      expect(progress?.status, equals(SurahDownloadStatus.failed));
+      expect(progress?.errorMessage, equals('تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت'));
+      expect(progress?.errorMessage?.contains('ClientException'), isFalse);
+    });
+
+    test('pauseDownload sets status paused and allows subsequent resume to complete', () async {
+      final downloader = QuranAudioDownloader();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_110';
+
+      // Mock client that pauses on ayah 2
+      final mockClient = MockClient((request) async {
+        if (request.url.path.contains('110002')) {
+          downloader.pauseDownload(110);
+        }
+        return http.Response.bytes(List.filled(50, 1), 200);
+      });
+
+      await downloader.downloadSurah(surah: 110, client: mockClient);
+
+      final pausedProgress = downloader.downloadProgressNotifier.value[key];
+      expect(pausedProgress?.status, equals(SurahDownloadStatus.paused));
+      expect(pausedProgress?.isPaused, isTrue);
+
+      // Resume with normal client
+      final resumeClient = MockClient((request) async {
+        return http.Response.bytes(List.filled(50, 1), 200);
+      });
+
+      await downloader.downloadSurah(surah: 110, client: resumeClient);
+
+      final completedProgress = downloader.downloadProgressNotifier.value[key];
+      expect(completedProgress?.status, equals(SurahDownloadStatus.completed));
+      expect(await QuranAudioDownloader.isSurahDownloaded(110), isTrue);
+    });
   });
 
   group('Audio Source Resolution (Offline Local File vs Online Stream)', () {

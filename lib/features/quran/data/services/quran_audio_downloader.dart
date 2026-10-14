@@ -254,6 +254,17 @@ class QuranAudioDownloader {
     int currentCount = existingCount;
     int currentBytes = existingBytes;
 
+    // Clean up any stale temp files from prior aborted attempts
+    try {
+      if (await surahDir.exists()) {
+        for (final file in surahDir.listSync()) {
+          if (file is File && file.path.endsWith('.tmp')) {
+            file.deleteSync();
+          }
+        }
+      }
+    } catch (_) {}
+
     for (int a = 1; a <= totalVerses; a++) {
       // Check for pause
       if (_pauseFlags[key] == true) {
@@ -273,17 +284,7 @@ class QuranAudioDownloader {
 
       // Check for cancel
       if (_cancelFlags[key] == true) {
-        _updateProgress(
-          key,
-          SurahDownloadProgress(
-            surah: surah,
-            reciterId: r.id,
-            downloadedAyahs: currentCount,
-            totalAyahs: totalVerses,
-            downloadedBytes: currentBytes,
-            status: SurahDownloadStatus.idle,
-          ),
-        );
+        _removeProgress(key);
         return;
       }
 
@@ -310,19 +311,43 @@ class QuranAudioDownloader {
         final tempFile = File('${surahDir.path}/$sStr$aStr.tmp');
         final sink = tempFile.openWrite();
 
-        await response.stream.listen(
-          (chunk) {
-            sink.add(chunk);
-          },
-          cancelOnError: true,
-        ).asFuture<void>();
-
-        await sink.flush();
-        await sink.close();
+        try {
+          await response.stream.listen(
+            (chunk) {
+              sink.add(chunk);
+            },
+            cancelOnError: true,
+          ).asFuture<void>();
+        } finally {
+          await sink.flush();
+          await sink.close();
+        }
 
         // Check if canceled during write
         if (_cancelFlags[key] == true) {
-          if (tempFile.existsSync()) await tempFile.delete();
+          try {
+            if (tempFile.existsSync()) await tempFile.delete();
+          } catch (_) {}
+          _removeProgress(key);
+          return;
+        }
+
+        // Check if paused during write
+        if (_pauseFlags[key] == true) {
+          try {
+            if (tempFile.existsSync()) await tempFile.delete();
+          } catch (_) {}
+          _updateProgress(
+            key,
+            SurahDownloadProgress(
+              surah: surah,
+              reciterId: r.id,
+              downloadedAyahs: currentCount,
+              totalAyahs: totalVerses,
+              downloadedBytes: currentBytes,
+              status: SurahDownloadStatus.paused,
+            ),
+          );
           return;
         }
 
@@ -347,11 +372,48 @@ class QuranAudioDownloader {
           ),
         );
       } catch (e) {
-        // Disk space or network failure
+        // Safely cleanup temp file
+        try {
+          final tempFile = File('${surahDir.path}/$sStr$aStr.tmp');
+          if (tempFile.existsSync()) await tempFile.delete();
+        } catch (_) {}
+
+        // User intentionally canceled
+        if (_cancelFlags[key] == true) {
+          _removeProgress(key);
+          return;
+        }
+
+        // User intentionally paused
+        if (_pauseFlags[key] == true) {
+          _updateProgress(
+            key,
+            SurahDownloadProgress(
+              surah: surah,
+              reciterId: r.id,
+              downloadedAyahs: currentCount,
+              totalAyahs: totalVerses,
+              downloadedBytes: currentBytes,
+              status: SurahDownloadStatus.paused,
+            ),
+          );
+          return;
+        }
+
+        // True network or disk failure
         final isDiskError = e is FileSystemException;
-        final errorMsg = isDiskError
-            ? 'المساحة التخزينية غير كافية لإكمال التنزيل'
-            : 'تعذر تحميل الآية $a: $e';
+        final String errorMsg;
+        if (isDiskError) {
+          errorMsg = 'المساحة التخزينية غير كافية لإكمال التنزيل';
+        } else if (e.toString().contains('Connection closed') ||
+            e.toString().contains('SocketException') ||
+            e.toString().contains('TimeoutException') ||
+            e.toString().contains('Failed host lookup') ||
+            e.toString().contains('ClientException')) {
+          errorMsg = 'تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت';
+        } else {
+          errorMsg = 'تعذر تحميل الآية $a، يرجى إعادة المحاولة';
+        }
 
         _updateProgress(
           key,
@@ -386,13 +448,48 @@ class QuranAudioDownloader {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final key = '${r.id}_$surah';
     _pauseFlags[key] = true;
+    _cancelFlags[key] = false;
+    _activeHttpClients[key]?.close();
+    _activeHttpClients.remove(key);
+
+    final prev = downloadProgressNotifier.value[key];
+    if (prev != null) {
+      _updateProgress(
+        key,
+        SurahDownloadProgress(
+          surah: surah,
+          reciterId: r.id,
+          downloadedAyahs: prev.downloadedAyahs,
+          totalAyahs: prev.totalAyahs,
+          downloadedBytes: prev.downloadedBytes,
+          status: SurahDownloadStatus.paused,
+        ),
+      );
+    }
   }
 
   void cancelDownload(int surah, {QuranReciter? reciter}) {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final key = '${r.id}_$surah';
     _cancelFlags[key] = true;
+    _pauseFlags[key] = false;
     _activeHttpClients[key]?.close();
+    _activeHttpClients.remove(key);
+
+    // Clean up any temp files for this surah
+    getSurahDir(surah, r.id).then((dir) {
+      try {
+        if (dir.existsSync()) {
+          for (final file in dir.listSync()) {
+            if (file is File && file.path.endsWith('.tmp')) {
+              file.deleteSync();
+            }
+          }
+        }
+      } catch (_) {}
+    });
+
+    _removeProgress(key);
   }
 
   /// Delete all downloaded audio files for a specific Surah
@@ -420,6 +517,13 @@ class QuranAudioDownloader {
     final current =
         Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
     current[key] = progress;
+    downloadProgressNotifier.value = current;
+  }
+
+  void _removeProgress(String key) {
+    final current =
+        Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
+    current.remove(key);
     downloadProgressNotifier.value = current;
   }
 }
