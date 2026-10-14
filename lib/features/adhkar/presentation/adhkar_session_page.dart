@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
+import 'widgets/adhkar_fahras_sheet.dart';
 import 'widgets/adhkar_session_card.dart';
 import 'widgets/dhikr_counter_dial.dart';
 
@@ -207,6 +208,23 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     });
   }
 
+  Future<void> _openFahras() async {
+    if (_items.isEmpty) return;
+    HapticFeedback.selectionClick();
+    final selectedIndex = await showAdhkarFahrasSheet(
+      context: context,
+      categoryTitle: widget.titleOverride ?? _categoryTitle ?? widget.category.label,
+      items: _items,
+      currentIndex: _index,
+      counts: _counts,
+      favoriteIdFor: _favoriteIdFor,
+      repeatFor: _repeatFor,
+    );
+    if (selectedIndex != null && selectedIndex != _index && mounted) {
+      _pageController.jumpToPage(selectedIndex);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title =
@@ -223,6 +241,18 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       appBar: PrimaryAppBar(
         title: title,
         showBack: true,
+        actions: [
+          if (totalItems > 1)
+            IconButton(
+              tooltip: 'فهرس الأذكار',
+              icon: Icon(
+                Icons.format_list_bulleted_rounded,
+                color: palette.gold,
+                size: AppIcon.md,
+              ),
+              onPressed: _openFahras,
+            ),
+        ],
         bottom: totalItems > 0
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(28),
@@ -236,11 +266,38 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'الذكر ${_index + 1} من $totalItems',
-                            style: context.text.caption.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: palette.gold,
+                          InkWell(
+                            onTap: _openFahras,
+                            borderRadius: AppRadius.smRadius,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.xs,
+                                vertical: 2,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.toc_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.gold,
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    'الذكر ${_index + 1} من $totalItems',
+                                    style: context.text.caption.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: palette.gold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: AppIcon.xs,
+                                    color: palette.gold,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           Text(
