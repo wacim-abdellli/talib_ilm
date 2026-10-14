@@ -75,6 +75,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.logoLockup,
   });
 
+  /// Pure serene white splash screen tokens
+  static const Color splashWhite = Color(0xFFFFFFFF);
+  static const Color splashText = Color(0xFF1C1917);
+  static const Color splashTextMuted = Color(0xFF5E574E);
+  static const Color splashTextSubtle = Color(0xFF787169);
+  static const Color splashGold = Color(0xFF92400E);
+  static const Color splashGoldSoft = Color(0xFFFEF3C7);
+
   /// Light theme palette — Warm Ivory Parchment & Imperial Burnished Gold
   static const light = AppPalette(
     bg: Color(0xFFFAF8F5),
@@ -590,7 +598,7 @@ class AppMotion {
   static const Duration fast = Duration(milliseconds: 120);
   static const Duration base = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 320);
-  static const Duration splash = Duration(milliseconds: 1400);
+  static const Duration splash = Duration(milliseconds: 650);
   static const Duration toast = Duration(milliseconds: 2500);
   static const Duration debounce = Duration(milliseconds: 500);
 

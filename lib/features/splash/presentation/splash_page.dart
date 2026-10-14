@@ -90,11 +90,10 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: palette.bg,
+      backgroundColor: AppPalette.splashWhite,
       body: SafeArea(
         child: InkWell(
           onTap: _proceedToHome,
@@ -109,134 +108,162 @@ class _SplashPageState extends State<SplashPage>
               opacity: _fadeAnimation,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Top: Sacred Basmalah with Full Shakl (Tashkeel)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(top: AppSpace.md),
-                      child: Semantics(
-                        header: true,
-                        label: 'بسم الله الرحمن الرحيم',
-                        child: Text(
-                          'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                          textAlign: TextAlign.center,
-                          style: textTheme.sacredLarge.copyWith(
-                            color: palette.gold,
-                            letterSpacing: 0.5,
-                          ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-                      ),
-                    ),
-
-                    // Center: Sacred Emblem & App Identity
-                    Expanded(
-                      child: Center(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
+                        child: IntrinsicHeight(
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Illuminated Masterpiece Emblem
-                              Semantics(
-                                label: 'شعار تطبيق طالب العلم',
-                                image: true,
-                                child: Container(
-                                  width: 140,
-                                  height: 140,
-                                  decoration: BoxDecoration(
-                                    color: palette.surfaceRaised,
-                                    borderRadius: AppRadius.xlRadius,
-                                    border: Border.all(
-                                      color: palette.border,
-                                      width: 1.5,
-                                    ),
-                                    boxShadow: palette.shadow,
-                                  ),
-                                  padding: const EdgeInsetsDirectional.all(
-                                    AppSpace.md,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: AppRadius.lgRadius,
-                                    child: Image.asset(
-                                      palette.logoSymbol,
-                                      fit: BoxFit.contain,
-                                    ),
+                              // Top: Sacred Salam Greeting & Basmalah
+                              Padding(
+                                padding: const EdgeInsetsDirectional.only(
+                                  top: AppSpace.sm,
+                                ),
+                                child: Semantics(
+                                  header: true,
+                                  label: 'السلام عليكم ورحمة الله وبركاته',
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ',
+                                        textAlign: TextAlign.center,
+                                        style: textTheme.titleSmall.copyWith(
+                                          color: AppPalette.splashGold,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpace.xxs),
+                                      Text(
+                                        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                                        textAlign: TextAlign.center,
+                                        style: textTheme.caption.copyWith(
+                                          color: AppPalette.splashTextSubtle,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: AppSpace.xl),
 
-                              // App Name
-                              Text(
-                                'طالبُ العِلْمِ',
-                                textAlign: TextAlign.center,
-                                style: textTheme.display.copyWith(
-                                  color: palette.text,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpace.xs),
-
-                              // Sacred Motto / Tagline
+                              // Center: Minimalist Sacred Emblem & App Identity
                               Padding(
                                 padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.md,
+                                  vertical: AppSpace.md,
                                 ),
-                                child: Text(
-                                  'زادُ المسلمِ في طَلَبِ العِلمِ النَّافِعِ',
-                                  textAlign: TextAlign.center,
-                                  style: textTheme.body.copyWith(
-                                    color: palette.textMuted,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Minimalist Luxury Emblem
+                                    Semantics(
+                                      label: 'شعار تطبيق طالب العلم',
+                                      image: true,
+                                      child: Image.asset(
+                                        'assets/branding/symbol_on_light.png',
+                                        width: 120,
+                                        height: 120,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpace.md),
+
+                                    // App Name
+                                    Text(
+                                      'طَالِبُ العِلْمِ',
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.display.copyWith(
+                                        color: AppPalette.splashText,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpace.xs),
+
+                                    // Sacred Motto / Tagline
+                                    Text(
+                                      'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ النَّافِعِ',
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.bodySmall.copyWith(
+                                        color: AppPalette.splashTextMuted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpace.sm),
+
+                                    // Minimalist Qur'anic Prayer Chip
+                                    Container(
+                                      padding: const EdgeInsetsDirectional.symmetric(
+                                        horizontal: AppSpace.md,
+                                        vertical: AppSpace.xxs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppPalette.splashGoldSoft,
+                                        borderRadius: AppRadius.pillRadius,
+                                      ),
+                                      child: Text(
+                                        '﴿ رَبِّ زِدْنِي عِلْمًا ﴾',
+                                        style: textTheme.caption.copyWith(
+                                          color: AppPalette.splashGold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Bottom: Dignified Progress & Prophetic Hadith
+                              Padding(
+                                padding: const EdgeInsetsDirectional.only(
+                                  bottom: AppSpace.sm,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                      width: 80,
+                                      child: ClipRRect(
+                                        borderRadius: AppRadius.pillRadius,
+                                        child: AnimatedBuilder(
+                                          animation: _animController,
+                                          builder: (context, _) => LinearProgressIndicator(
+                                            value: _animController.value,
+                                            backgroundColor: AppPalette.splashGoldSoft,
+                                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                              AppPalette.splashGold,
+                                            ),
+                                            minHeight: 2.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpace.sm),
+                                    Text(
+                                      '«مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الْجَنَّةِ»',
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.caption.copyWith(
+                                        color: AppPalette.splashTextSubtle,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-
-                    // Bottom: Dignified Progress & Subtitle
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        bottom: AppSpace.md,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 120,
-                            child: ClipRRect(
-                              borderRadius: AppRadius.pillRadius,
-                              child: AnimatedBuilder(
-                                animation: _animController,
-                                builder: (context, _) => LinearProgressIndicator(
-                                  value: _animController.value,
-                                  backgroundColor: palette.surfaceMuted,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    palette.gold,
-                                  ),
-                                  minHeight: 3,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.sm),
-                          Text(
-                            '«مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الْجَنَّةِ»',
-                            textAlign: TextAlign.center,
-                            style: textTheme.caption.copyWith(
-                              color: palette.textSubtle,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
