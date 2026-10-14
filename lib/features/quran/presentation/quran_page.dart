@@ -485,6 +485,12 @@ class _QuranPageState extends State<QuranPage> {
           decoration: BoxDecoration(
             color: isSelected ? palette.surfaceRaised : Colors.transparent,
             borderRadius: AppRadius.pillRadius,
+            border: isSelected
+                ? Border.all(
+                    color: palette.gold.withValues(alpha: 0.35),
+                    width: 1,
+                  )
+                : null,
             boxShadow: isSelected ? palette.shadow : null,
           ),
           child: Center(

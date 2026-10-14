@@ -141,8 +141,8 @@ class JuzCard extends StatelessWidget {
 
             // Trailing arrow icon
             Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: AppIcon.sm,
+              Icons.chevron_left_rounded,
+              size: AppIcon.md,
               color: palette.gold,
             ),
           ],

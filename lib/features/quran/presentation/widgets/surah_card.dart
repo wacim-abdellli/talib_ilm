@@ -161,13 +161,18 @@ class SurahCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: AppSpace.sm,
-                          vertical: AppSpace.xs,
+                          vertical: AppSpace.xxs,
                         ),
                         decoration: BoxDecoration(
                           color: isMakki
                               ? palette.primarySoft
                               : palette.goldSoft,
                           borderRadius: AppRadius.smRadius,
+                          border: Border.all(
+                            color: (isMakki ? palette.primary : palette.gold)
+                                .withValues(alpha: 0.25),
+                            width: 0.8,
+                          ),
                         ),
                         child: Text(
                           isMakki ? 'مكية' : 'مدنية',

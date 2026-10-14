@@ -172,6 +172,9 @@ class QcfFontLoader {
         .then((_) {
           _loadedPages.add(pageNumber);
         })
+        .catchError((_) {
+          _loadedPages.add(pageNumber);
+        })
         .whenComplete(() {
           _loadingTasks.remove(pageNumber);
         });
@@ -229,8 +232,7 @@ class QcfFontLoader {
         continue;
       }
 
-      // Frame-yielding delay so background loading doesn't drop frames during user swiping
-      await Future<void>.delayed(const Duration(milliseconds: 32));
+      await Future<void>.delayed(Duration.zero);
 
       if (myGeneration != _generation) {
         return;
@@ -246,38 +248,80 @@ class QcfFontLoader {
   static Future<void> _loadFontInternal(int pageNumber) async {
     final fontName = getBaseFontFamily(pageNumber);
 
-    Uint8List fontBytes;
+    Uint8List? fontBytes;
 
     if (_currentMode == FontStorageMode.permanentDisk) {
-      final fontDir = await _getFontDirectory();
-      final fontPath = '${fontDir.path}/$fontName.ttf';
-      final file = File(fontPath);
+      try {
+        final fontDir = await _getFontDirectory();
+        final fontPath = '${fontDir.path}/$fontName.ttf';
+        final file = File(fontPath);
 
-      if (await file.exists() && await file.length() > 1000) {
-        fontBytes = await file.readAsBytes();
-      } else {
-        final gzipBytes = await _loadCompressedFont(fontName);
-        fontBytes = await Isolate.run(() {
-          final extracted = _extractFont(gzipBytes);
-          file.parent.createSync(recursive: true);
-          file.writeAsBytesSync(extracted, flush: true);
-          return extracted;
-        });
+        if (await file.exists() && await file.length() > 1000) {
+          fontBytes = await file.readAsBytes();
+        } else {
+          final gzipBytes = await _loadCompressedFont(fontName);
+          fontBytes = await Isolate.run(() {
+            final extracted = _extractFont(gzipBytes);
+            try {
+              file.parent.createSync(recursive: true);
+              file.writeAsBytesSync(extracted, flush: true);
+            } catch (_) {}
+            return extracted;
+          });
+        }
+      } catch (_) {
+        fontBytes = null;
       }
-    } else {
-      final gzipBytes = await _loadCompressedFont(fontName);
-      fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
     }
 
+    if (fontBytes == null) {
+      try {
+        final gzipBytes = await _loadCompressedFont(fontName);
+        fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
+      } catch (_) {
+        return;
+      }
+    }
+
+    final rawBytes = fontBytes;
+    if (rawBytes == null) return;
+
     // 1. Register authentic Light/Sepia Tajweed Medina font
-    await _registerFont(fontBytes, getTajweedLightFamily(pageNumber));
+    await _registerFont(rawBytes, getTajweedLightFamily(pageNumber));
 
     // 2. Register Dark Mode Tajweed Medina font
     final darkBytes = _modifyCpalBaseColor(
-      Uint8List.fromList(fontBytes),
+      Uint8List.fromList(rawBytes),
       const Color(0xFFFFFFFF),
     );
     await _registerFont(darkBytes, getTajweedDarkFamily(pageNumber));
+
+    // 3. Register Non-Tajweed Light variant
+    final noTajweedLightBytes = _modifyCpalAllColors(
+      Uint8List.fromList(rawBytes),
+      const Color(0xFF000000),
+    );
+    await _registerFont(
+      noTajweedLightBytes,
+      getNoTajweedLightFamily(pageNumber),
+    );
+
+    // 4. Register Non-Tajweed Dark Mode variant
+    final noTajweedDarkBytes = _modifyCpalAllColors(
+      Uint8List.fromList(rawBytes),
+      const Color(0xFFFFFFFF),
+    );
+    await _registerFont(
+      noTajweedDarkBytes,
+      getNoTajweedDarkFamily(pageNumber),
+    );
+
+    // 5. Register Red highlight variant
+    final redBytes = _modifyCpalAllColors(
+      Uint8List.fromList(rawBytes),
+      const Color(0xFFFF0000),
+    );
+    await _registerFont(redBytes, getRedFamily(pageNumber));
   }
 
   /// Registers non-tajweed font variants on demand when the user disables Tajweed.

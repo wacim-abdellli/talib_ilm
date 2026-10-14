@@ -71,7 +71,7 @@ class QuranLastReadBanner extends StatelessWidget {
                       child: Text(
                         'آخر قراءة',
                         style: textTheme.caption.copyWith(
-                          color: palette.onGold,
+                          color: palette.onPrimarySoft,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -121,8 +121,8 @@ class QuranLastReadBanner extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpace.xs),
                 Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: AppIcon.sm,
+                  Icons.chevron_left_rounded,
+                  size: AppIcon.md,
                   color: palette.gold,
                 ),
               ],
