@@ -65,10 +65,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadAllData();
 
-    // Refresh state every minute
+    // Refresh state and prayer times every minute
     _stateRefreshTimer = Timer.periodic(
       const Duration(minutes: 1),
-      (_) => _stateController.refresh(),
+      (_) => _refreshPeriodicData(),
     );
   }
 
@@ -99,19 +99,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _refreshPeriodicData() async {
+    _stateController.refresh();
+    try {
+      final day = await _prayerTimeService.getPrayerTimesDay();
+      if (mounted) {
+        setState(() => _prayerDay = day);
+      }
+    } catch (_) {}
+  }
+
   @override
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
       _refreshStats();
-      _stateController.refresh();
+      _refreshPeriodicData();
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _stateController.refresh();
+      _refreshPeriodicData();
     }
   }
 

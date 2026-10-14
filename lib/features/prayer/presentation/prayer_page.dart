@@ -254,10 +254,13 @@ class _PrayerPageState extends State<PrayerPage> {
           state.nextPrayerTime,
           state.remaining,
         );
+        final countdownText = state.isInPrayerTime
+            ? 'رُفِع الأذان منذ ${state.elapsed.inMinutes} د'
+            : _formatCountdown(state.remaining);
         return NextPrayerCard(
           prayer: prayer,
-          countdownText: _formatCountdown(state.remaining),
-          progress: progress,
+          countdownText: countdownText,
+          progress: state.isInPrayerTime ? 1.0 : progress,
           onTap: () => _openPrayerSettings(context),
           onOpenQibla: () => _openQibla(context),
           onOpenAdhkar: () => _openDuas(context),

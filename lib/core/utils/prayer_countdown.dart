@@ -9,11 +9,15 @@ class PrayerCountdownState {
   final String nextPrayerName;
   final DateTime nextPrayerTime;
   final Duration remaining;
+  final bool isInPrayerTime;
+  final Duration elapsed;
 
   const PrayerCountdownState({
     required this.nextPrayerName,
     required this.nextPrayerTime,
     required this.remaining,
+    this.isInPrayerTime = false,
+    this.elapsed = Duration.zero,
   });
 }
 
@@ -54,6 +58,30 @@ class PrayerCountdownController {
 
   Future<void> _tick() async {
     final current = now();
+    const iqamaDuration = Duration(minutes: 15);
+
+    // 1. Check if any prayer is currently within its 15-minute Iqama/Prayer window
+    final entries = _day.prayers.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+
+    for (int i = entries.length - 1; i >= 0; i--) {
+      final entry = entries[i];
+      if (!current.isBefore(entry.value)) {
+        final elapsed = current.difference(entry.value);
+        if (elapsed < iqamaDuration) {
+          state.value = PrayerCountdownState(
+            nextPrayerName: entry.key,
+            nextPrayerTime: entry.value,
+            remaining: Duration.zero,
+            isInPrayerTime: true,
+            elapsed: elapsed,
+          );
+          return;
+        }
+      }
+    }
+
+    // 2. Find next upcoming prayer today
     final nextEntry = _findNextPrayer(_day.prayers, current);
 
     if (nextEntry == null) {
@@ -66,6 +94,8 @@ class PrayerCountdownController {
       nextPrayerName: nextEntry.key,
       nextPrayerTime: nextEntry.value,
       remaining: remaining.isNegative ? Duration.zero : remaining,
+      isInPrayerTime: false,
+      elapsed: Duration.zero,
     );
   }
 

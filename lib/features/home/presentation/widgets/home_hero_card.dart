@@ -6,6 +6,7 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../prayer/data/models/prayer_models.dart';
+import 'home_hero_timeline_station.dart';
 
 /// HomeHeroCard - Calm Scholar Prayer Time Centerpiece
 class HomeHeroCard extends StatefulWidget {
@@ -28,30 +29,151 @@ class HomeHeroCard extends StatefulWidget {
   State<HomeHeroCard> createState() => _HomeHeroCardState();
 }
 
+class _PrayerEvaluation {
+  final String prayerName;
+  final DateTime prayerTime;
+  final bool isInPrayerTime;
+  final Duration elapsedSinceAdhan;
+  final Duration remainingUntilAdhan;
+  final String activeHighlightPrayerName;
+  final Set<String> completedPrayerNames;
+
+  const _PrayerEvaluation({
+    required this.prayerName,
+    required this.prayerTime,
+    required this.isInPrayerTime,
+    required this.elapsedSinceAdhan,
+    required this.remainingUntilAdhan,
+    required this.activeHighlightPrayerName,
+    required this.completedPrayerNames,
+  });
+}
+
 class _HomeHeroCardState extends State<HomeHeroCard> {
+  static const Duration _iqamaWindow = Duration(minutes: 15);
   late Timer _timer;
-  late Duration _timeLeft;
+  late _PrayerEvaluation _eval;
 
   @override
   void initState() {
     super.initState();
-    _updateTimeLeft();
+    _eval = _evaluatePrayer(DateTime.now());
     _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeHeroCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.nextPrayerTime != widget.nextPrayerTime ||
+        oldWidget.nextPrayerName != widget.nextPrayerName ||
+        oldWidget.allPrayers != widget.allPrayers) {
+      _updateEvaluation();
+    }
   }
 
   void _startTimer() {
     _timer = Timer.periodic(AppMotion.oneSecond, (_) {
-      _updateTimeLeft();
+      _updateEvaluation();
     });
   }
 
-  void _updateTimeLeft() {
+  void _updateEvaluation() {
     final now = DateTime.now();
-    final diff = widget.nextPrayerTime.difference(now);
+    final newEval = _evaluatePrayer(now);
     if (mounted) {
-      final newTime = diff.isNegative ? Duration.zero : diff;
-      setState(() => _timeLeft = newTime);
+      setState(() => _eval = newEval);
     }
+  }
+
+  _PrayerEvaluation _evaluatePrayer(DateTime now) {
+    final all = widget.allPrayers;
+    if (all != null && all.isNotEmpty) {
+      final entries = AppStrings.prayerOrder
+          .where((p) => all.containsKey(p))
+          .map((p) => MapEntry(p, all[p]!))
+          .toList();
+
+      // 1. Check if any prayer is currently within its 15-minute Iqama/Prayer window
+      for (int i = entries.length - 1; i >= 0; i--) {
+        final entry = entries[i];
+        final pTime = entry.value;
+        if (!now.isBefore(pTime)) {
+          final elapsed = now.difference(pTime);
+          if (elapsed < _iqamaWindow) {
+            final completed = entries.take(i).map((e) => e.key).toSet();
+            return _PrayerEvaluation(
+              prayerName: entry.key,
+              prayerTime: pTime,
+              isInPrayerTime: true,
+              elapsedSinceAdhan: elapsed,
+              remainingUntilAdhan: Duration.zero,
+              activeHighlightPrayerName: entry.key,
+              completedPrayerNames: completed,
+            );
+          }
+        }
+      }
+
+      // 2. Find next upcoming prayer today
+      for (int i = 0; i < entries.length; i++) {
+        final entry = entries[i];
+        if (entry.value.isAfter(now)) {
+          final completed = entries.take(i).map((e) => e.key).toSet();
+          return _PrayerEvaluation(
+            prayerName: entry.key,
+            prayerTime: entry.value,
+            isInPrayerTime: false,
+            elapsedSinceAdhan: Duration.zero,
+            remainingUntilAdhan: entry.value.difference(now),
+            activeHighlightPrayerName: entry.key,
+            completedPrayerNames: completed,
+          );
+        }
+      }
+
+      // 3. All today's prayers completed: next prayer is tomorrow's Fajr
+      final fajrToday = all[AppStrings.prayerFajr] ?? now;
+      final fajrTomorrow = DateTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        fajrToday.hour,
+        fajrToday.minute,
+      );
+      final allCompleted = entries.map((e) => e.key).toSet();
+      return _PrayerEvaluation(
+        prayerName: AppStrings.prayerFajr,
+        prayerTime: fajrTomorrow,
+        isInPrayerTime: false,
+        elapsedSinceAdhan: Duration.zero,
+        remainingUntilAdhan: fajrTomorrow.difference(now),
+        activeHighlightPrayerName: AppStrings.prayerFajr,
+        completedPrayerNames: allCompleted,
+      );
+    }
+
+    final diff = widget.nextPrayerTime.difference(now);
+    if (diff.isNegative && (-diff) < _iqamaWindow) {
+      return _PrayerEvaluation(
+        prayerName: widget.nextPrayerName,
+        prayerTime: widget.nextPrayerTime,
+        isInPrayerTime: true,
+        elapsedSinceAdhan: -diff,
+        remainingUntilAdhan: Duration.zero,
+        activeHighlightPrayerName: widget.nextPrayerName,
+        completedPrayerNames: const {},
+      );
+    }
+
+    return _PrayerEvaluation(
+      prayerName: widget.nextPrayerName,
+      prayerTime: widget.nextPrayerTime,
+      isInPrayerTime: false,
+      elapsedSinceAdhan: Duration.zero,
+      remainingUntilAdhan: diff.isNegative ? Duration.zero : diff,
+      activeHighlightPrayerName: widget.nextPrayerName,
+      completedPrayerNames: const {},
+    );
   }
 
   @override
@@ -64,26 +186,34 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final prayerColor = palette.prayer(widget.nextPrayerName);
+    final eval = _eval;
+    final prayerColor = palette.prayer(eval.prayerName);
 
-    final hours = _timeLeft.inHours.toString().padLeft(2, '0');
-    final minutes = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (_timeLeft.inSeconds % 60).toString().padLeft(2, '0');
+    final hours = eval.remainingUntilAdhan.inHours.toString().padLeft(2, '0');
+    final minutes = (eval.remainingUntilAdhan.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (eval.remainingUntilAdhan.inSeconds % 60).toString().padLeft(2, '0');
 
-    final prayerTimeDisplay = formatPrayerTime12h(widget.nextPrayerTime);
-    final nearnessLabel = _getNearnessLabel();
+    final elapsedMinutes = eval.elapsedSinceAdhan.inMinutes.toString().padLeft(2, '0');
+    final elapsedSeconds = (eval.elapsedSinceAdhan.inSeconds % 60).toString().padLeft(2, '0');
+
+    final prayerTimeDisplay = formatPrayerTime12h(eval.prayerTime);
+    final nearnessLabel = _getNearnessLabel(eval);
 
     return Semantics(
-      label: 'صلاة ${widget.nextPrayerName}',
-      hint: 'المتبقي ${_getReadableDuration()}',
+      label: eval.isInPrayerTime
+          ? 'صلاة ${eval.prayerName} - وقت الصلاة الآن'
+          : 'صلاة ${eval.prayerName}',
+      hint: eval.isInPrayerTime
+          ? 'رُفِع الأذان منذ ${eval.elapsedSinceAdhan.inMinutes} دقيقة'
+          : 'المتبقي ${_getReadableDuration(eval.remainingUntilAdhan)}',
       button: true,
       onTapHint: 'اضغط لعرض تفاصيل الصلاة',
       child: AppCard(
         onTap: widget.onTap,
         color: palette.surfaceRaised,
         border: Border.all(
-          color: prayerColor.withValues(alpha: 0.32),
-          width: 1.5,
+          color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.55 : 0.32),
+          width: eval.isInPrayerTime ? 2.0 : 1.5,
         ),
         padding: EdgeInsets.zero,
         child: Container(
@@ -94,7 +224,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
               colors: [
-                prayerColor.withValues(alpha: 0.10),
+                prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.16 : 0.10),
                 Colors.transparent,
               ],
               stops: const [0.0, 0.45],
@@ -121,18 +251,18 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                prayerColor.withValues(alpha: 0.28),
+                                prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.36 : 0.28),
                                 prayerColor.withValues(alpha: 0.10),
                               ],
                             ),
                             borderRadius: AppRadius.mdRadius,
                             border: Border.all(
-                              color: prayerColor.withValues(alpha: 0.5),
-                              width: 1.2,
+                              color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.75 : 0.5),
+                              width: eval.isInPrayerTime ? 1.5 : 1.2,
                             ),
                           ),
                           child: Icon(
-                            _iconForPrayer(widget.nextPrayerName),
+                            iconForPrayer(eval.prayerName),
                             color: prayerColor,
                             size: AppIcon.lg,
                           ),
@@ -142,7 +272,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                         // Large Prayer Title (Uncluttered, Single Line)
                         Expanded(
                           child: Text(
-                            'صلاة ${widget.nextPrayerName}',
+                            'صلاة ${eval.prayerName}',
                             style: textTheme.title.copyWith(
                               color: palette.text,
                               fontWeight: FontWeight.w800,
@@ -166,13 +296,13 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          prayerColor.withValues(alpha: 0.18),
+                          prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.26 : 0.18),
                           prayerColor.withValues(alpha: 0.08),
                         ],
                       ),
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: prayerColor.withValues(alpha: 0.45),
+                        color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.65 : 0.45),
                         width: 1.2,
                       ),
                     ),
@@ -201,7 +331,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
               const SizedBox(height: AppSpace.md),
 
-              // 2. Horizon Countdown Banner (Unified Single Line with Integrated Badges)
+              // 2. Horizon Countdown / Salat Time Banner
               Container(
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.md,
@@ -210,14 +340,14 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      prayerColor.withValues(alpha: 0.12),
-                      prayerColor.withValues(alpha: 0.04),
+                      prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.22 : 0.12),
+                      prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.08 : 0.04),
                     ],
                   ),
                   borderRadius: AppRadius.mdRadius,
                   border: Border.all(
-                    color: prayerColor.withValues(alpha: 0.25),
-                    width: 1,
+                    color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.55 : 0.25),
+                    width: eval.isInPrayerTime ? 1.5 : 1,
                   ),
                 ),
                 child: FittedBox(
@@ -225,13 +355,13 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Start: Nearness Indicator with Glowing Pulse Dot
+                      // Start: Status / Nearness Indicator with Pulse Dot
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 6,
-                            height: 6,
+                            width: AppSpace.sm,
+                            height: AppSpace.sm,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: prayerColor,
@@ -249,10 +379,9 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       ),
                       const SizedBox(width: AppSpace.lg),
 
-                      // End: Digital Precision Countdown Clock (05 : 46 : 13)
-                      Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Container(
+                      // End: Digital Precision Clock or Elapsed Adhan Time Box
+                      if (eval.isInPrayerTime)
+                        Container(
                           padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: AppSpace.md,
                             vertical: AppSpace.xs + 2,
@@ -261,7 +390,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                             color: palette.surfaceRaised,
                             borderRadius: AppRadius.smRadius,
                             border: Border.all(
-                              color: prayerColor.withValues(alpha: 0.35),
+                              color: prayerColor.withValues(alpha: 0.45),
                               width: 1.2,
                             ),
                             boxShadow: palette.shadow,
@@ -269,36 +398,105 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: AppIcon.xs,
+                                color: prayerColor,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
                               Text(
-                                hours,
-                                style: textTheme.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: palette.text,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                'منذ ',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              _CountdownColon(color: prayerColor),
-                              Text(
-                                minutes,
-                                style: textTheme.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: palette.text,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      elapsedMinutes,
+                                      style: textTheme.titleSmall.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: prayerColor,
+                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                    CountdownColon(color: prayerColor),
+                                    Text(
+                                      elapsedSeconds,
+                                      style: textTheme.titleSmall.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: prayerColor,
+                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              _CountdownColon(color: prayerColor),
+                              const SizedBox(width: AppSpace.xs),
                               Text(
-                                seconds,
-                                style: textTheme.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w800,
+                                'د',
+                                style: textTheme.caption.copyWith(
                                   color: prayerColor,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ],
                           ),
+                        )
+                      else
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs + 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.surfaceRaised,
+                              borderRadius: AppRadius.smRadius,
+                              border: Border.all(
+                                color: prayerColor.withValues(alpha: 0.35),
+                                width: 1.2,
+                              ),
+                              boxShadow: palette.shadow,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  hours,
+                                  style: textTheme.titleSmall.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: palette.text,
+                                    fontFeatures: const [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                                CountdownColon(color: prayerColor),
+                                Text(
+                                  minutes,
+                                  style: textTheme.titleSmall.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: palette.text,
+                                    fontFeatures: const [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                                CountdownColon(color: prayerColor),
+                                Text(
+                                  seconds,
+                                  style: textTheme.titleSmall.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: prayerColor,
+                                    fontFeatures: const [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -321,18 +519,16 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                 ),
                 child: Row(
                   children: AppStrings.prayerOrder.map((prayerName) {
-                    final isSameDay = widget.nextPrayerTime.day == DateTime.now().day;
-                    final isCurrent = widget.nextPrayerName == prayerName && isSameDay;
+                    final isCurrent = eval.activeHighlightPrayerName == prayerName;
                     final prayerTime = widget.allPrayers?[prayerName];
-                    final isPast = prayerTime != null &&
-                        (prayerTime.isBefore(DateTime.now()) || !isSameDay);
+                    final isPast = eval.completedPrayerNames.contains(prayerName);
 
-                    return _buildTimelineStation(
-                      context: context,
+                    return HomeHeroTimelineStation(
                       prayerName: prayerName,
                       prayerTime: prayerTime,
                       isCurrent: isCurrent,
                       isPast: isPast,
+                      isInPrayerTime: isCurrent && eval.isInPrayerTime,
                     );
                   }).toList(),
                 ),
@@ -344,198 +540,24 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     );
   }
 
-  Widget _buildTimelineStation({
-    required BuildContext context,
-    required String prayerName,
-    required DateTime? prayerTime,
-    required bool isCurrent,
-    required bool isPast,
-  }) {
-    final palette = context.palette;
-    final textTheme = context.text;
-    final pColor = palette.prayer(prayerName);
-    final timeStr =
-        prayerTime != null ? formatPrayerTime12h(prayerTime) : '';
-    final icon = _iconForPrayer(prayerName);
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.xs,
-          vertical: AppSpace.xs,
-        ),
-        decoration: isCurrent
-            ? BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    pColor.withValues(alpha: 0.22),
-                    pColor.withValues(alpha: 0.08),
-                  ],
-                ),
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(
-                  color: pColor,
-                  width: 1.5,
-                ),
-                boxShadow: palette.shadow,
-              )
-            : null,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Status Pip
-            if (isCurrent)
-              Container(
-                width: 5,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: AppSpace.xs),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.gold,
-                ),
-              )
-            else if (isPast)
-              Container(
-                margin: const EdgeInsets.only(bottom: AppSpace.xs),
-                child: Icon(
-                  Icons.check_rounded,
-                  size: AppIcon.xs,
-                  color: palette.success,
-                ),
-              )
-            else
-              Container(
-                width: 4,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpace.xs),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: pColor.withValues(alpha: 0.35),
-                ),
-              ),
-
-            // Celestial Icon with individual prayer color
-            Icon(
-              icon,
-              size: isCurrent ? AppIcon.md : AppIcon.sm,
-              color: isCurrent
-                  ? pColor
-                  : (isPast
-                      ? pColor.withValues(alpha: 0.45)
-                      : pColor.withValues(alpha: 0.85)),
-            ),
-            const SizedBox(height: AppSpace.xs),
-
-            // Prayer Name
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                prayerName,
-                style: isCurrent
-                    ? textTheme.caption.copyWith(
-                        color: pColor,
-                        fontWeight: FontWeight.w800,
-                      )
-                    : textTheme.caption.copyWith(
-                        color: isPast ? palette.textMuted : palette.text,
-                        fontWeight: FontWeight.w600,
-                      ),
-                maxLines: 1,
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 2),
-
-            // Prayer Time with Western Arabic numerals (123456)
-            if (timeStr.isNotEmpty)
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  timeStr,
-                  style: isCurrent
-                      ? textTheme.caption.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.w800,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        )
-                      : textTheme.caption.copyWith(
-                          color: isPast ? palette.textSubtle : palette.textMuted,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _iconForPrayer(String name) {
-    final p = name.trim();
-    if (p.contains(AppStrings.prayerFajr) || p == 'الفجر') {
-      return Icons.wb_twilight_rounded;
+  String _getNearnessLabel(_PrayerEvaluation eval) {
+    if (eval.isInPrayerTime) {
+      return 'وقت الصلاة الآن (الإقامة)';
     }
-    if (p == 'الشروق') {
-      return Icons.wb_sunny_rounded;
-    }
-    if (p.contains(AppStrings.prayerDhuhr) || p == 'الظهر') {
-      return Icons.wb_sunny_rounded;
-    }
-    if (p.contains(AppStrings.prayerAsr) || p == 'العصر') {
-      return Icons.wb_sunny_outlined;
-    }
-    if (p.contains(AppStrings.prayerMaghrib) || p == 'المغرب') {
-      return Icons.nights_stay_outlined;
-    }
-    if (p.contains(AppStrings.prayerIsha) || p == 'العشاء') {
-      return Icons.bedtime_rounded;
-    }
-    return Icons.access_time_rounded;
-  }
-
-  String _getNearnessLabel() {
-    final minutes = _timeLeft.inMinutes;
-    final seconds = _timeLeft.inSeconds;
-    if (minutes <= 0 && seconds <= 0) {
-      return 'حان وقت الأذان';
-    }
+    final minutes = eval.remainingUntilAdhan.inMinutes;
     if (minutes <= 5) {
       return 'يقترب وقت الصلاة';
     }
     return 'بقي على الأذان';
   }
 
-  String _getReadableDuration() {
-    final hours = _timeLeft.inHours;
-    final minutes = _timeLeft.inMinutes % 60;
-    final seconds = _timeLeft.inSeconds % 60;
+  String _getReadableDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
     if (hours > 0) {
       return '$hours:$minutes:$seconds';
     }
     return '$minutes:$seconds';
-  }
-}
-
-class _CountdownColon extends StatelessWidget {
-  final Color color;
-
-  const _CountdownColon({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
-      child: Text(
-        ':',
-        style: context.text.titleSmall.copyWith(
-          fontWeight: FontWeight.w800,
-          color: color.withValues(alpha: 0.7),
-        ),
-      ),
-    );
   }
 }
