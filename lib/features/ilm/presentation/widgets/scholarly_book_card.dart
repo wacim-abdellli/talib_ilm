@@ -43,8 +43,12 @@ class ScholarlyBookCard extends StatelessWidget {
     final progressValue = totalPages > 0
         ? (currentPage / totalPages).clamp(0.0, 1.0)
         : 0.0;
-    final isCompleted = progress?.isCompleted ?? false;
-    final isStarted = progress != null && currentPage > 1;
+    final isCompleted = (progress?.isCompleted ?? false) ||
+        (progress?.completedDate != null) ||
+        (totalPages > 0 && currentPage >= totalPages);
+    final isStarted = !isCompleted &&
+        progress != null &&
+        (currentPage > 1 || (progress?.totalReadingTimeMinutes ?? 0) > 0);
     final isFavorite = progress?.isFavorite ?? false;
 
     return AppCard(
@@ -52,11 +56,11 @@ class ScholarlyBookCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpace.md),
       border: Border.all(
         color: isCompleted
-            ? palette.primary.withAlpha(90)
-            : isRecommended
-                ? palette.gold.withAlpha(120)
+            ? palette.success.withAlpha(90)
+            : isStarted
+                ? palette.primary.withAlpha(90)
                 : palette.border,
-        width: isRecommended || isCompleted ? 1.5 : 1,
+        width: isCompleted || isStarted ? 1.5 : 1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,49 +193,54 @@ class ScholarlyBookCard extends StatelessWidget {
 
           // ── Footer Status & Progress ────────────────────────────
           if (isCompleted) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.primarySoft,
-                borderRadius: AppRadius.smRadius,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: AppIcon.sm,
-                    color: palette.success,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    'مُتَمَّم بفضل الله',
-                    style: context.text.caption.copyWith(
-                      color: palette.success,
-                      fontWeight: FontWeight.w600,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppProgress(
+                  progress: 1.0,
+                  color: palette.success,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'مُتَمَّم بفضل الله',
+                      style: context.text.caption.copyWith(
+                        color: palette.success,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    if (totalPages > 0)
+                      Text(
+                        '$totalPages صفحة',
+                        style: context.text.caption.copyWith(
+                          color: palette.textSubtle,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ] else if (isStarted) ...[
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppProgress(progress: progressValue),
+                AppProgress(
+                  progress: progressValue,
+                  color: categoryColors.fg,
+                ),
                 const SizedBox(height: AppSpace.xs),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${(progressValue * 100).round()}%',
+                      'قيد المدارسة • ${(progressValue * 100).round()}%',
                       style: context.text.caption.copyWith(
                         color: categoryColors.fg,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     if (totalPages > 0)
@@ -247,27 +256,22 @@ class ScholarlyBookCard extends StatelessWidget {
             ),
           ] else ...[
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  isRecommended
-                      ? Icons.auto_awesome_rounded
-                      : Icons.arrow_forward_rounded,
-                  size: AppIcon.sm,
-                  color: isRecommended ? palette.gold : palette.textSubtle,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Expanded(
-                  child: Text(
-                    isRecommended ? 'ابدأ كأول خطوة ✨' : 'ابدأ المدارسة',
-                    style: context.text.caption.copyWith(
-                      color: isRecommended ? palette.gold : palette.textSubtle,
-                      fontWeight:
-                          isRecommended ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  'لم يبدأ بعد',
+                  style: context.text.caption.copyWith(
+                    color: palette.textMuted,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (totalPages > 0)
+                  Text(
+                    '$totalPages صفحة',
+                    style: context.text.caption.copyWith(
+                      color: palette.textSubtle,
+                    ),
+                  ),
               ],
             ),
           ],
