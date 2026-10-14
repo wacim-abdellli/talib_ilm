@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../app/theme/app_palette.dart';
@@ -74,6 +75,7 @@ class _QuranPageState extends State<QuranPage> {
         _bookmarks = bookmarks;
         _isLoading = false;
       });
+      QcfFontLoader.preloadPages(lastRead.page, radius: 2);
     }
   }
 
@@ -134,6 +136,7 @@ class _QuranPageState extends State<QuranPage> {
     final startTime = DateTime.now();
     final effectiveAyah = ayah ?? 1;
     final targetPage = quran.getPageNumber(surahNum, effectiveAyah);
+    QcfFontLoader.preloadPages(targetPage, radius: 2);
 
     // Record reading history (throttled)
     ReadingHistoryService.recordReading(
@@ -168,6 +171,7 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _openPage(int pageNumber) async {
     final startTime = DateTime.now();
+    QcfFontLoader.preloadPages(pageNumber, radius: 2);
 
     // Record reading history (throttled)
     ReadingHistoryService.recordReading(

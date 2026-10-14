@@ -42,19 +42,38 @@ class MushafSinglePage extends StatefulWidget {
 
 class _MushafSinglePageState extends State<MushafSinglePage> {
   late final PageController _pageController;
+  bool _isFontReady = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: widget.pageNumber - 1);
-    QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
+    _checkAndLoadFont();
   }
 
   @override
   void didUpdateWidget(covariant MushafSinglePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.pageNumber != widget.pageNumber) {
-      QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
+      _checkAndLoadFont();
+    }
+  }
+
+  void _checkAndLoadFont() {
+    final page = widget.pageNumber;
+    if (QcfFontLoader.isFontLoaded(page)) {
+      _isFontReady = true;
+      QcfFontLoader.preloadPages(page, radius: 2);
+    } else {
+      _isFontReady = false;
+      QcfFontLoader.ensureFontLoaded(page).then((_) {
+        if (mounted && widget.pageNumber == page) {
+          setState(() {
+            _isFontReady = true;
+          });
+          QcfFontLoader.preloadPages(page, radius: 2);
+        }
+      });
     }
   }
 
@@ -207,14 +226,43 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
       return FutureBuilder<void>(
         future: QuranRepository.instance.ensureLoaded(604),
         builder: (context, snapshot) {
-          if (!QuranRepository.instance.isReady) {
-            return const Center(child: CircularProgressIndicator());
+          if (!QuranRepository.instance.isReady || !_isFontReady) {
+            return _buildFontLoadingPlaceholder(palette);
           }
           return _buildPageWidget(context, palette);
         },
       );
     }
+
+    if (!_isFontReady && !QcfFontLoader.isFontLoaded(widget.pageNumber)) {
+      return _buildFontLoadingPlaceholder(palette);
+    }
+
     return _buildPageWidget(context, palette);
+  }
+
+  Widget _buildFontLoadingPlaceholder(AppPalette palette) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox.square(
+            dimension: AppSpace.xxl,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.2,
+              color: palette.gold,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            'جاري إعداد الصفحة المباركة...',
+            style: context.text.caption.copyWith(
+              color: MushafColors.textFor(widget.themeMode).withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPageWidget(BuildContext context, AppPalette palette) {

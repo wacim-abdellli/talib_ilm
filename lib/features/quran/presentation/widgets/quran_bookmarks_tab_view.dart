@@ -7,6 +7,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../data/services/bookmark_service.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'mushaf_page_viewer.dart';
 
 class QuranBookmarksTabView extends StatefulWidget {
@@ -211,6 +212,7 @@ class _QuranBookmarksTabViewState extends State<QuranBookmarksTabView> {
     return AppCard(
       onTap: () {
         HapticFeedback.lightImpact();
+        QcfFontLoader.preloadPages(b.page, radius: 2);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -305,6 +307,7 @@ class _QuranBookmarksTabViewState extends State<QuranBookmarksTabView> {
     return AppCard(
       onTap: () {
         HapticFeedback.lightImpact();
+        QcfFontLoader.preloadPages(b.page, radius: 2);
         Navigator.push(
           context,
           MaterialPageRoute(
