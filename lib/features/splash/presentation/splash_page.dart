@@ -103,7 +103,7 @@ class _SplashPageState extends State<SplashPage>
     unawaited(PrayerScheduleService().refreshSchedulesIfNeeded().catchError((_) {}));
 
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
-    final totalSplashDuration = AppMotion.splash + AppMotion.deliberate;
+    final totalSplashDuration = AppMotion.splash + AppMotion.oneSecond;
     final remaining = totalSplashDuration - elapsed;
 
     if (remaining > Duration.zero) {
@@ -189,14 +189,14 @@ class _SplashPageState extends State<SplashPage>
 
                                       const SizedBox(height: AppSpace.xs),
 
-                                      // Prominent Sacred Basmalah with ornamental delimiter
+                                      // Prominent Sacred Basmalah with ornamental delimiters
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
                                             '۞',
-                                            style: textTheme.caption.copyWith(
+                                            style: textTheme.sacred.copyWith(
                                               color: AppPalette.splashGold,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -206,7 +206,7 @@ class _SplashPageState extends State<SplashPage>
                                             child: Text(
                                               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
                                               textAlign: TextAlign.center,
-                                              style: textTheme.sacred.copyWith(
+                                              style: textTheme.sacredLarge.copyWith(
                                                 color: AppPalette.splashGold,
                                                 fontWeight: FontWeight.bold,
                                                 height: 1.35,
@@ -216,7 +216,7 @@ class _SplashPageState extends State<SplashPage>
                                           const SizedBox(width: AppSpace.sm),
                                           Text(
                                             '۞',
-                                            style: textTheme.caption.copyWith(
+                                            style: textTheme.sacred.copyWith(
                                               color: AppPalette.splashGold,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -228,8 +228,8 @@ class _SplashPageState extends State<SplashPage>
 
                                       // Delicate Islamic Divider
                                       Container(
-                                        width: 100,
-                                        height: 1.2,
+                                        width: 140,
+                                        height: 1.5,
                                         decoration: BoxDecoration(
                                           color: AppPalette.splashGoldSoft,
                                           borderRadius: AppRadius.pillRadius,
@@ -332,12 +332,33 @@ class _SplashPageState extends State<SplashPage>
                                               width: 1.0,
                                             ),
                                           ),
-                                          child: Text(
-                                            '﴿ رَبِّ زِدْنِي عِلْمًا ﴾',
-                                            style: textTheme.label.copyWith(
-                                              color: AppPalette.splashGold,
-                                              fontWeight: FontWeight.bold,
+                                          child: Text.rich(
+                                            TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: '۞ ',
+                                                  style: textTheme.sacred.copyWith(
+                                                    color: AppPalette.splashGold,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: 'رَبِّ زِدْنِي عِلْمًا',
+                                                  style: textTheme.label.copyWith(
+                                                    color: AppPalette.splashGold,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: ' ۞',
+                                                  style: textTheme.sacred.copyWith(
+                                                    color: AppPalette.splashGold,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
                                         ),
                                       ],

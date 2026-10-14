@@ -164,10 +164,13 @@ class SurahCard extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpace.xs + 2),
                         // Verses and page count
-                        Text(
-                          '$versesCount آية • ص $startPage',
-                          style: context.text.caption.copyWith(
-                            color: palette.textMuted,
+                        Flexible(
+                          child: Text(
+                            '$versesCount آية • ص $startPage',
+                            style: context.text.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
