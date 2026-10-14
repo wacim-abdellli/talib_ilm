@@ -423,101 +423,160 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
 
   Widget _buildTopBar(AppPalette palette, AppTextTheme textTheme, Color bgColor) {
     final topPadding = MediaQuery.paddingOf(context).top;
-    final topBarHeight = topPadding + AppSize.navH;
+    final fullBarHeight = topPadding + AppSize.navH;
+    final minimalBarHeight = topPadding + 42.0;
 
     return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
-      height: _showControls ? topBarHeight : topPadding,
-      color: _showControls ? palette.surfaceRaised : bgColor,
+      height: _showControls ? fullBarHeight : minimalBarHeight,
+      decoration: BoxDecoration(
+        color: _showControls ? palette.surfaceRaised : bgColor,
+        border: Border(
+          bottom: BorderSide(
+            color: _showControls
+                ? palette.border
+                : palette.border.withValues(alpha: 0.35),
+            width: 1,
+          ),
+        ),
+      ),
       child: ClipRect(
-        child: OverflowBox(
-          alignment: Alignment.topCenter,
-          minHeight: topBarHeight,
-          maxHeight: topBarHeight,
-          child: IgnorePointer(
-            ignoring: !_showControls,
-            child: AnimatedOpacity(
-              duration: AppMotion.fast,
-              curve: AppMotion.easeOut,
-              opacity: _showControls ? 1.0 : 0.0,
-              child: Container(
-                height: topBarHeight,
-                padding: EdgeInsetsDirectional.only(top: topPadding),
-                decoration: BoxDecoration(
-                  color: palette.surfaceRaised,
-                  border: Border(
-                    bottom: BorderSide(color: palette.border, width: 1),
-                  ),
-                ),
+        child: Stack(
+          children: [
+            // ── Minimal Distraction-Free Header (Shown when controls hidden) ──
+            Positioned(
+              top: topPadding,
+              left: AppSpace.md,
+              right: AppSpace.md,
+              height: 42.0,
+              child: AnimatedOpacity(
+                duration: AppMotion.fast,
+                curve: AppMotion.easeOut,
+                opacity: _showControls ? 0.0 : 1.0,
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: AppIcon.sm,
-                      ),
-                      tooltip: 'رجوع',
-                      color: palette.text,
-                      onPressed: () => Navigator.maybePop(context),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.book.title,
-                            style: textTheme.titleSmall.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.book.author,
-                            style: textTheme.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                    Flexible(
+                      child: Text(
+                        widget.book.title,
+                        style: textTheme.titleSmall.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    ListenableBuilder(
-                      listenable: themeService,
-                      builder: (context, _) {
-                        return IconButton(
-                          tooltip: themeService.themeDisplayName,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            themeService.toggleTheme();
-                          },
-                          icon: Icon(
-                            themeService.themeIcon,
-                            color: palette.text,
-                            size: AppIcon.sm,
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      tooltip: 'نسخ الصفحة',
-                      onPressed: _copyPageContent,
-                      icon: Icon(
-                        Icons.copy_rounded,
-                        color: palette.text,
-                        size: AppIcon.sm,
+                    const SizedBox(width: AppSpace.sm),
+                    Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: palette.goldSoft,
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: palette.gold.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'صفحة $_currentPage من $_totalPages',
+                        style: textTheme.caption.copyWith(
+                          color: palette.gold,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
+
+            // ── Full Action Toolbar (Shown when controls visible) ────────────
+            Positioned(
+              top: topPadding,
+              left: 0,
+              right: 0,
+              height: AppSize.navH,
+              child: IgnorePointer(
+                ignoring: !_showControls,
+                child: AnimatedOpacity(
+                  duration: AppMotion.fast,
+                  curve: AppMotion.easeOut,
+                  opacity: _showControls ? 1.0 : 0.0,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: AppIcon.sm,
+                        ),
+                        tooltip: 'رجوع',
+                        color: palette.text,
+                        onPressed: () => Navigator.maybePop(context),
+                      ),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.book.title,
+                              style: textTheme.titleSmall.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              widget.book.author,
+                              style: textTheme.caption.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListenableBuilder(
+                        listenable: themeService,
+                        builder: (context, _) {
+                          return IconButton(
+                            tooltip: themeService.themeDisplayName,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              themeService.toggleTheme();
+                            },
+                            icon: Icon(
+                              themeService.themeIcon,
+                              color: palette.text,
+                              size: AppIcon.sm,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        tooltip: 'نسخ الصفحة',
+                        onPressed: _copyPageContent,
+                        icon: Icon(
+                          Icons.copy_rounded,
+                          color: palette.text,
+                          size: AppIcon.sm,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

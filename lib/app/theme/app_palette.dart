@@ -648,9 +648,11 @@ class AppSize {
   static const double navH = 64;
   static const double navMargin = 16;
 
-  /// Clearance required at the bottom of screens to not be covered by floating nav
+  /// Clearance required at the bottom of screens to sit comfortably above the floating nav
   static double navClearance(BuildContext context) {
-    return navH + navMargin + MediaQuery.paddingOf(context).bottom;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navBottom = bottomInset > 0 ? bottomInset : AppSpace.sm;
+    return navH + navBottom + AppSpace.sm;
   }
 }
 

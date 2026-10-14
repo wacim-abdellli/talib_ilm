@@ -205,19 +205,25 @@ class ScholarlyBookCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'مُتَمَّم بفضل الله',
-                      style: context.text.caption.copyWith(
-                        color: palette.success,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        'مُتَمَّم بفضل الله',
+                        style: context.text.caption.copyWith(
+                          color: palette.success,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: AppSpace.xs),
                     if (totalPages > 0)
                       Text(
                         '$totalPages صفحة',
                         style: context.text.caption.copyWith(
                           color: palette.textSubtle,
                         ),
+                        maxLines: 1,
                       ),
                   ],
                 ),
@@ -236,19 +242,25 @@ class ScholarlyBookCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'قيد المدارسة • ${(progressValue * 100).round()}%',
-                      style: context.text.caption.copyWith(
-                        color: categoryColors.fg,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        'التقدم: ${(progressValue * 100).round()}%',
+                        style: context.text.caption.copyWith(
+                          color: categoryColors.fg,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: AppSpace.xs),
                     if (totalPages > 0)
                       Text(
                         'صـ $currentPage من $totalPages',
                         style: context.text.caption.copyWith(
                           color: palette.textSubtle,
                         ),
+                        maxLines: 1,
                       ),
                   ],
                 ),
@@ -258,19 +270,25 @@ class ScholarlyBookCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'لم يبدأ بعد',
-                  style: context.text.caption.copyWith(
-                    color: palette.textMuted,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    'لم يبدأ بعد',
+                    style: context.text.caption.copyWith(
+                      color: palette.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: AppSpace.xs),
                 if (totalPages > 0)
                   Text(
                     '$totalPages صفحة',
                     style: context.text.caption.copyWith(
                       color: palette.textSubtle,
                     ),
+                    maxLines: 1,
                   ),
               ],
             ),

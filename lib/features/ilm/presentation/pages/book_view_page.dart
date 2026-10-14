@@ -501,6 +501,7 @@ class _BookViewPageState extends State<BookViewPage>
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final topBarHeight = topPadding + kToolbarHeight + 48.0;
+    final minimalBarHeight = topPadding + 42.0;
 
     return Scaffold(
       backgroundColor: context.palette.bg,
@@ -510,28 +511,96 @@ class _BookViewPageState extends State<BookViewPage>
           AnimatedContainer(
             duration: AppMotion.fast,
             curve: AppMotion.easeOut,
-            height: _showControls ? topBarHeight : topPadding,
-            color: _showControls ? context.palette.surfaceRaised : context.palette.bg,
+            height: _showControls ? topBarHeight : minimalBarHeight,
+            decoration: BoxDecoration(
+              color: _showControls ? context.palette.surfaceRaised : context.palette.bg,
+              border: Border(
+                bottom: BorderSide(
+                  color: _showControls
+                      ? context.palette.border
+                      : context.palette.border.withValues(alpha: 0.35),
+                  width: 1,
+                ),
+              ),
+            ),
             child: ClipRect(
-              child: OverflowBox(
-                alignment: Alignment.topCenter,
-                minHeight: topBarHeight,
-                maxHeight: topBarHeight,
-                child: IgnorePointer(
-                  ignoring: !_showControls,
-                  child: AnimatedOpacity(
-                    duration: AppMotion.fast,
-                    curve: AppMotion.easeOut,
-                    opacity: _showControls ? 1.0 : 0.0,
-                    child: BookViewAppBar(
-                      title: widget.book.title,
-                      isFavorite: _isFavorite,
-                      onToggleFavorite: _toggleFavorite,
-                      onResetProgress: _resetProgress,
-                      tabController: _tabController,
+              child: Stack(
+                children: [
+                  // Minimal header when controls hidden
+                  Positioned(
+                    top: topPadding,
+                    left: AppSpace.md,
+                    right: AppSpace.md,
+                    height: 42.0,
+                    child: AnimatedOpacity(
+                      duration: AppMotion.fast,
+                      curve: AppMotion.easeOut,
+                      opacity: _showControls ? 0.0 : 1.0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.book.title,
+                              style: context.text.titleSmall.copyWith(
+                                color: context.palette.text,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.sm),
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.palette.goldSoft,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: context.palette.gold.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'صفحة $_currentPage من $_totalPages',
+                              style: context.text.caption.copyWith(
+                                color: context.palette.gold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+
+                  // Full App Bar when controls visible
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: topBarHeight,
+                    child: IgnorePointer(
+                      ignoring: !_showControls,
+                      child: AnimatedOpacity(
+                        duration: AppMotion.fast,
+                        curve: AppMotion.easeOut,
+                        opacity: _showControls ? 1.0 : 0.0,
+                        child: BookViewAppBar(
+                          title: widget.book.title,
+                          isFavorite: _isFavorite,
+                          onToggleFavorite: _toggleFavorite,
+                          onResetProgress: _resetProgress,
+                          tabController: _tabController,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
