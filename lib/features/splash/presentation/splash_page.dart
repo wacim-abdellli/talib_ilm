@@ -76,9 +76,13 @@ class _SplashPageState extends State<SplashPage>
   void _proceedToHome() {
     if (_navigated || !mounted) return;
     _navigated = true;
-    Navigator.of(context).pushReplacement(
-      buildFadeRoute(page: const AppShell()),
-    );
+    _timer?.cancel();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        buildFadeRoute(page: const AppShell()),
+      );
+    });
   }
 
   @override
