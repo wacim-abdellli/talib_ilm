@@ -13,6 +13,7 @@ void main() {
     test('PrayerNotificationMode enum has all required options', () {
       expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.adhan));
       expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.takbeer));
+      expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.announcement));
       expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.tone));
       expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.silent));
       expect(PrayerNotificationMode.values, contains(PrayerNotificationMode.off));

@@ -7,16 +7,18 @@ enum AdhanSound {
   alafasy,
   abdulbasit,
   qatami,
+  aqsa,
   takbeer,
 }
 
 /// Rich notification options for prayer times
 enum PrayerNotificationMode {
-  adhan,   // أذان كامل بصوت المؤذن
-  takbeer, // تكبير وتنبيه صوتي موجز (حان الآن وقت الصلاة)
-  tone,    // نغمة تنبيه هادئة
-  silent,  // إشعار مرئي فقط بدون صوت
-  off,     // إيقاف التنبيه
+  adhan,        // أذان كامل بصوت المؤذن المختار
+  takbeer,      // تكبيرات الأذان فقط
+  announcement, // نداء وقت الصلاة (حان الآن وقت صلاة...)
+  tone,         // نغمة تنبيه هادئة
+  silent,       // إشعار مرئي فقط بدون صوت
+  off,          // إيقاف التنبيه
 }
 
 class AdhanSettings {

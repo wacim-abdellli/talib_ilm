@@ -7,6 +7,7 @@ import '../../../../core/services/adhan_service.dart';
 import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import 'prayer_muezzin_selector.dart';
 import 'prayer_notification_tester.dart';
 
 class PrayerAdhanSection extends StatelessWidget {
@@ -107,9 +108,19 @@ class PrayerAdhanSection extends StatelessWidget {
               palette: palette,
               textTheme: textTheme,
               mode: PrayerNotificationMode.takbeer,
-              title: 'تكبير وتنبيه موجز',
-              subtitle: 'تكبيرات الأذان مع تنبيه "حان الآن وقت الصلاة"',
+              title: 'تكبيرات فقط',
+              subtitle: 'تكبيرات الأذان فقط (الله أكبر، الله أكبر) دون الأذان كاملاً',
               icon: Icons.campaign_rounded,
+            ),
+            const SizedBox(height: AppSpace.xs),
+            _buildModePill(
+              context: context,
+              palette: palette,
+              textTheme: textTheme,
+              mode: PrayerNotificationMode.announcement,
+              title: 'نداء وقت الصلاة',
+              subtitle: 'نداء صوتي وقور: "حان الآن وقت صلاة الفجر / الظهر / ..."',
+              icon: Icons.record_voice_over_rounded,
             ),
             const SizedBox(height: AppSpace.xs),
             _buildModePill(
@@ -134,70 +145,12 @@ class PrayerAdhanSection extends StatelessWidget {
 
             const SizedBox(height: AppSpace.lg),
 
-            // ── Muezzin Selector (When Adhan or Takbeer active) ───────────
-            if (settings.defaultMode == PrayerNotificationMode.adhan ||
-                settings.defaultMode == PrayerNotificationMode.takbeer) ...[
-              DropdownButtonFormField<AdhanSound>(
-                initialValue: settings.sound,
-                style: textTheme.body.copyWith(
-                  color: palette.text,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'صوت المؤذن',
-                  labelStyle: textTheme.bodySmall.copyWith(
-                    color: palette.textMuted,
-                  ),
-                  filled: true,
-                  fillColor: palette.surfaceMuted,
-                  border: OutlineInputBorder(
-                    borderRadius: AppRadius.mdRadius,
-                    borderSide: BorderSide(color: palette.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: AppRadius.mdRadius,
-                    borderSide: BorderSide(color: palette.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: AppRadius.mdRadius,
-                    borderSide: BorderSide(color: palette.primary, width: 2),
-                  ),
-                  contentPadding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.sm,
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AdhanSound.makkah,
-                    child: Text('أذان الحرم المكي الشريف (الشيخ علي ملا)'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.madinah,
-                    child: Text('أذان المسجد النبوي الشريف (المدينة المنورة)'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.alafasy,
-                    child: Text('أذان الشيخ مشاري راشد العفاسي'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.abdulbasit,
-                    child: Text('أذان الشيخ عبد الباسط عبد الصمد'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.qatami,
-                    child: Text('أذان الشيخ ناصر القطامي'),
-                  ),
-                  DropdownMenuItem(
-                    value: AdhanSound.takbeer,
-                    child: Text('تكبيرات وتنبيه بصوت الصلاة (موجز)'),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    onSettingsChanged(settings.copyWith(sound: val));
-                  }
-                },
+            // ── Muezzin Selector (When Adhan active) ─────────────────────
+            if (settings.defaultMode == PrayerNotificationMode.adhan) ...[
+              PrayerMuezzinSelector(
+                settings: settings,
+                adhanService: adhanService,
+                onSettingsChanged: onSettingsChanged,
               ),
               const SizedBox(height: AppSpace.md),
             ],
@@ -353,7 +306,16 @@ class PrayerAdhanSection extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('تنبيه موجز'),
+                                Text('تكبيرات فقط'),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: PrayerNotificationMode.announcement,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('نداء الصلاة'),
                               ],
                             ),
                           ),

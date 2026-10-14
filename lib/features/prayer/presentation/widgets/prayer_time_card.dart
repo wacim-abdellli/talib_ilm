@@ -177,7 +177,11 @@ class PrayerTimeCard extends StatelessWidget {
                         break;
                       case PrayerNotificationMode.takbeer:
                         modeIcon = Icons.campaign_rounded;
-                        modeTooltip = 'تكبير وتنبيه موجز (انقر لتغيير النمط)';
+                        modeTooltip = 'تكبيرات فقط (انقر لتغيير النمط)';
+                        break;
+                      case PrayerNotificationMode.announcement:
+                        modeIcon = Icons.record_voice_over_rounded;
+                        modeTooltip = 'نداء وقت الصلاة (انقر لتغيير النمط)';
                         break;
                       case PrayerNotificationMode.tone:
                         modeIcon = Icons.notifications_active_rounded;

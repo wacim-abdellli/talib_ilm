@@ -33,28 +33,25 @@ class PrayerNotificationTester extends StatefulWidget {
 
 class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
   String _selectedPrayer = 'العشاء';
+  String? _activeAudioTestKey;
 
   Future<void> _testAudio({
     required AdhanSound sound,
+    required PrayerNotificationMode mode,
     String? prayerName,
+    required String testKey,
   }) async {
     HapticFeedback.lightImpact();
-    if (widget.adhanService.isPlaying) {
+    if (_activeAudioTestKey == testKey && widget.adhanService.isPlaying) {
       await widget.adhanService.stop();
+      if (mounted) setState(() => _activeAudioTestKey = null);
       return;
     }
 
-    if (widget.settings.defaultMode == PrayerNotificationMode.silent ||
-        widget.settings.defaultMode == PrayerNotificationMode.off) {
-      AppSnackbar.info(
-        context,
-        'النمط الافتراضي المحدد حالياً صامت. اختر أذان كامل أو تكبير لسماع الصوت.',
-      );
-      return;
-    }
-
+    if (mounted) setState(() => _activeAudioTestKey = testKey);
     await widget.adhanService.test(
-      sound,
+      sound: sound,
+      mode: mode,
       volume: widget.settings.volume,
       prayerName: prayerName,
     );
@@ -68,6 +65,7 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
   }) async {
     HapticFeedback.mediumImpact();
     final notifService = NotificationService();
+    await notifService.requestPermissions();
     await notifService.showInstantTestNotification(
       prayerName: prayerName,
       mode: mode,
@@ -89,6 +87,7 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
   }) async {
     HapticFeedback.heavyImpact();
     final notifService = NotificationService();
+    await notifService.requestPermissions();
     await notifService.scheduleTestNotificationAfter(
       seconds: 5,
       prayerName: prayerName,
@@ -108,9 +107,8 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
     final palette = context.palette;
     final textTheme = context.text;
 
-    final isTakbeer =
-        widget.settings.defaultMode == PrayerNotificationMode.takbeer;
-    final soundToPlay = isTakbeer ? AdhanSound.takbeer : widget.settings.sound;
+    final currentMode = widget.settings.defaultMode;
+    final soundToPlay = widget.settings.sound;
 
     return AppCard(
       color: palette.surfaceRaised,
@@ -208,12 +206,11 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
           StreamBuilder<PlayerState>(
             stream: widget.adhanService.playerStateStream,
             builder: (context, _) {
-              final isPlaying = widget.adhanService.isPlaying;
+              final isPlaying = widget.adhanService.isPlaying &&
+                  _activeAudioTestKey == 'quick_preview';
               final previewLabel = isPlaying
                   ? 'إيقاف الصوت الآن'
-                  : (isTakbeer
-                      ? 'استماع لتنبيه صلاة $_selectedPrayer'
-                      : 'استماع لصوت المؤذن المحدد');
+                  : 'استماع للنمط المختار لصلاة $_selectedPrayer';
               return AppButton.tonal(
                 label: previewLabel,
                 icon: isPlaying
@@ -221,7 +218,9 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
                     : Icons.volume_up_rounded,
                 onPressed: () => _testAudio(
                   sound: soundToPlay,
+                  mode: currentMode,
                   prayerName: _selectedPrayer,
+                  testKey: 'quick_preview',
                 ),
               );
             },
@@ -236,8 +235,8 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
                   label: 'إشعار فوري (الآن)',
                   icon: Icons.notifications_active_rounded,
                   onPressed: () => _sendInstantTest(
-                    mode: widget.settings.defaultMode,
-                    sound: widget.settings.sound,
+                    mode: currentMode,
+                    sound: soundToPlay,
                     label: 'النمط الحالي',
                     prayerName: _selectedPrayer,
                   ),
@@ -249,8 +248,8 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
                   label: 'بعد 5 ثوانٍ (للخروج)',
                   icon: Icons.timer_outlined,
                   onPressed: () => _sendDelayed5sTest(
-                    mode: widget.settings.defaultMode,
-                    sound: widget.settings.sound,
+                    mode: currentMode,
+                    sound: soundToPlay,
                     label: 'النمط الحالي',
                     prayerName: _selectedPrayer,
                   ),
@@ -265,10 +264,11 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
 
           // ── Test All Cases Grid ──
           Text(
-            'اختبار الأصوات المتاحة (استماع / فوري / بعد 5ث):',
+            'اختبار الأصوات المتاحة (سماع / إشعار فوري / بعد 5 ثوانٍ):',
             style: AppTextStyles.labelSmall.copyWith(
               color: palette.primary,
               fontFamily: AppTextStyles.cairo,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: AppSpace.xs),
@@ -277,19 +277,21 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             context,
             palette: palette,
             icon: Icons.campaign_rounded,
-            title: 'تكبير وتنبيه: حانت صلاة العشاء',
+            title: 'تكبيرات الأذان فقط',
             mode: PrayerNotificationMode.takbeer,
             sound: AdhanSound.takbeer,
-            prayerName: 'العشاء',
+            prayerName: _selectedPrayer,
+            testKey: 'takbeer',
           ),
           _buildTestCaseRow(
             context,
             palette: palette,
-            icon: Icons.campaign_rounded,
-            title: 'تكبير وتنبيه: حانت صلاة الفجر',
-            mode: PrayerNotificationMode.takbeer,
-            sound: AdhanSound.takbeer,
-            prayerName: 'الفجر',
+            icon: Icons.record_voice_over_rounded,
+            title: 'نداء: حان وقت صلاة $_selectedPrayer',
+            mode: PrayerNotificationMode.announcement,
+            sound: AdhanSound.makkah,
+            prayerName: _selectedPrayer,
+            testKey: 'announcement_$_selectedPrayer',
           ),
           _buildTestCaseRow(
             context,
@@ -299,6 +301,7 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             mode: PrayerNotificationMode.adhan,
             sound: AdhanSound.makkah,
             prayerName: _selectedPrayer,
+            testKey: 'adhan_makkah',
           ),
           _buildTestCaseRow(
             context,
@@ -308,6 +311,7 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             mode: PrayerNotificationMode.adhan,
             sound: AdhanSound.madinah,
             prayerName: _selectedPrayer,
+            testKey: 'adhan_madinah',
           ),
           _buildTestCaseRow(
             context,
@@ -317,6 +321,7 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             mode: PrayerNotificationMode.adhan,
             sound: AdhanSound.alafasy,
             prayerName: _selectedPrayer,
+            testKey: 'adhan_alafasy',
           ),
           _buildTestCaseRow(
             context,
@@ -326,6 +331,17 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             mode: PrayerNotificationMode.adhan,
             sound: AdhanSound.abdulbasit,
             prayerName: _selectedPrayer,
+            testKey: 'adhan_abdulbasit',
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.mosque_rounded,
+            title: 'أذان المسجد الأقصى (القدس)',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.aqsa,
+            prayerName: _selectedPrayer,
+            testKey: 'adhan_aqsa',
           ),
           _buildTestCaseRow(
             context,
@@ -335,24 +351,27 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             mode: PrayerNotificationMode.adhan,
             sound: AdhanSound.qatami,
             prayerName: _selectedPrayer,
+            testKey: 'adhan_qatami',
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.notifications_active_rounded,
+            title: 'نغمة تنبيه هادئة',
+            mode: PrayerNotificationMode.tone,
+            sound: AdhanSound.makkah,
+            prayerName: _selectedPrayer,
+            testKey: 'tone',
           ),
           _buildTestCaseRow(
             context,
             palette: palette,
             icon: Icons.notifications_none_rounded,
-            title: 'نغمة تنبيه هادئة',
-            mode: PrayerNotificationMode.tone,
-            sound: AdhanSound.makkah,
-            prayerName: _selectedPrayer,
-          ),
-          _buildTestCaseRow(
-            context,
-            palette: palette,
-            icon: Icons.notifications_off_outlined,
             title: 'إشعار صامت مرئي',
             mode: PrayerNotificationMode.silent,
             sound: AdhanSound.makkah,
             prayerName: _selectedPrayer,
+            testKey: 'silent',
           ),
 
           const SizedBox(height: AppSpace.xs),
@@ -395,122 +414,151 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
     required PrayerNotificationMode mode,
     required AdhanSound sound,
     required String prayerName,
+    required String testKey,
   }) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-      child: Container(
-        padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.sm,
-          vertical: AppSpace.xs,
-        ),
-        decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: AppRadius.smRadius,
-          border: Border.all(color: palette.border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: palette.primary),
-            const SizedBox(width: AppSpace.xs),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: palette.text,
-                  fontFamily: AppTextStyles.cairo,
-                ),
+    return StreamBuilder<PlayerState>(
+      stream: widget.adhanService.playerStateStream,
+      builder: (context, _) {
+        final isPlayingThis =
+            widget.adhanService.isPlaying && _activeAudioTestKey == testKey;
+
+        return Padding(
+          padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
+          child: Container(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: palette.surface,
+              borderRadius: AppRadius.smRadius,
+              border: Border.all(
+                color: isPlayingThis ? palette.gold : palette.border,
               ),
             ),
-            // Preview Audio Button
-            if (mode != PrayerNotificationMode.silent &&
-                mode != PrayerNotificationMode.tone) ...[
-              InkWell(
-                onTap: () => _testAudio(sound: sound, prayerName: prayerName),
-                borderRadius: AppRadius.smRadius,
-                child: Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.xs,
-                    vertical: AppSpace.xxs,
+            child: Row(
+              children: [
+                Icon(icon, color: isPlayingThis ? palette.gold : palette.primary),
+                const SizedBox(width: AppSpace.xs),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: palette.text,
+                      fontFamily: AppTextStyles.cairo,
+                      fontWeight:
+                          isPlayingThis ? FontWeight.bold : FontWeight.normal,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceRaised,
+                ),
+                // Preview Audio Button (if sound-capable)
+                if (mode != PrayerNotificationMode.silent &&
+                    mode != PrayerNotificationMode.tone) ...[
+                  InkWell(
+                    onTap: () => _testAudio(
+                      sound: sound,
+                      mode: mode,
+                      prayerName: prayerName,
+                      testKey: testKey,
+                    ),
                     borderRadius: AppRadius.smRadius,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.play_arrow_rounded, color: palette.primary),
-                      const SizedBox(width: AppSpace.xxs),
-                      Text(
-                        'سماع',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: palette.text,
-                          fontFamily: AppTextStyles.cairo,
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xs,
+                        vertical: AppSpace.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isPlayingThis
+                            ? palette.goldSoft
+                            : palette.surfaceRaised,
+                        borderRadius: AppRadius.smRadius,
+                        border: Border.all(
+                          color: isPlayingThis ? palette.gold : palette.border,
                         ),
                       ),
-                    ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isPlayingThis
+                                ? Icons.stop_rounded
+                                : Icons.play_arrow_rounded,
+                            color: isPlayingThis ? palette.gold : palette.primary,
+                            size: AppIcon.xs,
+                          ),
+                          const SizedBox(width: AppSpace.xxs),
+                          Text(
+                            isPlayingThis ? 'إيقاف' : 'سماع',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: isPlayingThis ? palette.gold : palette.text,
+                              fontFamily: AppTextStyles.cairo,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.xs),
-            ],
-            InkWell(
-              onTap: () => _sendInstantTest(
-                mode: mode,
-                sound: sound,
-                label: title,
-                prayerName: prayerName,
-              ),
-              borderRadius: AppRadius.smRadius,
-              child: Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: AppSpace.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.primarySoft,
+                  const SizedBox(width: AppSpace.xs),
+                ],
+                InkWell(
+                  onTap: () => _sendInstantTest(
+                    mode: mode,
+                    sound: sound,
+                    label: title,
+                    prayerName: prayerName,
+                  ),
                   borderRadius: AppRadius.smRadius,
-                ),
-                child: Text(
-                  'فوري',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: palette.primary,
-                    fontFamily: AppTextStyles.cairo,
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    child: Text(
+                      'فوري',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: palette.primary,
+                        fontFamily: AppTextStyles.cairo,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: AppSpace.xs),
-            InkWell(
-              onTap: () => _sendDelayed5sTest(
-                mode: mode,
-                sound: sound,
-                label: title,
-                prayerName: prayerName,
-              ),
-              borderRadius: AppRadius.smRadius,
-              child: Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: AppSpace.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.goldSoft,
+                const SizedBox(width: AppSpace.xs),
+                InkWell(
+                  onTap: () => _sendDelayed5sTest(
+                    mode: mode,
+                    sound: sound,
+                    label: title,
+                    prayerName: prayerName,
+                  ),
                   borderRadius: AppRadius.smRadius,
-                ),
-                child: Text(
-                  'بعد 5ث',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: palette.gold,
-                    fontFamily: AppTextStyles.cairo,
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.goldSoft,
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    child: Text(
+                      'بعد 5ث',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: palette.gold,
+                        fontFamily: AppTextStyles.cairo,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -16,10 +16,12 @@ class AdhanService {
 
   bool get isPlaying => _player.playing;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
+  Stream<bool> get isPlayingStream => _player.playingStream;
 
-  /// Play adhan or takbeer with volume control and MediaItem tag for background audio
-  Future<void> play(
-    AdhanSound sound, {
+  /// Play adhan, takbeer, or voice announcement with volume control and MediaItem tag
+  Future<void> play({
+    AdhanSound sound = AdhanSound.makkah,
+    PrayerNotificationMode mode = PrayerNotificationMode.adhan,
     double volume = 80.0,
     String? prayerName,
   }) async {
@@ -30,14 +32,14 @@ class AdhanService {
         QuranRadioService().pause();
       } catch (_) {}
 
-      final assetPath = _assetFor(sound, prayerName: prayerName);
-      final title = _titleFor(sound, prayerName: prayerName);
+      final assetPath = _assetFor(sound: sound, mode: mode, prayerName: prayerName);
+      final title = _titleFor(sound: sound, mode: mode, prayerName: prayerName);
 
       // Create AudioSource with required MediaItem tag for just_audio_background
       final source = AudioSource.asset(
         assetPath,
         tag: MediaItem(
-          id: 'adhan_${sound.name}_${prayerName ?? "default"}',
+          id: 'adhan_${mode.name}_${sound.name}_${prayerName ?? "default"}',
           album: 'أذان ومواقيت الصلاة',
           title: title,
           artist: 'طالب العلم',
@@ -63,13 +65,19 @@ class AdhanService {
     }
   }
 
-  /// Test play with volume and optional prayer name
-  Future<void> test(
-    AdhanSound sound, {
+  /// Test play with volume and optional prayer name and mode
+  Future<void> test({
+    AdhanSound sound = AdhanSound.makkah,
+    PrayerNotificationMode mode = PrayerNotificationMode.adhan,
     double volume = 80.0,
     String? prayerName,
   }) async {
-    await play(sound, volume: volume, prayerName: prayerName);
+    await play(
+      sound: sound,
+      mode: mode,
+      volume: volume,
+      prayerName: prayerName,
+    );
   }
 
   Future<void> preload() async {
@@ -82,7 +90,18 @@ class AdhanService {
     } catch (_) {}
   }
 
-  String _assetFor(AdhanSound sound, {String? prayerName}) {
+  String _assetFor({
+    required AdhanSound sound,
+    required PrayerNotificationMode mode,
+    String? prayerName,
+  }) {
+    if (mode == PrayerNotificationMode.announcement) {
+      return AppAssets.adhanAnnouncementFor(prayerName);
+    }
+    if (mode == PrayerNotificationMode.takbeer) {
+      return AppAssets.adhanTakbeer;
+    }
+
     switch (sound) {
       case AdhanSound.makkah:
         return AppAssets.adhanMakkah;
@@ -94,12 +113,27 @@ class AdhanService {
         return AppAssets.adhanAbdulbasit;
       case AdhanSound.qatami:
         return AppAssets.adhanQatami;
+      case AdhanSound.aqsa:
+        return AppAssets.adhanAqsa;
       case AdhanSound.takbeer:
-        return AppAssets.adhanTakbeerFor(prayerName);
+        return AppAssets.adhanTakbeer;
     }
   }
 
-  String _titleFor(AdhanSound sound, {String? prayerName}) {
+  String _titleFor({
+    required AdhanSound sound,
+    required PrayerNotificationMode mode,
+    String? prayerName,
+  }) {
+    if (mode == PrayerNotificationMode.announcement) {
+      return prayerName != null
+          ? 'نداء: حان الآن وقت صلاة $prayerName'
+          : 'نداء وقت الصلاة';
+    }
+    if (mode == PrayerNotificationMode.takbeer) {
+      return 'تكبيرات الأذان المباركة';
+    }
+
     switch (sound) {
       case AdhanSound.makkah:
         return 'أذان الحرم المكي الشريف (الشيخ علي ملا)';
@@ -111,10 +145,10 @@ class AdhanService {
         return 'أذان الشيخ عبد الباسط عبد الصمد';
       case AdhanSound.qatami:
         return 'أذان الشيخ ناصر القطامي';
+      case AdhanSound.aqsa:
+        return 'أذان المسجد الأقصى المبارك (القدس الشريف)';
       case AdhanSound.takbeer:
-        return prayerName != null
-            ? 'تنبيه صلاة $prayerName'
-            : 'تكبيرات الأذان وتنبيه وقت الصلاة';
+        return 'تكبيرات الأذان';
     }
   }
 }

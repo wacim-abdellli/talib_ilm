@@ -11,20 +11,33 @@ class AppAssets {
   static const String adhanAlafasy = 'assets/audio/adhan_alafasy.mp3';
   static const String adhanAbdulbasit = 'assets/audio/adhan_abdulbasit.mp3';
   static const String adhanQatami = 'assets/audio/adhan_qatami.mp3';
+  static const String adhanAqsa = 'assets/audio/adhan_aqsa.mp3';
   static const String adhanTakbeer = 'assets/audio/adhan_takbeer.mp3';
-  static const String adhanTakbeerFajr = 'assets/audio/adhan_takbeer_fajr.mp3';
-  static const String adhanTakbeerDhuhr = 'assets/audio/adhan_takbeer_dhuhr.mp3';
-  static const String adhanTakbeerAsr = 'assets/audio/adhan_takbeer_asr.mp3';
-  static const String adhanTakbeerMaghrib = 'assets/audio/adhan_takbeer_maghrib.mp3';
-  static const String adhanTakbeerIsha = 'assets/audio/adhan_takbeer_isha.mp3';
+
+  static const String adhanAnnouncementFajr =
+      'assets/audio/adhan_announcement_fajr.mp3';
+  static const String adhanAnnouncementDhuhr =
+      'assets/audio/adhan_announcement_dhuhr.mp3';
+  static const String adhanAnnouncementAsr =
+      'assets/audio/adhan_announcement_asr.mp3';
+  static const String adhanAnnouncementMaghrib =
+      'assets/audio/adhan_announcement_maghrib.mp3';
+  static const String adhanAnnouncementIsha =
+      'assets/audio/adhan_announcement_isha.mp3';
+  static const String adhanAnnouncementGeneral =
+      'assets/audio/adhan_announcement_general.mp3';
+
+  static String adhanAnnouncementFor(String? prayerName) {
+    if (prayerName == null) return adhanAnnouncementGeneral;
+    if (prayerName.contains('فجر')) return adhanAnnouncementFajr;
+    if (prayerName.contains('ظهر')) return adhanAnnouncementDhuhr;
+    if (prayerName.contains('عصر')) return adhanAnnouncementAsr;
+    if (prayerName.contains('مغرب')) return adhanAnnouncementMaghrib;
+    if (prayerName.contains('عشاء')) return adhanAnnouncementIsha;
+    return adhanAnnouncementGeneral;
+  }
 
   static String adhanTakbeerFor(String? prayerName) {
-    if (prayerName == null) return adhanTakbeer;
-    if (prayerName.contains('فجر')) return adhanTakbeerFajr;
-    if (prayerName.contains('ظهر')) return adhanTakbeerDhuhr;
-    if (prayerName.contains('عصر')) return adhanTakbeerAsr;
-    if (prayerName.contains('مغرب')) return adhanTakbeerMaghrib;
-    if (prayerName.contains('عشاء')) return adhanTakbeerIsha;
     return adhanTakbeer;
   }
 

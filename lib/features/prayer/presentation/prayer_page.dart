@@ -336,13 +336,16 @@ class _PrayerPageState extends State<PrayerPage> {
         _adhanSettings ?? await _adhanSettingsService.getSettings();
     final currentMode = currentSettings.modeForPrayer(prayerName);
 
-    // Cycle: adhan -> takbeer -> tone -> silent -> off -> adhan
+    // Cycle: adhan -> takbeer -> announcement -> tone -> silent -> off -> adhan
     final PrayerNotificationMode nextMode;
     switch (currentMode) {
       case PrayerNotificationMode.adhan:
         nextMode = PrayerNotificationMode.takbeer;
         break;
       case PrayerNotificationMode.takbeer:
+        nextMode = PrayerNotificationMode.announcement;
+        break;
+      case PrayerNotificationMode.announcement:
         nextMode = PrayerNotificationMode.tone;
         break;
       case PrayerNotificationMode.tone:
@@ -386,7 +389,10 @@ class _PrayerPageState extends State<PrayerPage> {
           modeName = 'أذان كامل';
           break;
         case PrayerNotificationMode.takbeer:
-          modeName = 'تكبير وتنبيه موجز';
+          modeName = 'تكبيرات فقط';
+          break;
+        case PrayerNotificationMode.announcement:
+          modeName = 'نداء وقت الصلاة';
           break;
         case PrayerNotificationMode.tone:
           modeName = 'نغمة هادئة';
