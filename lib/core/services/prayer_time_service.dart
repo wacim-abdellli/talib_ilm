@@ -43,6 +43,8 @@ class PrayerTimeService {
         city: location.city,
         latitude: location.latitude,
         longitude: location.longitude,
+        countryCode: location.countryCode,
+        savedMethod: savedMethodStr,
         date: date,
         method: method,
         adjustments: adjustments,
@@ -54,6 +56,8 @@ class PrayerTimeService {
         city: AppStrings.locationDefaultCity,
         latitude: _defaultLat,
         longitude: 39.8579,
+        countryCode: null,
+        savedMethod: savedMethodStr,
         date: date,
         method: method,
         adjustments: adjustments,
@@ -70,6 +74,7 @@ class PrayerTimeService {
   }) {
     if (savedMethod != null && savedMethod != 'auto') {
       switch (savedMethod) {
+        case 'algeria':
         case 'mwl':
           return CalculationMethod.muslim_world_league;
         case 'umm_al_qura':
@@ -146,6 +151,8 @@ class PrayerTimeService {
     required String city,
     required double latitude,
     required double longitude,
+    String? countryCode,
+    String? savedMethod,
     DateTime? date,
     CalculationMethod method = CalculationMethod.muslim_world_league,
     Map<String, int> adjustments = const {},
@@ -154,6 +161,15 @@ class PrayerTimeService {
     final safeLon = longitude.clamp(-180.0, 180.0);
     final coordinates = Coordinates(safeLat, safeLon);
     final params = method.getParameters()..madhab = Madhab.shafi;
+
+    // Calibrate official Ministry of Religious Affairs standard for Algeria & North Africa:
+    // Official ministry timetables (Algeria, Morocco, Tunisia) calculate Isha at complete 18.0° twilight.
+    // Default MWL in adhan library uses 17.0°, resulting in an astronomical ~5-minute early disparity.
+    final country = (countryCode ?? '').toUpperCase().trim();
+    if (country == 'DZ' || country == 'MA' || country == 'TN' || savedMethod == 'algeria') {
+      params.fajrAngle = 18.0;
+      params.ishaAngle = 18.0;
+    }
 
     // Apply Adjustments to params?
     // Adhan package allows adjusting params.adjustments

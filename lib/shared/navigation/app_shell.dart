@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
+import '../../core/services/foreground_prayer_service.dart';
+import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
+import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/icon_badge.dart';
 import '../../shared/widgets/nav_bar.dart';
 
 import '../../features/home/presentation/home_page.dart';
@@ -9,6 +13,7 @@ import '../../features/prayer/presentation/prayer_page.dart';
 import '../../features/adhkar/presentation/adhkar_page.dart';
 import '../../features/ilm/presentation/ilm_page.dart';
 import '../../features/more/presentation/more_page.dart';
+import 'fade_page_route.dart';
 
 class AppShell extends StatefulWidget {
   final int initialIndex;
@@ -41,6 +46,13 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     _currentIndex = widget.initialIndex.clamp(0, 4);
     _loadedTabs.add(_currentIndex);
+    ForegroundPrayerService().start();
+  }
+
+  @override
+  void dispose() {
+    ForegroundPrayerService().stop();
+    super.dispose();
   }
 
   void selectTab(int index) {
@@ -90,9 +102,22 @@ class _AppShellState extends State<AppShell> {
 
     return Scaffold(
       extendBody: true,
-      body: AnimatedIndexedStack(
-        index: _currentIndex,
-        children: pages,
+      body: Stack(
+        children: [
+          AnimatedIndexedStack(
+            index: _currentIndex,
+            children: pages,
+          ),
+          SafeArea(
+            child: ValueListenableBuilder<ActivePrayerAlert?>(
+              valueListenable: ForegroundPrayerService().activeAlert,
+              builder: (context, alert, _) {
+                if (alert == null) return const SizedBox.shrink();
+                return _buildPrayerAlertBanner(context, alert);
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavBar(
         currentIndex: _currentIndex,
@@ -119,6 +144,102 @@ class _AppShellState extends State<AppShell> {
             label: 'المزيد',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPrayerAlertBanner(
+    BuildContext context,
+    ActivePrayerAlert alert,
+  ) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
+      child: Material(
+        color: palette.surfaceRaised,
+        elevation: 8,
+        borderRadius: AppRadius.lgRadius,
+        child: Container(
+          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised,
+            borderRadius: AppRadius.lgRadius,
+            border: Border.all(
+              color: palette.gold,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const IconBadge(icon: Icons.mosque_rounded),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'حان الآن وقت صلاة ${alert.prayerName}',
+                          style: textTheme.titleSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: palette.text,
+                          ),
+                        ),
+                        Text(
+                          alert.prayerName.contains('فجر')
+                              ? 'الصلاة خير من النوم.. حي على الصلاة'
+                              : 'حي على الصلاة.. حي على الفلاح',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AppIconButton(
+                    icon: Icons.close_rounded,
+                    tooltip: 'إغلاق التنبيه',
+                    color: palette.textMuted,
+                    onPressed: () => ForegroundPrayerService().dismissAlert(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppButton.outline(
+                    label: 'إيقاف الأذان',
+                    size: AppButtonSize.sm,
+                    icon: Icons.volume_off_rounded,
+                    onPressed: () => ForegroundPrayerService().dismissAlert(),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  AppButton(
+                    label: 'أذكار الصلاة',
+                    size: AppButtonSize.sm,
+                    icon: Icons.menu_book_rounded,
+                    onPressed: () {
+                      ForegroundPrayerService().dismissAlert();
+                      Navigator.push(
+                        context,
+                        buildFadeRoute(
+                          page: AfterPrayerAthkarPage(
+                            prayerName: alert.prayerName,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
