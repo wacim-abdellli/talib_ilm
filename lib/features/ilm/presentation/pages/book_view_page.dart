@@ -510,18 +510,27 @@ class _BookViewPageState extends State<BookViewPage>
           AnimatedContainer(
             duration: AppMotion.fast,
             curve: AppMotion.easeOut,
-            height: _showControls ? topBarHeight : 0.0,
+            height: _showControls ? topBarHeight : topPadding,
+            color: _showControls ? context.palette.surfaceRaised : context.palette.bg,
             child: ClipRect(
               child: OverflowBox(
-                alignment: Alignment.bottomCenter,
+                alignment: Alignment.topCenter,
                 minHeight: topBarHeight,
                 maxHeight: topBarHeight,
-                child: BookViewAppBar(
-                  title: widget.book.title,
-                  isFavorite: _isFavorite,
-                  onToggleFavorite: _toggleFavorite,
-                  onResetProgress: _resetProgress,
-                  tabController: _tabController,
+                child: IgnorePointer(
+                  ignoring: !_showControls,
+                  child: AnimatedOpacity(
+                    duration: AppMotion.fast,
+                    curve: AppMotion.easeOut,
+                    opacity: _showControls ? 1.0 : 0.0,
+                    child: BookViewAppBar(
+                      title: widget.book.title,
+                      isFavorite: _isFavorite,
+                      onToggleFavorite: _toggleFavorite,
+                      onResetProgress: _resetProgress,
+                      tabController: _tabController,
+                    ),
+                  ),
                 ),
               ),
             ),

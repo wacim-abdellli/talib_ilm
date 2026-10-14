@@ -326,7 +326,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         body: Column(
           children: [
             // ── 1. Prestigious Scholarly Top Bar (Hides smoothly on immersion) ──
-            _buildTopBar(palette, textTheme),
+            _buildTopBar(palette, textTheme, bgColor),
 
             // ── 2. Reflowable Digital Reader Body ─────────────────────────────
             Expanded(
@@ -421,92 +421,101 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     );
   }
 
-  Widget _buildTopBar(AppPalette palette, AppTextTheme textTheme) {
+  Widget _buildTopBar(AppPalette palette, AppTextTheme textTheme, Color bgColor) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final topBarHeight = topPadding + AppSize.navH;
 
     return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
-      height: _showControls ? topBarHeight : 0.0,
+      height: _showControls ? topBarHeight : topPadding,
+      color: _showControls ? palette.surfaceRaised : bgColor,
       child: ClipRect(
         child: OverflowBox(
-          alignment: Alignment.bottomCenter,
+          alignment: Alignment.topCenter,
           minHeight: topBarHeight,
           maxHeight: topBarHeight,
-          child: Container(
-            height: topBarHeight,
-            padding: EdgeInsetsDirectional.only(top: topPadding),
-            decoration: BoxDecoration(
-              color: palette.surfaceRaised,
-              border: Border(
-                bottom: BorderSide(color: palette.border, width: 1),
-              ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: AppIcon.sm,
-                  ),
-                  tooltip: 'رجوع',
-                  color: palette.text,
-                  onPressed: () => Navigator.maybePop(context),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.book.title,
-                        style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        widget.book.author,
-                        style: textTheme.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+          child: IgnorePointer(
+            ignoring: !_showControls,
+            child: AnimatedOpacity(
+              duration: AppMotion.fast,
+              curve: AppMotion.easeOut,
+              opacity: _showControls ? 1.0 : 0.0,
+              child: Container(
+                height: topBarHeight,
+                padding: EdgeInsetsDirectional.only(top: topPadding),
+                decoration: BoxDecoration(
+                  color: palette.surfaceRaised,
+                  border: Border(
+                    bottom: BorderSide(color: palette.border, width: 1),
                   ),
                 ),
-                ListenableBuilder(
-                  listenable: themeService,
-                  builder: (context, _) {
-                    return IconButton(
-                      tooltip: themeService.themeDisplayName,
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        themeService.toggleTheme();
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: AppIcon.sm,
+                      ),
+                      tooltip: 'رجوع',
+                      color: palette.text,
+                      onPressed: () => Navigator.maybePop(context),
+                    ),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.book.title,
+                            style: textTheme.titleSmall.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            widget.book.author,
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    ListenableBuilder(
+                      listenable: themeService,
+                      builder: (context, _) {
+                        return IconButton(
+                          tooltip: themeService.themeDisplayName,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            themeService.toggleTheme();
+                          },
+                          icon: Icon(
+                            themeService.themeIcon,
+                            color: palette.text,
+                            size: AppIcon.sm,
+                          ),
+                        );
                       },
+                    ),
+                    IconButton(
+                      tooltip: 'نسخ الصفحة',
+                      onPressed: _copyPageContent,
                       icon: Icon(
-                        themeService.themeIcon,
+                        Icons.copy_rounded,
                         color: palette.text,
                         size: AppIcon.sm,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: 'نسخ الصفحة',
-                  onPressed: _copyPageContent,
-                  icon: Icon(
-                    Icons.copy_rounded,
-                    color: palette.text,
-                    size: AppIcon.sm,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -526,7 +535,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: const EdgeInsetsDirectional.symmetric(
             horizontal: AppSpace.lg,
-            vertical: AppSpace.md,
+            vertical: AppSpace.lg,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
