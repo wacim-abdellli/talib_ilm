@@ -135,9 +135,9 @@ class _HadithCardState extends State<HadithCard> {
 
           const SizedBox(height: AppSpace.md),
 
-          // Title
+          // Title (authentic shortest saying, full text with no dots)
           Text(
-            widget.hadith.title,
+            widget.hadith.cleanTitle,
             style: AppTextStyles.titleMedium.copyWith(
               color: palette.text,
               fontFamily: AppTextStyles.cairo,

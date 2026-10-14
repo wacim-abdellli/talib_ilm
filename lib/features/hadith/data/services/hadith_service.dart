@@ -39,12 +39,19 @@ class HadithService {
     return all[index];
   }
 
-  /// Returns a random hadith from the collection
-  Future<GradedHadith?> getRandomHadith() async {
+  /// Returns a random hadith from the collection, optionally avoiding [excludeId]
+  Future<GradedHadith?> getRandomHadith({String? excludeId}) async {
     final all = await getAllHadiths();
     if (all.isEmpty) return null;
+    if (all.length == 1) return all.first;
     final rng = Random();
-    return all[rng.nextInt(all.length)];
+    GradedHadith candidate;
+    int attempts = 0;
+    do {
+      candidate = all[rng.nextInt(all.length)];
+      attempts++;
+    } while (candidate.id == excludeId && attempts < 10);
+    return candidate;
   }
 
   /// Returns list of unique collections

@@ -56,6 +56,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // Emotional state controller
   final HomeStateController _stateController = HomeStateController();
   Timer? _stateRefreshTimer;
+  Key _hadithKey = UniqueKey();
 
   @override
   void initState() {
@@ -226,6 +227,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _handlePullRefresh() async {
+    setState(() {
+      _hadithKey = UniqueKey();
+    });
     await _loadAllData();
   }
 
@@ -285,12 +289,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
 
                   // Daily Graded Hadith & Prophetic Remembrances
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsetsDirectional.symmetric(
+                      padding: const EdgeInsetsDirectional.symmetric(
                         horizontal: AppSpace.xl,
                       ),
-                      child: HomeDailyHadithCard(),
+                      child: HomeDailyHadithCard(key: _hadithKey),
                     ),
                   ),
                   const SliverToBoxAdapter(

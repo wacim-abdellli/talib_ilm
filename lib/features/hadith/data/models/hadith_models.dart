@@ -64,6 +64,17 @@ class GradedHadith {
   /// Whether this Hadith is Muttafaq 'alayh or Sahih
   bool get isSahih => grade.contains('صحيح');
 
+  /// Clean title guaranteed to have no trailing dots, ellipses, or generic headers
+  String get cleanTitle {
+    var t = title.replaceAll(RegExp(r'\.{2,}'), '').replaceAll(RegExp(r'\.+$'), '').trim();
+    if (t.startsWith('حديث من ') || t.startsWith('الحديث القدسي ')) {
+      if (category.isNotEmpty && !category.contains('القدسي')) {
+        return category;
+      }
+    }
+    return t.isNotEmpty ? t : 'حديث نبوي شريف';
+  }
+
   /// Clean matn snippet for compact cards
   String get shortMatn {
     if (matn.length <= 140) return matn;

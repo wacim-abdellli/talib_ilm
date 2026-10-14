@@ -31,6 +31,38 @@ void main() {
       expect(legacy.text, hadith.matn);
       expect(legacy.source, contains('صحيح متفق عليه'));
     });
+
+    test('cleanTitle strips trailing dots and generic prefixes cleanly', () {
+      final h1 = GradedHadith(
+        id: '1',
+        number: 1,
+        title: 'الحياء من الإيمان...',
+        collection: 'رياض الصالحين',
+        category: 'باب الحياء',
+        grade: 'صحيح',
+        source: 'متفق عليه',
+        narrator: 'أبو هريرة',
+        matn: 'الحياء من الإيمان',
+        benefits: '',
+      );
+      expect(h1.cleanTitle, 'الحياء من الإيمان');
+      expect(h1.cleanTitle.contains('..'), isFalse);
+
+      final h2 = GradedHadith(
+        id: '2',
+        number: 2,
+        title: 'حديث من كتاب الأدب (1)',
+        collection: 'رياض الصالحين',
+        category: 'باب حسن الخلق',
+        grade: 'صحيح',
+        source: 'متفق عليه',
+        narrator: 'أبو هريرة',
+        matn: 'أكمل المؤمنين إيمانا أحسنهم خلقا',
+        benefits: '',
+      );
+      expect(h2.cleanTitle, 'باب حسن الخلق');
+      expect(h2.cleanTitle.startsWith('حديث من'), isFalse);
+    });
   });
 
   group('Quran Radio Model', () {
