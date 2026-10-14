@@ -134,10 +134,11 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: AppPalette.splashWhite,
+      backgroundColor: palette.bg,
       body: SafeArea(
         child: InkWell(
           onTap: _proceedToHome,
@@ -146,7 +147,7 @@ class _SplashPageState extends State<SplashPage>
           child: Padding(
             padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.xl,
-              vertical: AppSpace.md,
+              vertical: AppSpace.lg,
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -161,96 +162,42 @@ class _SplashPageState extends State<SplashPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 1. Top Section: Prominent Sacred Basmalah & Salam
+                          // 1. Top Section: Majestic Golden Calligraphic Basmalah
                           SlideTransition(
                             position: _headerSlide,
                             child: FadeTransition(
                               opacity: _headerFade,
                               child: Padding(
                                 padding: const EdgeInsetsDirectional.only(
-                                  top: AppSpace.sm,
+                                  top: AppSpace.xl,
                                 ),
                                 child: Semantics(
                                   header: true,
                                   label: 'بسم الله الرحمن الرحيم',
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Noble Greeting
-                                      Text(
-                                        'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ',
-                                        textAlign: TextAlign.center,
-                                        style: textTheme.caption.copyWith(
-                                          color: AppPalette.splashTextMuted,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: AppSpace.xs),
-
-                                      // Prominent Sacred Basmalah with ornamental delimiters
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '۞',
-                                            style: textTheme.sacred.copyWith(
-                                              color: AppPalette.splashGold,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: AppSpace.sm),
-                                          Flexible(
-                                            child: Text(
-                                              'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                                              textAlign: TextAlign.center,
-                                              style: textTheme.sacredLarge.copyWith(
-                                                color: AppPalette.splashGold,
-                                                fontWeight: FontWeight.bold,
-                                                height: 1.35,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: AppSpace.sm),
-                                          Text(
-                                            '۞',
-                                            style: textTheme.sacred.copyWith(
-                                              color: AppPalette.splashGold,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: AppSpace.xs),
-
-                                      // Delicate Islamic Divider
-                                      Container(
-                                        width: 140,
-                                        height: 1.5,
-                                        decoration: BoxDecoration(
-                                          color: AppPalette.splashGoldSoft,
-                                          borderRadius: AppRadius.pillRadius,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.sacredLarge.copyWith(
+                                      color: palette.gold,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.4,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
 
-                          // 2. Center Section: Luminous Emblem & App Title
+                          // 2. Center Section: Squircle Badge with New Logo, Title, and Subtitle
                           Padding(
                             padding: const EdgeInsetsDirectional.symmetric(
-                              vertical: AppSpace.md,
+                              vertical: AppSpace.xl,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Luminous Ambient Halo & Sacred Emblem
+                                // Squircle Badge with Ambient Glow
                                 ScaleTransition(
                                   scale: _emblemScale,
                                   child: FadeTransition(
@@ -259,22 +206,21 @@ class _SplashPageState extends State<SplashPage>
                                       label: 'شعار تطبيق طالب العلم',
                                       image: true,
                                       child: Container(
-                                        width: 136,
-                                        height: 136,
+                                        width: 128,
+                                        height: 128,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppPalette.splashGoldSoft,
+                                          color: palette.surfaceRaised,
+                                          borderRadius: AppRadius.xlRadius,
                                           border: Border.all(
-                                            color: AppPalette.splashGold
-                                                .withValues(alpha: 0.28),
+                                            color: palette.gold.withValues(alpha: 0.28),
                                             width: 1.2,
                                           ),
                                         ),
                                         child: Image.asset(
-                                          'assets/branding/symbol_on_light.png',
-                                          width: 108,
-                                          height: 108,
+                                          palette.logoSymbol,
+                                          width: 88,
+                                          height: 88,
                                           fit: BoxFit.contain,
                                         ),
                                       ),
@@ -284,7 +230,7 @@ class _SplashPageState extends State<SplashPage>
 
                                 const SizedBox(height: AppSpace.lg),
 
-                                // Animated Title, Subtitle, and Quranic Du'a
+                                // Animated Title & Subtitle
                                 SlideTransition(
                                   position: _titleSlide,
                                   child: FadeTransition(
@@ -297,9 +243,9 @@ class _SplashPageState extends State<SplashPage>
                                           'طَالِبُ العِلْمِ',
                                           textAlign: TextAlign.center,
                                           style: textTheme.display.copyWith(
-                                            color: AppPalette.splashText,
+                                            color: palette.text,
                                             fontWeight: FontWeight.w800,
-                                            letterSpacing: 0.8,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
 
@@ -307,58 +253,11 @@ class _SplashPageState extends State<SplashPage>
 
                                         // Sacred Tagline
                                         Text(
-                                          'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ الشَّرْعِيِّ',
+                                          'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ النَّافِعِ',
                                           textAlign: TextAlign.center,
                                           style: textTheme.bodySmall.copyWith(
-                                            color: AppPalette.splashTextMuted,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: AppSpace.sm),
-
-                                        // Qur'anic Prayer Pill
-                                        Container(
-                                          padding: const EdgeInsetsDirectional.symmetric(
-                                            horizontal: AppSpace.lg,
-                                            vertical: AppSpace.xs,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppPalette.splashGoldSoft,
-                                            borderRadius: AppRadius.pillRadius,
-                                            border: Border.all(
-                                              color: AppPalette.splashGold
-                                                  .withValues(alpha: 0.35),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: Text.rich(
-                                            TextSpan(
-                                              children: [
-                                                TextSpan(
-                                                  text: '۞ ',
-                                                  style: textTheme.sacred.copyWith(
-                                                    color: AppPalette.splashGold,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: 'رَبِّ زِدْنِي عِلْمًا',
-                                                  style: textTheme.label.copyWith(
-                                                    color: AppPalette.splashGold,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: ' ۞',
-                                                  style: textTheme.sacred.copyWith(
-                                                    color: AppPalette.splashGold,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            textAlign: TextAlign.center,
+                                            color: palette.textMuted,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
@@ -369,19 +268,19 @@ class _SplashPageState extends State<SplashPage>
                             ),
                           ),
 
-                          // 3. Bottom Section: Fast Progress Bar & Prophetic Hadith
+                          // 3. Bottom Section: Golden Progress Line & Prophetic Hadith
                           FadeTransition(
                             opacity: _bottomFade,
                             child: Padding(
                               padding: const EdgeInsetsDirectional.only(
-                                bottom: AppSpace.sm,
+                                bottom: AppSpace.md,
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Fast subtle progress bar
+                                  // Sleek Golden Progress Bar
                                   SizedBox(
-                                    width: 90,
+                                    width: 96,
                                     child: ClipRRect(
                                       borderRadius: AppRadius.pillRadius,
                                       child: AnimatedBuilder(
@@ -389,11 +288,10 @@ class _SplashPageState extends State<SplashPage>
                                         builder: (context, _) =>
                                             LinearProgressIndicator(
                                           value: _animController.value,
-                                          backgroundColor:
-                                              AppPalette.splashGoldSoft,
+                                          backgroundColor: palette.goldSoft,
                                           valueColor:
-                                              const AlwaysStoppedAnimation<Color>(
-                                            AppPalette.splashGold,
+                                              AlwaysStoppedAnimation<Color>(
+                                            palette.gold,
                                           ),
                                           minHeight: 2.5,
                                         ),
@@ -408,7 +306,7 @@ class _SplashPageState extends State<SplashPage>
                                     '«مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الْجَنَّةِ»',
                                     textAlign: TextAlign.center,
                                     style: textTheme.caption.copyWith(
-                                      color: AppPalette.splashTextSubtle,
+                                      color: palette.textSubtle,
                                       fontStyle: FontStyle.italic,
                                       height: 1.45,
                                     ),
