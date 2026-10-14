@@ -1,42 +1,45 @@
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+
 import '../../app/constants/app_assets.dart';
+import '../../features/quran/data/services/quran_audio_service.dart';
+import '../../features/radio/data/services/quran_radio_service.dart';
 import 'adhan_settings_service.dart';
 
 export 'package:just_audio/just_audio.dart' show PlayerState;
 
 class AdhanService {
   final AudioPlayer _player;
-  AudioSource? _preloadedMakkah;
-  AudioSource? _preloadedMadinah;
-  AudioSource? _preloadedTakbeer;
-  bool _isPreloaded = false;
 
   AdhanService({AudioPlayer? player}) : _player = player ?? AudioPlayer();
-
-  /// Preload adhan audio sources for instant playback
-  Future<void> preload() async {
-    if (_isPreloaded) return;
-    try {
-      _preloadedMakkah = AudioSource.asset(AppAssets.adhanMakkah);
-      _preloadedMadinah = AudioSource.asset(AppAssets.adhanMadinah);
-      _preloadedTakbeer = AudioSource.asset(AppAssets.adhanTakbeer);
-      _isPreloaded = true;
-    } catch (e) {
-      // Fallback: load on-demand
-      _isPreloaded = false;
-    }
-  }
 
   bool get isPlaying => _player.playing;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
 
-  /// Play adhan with volume control
+  /// Play adhan or takbeer with volume control and MediaItem tag for background audio
   Future<void> play(AdhanSound sound, {double volume = 80.0}) async {
     try {
-      await preload();
-      final source = _sourceFor(sound);
+      // Pause Quran recitation and radio to prevent audio collision
+      try {
+        QuranAudioService().pause();
+        QuranRadioService().pause();
+      } catch (_) {}
 
-      // Set volume (0.0 to 1.0)
+      final assetPath = _assetFor(sound);
+      final title = _titleFor(sound);
+
+      // Create AudioSource with required MediaItem tag for just_audio_background
+      final source = AudioSource.asset(
+        assetPath,
+        tag: MediaItem(
+          id: 'adhan_${sound.name}',
+          album: 'أذان الصلاة',
+          title: title,
+          artist: 'المؤذن',
+        ),
+      );
+
       final normalizedVolume = (volume / 100).clamp(0.0, 1.0);
 
       await _player.stop();
@@ -44,17 +47,16 @@ class AdhanService {
       await _player.setVolume(normalizedVolume);
       await _player.play();
     } catch (e) {
-      // Fall back to direct asset play
-      final asset = _assetFor(sound);
-      await _player.stop();
-      await _player.setAudioSource(AudioSource.asset(asset));
-      await _player.setVolume((volume / 100).clamp(0.0, 1.0));
-      await _player.play();
+      debugPrint('AdhanService.play error: $e');
     }
   }
 
   Future<void> stop() async {
-    await _player.stop();
+    try {
+      await _player.stop();
+    } catch (e) {
+      debugPrint('AdhanService.stop error: $e');
+    }
   }
 
   /// Test play with volume
@@ -62,26 +64,14 @@ class AdhanService {
     await play(sound, volume: volume);
   }
 
-  Future<void> dispose() async {
-    _isPreloaded = false;
-    _preloadedMakkah = null;
-    _preloadedMadinah = null;
-    _preloadedTakbeer = null;
-    await _player.dispose();
+  Future<void> preload() async {
+    // Media sources are prepared on demand with MediaItem tags
   }
 
-  AudioSource _sourceFor(AdhanSound sound) {
-    if (!_isPreloaded) {
-      return AudioSource.asset(_assetFor(sound));
-    }
-    switch (sound) {
-      case AdhanSound.makkah:
-        return _preloadedMakkah ?? AudioSource.asset(_assetFor(sound));
-      case AdhanSound.madinah:
-        return _preloadedMadinah ?? AudioSource.asset(_assetFor(sound));
-      case AdhanSound.takbeer:
-        return _preloadedTakbeer ?? AudioSource.asset(_assetFor(sound));
-    }
+  Future<void> dispose() async {
+    try {
+      await _player.dispose();
+    } catch (_) {}
   }
 
   String _assetFor(AdhanSound sound) {
@@ -92,6 +82,17 @@ class AdhanService {
         return AppAssets.adhanMadinah;
       case AdhanSound.takbeer:
         return AppAssets.adhanTakbeer;
+    }
+  }
+
+  String _titleFor(AdhanSound sound) {
+    switch (sound) {
+      case AdhanSound.makkah:
+        return 'أذان مكة المكرمة';
+      case AdhanSound.madinah:
+        return 'أذان المسجد النبوي الشريف';
+      case AdhanSound.takbeer:
+        return 'تكبيرات الأذان';
     }
   }
 }

@@ -5,11 +5,9 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_service.dart';
 import '../../../../core/services/adhan_settings_service.dart';
-import '../../../../core/services/notification_service.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/section_header.dart';
+import 'prayer_notification_tester.dart';
 
 class PrayerAdhanSection extends StatelessWidget {
   final AdhanSettings settings;
@@ -253,57 +251,10 @@ class PrayerAdhanSection extends StatelessWidget {
               const SizedBox(height: AppSpace.md),
             ],
 
-            // ── Testing Actions (Audio Preview + Instant Notification) ───
-            Row(
-              children: [
-                Expanded(
-                  child: StreamBuilder<PlayerState>(
-                    stream: adhanService.playerStateStream,
-                    builder: (context, snapshot) {
-                      final isPlaying = adhanService.isPlaying;
-                      return AppButton.tonal(
-                        label: isPlaying ? 'إيقاف الصوت' : 'استماع للصوت',
-                        icon: isPlaying
-                            ? Icons.stop_circle_rounded
-                            : Icons.play_circle_outline_rounded,
-                        onPressed: () async {
-                          HapticFeedback.lightImpact();
-                          if (isPlaying) {
-                            await adhanService.stop();
-                          } else {
-                            await adhanService.test(
-                              settings.sound,
-                              volume: settings.volume,
-                            );
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: AppButton(
-                    label: 'تجربة إشعار الآن',
-                    icon: Icons.notifications_active_rounded,
-                    onPressed: () async {
-                      HapticFeedback.mediumImpact();
-                      final notifService = NotificationService();
-                      await notifService.showInstantTestNotification(
-                        prayerName: 'العشاء',
-                        mode: settings.defaultMode,
-                        sound: settings.sound,
-                      );
-                      if (context.mounted) {
-                        AppSnackbar.success(
-                          context,
-                          'تم إرسال إشعار الصلاة التجريبي! تفقد شريط الإشعارات.',
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
+            // ── Comprehensive Testing Bench (Audio + Instant + 5s Outside App) ──
+            PrayerNotificationTester(
+              settings: settings,
+              adhanService: adhanService,
             ),
 
             const SizedBox(height: AppSpace.lg),

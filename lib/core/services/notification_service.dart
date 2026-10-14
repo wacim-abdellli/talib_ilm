@@ -46,46 +46,50 @@ class NotificationService {
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_channel_adhan_makkah',
+          'talib_prayer_makkah_v1',
           'أذان مكة المكرمة',
           description: 'صوت أذان مكة المكرمة عند دخول وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_makkah'),
           playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_channel_adhan_madinah',
+          'talib_prayer_madinah_v1',
           'أذان المدينة المنورة',
           description: 'صوت أذان المدينة المنورة عند دخول وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_madinah'),
           playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_channel_takbeer',
+          'talib_prayer_takbeer_v1',
           'تكبيرات وتنبيه الصلاة',
           description: 'تكبيرات الأذان وتنبيه حان وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_takbeer'),
           playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_channel_tone',
+          'talib_prayer_tone_v1',
           'نغمة التنبيه الهادئة',
           description: 'نغمة هادئة عند دخول وقت الصلاة',
           importance: Importance.high,
           playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
         ),
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_channel_silent',
+          'talib_prayer_silent_v1',
           'تنبيه مرئي صامت',
           description: 'إشعار مرئي بدون صوت لمواقيت الصلاة',
           importance: Importance.high,
@@ -168,7 +172,7 @@ class NotificationService {
 
     final details = _buildPrayerDetails(mode: mode, sound: sound);
     final title = 'حان الآن وقت صلاة $prayerName (إشعار تجريبي)';
-    final body = 'حي على الصلاة.. حي على الفلاح. تم التحقق من نجاح التنبيه.';
+    final body = 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
 
     await _plugin.show(
       9999,
@@ -176,6 +180,61 @@ class NotificationService {
       body,
       details,
     );
+  }
+
+  /// Schedules a test notification after [seconds] (e.g. 5 seconds)
+  /// allowing the user to minimize the app or lock the screen to test outside the app.
+  Future<void> scheduleTestNotificationAfter({
+    required int seconds,
+    required String prayerName,
+    required PrayerNotificationMode mode,
+    AdhanSound sound = AdhanSound.makkah,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    await init();
+    await requestPermissions();
+
+    final scheduledTime =
+        DateTime.now().add(Duration(seconds: seconds)); // ui-lint: allow
+    final details = _buildPrayerDetails(mode: mode, sound: sound);
+    final title = 'حان الآن وقت صلاة $prayerName (تجربة خارج التطبيق)';
+    final body = 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
+
+    try {
+      await _plugin.zonedSchedule(
+        8888,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling test notification with exact alarm: $e');
+      // Direct timer fallback if exact alarms are restricted
+      Future.delayed(Duration(seconds: seconds), () { // ui-lint: allow
+        _plugin.show(8888, title, body, details);
+      });
+    }
+  }
+
+  String _modeLabel(PrayerNotificationMode mode) {
+    switch (mode) {
+      case PrayerNotificationMode.adhan:
+        return 'أذان كامل';
+      case PrayerNotificationMode.takbeer:
+        return 'تكبيرات موجزة';
+      case PrayerNotificationMode.tone:
+        return 'نغمة هادئة';
+      case PrayerNotificationMode.silent:
+        return 'إشعار صامت';
+      case PrayerNotificationMode.off:
+        return 'إيقاف';
+    }
   }
 
   /// Legacy support
@@ -256,19 +315,25 @@ class NotificationService {
     switch (mode) {
       case PrayerNotificationMode.adhan:
         final soundName = _soundName(sound);
+        final channelId = sound == AdhanSound.madinah
+            ? 'talib_prayer_madinah_v1'
+            : 'talib_prayer_makkah_v1';
         return AndroidNotificationDetails(
-          'prayer_channel_$soundName',
-          'أذان الصلاة',
+          channelId,
+          sound == AdhanSound.madinah
+              ? 'أذان المدينة المنورة'
+              : 'أذان مكة المكرمة',
           channelDescription: 'صوت الأذان عند دخول وقت الصلاة',
           importance: Importance.max,
           priority: Priority.max,
           sound: RawResourceAndroidNotificationSound(soundName),
           playSound: true,
           visibility: NotificationVisibility.public,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         );
       case PrayerNotificationMode.takbeer:
         return const AndroidNotificationDetails(
-          'prayer_channel_takbeer',
+          'talib_prayer_takbeer_v1',
           'تكبيرات الصلاة',
           channelDescription: 'تكبيرات الأذان وتنبيه حان وقت الصلاة',
           importance: Importance.max,
@@ -276,21 +341,23 @@ class NotificationService {
           sound: RawResourceAndroidNotificationSound('adhan_takbeer'),
           playSound: true,
           visibility: NotificationVisibility.public,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         );
       case PrayerNotificationMode.tone:
         return const AndroidNotificationDetails(
-          'prayer_channel_tone',
+          'talib_prayer_tone_v1',
           'نغمة التنبيه الهادئة',
           channelDescription: 'نغمة هادئة عند دخول وقت الصلاة',
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
           visibility: NotificationVisibility.public,
+          audioAttributesUsage: AudioAttributesUsage.notification,
         );
       case PrayerNotificationMode.silent:
       case PrayerNotificationMode.off:
         return const AndroidNotificationDetails(
-          'prayer_channel_silent',
+          'talib_prayer_silent_v1',
           'تنبيه مرئي صامت',
           channelDescription: 'إشعار مرئي بدون صوت لمواقيت الصلاة',
           importance: Importance.high,
