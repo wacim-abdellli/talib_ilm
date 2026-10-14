@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
-import '../../../../shared/widgets/primary_app_bar.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
+import '../widgets/book_view_bookmarks_sheet.dart';
+import '../widgets/book_view_controls.dart' show BookNoteDialog;
+import '../widgets/mutn_memorization_view.dart';
+import '../widgets/scholarly_reader_hud.dart';
 import '../widgets/shamela_fihris_sheet.dart';
 import '../widgets/shamela_text_highlighter.dart';
 import '../widgets/shamela_typography_sheet.dart';
@@ -33,6 +38,8 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   late int _currentPage;
   late int _totalPages;
 
+  bool _showControls = true;
+  bool _memorizationMode = false;
   double _fontSizeDelta = 2.0;
   String _fontFamily = 'Amiri';
   double _lineHeight = 1.85;
@@ -43,6 +50,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   final Set<int> _loadingPages = {};
   final Map<int, String> _pageErrors = {};
 
+  final TextEditingController _noteController = TextEditingController();
   List<ShamelaChapter> _chapters = [];
   bool _isLoadingChapters = true;
 
@@ -53,6 +61,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _totalPages = widget.book.totalPages > 0 ? widget.book.totalPages : 100;
     _pageController = PageController(initialPage: _currentPage - 1);
 
+    _loadPreferences();
     _loadPage(_currentPage);
     _checkBookmark();
     _loadFihris();
@@ -61,7 +70,30 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   @override
   void dispose() {
     _pageController.dispose();
+    _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _fontSizeDelta = prefs.getDouble('shamela_reader_font_delta') ?? 2.0;
+      _fontFamily = prefs.getString('shamela_reader_font_family') ?? 'Amiri';
+      _lineHeight = prefs.getDouble('shamela_reader_line_height') ?? 1.85;
+      final surfIndex = prefs.getInt('shamela_reader_surface') ?? 0;
+      _surface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      _memorizationMode = prefs.getBool('shamela_memorization_mode') ?? false;
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('shamela_reader_font_delta', _fontSizeDelta);
+    await prefs.setString('shamela_reader_font_family', _fontFamily);
+    await prefs.setDouble('shamela_reader_line_height', _lineHeight);
+    await prefs.setInt('shamela_reader_surface', _surface.index);
+    await prefs.setBool('shamela_memorization_mode', _memorizationMode);
   }
 
   Future<void> _checkBookmark() async {
@@ -86,6 +118,68 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           ? 'تم حفظ علامة في الصفحة $_currentPage'
           : 'تمت إزالة العلامة من الصفحة $_currentPage',
     );
+  }
+
+  void _toggleControls() {
+    setState(() => _showControls = !_showControls);
+  }
+
+  void _toggleMemorizationMode() {
+    HapticFeedback.mediumImpact();
+    setState(() => _memorizationMode = !_memorizationMode);
+    _savePreferences();
+  }
+
+  Future<void> _openNoteDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'shamela_note_${widget.book.id}_$_currentPage';
+    _noteController.text = prefs.getString(key) ?? '';
+
+    if (!mounted) return;
+    BookNoteDialog.show(
+      context,
+      controller: _noteController,
+      onSave: () async {
+        final text = _noteController.text.trim();
+        if (text.isEmpty) {
+          await prefs.remove(key);
+        } else {
+          await prefs.setString(key, text);
+        }
+        _noteController.clear();
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        AppSnackbar.success(context, 'تم حفظ الملاحظة للصفحة $_currentPage');
+      },
+    );
+  }
+
+  Future<void> _showBookmarksSheet() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('shamela_bookmarks') ?? [];
+    final prefix = '${widget.book.id}_';
+    final pages = list
+        .where((s) => s.startsWith(prefix))
+        .map((s) => int.tryParse(s.substring(prefix.length)))
+        .whereType<int>()
+        .toList()
+      ..sort();
+
+    if (!mounted) return;
+    if (pages.isEmpty) {
+      AppSnackbar.info(context, 'لا توجد إشارات مرجعية محفوظة في هذا الكتاب');
+      return;
+    }
+
+    final entries = pages
+        .map((p) => BookmarkEntry(
+              title: widget.book.title,
+              subtitle: 'صفحة $p',
+              note: prefs.getString('shamela_note_${widget.book.id}_$p'),
+            ))
+        .toList();
+
+    BookViewBookmarksSheet.show(context, entries);
   }
 
   Future<void> _loadFihris() async {
@@ -188,10 +282,22 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         fontFamily: _fontFamily,
         lineHeight: _lineHeight,
         surface: _surface,
-        onFontSizeChanged: (delta) => setState(() => _fontSizeDelta = delta),
-        onFontFamilyChanged: (family) => setState(() => _fontFamily = family),
-        onLineHeightChanged: (lh) => setState(() => _lineHeight = lh),
-        onSurfaceChanged: (surf) => setState(() => _surface = surf),
+        onFontSizeChanged: (delta) {
+          setState(() => _fontSizeDelta = delta);
+          _savePreferences();
+        },
+        onFontFamilyChanged: (family) {
+          setState(() => _fontFamily = family);
+          _savePreferences();
+        },
+        onLineHeightChanged: (lh) {
+          setState(() => _lineHeight = lh);
+          _savePreferences();
+        },
+        onSurfaceChanged: (surf) {
+          setState(() => _surface = surf);
+          _savePreferences();
+        },
       ),
     );
   }
@@ -203,7 +309,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       case ShamelaReaderSurface.parchment:
         return palette.goldSoft;
       case ShamelaReaderSurface.night:
-        return palette.brandDark;
+        return palette.surface;
     }
   }
 
@@ -217,63 +323,12 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: bgColor,
-        appBar: PrimaryAppBar(
-          title: widget.book.title,
-          showBack: true,
-          actions: [
-            IconButton(
-              icon: Icon(
-                _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                color: _isBookmarked ? palette.gold : palette.text,
-              ),
-              tooltip: 'حفظ علامة مرجعية',
-              onPressed: _toggleBookmark,
-            ),
-            IconButton(
-              icon: Icon(Icons.format_size_rounded, color: palette.text),
-              tooltip: 'تنسيق الخط وخيارات القراءة',
-              onPressed: _showTypographySheet,
-            ),
-            IconButton(
-              icon: Icon(Icons.list_alt_rounded, color: palette.text),
-              tooltip: 'فهرس الكتاب',
-              onPressed: _showFihrisSheet,
-            ),
-          ],
-        ),
         body: Column(
           children: [
-            // Metadata strip
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.lg,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surface,
-                border: Border(bottom: BorderSide(color: palette.border, width: 1)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.book.author,
-                      style: textTheme.caption.copyWith(
-                        color: palette.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    'ص $_currentPage من $_totalPages',
-                    style: textTheme.caption.copyWith(color: palette.textMuted),
-                  ),
-                ],
-              ),
-            ),
+            // ── 1. Prestigious Scholarly Top Bar (Hides smoothly on immersion) ──
+            _buildTopBar(palette, textTheme),
 
-            // Reader Content View
+            // ── 2. Reflowable Digital Reader Body ─────────────────────────────
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -290,7 +345,10 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(color: palette.gold, strokeWidth: 2),
+                          CircularProgressIndicator(
+                            color: palette.gold,
+                            strokeWidth: 2.5,
+                          ),
                           const SizedBox(height: AppSpace.md),
                           Text(
                             'جاري استحضار الصفحة $pageNum من المكتبة...',
@@ -331,14 +389,126 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                     return const SizedBox.shrink();
                   }
 
-                  return _buildPageContent(page, palette, textTheme);
+                  return BookPageTapDetector(
+                    onTap: _toggleControls,
+                    child: _buildPageContent(page, palette, textTheme),
+                  );
                 },
               ),
             ),
 
-            // Bottom Navigation Footer
-            _buildBottomFooter(palette, textTheme),
+            // ── 3. Unified Bottom Scholarly HUD (Exact same as Mutun) ─────────
+            ScholarlyReaderHud(
+              currentPage: _currentPage,
+              totalPages: _totalPages,
+              isBookmarked: _isBookmarked,
+              memorizationMode: _memorizationMode,
+              showControls: _showControls,
+              onPreviousPage: _currentPage > 1 ? () => _jumpToPage(_currentPage - 1) : null,
+              onNextPage: _currentPage < _totalPages ? () => _jumpToPage(_currentPage + 1) : null,
+              onPageIndicatorTap: _showFihrisSheet,
+              onToggleBookmark: _toggleBookmark,
+              onShowBookmarks: _showBookmarksSheet,
+              onAddNote: _openNoteDialog,
+              onOpenFihris: _showFihrisSheet,
+              onToggleMemorization: _toggleMemorizationMode,
+              onOpenTypography: _showTypographySheet,
+              onShare: _sharePageContent,
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(AppPalette palette, AppTextTheme textTheme) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final topBarHeight = topPadding + AppSize.navH;
+
+    return AnimatedContainer(
+      duration: AppMotion.fast,
+      curve: AppMotion.easeOut,
+      height: _showControls ? topBarHeight : 0.0,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.bottomCenter,
+          minHeight: topBarHeight,
+          maxHeight: topBarHeight,
+          child: Container(
+            height: topBarHeight,
+            padding: EdgeInsetsDirectional.only(top: topPadding),
+            decoration: BoxDecoration(
+              color: palette.surfaceRaised,
+              border: Border(
+                bottom: BorderSide(color: palette.border, width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: AppIcon.sm,
+                  ),
+                  tooltip: 'رجوع',
+                  color: palette.text,
+                  onPressed: () => Navigator.maybePop(context),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.book.title,
+                        style: textTheme.titleSmall.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        widget.book.author,
+                        style: textTheme.caption.copyWith(
+                          color: palette.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                ListenableBuilder(
+                  listenable: themeService,
+                  builder: (context, _) {
+                    return IconButton(
+                      tooltip: themeService.themeDisplayName,
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        themeService.toggleTheme();
+                      },
+                      icon: Icon(
+                        themeService.themeIcon,
+                        color: palette.text,
+                        size: AppIcon.sm,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: 'نسخ الصفحة',
+                  onPressed: _copyPageContent,
+                  icon: Icon(
+                    Icons.copy_rounded,
+                    color: palette.text,
+                    size: AppIcon.sm,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -349,7 +519,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     AppPalette palette,
     AppTextTheme textTheme,
   ) {
-    // SelectionArea wraps the entire scrollable area allowing free vertical scrolling with zero gesture friction
     return SelectionArea(
       child: Scrollbar(
         thumbVisibility: true,
@@ -386,18 +555,26 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                 const SizedBox(height: AppSpace.md),
               ],
 
-              // Enhanced body text with scholarly syntax coloring
-              Text.rich(
-                ShamelaTextHighlighter.buildSpans(
-                  text: page.content,
-                  palette: palette,
-                  textTheme: textTheme,
+              // Memorization Mode or Scholarly Syntax Highlighter
+              if (_memorizationMode)
+                MutnMemorizationView(
+                  content: page.content,
                   fontFamily: _fontFamily,
                   fontSizeDelta: _fontSizeDelta,
                   lineHeight: _lineHeight,
+                )
+              else
+                Text.rich(
+                  ShamelaTextHighlighter.buildSpans(
+                    text: page.content,
+                    palette: palette,
+                    textTheme: textTheme,
+                    fontFamily: _fontFamily,
+                    fontSizeDelta: _fontSizeDelta,
+                    lineHeight: _lineHeight,
+                  ),
+                  textAlign: TextAlign.start,
                 ),
-                textAlign: TextAlign.start,
-              ),
 
               // Footnotes (الحواشي والتحقيق) Section if present
               if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
@@ -444,72 +621,9 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                 ),
               ],
 
-              const SizedBox(height: AppSpace.xl),
+              const SizedBox(height: AppSpace.xxl),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomFooter(AppPalette palette, AppTextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        border: Border(top: BorderSide(color: palette.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            // Next Page Button (RTL: forward in book)
-            IconButton(
-              icon: Icon(Icons.arrow_forward_ios_rounded, size: AppIcon.sm, color: palette.text),
-              tooltip: 'الصفحة التالية',
-              onPressed: _currentPage < _totalPages
-                  ? () => _jumpToPage(_currentPage + 1)
-                  : null,
-            ),
-
-            Expanded(
-              child: Slider(
-                value: _currentPage.toDouble(),
-                min: 1.0,
-                max: _totalPages.toDouble(),
-                divisions: _totalPages > 1 ? _totalPages - 1 : 1,
-                activeColor: palette.gold,
-                inactiveColor: palette.border,
-                onChanged: (val) {
-                  _jumpToPage(val.toInt());
-                },
-              ),
-            ),
-
-            // Previous Page Button (RTL: back in book)
-            IconButton(
-              icon: Icon(Icons.arrow_back_ios_rounded, size: AppIcon.sm, color: palette.text),
-              tooltip: 'الصفحة السابقة',
-              onPressed: _currentPage > 1
-                  ? () => _jumpToPage(_currentPage - 1)
-                  : null,
-            ),
-
-            // Actions: Copy & Share
-            IconButton(
-              icon: Icon(Icons.copy_rounded, size: AppIcon.sm, color: palette.textMuted),
-              tooltip: 'نسخ الصفحة وتوثيقها',
-              onPressed: _copyPageContent,
-            ),
-            IconButton(
-              icon: Icon(Icons.share_rounded, size: AppIcon.sm, color: palette.textMuted),
-              tooltip: 'مشاركة',
-              onPressed: _sharePageContent,
-            ),
-          ],
         ),
       ),
     );

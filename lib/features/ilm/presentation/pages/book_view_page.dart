@@ -11,6 +11,8 @@ import '../../data/models/lesson_model.dart';
 
 import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
+import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../app/theme/theme_colors.dart';
 import '../../../../app/theme/app_text.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
@@ -497,23 +499,38 @@ class _BookViewPageState extends State<BookViewPage>
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final topBarHeight = topPadding + kToolbarHeight + 48.0;
+
     return Scaffold(
-      appBar: _showControls
-          ? BookViewAppBar(
-              title: widget.book.title,
-              isFavorite: _isFavorite,
-              onToggleFavorite: _toggleFavorite,
-              onResetProgress: _resetProgress,
-              tabController: _tabController,
-            )
-          : null,
+      backgroundColor: context.palette.bg,
       floatingActionButton: null,
-      body: Container(
-        color: context.backgroundColor,
-        child: TabBarView(
-          controller: _tabController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
+      body: Column(
+        children: [
+          AnimatedContainer(
+            duration: AppMotion.fast,
+            curve: AppMotion.easeOut,
+            height: _showControls ? topBarHeight : 0.0,
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.bottomCenter,
+                minHeight: topBarHeight,
+                maxHeight: topBarHeight,
+                child: BookViewAppBar(
+                  title: widget.book.title,
+                  isFavorite: _isFavorite,
+                  onToggleFavorite: _toggleFavorite,
+                  onResetProgress: _resetProgress,
+                  tabController: _tabController,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
             BookMutnTab(
               book: widget.book,
               mutunInitialPage: _mutunInitialPage,
@@ -558,6 +575,8 @@ class _BookViewPageState extends State<BookViewPage>
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 }
