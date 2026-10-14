@@ -94,9 +94,9 @@ class AdhkarContextualHero extends StatelessWidget {
                       recTitle,
                       style: context.text.titleSmall.copyWith(
                         color: palette.text,
+                        height: 1.25,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                     Text(
                       recSubtitle,

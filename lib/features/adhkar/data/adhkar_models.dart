@@ -5,6 +5,7 @@ enum AdhkarCategory {
   morning,
   evening,
   afterPrayer,
+  prayerSunan,
   beforePrayer,
   general,
   tasbeeh,
@@ -15,8 +16,14 @@ enum AdhkarCategory {
   home,
   mosqueAdhan,
   wuduFood,
+  wuduTaharah,
+  foodDrink,
   distress,
   travel,
+  sicknessFunerals,
+  natureWeather,
+  socialManners,
+  fastingHajj,
 }
 
 extension AdhkarCategoryLabel on AdhkarCategory {
@@ -28,6 +35,8 @@ extension AdhkarCategoryLabel on AdhkarCategory {
         return AppStrings.adhkarEvening;
       case AdhkarCategory.afterPrayer:
         return AppStrings.adhkarAfterPrayer;
+      case AdhkarCategory.prayerSunan:
+        return 'سنن وأدعية الصلاة';
       case AdhkarCategory.beforePrayer:
         return AppStrings.adhkarBeforePrayer;
       case AdhkarCategory.general:
@@ -47,11 +56,22 @@ extension AdhkarCategoryLabel on AdhkarCategory {
       case AdhkarCategory.mosqueAdhan:
         return 'أذكار المسجد والأذان';
       case AdhkarCategory.wuduFood:
-        return 'أذكار الوضوء والطعام';
+      case AdhkarCategory.wuduTaharah:
+        return 'أذكار الطهارة والوضوء';
+      case AdhkarCategory.foodDrink:
+        return 'أذكار الطعام والشراب';
       case AdhkarCategory.distress:
         return 'أذكار الكرب والهم';
       case AdhkarCategory.travel:
         return 'أذكار السفر';
+      case AdhkarCategory.sicknessFunerals:
+        return 'أدعية المرض والجنائز';
+      case AdhkarCategory.natureWeather:
+        return 'أذكار المطر والظواهر';
+      case AdhkarCategory.socialManners:
+        return 'أذكار المجالس والآداب';
+      case AdhkarCategory.fastingHajj:
+        return 'أذكار الصيام والحج';
     }
   }
 
@@ -67,6 +87,9 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
     case 'after_prayer':
     case 'afterPrayer':
       return AdhkarCategory.afterPrayer;
+    case 'prayer_sunan':
+    case 'prayerSunan':
+      return AdhkarCategory.prayerSunan;
     case 'before_prayer':
     case 'beforePrayer':
       return AdhkarCategory.beforePrayer;
@@ -92,10 +115,28 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
     case 'wudu_food':
     case 'wuduFood':
       return AdhkarCategory.wuduFood;
+    case 'wudu_taharah':
+    case 'wuduTaharah':
+      return AdhkarCategory.wuduTaharah;
+    case 'food_drink':
+    case 'foodDrink':
+      return AdhkarCategory.foodDrink;
     case 'distress':
       return AdhkarCategory.distress;
     case 'travel':
       return AdhkarCategory.travel;
+    case 'sickness_funerals':
+    case 'sicknessFunerals':
+      return AdhkarCategory.sicknessFunerals;
+    case 'nature_weather':
+    case 'natureWeather':
+      return AdhkarCategory.natureWeather;
+    case 'social_manners':
+    case 'socialManners':
+      return AdhkarCategory.socialManners;
+    case 'fasting_hajj':
+    case 'fastingHajj':
+      return AdhkarCategory.fastingHajj;
   }
   return null;
 }
@@ -206,6 +247,9 @@ class AthkarCatalog {
   AthkarCategoryData? byId(String id) {
     for (final category in categories) {
       if (category.id == id) return category;
+    }
+    if (id == 'wudu_food') {
+      return byId('wudu_taharah');
     }
     return null;
   }

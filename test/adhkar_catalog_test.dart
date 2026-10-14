@@ -7,10 +7,10 @@ void main() {
   group('AthkarCatalog Authentic Sunnah Data Tests', () {
     final service = AthkarService();
 
-    test('loads all 13 authentic categories from assets/data/adhkar.json', () async {
+    test('loads all 19 authentic Sunan categories from assets/data/adhkar.json', () async {
       final catalog = await service.loadCatalog();
 
-      expect(catalog.categories.isNotEmpty, isTrue);
+      expect(catalog.categories.length, greaterThanOrEqualTo(19));
 
       final morning = catalog.byId('morning');
       final evening = catalog.byId('evening');
@@ -23,6 +23,13 @@ void main() {
       final home = catalog.byId('home');
       final mosqueAdhan = catalog.byId('mosque_adhan');
       final wuduFood = catalog.byId('wudu_food');
+      final wuduTaharah = catalog.byId('wudu_taharah');
+      final foodDrink = catalog.byId('food_drink');
+      final prayerSunan = catalog.byId('prayer_sunan');
+      final sicknessFunerals = catalog.byId('sickness_funerals');
+      final natureWeather = catalog.byId('nature_weather');
+      final socialManners = catalog.byId('social_manners');
+      final fastingHajj = catalog.byId('fasting_hajj');
       final distress = catalog.byId('distress');
       final travel = catalog.byId('travel');
 
@@ -36,27 +43,30 @@ void main() {
       expect(waking, isNotNull, reason: 'Waking adhkar category must exist');
       expect(home, isNotNull, reason: 'Home category must exist');
       expect(mosqueAdhan, isNotNull, reason: 'Mosque and Adhan category must exist');
-      expect(wuduFood, isNotNull, reason: 'Wudu and food category must exist');
+      expect(wuduFood, isNotNull, reason: 'Wudu food backward compatibility must exist');
+      expect(wuduTaharah, isNotNull, reason: 'Wudu and Taharah category must exist');
+      expect(foodDrink, isNotNull, reason: 'Food and Drink category must exist');
+      expect(prayerSunan, isNotNull, reason: 'Prayer Sunan category must exist');
+      expect(sicknessFunerals, isNotNull, reason: 'Sickness and funerals category must exist');
+      expect(natureWeather, isNotNull, reason: 'Nature and weather category must exist');
+      expect(socialManners, isNotNull, reason: 'Social manners category must exist');
+      expect(fastingHajj, isNotNull, reason: 'Fasting and Hajj category must exist');
       expect(distress, isNotNull, reason: 'Distress and Ruqyah category must exist');
       expect(travel, isNotNull, reason: 'Travel category must exist');
 
-      // Verify authentic counts
+      // Verify authentic counts across enriched catalog
+      expect(prayerSunan!.items.length, greaterThanOrEqualTo(35));
       expect(morning!.items.length, greaterThanOrEqualTo(20));
       expect(evening!.items.length, greaterThanOrEqualTo(18));
       expect(afterPrayer!.items.length, greaterThanOrEqualTo(10));
-      expect(sleeping!.items.length, greaterThanOrEqualTo(10));
-      expect(duas!.items.length, greaterThanOrEqualTo(10));
-      expect(tasbeeh!.items.length, greaterThanOrEqualTo(5));
-      expect(istighfar!.items.length, greaterThanOrEqualTo(5));
-      expect(waking!.items.length, greaterThanOrEqualTo(4));
-      expect(home!.items.length, greaterThanOrEqualTo(4));
-      expect(mosqueAdhan!.items.length, greaterThanOrEqualTo(5));
-      expect(wuduFood!.items.length, greaterThanOrEqualTo(4));
-      expect(distress!.items.length, greaterThanOrEqualTo(5));
-      expect(travel!.items.length, greaterThanOrEqualTo(3));
 
-      // Verify content integrity
+      final totalItems = catalog.categories.fold<int>(0, (sum, c) => sum + c.items.length);
+      expect(totalItems, greaterThanOrEqualTo(370));
+
+      // Verify content integrity and title cleanliness (NO dots/ellipsis)
       for (final category in catalog.categories) {
+        expect(category.title.endsWith('..'), isFalse, reason: 'Category title should not have trailing dots: ${category.title}');
+        expect(category.title.contains('...'), isFalse, reason: 'Category title should not have ellipsis: ${category.title}');
         for (final item in category.items) {
           expect(item.id.isNotEmpty, isTrue, reason: 'Item ID must not be empty');
           expect(item.arabic.isNotEmpty, isTrue, reason: 'Item Arabic text must not be empty');

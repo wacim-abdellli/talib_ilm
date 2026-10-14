@@ -51,9 +51,10 @@ class CategoryTile extends StatelessWidget {
         HapticFeedback.lightImpact();
         data.onTap();
       },
-      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -62,6 +63,8 @@ class CategoryTile extends StatelessWidget {
                 icon: _getCategoryIcon(data.id),
                 bg: catColors.bg,
                 fg: catColors.fg,
+                size: AppIcon.hero,
+                iconSize: AppIcon.sm,
               ),
               const SizedBox(width: AppSpace.xs),
               Flexible(
@@ -87,36 +90,49 @@ class CategoryTile extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            data.title,
-            style: context.text.titleSmall.copyWith(
-              color: palette.text,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
           const SizedBox(height: AppSpace.xs),
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  'عرض الأذكار',
-                  style: context.text.caption.copyWith(
-                    color: palette.textMuted,
-                    fontWeight: FontWeight.w500,
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.bottomStart,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      data.title,
+                      style: context.text.titleSmall.copyWith(
+                        color: palette.text,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.fade,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: AppSpace.xs),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'عرض الأذكار',
+                          style: context.text.caption.copyWith(
+                            color: palette.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: AppIcon.xs,
+                        color: catColors.fg,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpace.xs),
-              Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: AppIcon.sm,
-                color: catColors.fg,
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -131,8 +147,12 @@ class CategoryTile extends StatelessWidget {
         return Icons.nights_stay_rounded;
       case 'after_prayer':
         return Icons.mosque_rounded;
+      case 'prayer_sunan':
+        return Icons.access_time_filled_rounded;
       case 'waking':
         return Icons.wb_twilight_rounded;
+      case 'sleeping':
+        return Icons.bedtime_rounded;
       case 'distress':
         return Icons.shield_rounded;
       case 'mosque_adhan':
@@ -140,17 +160,26 @@ class CategoryTile extends StatelessWidget {
       case 'home':
         return Icons.cottage_rounded;
       case 'wudu_food':
-        return Icons.water_drop_rounded;
+      case 'wudu_taharah':
+        return Icons.clean_hands_rounded;
+      case 'food_drink':
+        return Icons.restaurant_rounded;
       case 'travel':
         return Icons.explore_rounded;
+      case 'sickness_funerals':
+        return Icons.healing_rounded;
+      case 'nature_weather':
+        return Icons.cloud_queue_rounded;
+      case 'social_manners':
+        return Icons.diversity_3_rounded;
+      case 'fasting_hajj':
+        return Icons.brightness_medium_rounded;
       case 'duas':
         return Icons.menu_book_rounded;
       case 'tasbeeh':
         return Icons.fingerprint_rounded;
       case 'istighfar':
         return Icons.restart_alt_rounded;
-      case 'sleeping':
-        return Icons.bedtime_rounded;
       default:
         return Icons.auto_stories_rounded;
     }

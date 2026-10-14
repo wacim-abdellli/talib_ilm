@@ -304,6 +304,14 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                   const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
+                    'سنن الصلاة',
+                    Icons.access_time_filled_rounded,
+                    widget.selectedCategory == 'prayer_sunan',
+                    () => widget.onSelectCategory('prayer_sunan'),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  _buildCategoryTab(
+                    context,
                     'أحوال اليوم',
                     Icons.wb_twilight_rounded,
                     widget.selectedCategory == 'daily',
@@ -312,7 +320,7 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                   const SizedBox(width: AppSpace.sm),
                   _buildCategoryTab(
                     context,
-                    'الكرب والأدعية',
+                    'الكرب والهم',
                     Icons.shield_outlined,
                     widget.selectedCategory == 'distress',
                     () => widget.onSelectCategory('distress'),
@@ -324,6 +332,14 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                     Icons.circle_outlined,
                     widget.selectedCategory == 'tasbeeh',
                     () => widget.onSelectCategory('tasbeeh'),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  _buildCategoryTab(
+                    context,
+                    'أدعية جامعة',
+                    Icons.menu_book_rounded,
+                    widget.selectedCategory == 'duas',
+                    () => widget.onSelectCategory('duas'),
                   ),
                 ],
               ),

@@ -15,14 +15,18 @@ import 'widgets/dhikr_counter_dial.dart';
 /// and ergonomically placed RTL navigation arrows.
 class AdhkarSessionPage extends StatefulWidget {
   final AdhkarCategory category;
+  final String? categoryId;
   final String? titleOverride;
   final String? contextLabel;
+  final AthkarCategoryData? categoryData;
 
   const AdhkarSessionPage({
     super.key,
     required this.category,
+    this.categoryId,
     this.titleOverride,
     this.contextLabel,
+    this.categoryData,
   });
 
   @override
@@ -54,13 +58,16 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   Future<void> _loadItems() async {
     await _clearPersistedSession();
-    final catalog = await _athkarService.loadCatalog();
-    final categoryId = _catalogIdFor(widget.category);
-    var categoryData = catalog.byId(categoryId);
+    var categoryData = widget.categoryData;
+    if (categoryData == null) {
+      final catalog = await _athkarService.loadCatalog();
+      final categoryId = widget.categoryId ?? _catalogIdFor(widget.category);
+      categoryData = catalog.byId(categoryId);
 
-    // Fallbacks for sleeping
-    if (categoryData == null && widget.category == AdhkarCategory.sleeping) {
-      categoryData = catalog.byId('general') ?? catalog.byId('before_prayer');
+      // Fallbacks for sleeping
+      if (categoryData == null && widget.category == AdhkarCategory.sleeping) {
+        categoryData = catalog.byId('general') ?? catalog.byId('before_prayer');
+      }
     }
 
     final items = categoryData?.items ?? const <AthkarItem>[];
@@ -476,6 +483,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         return 'sleeping';
       case AdhkarCategory.afterPrayer:
         return 'after_prayer';
+      case AdhkarCategory.prayerSunan:
+        return 'prayer_sunan';
       case AdhkarCategory.beforePrayer:
         return 'before_prayer';
       case AdhkarCategory.waking:
@@ -485,11 +494,22 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       case AdhkarCategory.mosqueAdhan:
         return 'mosque_adhan';
       case AdhkarCategory.wuduFood:
-        return 'wudu_food';
+      case AdhkarCategory.wuduTaharah:
+        return 'wudu_taharah';
+      case AdhkarCategory.foodDrink:
+        return 'food_drink';
       case AdhkarCategory.distress:
         return 'distress';
       case AdhkarCategory.travel:
         return 'travel';
+      case AdhkarCategory.sicknessFunerals:
+        return 'sickness_funerals';
+      case AdhkarCategory.natureWeather:
+        return 'nature_weather';
+      case AdhkarCategory.socialManners:
+        return 'social_manners';
+      case AdhkarCategory.fastingHajj:
+        return 'fasting_hajj';
       default:
         return category.name;
     }

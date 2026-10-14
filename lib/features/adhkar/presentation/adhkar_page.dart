@@ -249,7 +249,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: AppSpace.md,
                             mainAxisSpacing: AppSpace.md,
-                            childAspectRatio: 0.95,
+                            childAspectRatio: 0.86,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -284,7 +284,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
       return all.where((i) => i.id == 'evening').toList();
     }
     if (_selectedCategory == 'after_prayer') {
-      return all.where((i) => i.id == 'after_prayer').toList();
+      return all.where((i) => ['after_prayer', 'prayer_sunan'].contains(i.id)).toList();
+    }
+    if (_selectedCategory == 'prayer_sunan') {
+      return all.where((i) => ['prayer_sunan', 'after_prayer'].contains(i.id)).toList();
     }
     if (_selectedCategory == 'daily') {
       return all
@@ -293,152 +296,88 @@ class _AdhkarPageState extends State<AdhkarPage> {
                 'sleeping',
                 'home',
                 'mosque_adhan',
-                'wudu_food',
-                'travel'
+                'wudu_taharah',
+                'food_drink',
+                'travel',
+                'nature_weather',
+                'social_manners',
               ].contains(i.id))
           .toList();
     }
     if (_selectedCategory == 'distress') {
-      return all.where((i) => ['distress', 'duas'].contains(i.id)).toList();
+      return all.where((i) => ['distress', 'sickness_funerals'].contains(i.id)).toList();
     }
     if (_selectedCategory == 'tasbeeh') {
       return all.where((i) => ['tasbeeh', 'istighfar'].contains(i.id)).toList();
     }
-    if (_selectedCategory == 'misc') {
-      return all
-          .where((i) => [
-                'waking',
-                'sleeping',
-                'home',
-                'mosque_adhan',
-                'wudu_food',
-                'travel',
-                'distress',
-                'duas',
-                'tasbeeh',
-                'istighfar'
-              ].contains(i.id))
-          .toList();
+    if (_selectedCategory == 'duas') {
+      return all.where((i) => ['duas', 'fasting_hajj'].contains(i.id)).toList();
     }
-    return all;
+    return all.where((i) => i.id == _selectedCategory).toList();
   }
 
   List<CategoryCardData> _dashboardItems(
     BuildContext context,
     AthkarCatalog catalog,
   ) {
-    AthkarCategoryData? byId(String id) => catalog.byId(id);
+    return catalog.categories.map((cat) {
+      final isMorning = cat.id == 'morning';
+      final isEvening = cat.id == 'evening';
 
-    final morning = byId('morning');
-    final evening = byId('evening');
-    final afterPrayer = byId('after_prayer');
-    final waking = byId('waking');
-    final sleeping =
-        byId('sleeping') ?? byId('general') ?? byId('before_prayer');
-    final distress = byId('distress');
-    final mosqueAdhan = byId('mosque_adhan');
-    final home = byId('home');
-    final wuduFood = byId('wudu_food');
-    final travel = byId('travel');
-    final duas = byId('duas');
-    final tasbeeh = byId('tasbeeh');
-    final istighfar = byId('istighfar');
+      return CategoryCardData(
+        id: cat.id,
+        title: cat.title,
+        total: cat.items.length,
+        icon: _iconForCategory(cat.id),
+        showProgress: isMorning || isEvening,
+        onTap: () => _openCategory(context, cat),
+      );
+    }).toList();
+  }
 
-    return [
-      CategoryCardData(
-        id: 'morning',
-        title: morning?.title ?? 'أذكار الصباح',
-        total: morning?.items.length ?? 0,
-        icon: Icons.wb_sunny_outlined,
-        showProgress: true,
-        onTap: () => _openCategory(context, morning),
-      ),
-      CategoryCardData(
-        id: 'evening',
-        title: evening?.title ?? 'أذكار المساء',
-        total: evening?.items.length ?? 0,
-        icon: Icons.nights_stay_outlined,
-        showProgress: true,
-        onTap: () => _openCategory(context, evening),
-      ),
-      CategoryCardData(
-        id: 'after_prayer',
-        title: afterPrayer?.title ?? 'أذكار بعد الصلاة',
-        total: afterPrayer?.items.length ?? 0,
-        icon: Icons.mosque_outlined,
-        onTap: () => _openCategory(context, afterPrayer),
-      ),
-      CategoryCardData(
-        id: 'waking',
-        title: waking?.title ?? 'أذكار الاستيقاظ',
-        total: waking?.items.length ?? 0,
-        icon: Icons.wb_twilight_rounded,
-        onTap: () => _openCategory(context, waking),
-      ),
-      CategoryCardData(
-        id: sleeping?.id ?? 'sleeping',
-        title: sleeping?.title ?? 'أذكار النوم',
-        total: sleeping?.items.length ?? 0,
-        icon: Icons.bedtime_outlined,
-        onTap: () => _openSleeping(context, sleeping),
-      ),
-      CategoryCardData(
-        id: 'distress',
-        title: distress?.title ?? 'أذكار الكرب والهم',
-        total: distress?.items.length ?? 0,
-        icon: Icons.shield_outlined,
-        onTap: () => _openCategory(context, distress),
-      ),
-      CategoryCardData(
-        id: 'mosque_adhan',
-        title: mosqueAdhan?.title ?? 'أذكار المسجد والأذان',
-        total: mosqueAdhan?.items.length ?? 0,
-        icon: Icons.campaign_outlined,
-        onTap: () => _openCategory(context, mosqueAdhan),
-      ),
-      CategoryCardData(
-        id: 'home',
-        title: home?.title ?? 'أذكار المنزل',
-        total: home?.items.length ?? 0,
-        icon: Icons.home_outlined,
-        onTap: () => _openCategory(context, home),
-      ),
-      CategoryCardData(
-        id: 'wudu_food',
-        title: wuduFood?.title ?? 'أذكار الوضوء والطعام',
-        total: wuduFood?.items.length ?? 0,
-        icon: Icons.water_drop_outlined,
-        onTap: () => _openCategory(context, wuduFood),
-      ),
-      CategoryCardData(
-        id: 'travel',
-        title: travel?.title ?? 'أذكار السفر',
-        total: travel?.items.length ?? 0,
-        icon: Icons.flight_takeoff_outlined,
-        onTap: () => _openCategory(context, travel),
-      ),
-      CategoryCardData(
-        id: 'duas',
-        title: duas?.title ?? 'أدعية عامة',
-        total: duas?.items.length ?? 0,
-        icon: Icons.menu_book_outlined,
-        onTap: () => _openDuas(context),
-      ),
-      CategoryCardData(
-        id: 'tasbeeh',
-        title: tasbeeh?.title ?? 'عداد التسبيح',
-        total: tasbeeh?.items.length ?? 0,
-        icon: Icons.circle_outlined,
-        onTap: () => _openTasbeeh(context),
-      ),
-      CategoryCardData(
-        id: 'istighfar',
-        title: istighfar?.title ?? 'الاستغفار والتوبة',
-        total: istighfar?.items.length ?? 0,
-        icon: Icons.autorenew_rounded,
-        onTap: () => _openIstighfar(context),
-      ),
-    ];
+  IconData _iconForCategory(String id) {
+    switch (id) {
+      case 'morning':
+        return Icons.wb_sunny_rounded;
+      case 'evening':
+        return Icons.nights_stay_rounded;
+      case 'after_prayer':
+        return Icons.mosque_rounded;
+      case 'prayer_sunan':
+        return Icons.access_time_filled_rounded;
+      case 'waking':
+        return Icons.wb_twilight_rounded;
+      case 'sleeping':
+        return Icons.bedtime_rounded;
+      case 'mosque_adhan':
+        return Icons.notifications_active_rounded;
+      case 'home':
+        return Icons.cottage_rounded;
+      case 'wudu_taharah':
+      case 'wudu_food':
+        return Icons.clean_hands_rounded;
+      case 'food_drink':
+        return Icons.restaurant_rounded;
+      case 'travel':
+        return Icons.explore_rounded;
+      case 'distress':
+        return Icons.shield_rounded;
+      case 'sickness_funerals':
+        return Icons.healing_rounded;
+      case 'nature_weather':
+        return Icons.cloud_queue_rounded;
+      case 'social_manners':
+        return Icons.diversity_3_rounded;
+      case 'fasting_hajj':
+        return Icons.brightness_medium_rounded;
+      case 'tasbeeh':
+        return Icons.fingerprint_rounded;
+      case 'istighfar':
+        return Icons.restart_alt_rounded;
+      case 'duas':
+      default:
+        return Icons.menu_book_rounded;
+    }
   }
 
   void _openCategory(BuildContext context, AthkarCategoryData? category) {
@@ -476,44 +415,27 @@ class _AdhkarPageState extends State<AdhkarPage> {
         );
         return;
       case 'duas':
-        Navigator.push(context, buildFadeRoute(page: DuasMiscPage()));
+        Navigator.push(context, buildFadeRoute(page: const DuasMiscPage()));
+        return;
+      case 'sleeping':
+        Navigator.push(context, buildFadeRoute(page: const SleepingAthkarPage()));
         return;
     }
 
-    final parsed = adhkarCategoryFromId(category.id);
-    if (parsed == null) return;
+    final parsed = adhkarCategoryFromId(category.id) ?? AdhkarCategory.general;
     Navigator.push(
       context,
       buildFadeRoute(
         page: AdhkarSessionPage(
           category: parsed,
+          categoryId: category.id,
           titleOverride: category.title,
+          categoryData: category,
         ),
       ),
     );
   }
 
-  void _openDuas(BuildContext context) {
-    Navigator.push(context, buildFadeRoute(page: DuasMiscPage()));
-  }
-
-  void _openTasbeeh(BuildContext context) {
-    Navigator.push(
-      context,
-      buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 0)),
-    );
-  }
-
-  void _openIstighfar(BuildContext context) {
-    Navigator.push(
-      context,
-      buildFadeRoute(page: const TasbeehIstighfarPage(initialTabIndex: 1)),
-    );
-  }
-
-  void _openSleeping(BuildContext context, AthkarCategoryData? category) {
-    Navigator.push(context, buildFadeRoute(page: const SleepingAthkarPage()));
-  }
 
   String _normalizeId(String id) {
     final normalized = id.trim().toLowerCase();
