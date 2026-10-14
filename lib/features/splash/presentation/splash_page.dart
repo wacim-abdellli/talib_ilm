@@ -43,13 +43,13 @@ class _SplashPageState extends State<SplashPage>
 
     _animController = AnimationController(
       vsync: this,
-      duration: AppMotion.splash,
+      duration: AppMotion.deliberate + AppMotion.oneSecond,
     );
 
     // Staggered fluid entrance animations
     _headerFade = CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.0, 0.65, curve: AppMotion.easeOut),
+      curve: const Interval(0.0, 0.55, curve: AppMotion.easeOut),
     );
 
     _headerSlide = Tween<Offset>(
@@ -57,24 +57,24 @@ class _SplashPageState extends State<SplashPage>
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.0, 0.65, curve: AppMotion.easeOut),
+      curve: const Interval(0.0, 0.55, curve: AppMotion.easeOut),
     ));
 
-    _emblemScale = Tween<double>(begin: 0.86, end: 1.0).animate(
+    _emblemScale = Tween<double>(begin: 0.82, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
-        curve: const Interval(0.15, 0.85, curve: AppMotion.easeOut),
+        curve: const Interval(0.15, 0.75, curve: AppMotion.easeOut),
       ),
     );
 
     _emblemFade = CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.15, 0.85, curve: AppMotion.easeIn),
+      curve: const Interval(0.15, 0.75, curve: AppMotion.easeIn),
     );
 
     _titleFade = CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.35, 0.95, curve: AppMotion.easeIn),
+      curve: const Interval(0.35, 0.85, curve: AppMotion.easeIn),
     );
 
     _titleSlide = Tween<Offset>(
@@ -82,12 +82,12 @@ class _SplashPageState extends State<SplashPage>
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.35, 0.95, curve: AppMotion.easeOut),
+      curve: const Interval(0.35, 0.85, curve: AppMotion.easeOut),
     ));
 
     _bottomFade = CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.55, 1.0, curve: AppMotion.easeIn),
+      curve: const Interval(0.50, 0.95, curve: AppMotion.easeIn),
     );
 
     _animController.forward();
@@ -103,7 +103,7 @@ class _SplashPageState extends State<SplashPage>
     unawaited(PrayerScheduleService().refreshSchedulesIfNeeded().catchError((_) {}));
 
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
-    final totalSplashDuration = AppMotion.splash + AppMotion.oneSecond;
+    final totalSplashDuration = AppMotion.deliberate + AppMotion.oneSecond + AppMotion.base;
     final remaining = totalSplashDuration - elapsed;
 
     if (remaining > Duration.zero) {
@@ -134,11 +134,10 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: palette.bg,
+      backgroundColor: AppPalette.splashWhite,
       body: SafeArea(
         child: InkWell(
           onTap: _proceedToHome,
@@ -147,7 +146,7 @@ class _SplashPageState extends State<SplashPage>
           child: Padding(
             padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.xl,
-              vertical: AppSpace.lg,
+              vertical: AppSpace.md,
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -162,27 +161,69 @@ class _SplashPageState extends State<SplashPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 1. Top Section: Majestic Golden Calligraphic Basmalah
+                          // 1. Top Section: Noble Salam & Prominent Sacred Basmalah
                           SlideTransition(
                             position: _headerSlide,
                             child: FadeTransition(
                               opacity: _headerFade,
                               child: Padding(
                                 padding: const EdgeInsetsDirectional.only(
-                                  top: AppSpace.xl,
+                                  top: AppSpace.sm,
                                 ),
                                 child: Semantics(
                                   header: true,
-                                  label: 'بسم الله الرحمن الرحيم',
-                                  child: Text(
-                                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                                    textAlign: TextAlign.center,
-                                    style: textTheme.sacredLarge.copyWith(
-                                      color: palette.gold,
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.4,
-                                      letterSpacing: 0.5,
-                                    ),
+                                  label: 'السلام عليكم ورحمة الله وبركاته',
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Noble Salam Greeting
+                                      Text(
+                                        'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ',
+                                        textAlign: TextAlign.center,
+                                        style: textTheme.label.copyWith(
+                                          color: AppPalette.splashGold,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: AppSpace.xs),
+
+                                      // Prominent Sacred Basmalah with ornamental delimiters
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '۞',
+                                            style: textTheme.sacred.copyWith(
+                                              color: AppPalette.splashGold,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: AppSpace.sm),
+                                          Flexible(
+                                            child: Text(
+                                              'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                                              textAlign: TextAlign.center,
+                                              style: textTheme.sacredLarge.copyWith(
+                                                color: AppPalette.splashGold,
+                                                fontWeight: FontWeight.bold,
+                                                height: 1.35,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: AppSpace.sm),
+                                          Text(
+                                            '۞',
+                                            style: textTheme.sacred.copyWith(
+                                              color: AppPalette.splashGold,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -192,12 +233,12 @@ class _SplashPageState extends State<SplashPage>
                           // 2. Center Section: Squircle Badge with New Logo, Title, and Subtitle
                           Padding(
                             padding: const EdgeInsetsDirectional.symmetric(
-                              vertical: AppSpace.xl,
+                              vertical: AppSpace.md,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Squircle Badge with Ambient Glow
+                                // Squircle Badge with New Brand Logo
                                 ScaleTransition(
                                   scale: _emblemScale,
                                   child: FadeTransition(
@@ -206,21 +247,22 @@ class _SplashPageState extends State<SplashPage>
                                       label: 'شعار تطبيق طالب العلم',
                                       image: true,
                                       child: Container(
-                                        width: 128,
-                                        height: 128,
+                                        width: 130,
+                                        height: 130,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: palette.surfaceRaised,
+                                          color: AppPalette.splashWhite,
                                           borderRadius: AppRadius.xlRadius,
                                           border: Border.all(
-                                            color: palette.gold.withValues(alpha: 0.28),
-                                            width: 1.2,
+                                            color: AppPalette.splashGold
+                                                .withValues(alpha: 0.35),
+                                            width: 1.5,
                                           ),
                                         ),
                                         child: Image.asset(
-                                          palette.logoSymbol,
-                                          width: 88,
-                                          height: 88,
+                                          'assets/branding/symbol_on_light.png',
+                                          width: 90,
+                                          height: 90,
                                           fit: BoxFit.contain,
                                         ),
                                       ),
@@ -230,7 +272,7 @@ class _SplashPageState extends State<SplashPage>
 
                                 const SizedBox(height: AppSpace.lg),
 
-                                // Animated Title & Subtitle
+                                // Animated Title, Subtitle, and Quranic Du'a
                                 SlideTransition(
                                   position: _titleSlide,
                                   child: FadeTransition(
@@ -243,7 +285,7 @@ class _SplashPageState extends State<SplashPage>
                                           'طَالِبُ العِلْمِ',
                                           textAlign: TextAlign.center,
                                           style: textTheme.display.copyWith(
-                                            color: palette.text,
+                                            color: AppPalette.splashText,
                                             fontWeight: FontWeight.w800,
                                             letterSpacing: 0.5,
                                           ),
@@ -256,8 +298,29 @@ class _SplashPageState extends State<SplashPage>
                                           'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ النَّافِعِ',
                                           textAlign: TextAlign.center,
                                           style: textTheme.bodySmall.copyWith(
-                                            color: palette.textMuted,
+                                            color: AppPalette.splashTextMuted,
                                             fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: AppSpace.sm),
+
+                                        // Minimalist Qur'anic Prayer Chip
+                                        Container(
+                                          padding: const EdgeInsetsDirectional.symmetric(
+                                            horizontal: AppSpace.md,
+                                            vertical: AppSpace.xxs,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppPalette.splashGoldSoft,
+                                            borderRadius: AppRadius.pillRadius,
+                                          ),
+                                          child: Text(
+                                            '﴿ رَبِّ زِدْنِي عِلْمًا ﴾',
+                                            style: textTheme.caption.copyWith(
+                                              color: AppPalette.splashGold,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -268,19 +331,19 @@ class _SplashPageState extends State<SplashPage>
                             ),
                           ),
 
-                          // 3. Bottom Section: Golden Progress Line & Prophetic Hadith
+                          // 3. Bottom Section: Fast Progress Bar & Prophetic Hadith
                           FadeTransition(
                             opacity: _bottomFade,
                             child: Padding(
                               padding: const EdgeInsetsDirectional.only(
-                                bottom: AppSpace.md,
+                                bottom: AppSpace.sm,
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   // Sleek Golden Progress Bar
                                   SizedBox(
-                                    width: 96,
+                                    width: 90,
                                     child: ClipRRect(
                                       borderRadius: AppRadius.pillRadius,
                                       child: AnimatedBuilder(
@@ -288,10 +351,11 @@ class _SplashPageState extends State<SplashPage>
                                         builder: (context, _) =>
                                             LinearProgressIndicator(
                                           value: _animController.value,
-                                          backgroundColor: palette.goldSoft,
+                                          backgroundColor:
+                                              AppPalette.splashGoldSoft,
                                           valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            palette.gold,
+                                              const AlwaysStoppedAnimation<Color>(
+                                            AppPalette.splashGold,
                                           ),
                                           minHeight: 2.5,
                                         ),
@@ -306,7 +370,7 @@ class _SplashPageState extends State<SplashPage>
                                     '«مَنْ سَلَكَ طَرِيقاً يَلْتَمِسُ فِيهِ عِلْماً سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقاً إِلَى الْجَنَّةِ»',
                                     textAlign: TextAlign.center,
                                     style: textTheme.caption.copyWith(
-                                      color: palette.textSubtle,
+                                      color: AppPalette.splashTextSubtle,
                                       fontStyle: FontStyle.italic,
                                       height: 1.45,
                                     ),
