@@ -33,18 +33,12 @@ class AppListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
-
     final leadingWidget = leading ??
         (icon != null ? IconBadge(icon: icon!) : null);
 
-    final chevronIcon = isRtl
-        ? Icons.chevron_left_rounded
-        : Icons.chevron_right_rounded;
-
     final effectiveTrailing = trailing ??
         (showChevron && onTap != null
-            ? Icon(chevronIcon, size: AppIcon.md, color: palette.textSubtle)
+            ? Icon(Icons.chevron_right_rounded, size: AppIcon.md, color: palette.textSubtle)
             : null);
 
     return Column(

@@ -289,7 +289,7 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
                         ),
                       ),
                       Icon(
-                        Icons.chevron_left_rounded,
+                        Icons.chevron_right_rounded,
                         color: palette.textMuted,
                       ),
                     ],
@@ -346,7 +346,7 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
                         ),
                       ),
                       Icon(
-                        Icons.chevron_left_rounded,
+                        Icons.chevron_right_rounded,
                         color: palette.textMuted,
                       ),
                     ],

@@ -323,9 +323,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                 // Floating Previous Arrow (Right side in RTL)
                                 if (_index > 0)
                                   PositionedDirectional(
-                                    end: AppSpace.xs,
+                                    start: AppSpace.xs,
                                     child: FloatingChevronButton(
-                                      icon: Icons.chevron_right_rounded,
+                                      icon: Icons.chevron_left_rounded,
                                       tooltip: 'الذكر السابق',
                                       onTap: _goPrev,
                                     ),
@@ -334,9 +334,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                 // Floating Next Arrow (Left side in RTL)
                                 if (_index + 1 < totalItems)
                                   PositionedDirectional(
-                                    start: AppSpace.xs,
+                                    end: AppSpace.xs,
                                     child: FloatingChevronButton(
-                                      icon: Icons.chevron_left_rounded,
+                                      icon: Icons.chevron_right_rounded,
                                       tooltip: 'الذكر التالي',
                                       isHighlighted: isCurrentComplete,
                                       onTap: _goNext,
@@ -369,7 +369,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                               children: [
                                 // Previous Dhikr Button (Right in RTL)
                                 NavigationPillButton(
-                                  icon: Icons.chevron_right_rounded,
+                                  icon: Icons.chevron_left_rounded,
                                   label: 'السابق',
                                   isLeadingIcon: true,
                                   isEnabled: _index > 0,
@@ -419,7 +419,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
                                 // Next Dhikr Button (Left in RTL)
                                 NavigationPillButton(
-                                  icon: Icons.chevron_left_rounded,
+                                  icon: Icons.chevron_right_rounded,
                                   label: 'التالي',
                                   isLeadingIcon: false,
                                   isHighlighted: isCurrentComplete,

@@ -447,7 +447,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               children: [
                 IconButton(
                   icon: const Icon(
-                    Icons.arrow_forward_ios_rounded,
+                    Icons.arrow_back_ios_new_rounded,
                     size: AppIcon.sm,
                   ),
                   tooltip: 'رجوع',

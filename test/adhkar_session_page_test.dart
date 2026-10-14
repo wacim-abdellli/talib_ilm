@@ -75,14 +75,14 @@ void main() {
           Row(
             children: [
               NavigationPillButton(
-                icon: Icons.chevron_right_rounded,
+                icon: Icons.chevron_left_rounded,
                 label: 'السابق',
                 isLeadingIcon: true,
                 isEnabled: false,
                 onTap: () {},
               ),
               NavigationPillButton(
-                icon: Icons.chevron_left_rounded,
+                icon: Icons.chevron_right_rounded,
                 label: 'التالي',
                 isLeadingIcon: false,
                 isEnabled: true,

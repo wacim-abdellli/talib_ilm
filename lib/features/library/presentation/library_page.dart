@@ -222,7 +222,7 @@ class _LibraryLevelCard extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.arrow_back_ios_new_rounded,
+            Icons.arrow_forward_ios_rounded,
             size: AppIcon.sm,
             color: palette.textMuted,
           ),

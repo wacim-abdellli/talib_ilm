@@ -9,14 +9,11 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
     return IconButton(
       tooltip: AppStrings.tooltipBack,
       onPressed: onTap ?? () => Navigator.maybePop(context),
-      icon: Icon(
-        isRtl
-            ? Icons.arrow_forward_ios_rounded
-            : Icons.arrow_back_ios_new_rounded,
+      icon: const Icon(
+        Icons.arrow_back_ios_new_rounded,
         size: AppIcon.md,
       ),
     );

@@ -111,7 +111,7 @@ class AdhkarContextualHero extends StatelessWidget {
               ),
               const SizedBox(width: AppSpace.md),
               Icon(
-                Icons.arrow_back_ios_new_rounded,
+                Icons.arrow_forward_ios_rounded,
                 size: AppIcon.md,
                 color: catColors.fg,
               ),

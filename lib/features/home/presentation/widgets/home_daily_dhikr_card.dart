@@ -254,7 +254,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                   TextButton.icon(
                     onPressed: widget.onOpenSession,
                     icon: Icon(
-                      Icons.arrow_back_rounded,
+                      Icons.arrow_forward_rounded,
                       size: AppIcon.sm,
                       color: palette.primary,
                     ),

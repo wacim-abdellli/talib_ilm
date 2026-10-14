@@ -66,12 +66,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       }
       return const AppOverflowMenu();
     }
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
-    final icon =
-        leadingIcon ??
-        (isRtl
-            ? Icons.arrow_forward_ios_rounded
-            : Icons.arrow_back_ios_new_rounded);
+    final icon = leadingIcon ?? Icons.arrow_back_ios_new_rounded;
     final tap = onLeadingTap ?? () => Navigator.maybePop(context);
     return IconButton(
       tooltip: AppStrings.tooltipBack,

@@ -146,7 +146,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: const Icon(
-                          Icons.arrow_forward_ios_rounded,
+                          Icons.arrow_back_ios_new_rounded,
                           size: AppIcon.sm,
                         ),
                         tooltip: 'الصفحة السابقة',
@@ -187,7 +187,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(
-                          Icons.arrow_back_ios_rounded,
+                          Icons.arrow_forward_ios_rounded,
                           size: AppIcon.sm,
                         ),
                         tooltip: 'الصفحة التالية',

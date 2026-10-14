@@ -315,7 +315,7 @@ class MushafReciterDropdownCard extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.chevron_left_rounded,
+            Icons.chevron_right_rounded,
             color: palette.textMuted,
             size: AppIcon.md,
           ),
@@ -442,7 +442,7 @@ class MushafTafsirDropdownCard extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.chevron_left_rounded,
+            Icons.chevron_right_rounded,
             color: palette.textMuted,
             size: AppIcon.md,
           ),

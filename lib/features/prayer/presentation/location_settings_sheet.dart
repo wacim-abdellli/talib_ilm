@@ -647,7 +647,7 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                       ),
                     ),
                     Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       size: AppIcon.md,
                       color: palette.textSubtle,
                     ),

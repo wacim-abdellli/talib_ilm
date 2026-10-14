@@ -117,7 +117,7 @@ class IlmContinueReadingCard extends StatelessWidget {
                 ),
                 AppButton.tonal(
                   label: 'تابع رحلتك',
-                  icon: Icons.arrow_back_rounded,
+                  icon: Icons.arrow_forward_rounded,
                   size: AppButtonSize.sm,
                   onPressed: () {
                     if (bookData != null) onNavigateToBook(bookData);
@@ -173,7 +173,7 @@ class IlmContinueReadingCard extends StatelessWidget {
             ScaleTransition(
               scale: pulseAnimation,
               child: Icon(
-                Icons.arrow_back_rounded,
+                Icons.arrow_forward_rounded,
                 size: AppIcon.lg,
                 color: palette.primary,
               ),

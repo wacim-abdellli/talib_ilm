@@ -109,7 +109,7 @@ class SharhCard extends StatelessWidget {
           ),
           const SizedBox(width: AppSpace.sm),
           Icon(
-            Icons.chevron_left_rounded,
+            Icons.chevron_right_rounded,
             size: AppIcon.md,
             color: palette.textSubtle,
           ),
