@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeService extends ChangeNotifier {
   static const String _themeKey = 'theme_mode';
 
-  ThemeMode _themeMode = ThemeMode.system;
+  static const String _defaultMigratedKey = 'theme_default_light_v1';
+
+  ThemeMode _themeMode = ThemeMode.light;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -16,14 +18,28 @@ class ThemeService extends ChangeNotifier {
   /// Load theme preference from storage
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
+
+    final isMigrated = prefs.getBool(_defaultMigratedKey) ?? false;
+    if (!isMigrated) {
+      await prefs.setBool(_defaultMigratedKey, true);
+      final existingTheme = prefs.getString(_themeKey);
+      // Migrate legacy default ('system') or unset to Light mode
+      if (existingTheme == null || existingTheme == 'system') {
+        _themeMode = ThemeMode.light;
+        await prefs.setString(_themeKey, 'light');
+        notifyListeners();
+        return;
+      }
+    }
+
     final themeName = prefs.getString(_themeKey);
 
     if (themeName == 'dark') {
       _themeMode = ThemeMode.dark;
-    } else if (themeName == 'light') {
-      _themeMode = ThemeMode.light;
-    } else {
+    } else if (themeName == 'system') {
       _themeMode = ThemeMode.system;
+    } else {
+      _themeMode = ThemeMode.light;
     }
     notifyListeners();
   }
