@@ -229,7 +229,8 @@ class QcfFontLoader {
         continue;
       }
 
-      await Future<void>.delayed(Duration.zero);
+      // Frame-yielding delay so background loading doesn't drop frames during user swiping
+      await Future<void>.delayed(const Duration(milliseconds: 32));
 
       if (myGeneration != _generation) {
         return;
@@ -239,7 +240,9 @@ class QcfFontLoader {
     }
   }
 
-  /// Loads and registers every generated variant for a single Quran page.
+  static final Set<String> _registeredFamilies = {};
+
+  /// Loads and registers the authentic Medina Mushaf fonts for a single page.
   static Future<void> _loadFontInternal(int pageNumber) async {
     final fontName = getBaseFontFamily(pageNumber);
 
@@ -266,46 +269,73 @@ class QcfFontLoader {
       fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
     }
 
+    // 1. Register authentic Light/Sepia Tajweed Medina font
     await _registerFont(fontBytes, getTajweedLightFamily(pageNumber));
 
+    // 2. Register Dark Mode Tajweed Medina font
     final darkBytes = _modifyCpalBaseColor(
       Uint8List.fromList(fontBytes),
       const Color(0xFFFFFFFF),
     );
     await _registerFont(darkBytes, getTajweedDarkFamily(pageNumber));
+  }
+
+  /// Registers non-tajweed font variants on demand when the user disables Tajweed.
+  static Future<void> ensureNonTajweedLoaded(int pageNumber) async {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    final lightFam = getNoTajweedLightFamily(pageNumber);
+    final darkFam = getNoTajweedDarkFamily(pageNumber);
+    if (_registeredFamilies.contains(lightFam) && _registeredFamilies.contains(darkFam)) {
+      return;
+    }
+
+    final fontName = getBaseFontFamily(pageNumber);
+    Uint8List fontBytes;
+
+    if (_currentMode == FontStorageMode.permanentDisk) {
+      final fontDir = await _getFontDirectory();
+      final fontPath = '${fontDir.path}/$fontName.ttf';
+      final file = File(fontPath);
+      if (await file.exists() && await file.length() > 1000) {
+        fontBytes = await file.readAsBytes();
+      } else {
+        final gzipBytes = await _loadCompressedFont(fontName);
+        fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
+      }
+    } else {
+      final gzipBytes = await _loadCompressedFont(fontName);
+      fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
+    }
 
     final noTajweedLightBytes = _modifyCpalAllColors(
       Uint8List.fromList(fontBytes),
       const Color(0xFF000000),
     );
-    await _registerFont(
-      noTajweedLightBytes,
-      getNoTajweedLightFamily(pageNumber),
-    );
+    await _registerFont(noTajweedLightBytes, lightFam);
 
     final noTajweedDarkBytes = _modifyCpalAllColors(
       Uint8List.fromList(fontBytes),
       const Color(0xFFFFFFFF),
     );
-    await _registerFont(noTajweedDarkBytes, getNoTajweedDarkFamily(pageNumber));
-
-    final redBytes = _modifyCpalAllColors(
-      Uint8List.fromList(fontBytes),
-      const Color(0xFFFF0000),
-    );
-    await _registerFont(redBytes, getRedFamily(pageNumber));
+    await _registerFont(noTajweedDarkBytes, darkFam);
   }
 
   /// Registers a font blob under the provided family name for Flutter text rendering.
   static Future<void> _registerFont(Uint8List fontBytes, String family) async {
-    final loader = FontLoader(family);
-    final byteData = ByteData.view(
-      fontBytes.buffer,
-      fontBytes.offsetInBytes,
-      fontBytes.lengthInBytes,
-    );
-    loader.addFont(Future<ByteData>.value(byteData));
-    await loader.load();
+    if (_registeredFamilies.contains(family)) return;
+    try {
+      final loader = FontLoader(family);
+      final byteData = ByteData.view(
+        fontBytes.buffer,
+        fontBytes.offsetInBytes,
+        fontBytes.lengthInBytes,
+      );
+      loader.addFont(Future<ByteData>.value(byteData));
+      await loader.load();
+      _registeredFamilies.add(family);
+    } catch (_) {
+      _registeredFamilies.add(family);
+    }
   }
 
   /// Loads a compressed font asset from the package bundle.

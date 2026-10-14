@@ -393,15 +393,15 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
           textDirection: TextDirection.rtl,
           child: PageView.builder(
             controller: _pageController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
+            allowImplicitScrolling: true,
+            physics: const PageScrollPhysics(),
             itemCount: 604,
             onPageChanged: (index) => _onPageChanged(index + 1),
             itemBuilder: (context, index) {
               final pageNumber = index + 1;
               return RepaintBoundary(
                 child: MushafSinglePage(
+                  key: ValueKey('mushaf_page_$pageNumber'),
                   pageNumber: pageNumber,
                   themeMode: _themeMode,
                   isTajweedEnabled: _isTajweedEnabled,

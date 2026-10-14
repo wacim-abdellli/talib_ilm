@@ -40,22 +40,31 @@ class MushafSinglePage extends StatefulWidget {
   State<MushafSinglePage> createState() => _MushafSinglePageState();
 }
 
-class _MushafSinglePageState extends State<MushafSinglePage> {
-  late final PageController _pageController;
+class _MushafSinglePageState extends State<MushafSinglePage>
+    with AutomaticKeepAliveClientMixin {
+  static final PageController _sharedPageController = PageController();
   bool _isFontReady = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.pageNumber - 1);
-    _checkAndLoadFont();
+    _isFontReady = QcfFontLoader.isFontLoaded(widget.pageNumber);
+    if (!_isFontReady) {
+      _checkAndLoadFont();
+    }
   }
 
   @override
   void didUpdateWidget(covariant MushafSinglePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.pageNumber != widget.pageNumber) {
-      _checkAndLoadFont();
+      _isFontReady = QcfFontLoader.isFontLoaded(widget.pageNumber);
+      if (!_isFontReady) {
+        _checkAndLoadFont();
+      }
     }
   }
 
@@ -63,23 +72,20 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final page = widget.pageNumber;
     if (QcfFontLoader.isFontLoaded(page)) {
       _isFontReady = true;
-      QcfFontLoader.preloadPages(page, radius: 2);
-    } else {
-      _isFontReady = false;
-      QcfFontLoader.ensureFontLoaded(page).then((_) {
-        if (mounted && widget.pageNumber == page) {
-          setState(() {
-            _isFontReady = true;
-          });
-          QcfFontLoader.preloadPages(page, radius: 2);
-        }
-      });
+      return;
     }
+    _isFontReady = false;
+    QcfFontLoader.ensureFontLoaded(page).then((_) {
+      if (mounted && widget.pageNumber == page) {
+        setState(() {
+          _isFontReady = true;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -91,13 +97,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
 
   Color _getBorderColor(MushafThemeMode themeMode) => MushafColors.bannerBorderFor(themeMode);
 
-  void _openAyah(int surah, int ayah) {
-    if (widget.onAyahTap != null) {
-      widget.onAyahTap!(surah, ayah);
-    } else {
-      widget.onToggleOverlays?.call();
-    }
-  }
+
 
   void _openAyahLongPress(int surah, int ayah) {
     HapticFeedback.mediumImpact();
@@ -106,6 +106,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final palette = context.palette;
     final textTheme = context.text;
     final themeMode = widget.themeMode;
@@ -295,11 +296,11 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
       pageIndex: pageNumber,
       isTajweed: widget.isTajweedEnabled,
       isDark: themeMode == MushafThemeMode.dark,
-      pageController: _pageController,
+      pageController: _sharedPageController,
       lineOffsets: wordOffsets,
       wordHighlightIndex: WordHighlightIndex.empty,
       bookmarkIndex: bookmarkIndex,
-      onWordTap: (surah, ayah, wordIdx, word) => _openAyah(surah, ayah),
+      onWordTap: null, // Avoids ~200 TapGestureRecognizers and 15 timers per page; taps bubble to parent InkWell
       onLongPress: (surah, ayah, details) => _openAyahLongPress(surah, ayah),
       surahHeaderBuilder: (context, surah) => MushafSurahBanner(
         surahNumber: surah,
