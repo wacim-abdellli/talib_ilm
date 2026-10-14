@@ -11,6 +11,15 @@ class PrayerTimeService {
   static const _keyCalcMethod = 'adhan_calc_method';
   static const _keyAdjPrefix = 'adhan_adj_';
 
+  static PrayerTimesDay? _cachedToday;
+  static DateTime? _cacheTimestamp;
+  static const Duration _cacheDuration = Duration(minutes: 5);
+
+  static void clearCache() {
+    _cachedToday = null;
+    _cacheTimestamp = null;
+  }
+
   PrayerTimeService({
     LocationService? locationService,
     DateTime Function()? now,
@@ -19,6 +28,17 @@ class PrayerTimeService {
 
   Future<PrayerTimesDay> getPrayerTimesDay({DateTime? date}) async {
     final current = (date ?? now()).toLocal();
+    final isToday = date == null;
+
+    if (isToday && _cachedToday != null && _cacheTimestamp != null) {
+      if (DateTime.now().difference(_cacheTimestamp!) < _cacheDuration &&
+          _cachedToday!.date.day == current.day &&
+          _cachedToday!.date.month == current.month &&
+          _cachedToday!.date.year == current.year) {
+        return _cachedToday!;
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
 
     // Load adjustments
@@ -38,7 +58,7 @@ class PrayerTimeService {
         latitude: location.latitude,
       );
 
-      return _buildDay(
+      final result = _buildDay(
         current,
         city: location.city,
         latitude: location.latitude,
@@ -49,9 +69,15 @@ class PrayerTimeService {
         method: method,
         adjustments: adjustments,
       );
+
+      if (isToday) {
+        _cachedToday = result;
+        _cacheTimestamp = DateTime.now();
+      }
+      return result;
     } catch (_) {
       final method = _resolveMethod(savedMethodStr, countryCode: null, latitude: _defaultLat);
-      return _buildDay(
+      final result = _buildDay(
         current,
         city: AppStrings.locationDefaultCity,
         latitude: _defaultLat,
@@ -62,6 +88,12 @@ class PrayerTimeService {
         method: method,
         adjustments: adjustments,
       );
+
+      if (isToday) {
+        _cachedToday = result;
+        _cacheTimestamp = DateTime.now();
+      }
+      return result;
     }
   }
 

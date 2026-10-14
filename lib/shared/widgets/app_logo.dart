@@ -41,6 +41,8 @@ class AppLogo extends StatelessWidget {
         width: isLockup ? null : size.dimension,
         height: size.dimension,
         fit: BoxFit.contain,
+        cacheWidth: isLockup ? null : (size.dimension * 3).round(),
+        cacheHeight: (size.dimension * 3).round(),
       ),
     );
   }

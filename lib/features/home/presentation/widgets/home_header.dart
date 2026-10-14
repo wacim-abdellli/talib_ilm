@@ -62,7 +62,10 @@ class HomeHeader extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: AppRadius.mdRadius,
-                child: Image.asset(palette.logoSymbol, fit: BoxFit.contain),
+                child: Image.asset(
+                  palette.logoSymbol,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             const SizedBox(height: AppSpace.md),
@@ -145,18 +148,37 @@ class HomeHeader extends StatelessWidget {
     );
   }
 
+  static int _cachedDay = -1;
+  static int _cachedMonth = -1;
+  static int _cachedYear = -1;
+  static String _cachedHijriStr = '';
+
+  static String _formatHijri(DateTime date) {
+    if (_cachedDay == date.day &&
+        _cachedMonth == date.month &&
+        _cachedYear == date.year &&
+        _cachedHijriStr.isNotEmpty) {
+      return _cachedHijriStr;
+    }
+    try {
+      HijriCalendar.setLocal('ar');
+      final h = HijriCalendar.fromDate(date);
+      _cachedHijriStr = '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
+      _cachedDay = date.day;
+      _cachedMonth = date.month;
+      _cachedYear = date.year;
+    } catch (_) {
+      _cachedHijriStr = '';
+    }
+    return _cachedHijriStr;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
     final date = DateTime.now();
-
-    String hijriStr = '';
-    try {
-      HijriCalendar.setLocal('ar');
-      final h = HijriCalendar.fromDate(date);
-      hijriStr = '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
-    } catch (_) {}
+    final hijriStr = _formatHijri(date);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

@@ -4,6 +4,11 @@ import 'package:flutter/services.dart';
 import '../../features/ilm/data/models/mutun_models.dart';
 import '../../app/constants/app_assets.dart';
 
+MutunProgram _parseMutunProgram(String raw) {
+  final decoded = jsonDecode(raw);
+  return MutunProgram.fromJson(decoded);
+}
+
 class AssetService {
   static MutunProgram? _cachedProgram;
   static Future<MutunProgram>? _loadingFuture;
@@ -18,8 +23,7 @@ class AssetService {
 
   static Future<MutunProgram> _loadInternal() async {
     final raw = await rootBundle.loadString(AppAssets.mutunProgram);
-    final decoded = jsonDecode(raw);
-    _cachedProgram = MutunProgram.fromJson(decoded);
+    _cachedProgram = await compute(_parseMutunProgram, raw);
     _loadingFuture = null;
     return _cachedProgram!;
   }

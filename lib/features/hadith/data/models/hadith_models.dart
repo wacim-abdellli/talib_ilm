@@ -12,6 +12,11 @@ class GradedHadith {
   final String matn;
   final String benefits;
 
+  final String? searchIndex;
+
+  static final RegExp _dotsRegex = RegExp(r'\.{2,}');
+  static final RegExp _trailingDotsRegex = RegExp(r'\.+$');
+
   const GradedHadith({
     required this.id,
     required this.number,
@@ -23,9 +28,38 @@ class GradedHadith {
     required this.narrator,
     required this.matn,
     required this.benefits,
+    this.searchIndex,
   });
 
-  factory GradedHadith.fromJson(Map<String, dynamic> json) {
+  GradedHadith copyWith({
+    String? id,
+    int? number,
+    String? title,
+    String? collection,
+    String? category,
+    String? grade,
+    String? source,
+    String? narrator,
+    String? matn,
+    String? benefits,
+    String? searchIndex,
+  }) {
+    return GradedHadith(
+      id: id ?? this.id,
+      number: number ?? this.number,
+      title: title ?? this.title,
+      collection: collection ?? this.collection,
+      category: category ?? this.category,
+      grade: grade ?? this.grade,
+      source: source ?? this.source,
+      narrator: narrator ?? this.narrator,
+      matn: matn ?? this.matn,
+      benefits: benefits ?? this.benefits,
+      searchIndex: searchIndex ?? this.searchIndex,
+    );
+  }
+
+  factory GradedHadith.fromJson(Map<String, dynamic> json, {String? searchIndex}) {
     return GradedHadith(
       id: json['id'] as String? ?? '',
       number: (json['number'] as num?)?.toInt() ?? 0,
@@ -37,6 +71,7 @@ class GradedHadith {
       narrator: json['narrator'] as String? ?? '',
       matn: json['matn'] as String? ?? '',
       benefits: json['benefits'] as String? ?? '',
+      searchIndex: searchIndex,
     );
   }
 
@@ -66,7 +101,7 @@ class GradedHadith {
 
   /// Clean title guaranteed to have no trailing dots, ellipses, or generic headers
   String get cleanTitle {
-    var t = title.replaceAll(RegExp(r'\.{2,}'), '').replaceAll(RegExp(r'\.+$'), '').trim();
+    var t = title.replaceAll(_dotsRegex, '').replaceAll(_trailingDotsRegex, '').trim();
     if (t.startsWith('حديث من ') || t.startsWith('الحديث القدسي ')) {
       if (category.isNotEmpty && !category.contains('القدسي')) {
         return category;

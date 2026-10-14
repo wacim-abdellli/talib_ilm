@@ -1,9 +1,41 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'adhkar_models.dart';
 import '../../../app/constants/app_assets.dart';
 import '../../../app/constants/app_strings.dart';
+
+AthkarCatalog _parseAthkarJson(String raw) {
+  final decoded = jsonDecode(raw);
+  List<AthkarCategoryData> categories;
+
+  if (decoded is Map<String, dynamic>) {
+    final rawCategories = decoded['categories'] as List? ?? [];
+    categories = rawCategories
+        .whereType<Map<String, dynamic>>()
+        .map(AthkarCategoryData.fromJson)
+        .toList();
+  } else if (decoded is List) {
+    final items = decoded
+        .whereType<Map<String, dynamic>>()
+        .map(AthkarItem.fromJson)
+        .toList();
+    categories = AthkarService.categoriesFromItems(items);
+  } else {
+    categories = const [];
+  }
+
+  final merged = List<AthkarCategoryData>.from(categories);
+  final fallback = AthkarService.getFallbackCatalog().categories;
+  final existingIds = merged.map((c) => c.id).toSet();
+  for (final category in fallback) {
+    if (!existingIds.contains(category.id)) {
+      merged.add(category);
+    }
+  }
+  return AthkarCatalog(categories: merged);
+}
 
 class AthkarService {
   static Future<AthkarCatalog>? _globalCache;
@@ -13,46 +45,19 @@ class AthkarService {
     if (cached != null) {
       return cached.catchError((error) {
         _globalCache = null;
-        return _fallbackCatalog();
+        return getFallbackCatalog();
       });
     }
     _globalCache = _loadFromAssets();
     return _globalCache!.catchError((error) {
       _globalCache = null;
-      return _fallbackCatalog();
+      return getFallbackCatalog();
     });
   }
 
   Future<AthkarCatalog> _loadFromAssets() async {
     final raw = await rootBundle.loadString(AppAssets.adhkarData);
-    final decoded = jsonDecode(raw);
-    List<AthkarCategoryData> categories;
-
-    if (decoded is Map<String, dynamic>) {
-      final rawCategories = decoded['categories'] as List? ?? [];
-      categories = rawCategories
-          .whereType<Map<String, dynamic>>()
-          .map(AthkarCategoryData.fromJson)
-          .toList();
-    } else if (decoded is List) {
-      final items = decoded
-          .whereType<Map<String, dynamic>>()
-          .map(AthkarItem.fromJson)
-          .toList();
-      categories = _categoriesFromItems(items);
-    } else {
-      categories = const [];
-    }
-
-    final merged = List<AthkarCategoryData>.from(categories);
-    final fallback = _fallbackCatalog().categories;
-    final existingIds = merged.map((c) => c.id).toSet();
-    for (final category in fallback) {
-      if (!existingIds.contains(category.id)) {
-        merged.add(category);
-      }
-    }
-    return AthkarCatalog(categories: merged);
+    return compute(_parseAthkarJson, raw);
   }
 
   void resetCache() {
@@ -102,7 +107,7 @@ class AthkarService {
     );
   }
 
-  List<AthkarCategoryData> _categoriesFromItems(List<AthkarItem> items) {
+  static List<AthkarCategoryData> categoriesFromItems(List<AthkarItem> items) {
     if (items.isEmpty) return [];
 
     final hasOrder = items.every((item) => item.order > 0);
@@ -140,7 +145,7 @@ class AthkarService {
     ];
   }
 
-  AthkarCatalog _fallbackCatalog() {
+  static AthkarCatalog getFallbackCatalog() {
     return AthkarCatalog(
       categories: [
         AthkarCategoryData(
@@ -315,7 +320,7 @@ class AthkarService {
     );
   }
 
-  AthkarItem _fallbackItem({
+  static AthkarItem _fallbackItem({
     required String id,
     required String arabic,
     required String transliteration,

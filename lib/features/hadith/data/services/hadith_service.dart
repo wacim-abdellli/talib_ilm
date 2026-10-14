@@ -1,7 +1,35 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/hadith_models.dart';
+
+final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
+final RegExp _alefRegex = RegExp(r'[إأآا]');
+
+String _normalizeArabicText(String text) {
+  if (text.isEmpty) return '';
+  return text
+      .replaceAll(_tashkeelRegex, '') // remove tashkeel
+      .replaceAll(_alefRegex, 'ا')
+      .replaceAll('ى', 'ي')
+      .replaceAll('ة', 'ه')
+      .toLowerCase();
+}
+
+List<GradedHadith> _parseHadithsJson(String jsonStr) {
+  final list = json.decode(jsonStr) as List;
+  return list
+      .whereType<Map<String, dynamic>>()
+      .map((m) {
+        final hadith = GradedHadith.fromJson(m);
+        final searchIdx = _normalizeArabicText(
+          '${hadith.title} ${hadith.matn} ${hadith.narrator} ${hadith.benefits}',
+        );
+        return hadith.copyWith(searchIndex: searchIdx);
+      })
+      .toList();
+}
 
 class HadithService {
   static final HadithService _instance = HadithService._internal();
@@ -9,22 +37,30 @@ class HadithService {
   HadithService._internal();
 
   List<GradedHadith>? _cachedHadiths;
+  Future<List<GradedHadith>>? _loadingFuture;
 
-  /// Loads all graded hadiths from local bundled asset with zero latency
+  /// Loads all graded hadiths via background isolate with zero main-thread hitching
   Future<List<GradedHadith>> getAllHadiths() async {
     if (_cachedHadiths != null && _cachedHadiths!.isNotEmpty) {
       return _cachedHadiths!;
     }
+    if (_loadingFuture != null) {
+      return _loadingFuture!;
+    }
 
+    _loadingFuture = _loadInternal();
+    return _loadingFuture!;
+  }
+
+  Future<List<GradedHadith>> _loadInternal() async {
     try {
       final jsonStr = await rootBundle.loadString('assets/data/hadith_collection.json');
-      final list = json.decode(jsonStr) as List;
-      _cachedHadiths = list
-          .map((item) => GradedHadith.fromJson(item as Map<String, dynamic>))
-          .toList();
+      _cachedHadiths = await compute(_parseHadithsJson, jsonStr);
       return _cachedHadiths!;
     } catch (_) {
       return const [];
+    } finally {
+      _loadingFuture = null;
     }
   }
 
@@ -83,31 +119,28 @@ class HadithService {
     return all.where((h) => h.category == category).toList();
   }
 
+  /// Normalizes Arabic text using shared precompiled regular expressions
+  static String normalizeArabic(String text) => _normalizeArabicText(text);
+
   /// Search hadiths by title, matn, or narrator with diacritics normalization
   Future<List<GradedHadith>> searchHadiths(String query) async {
     final all = await getAllHadiths();
-    final cleanQuery = _normalizeArabic(query.trim());
+    final cleanQuery = _normalizeArabicText(query.trim());
     if (cleanQuery.isEmpty) return all;
 
     return all.where((h) {
-      final cleanTitle = _normalizeArabic(h.title);
-      final cleanMatn = _normalizeArabic(h.matn);
-      final cleanNarrator = _normalizeArabic(h.narrator);
-      final cleanBenefits = _normalizeArabic(h.benefits);
+      if (h.searchIndex != null) {
+        return h.searchIndex!.contains(cleanQuery);
+      }
+      final cleanTitle = _normalizeArabicText(h.title);
+      final cleanMatn = _normalizeArabicText(h.matn);
+      final cleanNarrator = _normalizeArabicText(h.narrator);
+      final cleanBenefits = _normalizeArabicText(h.benefits);
 
       return cleanTitle.contains(cleanQuery) ||
           cleanMatn.contains(cleanQuery) ||
           cleanNarrator.contains(cleanQuery) ||
           cleanBenefits.contains(cleanQuery);
     }).toList();
-  }
-
-  static String _normalizeArabic(String text) {
-    return text
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '') // remove tashkeel
-        .replaceAll(RegExp(r'[إأآا]'), 'ا')
-        .replaceAll('ى', 'ي')
-        .replaceAll('ة', 'ه')
-        .toLowerCase();
   }
 }

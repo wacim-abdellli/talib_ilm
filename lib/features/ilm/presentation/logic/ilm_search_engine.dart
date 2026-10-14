@@ -7,12 +7,17 @@ import '../../data/models/mutun_models.dart';
 class IlmSearchEngine {
   IlmSearchEngine._();
 
+  static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u0652]');
+  static final RegExp _alefRegex = RegExp(r'[أإآ]');
+
+  static final Map<String, String> _normalizedTitleCache = {};
+
   /// Normalizes Arabic text by removing tashkeel and unifying letter variants.
   static String normalizeArabic(String text) {
     if (text.isEmpty) return '';
     return text
-        .replaceAll(RegExp(r'[\u064B-\u0652]'), '') // remove tashkeel
-        .replaceAll(RegExp(r'[أإآ]'), 'ا')
+        .replaceAll(_tashkeelRegex, '') // remove tashkeel
+        .replaceAll(_alefRegex, 'ا')
         .replaceAll('ة', 'ه')
         .replaceAll('ى', 'ي')
         .toLowerCase()
@@ -30,7 +35,10 @@ class IlmSearchEngine {
     final matched = <(int score, IlmBook book)>[];
 
     for (final book in books) {
-      final tNorm = normalizeArabic(book.title);
+      final tNorm = _normalizedTitleCache.putIfAbsent(
+        book.id,
+        () => normalizeArabic(book.title),
+      );
 
       int score = 0;
       if (tNorm == q) {

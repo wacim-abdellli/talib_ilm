@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
@@ -48,16 +49,23 @@ class _QuranPageState extends State<QuranPage> {
 
   LastRead? _lastRead;
   List<Bookmark> _bookmarks = [];
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _loadData();
-    _searchController.addListener(_filterIndex);
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(AppMotion.searchDebounce, _filterIndex);
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -80,6 +88,35 @@ class _QuranPageState extends State<QuranPage> {
     }
   }
 
+  static final Map<int, String> _surahSearchIndex = {
+    for (int i = 1; i <= 114; i++)
+      i: ArabicSearchUtils.normalize(
+        '${quran.getSurahNameArabic(i)} ${quran.getSurahName(i)} $i',
+      ),
+  };
+
+  static final Map<int, String> _juzSearchIndex = {
+    for (int i = 1; i <= 30; i++)
+      i: () {
+        final map = quran.getSurahAndVersesFromJuz(i);
+        final firstSurah = map.keys.first;
+        final firstVerse = map[firstSurah]!.first;
+        final surahName = quran.getSurahNameArabic(firstSurah);
+        final snippet = quran.getVerse(firstSurah, firstVerse, verseEndSymbol: false);
+        return ArabicSearchUtils.normalize('الجزء $i $surahName $snippet $i');
+      }(),
+  };
+
+  static final Map<int, String> _hizbSearchIndex = {
+    for (int i = 1; i <= 60; i++)
+      i: () {
+        final hizb = HizbCatalog.getHizb(i);
+        return ArabicSearchUtils.normalize(
+          '${hizb.nameArabic} ${hizb.surahNameArabic} ${hizb.firstVerseSnippet} $i',
+        );
+      }(),
+  };
+
   void _filterIndex() {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
@@ -93,36 +130,20 @@ class _QuranPageState extends State<QuranPage> {
       return;
     }
 
+    final normalizedQuery = ArabicSearchUtils.normalize(query);
     if (mounted) {
       setState(() {
-        _filteredSurahs = List.generate(114, (i) => i + 1).where((surahNum) {
-          final nameAr = quran.getSurahNameArabic(surahNum);
-          final nameEn = quran.getSurahName(surahNum);
-          return ArabicSearchUtils.matches(nameAr, query) ||
-              nameEn.toLowerCase().contains(query.toLowerCase()) ||
-              surahNum.toString().contains(query);
-        }).toList();
+        _filteredSurahs = List.generate(114, (i) => i + 1)
+            .where((i) => _surahSearchIndex[i]?.contains(normalizedQuery) ?? false)
+            .toList();
 
-        _filteredJuzs = List.generate(30, (i) => i + 1).where((juzNum) {
-          final map = quran.getSurahAndVersesFromJuz(juzNum);
-          final firstSurah = map.keys.first;
-          final firstVerse = map[firstSurah]!.first;
-          final surahName = quran.getSurahNameArabic(firstSurah);
-          final snippet = quran.getVerse(firstSurah, firstVerse, verseEndSymbol: false);
-          final label = 'الجزء $juzNum';
-          return ArabicSearchUtils.matches(label, query) ||
-              ArabicSearchUtils.matches(surahName, query) ||
-              ArabicSearchUtils.matches(snippet, query) ||
-              juzNum.toString().contains(query);
-        }).toList();
+        _filteredJuzs = List.generate(30, (i) => i + 1)
+            .where((i) => _juzSearchIndex[i]?.contains(normalizedQuery) ?? false)
+            .toList();
 
-        _filteredHizbs = List.generate(60, (i) => i + 1).where((hizbNum) {
-          final hizb = HizbCatalog.getHizb(hizbNum);
-          return ArabicSearchUtils.matches(hizb.nameArabic, query) ||
-              ArabicSearchUtils.matches(hizb.surahNameArabic, query) ||
-              ArabicSearchUtils.matches(hizb.firstVerseSnippet, query) ||
-              hizbNum.toString().contains(query);
-        }).toList();
+        _filteredHizbs = List.generate(60, (i) => i + 1)
+            .where((i) => _hizbSearchIndex[i]?.contains(normalizedQuery) ?? false)
+            .toList();
       });
     }
   }

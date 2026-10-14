@@ -57,6 +57,8 @@ class AppDrawer extends StatelessWidget {
                       child: Image.asset(
                         palette.logoSymbol,
                         fit: BoxFit.contain,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
                         errorBuilder: (c, e, s) => Icon(
                           Icons.menu_book_rounded,
                           size: AppIcon.lg,

@@ -965,19 +965,32 @@ class TurathCatalog {
     ),
   ];
 
+  static final Map<int, String> _bookSearchIndex = {
+    for (final book in books)
+      book.id: ArabicSearchUtils.normalize('${book.title} ${book.author} ${book.description}'),
+  };
+
   /// Instant search across titles, authors, and descriptions
   static List<ShamelaBook> search({
     String query = '',
     int categoryId = 0,
   }) {
     final q = query.trim();
+    if (q.isEmpty && categoryId == 0) return books;
+
+    final normalizedQuery = q.isEmpty ? '' : ArabicSearchUtils.normalize(q);
 
     return books.where((book) {
       if (categoryId != 0 && book.categoryId != categoryId) {
         return false;
       }
-      if (q.isEmpty) {
+      if (normalizedQuery.isEmpty) {
         return true;
+      }
+
+      final searchIndex = _bookSearchIndex[book.id];
+      if (searchIndex != null) {
+        return searchIndex.contains(normalizedQuery);
       }
 
       return ArabicSearchUtils.matches(book.title, q) ||

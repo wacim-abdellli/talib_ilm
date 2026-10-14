@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../app/theme/app_ui.dart';
 import 'package:talib_ilm/shared/widgets/app_back_button.dart';
 import '../widgets/hadith_card.dart';
 import '../../data/models/hadith_models.dart';
@@ -22,6 +24,7 @@ class HadithExplorerPage extends StatefulWidget {
 class _HadithExplorerPageState extends State<HadithExplorerPage> {
   final HadithService _hadithService = HadithService();
   final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   List<GradedHadith> _allHadiths = [];
   List<GradedHadith> _filteredHadiths = [];
@@ -39,6 +42,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -87,27 +91,21 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     }
 
     if (query.isNotEmpty) {
-      final clean = _normalize(query);
+      final clean = HadithService.normalizeArabic(query);
       list = list.where((h) {
-        return _normalize(h.title).contains(clean) ||
-            _normalize(h.matn).contains(clean) ||
-            _normalize(h.narrator).contains(clean) ||
-            _normalize(h.benefits).contains(clean);
+        if (h.searchIndex != null) {
+          return h.searchIndex!.contains(clean);
+        }
+        return HadithService.normalizeArabic(h.title).contains(clean) ||
+            HadithService.normalizeArabic(h.matn).contains(clean) ||
+            HadithService.normalizeArabic(h.narrator).contains(clean) ||
+            HadithService.normalizeArabic(h.benefits).contains(clean);
       }).toList();
     }
 
     setState(() {
       _filteredHadiths = list;
     });
-  }
-
-  String _normalize(String s) {
-    return s
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
-        .replaceAll(RegExp(r'[إأآا]'), 'ا')
-        .replaceAll('ى', 'ي')
-        .replaceAll('ة', 'ه')
-        .toLowerCase();
   }
 
   @override
@@ -159,7 +157,10 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (_) => _applyFilter(),
+                      onChanged: (_) {
+                        _searchDebounce?.cancel();
+                        _searchDebounce = Timer(AppMotion.searchDebounce, _applyFilter);
+                      },
                       decoration: InputDecoration(
                         icon: Icon(
                           Icons.search_rounded,

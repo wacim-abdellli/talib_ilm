@@ -50,6 +50,14 @@ class VerifiedCitiesCatalog {
     return best;
   }
 
+  static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
+  static final RegExp _alefRegex = RegExp(r'[إأآا]');
+
+  static final Map<String, String> _citySearchIndex = {
+    for (final c in all)
+      c.id: _normalize('${c.name} ${c.province ?? ''} ${c.country}'),
+  };
+
   /// Search cities by normalized Arabic name or province
   static List<VerifiedCity> search(String query, {String? countryCode}) {
     final q = _normalize(query.trim());
@@ -58,6 +66,10 @@ class VerifiedCitiesCatalog {
         if (c.countryCode.toUpperCase() != countryCode.toUpperCase()) return false;
       }
       if (q.isEmpty) return true;
+      final idx = _citySearchIndex[c.id];
+      if (idx != null) {
+        return idx.contains(q);
+      }
       return _normalize(c.name).contains(q) ||
           (c.province != null && _normalize(c.province!).contains(q)) ||
           _normalize(c.country).contains(q);
@@ -66,8 +78,8 @@ class VerifiedCitiesCatalog {
 
   static String _normalize(String input) {
     return input
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '') // remove tashkeel
-        .replaceAll(RegExp(r'[إأآا]'), 'ا')
+        .replaceAll(_tashkeelRegex, '') // remove tashkeel
+        .replaceAll(_alefRegex, 'ا')
         .replaceAll('ة', 'ه')
         .replaceAll('ى', 'ي')
         .toLowerCase();

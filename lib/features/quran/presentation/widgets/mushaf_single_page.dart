@@ -10,6 +10,33 @@ import '../../../../core/utils/arabic_digits.dart'
 import 'quran_section_header.dart';
 export 'quran_section_header.dart';
 
+class _PageMeta {
+  final String vocalizedSurahName;
+  final String juzName;
+  const _PageMeta({required this.vocalizedSurahName, required this.juzName});
+}
+
+final Map<int, _PageMeta> _pageMetaCache = <int, _PageMeta>{};
+
+_PageMeta _getPageMeta(int pageNumber) {
+  final cached = _pageMetaCache[pageNumber];
+  if (cached != null) return cached;
+
+  final ranges = getPageData(pageNumber);
+  final firstSurah =
+      ranges.isNotEmpty ? int.parse(ranges.first['surah'].toString()) : 1;
+  final firstAyah =
+      ranges.isNotEmpty ? int.parse(ranges.first['start'].toString()) : 1;
+  final juzNumber = quran.getJuzNumber(firstSurah, firstAyah);
+  final surahName = quran.getSurahNameArabic(firstSurah);
+  final vocalized = getVocalizedSurahName(firstSurah, fallback: surahName);
+  final juz = getArabicJuzName(juzNumber);
+
+  final meta = _PageMeta(vocalizedSurahName: vocalized, juzName: juz);
+  _pageMetaCache[pageNumber] = meta;
+  return meta;
+}
+
 /// A complete, authentic King Fahd Complex Medina Mushaf single page
 /// rendered using [qcf_quran_plus] with Uthmani Tajweed font support.
 class MushafSinglePage extends StatefulWidget {
@@ -77,14 +104,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final verseTextColor = _getVerseTextColor(themeMode);
     final verseNumColor = _getVerseNumberColor(themeMode);
     final borderColor = _getBorderColor(themeMode);
-
-    final ranges = getPageData(pageNumber);
-    final firstSurah = ranges.isNotEmpty ? int.parse(ranges.first['surah'].toString()) : 1;
-    final firstAyah = ranges.isNotEmpty ? int.parse(ranges.first['start'].toString()) : 1;
-    final juzNumber = quran.getJuzNumber(firstSurah, firstAyah);
-    final surahName = quran.getSurahNameArabic(firstSurah);
-    final vocalizedSurahName = getVocalizedSurahName(firstSurah, fallback: surahName);
-    final juzName = getArabicJuzName(juzNumber);
+    final meta = _getPageMeta(pageNumber);
 
     return Container(
       color: pageBg,
@@ -112,7 +132,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                   PositionedDirectional(
                     start: 0,
                     child: Text(
-                      vocalizedSurahName,
+                      meta.vocalizedSurahName,
                       style: textTheme.mushafChrome.copyWith(
                         color: verseTextColor,
                       ),
@@ -131,7 +151,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                   PositionedDirectional(
                     end: 0,
                     child: Text(
-                      juzName,
+                      meta.juzName,
                       style: textTheme.mushafChrome.copyWith(
                         color: verseTextColor,
                       ),
@@ -224,27 +244,29 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
       ]);
     }
 
-    return QuranSinglePageWidget(
-      key: ValueKey('qcf_plus_page_$pageNumber'),
-      page: page,
-      pageIndex: pageNumber,
-      isTajweed: widget.isTajweedEnabled,
-      isDark: themeMode == MushafThemeMode.dark,
-      pageController: _sharedController,
-      lineOffsets: wordOffsets,
-      wordHighlightIndex: WordHighlightIndex.empty,
-      bookmarkIndex: bookmarkIndex,
-      onWordTap: (surah, ayah, wordIdx, word) => _openAyah(surah, ayah),
-      onLongPress: (surah, ayah, details) => _openAyahLongPress(surah, ayah),
-      surahHeaderBuilder: (context, surah) => MushafSurahBanner(
-        surahNumber: surah,
-        themeMode: themeMode,
+    return RepaintBoundary(
+      child: QuranSinglePageWidget(
+        key: ValueKey('qcf_plus_page_$pageNumber'),
+        page: page,
+        pageIndex: pageNumber,
+        isTajweed: widget.isTajweedEnabled,
+        isDark: themeMode == MushafThemeMode.dark,
+        pageController: _sharedController,
+        lineOffsets: wordOffsets,
+        wordHighlightIndex: WordHighlightIndex.empty,
+        bookmarkIndex: bookmarkIndex,
+        onWordTap: (surah, ayah, wordIdx, word) => _openAyah(surah, ayah),
+        onLongPress: (surah, ayah, details) => _openAyahLongPress(surah, ayah),
+        surahHeaderBuilder: (context, surah) => MushafSurahBanner(
+          surahNumber: surah,
+          themeMode: themeMode,
+        ),
+        basmallahBuilder: (context, surah) => QuranBasmalahBanner(
+          surahNumber: surah,
+          themeMode: themeMode,
+        ),
+        forceFitConstraints: false,
       ),
-      basmallahBuilder: (context, surah) => QuranBasmalahBanner(
-        surahNumber: surah,
-        themeMode: themeMode,
-      ),
-      forceFitConstraints: false,
     );
   }
 }

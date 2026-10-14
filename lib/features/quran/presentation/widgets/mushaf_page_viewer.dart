@@ -398,7 +398,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
           textDirection: TextDirection.rtl,
           child: PageView.builder(
             controller: _pageController,
-            allowImplicitScrolling: true,
+            allowImplicitScrolling: false,
             physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
             itemCount: 604,
             onPageChanged: (index) => _onPageChanged(index + 1),
