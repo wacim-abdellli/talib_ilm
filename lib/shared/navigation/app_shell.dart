@@ -94,34 +94,31 @@ class _AppShellState extends State<AppShell> {
         index: _currentIndex,
         children: pages,
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: NavBar(
-          currentIndex: _currentIndex,
-          onTap: selectTab,
-          items: const [
-            NavBarItem(
-              icon: Icons.home_rounded,
-              label: AppStrings.navHome,
-            ),
-            NavBarItem(
-              icon: Icons.access_time_rounded,
-              label: AppStrings.navPrayer,
-            ),
-            NavBarItem(
-              icon: Icons.auto_stories_rounded,
-              label: 'العلم',
-            ),
-            NavBarItem(
-              icon: Icons.spa_rounded,
-              label: 'الأذكار',
-            ),
-            NavBarItem(
-              icon: Icons.dashboard_rounded,
-              label: 'المزيد',
-            ),
-          ],
-        ),
+      bottomNavigationBar: NavBar(
+        currentIndex: _currentIndex,
+        onTap: selectTab,
+        items: const [
+          NavBarItem(
+            icon: Icons.home_rounded,
+            label: AppStrings.navHome,
+          ),
+          NavBarItem(
+            icon: Icons.access_time_rounded,
+            label: AppStrings.navPrayer,
+          ),
+          NavBarItem(
+            icon: Icons.auto_stories_rounded,
+            label: 'العلم',
+          ),
+          NavBarItem(
+            icon: Icons.spa_rounded,
+            label: 'الأذكار',
+          ),
+          NavBarItem(
+            icon: Icons.dashboard_rounded,
+            label: 'المزيد',
+          ),
+        ],
       ),
     );
   }

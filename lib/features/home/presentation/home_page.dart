@@ -368,14 +368,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
 
                   // Minimized gap under radio card and above floating navigation bar
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AppSize.navH +
-                          (MediaQuery.paddingOf(context).bottom > 0
-                              ? MediaQuery.paddingOf(context).bottom
-                              : AppSpace.sm) +
-                          AppSpace.xs,
-                    ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.sm),
                   ),
                 ],
               ),
