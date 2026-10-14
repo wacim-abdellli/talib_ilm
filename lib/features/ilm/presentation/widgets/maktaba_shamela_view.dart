@@ -392,7 +392,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                   onPressed: () => _downloadBook(book),
                                   icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
                                   label: Text(
-                                    'تحميل بدون إنترنت',
+                                    'تحميل للقراءة بدون إنترنت',
                                     style: textTheme.caption.copyWith(
                                       color: palette.primary,
                                       fontWeight: FontWeight.bold,

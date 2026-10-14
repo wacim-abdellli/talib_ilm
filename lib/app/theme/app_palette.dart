@@ -47,6 +47,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final bool isDark;
   final String logoSymbol;
   final String logoLockup;
+  final Color splashBg;
+  final Color splashCardBg;
+  final Color splashCardBorder;
 
   const AppPalette({
     required this.bg,
@@ -73,6 +76,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.isDark,
     required this.logoSymbol,
     required this.logoLockup,
+    required this.splashBg,
+    required this.splashCardBg,
+    required this.splashCardBorder,
   });
 
   /// Pure serene white splash screen tokens
@@ -115,6 +121,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     isDark: false,
     logoSymbol: 'assets/branding/symbol_on_light.png',
     logoLockup: 'assets/branding/lockup_on_light.png',
+    splashBg: Color(0xFFFFFFFF),
+    splashCardBg: Color(0xFFFFFBF2),
+    splashCardBorder: Color(0xFFE9D8B4),
   );
 
   /// Dark theme palette — Velvet Obsidian & Imperial Radiant Gold
@@ -143,6 +152,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     isDark: true,
     logoSymbol: 'assets/branding/symbol_on_dark.png',
     logoLockup: 'assets/branding/lockup_on_dark.png',
+    splashBg: Color(0xFF090807),
+    splashCardBg: Color(0xFF161310),
+    splashCardBorder: Color(0xFF2E2416),
   );
 
   /// Default Mushaf theme mode aligning with palette brightness
@@ -340,6 +352,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     bool? isDark,
     String? logoSymbol,
     String? logoLockup,
+    Color? splashBg,
+    Color? splashCardBg,
+    Color? splashCardBorder,
   }) {
     return AppPalette(
       bg: bg ?? this.bg,
@@ -366,6 +381,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       isDark: isDark ?? this.isDark,
       logoSymbol: logoSymbol ?? this.logoSymbol,
       logoLockup: logoLockup ?? this.logoLockup,
+      splashBg: splashBg ?? this.splashBg,
+      splashCardBg: splashCardBg ?? this.splashCardBg,
+      splashCardBorder: splashCardBorder ?? this.splashCardBorder,
     );
   }
 
@@ -397,6 +415,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       isDark: t < 0.5 ? isDark : other.isDark,
       logoSymbol: t < 0.5 ? logoSymbol : other.logoSymbol,
       logoLockup: t < 0.5 ? logoLockup : other.logoLockup,
+      splashBg: Color.lerp(splashBg, other.splashBg, t)!,
+      splashCardBg: Color.lerp(splashCardBg, other.splashCardBg, t)!,
+      splashCardBorder: Color.lerp(splashCardBorder, other.splashCardBorder, t)!,
     );
   }
 }
