@@ -702,11 +702,11 @@ class MushafColors {
   static const Color sepiaBannerText = Color(0xFF332014);
   static const Color sepiaBannerSubtext = Color(0xFF6B4E38);
 
-  static const Color darkBg = Color(0xFF121316);
-  static const Color darkText = Color(0xFFE8E5DD);
-  static const Color darkVerseNumber = Color(0xFFE5C07B);
-  static const Color darkBannerBg = Color(0xFF1A1D23);
-  static const Color darkBannerBorder = Color(0xFF997D3D);
+  static const Color darkBg = Color(0xFF101114);
+  static const Color darkText = Color(0xFFEAE5DC);
+  static const Color darkVerseNumber = Color(0xFFD4AF37);
+  static const Color darkBannerBg = Color(0xFF181A20);
+  static const Color darkBannerBorder = Color(0xFF8C7338);
   static const Color darkBannerText = Color(0xFFF5D78E);
   static const Color darkBannerSubtext = Color(0xFFC7AA64);
 

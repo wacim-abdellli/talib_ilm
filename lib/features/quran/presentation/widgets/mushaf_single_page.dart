@@ -41,28 +41,8 @@ class MushafSinglePage extends StatefulWidget {
 }
 
 class _MushafSinglePageState extends State<MushafSinglePage> {
-  late final PageController _pageController;
+  static final PageController _sharedController = PageController();
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: widget.pageNumber - 1);
-    QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
-  }
-
-  @override
-  void didUpdateWidget(covariant MushafSinglePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.pageNumber != widget.pageNumber) {
-      QcfFontLoader.preloadPages(widget.pageNumber, radius: 2);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   Color _getPageBg(MushafThemeMode themeMode) => MushafColors.bgFor(themeMode);
 
@@ -250,7 +230,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
       pageIndex: pageNumber,
       isTajweed: widget.isTajweedEnabled,
       isDark: themeMode == MushafThemeMode.dark,
-      pageController: _pageController,
+      pageController: _sharedController,
       lineOffsets: wordOffsets,
       wordHighlightIndex: WordHighlightIndex.empty,
       bookmarkIndex: bookmarkIndex,

@@ -57,6 +57,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   late final ValueNotifier<QuranPosition> _positionNotifier;
   Timer? _saveLastReadDebounceTimer;
+  Timer? _preloadDebounceTimer;
 
   MushafThemeMode _themeMode = MushafThemeMode.sepia;
   bool _isTajweedEnabled = true;
@@ -129,6 +130,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   void dispose() {
     _audioService.errorNotifier.removeListener(_onAudioError);
     _saveLastReadDebounceTimer?.cancel();
+    _preloadDebounceTimer?.cancel();
     BookmarkService.saveLastRead(
       surah: _currentSurah,
       ayah: _currentAyah,
@@ -230,7 +232,10 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       page: _currentPage,
       juz: quran.getJuzNumber(_currentSurah, _currentAyah),
     );
-    QcfFontLoader.preloadPages(page, radius: 3);
+    _preloadDebounceTimer?.cancel();
+    _preloadDebounceTimer = Timer(AppMotion.fast, () {
+      QcfFontLoader.preloadPages(page, radius: 2);
+    });
     _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
   }
 
@@ -394,7 +399,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
           child: PageView.builder(
             controller: _pageController,
             allowImplicitScrolling: true,
-            physics: const PageScrollPhysics(),
+            physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
             itemCount: 604,
             onPageChanged: (index) => _onPageChanged(index + 1),
             itemBuilder: (context, index) {

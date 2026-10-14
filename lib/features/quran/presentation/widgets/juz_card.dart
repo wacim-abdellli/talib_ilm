@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
-import '../../../../shared/widgets/app_card.dart';
+import '../../../../app/theme/app_ui.dart';
 import 'surah_card.dart';
 
-/// Authentic Juz card modeled after classical Madinah Mushaf index (Wahi style).
+/// Minimalist Juz tile modeled after classical Madinah Mushaf index.
 class JuzCard extends StatelessWidget {
   final int juzNumber;
   final VoidCallback onTap;
@@ -63,89 +63,104 @@ class JuzCard extends StatelessWidget {
         ? juzNames[juzNumber - 1]
         : 'الجزء $juzNumber';
 
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-      child: AppCard(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
         },
-        padding: const EdgeInsetsDirectional.symmetric(
-          horizontal: AppSpace.lg,
-          vertical: AppSpace.md,
-        ),
-        child: Row(
-          children: [
-            // Ornate Juz Medallion
-            SurahNumberMedallion(number: juzNumber),
-            const SizedBox(width: AppSpace.lg),
-
-            // Juz information
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        juzLabel,
-                        style: context.text.titleSmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.sm,
-                          vertical: AppSpace.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: palette.goldSoft,
-                          borderRadius: AppRadius.pillRadius,
-                        ),
-                        child: Text(
-                          'صفحة $pageNumber',
-                          style: context.text.caption.copyWith(
-                            color: palette.onGold,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.xs),
-                  // Opening Ayah snippet
-                  Text(
-                    '«$verseSnippet»',
-                    style: context.text.sacred.copyWith(
-                      color: palette.gold,
-                      height: 1.4,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpace.xs),
-                  // Starting Surah and Verse
-                  Text(
-                    'بداية سورة $surahName • آية $firstVerse',
-                    style: context.text.caption.copyWith(
-                      color: palette.textMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+        borderRadius: AppRadius.mdRadius,
+        child: Container(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.lg,
+            vertical: AppSpace.sm + 2,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: palette.border.withValues(alpha: 0.45),
+                width: 0.6,
               ),
             ),
+          ),
+          child: Row(
+            children: [
+              // Clean medallion
+              SurahNumberMedallion(number: juzNumber),
+              const SizedBox(width: AppSpace.md),
 
-            // Trailing arrow icon
-            Icon(
-              Icons.chevron_left_rounded,
-              size: AppIcon.md,
-              color: palette.gold,
-            ),
-          ],
+              // Juz information
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          juzLabel,
+                          style: context.text.titleSmall.copyWith(
+                            color: palette.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs + 2),
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xs + 2,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.goldSoft,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: palette.gold.withValues(alpha: 0.25),
+                              width: 0.7,
+                            ),
+                          ),
+                          child: Text(
+                            'ص $pageNumber',
+                            style: context.text.caption.copyWith(
+                              color: palette.gold,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.xxs + 1),
+                    Text(
+                      '«$verseSnippet»',
+                      style: context.text.sacred.copyWith(
+                        color: palette.gold,
+                        height: 1.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'بداية سورة $surahName • آية $firstVerse',
+                      style: context.text.caption.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: AppSpace.xs),
+
+              // Trailing arrow
+              Icon(
+                Icons.chevron_left_rounded,
+                size: AppIcon.md,
+                color: palette.textMuted,
+              ),
+            ],
+          ),
         ),
       ),
     );

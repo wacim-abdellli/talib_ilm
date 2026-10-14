@@ -19,6 +19,7 @@ import 'widgets/juz_card.dart';
 import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
 import 'widgets/quran_bookmarks_tab_view.dart';
+import 'widgets/quran_sliver_header.dart';
 import 'widgets/quran_stats_banner.dart';
 import 'widgets/reading_history_sheet.dart';
 import 'widgets/surah_card.dart';
@@ -138,7 +139,6 @@ class _QuranPageState extends State<QuranPage> {
     final targetPage = quran.getPageNumber(surahNum, effectiveAyah);
     QcfFontLoader.preloadPages(targetPage, radius: 2);
 
-    // Record reading history (throttled)
     ReadingHistoryService.recordReading(
       surah: surahNum,
       ayah: effectiveAyah,
@@ -173,7 +173,6 @@ class _QuranPageState extends State<QuranPage> {
     final startTime = DateTime.now();
     QcfFontLoader.preloadPages(pageNumber, radius: 2);
 
-    // Record reading history (throttled)
     ReadingHistoryService.recordReading(
       surah: _lastRead?.surah ?? 1,
       ayah: _lastRead?.ayah ?? 1,
@@ -209,7 +208,6 @@ class _QuranPageState extends State<QuranPage> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final textTheme = context.text;
     final isSearching = _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
@@ -249,261 +247,115 @@ class _QuranPageState extends State<QuranPage> {
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: palette.gold))
-          : Column(
-              children: [
-                if (!isSearching) ...[
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      AppSpace.lg,
-                      AppSpace.xs,
-                      AppSpace.lg,
-                      AppSpace.sm,
-                    ),
-                    child: Row(
+          : NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                if (!isSearching)
+                  SliverToBoxAdapter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: QuranStatCard(
-                            label: 'أيام التتابع',
-                            value: '$_streak',
-                            icon: Icons.local_fire_department_rounded,
-                            iconColor: palette.gold,
+                        // Stats row (أيام التتابع • قراءة اليوم • المحفوظات)
+                        Padding(
+                          padding: const EdgeInsetsDirectional.fromSTEB(
+                            AppSpace.lg,
+                            AppSpace.xs,
+                            AppSpace.lg,
+                            AppSpace.xs,
                           ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Expanded(
-                          child: QuranStatCard(
-                            label: 'قراءة اليوم',
-                            value: '$_minutesToday د',
-                            icon: Icons.timer_outlined,
-                            iconColor: palette.primary,
-                            subtitle:
-                                '${(_minutesToday / _dailyGoal * 100).clamp(0, 100).toInt()}% من الهدف',
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Expanded(
-                          child: QuranStatCard(
-                            label: 'المحفوظات',
-                            value: '${_bookmarks.length}',
-                            icon: Icons.bookmark_rounded,
-                            iconColor: palette.gold,
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const BookmarksPage(),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: QuranStatCard(
+                                  label: 'أيام التتابع',
+                                  value: '$_streak',
+                                  icon: Icons.local_fire_department_rounded,
+                                  iconColor: palette.gold,
                                 ),
-                              ).then((_) => _loadData());
-                            },
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: QuranStatCard(
+                                  label: 'قراءة اليوم',
+                                  value: '$_minutesToday د',
+                                  icon: Icons.timer_outlined,
+                                  iconColor: palette.primary,
+                                  subtitle:
+                                      '${(_minutesToday / _dailyGoal * 100).clamp(0, 100).toInt()}% من الهدف',
+                                ),
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: QuranStatCard(
+                                  label: 'المحفوظات',
+                                  value: '${_bookmarks.length}',
+                                  icon: Icons.bookmark_rounded,
+                                  iconColor: palette.gold,
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const BookmarksPage(),
+                                      ),
+                                    ).then((_) => _loadData());
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+
+                        // Last read banner (آخر قراءة)
+                        if (_lastRead != null)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                              AppSpace.lg,
+                              AppSpace.xs,
+                              AppSpace.lg,
+                              AppSpace.xs,
+                            ),
+                            child: QuranLastReadBanner(
+                              lastRead: _lastRead!,
+                              onTap: () => _openSurah(
+                                _lastRead!.surah,
+                                ayah: _lastRead!.ayah,
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: AppSpace.xs),
                       ],
                     ),
                   ),
 
-                  if (_lastRead != null)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.lg,
-                        vertical: AppSpace.xs,
-                      ),
-                      child: QuranLastReadBanner(
-                        lastRead: _lastRead!,
-                        onTap: () => _openSurah(_lastRead!.surah, ayah: _lastRead!.ayah),
-                      ),
-                    ),
-                ],
-
-                const SizedBox(height: AppSpace.xs),
-                _buildIndexTabs(context),
-
-                // Search Bar with native RTL support and compact clear button
-                Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(
-                    AppSpace.lg,
-                    AppSpace.xs,
-                    AppSpace.lg,
-                    AppSpace.sm,
+                // Pinned Category Tabs & Search Bar
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: QuranPinnedHeaderDelegate(
+                    selectedTabIndex: _selectedTabIndex,
+                    bookmarksCount: _bookmarks.length,
+                    onTabSelected: (index) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedTabIndex = index);
+                    },
+                    searchController: _searchController,
+                    onSearchChanged: _filterIndex,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    textDirection: TextDirection.rtl,
-                    textInputAction: TextInputAction.search,
-                    style: textTheme.body.copyWith(color: palette.text),
-                    cursorColor: palette.primary,
-                    decoration: InputDecoration(
-                      hintText: _selectedTabIndex == 0
-                          ? 'ابحث عن سورة بالاسم أو الرقم...'
-                          : _selectedTabIndex == 1
-                              ? 'ابحث عن جزء بالاسم أو الرقم أو الآية...'
-                              : 'ابحث في المحفوظات والتدبر...',
-                      hintStyle: textTheme.bodySmall.copyWith(
-                        color: palette.textMuted,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: palette.gold,
-                        size: AppIcon.md,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.close_rounded,
-                                color: palette.textMuted,
-                                size: AppIcon.sm,
-                              ),
-                              tooltip: 'مسح البحث',
-                              splashColor: Colors.transparent,
-                              highlightColor: Colors.transparent,
-                              onPressed: () {
-                                _searchController.clear();
-                                _filterIndex();
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: palette.surfaceMuted,
-                      contentPadding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.sm,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.mdRadius,
-                        borderSide: BorderSide(color: palette.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.mdRadius,
-                        borderSide: BorderSide(color: palette.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.mdRadius,
-                        borderSide: BorderSide(
-                          color: palette.gold,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Content List (Surahs, Juzs, Hizbs, or Bookmarks)
-                Expanded(
-                  child: _selectedTabIndex == 0
-                      ? _buildSurahsList(context)
-                      : _selectedTabIndex == 1
-                          ? _buildJuzsList(context)
-                          : _selectedTabIndex == 2
-                              ? _buildHizbsList(context)
-                              : QuranBookmarksTabView(
-                                  bookmarks: _bookmarks,
-                                  onEmptyAction: () =>
-                                      setState(() => _selectedTabIndex = 0),
-                                  onReload: _loadData,
-                                ),
                 ),
               ],
+              body: _selectedTabIndex == 0
+                  ? _buildSurahsList(context)
+                  : _selectedTabIndex == 1
+                      ? _buildJuzsList(context)
+                      : _selectedTabIndex == 2
+                          ? _buildHizbsList(context)
+                          : QuranBookmarksTabView(
+                              bookmarks: _bookmarks,
+                              onEmptyAction: () =>
+                                  setState(() => _selectedTabIndex = 0),
+                              onReload: _loadData,
+                            ),
             ),
-    );
-  }
-
-  Widget _buildIndexTabs(BuildContext context) {
-    final palette = context.palette;
-
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-      child: Container(
-        padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-        decoration: BoxDecoration(
-          color: palette.surfaceMuted,
-          borderRadius: AppRadius.pillRadius,
-          border: Border.all(color: palette.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildTabButton(
-                title: 'السور (114)',
-                isSelected: _selectedTabIndex == 0,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedTabIndex = 0);
-                },
-              ),
-            ),
-            Expanded(
-              child: _buildTabButton(
-                title: 'الأجزاء (30)',
-                isSelected: _selectedTabIndex == 1,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedTabIndex = 1);
-                },
-              ),
-            ),
-            Expanded(
-              child: _buildTabButton(
-                title: 'الأحزاب (60)',
-                isSelected: _selectedTabIndex == 2,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedTabIndex = 2);
-                },
-              ),
-            ),
-            Expanded(
-              child: _buildTabButton(
-                title: 'المحفوظات (${_bookmarks.length})',
-                isSelected: _selectedTabIndex == 3,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedTabIndex = 3);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabButton({
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final palette = context.palette;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.pillRadius,
-        child: AnimatedContainer(
-          duration: AppMotion.base,
-          padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
-          decoration: BoxDecoration(
-            color: isSelected ? palette.surfaceRaised : Colors.transparent,
-            borderRadius: AppRadius.pillRadius,
-            border: isSelected
-                ? Border.all(
-                    color: palette.gold.withValues(alpha: 0.35),
-                    width: 1,
-                  )
-                : null,
-            boxShadow: isSelected ? palette.shadow : null,
-          ),
-          child: Center(
-            child: Text(
-              title,
-              style: context.text.label.copyWith(
-                color: isSelected ? palette.gold : palette.textMuted,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -529,12 +381,11 @@ class _QuranPageState extends State<QuranPage> {
         .toSet();
 
     return ListView.builder(
+      key: const PageStorageKey('surahs_list'),
       itemCount: _filteredSurahs.length,
       addAutomaticKeepAlives: false,
       addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
-        start: AppSpace.lg,
-        end: AppSpace.lg,
         bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
@@ -542,6 +393,7 @@ class _QuranPageState extends State<QuranPage> {
         final isBookmarked = bookmarkedSurahSet.contains(surahNum);
 
         return SurahCard(
+          key: ValueKey('surah_$surahNum'),
           surahNumber: surahNum,
           isBookmarked: isBookmarked,
           onTap: () => _openSurah(surahNum),
@@ -568,17 +420,17 @@ class _QuranPageState extends State<QuranPage> {
     }
 
     return ListView.builder(
+      key: const PageStorageKey('juzs_list'),
       itemCount: _filteredJuzs.length,
       addAutomaticKeepAlives: false,
       addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
-        start: AppSpace.lg,
-        end: AppSpace.lg,
         bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
         final juzNum = _filteredJuzs[index];
         return JuzCard(
+          key: ValueKey('juz_$juzNum'),
           juzNumber: juzNum,
           onTap: () {
             final map = quran.getSurahAndVersesFromJuz(juzNum);
@@ -601,7 +453,7 @@ class _QuranPageState extends State<QuranPage> {
           icon: Icons.search_off_rounded,
           title: 'لا توجد نتائج',
           subtitle:
-              'لم نتمكن من العثور على حزب يطابق بحثك. جرّب كتابة رقم الحزب أو اسم السورة.',
+              'لم نتمكن من العثور على حزب يطابق بحثك. جرّب كتابة اسم الحزب أو السورة.',
           actionLabel: 'إعادة ضبط البحث',
           onAction: () => _searchController.clear(),
         ),
@@ -609,18 +461,18 @@ class _QuranPageState extends State<QuranPage> {
     }
 
     return ListView.builder(
+      key: const PageStorageKey('hizbs_list'),
       itemCount: _filteredHizbs.length,
       addAutomaticKeepAlives: false,
       addRepaintBoundaries: true,
       padding: EdgeInsetsDirectional.only(
-        start: AppSpace.lg,
-        end: AppSpace.lg,
         bottom: AppSize.navClearance(context),
       ),
       itemBuilder: (context, index) {
         final hizbNum = _filteredHizbs[index];
         final hizb = HizbCatalog.getHizb(hizbNum);
         return HizbCard(
+          key: ValueKey('hizb_$hizbNum'),
           hizb: hizb,
           onOpenPage: _openPage,
         );
