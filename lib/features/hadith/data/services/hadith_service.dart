@@ -47,12 +47,24 @@ class HadithService {
     return all[rng.nextInt(all.length)];
   }
 
-  /// Returns list of unique categories
-  Future<List<String>> getCategories() async {
+  /// Returns list of unique collections
+  Future<List<String>> getCollections() async {
     final all = await getAllHadiths();
     final set = <String>{};
     for (final h in all) {
-      if (h.category.isNotEmpty) set.add(h.category);
+      if (h.collection.isNotEmpty) set.add(h.collection);
+    }
+    return set.toList();
+  }
+
+  /// Returns list of unique categories (optionally scoped to a collection)
+  Future<List<String>> getCategories([String? collection]) async {
+    final all = await getAllHadiths();
+    final set = <String>{};
+    for (final h in all) {
+      if (collection == null || collection == 'الكل' || h.collection == collection) {
+        if (h.category.isNotEmpty) set.add(h.category);
+      }
     }
     return set.toList();
   }

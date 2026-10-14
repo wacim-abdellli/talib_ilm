@@ -18,9 +18,6 @@ import 'widgets/home_quick_actions.dart';
 import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/models/sharh_model.dart';
 import '../../ilm/presentation/ilm_page.dart';
-import '../../ilm/data/services/motivation_service.dart';
-import '../../ilm/presentation/widgets/motivation_widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
 
 import '../../prayer/data/models/prayer_models.dart';
@@ -54,7 +51,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isLoading = true;
   PrayerTimesDay? _prayerDay;
   ContinueData? _continueData;
-  DailyQuote? _dailyQuote;
   DailyDhikrPayload? _dailyDhikr;
 
   // Emotional state controller
@@ -87,7 +83,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final results = await Future.wait([
       _prayerTimeService.getPrayerTimesDay(),
       _loadContinueData(),
-      _loadDailyQuoteData(),
       _stateController.initialize(),
       AthkarService().getDailyDhikr(),
     ]);
@@ -97,8 +92,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     setState(() {
       _prayerDay = results[0] as PrayerTimesDay;
       _continueData = results[1] as ContinueData?;
-      _dailyQuote = results[2] as DailyQuote?;
-      _dailyDhikr = results[4] as DailyDhikrPayload?;
+      _dailyDhikr = results[3] as DailyDhikrPayload?;
       _isLoading = false;
     });
   }
@@ -235,21 +229,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     await _loadAllData();
   }
 
-  Future<void> _cycleQuote() async {
-    final prefs = await SharedPreferences.getInstance();
-    final service = MotivationService(prefs);
-    final quote = await service.cycleDailyQuote();
-    setState(() {
-      _dailyQuote = quote;
-    });
-  }
-
-  Future<DailyQuote?> _loadDailyQuoteData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final service = MotivationService(prefs);
-    return service.getDailyQuote();
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -259,6 +238,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       backgroundColor: context.palette.bg,
       body: SafeArea(
+        bottom: false,
         child: ListenableBuilder(
           listenable: _stateController,
           builder: (context, child) {
@@ -304,34 +284,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.lg),
                   ),
 
-                  // Daily Motivation with temporal framing
-                  if (_dailyQuote != null) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.xl,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SectionHeader(
-                              title: 'تذكرة اليوم',
-                              padding: EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-                            ),
-                            DailyMotivationCard(
-                              quote: _dailyQuote!,
-                              onReload: _cycleQuote,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AppSpace.xl),
-                    ),
-                  ],
-
-                  // Daily Graded Hadith
+                  // Daily Graded Hadith & Prophetic Remembrances
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsetsDirectional.symmetric(
@@ -405,10 +358,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         onOpenRadio: () => QuranRadioSheet.show(context),
                       ),
                     ),
-                  ),
-
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AppSpace.xl),
                   ),
 
                   SliverToBoxAdapter(

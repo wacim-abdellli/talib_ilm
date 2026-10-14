@@ -25,6 +25,8 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
 
   List<GradedHadith> _allHadiths = [];
   List<GradedHadith> _filteredHadiths = [];
+  List<String> _collections = ['الكل'];
+  String _selectedCollection = 'الكل';
   List<String> _categories = ['الكل'];
   String _selectedCategory = 'الكل';
   bool _isLoading = true;
@@ -43,12 +45,14 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
 
   Future<void> _loadHadiths() async {
     final hadiths = await _hadithService.getAllHadiths();
+    final collections = await _hadithService.getCollections();
     final categories = await _hadithService.getCategories();
 
     if (!mounted) return;
 
     setState(() {
       _allHadiths = hadiths;
+      _collections = ['الكل', ...collections];
       _categories = ['الكل', ...categories];
       if (widget.initialCategory != null &&
           _categories.contains(widget.initialCategory)) {
@@ -59,9 +63,24 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     });
   }
 
+  Future<void> _onCollectionSelected(String col) async {
+    _selectedCollection = col;
+    final cats = await _hadithService.getCategories(col);
+    if (!mounted) return;
+    setState(() {
+      _categories = ['الكل', ...cats];
+      _selectedCategory = 'الكل';
+      _applyFilter();
+    });
+  }
+
   void _applyFilter() {
     final query = _searchController.text.trim();
     List<GradedHadith> list = _allHadiths;
+
+    if (_selectedCollection != 'الكل') {
+      list = list.where((h) => h.collection == _selectedCollection).toList();
+    }
 
     if (_selectedCategory != 'الكل') {
       list = list.where((h) => h.category == _selectedCategory).toList();
@@ -100,12 +119,25 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
       appBar: AppBar(
         backgroundColor: palette.surface,
         elevation: 0,
-        title: Text(
-          'الأحاديث النبوية الصحيحة',
-          style: AppTextStyles.titleMedium.copyWith(
-            color: palette.text,
-            fontFamily: AppTextStyles.cairo,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'الأحاديث النبوية الصحيحة',
+              style: AppTextStyles.titleMedium.copyWith(
+                color: palette.text,
+                fontFamily: AppTextStyles.cairo,
+              ),
+            ),
+            if (!_isLoading)
+              Text(
+                '${_filteredHadiths.length} حديثاً صحيحاً ومسنداً',
+                style: AppTextStyles.caption.copyWith(
+                  color: palette.textMuted,
+                  fontFamily: AppTextStyles.cairo,
+                ),
+              ),
+          ],
         ),
         leading: const AppBackButton(),
       ),
@@ -148,9 +180,52 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                   ),
                 ),
 
-                // Category Chips
+                // Canonical Collections Chips
+                if (_collections.length > 2) ...[
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.lg,
+                      ),
+                      itemCount: _collections.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpace.xs),
+                      itemBuilder: (context, index) {
+                        final col = _collections[index];
+                        final isSelected = col == _selectedCollection;
+                        return ChoiceChip(
+                          label: Text(
+                            col,
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: isSelected
+                                  ? palette.onPrimary
+                                  : palette.text,
+                              fontFamily: AppTextStyles.cairo,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: palette.primary,
+                          backgroundColor: palette.surfaceRaised,
+                          side: BorderSide(
+                            color: isSelected
+                                ? palette.primary
+                                : palette.border,
+                          ),
+                          onSelected: (val) {
+                            if (val) _onCollectionSelected(col);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                ],
+
+                // Chapter / Category Chips
                 SizedBox(
-                  height: 44,
+                  height: 40,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsetsDirectional.symmetric(
@@ -158,7 +233,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                     ),
                     itemCount: _categories.length,
                     separatorBuilder: (context, index) =>
-                        const SizedBox(width: AppSpace.sm),
+                        const SizedBox(width: AppSpace.xs),
                     itemBuilder: (context, index) {
                       final cat = _categories[index];
                       final isSelected = cat == _selectedCategory;
@@ -173,11 +248,11 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                           ),
                         ),
                         selected: isSelected,
-                        selectedColor: palette.primary,
+                        selectedColor: palette.gold,
                         backgroundColor: palette.surface,
                         side: BorderSide(
                           color: isSelected
-                              ? palette.primary
+                              ? palette.gold
                               : palette.border,
                         ),
                         onSelected: (val) {
@@ -191,7 +266,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                   ),
                 ),
 
-                const SizedBox(height: AppSpace.md),
+                const SizedBox(height: AppSpace.sm),
 
                 // Hadith List
                 Expanded(
