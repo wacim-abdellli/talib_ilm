@@ -565,6 +565,9 @@ class AppRadius {
   static BorderRadius get lgRadius => BorderRadius.circular(lg);
   static BorderRadius get xlRadius => BorderRadius.circular(xl);
   static BorderRadius get pillRadius => BorderRadius.circular(pill);
+  static BorderRadius get sheetTopRadius => const BorderRadius.vertical(
+        top: Radius.circular(xl),
+      );
 }
 
 /// Icon size tokens

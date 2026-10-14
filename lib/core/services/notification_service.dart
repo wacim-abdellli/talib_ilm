@@ -248,7 +248,7 @@ class NotificationService {
     required String prayerName,
     required DateTime scheduledTime,
     required PrayerNotificationMode mode,
-    AdhanSound sound = AdhanSound.makkah,
+    AdhanSound sound = AdhanSound.qatami,
   }) async {
     if (mode == PrayerNotificationMode.off) return;
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
@@ -287,7 +287,7 @@ class NotificationService {
   Future<void> showInstantTestNotification({
     required String prayerName,
     required PrayerNotificationMode mode,
-    AdhanSound sound = AdhanSound.makkah,
+    AdhanSound sound = AdhanSound.qatami,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return;
@@ -319,7 +319,7 @@ class NotificationService {
     required int seconds,
     required String prayerName,
     required PrayerNotificationMode mode,
-    AdhanSound sound = AdhanSound.makkah,
+    AdhanSound sound = AdhanSound.qatami,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return;
@@ -395,7 +395,7 @@ class NotificationService {
         ? (sound == AdhanSound.takbeer ? PrayerNotificationMode.takbeer : PrayerNotificationMode.adhan)
         : PrayerNotificationMode.silent;
 
-    final details = _buildPrayerDetails(mode: mode, sound: sound ?? AdhanSound.makkah);
+    final details = _buildPrayerDetails(mode: mode, sound: sound ?? AdhanSound.qatami);
 
     try {
       await _plugin.zonedSchedule(
@@ -591,8 +591,9 @@ class NotificationService {
       case AdhanSound.takbeer:
         return 'adhan_takbeer';
       case AdhanSound.makkah:
-      default:
         return 'adhan_makkah';
+      default:
+        return 'adhan_qatami';
     }
   }
 

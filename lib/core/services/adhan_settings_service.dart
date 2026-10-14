@@ -2,11 +2,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
 
 enum AdhanSound {
+  qatami,
   makkah,
   madinah,
   alafasy,
   abdulbasit,
-  qatami,
   aqsa,
   takbeer,
 }
@@ -118,16 +118,19 @@ class AdhanSettingsService {
   Future<AdhanSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_keyEnabled) ?? false;
-    final soundIndex = prefs.getInt(_keySound) ?? 0;
+    final soundIndex = prefs.getInt(_keySound);
+    final AdhanSound sound;
+    if (soundIndex != null && soundIndex >= 0 && soundIndex < AdhanSound.values.length) {
+      sound = AdhanSound.values[soundIndex];
+    } else {
+      sound = AdhanSound.qatami;
+    }
+
     final silent = prefs.getBool(_keySilent) ?? false;
     final calcMethod = prefs.getString(_keyCalcMethod) ?? 'auto';
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
     final iqama = prefs.getBool(_keyIqama) ?? false;
-
-    final maxIndex = AdhanSound.values.length - 1;
-    final safeIndex = soundIndex.clamp(0, maxIndex).toInt();
-    final sound = AdhanSound.values[safeIndex];
 
     final defaultModeIndex = prefs.getInt(_keyDefaultMode);
     final PrayerNotificationMode defaultMode;

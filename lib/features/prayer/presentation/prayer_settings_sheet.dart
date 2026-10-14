@@ -15,7 +15,6 @@ import '../../../shared/widgets/icon_badge.dart';
 import '../../../shared/widgets/section_header.dart';
 import 'widgets/prayer_adhan_section.dart';
 import 'widgets/prayer_adjustments_section.dart';
-import 'widgets/prayer_calc_section.dart';
 
 class PrayerSettingsSheet extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
@@ -137,9 +136,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     return Container(
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: AppRadius.sheetTopRadius,
         border: Border.all(
           color: palette.border,
         ),
@@ -174,12 +171,6 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PrayerCalcSection(
-                    settings: settings,
-                    isDark: isDark,
-                    onSettingsChanged: _updateSettings,
-                  ),
-                  const SizedBox(height: AppSpace.lg),
                   PrayerAdhanSection(
                     settings: settings,
                     isDark: isDark,
@@ -230,7 +221,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                   ),
                 ),
                 Text(
-                  'تخصيص الحساب والمؤذن والتنبيهات',
+                  'تخصيص أصوات المؤذنين ونمط التنبيهات',
                   style: context.text.caption.copyWith(
                     color: palette.textMuted,
                   ),

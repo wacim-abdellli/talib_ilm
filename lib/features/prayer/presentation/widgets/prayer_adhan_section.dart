@@ -10,7 +10,7 @@ import '../../../../shared/widgets/section_header.dart';
 import 'prayer_muezzin_selector.dart';
 import 'prayer_notification_tester.dart';
 
-class PrayerAdhanSection extends StatelessWidget {
+class PrayerAdhanSection extends StatefulWidget {
   final AdhanSettings settings;
   final bool isDark;
   final AdhanService adhanService;
@@ -25,7 +25,17 @@ class PrayerAdhanSection extends StatelessWidget {
   });
 
   @override
+  State<PrayerAdhanSection> createState() => _PrayerAdhanSectionState();
+}
+
+class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
+  bool _showTester = false;
+
+  @override
   Widget build(BuildContext context) {
+    final settings = widget.settings;
+    final adhanService = widget.adhanService;
+    final onSettingsChanged = widget.onSettingsChanged;
     final palette = context.palette;
     final textTheme = context.text;
 
@@ -199,6 +209,7 @@ class PrayerAdhanSection extends StatelessWidget {
                             min: 0,
                             max: 100,
                             onChanged: (val) {
+                              adhanService.setVolume(val);
                               onSettingsChanged(settings.copyWith(volume: val));
                             },
                           ),
@@ -216,11 +227,65 @@ class PrayerAdhanSection extends StatelessWidget {
               const SizedBox(height: AppSpace.md),
             ],
 
-            // ── Comprehensive Testing Bench (Audio + Instant + 5s Outside App) ──
-            PrayerNotificationTester(
-              settings: settings,
-              adhanService: adhanService,
+            // ── Expandable Testing Bench (Audio + Notifications) ──
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() => _showTester = !_showTester);
+                },
+                borderRadius: AppRadius.mdRadius,
+                child: Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _showTester ? palette.primarySoft : palette.surfaceMuted,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: _showTester ? palette.primary : palette.border,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.science_rounded,
+                        size: AppIcon.sm,
+                        color: _showTester ? palette.primary : palette.gold,
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: Text(
+                          _showTester
+                              ? 'إخفاء لوحة اختبار التنبيهات والأصوات'
+                              : 'تجربة واختبار التنبيهات والأصوات',
+                          style: textTheme.body.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: _showTester ? palette.primary : palette.text,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _showTester
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: AppIcon.sm,
+                        color: _showTester ? palette.primary : palette.textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
+            if (_showTester) ...[
+              const SizedBox(height: AppSpace.sm),
+              PrayerNotificationTester(
+                settings: settings,
+                adhanService: adhanService,
+              ),
+            ],
 
             const SizedBox(height: AppSpace.lg),
             Divider(color: palette.border, height: 1),
@@ -368,7 +433,7 @@ class PrayerAdhanSection extends StatelessWidget {
     required String subtitle,
     required IconData icon,
   }) {
-    final isSelected = settings.defaultMode == mode;
+    final isSelected = widget.settings.defaultMode == mode;
 
     return Material(
       color: Colors.transparent,
@@ -376,8 +441,8 @@ class PrayerAdhanSection extends StatelessWidget {
         borderRadius: AppRadius.mdRadius,
         onTap: () {
           HapticFeedback.selectionClick();
-          onSettingsChanged(
-            settings.copyWith(
+          widget.onSettingsChanged(
+            widget.settings.copyWith(
               defaultMode: mode,
               silentNotifications: mode == PrayerNotificationMode.silent,
             ),

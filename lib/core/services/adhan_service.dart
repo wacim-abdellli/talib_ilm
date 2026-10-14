@@ -20,7 +20,7 @@ class AdhanService {
 
   /// Play adhan, takbeer, or voice announcement with volume control and MediaItem tag
   Future<void> play({
-    AdhanSound sound = AdhanSound.makkah,
+    AdhanSound sound = AdhanSound.qatami,
     PrayerNotificationMode mode = PrayerNotificationMode.adhan,
     double volume = 80.0,
     String? prayerName,
@@ -57,6 +57,14 @@ class AdhanService {
     }
   }
 
+  /// Sets audio player volume dynamically in real time
+  Future<void> setVolume(double volume) async {
+    final normalized = (volume / 100).clamp(0.0, 1.0);
+    try {
+      await _player.setVolume(normalized);
+    } catch (_) {}
+  }
+
   Future<void> stop() async {
     try {
       await _player.stop();
@@ -67,7 +75,7 @@ class AdhanService {
 
   /// Test play with volume and optional prayer name and mode
   Future<void> test({
-    AdhanSound sound = AdhanSound.makkah,
+    AdhanSound sound = AdhanSound.qatami,
     PrayerNotificationMode mode = PrayerNotificationMode.adhan,
     double volume = 80.0,
     String? prayerName,

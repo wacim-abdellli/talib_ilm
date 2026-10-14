@@ -296,6 +296,16 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
           _buildTestCaseRow(
             context,
             palette: palette,
+            icon: Icons.record_voice_over_rounded,
+            title: 'أذان الشيخ ناصر القطامي (الافتراضي)',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.qatami,
+            prayerName: _selectedPrayer,
+            testKey: 'adhan_qatami',
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
             icon: Icons.mosque_rounded,
             title: 'أذان مكة (الشيخ علي ملا)',
             mode: PrayerNotificationMode.adhan,
@@ -342,16 +352,6 @@ class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
             sound: AdhanSound.aqsa,
             prayerName: _selectedPrayer,
             testKey: 'adhan_aqsa',
-          ),
-          _buildTestCaseRow(
-            context,
-            palette: palette,
-            icon: Icons.record_voice_over_rounded,
-            title: 'أذان الشيخ ناصر القطامي',
-            mode: PrayerNotificationMode.adhan,
-            sound: AdhanSound.qatami,
-            prayerName: _selectedPrayer,
-            testKey: 'adhan_qatami',
           ),
           _buildTestCaseRow(
             context,

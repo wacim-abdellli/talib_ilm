@@ -41,6 +41,12 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
 
   static const List<MuezzinItem> _muezzins = [
     MuezzinItem(
+      sound: AdhanSound.qatami,
+      title: 'أذان الشيخ ناصر القطامي',
+      subtitle: 'أذان ندي خاشع (الافتراضي)',
+      tag: 'الموصى به ★',
+    ),
+    MuezzinItem(
       sound: AdhanSound.makkah,
       title: 'أذان الحرم المكي الشريف',
       subtitle: 'الشيخ علي أحمد ملا (شيخ مؤذني الحرم المكي)',
@@ -69,12 +75,6 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
       title: 'أذان المسجد الأقصى المبارك',
       subtitle: 'القدس الشريف (الشيخ ناجي قزاز)',
       tag: 'القدس الشريف',
-    ),
-    MuezzinItem(
-      sound: AdhanSound.qatami,
-      title: 'أذان الشيخ ناصر القطامي',
-      subtitle: 'أذان هادئ وخاشع',
-      tag: 'أذان خاشع',
     ),
   ];
 
