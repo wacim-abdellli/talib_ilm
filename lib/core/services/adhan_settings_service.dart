@@ -1,7 +1,16 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
 
-enum AdhanSound { makkah, madinah }
+enum AdhanSound { makkah, madinah, takbeer }
+
+/// Rich notification options for prayer times
+enum PrayerNotificationMode {
+  adhan,   // أذان كامل بصوت المؤذن
+  takbeer, // تكبير وتنبيه صوتي موجز (حان الآن وقت الصلاة)
+  tone,    // نغمة تنبيه هادئة
+  silent,  // إشعار مرئي فقط بدون صوت
+  off,     // إيقاف التنبيه
+}
 
 class AdhanSettings {
   final bool enabled;
@@ -13,6 +22,8 @@ class AdhanSettings {
   final double notifyBeforeMinutes;
   final bool iqamaReminders;
   final Map<String, int> adjustments;
+  final PrayerNotificationMode defaultMode;
+  final Map<String, PrayerNotificationMode> prayerModes;
 
   const AdhanSettings({
     required this.enabled,
@@ -24,6 +35,8 @@ class AdhanSettings {
     required this.notifyBeforeMinutes,
     required this.iqamaReminders,
     required this.adjustments,
+    this.defaultMode = PrayerNotificationMode.adhan,
+    this.prayerModes = const {},
   });
 
   AdhanSettings copyWith({
@@ -36,6 +49,8 @@ class AdhanSettings {
     double? notifyBeforeMinutes,
     bool? iqamaReminders,
     Map<String, int>? adjustments,
+    PrayerNotificationMode? defaultMode,
+    Map<String, PrayerNotificationMode>? prayerModes,
   }) {
     return AdhanSettings(
       enabled: enabled ?? this.enabled,
@@ -47,11 +62,25 @@ class AdhanSettings {
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       iqamaReminders: iqamaReminders ?? this.iqamaReminders,
       adjustments: adjustments ?? this.adjustments,
+      defaultMode: defaultMode ?? this.defaultMode,
+      prayerModes: prayerModes ?? this.prayerModes,
     );
   }
 
+  /// Resolves the specific notification mode for a given prayer.
+  PrayerNotificationMode modeForPrayer(String name) {
+    if (!enabled) return PrayerNotificationMode.off;
+    final specific = prayerModes[name];
+    if (specific != null) return specific;
+    final isToggled = prayerToggles[name] ?? true;
+    if (!isToggled) return PrayerNotificationMode.off;
+    if (silentNotifications) return PrayerNotificationMode.silent;
+    return defaultMode;
+  }
+
+  /// Whether a prayer notification is actively enabled (non-silent or silent)
   bool isPrayerEnabled(String name) {
-    return prayerToggles[name] ?? true;
+    return modeForPrayer(name) != PrayerNotificationMode.off;
   }
 }
 
@@ -60,7 +89,9 @@ class AdhanSettingsService {
   static const _keySound = 'adhan_sound';
   static const _keySilent = 'adhan_silent';
   static const _keyPrayerPrefix = 'adhan_prayer_';
-  // New keys
+  // Advanced notification keys
+  static const _keyDefaultMode = 'adhan_default_mode';
+  static const _keyPrayerModePrefix = 'adhan_prayer_mode_';
   static const _keyCalcMethod = 'adhan_calc_method';
   static const _keyVolume = 'adhan_volume';
   static const _keyNotifyBefore = 'adhan_notify_before';
@@ -89,11 +120,29 @@ class AdhanSettingsService {
     final safeIndex = soundIndex.clamp(0, maxIndex).toInt();
     final sound = AdhanSound.values[safeIndex];
 
+    final defaultModeIndex = prefs.getInt(_keyDefaultMode);
+    final PrayerNotificationMode defaultMode;
+    if (defaultModeIndex != null && defaultModeIndex >= 0 && defaultModeIndex < PrayerNotificationMode.values.length) {
+      defaultMode = PrayerNotificationMode.values[defaultModeIndex];
+    } else {
+      defaultMode = silent ? PrayerNotificationMode.silent : PrayerNotificationMode.adhan;
+    }
+
     final toggles = <String, bool>{};
     final adjustments = <String, int>{};
+    final prayerModes = <String, PrayerNotificationMode>{};
+
     for (final name in prayerNames) {
-      toggles[name] = prefs.getBool('$_keyPrayerPrefix$name') ?? true;
+      final isToggled = prefs.getBool('$_keyPrayerPrefix$name') ?? true;
+      toggles[name] = isToggled;
       adjustments[name] = prefs.getInt('$_keyAdjPrefix$name') ?? 0;
+
+      final modeIdx = prefs.getInt('$_keyPrayerModePrefix$name');
+      if (modeIdx != null && modeIdx >= 0 && modeIdx < PrayerNotificationMode.values.length) {
+        prayerModes[name] = PrayerNotificationMode.values[modeIdx];
+      } else {
+        prayerModes[name] = isToggled ? defaultMode : PrayerNotificationMode.off;
+      }
     }
 
     return AdhanSettings(
@@ -106,6 +155,8 @@ class AdhanSettingsService {
       notifyBeforeMinutes: notifyBefore,
       iqamaReminders: iqama,
       adjustments: adjustments,
+      defaultMode: defaultMode,
+      prayerModes: prayerModes,
     );
   }
 
@@ -118,12 +169,16 @@ class AdhanSettingsService {
     await prefs.setDouble(_keyVolume, settings.volume);
     await prefs.setDouble(_keyNotifyBefore, settings.notifyBeforeMinutes);
     await prefs.setBool(_keyIqama, settings.iqamaReminders);
+    await prefs.setInt(_keyDefaultMode, settings.defaultMode.index);
 
     for (final entry in settings.prayerToggles.entries) {
       await prefs.setBool('$_keyPrayerPrefix${entry.key}', entry.value);
     }
     for (final entry in settings.adjustments.entries) {
       await prefs.setInt('$_keyAdjPrefix${entry.key}', entry.value);
+    }
+    for (final entry in settings.prayerModes.entries) {
+      await prefs.setInt('$_keyPrayerModePrefix${entry.key}', entry.value.index);
     }
   }
 }

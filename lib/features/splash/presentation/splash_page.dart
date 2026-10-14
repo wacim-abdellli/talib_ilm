@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../app/theme/app_palette.dart';
+import '../../../core/services/prayer_schedule_service.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 
@@ -60,6 +61,8 @@ class _SplashPageState extends State<SplashPage>
   Future<void> _startStartupInitialization() async {
     // Warm up repository in background without stalling main UI isolate
     unawaited(QuranRepository.instance.ensureLoaded(604).catchError((_) {}));
+    // Warm up and refresh prayer & adhan notification schedules
+    unawaited(PrayerScheduleService().refreshSchedulesIfNeeded().catchError((_) {}));
 
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
     final remaining = AppMotion.splash - elapsed;

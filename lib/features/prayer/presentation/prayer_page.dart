@@ -313,9 +313,9 @@ class _PrayerPageState extends State<PrayerPage> {
       final isCurrent = currentName != null && name == currentName;
       final isNext = nextName != null && name == nextName;
       final isSunrise = name.contains('الشروق');
-      final isNotificationEnabled = !isSunrise &&
-          (_adhanSettings?.enabled ?? false) &&
-          (_adhanSettings?.isPrayerEnabled(name) ?? true);
+      final mode = isSunrise
+          ? PrayerNotificationMode.off
+          : (_adhanSettings?.modeForPrayer(name) ?? PrayerNotificationMode.adhan);
 
       return PrayerTimeEntry(
         name: name,
@@ -323,7 +323,8 @@ class _PrayerPageState extends State<PrayerPage> {
         isNext: isNext,
         isCurrent: isCurrent,
         isCompleted: !isCurrent && time.isBefore(now),
-        isNotificationEnabled: isNotificationEnabled,
+        isNotificationEnabled: mode != PrayerNotificationMode.off,
+        notificationMode: mode,
         onToggleNotification:
             isSunrise ? null : () => _togglePrayerNotification(name),
       );
@@ -333,26 +334,39 @@ class _PrayerPageState extends State<PrayerPage> {
   Future<void> _togglePrayerNotification(String prayerName) async {
     final currentSettings =
         _adhanSettings ?? await _adhanSettingsService.getSettings();
-    final isMasterEnabled = currentSettings.enabled;
-    final isPrayerActive = currentSettings.isPrayerEnabled(prayerName);
+    final currentMode = currentSettings.modeForPrayer(prayerName);
 
-    // If master is disabled, turning on any prayer enables master and this prayer
-    final bool nextPrayerActive;
-    final bool nextMasterEnabled;
-    if (!isMasterEnabled) {
-      nextMasterEnabled = true;
-      nextPrayerActive = true;
-    } else {
-      nextPrayerActive = !isPrayerActive;
-      nextMasterEnabled = true;
+    // Cycle: adhan -> takbeer -> tone -> silent -> off -> adhan
+    final PrayerNotificationMode nextMode;
+    switch (currentMode) {
+      case PrayerNotificationMode.adhan:
+        nextMode = PrayerNotificationMode.takbeer;
+        break;
+      case PrayerNotificationMode.takbeer:
+        nextMode = PrayerNotificationMode.tone;
+        break;
+      case PrayerNotificationMode.tone:
+        nextMode = PrayerNotificationMode.silent;
+        break;
+      case PrayerNotificationMode.silent:
+        nextMode = PrayerNotificationMode.off;
+        break;
+      case PrayerNotificationMode.off:
+        nextMode = PrayerNotificationMode.adhan;
+        break;
     }
+
+    final updatedModes =
+        Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
+    updatedModes[prayerName] = nextMode;
 
     final updatedToggles =
         Map<String, bool>.from(currentSettings.prayerToggles);
-    updatedToggles[prayerName] = nextPrayerActive;
+    updatedToggles[prayerName] = nextMode != PrayerNotificationMode.off;
 
     final updatedSettings = currentSettings.copyWith(
-      enabled: nextMasterEnabled,
+      enabled: true,
+      prayerModes: updatedModes,
       prayerToggles: updatedToggles,
     );
 
@@ -366,11 +380,29 @@ class _PrayerPageState extends State<PrayerPage> {
 
     HapticFeedback.selectionClick();
     if (mounted) {
+      final String modeName;
+      switch (nextMode) {
+        case PrayerNotificationMode.adhan:
+          modeName = 'أذان كامل';
+          break;
+        case PrayerNotificationMode.takbeer:
+          modeName = 'تكبير وتنبيه موجز';
+          break;
+        case PrayerNotificationMode.tone:
+          modeName = 'نغمة هادئة';
+          break;
+        case PrayerNotificationMode.silent:
+          modeName = 'إشعار صامت';
+          break;
+        case PrayerNotificationMode.off:
+          modeName = 'إيقاف التنبيه';
+          break;
+      }
       AppSnackbar.info(
         context,
-        nextPrayerActive
-            ? 'تم تفعيل أذان صلاة $prayerName'
-            : 'تم إيقاف أذان صلاة $prayerName',
+        nextMode != PrayerNotificationMode.off
+            ? 'تم ضبط تنبيه صلاة $prayerName: $modeName'
+            : 'تم إيقاف تنبيه صلاة $prayerName',
       );
     }
   }

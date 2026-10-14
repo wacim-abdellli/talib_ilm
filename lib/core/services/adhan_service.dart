@@ -8,6 +8,7 @@ class AdhanService {
   final AudioPlayer _player;
   AudioSource? _preloadedMakkah;
   AudioSource? _preloadedMadinah;
+  AudioSource? _preloadedTakbeer;
   bool _isPreloaded = false;
 
   AdhanService({AudioPlayer? player}) : _player = player ?? AudioPlayer();
@@ -18,6 +19,7 @@ class AdhanService {
     try {
       _preloadedMakkah = AudioSource.asset(AppAssets.adhanMakkah);
       _preloadedMadinah = AudioSource.asset(AppAssets.adhanMadinah);
+      _preloadedTakbeer = AudioSource.asset(AppAssets.adhanTakbeer);
       _isPreloaded = true;
     } catch (e) {
       // Fallback: load on-demand
@@ -64,6 +66,7 @@ class AdhanService {
     _isPreloaded = false;
     _preloadedMakkah = null;
     _preloadedMadinah = null;
+    _preloadedTakbeer = null;
     await _player.dispose();
   }
 
@@ -71,7 +74,14 @@ class AdhanService {
     if (!_isPreloaded) {
       return AudioSource.asset(_assetFor(sound));
     }
-    return sound == AdhanSound.makkah ? _preloadedMakkah! : _preloadedMadinah!;
+    switch (sound) {
+      case AdhanSound.makkah:
+        return _preloadedMakkah ?? AudioSource.asset(_assetFor(sound));
+      case AdhanSound.madinah:
+        return _preloadedMadinah ?? AudioSource.asset(_assetFor(sound));
+      case AdhanSound.takbeer:
+        return _preloadedTakbeer ?? AudioSource.asset(_assetFor(sound));
+    }
   }
 
   String _assetFor(AdhanSound sound) {
@@ -80,6 +90,8 @@ class AdhanService {
         return AppAssets.adhanMakkah;
       case AdhanSound.madinah:
         return AppAssets.adhanMadinah;
+      case AdhanSound.takbeer:
+        return AppAssets.adhanTakbeer;
     }
   }
 }

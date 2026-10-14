@@ -5,6 +5,7 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
+import '../../../core/services/prayer_schedule_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -72,6 +73,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     setState(() => _saving = true);
 
     await _settingsService.saveSettings(_settings!);
+    await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
     widget.onSettingsChanged?.call();
 
     if (!mounted) return;

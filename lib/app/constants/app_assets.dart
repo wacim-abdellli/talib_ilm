@@ -8,6 +8,7 @@ class AppAssets {
 
   static const String adhanMakkah = 'assets/audio/adhan_makkah.mp3';
   static const String adhanMadinah = 'assets/audio/adhan_madinah.mp3';
+  static const String adhanTakbeer = 'assets/audio/adhan_takbeer.mp3';
 
   static String mutunPdf(String bookId) {
     return 'assets/pdfs/mutun/$bookId.pdf';

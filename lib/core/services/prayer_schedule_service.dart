@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import 'adhan_settings_service.dart';
 import 'notification_service.dart';
-import '../../app/constants/app_strings.dart';
 import 'prayer_time_service.dart';
 
 class PrayerScheduleService {
@@ -29,11 +28,14 @@ class PrayerScheduleService {
     bool force = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final resolvedDay = day ?? await _prayerTimeService.getPrayerTimesDay();
+    final today = day ?? await _prayerTimeService.getPrayerTimesDay();
+    final tomorrow = await _prayerTimeService.getPrayerTimesDay(
+      date: DateTime.now().add(const Duration(days: 1)),
+    );
     final settings = await _adhanSettingsService.getSettings();
 
-    final dateKey = _formatDate(resolvedDay.date);
-    final locationKey = resolvedDay.city;
+    final dateKey = _formatDate(today.date);
+    final locationKey = today.city;
     final settingsKey = _settingsKey(settings);
 
     final lastDate = prefs.getString(_keyDate);
@@ -50,36 +52,46 @@ class PrayerScheduleService {
     await _notificationService.init();
     await _notificationService.requestPermissions();
     await _notificationService.cancelAll();
-    await _scheduleDay(resolvedDay, settings);
+
+    // Schedule Today's upcoming prayers (base ID 100)
+    await _scheduleDay(today, settings, baseId: 100);
+
+    // Schedule Tomorrow's prayers (base ID 200)
+    await _scheduleDay(tomorrow, settings, baseId: 200);
 
     await prefs.setString(_keyDate, dateKey);
     await prefs.setString(_keyLocation, locationKey);
     await prefs.setString(_keySettings, settingsKey);
   }
 
-  Future<void> _scheduleDay(PrayerTimesDay day, AdhanSettings settings) async {
+  Future<void> _scheduleDay(
+    PrayerTimesDay day,
+    AdhanSettings settings, {
+    required int baseId,
+  }) async {
     final now = DateTime.now();
     final entries = day.prayers.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
 
-    final playSound = settings.enabled && !settings.silentNotifications;
-    final sound = playSound ? settings.sound : null;
-
-    var id = 100;
+    var id = baseId;
     for (final entry in entries) {
-      if (!settings.isPrayerEnabled(entry.key)) {
+      final prayerName = entry.key;
+      final prayerTime = entry.value;
+
+      // Skip Sunrise (الشروق) for adhan / call to prayer
+      if (prayerName.contains('الشروق')) {
         id += 1;
         continue;
       }
 
-      if (entry.value.isAfter(now)) {
-        await _notificationService.scheduleNotification(
+      final mode = settings.modeForPrayer(prayerName);
+      if (mode != PrayerNotificationMode.off && prayerTime.isAfter(now)) {
+        await _notificationService.schedulePrayerNotification(
           id: id,
-          title: AppStrings.prayerNotificationTitle,
-          body: AppStrings.prayerNotificationBody(entry.key),
-          scheduledTime: entry.value,
-          playSound: playSound,
-          sound: sound,
+          prayerName: prayerName,
+          scheduledTime: prayerTime,
+          mode: mode,
+          sound: settings.sound,
         );
       }
       id += 1;
@@ -94,10 +106,10 @@ class PrayerScheduleService {
   }
 
   String _settingsKey(AdhanSettings settings) {
-    final toggles = AdhanSettingsService.prayerNames
-        .map((name) => settings.isPrayerEnabled(name) ? '1' : '0')
+    final modes = AdhanSettingsService.prayerNames
+        .map((name) => settings.modeForPrayer(name).index.toString())
         .join();
     return '${settings.enabled}|${settings.sound.index}|'
-        '${settings.silentNotifications}|$toggles';
+        '${settings.defaultMode.index}|$modes|${settings.silentNotifications}';
   }
 }

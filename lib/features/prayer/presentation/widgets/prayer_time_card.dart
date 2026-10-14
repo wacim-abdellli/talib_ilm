@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_tag.dart';
 
@@ -13,6 +14,7 @@ class PrayerTimeEntry {
   final bool isCurrent;
   final bool isCompleted;
   final bool isNotificationEnabled;
+  final PrayerNotificationMode notificationMode;
   final VoidCallback? onToggleNotification;
 
   const PrayerTimeEntry({
@@ -22,6 +24,7 @@ class PrayerTimeEntry {
     required this.isCurrent,
     required this.isCompleted,
     this.isNotificationEnabled = true,
+    this.notificationMode = PrayerNotificationMode.adhan,
     this.onToggleNotification,
   });
 }
@@ -161,43 +164,66 @@ class PrayerTimeCard extends StatelessWidget {
                   ),
                 )
               else
-                Semantics(
-                  button: true,
-                  label: item.isNotificationEnabled
-                      ? 'إلغاء تنبيه ${item.name}'
-                      : 'تفعيل تنبيه ${item.name}',
-                  child: Tooltip(
-                    message: item.isNotificationEnabled
-                        ? 'التنبيه مفعل (انقر للكتم)'
-                        : 'التنبيه مكتوم (انقر للتفعيل)',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: item.onToggleNotification,
-                        borderRadius: AppRadius.pillRadius,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                          decoration: BoxDecoration(
-                            color: item.isNotificationEnabled
-                                ? (isCurrent ? palette.goldSoft : palette.surfaceMuted)
-                                : Colors.transparent,
+                Builder(
+                  builder: (context) {
+                    final mode = item.notificationMode;
+                    final isActive = mode != PrayerNotificationMode.off;
+                    final IconData modeIcon;
+                    final String modeTooltip;
+                    switch (mode) {
+                      case PrayerNotificationMode.adhan:
+                        modeIcon = Icons.volume_up_rounded;
+                        modeTooltip = 'أذان كامل (انقر لتغيير النمط)';
+                        break;
+                      case PrayerNotificationMode.takbeer:
+                        modeIcon = Icons.campaign_rounded;
+                        modeTooltip = 'تكبير وتنبيه موجز (انقر لتغيير النمط)';
+                        break;
+                      case PrayerNotificationMode.tone:
+                        modeIcon = Icons.notifications_active_rounded;
+                        modeTooltip = 'نغمة هادئة (انقر لتغيير النمط)';
+                        break;
+                      case PrayerNotificationMode.silent:
+                        modeIcon = Icons.notifications_none_rounded;
+                        modeTooltip = 'إشعار صامت (انقر لتغيير النمط)';
+                        break;
+                      case PrayerNotificationMode.off:
+                        modeIcon = Icons.notifications_off_outlined;
+                        modeTooltip = 'التنبيه متوقف (انقر للتفعيل)';
+                        break;
+                    }
+
+                    return Semantics(
+                      button: true,
+                      label: modeTooltip,
+                      child: Tooltip(
+                        message: modeTooltip,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: item.onToggleNotification,
                             borderRadius: AppRadius.pillRadius,
-                          ),
-                          child: Icon(
-                            item.isNotificationEnabled
-                                ? (isCurrent
-                                    ? Icons.notifications_active_rounded
-                                    : Icons.notifications_active_outlined)
-                                : Icons.notifications_off_outlined,
-                            size: AppIcon.sm,
-                            color: item.isNotificationEnabled
-                                ? (isCurrent ? palette.gold : prayerColor)
-                                : palette.textSubtle,
+                            child: Container(
+                              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? (isCurrent ? palette.goldSoft : palette.surfaceMuted)
+                                    : Colors.transparent,
+                                borderRadius: AppRadius.pillRadius,
+                              ),
+                              child: Icon(
+                                modeIcon,
+                                size: AppIcon.sm,
+                                color: isActive
+                                    ? (isCurrent ? palette.gold : prayerColor)
+                                    : palette.textSubtle,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
             ],
           ),
