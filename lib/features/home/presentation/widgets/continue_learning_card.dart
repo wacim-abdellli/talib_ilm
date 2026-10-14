@@ -54,8 +54,12 @@ class LearningPulseCard extends StatelessWidget {
     final palette = context.palette;
     final hasData = data != null;
     final catColors = palette.category(data?.book.subject);
+    final safePercent = data?.progressPercent ??
+        (data?.page != null && data?.total != null && data!.total! > 0
+            ? ((data!.page! / data!.total!) * 100).round().clamp(0, 100)
+            : 0);
     final progress = hasData
-        ? ((data!.progressPercent ?? 0) / 100.0).clamp(0.0, 1.0)
+        ? (safePercent / 100.0).clamp(0.0, 1.0)
         : 0.0;
 
     return Semantics(
@@ -187,7 +191,7 @@ class LearningPulseCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${data!.progressPercent}% مكتمل',
+                      '$safePercent% مكتمل',
                       style: context.text.caption.copyWith(
                         color: palette.text,
                         fontWeight: FontWeight.w700,
@@ -200,6 +204,14 @@ class LearningPulseCard extends StatelessWidget {
                         style: context.text.caption.copyWith(
                           color: palette.textMuted,
                           fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      )
+                    else
+                      Text(
+                        'متابعة القراءة',
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                   ],

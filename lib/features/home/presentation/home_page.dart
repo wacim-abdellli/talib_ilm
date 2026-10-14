@@ -158,6 +158,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         progressPercent = progress.percent.clamp(0, 100).round();
       }
     }
+    progressPercent ??= (safePage != null && safeTotal != null && safeTotal > 0)
+        ? ((safePage / safeTotal) * 100).round().clamp(0, 100)
+        : 0;
     return ContinueData(
       book: book,
       tab: tab,
@@ -364,8 +367,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
 
+                  // Minimized gap under radio card and above floating navigation bar
                   SliverToBoxAdapter(
-                    child: SizedBox(height: AppSize.navClearance(context)),
+                    child: SizedBox(
+                      height: AppSize.navH +
+                          (MediaQuery.paddingOf(context).bottom > 0
+                              ? MediaQuery.paddingOf(context).bottom
+                              : AppSpace.sm) +
+                          AppSpace.xs,
+                    ),
                   ),
                 ],
               ),
