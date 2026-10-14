@@ -44,11 +44,12 @@ class NotificationService {
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
+      // ── Muezzin Full Adhan Channels ──────────────────────────────────────
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           'talib_prayer_makkah_v1',
-          'أذان مكة المكرمة',
-          description: 'صوت أذان مكة المكرمة عند دخول وقت الصلاة',
+          'أذان مكة المكرمة (الشيخ علي ملا)',
+          description: 'صوت أذان الحرم المكي الشريف عند دخول وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_makkah'),
           playSound: true,
@@ -58,7 +59,7 @@ class NotificationService {
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           'talib_prayer_madinah_v1',
-          'أذان المدينة المنورة',
+          'أذان المسجد النبوي الشريف',
           description: 'صوت أذان المدينة المنورة عند دخول وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_madinah'),
@@ -68,8 +69,98 @@ class NotificationService {
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
+          'talib_prayer_alafasy_v1',
+          'أذان الشيخ مشاري العفاسي',
+          description: 'صوت أذان الشيخ مشاري العفاسي عند دخول وقت الصلاة',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_alafasy'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_abdulbasit_v1',
+          'أذان الشيخ عبد الباسط عبد الصمد',
+          description: 'صوت أذان الشيخ عبد الباسط عبد الصمد عند دخول وقت الصلاة',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_abdulbasit'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_qatami_v1',
+          'أذان الشيخ ناصر القطامي',
+          description: 'صوت أذان الشيخ ناصر القطامي عند دخول وقت الصلاة',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_qatami'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+
+      // ── Prayer-Specific Takbeer & Announcement Channels ───────────────────
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_takbeer_fajr_v1',
+          'تنبيه صلاة الفجر (تكبير وصوت)',
+          description: 'تكبير وتنبيه حان الآن وقت صلاة الفجر',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_takbeer_fajr'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_takbeer_dhuhr_v1',
+          'تنبيه صلاة الظهر (تكبير وصوت)',
+          description: 'تكبير وتنبيه حان الآن وقت صلاة الظهر',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_takbeer_dhuhr'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_takbeer_asr_v1',
+          'تنبيه صلاة العصر (تكبير وصوت)',
+          description: 'تكبير وتنبيه حان الآن وقت صلاة العصر',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_takbeer_asr'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_takbeer_maghrib_v1',
+          'تنبيه صلاة المغرب (تكبير وصوت)',
+          description: 'تكبير وتنبيه حان الآن وقت صلاة المغرب',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_takbeer_maghrib'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_takbeer_isha_v1',
+          'تنبيه صلاة العشاء (تكبير وصوت)',
+          description: 'تكبير وتنبيه حان الآن وقت صلاة العشاء',
+          importance: Importance.max,
+          sound: RawResourceAndroidNotificationSound('adhan_takbeer_isha'),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
           'talib_prayer_takbeer_v1',
-          'تكبيرات وتنبيه الصلاة',
+          'تكبيرات الصلاة العامة',
           description: 'تكبيرات الأذان وتنبيه حان وقت الصلاة',
           importance: Importance.max,
           sound: RawResourceAndroidNotificationSound('adhan_takbeer'),
@@ -77,6 +168,8 @@ class NotificationService {
           audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
+
+      // ── Tone & Silent Channels ──────────────────────────────────────────
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           'talib_prayer_tone_v1',
@@ -138,9 +231,15 @@ class NotificationService {
     if (scheduledTime.isBefore(DateTime.now())) return;
     await init();
 
-    final details = _buildPrayerDetails(mode: mode, sound: sound);
+    final details = _buildPrayerDetails(
+      mode: mode,
+      sound: sound,
+      prayerName: prayerName,
+    );
     final title = 'حان الآن وقت صلاة $prayerName';
-    final body = 'حي على الصلاة.. حي على الفلاح';
+    final body = prayerName.contains('فجر')
+        ? 'الصلاة خير من النوم.. حي على الصلاة'
+        : 'حي على الصلاة.. حي على الفلاح';
 
     try {
       await _plugin.zonedSchedule(
@@ -170,9 +269,15 @@ class NotificationService {
     await init();
     await requestPermissions();
 
-    final details = _buildPrayerDetails(mode: mode, sound: sound);
+    final details = _buildPrayerDetails(
+      mode: mode,
+      sound: sound,
+      prayerName: prayerName,
+    );
     final title = 'حان الآن وقت صلاة $prayerName (إشعار تجريبي)';
-    final body = 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
+    final body = prayerName.contains('فجر')
+        ? 'الصلاة خير من النوم (النمط: ${_modeLabel(mode)})'
+        : 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
 
     await _plugin.show(
       9999,
@@ -198,9 +303,15 @@ class NotificationService {
 
     final scheduledTime =
         DateTime.now().add(Duration(seconds: seconds)); // ui-lint: allow
-    final details = _buildPrayerDetails(mode: mode, sound: sound);
+    final details = _buildPrayerDetails(
+      mode: mode,
+      sound: sound,
+      prayerName: prayerName,
+    );
     final title = 'حان الآن وقت صلاة $prayerName (تجربة خارج التطبيق)';
-    final body = 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
+    final body = prayerName.contains('فجر')
+        ? 'الصلاة خير من النوم (النمط: ${_modeLabel(mode)})'
+        : 'حي على الصلاة.. حي على الفلاح (النمط: ${_modeLabel(mode)})';
 
     try {
       await _plugin.zonedSchedule(
@@ -227,7 +338,7 @@ class NotificationService {
       case PrayerNotificationMode.adhan:
         return 'أذان كامل';
       case PrayerNotificationMode.takbeer:
-        return 'تكبيرات موجزة';
+        return 'تكبيرات وتنبيه موجز';
       case PrayerNotificationMode.tone:
         return 'نغمة هادئة';
       case PrayerNotificationMode.silent:
@@ -297,9 +408,18 @@ class NotificationService {
   NotificationDetails _buildPrayerDetails({
     required PrayerNotificationMode mode,
     required AdhanSound sound,
+    String? prayerName,
   }) {
-    final android = _buildAndroidPrayerDetails(mode: mode, sound: sound);
-    final ios = _buildDarwinPrayerDetails(mode: mode, sound: sound);
+    final android = _buildAndroidPrayerDetails(
+      mode: mode,
+      sound: sound,
+      prayerName: prayerName,
+    );
+    final ios = _buildDarwinPrayerDetails(
+      mode: mode,
+      sound: sound,
+      prayerName: prayerName,
+    );
     return NotificationDetails(
       android: android,
       iOS: ios,
@@ -311,18 +431,16 @@ class NotificationService {
   AndroidNotificationDetails _buildAndroidPrayerDetails({
     required PrayerNotificationMode mode,
     required AdhanSound sound,
+    String? prayerName,
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
         final soundName = _soundName(sound);
-        final channelId = sound == AdhanSound.madinah
-            ? 'talib_prayer_madinah_v1'
-            : 'talib_prayer_makkah_v1';
+        final channelId = _channelIdForAdhan(sound);
+        final channelName = _channelNameForAdhan(sound);
         return AndroidNotificationDetails(
           channelId,
-          sound == AdhanSound.madinah
-              ? 'أذان المدينة المنورة'
-              : 'أذان مكة المكرمة',
+          channelName,
           channelDescription: 'صوت الأذان عند دخول وقت الصلاة',
           importance: Importance.max,
           priority: Priority.max,
@@ -332,13 +450,18 @@ class NotificationService {
           audioAttributesUsage: AudioAttributesUsage.alarm,
         );
       case PrayerNotificationMode.takbeer:
-        return const AndroidNotificationDetails(
-          'talib_prayer_takbeer_v1',
-          'تكبيرات الصلاة',
-          channelDescription: 'تكبيرات الأذان وتنبيه حان وقت الصلاة',
+        final rawSound = _takbeerRawSoundFor(prayerName);
+        final channelId = _takbeerChannelIdFor(prayerName);
+        final channelTitle = prayerName != null
+            ? 'تنبيه صلاة $prayerName'
+            : 'تكبيرات الصلاة';
+        return AndroidNotificationDetails(
+          channelId,
+          channelTitle,
+          channelDescription: 'تكبيرات الأذان وتنبيه حان وقت صلاة $prayerName',
           importance: Importance.max,
           priority: Priority.max,
-          sound: RawResourceAndroidNotificationSound('adhan_takbeer'),
+          sound: RawResourceAndroidNotificationSound(rawSound),
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -372,6 +495,7 @@ class NotificationService {
   DarwinNotificationDetails _buildDarwinPrayerDetails({
     required PrayerNotificationMode mode,
     required AdhanSound sound,
+    String? prayerName,
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
@@ -382,8 +506,9 @@ class NotificationService {
           presentBadge: true,
         );
       case PrayerNotificationMode.takbeer:
-        return const DarwinNotificationDetails(
-          sound: 'adhan_takbeer.mp3',
+        final raw = _takbeerRawSoundFor(prayerName);
+        return DarwinNotificationDetails(
+          sound: '$raw.mp3',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,
@@ -408,11 +533,69 @@ class NotificationService {
     switch (sound) {
       case AdhanSound.madinah:
         return 'adhan_madinah';
+      case AdhanSound.alafasy:
+        return 'adhan_alafasy';
+      case AdhanSound.abdulbasit:
+        return 'adhan_abdulbasit';
+      case AdhanSound.qatami:
+        return 'adhan_qatami';
       case AdhanSound.takbeer:
         return 'adhan_takbeer';
       case AdhanSound.makkah:
       default:
         return 'adhan_makkah';
     }
+  }
+
+  String _channelIdForAdhan(AdhanSound sound) {
+    switch (sound) {
+      case AdhanSound.madinah:
+        return 'talib_prayer_madinah_v1';
+      case AdhanSound.alafasy:
+        return 'talib_prayer_alafasy_v1';
+      case AdhanSound.abdulbasit:
+        return 'talib_prayer_abdulbasit_v1';
+      case AdhanSound.qatami:
+        return 'talib_prayer_qatami_v1';
+      case AdhanSound.takbeer:
+      case AdhanSound.makkah:
+        return 'talib_prayer_makkah_v1';
+    }
+  }
+
+  String _channelNameForAdhan(AdhanSound sound) {
+    switch (sound) {
+      case AdhanSound.madinah:
+        return 'أذان المسجد النبوي الشريف';
+      case AdhanSound.alafasy:
+        return 'أذان الشيخ مشاري العفاسي';
+      case AdhanSound.abdulbasit:
+        return 'أذان الشيخ عبد الباسط عبد الصمد';
+      case AdhanSound.qatami:
+        return 'أذان الشيخ ناصر القطامي';
+      case AdhanSound.takbeer:
+      case AdhanSound.makkah:
+        return 'أذان مكة المكرمة (الشيخ علي ملا)';
+    }
+  }
+
+  String _takbeerRawSoundFor(String? prayerName) {
+    if (prayerName == null) return 'adhan_takbeer';
+    if (prayerName.contains('فجر')) return 'adhan_takbeer_fajr';
+    if (prayerName.contains('ظهر')) return 'adhan_takbeer_dhuhr';
+    if (prayerName.contains('عصر')) return 'adhan_takbeer_asr';
+    if (prayerName.contains('مغرب')) return 'adhan_takbeer_maghrib';
+    if (prayerName.contains('عشاء')) return 'adhan_takbeer_isha';
+    return 'adhan_takbeer';
+  }
+
+  String _takbeerChannelIdFor(String? prayerName) {
+    if (prayerName == null) return 'talib_prayer_takbeer_v1';
+    if (prayerName.contains('فجر')) return 'talib_prayer_takbeer_fajr_v1';
+    if (prayerName.contains('ظهر')) return 'talib_prayer_takbeer_dhuhr_v1';
+    if (prayerName.contains('عصر')) return 'talib_prayer_takbeer_asr_v1';
+    if (prayerName.contains('مغرب')) return 'talib_prayer_takbeer_maghrib_v1';
+    if (prayerName.contains('عشاء')) return 'talib_prayer_takbeer_isha_v1';
+    return 'talib_prayer_takbeer_v1';
   }
 }

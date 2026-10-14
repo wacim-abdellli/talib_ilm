@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_service.dart';
 import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../core/services/notification_service.dart';
@@ -13,8 +15,8 @@ import '../../../../shared/widgets/app_snackbar.dart';
 /// Test bench widget for adhan audio playback and notification delivery verification.
 ///
 /// Supports instant testing, 5-second delayed testing (to verify lock screen and
-/// background delivery outside the app), and testing all notification modes.
-class PrayerNotificationTester extends StatelessWidget {
+/// background delivery outside the app), prayer-specific announcements, and all muezzins.
+class PrayerNotificationTester extends StatefulWidget {
   final AdhanSettings settings;
   final AdhanService adhanService;
 
@@ -24,15 +26,26 @@ class PrayerNotificationTester extends StatelessWidget {
     required this.adhanService,
   });
 
-  Future<void> _testAudio(BuildContext context) async {
+  @override
+  State<PrayerNotificationTester> createState() =>
+      _PrayerNotificationTesterState();
+}
+
+class _PrayerNotificationTesterState extends State<PrayerNotificationTester> {
+  String _selectedPrayer = 'العشاء';
+
+  Future<void> _testAudio({
+    required AdhanSound sound,
+    String? prayerName,
+  }) async {
     HapticFeedback.lightImpact();
-    if (adhanService.isPlaying) {
-      await adhanService.stop();
+    if (widget.adhanService.isPlaying) {
+      await widget.adhanService.stop();
       return;
     }
 
-    if (settings.defaultMode == PrayerNotificationMode.silent ||
-        settings.defaultMode == PrayerNotificationMode.off) {
+    if (widget.settings.defaultMode == PrayerNotificationMode.silent ||
+        widget.settings.defaultMode == PrayerNotificationMode.off) {
       AppSnackbar.info(
         context,
         'النمط الافتراضي المحدد حالياً صامت. اختر أذان كامل أو تكبير لسماع الصوت.',
@@ -40,52 +53,52 @@ class PrayerNotificationTester extends StatelessWidget {
       return;
     }
 
-    final soundToPlay = settings.defaultMode == PrayerNotificationMode.takbeer
-        ? AdhanSound.takbeer
-        : settings.sound;
-
-    await adhanService.test(soundToPlay, volume: settings.volume);
+    await widget.adhanService.test(
+      sound,
+      volume: widget.settings.volume,
+      prayerName: prayerName,
+    );
   }
 
-  Future<void> _sendInstantTest(
-    BuildContext context, {
+  Future<void> _sendInstantTest({
     required PrayerNotificationMode mode,
     required AdhanSound sound,
     required String label,
+    required String prayerName,
   }) async {
     HapticFeedback.mediumImpact();
     final notifService = NotificationService();
     await notifService.showInstantTestNotification(
-      prayerName: 'العشاء',
+      prayerName: prayerName,
       mode: mode,
       sound: sound,
     );
-    if (context.mounted) {
+    if (mounted) {
       AppSnackbar.success(
         context,
-        'تم إرسال إشعار ($label) فوراً! تفقد شريط الإشعارات بالأعلى.',
+        'تم إرسال إشعار ($label) لصلاة $prayerName فوراً! تفقد شريط الإشعارات بالأعلى.',
       );
     }
   }
 
-  Future<void> _sendDelayed5sTest(
-    BuildContext context, {
+  Future<void> _sendDelayed5sTest({
     required PrayerNotificationMode mode,
     required AdhanSound sound,
     required String label,
+    required String prayerName,
   }) async {
     HapticFeedback.heavyImpact();
     final notifService = NotificationService();
     await notifService.scheduleTestNotificationAfter(
       seconds: 5,
-      prayerName: 'العشاء',
+      prayerName: prayerName,
       mode: mode,
       sound: sound,
     );
-    if (context.mounted) {
+    if (mounted) {
       AppSnackbar.success(
         context,
-        '⏳ تم جدولة تنبيه ($label) بعد 5 ثوانٍ! اخرج من التطبيق أو أقفل الشاشة الآن للتجربة.',
+        '⏳ تم جدولة تنبيه ($label) لصلاة $prayerName بعد 5 ثوانٍ! اخرج من التطبيق أو أقفل الشاشة الآن للتجربة.',
       );
     }
   }
@@ -93,6 +106,11 @@ class PrayerNotificationTester extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
+
+    final isTakbeer =
+        widget.settings.defaultMode == PrayerNotificationMode.takbeer;
+    final soundToPlay = isTakbeer ? AdhanSound.takbeer : widget.settings.sound;
 
     return AppCard(
       color: palette.surfaceRaised,
@@ -144,19 +162,67 @@ class PrayerNotificationTester extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           Divider(color: palette.border, height: 1),
+          const SizedBox(height: AppSpace.sm),
+
+          // ── Prayer Selector for Test ──
+          Text(
+            'اختر الصلاة لاختبار نداء دخول وقتها:',
+            style: textTheme.caption.copyWith(
+              color: palette.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpace.xs),
+          Wrap(
+            spacing: AppSpace.xs,
+            runSpacing: AppSpace.xs,
+            children: AppStrings.prayerOrder.map((prayer) {
+              final isSelected = _selectedPrayer == prayer;
+              return ChoiceChip(
+                label: Text(prayer),
+                selected: isSelected,
+                onSelected: (val) {
+                  if (val) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedPrayer = prayer);
+                  }
+                },
+                selectedColor: palette.primarySoft,
+                backgroundColor: palette.surface,
+                labelStyle: textTheme.caption.copyWith(
+                  color: isSelected ? palette.primary : palette.textMuted,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.smRadius,
+                  side: BorderSide(
+                    color: isSelected ? palette.primary : palette.border,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
           const SizedBox(height: AppSpace.md),
 
           // ── Audio Preview Row ──
           StreamBuilder<PlayerState>(
-            stream: adhanService.playerStateStream,
+            stream: widget.adhanService.playerStateStream,
             builder: (context, _) {
-              final isPlaying = adhanService.isPlaying;
+              final isPlaying = widget.adhanService.isPlaying;
+              final previewLabel = isPlaying
+                  ? 'إيقاف الصوت الآن'
+                  : (isTakbeer
+                      ? 'استماع لتنبيه صلاة $_selectedPrayer'
+                      : 'استماع لصوت المؤذن المحدد');
               return AppButton.tonal(
-                label: isPlaying ? 'إيقاف الصوت الآن' : 'استماع للصوت المحدد',
+                label: previewLabel,
                 icon: isPlaying
                     ? Icons.stop_circle_rounded
                     : Icons.volume_up_rounded,
-                onPressed: () => _testAudio(context),
+                onPressed: () => _testAudio(
+                  sound: soundToPlay,
+                  prayerName: _selectedPrayer,
+                ),
               );
             },
           ),
@@ -170,10 +236,10 @@ class PrayerNotificationTester extends StatelessWidget {
                   label: 'إشعار فوري (الآن)',
                   icon: Icons.notifications_active_rounded,
                   onPressed: () => _sendInstantTest(
-                    context,
-                    mode: settings.defaultMode,
-                    sound: settings.sound,
+                    mode: widget.settings.defaultMode,
+                    sound: widget.settings.sound,
                     label: 'النمط الحالي',
+                    prayerName: _selectedPrayer,
                   ),
                 ),
               ),
@@ -183,10 +249,10 @@ class PrayerNotificationTester extends StatelessWidget {
                   label: 'بعد 5 ثوانٍ (للخروج)',
                   icon: Icons.timer_outlined,
                   onPressed: () => _sendDelayed5sTest(
-                    context,
-                    mode: settings.defaultMode,
-                    sound: settings.sound,
+                    mode: widget.settings.defaultMode,
+                    sound: widget.settings.sound,
                     label: 'النمط الحالي',
+                    prayerName: _selectedPrayer,
                   ),
                 ),
               ),
@@ -199,7 +265,7 @@ class PrayerNotificationTester extends StatelessWidget {
 
           // ── Test All Cases Grid ──
           Text(
-            'اختبار كافة الحالات (فوري / خارج التطبيق بعد 5ث):',
+            'اختبار الأصوات المتاحة (استماع / فوري / بعد 5ث):',
             style: AppTextStyles.labelSmall.copyWith(
               color: palette.primary,
               fontFamily: AppTextStyles.cairo,
@@ -210,26 +276,65 @@ class PrayerNotificationTester extends StatelessWidget {
           _buildTestCaseRow(
             context,
             palette: palette,
-            icon: Icons.mosque_rounded,
-            title: 'أذان مكة المكرمة (كامل)',
-            mode: PrayerNotificationMode.adhan,
-            sound: AdhanSound.makkah,
-          ),
-          _buildTestCaseRow(
-            context,
-            palette: palette,
-            icon: Icons.location_city_rounded,
-            title: 'أذان المدينة المنورة (كامل)',
-            mode: PrayerNotificationMode.adhan,
-            sound: AdhanSound.madinah,
+            icon: Icons.campaign_rounded,
+            title: 'تكبير وتنبيه: حانت صلاة العشاء',
+            mode: PrayerNotificationMode.takbeer,
+            sound: AdhanSound.takbeer,
+            prayerName: 'العشاء',
           ),
           _buildTestCaseRow(
             context,
             palette: palette,
             icon: Icons.campaign_rounded,
-            title: 'تكبير وتنبيه موجز',
+            title: 'تكبير وتنبيه: حانت صلاة الفجر',
             mode: PrayerNotificationMode.takbeer,
             sound: AdhanSound.takbeer,
+            prayerName: 'الفجر',
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.mosque_rounded,
+            title: 'أذان مكة (الشيخ علي ملا)',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.makkah,
+            prayerName: _selectedPrayer,
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.location_city_rounded,
+            title: 'أذان المسجد النبوي الشريف',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.madinah,
+            prayerName: _selectedPrayer,
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.record_voice_over_rounded,
+            title: 'أذان الشيخ مشاري العفاسي',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.alafasy,
+            prayerName: _selectedPrayer,
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.record_voice_over_rounded,
+            title: 'أذان الشيخ عبد الباسط',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.abdulbasit,
+            prayerName: _selectedPrayer,
+          ),
+          _buildTestCaseRow(
+            context,
+            palette: palette,
+            icon: Icons.record_voice_over_rounded,
+            title: 'أذان الشيخ ناصر القطامي',
+            mode: PrayerNotificationMode.adhan,
+            sound: AdhanSound.qatami,
+            prayerName: _selectedPrayer,
           ),
           _buildTestCaseRow(
             context,
@@ -238,6 +343,7 @@ class PrayerNotificationTester extends StatelessWidget {
             title: 'نغمة تنبيه هادئة',
             mode: PrayerNotificationMode.tone,
             sound: AdhanSound.makkah,
+            prayerName: _selectedPrayer,
           ),
           _buildTestCaseRow(
             context,
@@ -246,6 +352,7 @@ class PrayerNotificationTester extends StatelessWidget {
             title: 'إشعار صامت مرئي',
             mode: PrayerNotificationMode.silent,
             sound: AdhanSound.makkah,
+            prayerName: _selectedPrayer,
           ),
 
           const SizedBox(height: AppSpace.xs),
@@ -287,6 +394,7 @@ class PrayerNotificationTester extends StatelessWidget {
     required String title,
     required PrayerNotificationMode mode,
     required AdhanSound sound,
+    required String prayerName,
   }) {
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
@@ -313,12 +421,46 @@ class PrayerNotificationTester extends StatelessWidget {
                 ),
               ),
             ),
+            // Preview Audio Button
+            if (mode != PrayerNotificationMode.silent &&
+                mode != PrayerNotificationMode.tone) ...[
+              InkWell(
+                onTap: () => _testAudio(sound: sound, prayerName: prayerName),
+                borderRadius: AppRadius.smRadius,
+                child: Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    borderRadius: AppRadius.smRadius,
+                    border: Border.all(color: palette.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.play_arrow_rounded, color: palette.primary),
+                      const SizedBox(width: AppSpace.xxs),
+                      Text(
+                        'سماع',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: palette.text,
+                          fontFamily: AppTextStyles.cairo,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpace.xs),
+            ],
             InkWell(
               onTap: () => _sendInstantTest(
-                context,
                 mode: mode,
                 sound: sound,
                 label: title,
+                prayerName: prayerName,
               ),
               borderRadius: AppRadius.smRadius,
               child: Container(
@@ -342,10 +484,10 @@ class PrayerNotificationTester extends StatelessWidget {
             const SizedBox(width: AppSpace.xs),
             InkWell(
               onTap: () => _sendDelayed5sTest(
-                context,
                 mode: mode,
                 sound: sound,
                 label: title,
+                prayerName: prayerName,
               ),
               borderRadius: AppRadius.smRadius,
               child: Container(

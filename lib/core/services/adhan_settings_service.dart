@@ -1,7 +1,14 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
 
-enum AdhanSound { makkah, madinah, takbeer }
+enum AdhanSound {
+  makkah,
+  madinah,
+  alafasy,
+  abdulbasit,
+  qatami,
+  takbeer,
+}
 
 /// Rich notification options for prayer times
 enum PrayerNotificationMode {

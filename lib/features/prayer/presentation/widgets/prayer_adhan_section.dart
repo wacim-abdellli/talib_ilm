@@ -170,15 +170,27 @@ class PrayerAdhanSection extends StatelessWidget {
                 items: const [
                   DropdownMenuItem(
                     value: AdhanSound.makkah,
-                    child: Text('أذان الحرم المكي الشريف'),
+                    child: Text('أذان الحرم المكي الشريف (الشيخ علي ملا)'),
                   ),
                   DropdownMenuItem(
                     value: AdhanSound.madinah,
-                    child: Text('أذان المسجد النبوي الشريف'),
+                    child: Text('أذان المسجد النبوي الشريف (المدينة المنورة)'),
+                  ),
+                  DropdownMenuItem(
+                    value: AdhanSound.alafasy,
+                    child: Text('أذان الشيخ مشاري راشد العفاسي'),
+                  ),
+                  DropdownMenuItem(
+                    value: AdhanSound.abdulbasit,
+                    child: Text('أذان الشيخ عبد الباسط عبد الصمد'),
+                  ),
+                  DropdownMenuItem(
+                    value: AdhanSound.qatami,
+                    child: Text('أذان الشيخ ناصر القطامي'),
                   ),
                   DropdownMenuItem(
                     value: AdhanSound.takbeer,
-                    child: Text('تكبيرات الأذان (تنبيه موجز)'),
+                    child: Text('تكبيرات وتنبيه بصوت الصلاة (موجز)'),
                   ),
                 ],
                 onChanged: (val) {
