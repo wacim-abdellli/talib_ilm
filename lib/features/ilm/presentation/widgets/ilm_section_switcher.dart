@@ -31,7 +31,7 @@ class IlmSectionSwitcher extends StatelessWidget {
       ),
       padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
       decoration: BoxDecoration(
-        color: palette.surfaceRaised,
+        color: palette.surfaceMuted,
         borderRadius: AppRadius.pillRadius,
         border: Border.all(color: palette.border),
       ),
@@ -53,7 +53,7 @@ class IlmSectionSwitcher extends StatelessWidget {
             child: _buildItem(
               context: context,
               section: IlmSection.shamela,
-              title: 'خزانة التراث',
+              title: 'المكتبة',
               icon: Icons.auto_stories_rounded,
               isSelected: selectedSection == IlmSection.shamela,
               palette: palette,
@@ -89,26 +89,39 @@ class IlmSectionSwitcher extends StatelessWidget {
           child: AnimatedContainer(
             duration: AppMotion.fast,
             curve: AppMotion.easeOut,
-            height: AppSize.tap,
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+              vertical: AppSpace.xs,
+            ),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? palette.primary : Colors.transparent,
+              color: isSelected ? palette.surfaceRaised : Colors.transparent,
               borderRadius: AppRadius.pillRadius,
+              boxShadow: isSelected ? palette.shadow : const [],
+              border: isSelected
+                  ? Border.all(color: palette.border.withValues(alpha: 0.8))
+                  : null,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
                   size: AppIcon.sm,
-                  color: isSelected ? palette.brandDark : palette.textMuted,
+                  color: isSelected ? palette.primary : palette.textSubtle,
                 ),
                 const SizedBox(width: AppSpace.xs),
-                Text(
-                  title,
-                  style: textTheme.caption.copyWith(
-                    color: isSelected ? palette.brandDark : palette.textMuted,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    title,
+                    style: textTheme.caption.copyWith(
+                      color: isSelected ? palette.text : palette.textMuted,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

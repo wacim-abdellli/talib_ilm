@@ -146,7 +146,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                           },
                           style: textTheme.body.copyWith(color: palette.text),
                           decoration: InputDecoration(
-                            hintText: 'ابحث في أمهات كتب التراث ومصنفات الأئمة...',
+                            hintText: 'ابحث في أمهات كتب المكتبة ومصنفات الأئمة...',
                             hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
                             border: InputBorder.none,
                           ),
@@ -171,7 +171,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
 
               // ── Categories Horizontal Filter Chips ─────────────────────
               SizedBox(
-                height: 38,
+                height: AppSize.tap,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -182,35 +182,39 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                     final cat = ShamelaService.categories[index];
                     final isSelected = _selectedCategoryId == cat.id;
 
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: AppRadius.pillRadius,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selectedCategoryId = cat.id);
-                        },
-                        child: AnimatedContainer(
-                          duration: AppMotion.fast,
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.md,
-                            vertical: AppSpace.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected ? palette.gold : palette.surfaceRaised,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: isSelected ? palette.gold : palette.border,
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: AppSize.tap),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: AppRadius.pillRadius,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedCategoryId = cat.id);
+                          },
+                          child: AnimatedContainer(
+                            duration: AppMotion.fast,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
                             ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            cat.count > 0 && cat.id != 0
-                                ? '${cat.name} (${cat.count})'
-                                : cat.name,
-                            style: textTheme.caption.copyWith(
-                              color: isSelected ? palette.brandDark : palette.text,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            decoration: BoxDecoration(
+                              color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isSelected ? palette.primary : palette.border,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              cat.count > 0 && cat.id != 0
+                                  ? '${cat.name} (${cat.count})'
+                                  : cat.name,
+                              style: textTheme.caption.copyWith(
+                                color: isSelected ? palette.primary : palette.textMuted,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
                         ),
@@ -232,8 +236,8 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
               padding: EdgeInsetsDirectional.all(AppSpace.xl),
               child: EmptyState(
                 icon: Icons.search_off_rounded,
-                title: 'لا توجد نتائج في خزانة التراث',
-                subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من الفنون والعلوم.',
+                title: 'لا توجد نتائج في المكتبة',
+                subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من فنون المكتبة.',
               ),
             ),
           )
@@ -260,15 +264,15 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: palette.goldSoft,
-                              borderRadius: AppRadius.smRadius,
-                              border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
+                              color: palette.primarySoft,
+                              borderRadius: AppRadius.mdRadius,
+                              border: Border.all(color: palette.border),
                             ),
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.auto_stories_rounded,
-                              color: palette.gold,
-                              size: AppIcon.lg,
+                              color: palette.primary,
+                              size: AppIcon.md,
                             ),
                           ),
                           const SizedBox(width: AppSpace.md),
@@ -364,23 +368,23 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     value: progress,
-                                    color: palette.gold,
+                                    color: palette.primary,
                                     strokeWidth: 2,
                                   ),
                                 ),
                                 const SizedBox(width: AppSpace.xs),
                                 Text(
                                   'جاري التحميل ${(progress * 100).toInt()}%',
-                                  style: textTheme.caption.copyWith(color: palette.gold),
+                                  style: textTheme.caption.copyWith(color: palette.primary),
                                 ),
                               ] else if (isDownloaded) ...[
-                                Icon(Icons.cloud_done_rounded, color: palette.gold, size: AppIcon.sm),
+                                Icon(Icons.offline_pin_rounded, color: palette.success, size: AppIcon.sm),
                                 const SizedBox(width: AppSpace.xxs),
                                 Text(
-                                  'محمّل بدون إنترنت',
+                                  'محمّل للقراءة بدون إنترنت',
                                   style: textTheme.caption.copyWith(
-                                    color: palette.gold,
-                                    fontWeight: FontWeight.w600,
+                                    color: palette.success,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ] else ...[

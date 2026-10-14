@@ -304,14 +304,17 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
             vertical: AppSpace.xs,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? palette.gold : palette.surfaceMuted,
+            color: isSelected ? palette.primarySoft : palette.surfaceMuted,
             borderRadius: AppRadius.smRadius,
-            border: Border.all(color: isSelected ? palette.gold : palette.border),
+            border: Border.all(
+              color: isSelected ? palette.primary : palette.border,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
           child: Text(
             label,
             style: textTheme.caption.copyWith(
-              color: isSelected ? palette.brandDark : palette.text,
+              color: isSelected ? palette.primary : palette.text,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -342,14 +345,17 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
             vertical: AppSpace.xs,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? palette.gold : palette.surfaceMuted,
+            color: isSelected ? palette.primarySoft : palette.surfaceMuted,
             borderRadius: AppRadius.smRadius,
-            border: Border.all(color: isSelected ? palette.gold : palette.border),
+            border: Border.all(
+              color: isSelected ? palette.primary : palette.border,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
           child: Text(
             label,
             style: textTheme.caption.copyWith(
-              color: isSelected ? palette.brandDark : palette.text,
+              color: isSelected ? palette.primary : palette.text,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

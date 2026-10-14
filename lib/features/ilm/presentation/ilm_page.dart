@@ -359,12 +359,17 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
             // ── 3. Scrollable Library Content ─────────────────────
             Expanded(
-              child: _selectedSection == IlmSection.shamela
-                  ? const MaktabaShamelaView()
-                  : CustomScrollView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      slivers: [
+              child: AnimatedSwitcher(
+                duration: AppMotion.base,
+                switchInCurve: AppMotion.easeOut,
+                switchOutCurve: AppMotion.easeIn,
+                child: _selectedSection == IlmSection.shamela
+                    ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
+                    : CustomScrollView(
+                        key: const ValueKey('mutun_section'),
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                        slivers: [
                         SliverToBoxAdapter(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,6 +533,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
+              ),
             ),
           ],
         ),
