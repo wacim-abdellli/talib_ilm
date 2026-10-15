@@ -32,6 +32,7 @@ import '../widgets/book_view_controls.dart' show BookNoteDialog;
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/models/favorite_item.dart';
 import '../../../../core/services/asset_service.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/services/book_progress_service.dart';
 
 class BookViewPage extends StatefulWidget {
@@ -87,8 +88,8 @@ class _BookViewPageState extends State<BookViewPage>
   int _readingSeconds = 0;
   bool _hasShownReadHint = false;
   bool get _canCompleteBook {
-    if (_totalPages <= 0) return false;
-    return (_maxPageReached / _totalPages) >= 0.9 && _readingSeconds >= 120;
+    if (_totalPages <= 1) return false;
+    return (_maxPageReached / _totalPages) >= 0.95 && _readingSeconds >= 120;
   }
 
   void _updateReadingTime() {
@@ -101,6 +102,12 @@ class _BookViewPageState extends State<BookViewPage>
   @override
   void initState() {
     super.initState();
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
+    final fallbackTotal = widget.book.totalPages > 0
+        ? widget.book.totalPages
+        : (digitalEntry?.totalPages ?? 0);
+    _totalPages = fallbackTotal;
+
     _mutunPdfKey = _lastActivityService.pdfKeyForMutn(widget.book.id);
     _mutunInitialPage = _lastActivityService.getPdfPage(_mutunPdfKey).then((
       info,
@@ -153,10 +160,15 @@ class _BookViewPageState extends State<BookViewPage>
 
   Future<void> _ensureBookInitialized({int? totalPages}) async {
     if (!_bookServiceReady) return;
-    final existing = await _bookProgressService.getBookProgress(widget.book.id);
-    if (existing != null) return;
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
+    final canonicalTotal = widget.book.totalPages > 0
+        ? widget.book.totalPages
+        : (digitalEntry?.totalPages ?? 0);
     final pages = totalPages ?? _totalPages;
-    final safePages = pages <= 0 ? 1 : pages;
+    final safePages = pages > canonicalTotal
+        ? pages
+        : (canonicalTotal > 0 ? canonicalTotal : (pages <= 0 ? 1 : pages));
+
     await _bookProgressService.initializeBook(
       bookId: widget.book.id,
       bookTitle: widget.book.title,
@@ -190,7 +202,11 @@ class _BookViewPageState extends State<BookViewPage>
   Future<void> _saveProgress() async {
     if (!_bookServiceReady) return;
     await _ensureBookInitialized(totalPages: _totalPages);
-    await _bookProgressService.updateCurrentPage(widget.book.id, _currentPage);
+    await _bookProgressService.updateCurrentPage(
+      widget.book.id,
+      _currentPage,
+      totalPages: _totalPages > 0 ? _totalPages : null,
+    );
     if (_sessionMinutes == 0) return;
     await _bookProgressService.addReadingTime(widget.book.id, _sessionMinutes);
     _sessionMinutes = 0;
@@ -447,7 +463,10 @@ class _BookViewPageState extends State<BookViewPage>
   Future<void> _onMutnPageChanged(int page, int total) async {
     if (total <= 0) return;
 
-    final safeTotal = total < page ? page : total;
+    final canonicalTotal = widget.book.totalPages > 0
+        ? widget.book.totalPages
+        : total;
+    final safeTotal = total > canonicalTotal ? total : canonicalTotal;
 
     setState(() {
       _currentPage = page;
@@ -461,14 +480,21 @@ class _BookViewPageState extends State<BookViewPage>
       _maxPageReached = page;
     }
 
-    _ensureBookInitialized(totalPages: safeTotal);
+    await _ensureBookInitialized(totalPages: safeTotal);
+    await _bookProgressService.updateCurrentPage(
+      widget.book.id,
+      page,
+      totalPages: safeTotal,
+    );
 
     _lastActivityService.savePdfPage(
       key: _mutunPdfKey,
       page: page,
       total: safeTotal,
     );
-    final reachedEnd = page >= safeTotal;
+    final reachedEnd = safeTotal > 1 && page >= safeTotal;
+
+    if (!mounted) return;
 
     // hint (only once)
     if (reachedEnd && !_canCompleteBook && !_hasShownReadHint) {

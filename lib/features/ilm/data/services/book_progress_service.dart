@@ -29,7 +29,13 @@ class BookProgressService {
       return false; // already completed
     }
 
-    await saveBookProgress(progress.copyWith(completedDate: DateTime.now()));
+    final targetPage =
+        progress.totalPages > 0 ? progress.totalPages : progress.currentPage;
+
+    await saveBookProgress(progress.copyWith(
+      currentPage: targetPage,
+      completedDate: DateTime.now(),
+    ));
 
     return true;
   }
@@ -91,16 +97,46 @@ class BookProgressService {
     await _prefs.setString(_progressKey, jsonString);
   }
 
-  Future<void> updateCurrentPage(String bookId, int page) async {
+  Future<void> updateCurrentPage(
+    String bookId,
+    int page, {
+    int? totalPages,
+  }) async {
     final progress = await getBookProgress(bookId);
     if (progress == null) return;
 
+    final effectiveTotal =
+        (totalPages != null && totalPages > progress.totalPages)
+            ? totalPages
+            : progress.totalPages;
+
+    final isActuallyCompleted = effectiveTotal > 1 && page >= effectiveTotal;
+
     final updatedProgress = progress.copyWith(
+      totalPages: effectiveTotal > 0 ? effectiveTotal : null,
       currentPage: page,
       lastReadDate: DateTime.now(),
+      clearCompletedDate: !isActuallyCompleted,
+      completedDate: isActuallyCompleted
+          ? (progress.completedDate ?? DateTime.now())
+          : null,
     );
 
     await saveBookProgress(updatedProgress);
+  }
+
+  Future<void> updateTotalPages(String bookId, int totalPages) async {
+    if (totalPages <= 0) return;
+    final progress = await getBookProgress(bookId);
+    if (progress == null) return;
+
+    if (totalPages != progress.totalPages) {
+      final isCompleted = totalPages > 1 && progress.currentPage >= totalPages;
+      await saveBookProgress(progress.copyWith(
+        totalPages: totalPages,
+        clearCompletedDate: !isCompleted,
+      ));
+    }
   }
 
   Future<void> addBookmark(String bookId, int page) async {
@@ -397,19 +433,62 @@ class BookProgressService {
     required int totalPages,
   }) async {
     final existing = await getBookProgress(bookId);
-    if (existing != null) return;
+    if (existing != null) {
+      if (totalPages > existing.totalPages) {
+        final isCompleted = totalPages > 1 && existing.currentPage >= totalPages;
+        await saveBookProgress(existing.copyWith(
+          totalPages: totalPages,
+          clearCompletedDate: !isCompleted,
+        ));
+      }
+      return;
+    }
 
     final now = DateTime.now();
     final newProgress = BookProgress(
       bookId: bookId,
       bookTitle: bookTitle,
       level: level,
-      totalPages: totalPages,
+      totalPages: totalPages > 0 ? totalPages : 1,
       currentPage: 1,
       lastReadDate: now,
       startedDate: now,
     );
 
     await saveBookProgress(newProgress);
+  }
+
+  Future<void> auditAndHealCatalogProgress(
+    Map<String, int> catalogTotals,
+  ) async {
+    final all = await getAllProgress();
+    bool changed = false;
+
+    for (int i = 0; i < all.length; i++) {
+      final p = all[i];
+      final canonicalTotal = catalogTotals[p.bookId];
+      if (canonicalTotal != null && canonicalTotal > 0) {
+        final targetTotal =
+            canonicalTotal > p.totalPages ? canonicalTotal : p.totalPages;
+        final isCompleted = targetTotal > 1 && p.currentPage >= targetTotal;
+        final shouldClearComplete = !isCompleted && p.completedDate != null;
+        final shouldUpdateTotal = targetTotal != p.totalPages;
+
+        if (shouldClearComplete || shouldUpdateTotal) {
+          all[i] = p.copyWith(
+            totalPages: targetTotal,
+            clearCompletedDate: shouldClearComplete,
+          );
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      final jsonString = json.encode(
+        all.map((p) => p.toJson()).toList(),
+      );
+      await _prefs.setString(_progressKey, jsonString);
+    }
   }
 }

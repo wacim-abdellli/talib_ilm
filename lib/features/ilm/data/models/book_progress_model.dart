@@ -27,10 +27,15 @@ class BookProgress {
     this.completedDate,
   });
 
-  double get progressPercentage =>
-      totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
+  double get progressPercentage {
+    if (totalPages <= 0) return 0.0;
+    return ((currentPage / totalPages) * 100).clamp(0.0, 100.0);
+  }
 
-  bool get isCompleted => currentPage >= totalPages;
+  bool get isCompleted {
+    if (totalPages <= 1) return false;
+    return currentPage >= totalPages;
+  }
 
   int get daysSinceLastRead {
     final now = DateTime.now();
@@ -46,6 +51,7 @@ class BookProgress {
   }
 
   BookProgress copyWith({
+    int? totalPages,
     int? currentPage,
     DateTime? lastReadDate,
     List<int>? bookmarkedPages,
@@ -53,12 +59,13 @@ class BookProgress {
     int? totalReadingTimeMinutes,
     bool? isFavorite,
     DateTime? completedDate,
+    bool clearCompletedDate = false,
   }) {
     return BookProgress(
       bookId: bookId,
       bookTitle: bookTitle,
       level: level,
-      totalPages: totalPages,
+      totalPages: totalPages ?? this.totalPages,
       currentPage: currentPage ?? this.currentPage,
       lastReadDate: lastReadDate ?? this.lastReadDate,
       bookmarkedPages: bookmarkedPages ?? this.bookmarkedPages,
@@ -67,7 +74,9 @@ class BookProgress {
           totalReadingTimeMinutes ?? this.totalReadingTimeMinutes,
       isFavorite: isFavorite ?? this.isFavorite,
       startedDate: startedDate,
-      completedDate: completedDate ?? this.completedDate,
+      completedDate: clearCompletedDate
+          ? null
+          : (completedDate ?? this.completedDate),
     );
   }
 

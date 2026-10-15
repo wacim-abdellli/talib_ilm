@@ -83,7 +83,10 @@ class LocationService {
   static bool _localeReady = false;
   static LocationResult? _memoryCache;
   static DateTime? _cacheTime;
-  static const Duration _cacheDuration = Duration(minutes: 15);
+
+  /// Fast access to the in-memory cached location if present
+  static LocationResult? get cachedLocation => _memoryCache;
+  static DateTime? get cacheTime => _cacheTime;
 
   /// Global real-time notifier whenever location is acquired or changed
   static final ValueNotifier<LocationResult?> onLocationChanged =

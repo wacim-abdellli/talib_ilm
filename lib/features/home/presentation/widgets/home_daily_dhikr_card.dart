@@ -236,7 +236,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                             Text(
                               isDone
                                   ? 'تمت القراءة'
-                                  : '$_tapCount / $target',
+                                  : '$_tapCount من $target',
                               style: context.text.caption.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: isDone

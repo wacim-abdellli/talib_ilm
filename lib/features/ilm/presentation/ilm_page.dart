@@ -138,6 +138,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
         _selectedLevelId = visibleLevels.first.id;
       }
 
+      final catalogTotals = {
+        for (final book in _allBooks)
+          if (book.totalPages > 0) book.id: book.totalPages,
+      };
+      await _progressService?.auditAndHealCatalogProgress(catalogTotals);
+
       _allProgress = await _progressService?.getAllProgress() ?? [];
       _progressById = {
         for (final progress in _allProgress) progress.bookId: progress,
@@ -298,8 +304,16 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
     await _loadData();
 
-    final isCompletedNow = _progressById[book.id]?.isCompleted ?? false;
-    if (!wasCompleted && isCompletedNow) {
+    final progressNow = _progressById[book.id];
+    final isCompletedNow = progressNow?.isCompleted ?? false;
+    final expectedTotal = book.totalPages > 0
+        ? book.totalPages
+        : (progressNow?.totalPages ?? 0);
+    final isGenuinelyFinished = isCompletedNow &&
+        expectedTotal > 1 &&
+        (progressNow?.currentPage ?? 0) >= expectedTotal;
+
+    if (!wasCompleted && isGenuinelyFinished) {
       _showCompletionReward(book);
     }
   }

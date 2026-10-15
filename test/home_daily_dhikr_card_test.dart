@@ -57,7 +57,7 @@ void main() {
       expect(find.text('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ'), findsOneWidget);
       expect(find.textContaining('حُطَّتْ خَطَايَاهُ'), findsOneWidget);
       expect(find.text('فتح الورد كاملًا'), findsOneWidget);
-      expect(find.text('0 / 3'), findsOneWidget);
+      expect(find.text('0 من 3'), findsOneWidget);
     });
 
     testWidgets('increments count on tap and triggers onOpenSession button', (tester) async {
@@ -72,9 +72,9 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('0 / 3'));
+      await tester.tap(find.text('0 من 3'));
       await tester.pump();
-      expect(find.text('1 / 3'), findsOneWidget);
+      expect(find.text('1 من 3'), findsOneWidget);
 
       await tester.tap(find.text('فتح الورد كاملًا'));
       await tester.pump();

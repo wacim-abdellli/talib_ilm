@@ -43,9 +43,10 @@ class ScholarlyBookCard extends StatelessWidget {
     final progressValue = totalPages > 0
         ? (currentPage / totalPages).clamp(0.0, 1.0)
         : 0.0;
-    final isCompleted = (progress?.isCompleted ?? false) ||
-        (progress?.completedDate != null) ||
-        (totalPages > 0 && currentPage >= totalPages);
+    final isCompleted = totalPages > 1 &&
+        ((progress?.isCompleted ?? false) ||
+            (progress?.completedDate != null && currentPage >= totalPages) ||
+            currentPage >= totalPages);
     final isStarted = !isCompleted &&
         progress != null &&
         (currentPage > 1 || (progress?.totalReadingTimeMinutes ?? 0) > 0);
