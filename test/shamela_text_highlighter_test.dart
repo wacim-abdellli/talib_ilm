@@ -84,6 +84,26 @@ void main() {
       expect(find.textContaining('قال الشارح'), findsOneWidget);
     });
 
+    testWidgets('Recognizes Prophetic Hadiths and citations in guillemets and narrations', (tester) async {
+      const sampleText = 'عن النبي صلى الله عليه وسلم قال: «إنما الأعمال بالنيات» رواه البخاري ومسلم.';
+
+      await tester.pumpWidget(buildHighlighterWidget(sampleText));
+
+      expect(find.byType(RichText), findsOneWidget);
+      expect(find.textContaining('إنما الأعمال بالنيات'), findsOneWidget);
+      expect(find.textContaining('رواه البخاري'), findsOneWidget);
+    });
+
+    testWidgets('Highlights Islamic divisions and ordinals (الأصل الأول / ثانياً)', (tester) async {
+      const sampleText = 'الأصل الأول: معرفة العبد ربه.\nثانياً: معرفة دين الإسلام بالأدلة.';
+
+      await tester.pumpWidget(buildHighlighterWidget(sampleText));
+
+      expect(find.byType(RichText), findsOneWidget);
+      expect(find.textContaining('الأصل الأول:'), findsOneWidget);
+      expect(find.textContaining('ثانياً:'), findsOneWidget);
+    });
+
     testWidgets('Survives text scaling up to 2.0 without overflow or crash', (tester) async {
       const sampleText = 'فصل في سنن الوضوء\nوسننه عشرة أشياء: التسمية، وغسل الكفين قبل إدخالهما الإناء.';
 

@@ -43,7 +43,6 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
     _scrollController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -70,96 +69,143 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
               // Chapter Header Pill if present
               if (page.chapterTitle != null &&
                   page.chapterTitle!.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.goldSoft,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(
-                      color: palette.gold.withValues(alpha: 0.3),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
                     ),
-                  ),
-                  child: Text(
-                    page.chapterTitle!,
-                    style: textTheme.caption.copyWith(
-                      color: palette.gold,
-                      fontWeight: FontWeight.bold,
+                    decoration: BoxDecoration(
+                      color: palette.goldSoft.withValues(alpha: 0.6),
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: palette.gold.withValues(alpha: 0.35),
+                        width: 1,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_stories_rounded,
+                          size: AppIcon.xs,
+                          color: palette.gold,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Flexible(
+                          child: Text(
+                            page.chapterTitle!,
+                            style: textTheme.caption.copyWith(
+                              color: palette.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpace.md),
               ],
 
-              // Memorization Mode or Scholarly Syntax Highlighter
-              if (widget.memorizationMode)
-                MutnMemorizationView(
-                  content: page.content,
-                  fontFamily: widget.fontFamily,
-                  fontSizeDelta: widget.fontSizeDelta,
-                  lineHeight: widget.lineHeight,
-                )
-              else
-                Text.rich(
-                  ShamelaTextHighlighter.buildSpans(
-                    text: page.content,
-                    palette: palette,
-                    textTheme: textTheme,
-                    fontFamily: widget.fontFamily,
-                    fontSizeDelta: widget.fontSizeDelta,
-                    lineHeight: widget.lineHeight,
+              // Reflowable Text Body with classical manuscript margin
+              Container(
+                decoration: BoxDecoration(
+                  border: BorderDirectional(
+                    start: BorderSide(
+                      color: palette.gold.withValues(alpha: 0.25),
+                      width: 2.0,
+                    ),
                   ),
-                  textAlign: TextAlign.start,
                 ),
+                padding: const EdgeInsetsDirectional.only(
+                  start: AppSpace.md,
+                  end: AppSpace.xs,
+                ),
+                child: widget.memorizationMode
+                    ? MutnMemorizationView(
+                        content: page.content,
+                        fontFamily: widget.fontFamily,
+                        fontSizeDelta: widget.fontSizeDelta,
+                        lineHeight: widget.lineHeight,
+                      )
+                    : Text.rich(
+                        ShamelaTextHighlighter.buildSpans(
+                          text: page.content,
+                          palette: palette,
+                          textTheme: textTheme,
+                          fontFamily: widget.fontFamily,
+                          fontSizeDelta: widget.fontSizeDelta,
+                          lineHeight: widget.lineHeight,
+                        ),
+                        textAlign: TextAlign.start,
+                      ),
+              ),
 
               // Footnotes (الحواشي والتحقيق) Section if present
               if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
-                const SizedBox(height: AppSpace.lg),
-                Divider(color: palette.gold.withValues(alpha: 0.4), height: 1),
-                const SizedBox(height: AppSpace.sm),
-                Container(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceRaised,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                const SizedBox(height: AppSpace.xl),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: palette.gold.withValues(alpha: 0.3),
+                        height: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.notes_rounded,
-                            color: palette.primary,
-                            size: AppIcon.sm,
+                            Icons.history_edu_rounded,
+                            color: palette.gold,
+                            size: AppIcon.xs,
                           ),
-                          const SizedBox(width: AppSpace.xs),
+                          const SizedBox(width: AppSpace.xxs),
                           Text(
-                            'الحواشي والتحقيق:',
+                            'الحواشي والتحقيق',
                             style: textTheme.caption.copyWith(
-                              color: palette.primary,
+                              color: palette.gold,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpace.xs),
-                      Text.rich(
-                        ShamelaTextHighlighter.buildSpans(
-                          text: page.hamesh!,
-                          palette: palette,
-                          textTheme: textTheme,
-                          fontFamily: widget.fontFamily,
-                          fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
-                          lineHeight: 1.6,
-                        ),
-                        textAlign: TextAlign.start,
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: palette.gold.withValues(alpha: 0.3),
+                        height: 1,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: palette.border,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text.rich(
+                    ShamelaTextHighlighter.buildSpans(
+                      text: page.hamesh!,
+                      palette: palette,
+                      textTheme: textTheme,
+                      fontFamily: widget.fontFamily,
+                      fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
+                      lineHeight: 1.6,
+                    ),
+                    textAlign: TextAlign.start,
                   ),
                 ),
               ],

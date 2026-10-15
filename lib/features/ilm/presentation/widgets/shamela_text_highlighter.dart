@@ -3,18 +3,32 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
-/// Intelligent scholarly text formatting, titling, and syntax coloring for classical Arabic books
+/// Intelligent scholarly text formatting, titling, and multi-tier syntax coloring
+/// for classical Islamic books, mutun, hadith collections, and commentaries.
 class ShamelaTextHighlighter {
   static final RegExp _tokenRegex = RegExp(
-    r'(﴿[^﴾]+﴾|\{[^}]+\})|' // 1: Quranic Verses (﴿...﴾ or {...})
-    r'(«[^»]+»|"[^"]+")|' // 2: Prophetic Hadith / Quotes
-    r'(\[[^\]]+\])|' // 3: Bracketed Section Headers / Chapters
-    r'((?:^|\n)\s*(?:بَابُ?|فَصْلٌ?|مَسْأَلَةٌ?|فَرْعٌ?|فَائِدَةٌ?|تَنْبِيهٌ?|خَاتِمَةٌ?|مُقَدِّمَةٌ?)[^\n\r]+)|' // 4: Line Headings
-    r'(\(قَوْلُهُ:?[^)]+\)|قَوْلُهُ:|قوله:)|' // 5: Matn Citations in Commentaries (قوله: ...)
-    r'(ﷺ)|' // 6: Sacred Sallallahu Alayhi Wa Sallam
-    r'(\((?:صلى الله عليه وسلم|رضي الله عنه|رضي الله عنها|رضي الله عنهم|رحمه الله|رحمهم الله|تعالى|سبحانه|عز وجل)\)|(?:صلى الله عليه وسلم|رضي الله عنه|رضي الله عنها|رضي الله عنهم|رحمه الله|عز وجل))|' // 7: Honorifics
-    r'((?:قال المصنف|قال الشارح|قال الإمام|قال رحمه الله|قلت):?)|' // 8: Scholarly Attribution
-    r'(\([٠-٩0-9]+\)|\[[٠-٩0-9]+\])', // 9: Footnote Numbers
+    // ── 1. Quranic Verses & Divine Speech (﴿...﴾, {...}, Basmalah, قال تعالى:) ──
+    r'(﴿[^﴾]+﴾|\{[^}]+\}|(?:^|\n)\s*(?:بِسْمِ\s+اللَّهِ\s+الرَّحْمَنِ\s+الرَّحِيمِ|بسم\s+الله\s+الرحمن\s+الرحيم)|(?:(?:قَالَ|قال|قَوْلُهُ|قوله|لِقَوْلِهِ|لقوله|كَقَوْلِهِ|كقوله)\s+(?:اللَّهُ\s+)?تَعَالَى:?))|'
+    // ── 2. Prophetic Hadiths, Takhrij & Citations («...», "...", قال رسول الله ﷺ) ──
+    r'(«[^»]+»|"[^"]+"|(?:(?:قَالَ|قال)\s+(?:رَسُولُ|رسول|النَّبِيُّ|النبي)\s+(?:اللَّهِ|الله)\s*(?:ﷺ|\(ﷺ\)|صلى الله عليه وسلم)?\s*:?)|(?:(?:عَنِ?|عن)\s+(?:النَّبِيِّ|النبي|رَسُولِ|رسول)\s+(?:اللَّهِ|الله)\s*(?:ﷺ|\(ﷺ\)|صلى الله عليه وسلم)?\s*(?:أَنَّهُ|أنه)?\s*(?:قَالَ|قال):?)|(?:(?:سَمِعْتُ|سمعت)\s+(?:رَسُولَ|رسول)\s+(?:اللَّهِ|الله)\s*(?:ﷺ|\(ﷺ\)|صلى الله عليه وسلم)?\s*(?:يَقُولُ|يقول):?)|(?:(?:رَوَاهُ|رواه|رَوَى|روى|أَخْرَجَهُ|أخرجه)\s+(?:البُخَارِيُّ|البخاري|مُسْلِمٌ|مسلم|أَحْمَدُ|أحمد|التِّرْمِذِيُّ|الترمذي|أَبُو\s+دَاوُدَ|أبو\s+داود|النَّسَائِيُّ|النسائي|ابْنُ\s+مَاجَهْ|ابن\s+ماجه|مَالِكٌ|مالك|الشَّيْخَانِ|الشيخان|مُتَّفَقٌ\s+عَلَيْهِ|متفق\s+عليه))|(?:صَحِيحُ\s+البُخَارِيِّ|صحيح\s+البخاري|صَحِيحُ\s+مُسْلِمٍ|صحيح\s+مسلم|مُتَّفَقٌ\s+عَلَيْهِ|متفق\s+عليه))|'
+    // ── 3. Prominent Line Headings (باب / فصل / مسألة / أصل / قاعدة) ──
+    r'((?:^|\n)\s*(?:بَابُ?|باب|فَصْلٌ?|فصل|مَسْأَلَةٌ?|مسألة|فَرْعٌ?|فرع|فَائِدَةٌ?|فائدة|تَنْبِيهٌ?|تنبيه|خَاتِمَةٌ?|خاتمة|مُقَدِّمَةٌ?|مقدمة|تَتِمَّةٌ?|تتمة|أَصْلٌ?|أصل|قَاعِدَةٌ?|قاعدة|ضَابِطٌ?|ضابط|مَبْحَثٌ?|مبحث|مَطْلَبٌ?|مطلب)[^\n\r]+)|'
+    // ── 4. Bracketed Section Titles / Chapter Headers [...] ──
+    r'(\[[^\]\r\n]+\])|'
+    // ── 5. Matn Citations in Commentaries (قوله: ... / الشرح:) ──
+    r'(\(قَوْلُهُ:?[^)]+\)|\(قوله:?[^)]+\)|قَوْلُهُ:|قوله:|\(الشَّرْحُ:?[^)]+\)|\(الشرح:?[^)]+\)|الشَّرْحُ:|الشرح:|\(المَتْنُ:?[^)]+\)|\(المتن:?[^)]+\)|المَتْنُ:|المتن:|\(الأَصْلُ:?[^)]+\)|\(الأصل:?[^)]+\)|الأَصْلُ:|الأصل:)|'
+    // ── 6. Scholarly Attribution & Fiqh Dialogues (قال الشافعي / فإن قيل / قلنا) ──
+    r'((?:(?:قَالَ|قال)\s+(?:المُصَنِّفُ|المصنف|الشَّارِحُ|الشارح|الإِمَامُ|الإمام|الشَّيْخُ|الشيخ|الشَّافِعِيُّ|الشافعي|مَالِكٌ|مالك|أَحْمَدُ|أحمد|أَبُو\s+حَنِيفَةَ|أبو\s+حنيفة|ابْنُ\s+تَيْمِيَّةَ|ابن\s+تيمية|ابْنُ\s+القَيِّمِ|ابن\s+القيم|النَّوَوِيُّ|النووي|ابْنُ\s+حَجَرٍ|ابن\s+حجر|ابْنُ\s+كَثِيرٍ|ابن\s+كثير|القُرْطُبِيُّ|القرطبي|ابْنُ\s+رَجَبٍ|ابن\s+رجب|الذَّهَبِيُّ|الذهبي|الطَّبَرِيُّ|الطبري|السَّعْدِيُّ|السعدي|العُثَيْمِينُ|العثيمين|ابْنُ\s+بَازٍ|ابن\s+باز|الأَلْبَانِيُّ|الألباني|شَيْخُ\s+الإِسْلَامِ|شيخ\s+الإسلام|القَاضِي|القاضي|رَحِمَهُ\s+اللَّهُ|رحمه\s+الله):?)|(?:قُلْتُ|قلت):?|(?:(?:فَإِنْ\s+قِيلَ|فإن\s+قيل|قِيلَ|قيل|فَإِنْ\s+قَالُوا|فإن\s+قالوا):?)|(?:(?:قُلْنَا|قلنا|فَالجَوَابُ|فالجواب|وَالجَوَابُ|والجواب|أُجِيبَ|أجيب):?))|'
+    // ── 7. Hadith Transmission Chains (حدثنا / أخبرنا / عن أبي هريرة) ──
+    r'((?:^|\s)(?:(?:حَدَّثَنَا|حدثنا|حَدَّثَنِي|حدثني|أَخْبَرَنَا|أخبرنا|أَخْبَرَنِي|أخبرني|أَنْبَأَنَا|أنبأنا)(?=\s))|(?:(?:عَنْ\s+أَبِي|عن\s+أبي|عَنِ\s+ابْنِ|عن\s+ابن|عَنْ\s+عَائِشَةَ|عن\s+عائشة|عَنْ\s+أَنَسٍ|عن\s+أنس|عَنْ\s+عُمَرَ|عن\s+عمر|عَنْ\s+عَلِيٍّ|عن\s+علي|عَنْ\s+جَابِرٍ|عن\s+جابر)(?=\s)))|'
+    // ── 8. Sacred Honorifics & Du'a (ﷺ / رضي الله عنه / رحمه الله / سبحانه) ──
+    r'(ﷺ|(?:\()?(?:صَلَّى\s+اللَّهُ\s+عَلَيْهِ\s+وَسَلَّمَ|صلى\s+الله\s+عليه\s+وسلم|عَلَيْهِ\s+الصَّلَاةُ\s+وَالسَّلَامُ|عليه\s+الصلاة\s+والسلام|عَلَيْهِ\s+السَّلَامُ|عليه\s+السلام|عَلَيْهِمَا\s+السَّلَامُ|عليهما\s+السلام|رَضِيَ\s+اللَّهُ\s+عَنْهُ|رضي\s+الله\s+عنه|رَضِيَ\s+اللَّهُ\s+عَنْهَا|رضي\s+الله\s+عنها|رَضِيَ\s+اللَّهُ\s+عَنْهُمْ|رضي\s+الله\s+عنهم|رَضِيَ\s+اللَّهُ\s+عَنْهُمَا|رضي\s+الله\s+عنهما|رَحِمَهُ\s+اللَّهُ|رحمه\s+الله|رَحِمَهُمُ\s+اللَّهُ|رحمهم\s+الله|رَحِمَنَا\s+اللَّهُ|رحمنا\s+الله|حَفِظَهُ\s+اللَّهُ|حفظه\s+الله|سُبْحَانَهُ\s+وَتَعَالَى|سبحانه\s+وتعالى|سُبْحَانَهُ|سبحانه|عَزَّ\s+وَجَلَّ|عز\s+وجل|جَلَّ\s+وَعَلَا|جل\s+وعلا|تَبَارَكَ\s+وَتَعَالَى|تبارك\s+وتعالى|جَلَّ\s+جَلَالُهُ|جل\s+جلاله)(?:\))?)|'
+    // ── 9. Divisions, Principles & Numerals (أولاً / الشرط الأول / الأصل الأول) ──
+    r'((?:(?:أَوَّلًا|أولاً|أولا|ثَانِيًا|ثانياً|ثانيا|ثَالِثًا|ثالثاً|ثالثا|رَابِعًا|رابعاً|رابعا|خَامِسًا|خامساً|خامسا|سَادِسًا|سادساً|سادسا|سَابِعًا|سابعاً|سابعا|ثَامِنًا|ثامناً|ثامنا|تَاسِعًا|تاسعاً|تاسعا|عَاشِرًا|عاشراً|عاشرا):?)|(?:(?:الشَّرْطُ|الشرط|الرُّكْنُ|الركن|الأَصْلُ|الأصل|القَاعِدَةُ|القاعدة|الوَجْهُ|الوجه|المَسْأَلَةُ|المسألة|الفَرْعُ|الفرع)\s+(?:الأَوَّلُ|الأول|الثَّانِي|الثاني|الثَّالِثُ|الثالث|الرَّابِعُ|الرابع|الخَامِسُ|الخامس|السَّادِسُ|السادس):?)|(?:(?:^|\n)\s*(?:[٠-٩0-9]+[\s\-–.:]+|(?:[٠-٩0-9]+)\))))|'
+    // ── 10. Poetic Breaks (/ or ***) ──
+    r'(\s*(?:/{1,3}|\*{3,})\s*)|'
+    // ── 11. Footnote Markers ──
+    r'(\([٠-٩0-9]+\)|\[[٠-٩0-9]+\])',
     unicode: true,
   );
 
@@ -49,7 +63,7 @@ class ShamelaTextHighlighter {
       final matchedText = match.group(0)!;
 
       if (match.group(1) != null) {
-        // ── 1. Quranic Verse (﴿...﴾ or {...}) ──
+        // ── 1. Quranic Verse & Divine Speech ──
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
@@ -59,75 +73,33 @@ class ShamelaTextHighlighter {
           ),
         ));
       } else if (match.group(2) != null) {
-        // ── 2. Hadith / Direct Quote ──
+        // ── 2. Prophetic Hadith & Takhrij Citation ──
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.primary,
-            fontWeight: FontWeight.w600,
+            color: palette.success,
+            fontWeight: FontWeight.w700,
           ),
         ));
       } else if (match.group(3) != null) {
-        // ── 3. Bracketed Section Title / Chapter Header ──
-        spans.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Container(
-            margin: const EdgeInsetsDirectional.symmetric(
-              vertical: AppSpace.xs,
-              horizontal: AppSpace.xxs,
-            ),
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.sm,
-              vertical: AppSpace.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: palette.goldSoft,
-              borderRadius: AppRadius.smRadius,
-              border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              matchedText.length > 2
-                  ? matchedText.substring(1, matchedText.length - 1).trim()
-                  : matchedText,
-              style: textTheme.caption.copyWith(
-                color: palette.gold,
-                fontWeight: FontWeight.bold,
-                fontSize: baseFontSize * 0.85,
-              ),
-            ),
+        // ── 3. Prominent Line Heading (باب / فصل / مسألة) ──
+        spans.add(TextSpan(
+          text: matchedText,
+          style: baseStyle.copyWith(
+            fontFamily: fontFamily,
+            color: palette.gold,
+            fontWeight: FontWeight.bold,
+            fontSize: baseFontSize * 1.08,
+            height: lineHeight * 1.2,
           ),
         ));
       } else if (match.group(4) != null) {
-        // ── 4. Prominent Line Heading (باب / فصل / مسألة) ──
-        spans.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Container(
-            width: double.infinity,
-            margin: const EdgeInsetsDirectional.symmetric(
-              vertical: AppSpace.sm,
-            ),
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
-            ),
-            decoration: BoxDecoration(
-              color: palette.goldSoft,
-              borderRadius: AppRadius.smRadius,
-              border: Border.all(
-                color: palette.gold.withValues(alpha: 0.35),
-                width: 1.0,
-              ),
-            ),
-            child: Text(
-              matchedText.trim(),
-              style: textTheme.titleSmall.copyWith(
-                fontFamily: fontFamily,
-                color: palette.gold,
-                fontWeight: FontWeight.bold,
-                fontSize: baseFontSize * 1.05,
-              ),
-              textAlign: TextAlign.center,
-            ),
+        // ── 4. Bracketed Section Title / Chapter Header [...] ──
+        spans.add(TextSpan(
+          text: matchedText,
+          style: baseStyle.copyWith(
+            color: palette.gold,
+            fontWeight: FontWeight.bold,
           ),
         ));
       } else if (match.group(5) != null) {
@@ -138,30 +110,12 @@ class ShamelaTextHighlighter {
             color: palette.primary,
             fontWeight: FontWeight.w800,
             decoration: TextDecoration.underline,
-            decorationColor: palette.gold.withValues(alpha: 0.4),
+            decorationColor: palette.gold.withValues(alpha: 0.45),
             decorationThickness: 1.5,
           ),
         ));
       } else if (match.group(6) != null) {
-        // ── 6. ﷺ Emblem ──
-        spans.add(TextSpan(
-          text: matchedText,
-          style: baseStyle.copyWith(
-            color: palette.gold,
-            fontWeight: FontWeight.bold,
-          ),
-        ));
-      } else if (match.group(7) != null) {
-        // ── 7. Du'a / Honorific ──
-        spans.add(TextSpan(
-          text: matchedText,
-          style: baseStyle.copyWith(
-            color: palette.textMuted,
-            fontSize: baseFontSize * 0.9,
-          ),
-        ));
-      } else if (match.group(8) != null) {
-        // ── 8. Scholarly Attribution Dialog (قال المصنف:) ──
+        // ── 6. Scholarly Attribution & Fiqh Dialogues (قال المصنف / الشارح / قلنا) ──
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
@@ -169,8 +123,45 @@ class ShamelaTextHighlighter {
             fontWeight: FontWeight.bold,
           ),
         ));
+      } else if (match.group(7) != null) {
+        // ── 7. Hadith Transmission Chains (حدثنا / أخبرنا / عن أبي هريرة) ──
+        spans.add(TextSpan(
+          text: matchedText,
+          style: baseStyle.copyWith(
+            color: palette.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ));
+      } else if (match.group(8) != null) {
+        // ── 8. Sacred Honorifics & Du'a (ﷺ / رضي الله عنه / رحمه الله / سبحانه) ──
+        spans.add(TextSpan(
+          text: matchedText,
+          style: baseStyle.copyWith(
+            color: palette.gold.withValues(alpha: 0.9),
+            fontSize: baseFontSize * 0.9,
+            fontWeight: FontWeight.w600,
+          ),
+        ));
       } else if (match.group(9) != null) {
-        // ── 9. Footnote Citation ──
+        // ── 9. Divisions, Principles & Numerals (أولاً / الشرط الأول / ١ -) ──
+        spans.add(TextSpan(
+          text: matchedText,
+          style: baseStyle.copyWith(
+            color: palette.gold,
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+      } else if (match.group(10) != null) {
+        // ── 10. Poetic Breaks (/ or ***) ──
+        spans.add(TextSpan(
+          text: ' ✤ ',
+          style: baseStyle.copyWith(
+            color: palette.gold,
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+      } else if (match.group(11) != null) {
+        // ── 11. Footnote Numbers ──
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
