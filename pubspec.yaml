@@ -20,6 +20,7 @@ dependencies:
   just_audio: ^0.10.5
   just_audio_background: ^0.0.1-beta.17
   share_plus: ^10.0.2
+  url_launcher: ^6.3.0
   file_picker: ^11.0.3
   flutter:
     sdk: flutter

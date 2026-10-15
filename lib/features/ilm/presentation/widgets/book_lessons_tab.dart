@@ -110,6 +110,7 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
         page: VideoPlayerPage(
           title: lesson.title,
           videoId: lesson.videoId,
+          scholar: lesson.scholar,
         ),
       ),
     );

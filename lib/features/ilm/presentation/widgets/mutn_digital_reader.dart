@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
@@ -300,10 +301,37 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: AppSpace.lg),
-                            AppButton(
-                              label: 'إعادة المحاولة',
-                              size: AppButtonSize.sm,
-                              onPressed: () => _loadPage(pageNum),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: AppSpace.sm,
+                              runSpacing: AppSpace.sm,
+                              children: [
+                                AppButton(
+                                  label: 'إعادة المحاولة',
+                                  size: AppButtonSize.sm,
+                                  onPressed: () => _loadPage(pageNum),
+                                ),
+                                if (widget.book.pdfPath != null)
+                                  AppButton(
+                                    label: 'نسخة PDF (بدون إنترنت)',
+                                    variant: AppButtonVariant.tonal,
+                                    size: AppButtonSize.sm,
+                                    icon: Icons.picture_as_pdf_rounded,
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => PdfViewerPage(
+                                            assetPath: widget.book.pdfPath!,
+                                            title: widget.book.title,
+                                            initialPage: pageNum,
+                                            onPageChanged: (p, t) =>
+                                                widget.onPageChanged(p, t),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                              ],
                             ),
                           ],
                         ),

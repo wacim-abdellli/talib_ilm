@@ -56,10 +56,10 @@ class MutunDigitalCatalog {
     ),
     'bk_tuhfat_atfal': MutunDigitalEntry(
       id: 'bk_tuhfat_atfal',
-      shamelaId: 21415, // Fallback tajweed/mutun id
+      shamelaId: 9632,
       title: 'تحفة الأطفال والغلمان في تجويد القرآن',
       author: 'سليمان بن حسين الجمزوري',
-      totalPages: 6,
+      totalPages: 8,
       isPoem: true,
     ),
     'bk_shuroot_salah': MutunDigitalEntry(

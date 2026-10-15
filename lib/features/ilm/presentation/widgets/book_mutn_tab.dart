@@ -4,6 +4,7 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_states.dart';
+import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import 'mutn_digital_reader.dart';
@@ -38,6 +39,22 @@ class BookMutnTab extends StatelessWidget {
     final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
 
     if (digitalEntry == null) {
+      if (book.pdfPath != null) {
+        return FutureBuilder<int>(
+          future: mutunInitialPage,
+          builder: (context, snapshot) {
+            return PdfViewerPage(
+              assetPath: book.pdfPath!,
+              title: book.title,
+              initialPage: snapshot.data ?? 1,
+              showAppBar: false,
+              onPageChanged: (page, total) => onPageChanged(page, total),
+              isBookmarked: isBookmarked,
+              onBookmarkToggle: onToggleBookmark,
+            );
+          },
+        );
+      }
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpace.xl),
