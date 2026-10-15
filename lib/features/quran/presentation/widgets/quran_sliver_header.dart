@@ -21,10 +21,10 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get minExtent => 126.0;
+  double get minExtent => 108.0;
 
   @override
-  double get maxExtent => 126.0;
+  double get maxExtent => 108.0;
 
   @override
   bool shouldRebuild(covariant QuranPinnedHeaderDelegate oldDelegate) {
@@ -42,25 +42,25 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
     final palette = context.palette;
     final textTheme = context.text;
 
-    return Container(
-      color: palette.bg,
-      padding: const EdgeInsetsDirectional.only(
-        top: AppSpace.xs,
-        bottom: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.bg,
-        border: Border(
-          bottom: BorderSide(
-            color: overlapsContent
-                ? palette.border
-                : palette.border.withValues(alpha: 0.35),
-            width: 0.8,
+    return SizedBox.expand(
+      child: Container(
+        padding: const EdgeInsetsDirectional.only(
+          top: AppSpace.xs,
+          bottom: AppSpace.xs,
+        ),
+        decoration: BoxDecoration(
+          color: palette.bg,
+          border: Border(
+            bottom: BorderSide(
+              color: overlapsContent
+                  ? palette.border
+                  : palette.border.withValues(alpha: 0.35),
+              width: 0.8,
+            ),
           ),
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // 1. Index Category Tabs (السور، الأجزاء، الأحزاب، المحفوظات)
           Padding(
@@ -187,8 +187,9 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTabButton({
     required BuildContext context,

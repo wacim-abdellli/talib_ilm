@@ -435,7 +435,7 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
                   ),
                   const SizedBox(height: AppSpace.sm),
                   Text(
-                    'تعذر تحميل معاني الكلمات',
+                    'المصحف يعمل كاملاً دون إنترنت',
                     style: textTheme.bodySmall.copyWith(
                       color: palette.text,
                       fontWeight: FontWeight.bold,
@@ -443,7 +443,7 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
                   ),
                   const SizedBox(height: AppSpace.xs),
                   Text(
-                    'تأكد من الاتصال بالإنترنت ثم حاول مرة أخرى',
+                    'معاني الكلمات المفردة تتطلب اتصالاً لحفظها تلقائياً على جهازك للاستخدام لاحقاً بدون إنترنت.',
                     style: textTheme.caption.copyWith(color: palette.textMuted),
                     textAlign: TextAlign.center,
                   ),

@@ -758,3 +758,26 @@ FAILED (54 violations)
   - `flutter test`: 8/8 tests passed.
   - `flutter build apk --debug`: Built successfully (40.3s).
 - **Open Issues:** None.
+
+---
+
+## Quran Blank Screen Fix & 100% Offline Access Verification
+- **Status:** Complete
+- **Root Causes Diagnosed & Fixed:**
+  1. **Duplicate Container Color & Decoration:**
+     - Removed redundant `color: palette.bg` from `QuranPinnedHeaderDelegate`'s container since `decoration: BoxDecoration(color: palette.bg, ...)` was already supplied, resolving the Flutter assertion failure.
+  2. **Pinned Persistent Header Sliver Extent Mismatch:**
+     - Resolved `layoutExtent exceeds paintExtent` assertion in `QuranPinnedHeaderDelegate` by wrapping the root in `SizedBox.expand` with matching 108.0dp `minExtent` and `maxExtent`.
+  3. **Viewport Refactoring to CustomScrollView:**
+     - Replaced `NestedScrollView` with a unified `CustomScrollView` and native `SliverList.builder` slivers for Surahs, Juzs, and Hizbs, eliminating nested scroll conflicts and viewport collapse.
+     - Enclosed `_loadData()` in a resilient `try-catch` to ensure `_isLoading = false` under all circumstances.
+  4. **100% Offline Access Clarification:**
+     - Confirmed all 114 Surahs, 6236 verses, and 604 Medina Mushaf pages and fonts (`QCF4001` - `QCF4604`) are bundled offline inside the APK.
+     - Updated Ayah word-by-word offline notification in `ayah_details_tabs.dart` to clarify that Quran reading is 100% offline.
+- **Verification Results:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (9 allows, cap 10).
+  - `flutter test test/quran_page_test.dart`: All passed (0 errors).
+  - `flutter test test/golden/`: 39/39 goldens passed.
+- **Open Issues:** None.
+
