@@ -14,6 +14,8 @@ class SharhCard extends StatelessWidget {
   final bool recommended;
   final bool isLastRead;
   final String? difficulty;
+  final bool isDigital;
+  final String? description;
 
   const SharhCard({
     super.key,
@@ -26,6 +28,8 @@ class SharhCard extends StatelessWidget {
     this.recommended = false,
     this.isLastRead = false,
     this.difficulty,
+    this.isDigital = false,
+    this.description,
   });
 
   @override
@@ -53,7 +57,11 @@ class SharhCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
-          const IconBadge(icon: Icons.person_outline),
+          IconBadge(
+            icon: isDigital ? Icons.auto_stories_rounded : Icons.person_outline,
+            bg: isDigital ? palette.primarySoft : null,
+            fg: isDigital ? palette.primary : null,
+          ),
           const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
@@ -70,6 +78,26 @@ class SharhCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (isDigital) ...[
+                      const SizedBox(width: AppSpace.xs),
+                      Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xs,
+                          vertical: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: palette.primarySoft,
+                          borderRadius: AppRadius.pillRadius,
+                        ),
+                        child: Text(
+                          'قراءة رقمية',
+                          style: context.text.caption.copyWith(
+                            color: palette.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (isLastRead) ...[
                       const SizedBox(width: AppSpace.xs),
                       Container(
@@ -92,6 +120,17 @@ class SharhCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (description != null && description!.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    description!,
+                    style: context.text.caption.copyWith(
+                      color: palette.textSubtle,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 if (progressText != null) ...[
                   const SizedBox(height: AppSpace.xs),
                   Text(

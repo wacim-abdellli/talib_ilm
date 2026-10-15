@@ -81,6 +81,8 @@ class BookSharhTab extends StatelessWidget {
               return SharhCard(
                 title: sharh.title,
                 scholar: sharh.scholar,
+                description: sharh.description,
+                isDigital: sharh.shamelaId != null,
                 difficulty: _difficultyLabel(index),
                 recommended: index == 0,
                 isLastRead: sharh.file == lastSharhFile,

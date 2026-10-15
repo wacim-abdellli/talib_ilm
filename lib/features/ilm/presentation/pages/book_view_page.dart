@@ -7,23 +7,24 @@ import 'package:talib_ilm/core/services/last_activity_service.dart';
 import 'package:talib_ilm/core/services/last_sharh_service.dart';
 import 'package:talib_ilm/shared/widgets/app_popup.dart';
 import 'package:talib_ilm/shared/widgets/app_snackbar.dart';
-import '../../data/models/lesson_model.dart';
-
 import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../app/theme/theme_colors.dart';
-import '../../../../app/theme/app_text.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/sharh_model.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
-import '../../../../shared/widgets/empty_state.dart';
 import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
-import 'lessons_list_page.dart';
+import '../../data/catalogs/mutun_lessons_catalog.dart';
+import '../../data/catalogs/turath_catalog.dart';
+import '../../data/models/shamela_models.dart';
+import '../../data/services/shamela_service.dart';
+import 'shamela_reader_page.dart';
 import 'sharh_reader_page.dart';
+import '../widgets/book_lessons_tab.dart';
 import '../widgets/book_mutn_tab.dart';
 import '../widgets/book_sharh_tab.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
@@ -76,7 +77,6 @@ class _BookViewPageState extends State<BookViewPage>
   String? _lastSharhFile;
   Sharh? _lastSharh;
   PdfPageInfo? _lastSharhPage;
-  static const int _temporaryLessonsCount = 10; // 🔧 TEMP
   late final String _mutunPdfKey;
   late final Future<int> _mutunInitialPage;
   bool _isFavorite = false;
@@ -230,8 +230,13 @@ class _BookViewPageState extends State<BookViewPage>
 
     PdfPageInfo? info;
     if (file != null) {
-      final key = _lastActivityService.pdfKeyForSharh(widget.book.id, file);
-      info = await _lastActivityService.getPdfPage(key);
+      if (sharh != null && sharh.shamelaId != null) {
+        final page = await ShamelaService.getLastReadPage(sharh.shamelaId!);
+        info = PdfPageInfo(page: page, total: 250);
+      } else {
+        final key = _lastActivityService.pdfKeyForSharh(widget.book.id, file);
+        info = await _lastActivityService.getPdfPage(key);
+      }
     }
 
     if (!mounted) return;
@@ -346,13 +351,47 @@ class _BookViewPageState extends State<BookViewPage>
     }
 
     if (widget.openLessonsOnStart) {
-      await _openLessonsList();
+      _tabController.animateTo(2);
     }
   }
 
   Future<void> _openSharhPdf(Sharh sharh) async {
     await _lastSharhService.save(widget.book.id, sharh.file);
     await _lastActivityService.setLastSharh(widget.book.id, sharh.file);
+
+    if (sharh.shamelaId != null) {
+      final match = TurathCatalog.books
+          .where((b) => b.id == sharh.shamelaId)
+          .firstOrNull;
+      final shamelaBook = match ??
+          ShamelaBook(
+            id: sharh.shamelaId!,
+            title: sharh.title,
+            author: sharh.scholar,
+            category: 'شروح المتون',
+            categoryId: 1,
+            totalPages: 250,
+            description: sharh.description ?? sharh.title,
+          );
+
+      final initialPage =
+          await ShamelaService.getLastReadPage(sharh.shamelaId!);
+
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        buildFadeRoute(
+          page: ShamelaReaderPage(
+            book: shamelaBook,
+            initialPage: initialPage,
+          ),
+        ),
+      );
+
+      await _loadLastSharh();
+      return;
+    }
 
     final pdfPath = AppAssets.sharhPdf(widget.book.id, sharh.file);
     final pdfKey = _lastActivityService.pdfKeyForSharh(
@@ -381,31 +420,6 @@ class _BookViewPageState extends State<BookViewPage>
     );
 
     await _loadLastSharh();
-  }
-
-  Future<void> _openLessonsList() async {
-    if (widget.book.playlistId == null) return;
-
-    await _lastActivityService.setLastTab(
-      widget.book.id,
-      LastActivityService.tabLessons,
-    );
-
-    if (!mounted) return;
-
-    await Navigator.push(
-      context,
-      buildFadeRoute(
-        page: LessonsListPage(
-          bookId: widget.book.id,
-          bookTitle: widget.book.title,
-          lessons: Lesson.generateFromPlaylist(
-            widget.book.playlistId!,
-            count: _temporaryLessonsCount,
-          ),
-        ),
-      ),
-    );
   }
 
   void _goToMutn() {
@@ -656,26 +670,15 @@ class _BookViewPageState extends State<BookViewPage>
               onOpenSharh: _openSharhPdf,
             ),
 
-            widget.book.playlistId == null
-                ? Padding(
-                    padding: AppSpace.cardPadding,
-                    child: EmptyState(
-                      icon: Icons.ondemand_video_outlined,
-                      title: AppStrings.bookLessonsEmptyTitle,
-                      subtitle: AppStrings.bookLessonsEmptyMessage,
-                      actionLabel: AppStrings.bookLessonsEmptyAction,
-                      onAction: _goToMutn,
-                    ),
-                  )
-                : Center(
-                    child: FilledButton(
-                      onPressed: _openLessonsList,
-                      child: Text(
-                        AppStrings.bookShowLessons,
-                        style: AppText.body,
-                      ),
-                    ),
-                  ),
+            BookLessonsTab(
+              bookId: widget.book.id,
+              bookTitle: widget.book.title,
+              lessons: MutunLessonsCatalog.getLessonsForBook(
+                widget.book.id,
+                fallbackPlaylist: widget.book.playlistId,
+              ),
+              onGoToMutn: _goToMutn,
+            ),
           ],
         ),
       ),

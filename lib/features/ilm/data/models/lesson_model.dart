@@ -5,12 +5,14 @@ class Lesson {
   final String title;
   final String videoId;
   final int durationMinutes;
+  final String? scholar;
 
-  Lesson({
+  const Lesson({
     required this.index,
     required this.title,
     required this.videoId,
     required this.durationMinutes,
+    this.scholar,
   });
 
   /// TEMP generator until API / real data
