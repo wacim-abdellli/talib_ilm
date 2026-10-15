@@ -12,11 +12,10 @@ import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
 import '../widgets/book_view_controls.dart' show BookNoteDialog;
-import '../widgets/mutn_memorization_view.dart';
 import '../widgets/scholarly_reader_hud.dart';
 import '../widgets/shamela_fihris_sheet.dart';
+import '../widgets/shamela_page_content.dart';
 import '../widgets/shamela_reader_top_bar.dart';
-import '../widgets/shamela_text_highlighter.dart';
 import '../widgets/shamela_typography_sheet.dart';
 
 class ShamelaReaderPage extends StatefulWidget {
@@ -400,7 +399,13 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
 
                   return BookPageTapDetector(
                     onTap: _toggleControls,
-                    child: _buildPageContent(page, palette, textTheme),
+                    child: ShamelaPageContent(
+                      page: page,
+                      memorizationMode: _memorizationMode,
+                      fontFamily: _fontFamily,
+                      fontSizeDelta: _fontSizeDelta,
+                      lineHeight: _lineHeight,
+                    ),
                   );
                 },
               ),
@@ -425,121 +430,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               onShare: _sharePageContent,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPageContent(
-    ShamelaPage page,
-    AppPalette palette,
-    AppTextTheme textTheme,
-  ) {
-    return SelectionArea(
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.lg,
-            vertical: AppSpace.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Chapter Header Pill if present
-              if (page.chapterTitle != null && page.chapterTitle!.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.goldSoft,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    page.chapterTitle!,
-                    style: textTheme.caption.copyWith(
-                      color: palette.gold,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.md),
-              ],
-
-              // Memorization Mode or Scholarly Syntax Highlighter
-              if (_memorizationMode)
-                MutnMemorizationView(
-                  content: page.content,
-                  fontFamily: _fontFamily,
-                  fontSizeDelta: _fontSizeDelta,
-                  lineHeight: _lineHeight,
-                )
-              else
-                Text.rich(
-                  ShamelaTextHighlighter.buildSpans(
-                    text: page.content,
-                    palette: palette,
-                    textTheme: textTheme,
-                    fontFamily: _fontFamily,
-                    fontSizeDelta: _fontSizeDelta,
-                    lineHeight: _lineHeight,
-                  ),
-                  textAlign: TextAlign.start,
-                ),
-
-              // Footnotes (الحواشي والتحقيق) Section if present
-              if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
-                const SizedBox(height: AppSpace.lg),
-                Divider(color: palette.gold.withValues(alpha: 0.4), height: 1),
-                const SizedBox(height: AppSpace.sm),
-                Container(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceRaised,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.notes_rounded, color: palette.primary, size: AppIcon.sm),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            'الحواشي والتحقيق:',
-                            style: textTheme.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpace.xs),
-                      Text.rich(
-                        ShamelaTextHighlighter.buildSpans(
-                          text: page.hamesh!,
-                          palette: palette,
-                          textTheme: textTheme,
-                          fontFamily: _fontFamily,
-                          fontSizeDelta: _fontSizeDelta * 0.7 - 2.0,
-                          lineHeight: 1.6,
-                        ),
-                        textAlign: TextAlign.start,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: AppSpace.xxl),
-            ],
-          ),
         ),
       ),
     );

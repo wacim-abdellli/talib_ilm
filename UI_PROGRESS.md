@@ -804,3 +804,24 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
      - `flutter test`: 100% passing.
 - **Open Issues:** None.
+
+---
+
+## App Footprint Optimization, Asset De-cluttering & Scrollbar Crash Resolution
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Massive Asset De-cluttering (~18 MB saved directly from bundled assets):**
+     - **PDF Compression**: Recompressed and deflated `bk_adhkar_adab.pdf` from 12.99 MB down to 3.23 MB (9.76 MB reduction) while perfectly preserving all 268 pages.
+     - **Dead Shuruh Removal**: Removed 6.63 MB of unreferenced PDFs in `assets/pdfs/shuruh/bk_usul_thalatha/` (`ibn_uthaymeen.pdf`, `ibn_baz.pdf`, `salah_al_shaikh.pdf`).
+     - **Duplicate Images & Mockups Removed**: Purged orphaned mockups and duplicates in `assets/images/` and `assets/branding/` (`app_logo_minimal.png`, `app_logo_transparent.png`, `icon_dark_rounded.png`, `icon_light_rounded.png`, `logo.png`, `talib_ilm_icon_rounded.png`, etc.).
+     - **Audio De-duplication**: Deleted unused `adhan_takbeer_*` variations from both `assets/audio/` and Android `res/raw/`.
+     - **Pubspec Sanitization**: Cleaned `pubspec.yaml` to only declare active asset folders.
+  2. **Scrollbar Isolation & Crash Fix (`shamela_page_content.dart`):**
+     - Diagnosed Android runtime crash (`PrimaryScrollController attached to multiple scroll views` / `ScrollController must only have one ScrollPosition`).
+     - Extracted page rendering into `ShamelaPageContent` with an isolated `ScrollController` lifecycle, ensuring 1-to-1 binding with `Scrollbar(thumbVisibility: true)` and `primary: false`.
+     - Reduced `shamela_reader_page.dart` from 548 lines to 430 lines (< 600 lines max).
+  3. **Verification:**
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
+     - `flutter test`: All 19 tests passed.
+- **Open Issues:** None.

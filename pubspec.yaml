@@ -82,13 +82,10 @@ flutter:
 
   assets:
     - assets/branding/
-    - assets/data/mutun_program.json
     - assets/data/
+    - assets/data/quran/
     - assets/audio/
-    - assets/images/logo.png
-    - assets/images/
     - assets/pdfs/mutun/
-    - assets/pdfs/shuruh/bk_usul_thalatha/
 
 
   fonts:
