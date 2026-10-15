@@ -8,6 +8,8 @@ class MoreSection {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final Widget? trailing;
+  final String? badge;
 
   MoreSection({
     required this.title,
@@ -15,6 +17,8 @@ class MoreSection {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.trailing,
+    this.badge,
   });
 }
 
@@ -60,12 +64,42 @@ class MoreSectionCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  section.title,
-                  style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: palette.text,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        section.title,
+                        style: textTheme.label.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: palette.text,
+                        ),
+                      ),
+                    ),
+                    if (section.badge != null) ...[
+                      const SizedBox(width: AppSpace.xs),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpace.xs,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: palette.gold.withValues(alpha: 0.15),
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.gold.withValues(alpha: 0.3),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          section.badge!,
+                          style: textTheme.caption.copyWith(
+                            color: palette.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -77,6 +111,11 @@ class MoreSectionCard extends StatelessWidget {
               ],
             ),
           ),
+          if (section.trailing != null) ...[
+            const SizedBox(width: AppSpace.xs),
+            section.trailing!,
+            const SizedBox(width: AppSpace.xs),
+          ],
           Icon(
             Icons.arrow_forward_ios_rounded,
             color: palette.textMuted,

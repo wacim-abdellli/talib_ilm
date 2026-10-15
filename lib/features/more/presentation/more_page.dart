@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../app/app.dart';
-import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import '../../../shared/widgets/app_snackbar.dart';
 import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
 import '../../quran/data/services/reading_stats_service.dart';
 import '../../quran/presentation/quran_audio_downloads_page.dart';
 import 'credits_and_licenses_page.dart';
-import 'widgets/backup_restore_sheet.dart';
 import 'widgets/more_section_card.dart';
 import 'widgets/theme_selector_sheet.dart';
 
@@ -42,6 +39,26 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
+  Widget _buildCategoryHeader(BuildContext context, String title) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        start: AppSpace.xs,
+        top: AppSpace.md,
+        bottom: AppSpace.xs,
+      ),
+      child: Text(
+        title,
+        style: textTheme.caption.copyWith(
+          color: palette.gold,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -50,74 +67,6 @@ class _MorePageState extends State<MorePage> {
     return ListenableBuilder(
       listenable: themeService,
       builder: (context, _) {
-        final sections = <MoreSection>[
-          MoreSection(
-            title: 'المفضلة والمحفوظات',
-            subtitle: 'جميع الأذكار، المتون، الأحاديث، والفوائد المحفوظة',
-            icon: Icons.bookmark_rounded,
-            color: palette.gold,
-            onTap: () => Navigator.push(
-              context,
-              buildFadeRoute(page: const FavoritesPage()),
-            ),
-          ),
-          MoreSection(
-            title: 'إعدادات الصلاة',
-            subtitle: 'تنبيهات الأذان وطرق الحساب ومواقيت الصلاة',
-            icon: Icons.mosque_rounded,
-            color: palette.primary,
-            onTap: () => _openPrayerSettings(context),
-          ),
-          MoreSection(
-            title: 'الإعدادات العامة والموقع',
-            subtitle: AppStrings.moreGeneralSubtitle,
-            icon: Icons.location_on_rounded,
-            color: palette.success,
-            onTap: () => _openLocationSettings(context),
-          ),
-          MoreSection(
-            title: 'المظهر والسمة',
-            subtitle: themeService.themeDisplayName,
-            icon: themeService.themeIcon,
-            color: palette.gold,
-            onTap: () => _showThemeSelector(context),
-          ),
-          MoreSection(
-            title: 'المصادر والتراخيص',
-            subtitle: 'بيانات مجمع الملك فهد، القراء، التفاسير، والرخص البرمجية',
-            icon: Icons.verified_user_rounded,
-            color: palette.primary,
-            onTap: () => Navigator.push(
-              context,
-              buildFadeRoute(page: const CreditsAndLicensesPage()),
-            ),
-          ),
-          MoreSection(
-            title: AppStrings.moreLanguageTitle,
-            subtitle: AppStrings.moreLanguageSubtitle,
-            icon: Icons.translate_rounded,
-            color: palette.primary,
-            onTap: () => _showInfo(context, AppStrings.moreLanguageInfo),
-          ),
-          MoreSection(
-            title: 'التنزيلات الصوتية',
-            subtitle: 'إدارة التلاوات المحملة للاستماع دون اتصال بالإنترنت',
-            icon: Icons.download_for_offline_rounded,
-            color: palette.primary,
-            onTap: () => Navigator.push(
-              context,
-              buildFadeRoute(page: const QuranAudioDownloadsPage()),
-            ),
-          ),
-          MoreSection(
-            title: AppStrings.moreBackupTitle,
-            subtitle: 'تصدير واستيراد الفواصل والملاحظات الإيمانية محلياً',
-            icon: Icons.cloud_sync_rounded,
-            color: palette.gold,
-            onTap: () => BackupRestoreSheet.show(context),
-          ),
-        ];
-
         return Scaffold(
           backgroundColor: palette.bg,
           body: SafeArea(
@@ -311,18 +260,113 @@ class _MorePageState extends State<MorePage> {
                 Expanded(
                   child: ListView(
                     padding: AppSpace.screenPadding.copyWith(
-                      top: AppSpace.md,
+                      top: AppSpace.xs,
                       bottom: AppSize.navClearance(context),
                     ),
                     physics: const BouncingScrollPhysics(
                       parent: AlwaysScrollableScrollPhysics(),
                     ),
                     children: [
-                      // Section Cards
-                      ...sections.map(
-                        (section) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                          child: MoreSectionCard(section: section),
+                      // Group 1: المحتوى والمحفوظات
+                      _buildCategoryHeader(context, 'المحتوى والمحفوظات'),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'المفضلة والمحفوظات',
+                            subtitle:
+                                'إشارات القراءة، الأذكار، المتون، والفوائد المحفوظة',
+                            icon: Icons.bookmark_rounded,
+                            color: palette.gold,
+                            onTap: () => Navigator.push(
+                              context,
+                              buildFadeRoute(page: const FavoritesPage()),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'التنزيلات الصوتية',
+                            subtitle:
+                                'إدارة التلاوات المحملة للاستماع دون اتصال بالإنترنت',
+                            icon: Icons.download_for_offline_rounded,
+                            color: palette.primary,
+                            onTap: () => Navigator.push(
+                              context,
+                              buildFadeRoute(
+                                page: const QuranAudioDownloadsPage(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Group 2: الصلاة والمواقيت
+                      _buildCategoryHeader(context, 'الصلاة والمواقيت'),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'إعدادات الصلاة والأذان',
+                            subtitle:
+                                'أصوات الأذان والتكبير، التنبيه المسبق، والإقامة',
+                            icon: Icons.mosque_rounded,
+                            color: palette.gold,
+                            onTap: () => _openPrayerSettings(context),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'الموقع وطرق الحساب',
+                            subtitle:
+                                'تحديد الولاية/المدينة وضبط الزوايا الفلكية للصلوات',
+                            icon: Icons.explore_rounded,
+                            color: palette.success,
+                            onTap: () => _openLocationSettings(context),
+                          ),
+                        ),
+                      ),
+
+                      // Group 3: التفضيلات والمظهر
+                      _buildCategoryHeader(context, 'التفضيلات والمظهر'),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'المظهر والسمة',
+                            subtitle:
+                                'تخصيص وضع الرؤية وألوان الواجهة للقراءة المريحة',
+                            icon: themeService.themeIcon,
+                            color: palette.gold,
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.surfaceMuted,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: palette.border,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                themeService.themeDisplayName,
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            onTap: () => _showThemeSelector(context),
+                          ),
                         ),
                       ),
 
@@ -331,6 +375,7 @@ class _MorePageState extends State<MorePage> {
                       // App Footer Card
                       Center(
                         child: Container(
+                          width: double.infinity,
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpace.xl,
                             vertical: AppSpace.lg,
@@ -360,7 +405,7 @@ class _MorePageState extends State<MorePage> {
                                   ),
                                   const SizedBox(width: AppSpace.sm),
                                   Text(
-                                    'طالب علم • النسخة 2.0.0',
+                                    'طالب علم • الإصدار 2.0.0',
                                     style: textTheme.caption.copyWith(
                                       fontWeight: FontWeight.w700,
                                       color: palette.textMuted,
@@ -370,11 +415,50 @@ class _MorePageState extends State<MorePage> {
                               ),
                               const SizedBox(height: AppSpace.xs),
                               Text(
-                                '«من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة»',
+                                '«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الجَنَّةِ»',
                                 style: textTheme.sacred.copyWith(
                                   color: palette.gold,
                                 ),
                                 textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppSpace.md),
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    buildFadeRoute(
+                                      page: const CreditsAndLicensesPage(),
+                                    ),
+                                  ),
+                                  borderRadius: AppRadius.pillRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpace.md,
+                                      vertical: AppSpace.xs,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.shield_outlined,
+                                          size: AppIcon.xs,
+                                          color: palette.textMuted,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Text(
+                                          'بيانات الإسناد ومصادر المحتوى',
+                                          style: textTheme.caption.copyWith(
+                                            color: palette.textMuted,
+                                            decoration:
+                                                TextDecoration.underline,
+                                            decorationColor: palette.border,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -389,10 +473,6 @@ class _MorePageState extends State<MorePage> {
         );
       },
     );
-  }
-
-  void _showInfo(BuildContext context, String message) {
-    AppSnackbar.info(context, message);
   }
 
   void _showThemeSelector(BuildContext context) {
