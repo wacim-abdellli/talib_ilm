@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/app_shell.dart';
@@ -35,10 +36,14 @@ class _SplashPageState extends State<SplashPage>
     super.initState();
     _startTime = DateTime.now();
 
-    // Progress bar and gentle emblem breathing sequence (~1.6 seconds)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove();
+    });
+
+    // Progress bar and gentle emblem breathing sequence (~1.4 seconds)
     _animController = AnimationController(
       vsync: this,
-      duration: AppMotion.oneSecond + AppMotion.deliberate,
+      duration: AppMotion.oneSecond + AppMotion.slow,
     );
 
     // Organic breathing sequence starting seamlessly from 1.0 scale
@@ -55,6 +60,12 @@ class _SplashPageState extends State<SplashPage>
       ),
     ]).animate(_animController);
 
+    _animController.addStatusListener((status) {
+      if (status == AnimationStatus.completed && widget.autoNavigate) {
+        _proceedToHome();
+      }
+    });
+
     _animController.forward();
 
     if (widget.autoNavigate) {
@@ -65,7 +76,7 @@ class _SplashPageState extends State<SplashPage>
   void _startStartupInitialization() {
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
     final totalSplashDuration =
-        AppMotion.oneSecond + AppMotion.deliberate;
+        AppMotion.oneSecond + AppMotion.slow;
     final remaining = totalSplashDuration - elapsed;
 
     if (remaining > Duration.zero) {

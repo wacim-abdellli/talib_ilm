@@ -41,6 +41,7 @@ dependencies:
   path_provider: ^2.1.2
   quran: ^1.4.1
   cached_network_image: ^3.3.1
+  flutter_native_splash: ^2.4.4
   # Vendored locally because upstream qcf_quran_plus (^0.1.0 on pub.dev) specifies
   # sdk: ^3.11.0, while Flutter stable (3.38.7) runs on Dart 3.10.7. The package code
   # is fully compatible with Dart 3.10. Remove local path and switch to pub.dev version
@@ -55,7 +56,6 @@ dev_dependencies:
   
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
-  flutter_native_splash: ^2.4.4
 
 flutter_launcher_icons:
   android: true
@@ -68,7 +68,14 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  color_dark: "#FFFFFF"
+  color_dark: "#090807"
+  image: "assets/branding/native_badge_light.png"
+  image_dark: "assets/branding/native_badge_dark.png"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#090807"
+    image: "assets/branding/native_badge_light.png"
+    image_dark: "assets/branding/native_badge_dark.png"
 
 flutter:
   uses-material-design: true

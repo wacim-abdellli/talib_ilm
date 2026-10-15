@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
@@ -8,7 +9,8 @@ import 'utils/ssl_helper_web.dart'
     if (dart.library.io) 'utils/ssl_helper_mobile.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   unawaited(SharedPreferences.getInstance());
   if (kDebugMode) {
     enableBadCertificateCatcher();
