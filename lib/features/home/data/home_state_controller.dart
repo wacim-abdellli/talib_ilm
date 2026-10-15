@@ -59,28 +59,41 @@ class HomeStateController extends ChangeNotifier {
        _prayerService = prayerService ?? PrayerTimeService();
 
   /// Initialize and calculate current state
-  Future<void> initialize() async {
-    await _loadUserState();
-    await _loadPrayerTimes();
-    _calculateState();
-    notifyListeners();
+  Future<void> initialize({PrayerTimesDay? preloadedPrayerDay}) async {
+    try {
+      await _loadUserState();
+      if (preloadedPrayerDay != null) {
+        _prayerDay = preloadedPrayerDay;
+        _updatePrayerProximity();
+      } else {
+        await _loadPrayerTimes();
+      }
+      _calculateState();
+      notifyListeners();
+    } catch (_) {}
   }
 
   /// Refresh state (call periodically or on resume)
   Future<void> refresh() async {
-    await _loadUserState();
-    _calculateState();
-    notifyListeners();
+    try {
+      await _loadUserState();
+      _calculateState();
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> _loadUserState() async {
-    _hasActedToday = await _dayTracker.hasActedToday();
-    _lastAction = await _dayTracker.getLastAction();
+    try {
+      _hasActedToday = await _dayTracker.hasActedToday();
+      _lastAction = await _dayTracker.getLastAction();
+    } catch (_) {}
   }
 
   Future<void> _loadPrayerTimes() async {
-    _prayerDay = await _prayerService.getPrayerTimesDay();
-    _updatePrayerProximity();
+    try {
+      _prayerDay = await _prayerService.getPrayerTimesDay();
+      _updatePrayerProximity();
+    } catch (_) {}
   }
 
   void _updatePrayerProximity() {

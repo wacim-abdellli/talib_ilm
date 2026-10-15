@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
 
   final ProgressService _progressService = ProgressService();
-  bool _isLoading = true;
+  bool _isLoading = false;
   PrayerTimesDay? _prayerDay;
   ContinueData? _continueData;
   DailyDhikrPayload? _dailyDhikr;
@@ -63,6 +63,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _prayerDay = _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
     _loadAllData();
 
     // Refresh state and prayer times every minute
@@ -81,22 +82,42 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _loadAllData() async {
-    // Parallel data loading
-    final results = await Future.wait([
-      _prayerTimeService.getPrayerTimesDay(),
-      _loadContinueData(),
-      _stateController.initialize(),
-      AthkarService().getDailyDhikr(),
-    ]);
+    try {
+      final prayerFuture = _prayerTimeService.getPrayerTimesDay();
+      final continueFuture = _loadContinueData();
+      final dhikrFuture = AthkarService().getDailyDhikr();
 
-    if (!mounted) return;
+      final prayerDay = await prayerFuture.catchError((_) {
+        return _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
+      });
 
-    setState(() {
-      _prayerDay = results[0] as PrayerTimesDay;
-      _continueData = results[1] as ContinueData?;
-      _dailyDhikr = results[3] as DailyDhikrPayload?;
-      _isLoading = false;
-    });
+      if (!mounted) return;
+      setState(() {
+        _prayerDay = prayerDay;
+      });
+
+      final stateFuture = _stateController.initialize(preloadedPrayerDay: prayerDay);
+
+      final results = await Future.wait([
+        continueFuture.catchError((_) => null),
+        stateFuture.catchError((_) {}),
+        dhikrFuture.catchError((_) => null),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _continueData = results[0] as ContinueData?;
+        _dailyDhikr = results[2] as DailyDhikrPayload?;
+      });
+    } catch (_) {
+      // Graceful fallback: never leave UI in a broken state
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _refreshPeriodicData() async {
@@ -133,54 +154,58 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<ContinueData?> _loadContinueData() async {
-    final lastActivity = await _lastActivityService.getLastActivity();
-    if (lastActivity == null) return null;
-    final program = await AssetService.loadMutunProgram();
-    final book = _findBook(program, lastActivity.bookId);
-    if (book == null) return null;
-    var tab = lastActivity.tab;
-    if (tab == LastActivityService.tabLessons && book.playlistId == null) {
-      tab = LastActivityService.tabMutn;
-    }
-    if (tab == LastActivityService.tabSharh && book.shuruh.isEmpty) {
-      tab = LastActivityService.tabMutn;
-    }
-    String? sharhFile = lastActivity.sharhFile;
-    if (tab == LastActivityService.tabSharh && sharhFile == null) {
-      sharhFile = await _lastSharhService.get(book.id);
-    }
-    Sharh? sharh;
-    if (tab == LastActivityService.tabSharh && sharhFile != null) {
-      sharh = _findSharhByFile(book, sharhFile);
-    }
-    int? progressPercent;
-    int? safePage = lastActivity.page;
-    int? safeTotal = lastActivity.total;
-    if (safePage != null && safeTotal != null && safeTotal > 0) {
-      final normalizedTotal = safeTotal < safePage ? safePage : safeTotal;
-      final normalizedPage = safePage.clamp(1, normalizedTotal);
-      safePage = normalizedPage;
-      safeTotal = normalizedTotal;
-      final value = (normalizedPage / normalizedTotal) * 100;
-      progressPercent = value.clamp(0, 100).round();
-    } else {
-      final progress = await _progressService.getProgress(book.id);
-      if (progress != null && progress.totalLessons > 0) {
-        progressPercent = progress.percent.clamp(0, 100).round();
+    try {
+      final lastActivity = await _lastActivityService.getLastActivity();
+      if (lastActivity == null) return null;
+      final program = await AssetService.loadMutunProgram();
+      final book = _findBook(program, lastActivity.bookId);
+      if (book == null) return null;
+      var tab = lastActivity.tab;
+      if (tab == LastActivityService.tabLessons && book.playlistId == null) {
+        tab = LastActivityService.tabMutn;
       }
+      if (tab == LastActivityService.tabSharh && book.shuruh.isEmpty) {
+        tab = LastActivityService.tabMutn;
+      }
+      String? sharhFile = lastActivity.sharhFile;
+      if (tab == LastActivityService.tabSharh && sharhFile == null) {
+        sharhFile = await _lastSharhService.get(book.id);
+      }
+      Sharh? sharh;
+      if (tab == LastActivityService.tabSharh && sharhFile != null) {
+        sharh = _findSharhByFile(book, sharhFile);
+      }
+      int? progressPercent;
+      int? safePage = lastActivity.page;
+      int? safeTotal = lastActivity.total;
+      if (safePage != null && safeTotal != null && safeTotal > 0) {
+        final normalizedTotal = safeTotal < safePage ? safePage : safeTotal;
+        final normalizedPage = safePage.clamp(1, normalizedTotal);
+        safePage = normalizedPage;
+        safeTotal = normalizedTotal;
+        final value = (normalizedPage / normalizedTotal) * 100;
+        progressPercent = value.clamp(0, 100).round();
+      } else {
+        final progress = await _progressService.getProgress(book.id);
+        if (progress != null && progress.totalLessons > 0) {
+          progressPercent = progress.percent.clamp(0, 100).round();
+        }
+      }
+      progressPercent ??= (safePage != null && safeTotal != null && safeTotal > 0)
+          ? ((safePage / safeTotal) * 100).round().clamp(0, 100)
+          : 0;
+      return ContinueData(
+        book: book,
+        tab: tab,
+        sharhFile: sharhFile,
+        sharh: sharh,
+        page: safePage,
+        total: safeTotal,
+        progressPercent: progressPercent,
+      );
+    } catch (_) {
+      return null;
     }
-    progressPercent ??= (safePage != null && safeTotal != null && safeTotal > 0)
-        ? ((safePage / safeTotal) * 100).round().clamp(0, 100)
-        : 0;
-    return ContinueData(
-      book: book,
-      tab: tab,
-      sharhFile: sharhFile,
-      sharh: sharh,
-      page: safePage,
-      total: safeTotal,
-      progressPercent: progressPercent,
-    );
   }
 
   IlmBook? _findBook(MutunProgram program, String bookId) {
@@ -249,10 +274,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       backgroundColor: context.palette.bg,
       extendBody: true,

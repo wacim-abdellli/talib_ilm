@@ -501,7 +501,7 @@ class LocationService {
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-      );
+      ).timeout(_sec(3));
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         country = p.country?.trim() ?? country;

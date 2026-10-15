@@ -26,6 +26,25 @@ class PrayerTimeService {
   }) : _locationService = locationService ?? LocationService(),
        now = now ?? DateTime.now;
 
+  /// Returns cached prayer times if available for today,
+  /// otherwise returns an instant fallback (Makkah calculation) with 0ms delay.
+  /// This ensures UI callers never block on GPS/network during initial frame build.
+  PrayerTimesDay getCachedOrFallbackPrayerTimesDay() {
+    final current = now().toLocal();
+    if (_cachedToday != null &&
+        _cachedToday!.date.day == current.day &&
+        _cachedToday!.date.month == current.month &&
+        _cachedToday!.date.year == current.year) {
+      return _cachedToday!;
+    }
+    return _buildDay(
+      current,
+      city: AppStrings.locationDefaultCity,
+      latitude: _defaultLat,
+      longitude: 39.8579,
+    );
+  }
+
   Future<PrayerTimesDay> getPrayerTimesDay({DateTime? date}) async {
     final current = (date ?? now()).toLocal();
     final isToday = date == null;
