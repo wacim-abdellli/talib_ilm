@@ -372,8 +372,57 @@ class _PrayerPageState extends State<PrayerPage> {
         notificationMode: mode,
         onToggleNotification:
             isSunrise ? null : () => _togglePrayerNotification(name),
+        onSelectMode: isSunrise
+            ? null
+            : (selectedMode) => _setPrayerNotificationMode(name, selectedMode),
       );
     }).toList();
+  }
+
+  Future<void> _setPrayerNotificationMode(
+    String prayerName,
+    PrayerNotificationMode newMode,
+  ) async {
+    final currentSettings =
+        _adhanSettings ?? await _adhanSettingsService.getSettings();
+
+    final updatedModes =
+        Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
+    updatedModes[prayerName] = newMode;
+
+    final updatedToggles =
+        Map<String, bool>.from(currentSettings.prayerToggles);
+    updatedToggles[prayerName] = newMode != PrayerNotificationMode.off;
+
+    final updatedSettings = currentSettings.copyWith(
+      enabled: true,
+      prayerModes: updatedModes,
+      prayerToggles: updatedToggles,
+    );
+
+    await _adhanSettingsService.saveSettings(updatedSettings);
+    await _prayerScheduleService.refreshSchedulesIfNeeded(force: true);
+
+    if (!mounted) return;
+    setState(() {
+      _adhanSettings = updatedSettings;
+    });
+
+    HapticFeedback.selectionClick();
+    final modeLabel = switch (newMode) {
+      PrayerNotificationMode.adhan => 'أذان كامل',
+      PrayerNotificationMode.takbeer => 'تكبيرات فقط',
+      PrayerNotificationMode.announcement => 'نداء وقت الصلاة',
+      PrayerNotificationMode.tone => 'نغمة تنبيه هادئة',
+      PrayerNotificationMode.silent => 'إشعار صامت',
+      PrayerNotificationMode.off => 'إيقاف التنبيه',
+    };
+    if (mounted) {
+      AppSnackbar.success(
+        context,
+        '$prayerName: تم ضبط التنبيه إلى ($modeLabel)',
+      );
+    }
   }
 
   Future<void> _togglePrayerNotification(String prayerName) async {

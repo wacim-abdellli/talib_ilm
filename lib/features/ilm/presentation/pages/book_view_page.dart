@@ -466,7 +466,7 @@ class _BookViewPageState extends State<BookViewPage>
     final canonicalTotal = widget.book.totalPages > 0
         ? widget.book.totalPages
         : total;
-    final safeTotal = total > canonicalTotal ? total : canonicalTotal;
+    final safeTotal = canonicalTotal;
 
     setState(() {
       _currentPage = page;

@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
       int? progressPercent;
       int? safePage = lastActivity.page;
-      int? safeTotal = lastActivity.total;
+      int? safeTotal = book.totalPages > 0 ? book.totalPages : lastActivity.total;
       if (safePage != null && safeTotal != null && safeTotal > 0) {
         final normalizedTotal = safeTotal < safePage ? safePage : safeTotal;
         final normalizedPage = safePage.clamp(1, normalizedTotal);

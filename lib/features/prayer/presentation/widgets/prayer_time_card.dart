@@ -16,6 +16,7 @@ class PrayerTimeEntry {
   final bool isNotificationEnabled;
   final PrayerNotificationMode notificationMode;
   final VoidCallback? onToggleNotification;
+  final ValueChanged<PrayerNotificationMode>? onSelectMode;
 
   const PrayerTimeEntry({
     required this.name,
@@ -26,6 +27,7 @@ class PrayerTimeEntry {
     this.isNotificationEnabled = true,
     this.notificationMode = PrayerNotificationMode.adhan,
     this.onToggleNotification,
+    this.onSelectMode,
   });
 }
 
@@ -169,60 +171,157 @@ class PrayerTimeCard extends StatelessWidget {
                     final mode = item.notificationMode;
                     final isActive = mode != PrayerNotificationMode.off;
                     final IconData modeIcon;
-                    final String modeTooltip;
+                    final String shortLabel;
                     switch (mode) {
                       case PrayerNotificationMode.adhan:
                         modeIcon = Icons.volume_up_rounded;
-                        modeTooltip = 'أذان كامل (انقر لتغيير النمط)';
+                        shortLabel = 'أذان';
                         break;
                       case PrayerNotificationMode.takbeer:
                         modeIcon = Icons.campaign_rounded;
-                        modeTooltip = 'تكبيرات فقط (انقر لتغيير النمط)';
+                        shortLabel = 'تكبيرات';
                         break;
                       case PrayerNotificationMode.announcement:
                         modeIcon = Icons.record_voice_over_rounded;
-                        modeTooltip = 'نداء وقت الصلاة (انقر لتغيير النمط)';
+                        shortLabel = 'نداء';
                         break;
                       case PrayerNotificationMode.tone:
                         modeIcon = Icons.notifications_active_rounded;
-                        modeTooltip = 'نغمة هادئة (انقر لتغيير النمط)';
+                        shortLabel = 'نغمة';
                         break;
                       case PrayerNotificationMode.silent:
                         modeIcon = Icons.notifications_none_rounded;
-                        modeTooltip = 'إشعار صامت (انقر لتغيير النمط)';
+                        shortLabel = 'صامت';
                         break;
                       case PrayerNotificationMode.off:
                         modeIcon = Icons.notifications_off_outlined;
-                        modeTooltip = 'التنبيه متوقف (انقر للتفعيل)';
+                        shortLabel = 'معطل';
                         break;
                     }
 
-                    return Semantics(
-                      button: true,
-                      label: modeTooltip,
-                      child: Tooltip(
-                        message: modeTooltip,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: item.onToggleNotification,
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        cardColor: palette.surfaceRaised,
+                        popupMenuTheme: PopupMenuThemeData(
+                          color: palette.surfaceRaised,
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.mdRadius,
+                            side: BorderSide(color: palette.border),
+                          ),
+                        ),
+                      ),
+                      child: PopupMenuButton<PrayerNotificationMode>(
+                        tooltip: 'خيارات التنبيه لصلاة ${item.name}',
+                        initialValue: mode,
+                        onSelected: (selected) {
+                          item.onSelectMode?.call(selected);
+                        },
+                        itemBuilder: (menuContext) => [
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.adhan,
+                            icon: Icons.volume_up_rounded,
+                            title: 'أذان كامل',
+                            subtitle: 'صوت الأذان كاملاً',
+                            isSelected: mode == PrayerNotificationMode.adhan,
+                          ),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.takbeer,
+                            icon: Icons.campaign_rounded,
+                            title: 'تكبيرات فقط',
+                            subtitle: 'تكبيرات الأذان الأولى',
+                            isSelected: mode == PrayerNotificationMode.takbeer,
+                          ),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.announcement,
+                            icon: Icons.record_voice_over_rounded,
+                            title: 'نداء وقت الصلاة',
+                            subtitle: 'حان الآن وقت صلاة ${item.name}',
+                            isSelected: mode == PrayerNotificationMode.announcement,
+                          ),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.tone,
+                            icon: Icons.notifications_active_rounded,
+                            title: 'نغمة تنبيه هادئة',
+                            subtitle: 'تنبيه نغمي لطيف ومختصر',
+                            isSelected: mode == PrayerNotificationMode.tone,
+                          ),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.silent,
+                            icon: Icons.notifications_none_rounded,
+                            title: 'إشعار صامت',
+                            subtitle: 'تنبيه مرئي بدون صوت',
+                            isSelected: mode == PrayerNotificationMode.silent,
+                          ),
+                          const PopupMenuDivider(),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.off,
+                            icon: Icons.notifications_off_outlined,
+                            title: 'إيقاف التنبيه',
+                            subtitle: 'بدون أي إشعار أو صوت',
+                            isSelected: mode == PrayerNotificationMode.off,
+                            isDestructive: true,
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? (isCurrent ? palette.goldSoft : palette.surfaceMuted)
+                                : palette.bg,
                             borderRadius: AppRadius.pillRadius,
-                            child: Container(
-                              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? (isCurrent ? palette.goldSoft : palette.surfaceMuted)
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.pillRadius,
-                              ),
-                              child: Icon(
+                            border: Border.all(
+                              color: isActive
+                                  ? (isCurrent
+                                      ? palette.gold.withValues(alpha: 0.5)
+                                      : palette.border)
+                                  : palette.border.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
                                 modeIcon,
                                 size: AppIcon.sm,
                                 color: isActive
                                     ? (isCurrent ? palette.gold : prayerColor)
                                     : palette.textSubtle,
                               ),
-                            ),
+                              const SizedBox(width: AppSpace.xxs),
+                              Text(
+                                shortLabel,
+                                style: context.text.caption.copyWith(
+                                  color: isActive
+                                      ? (isCurrent ? palette.gold : palette.text)
+                                      : palette.textSubtle,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpace.xxs),
+                              Icon(
+                                Icons.arrow_drop_down_rounded,
+                                size: AppIcon.sm,
+                                color: isActive
+                                    ? palette.textMuted
+                                    : palette.textSubtle,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -232,6 +331,71 @@ class PrayerTimeCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  PopupMenuItem<PrayerNotificationMode> _buildPopupOption(
+    BuildContext context, {
+    required AppPalette palette,
+    required PrayerNotificationMode mode,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isSelected,
+    bool isDestructive = false,
+  }) {
+    final activeColor = isDestructive
+        ? palette.error
+        : (isSelected ? palette.gold : palette.text);
+
+    return PopupMenuItem<PrayerNotificationMode>(
+      value: mode,
+      height: 48.0,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: AppIcon.sm,
+              color: isSelected
+                  ? (isDestructive ? palette.error : palette.gold)
+                  : palette.textMuted,
+            ),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: context.text.caption.copyWith(
+                      color: activeColor,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: context.text.caption.copyWith(
+                      color: palette.textSubtle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: AppSpace.xs),
+              Icon(
+                Icons.check_rounded,
+                size: AppIcon.sm,
+                color: isDestructive ? palette.error : palette.gold,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
