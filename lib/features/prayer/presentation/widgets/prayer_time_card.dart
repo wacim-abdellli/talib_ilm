@@ -276,9 +276,10 @@ class PrayerTimeCard extends StatelessWidget {
                           ),
                         ],
                         child: Container(
+                          constraints: const BoxConstraints(minHeight: 34),
                           padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
+                            vertical: AppSpace.xs,
                           ),
                           decoration: BoxDecoration(
                             color: isActive

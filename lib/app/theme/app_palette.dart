@@ -621,6 +621,8 @@ class AppMotion {
   static const Duration slow = Duration(milliseconds: 320);
   static const Duration splash = Duration(milliseconds: 650);
   static const Duration toast = Duration(milliseconds: 2500);
+  static const Duration toastShort = Duration(milliseconds: 1600);
+  static const Duration toastDismiss = Duration(milliseconds: 160);
   static const Duration debounce = Duration(milliseconds: 500);
 
   /// 16ms (~60fps frame ticker)

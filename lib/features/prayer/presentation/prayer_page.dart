@@ -400,6 +400,8 @@ class _PrayerPageState extends State<PrayerPage> {
       AppSnackbar.success(
         context,
         '$prayerName: تم ضبط التنبيه إلى ($modeLabel)',
+        duration: AppMotion.toastShort,
+        hasNavBar: true,
       );
     }
 
@@ -476,6 +478,8 @@ class _PrayerPageState extends State<PrayerPage> {
         nextMode != PrayerNotificationMode.off
             ? 'تم ضبط تنبيه صلاة $prayerName: $modeName'
             : 'تم إيقاف تنبيه صلاة $prayerName',
+        duration: AppMotion.toastShort,
+        hasNavBar: true,
       );
     }
 
@@ -524,10 +528,12 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _openLocationSettings(BuildContext context) {
+    AppSnackbar.dismiss();
     LocationSettingsSheet.show(context, onSaved: _reloadPrayer);
   }
 
   void _openPrayerSettings(BuildContext context) {
+    AppSnackbar.dismiss();
     PrayerSettingsSheet.show(context, onSettingsChanged: _reloadPrayer);
   }
 

@@ -25,6 +25,7 @@ class PrayerSettingsSheet extends StatefulWidget {
     BuildContext context, {
     VoidCallback? onSettingsChanged,
   }) {
+    AppSnackbar.dismiss();
     return AppSheet.show<void>(
       context: context,
       maxHeightFactor: 0.90,
@@ -77,10 +78,13 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
     if (!mounted) return;
 
-    AppSnackbar.success(context, 'تم حفظ إعدادات الصلاة');
-
-    await Future.delayed(AppMotion.searchDebounce);
-    if (mounted) Navigator.pop(context);
+    Navigator.pop(context);
+    AppSnackbar.success(
+      context,
+      'تم حفظ إعدادات الصلاة بنجاح',
+      duration: AppMotion.toastShort,
+      hasNavBar: true,
+    );
   }
 
   void _updateSettings(AdhanSettings newSettings) {
