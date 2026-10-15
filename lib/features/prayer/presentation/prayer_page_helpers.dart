@@ -7,7 +7,6 @@ class LocationInfo {
 
   const LocationInfo({required this.city, required this.isManual});
 }
-
 class PrayerPageHelpers {
   static String? findNextPrayerName(Map<String, DateTime> prayers) {
     final current = DateTime.now();
@@ -21,7 +20,6 @@ class PrayerPageHelpers {
     }
     return null;
   }
-
   static String? findCurrentPrayerName(Map<String, DateTime> prayers) {
     final now = DateTime.now();
     const prayerWindow = Duration(minutes: 15);
@@ -41,7 +39,6 @@ class PrayerPageHelpers {
     }
     return null;
   }
-
   static double calculatePrayerProgress(
     PrayerTimesDay day,
     String nextPrayerLabel,
@@ -64,7 +61,6 @@ class PrayerPageHelpers {
     final progress = 1 - (remainingSeconds / totalSeconds);
     return progress.clamp(0.0, 1.0);
   }
-
   static NextPrayer buildNextPrayer(PrayerTimesDay day) {
     final now = DateTime.now();
     final time = day.prayers[day.nextPrayer] ?? now;
@@ -75,7 +71,6 @@ class PrayerPageHelpers {
       minutesRemaining: minutes < 0 ? 0 : minutes,
     );
   }
-
   static String formatCountdown(Duration duration) {
     final totalSeconds = duration.inSeconds;
     final hours = (totalSeconds ~/ 3600).toString().padLeft(2, '0');
@@ -83,7 +78,6 @@ class PrayerPageHelpers {
     final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
     return '$hours:$minutes:$seconds';
   }
-
   static String formatGregorianDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');

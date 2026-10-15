@@ -4,7 +4,11 @@ import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/ilm_section_switcher.dart';
 
 void main() {
-  Widget buildTestableWidget(Widget child, {bool isDark = false, double textScale = 1.0}) {
+  Widget buildTestableWidget(
+    Widget child, {
+    bool isDark = false,
+    double textScale = 1.0,
+  }) {
     return MaterialApp(
       theme: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
       home: MediaQuery(
@@ -34,7 +38,7 @@ void main() {
         ),
       );
 
-      expect(find.text('متون المنهج'), findsOneWidget);
+      expect(find.text('متون طالب العلم'), findsOneWidget);
       expect(find.text('المكتبة'), findsOneWidget);
       expect(find.text('خزانة التراث'), findsNothing);
     });
@@ -60,13 +64,15 @@ void main() {
 
       expect(selected, equals(IlmSection.shamela));
 
-      await tester.tap(find.text('متون المنهج'));
+      await tester.tap(find.text('متون طالب العلم'));
       await tester.pumpAndSettle();
 
       expect(selected, equals(IlmSection.mutun));
     });
 
-    testWidgets('Survives text scaling 1.0, 1.5, and 2.0 without overflow', (tester) async {
+    testWidgets('Survives text scaling 1.0, 1.5, and 2.0 without overflow', (
+      tester,
+    ) async {
       for (final scale in [1.0, 1.5, 2.0]) {
         await tester.pumpWidget(
           buildTestableWidget(
@@ -79,13 +85,19 @@ void main() {
         );
 
         await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull, reason: 'Failed at textScale $scale');
-        expect(find.text('متون المنهج'), findsOneWidget);
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'Failed at textScale $scale',
+        );
+        expect(find.text('متون طالب العلم'), findsOneWidget);
         expect(find.text('المكتبة'), findsOneWidget);
       }
     });
 
-    testWidgets('Renders properly in both light and dark modes', (tester) async {
+    testWidgets('Renders properly in both light and dark modes', (
+      tester,
+    ) async {
       for (final dark in [false, true]) {
         await tester.pumpWidget(
           buildTestableWidget(

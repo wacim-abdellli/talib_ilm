@@ -8,7 +8,6 @@ import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
 import 'prayer_muezzin_selector.dart';
-import 'prayer_notification_tester.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
   final AdhanSettings settings;
@@ -29,7 +28,23 @@ class PrayerAdhanSection extends StatefulWidget {
 }
 
 class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
-  bool _showTester = false;
+  PrayerNotificationMode? _previewingMode;
+
+  Future<void> _togglePreviewMode(PrayerNotificationMode mode) async {
+    HapticFeedback.lightImpact();
+    if (_previewingMode == mode && widget.adhanService.isPlaying) {
+      await widget.adhanService.stop();
+      if (mounted) setState(() => _previewingMode = null);
+      return;
+    }
+
+    if (mounted) setState(() => _previewingMode = mode);
+    await widget.adhanService.test(
+      sound: widget.settings.sound,
+      mode: mode,
+      volume: widget.settings.volume,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,65 +242,6 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
               const SizedBox(height: AppSpace.md),
             ],
 
-            // ── Expandable Testing Bench (Audio + Notifications) ──
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() => _showTester = !_showTester);
-                },
-                borderRadius: AppRadius.mdRadius,
-                child: Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _showTester ? palette.primarySoft : palette.surfaceMuted,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(
-                      color: _showTester ? palette.primary : palette.border,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.science_rounded,
-                        size: AppIcon.sm,
-                        color: _showTester ? palette.primary : palette.gold,
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Expanded(
-                        child: Text(
-                          _showTester
-                              ? 'إخفاء لوحة اختبار التنبيهات والأصوات'
-                              : 'تجربة واختبار التنبيهات والأصوات',
-                          style: textTheme.body.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: _showTester ? palette.primary : palette.text,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        _showTester
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
-                        size: AppIcon.sm,
-                        color: _showTester ? palette.primary : palette.textMuted,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (_showTester) ...[
-              const SizedBox(height: AppSpace.sm),
-              PrayerNotificationTester(
-                settings: settings,
-                adhanService: adhanService,
-              ),
-            ],
 
             const SizedBox(height: AppSpace.lg),
             Divider(color: palette.border, height: 1),
@@ -499,12 +455,71 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                   ],
                 ),
               ),
-              if (isSelected)
+              if (mode == PrayerNotificationMode.takbeer ||
+                  mode == PrayerNotificationMode.announcement) ...[
+                const SizedBox(width: AppSpace.xs),
+                StreamBuilder<PlayerState>(
+                  stream: widget.adhanService.playerStateStream,
+                  builder: (context, _) {
+                    final isAudioActive =
+                        widget.adhanService.isPlaying && _previewingMode == mode;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _togglePreviewMode(mode),
+                        borderRadius: AppRadius.smRadius,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isAudioActive
+                                ? palette.primary
+                                : palette.surface,
+                            borderRadius: AppRadius.smRadius,
+                            border: Border.all(
+                              color: palette.primary,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isAudioActive
+                                    ? Icons.stop_rounded
+                                    : Icons.play_arrow_rounded,
+                                size: AppIcon.xs,
+                                color: isAudioActive
+                                    ? palette.onPrimary
+                                    : palette.primary,
+                              ),
+                              const SizedBox(width: AppSpace.xxs),
+                              Text(
+                                isAudioActive ? 'إيقاف' : 'استمع',
+                                style: textTheme.caption.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isAudioActive
+                                      ? palette.onPrimary
+                                      : palette.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+              if (isSelected) ...[
+                const SizedBox(width: AppSpace.xs),
                 Icon(
                   Icons.check_circle_rounded,
                   color: palette.primary,
                   size: AppIcon.sm,
                 ),
+              ],
             ],
           ),
         ),

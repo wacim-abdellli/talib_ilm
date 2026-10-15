@@ -28,7 +28,6 @@ class ShamelaReaderTopBar extends StatelessWidget {
     required this.onBack,
     required this.onCopy,
   });
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -36,7 +35,6 @@ class ShamelaReaderTopBar extends StatelessWidget {
     final topPadding = MediaQuery.paddingOf(context).top;
     final fullBarHeight = topPadding + AppSize.navH;
     final minimalBarHeight = topPadding + 42.0;
-
     return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
@@ -106,7 +104,6 @@ class ShamelaReaderTopBar extends StatelessWidget {
                 ),
               ),
             ),
-
             // ── Full Action Toolbar (Shown when controls visible) ────────────
             Positioned(
               top: topPadding,

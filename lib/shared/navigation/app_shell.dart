@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
 import '../../core/services/foreground_prayer_service.dart';
+import '../../core/services/notification_service.dart';
+import '../../core/services/prayer_schedule_service.dart';
 import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/icon_badge.dart';
@@ -47,6 +50,18 @@ class _AppShellState extends State<AppShell> {
     _currentIndex = widget.initialIndex.clamp(0, 4);
     _loadedTabs.add(_currentIndex);
     ForegroundPrayerService().start();
+    unawaited(_initPrayerNotifications());
+  }
+
+  Future<void> _initPrayerNotifications() async {
+    try {
+      final notif = NotificationService();
+      await notif.init();
+      await notif.requestPermissions();
+      await PrayerScheduleService().refreshSchedulesIfNeeded();
+    } catch (e) {
+      debugPrint('AppShell prayer notifications init error: $e');
+    }
   }
 
   @override

@@ -121,19 +121,7 @@ class ForegroundPrayerService {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setStringList('adhan_alerted_keys', _alertedKeys.toList());
 
-            // 1. Play Adhan audio directly in-app
-            if (mode == PrayerNotificationMode.adhan ||
-                mode == PrayerNotificationMode.takbeer ||
-                mode == PrayerNotificationMode.announcement) {
-              await _adhanService.play(
-                sound: settings.sound,
-                mode: mode,
-                volume: settings.volume,
-                prayerName: name,
-              );
-            }
-
-            // 2. Trigger instant system notification with heads-up alarm banner
+            // 1. Trigger instant system notification with heads-up alarm presentation and sound
             final orderIndex = AppStrings.prayerOrder.indexOf(name);
             final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
             await _notificationService.showInstantPrayerAlert(
@@ -143,7 +131,7 @@ class ForegroundPrayerService {
               sound: settings.sound,
             );
 
-            // 3. Post in-app alert banner
+            // 2. Post in-app alert banner
             activeAlert.value = ActivePrayerAlert(
               prayerName: name,
               prayerTime: time,

@@ -4,10 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
-enum IlmSection {
-  mutun,
-  shamela,
-}
+enum IlmSection { mutun, shamela }
 
 class IlmSectionSwitcher extends StatelessWidget {
   final IlmSection selectedSection;
@@ -41,7 +38,7 @@ class IlmSectionSwitcher extends StatelessWidget {
             child: _buildItem(
               context: context,
               section: IlmSection.mutun,
-              title: 'متون المنهج',
+              title: 'متون طالب العلم',
               icon: Icons.school_rounded,
               isSelected: selectedSection == IlmSection.mutun,
               palette: palette,
@@ -118,7 +115,9 @@ class IlmSectionSwitcher extends StatelessWidget {
                     title,
                     style: textTheme.caption.copyWith(
                       color: isSelected ? palette.text : palette.textMuted,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

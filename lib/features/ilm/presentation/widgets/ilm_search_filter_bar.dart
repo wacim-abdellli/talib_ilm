@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../data/models/mutun_models.dart';
 
-/// Clean, unified Level Selector bar for the academic curriculum (متون المنهج).
+/// Clean, unified Level Selector bar for the academic curriculum (متون طالب العلم).
 class IlmFilterBar extends StatelessWidget {
   final List<IlmLevel> levels;
   final String selectedLevelId;
@@ -65,7 +65,9 @@ class IlmFilterBar extends StatelessWidget {
                         level.label.isNotEmpty ? level.label : level.title,
                         style: context.text.label.copyWith(
                           color: isSelected ? palette.primary : palette.text,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
                       ),
                       if (isComplete) ...[

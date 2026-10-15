@@ -21,7 +21,7 @@ class NotificationService {
     if (_initialized) return;
     await _initTimeZones();
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('ic_launcher_monochrome');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -290,10 +290,10 @@ class NotificationService {
       sound: sound,
       prayerName: prayerName,
     );
-    final title = 'حان الآن وقت صلاة $prayerName';
+    final title = 'صلاة $prayerName';
     final body = prayerName.contains('فجر')
-        ? 'الصلاة خير من النوم.. حي على الصلاة'
-        : 'حي على الصلاة.. حي على الفلاح';
+        ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
+        : 'حي على الصلاة · حي على الفلاح';
 
     try {
       await _plugin.zonedSchedule(
@@ -328,10 +328,10 @@ class NotificationService {
       sound: sound,
       prayerName: prayerName,
     );
-    final title = 'حان الآن وقت صلاة $prayerName';
+    final title = 'صلاة $prayerName';
     final body = prayerName.contains('فجر')
-        ? 'الصلاة خير من النوم.. حي على الصلاة'
-        : 'حي على الصلاة.. حي على الفلاح';
+        ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
+        : 'حي على الصلاة · حي على الفلاح';
 
     await _plugin.show(
       id,
@@ -539,16 +539,18 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          ticker: 'حان الآن وقت صلاة $prayerName',
+          icon: 'ic_launcher_monochrome',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          ticker: 'صلاة $prayerName',
         );
       case PrayerNotificationMode.takbeer:
-        return const AndroidNotificationDetails(
+        return AndroidNotificationDetails(
           'talib_prayer_takbeer_v3',
           'تكبيرات الأذان المباركة',
           channelDescription: 'تكبيرات الأذان فقط عند دخول وقت الصلاة',
           importance: Importance.max,
           priority: Priority.max,
-          sound: RawResourceAndroidNotificationSound('adhan_takbeer'),
+          sound: const RawResourceAndroidNotificationSound('adhan_takbeer'),
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -557,7 +559,9 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          ticker: 'تكبيرات الأذان المباركة',
+          icon: 'ic_launcher_monochrome',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          ticker: 'صلاة $prayerName',
         );
       case PrayerNotificationMode.announcement:
         final rawSound = _announcementRawSoundFor(prayerName);
@@ -580,7 +584,9 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          ticker: channelTitle,
+          icon: 'ic_launcher_monochrome',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          ticker: 'صلاة $prayerName',
         );
       case PrayerNotificationMode.tone:
         return const AndroidNotificationDetails(
@@ -597,6 +603,8 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
+          icon: 'ic_launcher_monochrome',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
       case PrayerNotificationMode.silent:
       case PrayerNotificationMode.off:
@@ -609,6 +617,8 @@ class NotificationService {
           playSound: false,
           enableVibration: false,
           visibility: NotificationVisibility.public,
+          icon: 'ic_launcher_monochrome',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
     }
   }
