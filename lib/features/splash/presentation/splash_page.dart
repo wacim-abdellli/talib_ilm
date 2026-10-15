@@ -24,8 +24,6 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
-
-  late final Animation<double> _entranceFade;
   late final Animation<double> _emblemScale;
 
   Timer? _timer;
@@ -37,33 +35,23 @@ class _SplashPageState extends State<SplashPage>
     super.initState();
     _startTime = DateTime.now();
 
-    // Entrance and launch progress animation (~2.2 seconds)
+    // Progress bar and gentle emblem breathing sequence (~1.6 seconds)
     _animController = AnimationController(
       vsync: this,
-      duration: AppMotion.deliberate + AppMotion.oneSecond + AppMotion.deliberate,
+      duration: AppMotion.oneSecond + AppMotion.deliberate,
     );
 
-    _entranceFade = CurvedAnimation(
-      parent: _animController,
-      curve: AppMotion.easeOut,
-    );
-
-    // Staggered entrance and organic breathing sequence
+    // Organic breathing sequence starting seamlessly from 1.0 scale
     _emblemScale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.90, end: 1.0)
-            .chain(CurveTween(curve: AppMotion.easeOut)),
-        weight: 35,
-      ),
       TweenSequenceItem(
         tween: Tween<double>(begin: 1.0, end: 1.03)
             .chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 35,
+        weight: 50,
       ),
       TweenSequenceItem(
         tween: Tween<double>(begin: 1.03, end: 1.0)
             .chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 30,
+        weight: 50,
       ),
     ]).animate(_animController);
 
@@ -77,7 +65,7 @@ class _SplashPageState extends State<SplashPage>
   void _startStartupInitialization() {
     final elapsed = DateTime.now().difference(_startTime ?? DateTime.now());
     final totalSplashDuration =
-        AppMotion.deliberate + AppMotion.oneSecond + AppMotion.deliberate;
+        AppMotion.oneSecond + AppMotion.deliberate;
     final remaining = totalSplashDuration - elapsed;
 
     if (remaining > Duration.zero) {
@@ -95,7 +83,10 @@ class _SplashPageState extends State<SplashPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        buildFadeRoute(page: const AppShell()),
+        buildFadeRoute(
+          page: const AppShell(),
+          duration: AppMotion.debounce,
+        ),
       );
     });
   }
@@ -127,9 +118,7 @@ class _SplashPageState extends State<SplashPage>
                 horizontal: AppSpace.xl,
                 vertical: AppSpace.lg,
               ),
-              child: FadeTransition(
-                opacity: _entranceFade,
-                child: Column(
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -349,7 +338,6 @@ class _SplashPageState extends State<SplashPage>
               ),
             ),
           ),
-        ),
       ),
     );
   }
