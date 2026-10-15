@@ -844,3 +844,18 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
      - `flutter test`: 19/19 tests passed.
 - **Open Issues:** None.
+
+---
+
+## Mobile App Launcher Label: Arabic Display Name "طالب العلم"
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Android App Launcher (`AndroidManifest.xml`):**
+     - Updated `<application android:label="طالب العلم">` and launcher `<activity android:label="طالب العلم">` so the name displayed below the app icon on Android home screens and launchers is in Arabic (`طالب العلم`).
+  2. **iOS Display Name (`Info.plist`):**
+     - Updated `CFBundleDisplayName` to `<string>طالب العلم</string>`.
+  3. **Verification:**
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
+     - `flutter test`: 19/19 tests passed.
+- **Open Issues:** None.

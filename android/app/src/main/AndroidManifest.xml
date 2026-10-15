@@ -13,12 +13,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <application
-        android:label="talib_ilm"
+        android:label="طالب العلم"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name="com.ryanheise.audioservice.AudioServiceActivity"
+            android:label="طالب العلم"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
