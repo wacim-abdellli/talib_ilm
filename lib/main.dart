@@ -13,14 +13,14 @@ Future<void> main() async {
   if (kDebugMode) {
     enableBadCertificateCatcher();
   }
-  try {
-    await JustAudioBackground.init(
+  unawaited(
+    JustAudioBackground.init(
       androidNotificationChannelId: 'com.example.talib_ilm.channel.audio',
       androidNotificationChannelName: 'تلاوة القرآن الكريم',
       androidNotificationOngoing: true,
-    );
-  } catch (e) {
-    debugPrint('JustAudioBackground init warning: $e');
-  }
+    ).catchError((e) {
+      debugPrint('JustAudioBackground init warning: $e');
+    }),
+  );
   runApp(const TalibIlmApp());
 }
