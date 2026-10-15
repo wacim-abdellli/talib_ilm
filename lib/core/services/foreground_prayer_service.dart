@@ -35,6 +35,7 @@ class ForegroundPrayerService {
   factory ForegroundPrayerService() => _instance;
   ForegroundPrayerService._internal();
 
+  Timer? _initialTimer;
   Timer? _timer;
   StreamSubscription<PlayerState>? _playerSub;
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
@@ -68,8 +69,9 @@ class ForegroundPrayerService {
 
   void start() {
     unawaited(init());
+    _initialTimer?.cancel();
     _timer?.cancel();
-    Timer(const Duration(seconds: 1), _check); // ui-lint: allow service interval
+    _initialTimer = Timer(const Duration(seconds: 1), _check); // ui-lint: allow service interval
     _timer = Timer.periodic(
       const Duration(seconds: 30), // ui-lint: allow service interval
       (_) => _check(),
@@ -77,6 +79,7 @@ class ForegroundPrayerService {
   }
 
   void stop() {
+    _initialTimer?.cancel();
     _timer?.cancel();
     _playerSub?.cancel();
   }

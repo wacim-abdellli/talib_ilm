@@ -182,15 +182,24 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
             const SizedBox(height: AppSpace.sm),
 
             // ── Font Family ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('نوع الخط', style: textTheme.body.copyWith(color: palette.text)),
+                const SizedBox(height: AppSpace.xs),
                 Row(
                   children: [
-                    _buildFontOption('Amiri', 'الأميري (نسخ)', palette, textTheme),
-                    const SizedBox(width: AppSpace.sm),
-                    _buildFontOption('Cairo', 'القاهرة (رقعي)', palette, textTheme),
+                    Expanded(
+                      child: _buildFontOption('Amiri', 'الأميري\n(نسخ)', palette, textTheme),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: _buildFontOption('ScheherazadeNew', 'شهرزاد\n(تراثي)', palette, textTheme),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: _buildFontOption('Cairo', 'القاهرة\n(حديث)', palette, textTheme),
+                    ),
                   ],
                 ),
               ],

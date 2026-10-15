@@ -781,3 +781,26 @@ FAILED (54 violations)
   - `flutter test test/golden/`: 39/39 goldens passed.
 - **Open Issues:** None.
 
+---
+
+## Maktaba Shamela Reader Overhaul: Rich Typography, Syntax Coloring & Chapter Banners
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Refined Scholarly Typography (`shamela_typography_sheet.dart`):**
+     - Added curated Arabic typefaces tailored for Islamic manuscripts: `Amiri` (نسخ), `ScheherazadeNew` (تراثي), and `Cairo` (حديث).
+     - Reflowable line height and font size controls with live feedback.
+  2. **Intelligent Text Titling & Syntax Coloring (`shamela_text_highlighter.dart`):**
+     - Quranic Verses: Highlighted in sacred gold (`palette.gold`) with bold weight for both `{...}` and `﴿...﴾`.
+     - Matn vs. Sharh Commentary Anchors: Highlighted in primary gold with underline decoration for `قوله: ...` and `(قوله: ...)`, allowing immediate distinction between base text and commentary.
+     - Section Chapter Banners: Styled lines starting with `باب`, `فصل`, `مسألة`, `فرع`, `فائدة`, `تنبيه`, `خاتمة`, `مقدمة` with illuminated banner background and border.
+     - Scholarly Attributions: Bold primary accent for `قال المصنف:`, `قال الشارح:`, `قال الإمام:`, `قلت:`.
+     - Softened honorifics and footnote citation markers.
+  3. **Architecture & Rule 8 Compliance (`shamela_reader_top_bar.dart`):**
+     - Extracted reader top bar to dedicated widget `ShamelaReaderTopBar` (195 lines).
+     - Reduced `shamela_reader_page.dart` from 710 lines down to 548 lines (< 600 lines max).
+  4. **Verification & Tests:**
+     - Created `test/shamela_text_highlighter_test.dart` with 6 unit tests covering parsing, spans, commentary styling, and 2.0x text scaling.
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
+     - `flutter test`: 100% passing.
+- **Open Issues:** None.

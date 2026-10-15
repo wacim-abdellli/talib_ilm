@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -16,6 +15,7 @@ import '../widgets/book_view_controls.dart' show BookNoteDialog;
 import '../widgets/mutn_memorization_view.dart';
 import '../widgets/scholarly_reader_hud.dart';
 import '../widgets/shamela_fihris_sheet.dart';
+import '../widgets/shamela_reader_top_bar.dart';
 import '../widgets/shamela_text_highlighter.dart';
 import '../widgets/shamela_typography_sheet.dart';
 
@@ -326,7 +326,16 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         body: Column(
           children: [
             // ── 1. Prestigious Scholarly Top Bar (Hides smoothly on immersion) ──
-            _buildTopBar(palette, textTheme, bgColor),
+            ShamelaReaderTopBar(
+              title: widget.book.title,
+              author: widget.book.author,
+              currentPage: _currentPage,
+              totalPages: _totalPages,
+              showControls: _showControls,
+              bgColor: bgColor,
+              onBack: () => Navigator.maybePop(context),
+              onCopy: _copyPageContent,
+            ),
 
             // ── 2. Reflowable Digital Reader Body ─────────────────────────────
             Expanded(
@@ -414,167 +423,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               onToggleMemorization: _toggleMemorizationMode,
               onOpenTypography: _showTypographySheet,
               onShare: _sharePageContent,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopBar(AppPalette palette, AppTextTheme textTheme, Color bgColor) {
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final fullBarHeight = topPadding + AppSize.navH;
-    final minimalBarHeight = topPadding + 42.0;
-
-    return AnimatedContainer(
-      duration: AppMotion.fast,
-      curve: AppMotion.easeOut,
-      height: _showControls ? fullBarHeight : minimalBarHeight,
-      decoration: BoxDecoration(
-        color: _showControls ? palette.surfaceRaised : bgColor,
-        border: Border(
-          bottom: BorderSide(
-            color: _showControls
-                ? palette.border
-                : palette.border.withValues(alpha: 0.35),
-            width: 1,
-          ),
-        ),
-      ),
-      child: ClipRect(
-        child: Stack(
-          children: [
-            // ── Minimal Distraction-Free Header (Shown when controls hidden) ──
-            Positioned(
-              top: topPadding,
-              left: AppSpace.md,
-              right: AppSpace.md,
-              height: 42.0,
-              child: AnimatedOpacity(
-                duration: AppMotion.fast,
-                curve: AppMotion.easeOut,
-                opacity: _showControls ? 0.0 : 1.0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.book.title,
-                        style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.goldSoft,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(
-                          color: palette.gold.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        'صفحة $_currentPage من $_totalPages',
-                        style: textTheme.caption.copyWith(
-                          color: palette.gold,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Full Action Toolbar (Shown when controls visible) ────────────
-            Positioned(
-              top: topPadding,
-              left: 0,
-              right: 0,
-              height: AppSize.navH,
-              child: IgnorePointer(
-                ignoring: !_showControls,
-                child: AnimatedOpacity(
-                  duration: AppMotion.fast,
-                  curve: AppMotion.easeOut,
-                  opacity: _showControls ? 1.0 : 0.0,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: AppIcon.sm,
-                        ),
-                        tooltip: 'رجوع',
-                        color: palette.text,
-                        onPressed: () => Navigator.maybePop(context),
-                      ),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.book.title,
-                              style: textTheme.titleSmall.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              widget.book.author,
-                              style: textTheme.caption.copyWith(
-                                color: palette.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      ListenableBuilder(
-                        listenable: themeService,
-                        builder: (context, _) {
-                          return IconButton(
-                            tooltip: themeService.themeDisplayName,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              themeService.toggleTheme();
-                            },
-                            icon: Icon(
-                              themeService.themeIcon,
-                              color: palette.text,
-                              size: AppIcon.sm,
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        tooltip: 'نسخ الصفحة',
-                        onPressed: _copyPageContent,
-                        icon: Icon(
-                          Icons.copy_rounded,
-                          color: palette.text,
-                          size: AppIcon.sm,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ],
         ),
