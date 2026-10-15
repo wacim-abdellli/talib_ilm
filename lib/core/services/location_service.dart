@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -84,6 +85,16 @@ class LocationService {
   static DateTime? _cacheTime;
   static const Duration _cacheDuration = Duration(minutes: 15);
 
+  /// Global real-time notifier whenever location is acquired or changed
+  static final ValueNotifier<LocationResult?> onLocationChanged =
+      ValueNotifier<LocationResult?>(null);
+
+  /// Clears in-memory location cache so subsequent lookups re-fetch fresh data
+  static void clearCache() {
+    _memoryCache = null;
+    _cacheTime = null;
+  }
+
   /// Retrieves the location strictly prioritizing phone hardware GPS automatically:
   /// 1. In-memory fast cache (zero allocation)
   /// 2. Manual user override (if user explicitly selected a city/coordinates)
@@ -91,13 +102,6 @@ class LocationService {
   /// 4. Phone hardware GPS satellites (with background refresh)
   /// 5. Default fallback (Makkah)
   Future<LocationResult> getLocation({bool autoPrompt = true}) async {
-    // 0. Instant in-memory cache
-    if (_memoryCache != null && _cacheTime != null) {
-      if (DateTime.now().difference(_cacheTime!) < _cacheDuration) {
-        return _memoryCache!;
-      }
-    }
-
     final prefs = await SharedPreferences.getInstance();
 
     // Clean up any stale unverified IP estimates from previous app sessions
@@ -181,11 +185,13 @@ class LocationService {
 
             _memoryCache = resolved;
             _cacheTime = DateTime.now();
+            onLocationChanged.value = resolved;
             return resolved;
           } catch (_) {
             if (quickBest != null) {
               _memoryCache = quickBest;
               _cacheTime = DateTime.now();
+              onLocationChanged.value = quickBest;
               return quickBest;
             }
           }
@@ -226,6 +232,7 @@ class LocationService {
       );
       _memoryCache = resolved;
       _cacheTime = DateTime.now();
+      onLocationChanged.value = resolved;
     } catch (_) {}
   }
 
@@ -286,6 +293,10 @@ class LocationService {
 
     // Turn off manual override when user explicitly chooses GPS
     await prefs.setBool(_keyManualEnabled, false);
+
+    _memoryCache = resolved;
+    _cacheTime = DateTime.now();
+    onLocationChanged.value = resolved;
 
     return resolved;
   }
@@ -382,6 +393,10 @@ class LocationService {
     }
     await prefs.setDouble(_keyManualLat, location.latitude);
     await prefs.setDouble(_keyManualLon, location.longitude);
+
+    _memoryCache = location;
+    _cacheTime = DateTime.now();
+    onLocationChanged.value = location;
   }
 
   /// Sets a verified city selected from the catalog
@@ -413,6 +428,10 @@ class LocationService {
     await prefs.remove(_keyManualCalcMethod);
     await prefs.remove(_keyManualLat);
     await prefs.remove(_keyManualLon);
+
+    clearCache();
+    final fresh = await getLocation(autoPrompt: false);
+    onLocationChanged.value = fresh;
   }
 
   Future<void> _ensureLocale() async {

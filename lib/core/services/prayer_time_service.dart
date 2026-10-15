@@ -14,17 +14,25 @@ class PrayerTimeService {
   static PrayerTimesDay? _cachedToday;
   static DateTime? _cacheTimestamp;
   static const Duration _cacheDuration = Duration(minutes: 5);
+  static bool _cachedIsFallback = false;
+  static bool _listenerAttached = false;
 
   static void clearCache() {
     _cachedToday = null;
     _cacheTimestamp = null;
+    _cachedIsFallback = false;
   }
 
   PrayerTimeService({
     LocationService? locationService,
     DateTime Function()? now,
   }) : _locationService = locationService ?? LocationService(),
-       now = now ?? DateTime.now;
+       now = now ?? DateTime.now {
+    if (!_listenerAttached) {
+      _listenerAttached = true;
+      LocationService.onLocationChanged.addListener(clearCache);
+    }
+  }
 
   /// Returns cached prayer times if available for today,
   /// otherwise returns an instant fallback (Makkah calculation) with 0ms delay.
@@ -49,7 +57,7 @@ class PrayerTimeService {
     final current = (date ?? now()).toLocal();
     final isToday = date == null;
 
-    if (isToday && _cachedToday != null && _cacheTimestamp != null) {
+    if (isToday && _cachedToday != null && _cacheTimestamp != null && !_cachedIsFallback) {
       if (DateTime.now().difference(_cacheTimestamp!) < _cacheDuration &&
           _cachedToday!.date.day == current.day &&
           _cachedToday!.date.month == current.month &&
@@ -92,6 +100,7 @@ class PrayerTimeService {
       if (isToday) {
         _cachedToday = result;
         _cacheTimestamp = DateTime.now();
+        _cachedIsFallback = false;
       }
       return result;
     } catch (_) {
@@ -111,6 +120,7 @@ class PrayerTimeService {
       if (isToday) {
         _cachedToday = result;
         _cacheTimestamp = DateTime.now();
+        _cachedIsFallback = true;
       }
       return result;
     }

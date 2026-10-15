@@ -48,9 +48,19 @@ class _PrayerPageState extends State<PrayerPage> {
   @override
   void initState() {
     super.initState();
+    LocationService.onLocationChanged.addListener(_onLocationChanged);
     _loadPrayer();
     _locationFuture = _loadLocation();
     _loadSettings();
+  }
+
+  void _onLocationChanged() {
+    if (!mounted) return;
+    PrayerTimeService.clearCache();
+    setState(() {
+      _loadPrayer();
+      _locationFuture = _loadLocation();
+    });
   }
 
   Future<void> _loadSettings() async {
@@ -63,6 +73,7 @@ class _PrayerPageState extends State<PrayerPage> {
 
   @override
   void dispose() {
+    LocationService.onLocationChanged.removeListener(_onLocationChanged);
     _countdownController?.dispose();
     super.dispose();
   }

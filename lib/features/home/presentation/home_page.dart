@@ -7,6 +7,7 @@ import '../../../core/services/last_activity_service.dart';
 import '../../../core/services/last_sharh_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
+import '../../../core/services/location_service.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 
@@ -63,6 +64,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    LocationService.onLocationChanged.addListener(_onLocationChanged);
     _prayerDay = _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
     _loadAllData();
 
@@ -71,6 +73,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       const Duration(minutes: 1),
       (_) => _refreshPeriodicData(),
     );
+  }
+
+  void _onLocationChanged() {
+    if (!mounted) return;
+    PrayerTimeService.clearCache();
+    _loadAllData();
   }
 
   @override
@@ -149,6 +157,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    LocationService.onLocationChanged.removeListener(_onLocationChanged);
     _stateRefreshTimer?.cancel();
     super.dispose();
   }
@@ -461,7 +470,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _openLocationSettings(BuildContext context) {
     LocationSettingsSheet.show(
       context,
-      onSaved: _loadAllData,
+      onSaved: () {
+        LocationService.clearCache();
+        PrayerTimeService.clearCache();
+        _loadAllData();
+      },
     );
   }
 
