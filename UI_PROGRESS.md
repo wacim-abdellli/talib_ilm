@@ -825,3 +825,22 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
      - `flutter test`: All 19 tests passed.
 - **Open Issues:** None.
+
+---
+
+## Mutun Digital Reader: Horizontal Side Sliding (PageView) & Preloading
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Horizontal Side Sliding (`mutn_digital_reader.dart`):**
+     - Replaced static single-page container with a high-performance horizontal `PageView.builder` wrapped in RTL `Directionality`.
+     - Supports natural side swiping (swipe right-to-left to advance page, swipe left-to-right to go back).
+     - Added adjacent page preloading (`pageNum - 1`, `pageNum`, `pageNum + 1`) for instantaneous swipe transitions without blank delays.
+  2. **Modular Architecture & Rule 8 Compliance:**
+     - Leveraged [`ShamelaPageContent`](file:///d:/Projects/talib_ilm-main/lib/features/ilm/presentation/widgets/shamela_page_content.dart) for isolated page rendering with dedicated `ScrollController` (no scroll position collisions).
+     - Full scholarly syntax coloring, custom Islamic fonts (`Amiri`, `Cairo`, `ScheherazadeNew`), and memorization mode preserved.
+     - Kept `mutn_digital_reader.dart` compact at 380 lines (< 600 line limit).
+  3. **Verification:**
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
+     - `flutter test`: 19/19 tests passed.
+- **Open Issues:** None.

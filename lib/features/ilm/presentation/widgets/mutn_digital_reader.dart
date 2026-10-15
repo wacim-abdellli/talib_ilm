@@ -3,20 +3,19 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_states.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
-import 'mutn_memorization_view.dart';
 import 'scholarly_reader_hud.dart';
 import 'shamela_fihris_sheet.dart';
-import 'shamela_text_highlighter.dart';
+import 'shamela_page_content.dart';
 import 'shamela_typography_sheet.dart';
 
-/// Reflowable digital text reader for Islamic Mutun with distraction-free
-/// immersive mode, unified scholarly toolbar, syntax coloring, and self-testing recall.
+/// Reflowable digital text reader for Islamic Mutun with horizontal side sliding (PageView),
+/// distraction-free immersive mode, unified scholarly toolbar, syntax coloring, and self-testing recall.
 class MutnDigitalReaderView extends StatefulWidget {
   final IlmBook book;
   final MutunDigitalEntry digitalEntry;
@@ -50,9 +49,11 @@ class MutnDigitalReaderView extends StatefulWidget {
 class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   late int _currentPage;
   late int _totalPages;
-  bool _isLoading = true;
-  String? _errorMessage;
-  ShamelaPage? _pageData;
+  late final PageController _pageController;
+
+  final Map<int, ShamelaPage> _pageCache = {};
+  final Set<int> _loadingPages = {};
+  final Map<int, String> _pageErrors = {};
 
   // Typography & Surface settings
   double _fontSizeDelta = 2.0;
@@ -63,56 +64,19 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   // Memorization Mode (وضع التسميع والتحفيظ)
   bool _memorizationMode = false;
 
-  final ScrollController _scrollController = ScrollController();
-
-  TextSpan? _cachedSpans;
-  String? _cachedText;
-  double? _cachedDelta;
-  String? _cachedFamily;
-  double? _cachedLh;
-  Color? _cachedTextColor;
-
-  TextSpan _buildOrReuseSpans(
-    String text,
-    AppPalette palette,
-    AppTextTheme textTheme,
-  ) {
-    if (_cachedSpans != null &&
-        _cachedText == text &&
-        _cachedDelta == _fontSizeDelta &&
-        _cachedFamily == _fontFamily &&
-        _cachedLh == _lineHeight &&
-        _cachedTextColor == palette.text) {
-      return _cachedSpans!;
-    }
-    _cachedText = text;
-    _cachedDelta = _fontSizeDelta;
-    _cachedFamily = _fontFamily;
-    _cachedLh = _lineHeight;
-    _cachedTextColor = palette.text;
-    _cachedSpans = ShamelaTextHighlighter.buildSpans(
-      text: text,
-      palette: palette,
-      textTheme: textTheme,
-      fontSizeDelta: _fontSizeDelta,
-      fontFamily: _fontFamily,
-      lineHeight: _lineHeight,
-    );
-    return _cachedSpans!;
-  }
-
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialPage.clamp(1, widget.digitalEntry.totalPages);
     _totalPages = widget.digitalEntry.totalPages;
+    _pageController = PageController(initialPage: _currentPage - 1);
     _loadPreferences();
-    _fetchCurrentPage();
+    _preloadSurroundingPages(_currentPage);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -138,37 +102,55 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     await prefs.setBool('mutn_memorization_mode', _memorizationMode);
   }
 
-  Future<void> _fetchCurrentPage() async {
+  void _preloadSurroundingPages(int pageNum) {
+    for (final offset in [0, 1, -1]) {
+      final target = pageNum + offset;
+      if (target >= 1 && target <= _totalPages) {
+        _loadPage(target);
+      }
+    }
+  }
+
+  Future<void> _loadPage(int pageNum) async {
+    if (_pageCache.containsKey(pageNum) || _loadingPages.contains(pageNum)) {
+      return;
+    }
+
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _loadingPages.add(pageNum);
+      _pageErrors.remove(pageNum);
     });
 
     try {
       final page = await ShamelaService.fetchPage(
         bookId: widget.digitalEntry.shamelaId,
-        pageNumber: _currentPage,
+        pageNumber: pageNum,
       );
-
       if (!mounted) return;
       setState(() {
-        _pageData = page;
-        _isLoading = false;
+        _pageCache[pageNum] = page;
+        _loadingPages.remove(pageNum);
       });
-
-      widget.onPageChanged(_currentPage, _totalPages);
-
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _isLoading = false;
-        _errorMessage = 'تعذر تحميل الصفحة. يرجى التحقق من الاتصال بالإنترنت.';
+        _loadingPages.remove(pageNum);
+        _pageErrors[pageNum] =
+            'تعذر تحميل الصفحة $pageNum. يرجى التحقق من الاتصال بالإنترنت.';
       });
     }
+  }
+
+  void _onPageViewChanged(int index) {
+    final pageNum = index + 1;
+    if (pageNum == _currentPage) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _currentPage = pageNum;
+    });
+    _preloadSurroundingPages(pageNum);
+    widget.onPageChanged(pageNum, _totalPages);
   }
 
   void _goToPage(int page) {
@@ -176,7 +158,11 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     if (safe == _currentPage) return;
     HapticFeedback.selectionClick();
     setState(() => _currentPage = safe);
-    _fetchCurrentPage();
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(safe - 1);
+    }
+    _preloadSurroundingPages(safe);
+    widget.onPageChanged(safe, _totalPages);
   }
 
   void _openTypographySheet() {
@@ -258,21 +244,90 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       color: bgColor,
       child: Column(
         children: [
-          // ── Reader Body (Tap anywhere to toggle distraction-free mode) ──
+          // ── Reader Body: Horizontal Swipe (Slide side) PageView ──
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: palette.primary,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : _errorMessage != null
-                    ? _buildErrorView(palette, textTheme)
-                    : BookPageTapDetector(
-                        onTap: widget.onToggleControls,
-                        child: _buildContentArea(palette, textTheme),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _totalPages,
+                onPageChanged: _onPageViewChanged,
+                itemBuilder: (context, index) {
+                  final pageNum = index + 1;
+                  final page = _pageCache[pageNum];
+                  final isLoading = _loadingPages.contains(pageNum);
+                  final error = _pageErrors[pageNum];
+
+                  if (isLoading) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: palette.gold,
+                            strokeWidth: 2.5,
+                          ),
+                          const SizedBox(height: AppSpace.md),
+                          Text(
+                            'جاري استحضار الصفحة $pageNum من المتن...',
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
+                    );
+                  }
+
+                  if (error != null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.wifi_off_rounded,
+                              color: palette.textMuted,
+                              size: AppIcon.xl,
+                            ),
+                            const SizedBox(height: AppSpace.md),
+                            Text(
+                              error,
+                              style: textTheme.body.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: AppSpace.lg),
+                            AppButton(
+                              label: 'إعادة المحاولة',
+                              size: AppButtonSize.sm,
+                              onPressed: () => _loadPage(pageNum),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (page == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return BookPageTapDetector(
+                    onTap: widget.onToggleControls,
+                    child: ShamelaPageContent(
+                      page: page,
+                      memorizationMode: _memorizationMode,
+                      fontFamily: _fontFamily,
+                      fontSizeDelta: _fontSizeDelta,
+                      lineHeight: _lineHeight,
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
 
           // ── Unified Bottom Scholarly HUD ───────────────────────
@@ -282,8 +337,12 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             isBookmarked: widget.isBookmarked,
             memorizationMode: _memorizationMode,
             showControls: widget.showControls,
-            onPreviousPage: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
-            onNextPage: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+            onPreviousPage: _currentPage > 1
+                ? () => _goToPage(_currentPage - 1)
+                : null,
+            onNextPage: _currentPage < _totalPages
+                ? () => _goToPage(_currentPage + 1)
+                : null,
             onPageIndicatorTap: _openFihrisSheet,
             onToggleBookmark: widget.onToggleBookmark,
             onShowBookmarks: widget.onShowBookmarks,
@@ -293,111 +352,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             onOpenTypography: _openTypographySheet,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildContentArea(AppPalette palette, AppTextTheme textTheme) {
-    final content = _pageData?.content ?? '';
-    final chapter = _pageData?.chapterTitle;
-
-    return SelectionArea(
-      child: Scrollbar(
-        controller: _scrollController,
-        thickness: 3,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.lg,
-            vertical: AppSpace.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Chapter header if present
-              if (chapter != null && chapter.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceRaised,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: palette.gold, width: 1),
-                  ),
-                  child: Text(
-                    chapter,
-                    style: textTheme.titleSmall.copyWith(
-                      color: palette.gold,
-                      fontFamily: _fontFamily,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.lg),
-              ],
-
-              // Memorization view or standard scholarly view
-              if (_memorizationMode)
-                MutnMemorizationView(
-                  content: content,
-                  fontFamily: _fontFamily,
-                  fontSizeDelta: _fontSizeDelta,
-                  lineHeight: _lineHeight,
-                )
-              else
-                Text.rich(
-                  _buildOrReuseSpans(content, palette, textTheme),
-                  textAlign: TextAlign.start,
-                ),
-
-              // Footnotes / Hamesh
-              if (_pageData?.hamesh != null && _pageData!.hamesh!.isNotEmpty) ...[
-                const SizedBox(height: AppSpace.xl),
-                Divider(color: palette.border, thickness: 1),
-                const SizedBox(height: AppSpace.sm),
-                Text(
-                  'الحاشية والتعليقات:',
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  _pageData!.hamesh!,
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
-                    height: 1.6,
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpace.xxl),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-
-  Widget _buildErrorView(AppPalette palette, AppTextTheme textTheme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xl),
-        child: AppEmptyState(
-          icon: Icons.wifi_off_rounded,
-          title: 'تعذر تحميل الصفحة',
-          subtitle: _errorMessage ?? '',
-          action: AppButton(
-            label: 'إعادة المحاولة',
-            onPressed: _fetchCurrentPage,
-          ),
-        ),
       ),
     );
   }
