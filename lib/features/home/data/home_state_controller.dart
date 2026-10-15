@@ -47,9 +47,9 @@ class HomeStateController extends ChangeNotifier {
     return 1.0 - (_minutesToNextPrayer / 30.0);
   }
 
-  /// Whether in prayer window (0 to +30 min after adhan)
+  /// Whether in prayer window (0 to +15 min after adhan)
   bool get isInPrayerWindow {
-    return _minutesToNextPrayer <= 0 && _minutesSinceLastPrayer <= 30;
+    return _minutesToNextPrayer <= 0 && _minutesSinceLastPrayer <= 15;
   }
 
   HomeStateController({
@@ -127,7 +127,7 @@ class HomeStateController extends ChangeNotifier {
     _updatePrayerProximity();
 
     // Priority 1: Prayer window (adhan to +30 min)
-    if (_minutesToNextPrayer <= 0 && _minutesSinceLastPrayer <= 30) {
+    if (_minutesToNextPrayer <= 0 && _minutesSinceLastPrayer <= 15) {
       _currentState = HomeEmotionalState.prayerWindow;
       return;
     }
@@ -138,8 +138,8 @@ class HomeStateController extends ChangeNotifier {
       return;
     }
 
-    // Priority 3: Post-prayer calm (30-90 min after prayer)
-    if (_minutesSinceLastPrayer > 30 && _minutesSinceLastPrayer <= 90) {
+    // Priority 3: Post-prayer calm (15-60 min after prayer)
+    if (_minutesSinceLastPrayer > 15 && _minutesSinceLastPrayer <= 60) {
       _currentState = HomeEmotionalState.postPrayerCalm;
       return;
     }

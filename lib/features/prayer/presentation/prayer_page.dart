@@ -139,10 +139,7 @@ class _PrayerPageState extends State<PrayerPage> {
               final data = snapshot.data!;
               _ensureCountdown(data);
               final nextName = _findNextPrayerName(data.prayers);
-              final currentName = _findCurrentPrayerName(
-                data.prayers,
-                nextName,
-              );
+              final currentName = _findCurrentPrayerName(data.prayers);
               final times = _buildPrayerTimes(data, nextName, currentName);
               final gregorianDate = _formatGregorianDate(data.date);
 
@@ -184,18 +181,52 @@ class _PrayerPageState extends State<PrayerPage> {
                                 textAlign: TextAlign.right,
                               ),
                               const SizedBox(height: AppSpace.md),
-                              for (var i = 0; i < times.length; i++) ...[
-                                PrayerTimeCard(
-                                  item: times[i],
-                                  onBeforeAdhkar: () => _openDuas(context),
-                                  onAfterAdhkar: () =>
-                                      _openAfterPrayer(context, times[i].name),
-                                  onTap: () =>
-                                      _openAfterPrayer(context, times[i].name),
-                                ),
-                                if (i != times.length - 1)
-                                  const SizedBox(height: AppSpace.sm),
-                              ],
+                              if (_countdownController != null)
+                                ValueListenableBuilder<PrayerCountdownState>(
+                                  valueListenable: _countdownController!.state,
+                                  builder: (context, countdownState, _) {
+                                    final dynamicCurrentName = countdownState.isInPrayerTime
+                                        ? countdownState.nextPrayerName
+                                        : null;
+                                    final dynamicNextName = countdownState.isInPrayerTime
+                                        ? null
+                                        : countdownState.nextPrayerName;
+                                    final dynamicTimes = _buildPrayerTimes(
+                                      data,
+                                      dynamicNextName,
+                                      dynamicCurrentName,
+                                    );
+                                    return Column(
+                                      children: [
+                                        for (var i = 0; i < dynamicTimes.length; i++) ...[
+                                          PrayerTimeCard(
+                                            item: dynamicTimes[i],
+                                            onBeforeAdhkar: () => _openDuas(context),
+                                            onAfterAdhkar: () =>
+                                                _openAfterPrayer(context, dynamicTimes[i].name),
+                                            onTap: () =>
+                                                _openAfterPrayer(context, dynamicTimes[i].name),
+                                          ),
+                                          if (i != dynamicTimes.length - 1)
+                                            const SizedBox(height: AppSpace.sm),
+                                        ],
+                                      ],
+                                    );
+                                  },
+                                )
+                              else
+                                for (var i = 0; i < times.length; i++) ...[
+                                  PrayerTimeCard(
+                                    item: times[i],
+                                    onBeforeAdhkar: () => _openDuas(context),
+                                    onAfterAdhkar: () =>
+                                        _openAfterPrayer(context, times[i].name),
+                                    onTap: () =>
+                                        _openAfterPrayer(context, times[i].name),
+                                  ),
+                                  if (i != times.length - 1)
+                                    const SizedBox(height: AppSpace.sm),
+                                ],
                               const SizedBox(height: AppSpace.lg),
                               const SunanRawatibCard(),
                               const SizedBox(height: AppSpace.lg),
@@ -314,7 +345,7 @@ class _PrayerPageState extends State<PrayerPage> {
     return order.where(day.prayers.containsKey).map((name) {
       final time = day.prayers[name]!;
       final isCurrent = currentName != null && name == currentName;
-      final isNext = nextName != null && name == nextName;
+      final isNext = !isCurrent && nextName != null && name == nextName;
       final isSunrise = name.contains('الشروق');
       final mode = isSunrise
           ? PrayerNotificationMode.off
@@ -430,24 +461,22 @@ class _PrayerPageState extends State<PrayerPage> {
     return null;
   }
 
-  String? _findCurrentPrayerName(
-    Map<String, DateTime> prayers,
-    String? nextName,
-  ) {
-    const order = AppStrings.prayerOrder;
-    if (prayers.isEmpty) return null;
+  String? _findCurrentPrayerName(Map<String, DateTime> prayers) {
+    final now = DateTime.now();
+    const prayerWindow = Duration(minutes: 15);
 
-    if (nextName == null) {
-      return order.lastWhere(prayers.containsKey, orElse: () => '').isEmpty
-          ? null
-          : order.lastWhere(prayers.containsKey);
-    }
+    final entries = prayers.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
-    final nextIndex = order.indexOf(nextName);
-    if (nextIndex <= 0) return null;
-    for (var i = nextIndex - 1; i >= 0; i--) {
-      final candidate = order[i];
-      if (prayers.containsKey(candidate)) return candidate;
+    for (final entry in entries) {
+      if (entry.key.contains('الشروق')) continue;
+      final time = entry.value;
+      if (!now.isBefore(time)) {
+        final elapsed = now.difference(time);
+        if (elapsed <= prayerWindow && elapsed >= Duration.zero) {
+          return entry.key;
+        }
+      }
     }
     return null;
   }

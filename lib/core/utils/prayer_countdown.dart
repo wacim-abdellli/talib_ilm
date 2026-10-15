@@ -66,6 +66,7 @@ class PrayerCountdownController {
 
     for (int i = entries.length - 1; i >= 0; i--) {
       final entry = entries[i];
+      if (entry.key.contains('الشروق')) continue;
       if (!current.isBefore(entry.value)) {
         final elapsed = current.difference(entry.value);
         if (elapsed < iqamaDuration) {
