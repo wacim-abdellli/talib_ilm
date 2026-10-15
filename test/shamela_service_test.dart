@@ -4,29 +4,50 @@ import 'package:talib_ilm/features/ilm/data/services/shamela_service.dart';
 
 void main() {
   group('Shamela Models & Catalog Tests', () {
-    test('Curated classics list is populated with valid masterworks', () {
+    test('Curated classics list is populated with 180+ valid masterworks across all disciplines', () {
       final classics = ShamelaService.curatedClassics;
       expect(classics.isNotEmpty, isTrue);
-      expect(classics.length, greaterThanOrEqualTo(15));
+      expect(classics.length, greaterThanOrEqualTo(180));
 
+      final ids = <int>{};
       for (final book in classics) {
-        expect(book.id, greaterThan(0));
+        expect(book.id, greaterThan(0), reason: 'Book ${book.title} must have positive ID');
         expect(book.title.trim().isNotEmpty, isTrue);
         expect(book.author.trim().isNotEmpty, isTrue);
+        expect(book.authorDeath?.trim().isNotEmpty, isTrue);
+        expect(book.description.trim().isNotEmpty, isTrue);
         expect(book.totalPages, greaterThan(0));
+        expect(book.categoryId, greaterThan(0));
         expect(book.category.trim().isNotEmpty, isTrue);
+        ids.add(book.id);
       }
+      // Ensure unique IDs or acceptable duplicates
+      expect(ids.length, greaterThanOrEqualTo(170));
     });
 
-    test('Categories list contains all essential Islamic knowledge disciplines', () {
+    test('Categories list contains all 12 essential Islamic knowledge disciplines with correct counts', () {
       final categories = ShamelaService.categories;
-      expect(categories.isNotEmpty, isTrue);
+      expect(categories.length, equals(13)); // 0: الكل + 12 disciplines
       final names = categories.map((c) => c.name).toList();
 
       expect(names, contains('الكل'));
-      expect(names.any((n) => n.contains('العقيدة')), isTrue);
-      expect(names.any((n) => n.contains('السنة')), isTrue);
-      expect(names.any((n) => n.contains('أصول الفقه')), isTrue);
+      expect(names, contains('العقيدة والتوحيد'));
+      expect(names, contains('كتب السنة والحديث'));
+      expect(names, contains('علوم الحديث والمصطلح'));
+      expect(names, contains('التفسير وعلوم القرآن'));
+      expect(names, contains('الفقه الحنبلي'));
+      expect(names, contains('الفقه الشافعي'));
+      expect(names, contains('الفقه المالكي'));
+      expect(names, contains('الفقه الحنفي'));
+      expect(names, contains('أصول الفقه والقواعد'));
+      expect(names, contains('النحو واللغة العربية'));
+      expect(names, contains('السيرة النبوية والتاريخ'));
+      expect(names, contains('الرقائق والآداب والأذكار'));
+
+      // Ensure every discipline category has books
+      for (final cat in categories) {
+        expect(cat.count, greaterThan(0), reason: 'Category ${cat.name} must have books');
+      }
     });
 
     test('Search catalog by book title', () {
