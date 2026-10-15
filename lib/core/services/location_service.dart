@@ -54,6 +54,26 @@ class LocationResult {
         return 'الموقع الافتراضي';
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LocationResult &&
+          runtimeType == other.runtimeType &&
+          city == other.city &&
+          (latitude - other.latitude).abs() < 0.005 &&
+          (longitude - other.longitude).abs() < 0.005 &&
+          source == other.source &&
+          calculationMethod == other.calculationMethod;
+
+  @override
+  int get hashCode => Object.hash(
+        city,
+        (latitude * 100).round(),
+        (longitude * 100).round(),
+        source,
+        calculationMethod,
+      );
 }
 
 class LocationService {
@@ -83,6 +103,8 @@ class LocationService {
   static bool _localeReady = false;
   static LocationResult? _memoryCache;
   static DateTime? _cacheTime;
+  static bool _isGpsRefreshing = false;
+  static DateTime? _lastGpsRefreshTime;
 
   /// Fast access to the in-memory cached location if present
   static LocationResult? get cachedLocation => _memoryCache;
@@ -92,10 +114,21 @@ class LocationService {
   static final ValueNotifier<LocationResult?> onLocationChanged =
       ValueNotifier<LocationResult?>(null);
 
+  static void _notifyLocationChanged(LocationResult resolved) {
+    _memoryCache = resolved;
+    _cacheTime = DateTime.now();
+    final current = onLocationChanged.value;
+    if (current != null && current == resolved) {
+      return;
+    }
+    onLocationChanged.value = resolved;
+  }
+
   /// Clears in-memory location cache so subsequent lookups re-fetch fresh data
   static void clearCache() {
     _memoryCache = null;
     _cacheTime = null;
+    _lastGpsRefreshTime = null;
   }
 
   /// Retrieves the location strictly prioritizing phone hardware GPS automatically:
@@ -186,15 +219,11 @@ class LocationService {
               isVerifiedGps: true,
             );
 
-            _memoryCache = resolved;
-            _cacheTime = DateTime.now();
-            onLocationChanged.value = resolved;
+            _notifyLocationChanged(resolved);
             return resolved;
           } catch (_) {
             if (quickBest != null) {
-              _memoryCache = quickBest;
-              _cacheTime = DateTime.now();
-              onLocationChanged.value = quickBest;
+              _notifyLocationChanged(quickBest);
               return quickBest;
             }
           }
@@ -209,6 +238,13 @@ class LocationService {
   }
 
   Future<void> _backgroundGpsRefresh(SharedPreferences prefs) async {
+    if (_isGpsRefreshing) return;
+    if (_lastGpsRefreshTime != null &&
+        DateTime.now().difference(_lastGpsRefreshTime!) < const Duration(minutes: 15)) {
+      return;
+    }
+    _isGpsRefreshing = true;
+    _lastGpsRefreshTime = DateTime.now();
     try {
       final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!isServiceEnabled) return;
@@ -233,10 +269,11 @@ class LocationService {
         longitude: resolved.longitude,
         isVerifiedGps: true,
       );
-      _memoryCache = resolved;
-      _cacheTime = DateTime.now();
-      onLocationChanged.value = resolved;
-    } catch (_) {}
+      _notifyLocationChanged(resolved);
+    } catch (_) {
+    } finally {
+      _isGpsRefreshing = false;
+    }
   }
 
   /// Explicitly triggers high-accuracy GPS detection with native system prompts
@@ -297,9 +334,7 @@ class LocationService {
     // Turn off manual override when user explicitly chooses GPS
     await prefs.setBool(_keyManualEnabled, false);
 
-    _memoryCache = resolved;
-    _cacheTime = DateTime.now();
-    onLocationChanged.value = resolved;
+    _notifyLocationChanged(resolved);
 
     return resolved;
   }
@@ -397,9 +432,7 @@ class LocationService {
     await prefs.setDouble(_keyManualLat, location.latitude);
     await prefs.setDouble(_keyManualLon, location.longitude);
 
-    _memoryCache = location;
-    _cacheTime = DateTime.now();
-    onLocationChanged.value = location;
+    _notifyLocationChanged(location);
   }
 
   /// Sets a verified city selected from the catalog
@@ -434,7 +467,7 @@ class LocationService {
 
     clearCache();
     final fresh = await getLocation(autoPrompt: false);
-    onLocationChanged.value = fresh;
+    _notifyLocationChanged(fresh);
   }
 
   Future<void> _ensureLocale() async {

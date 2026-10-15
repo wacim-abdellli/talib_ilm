@@ -17,10 +17,25 @@ class PrayerTimeService {
   static bool _cachedIsFallback = false;
   static bool _listenerAttached = false;
 
+  static double? _lastLatitude;
+  static double? _lastLongitude;
+  static String? _lastCity;
+  static String? _lastCountryCode;
+  static CalculationMethod? _lastMethod;
+  static String? _lastSavedMethodStr;
+  static Map<String, int> _lastAdjustments = const {};
+
   static void clearCache() {
     _cachedToday = null;
     _cacheTimestamp = null;
     _cachedIsFallback = false;
+    _lastLatitude = null;
+    _lastLongitude = null;
+    _lastCity = null;
+    _lastCountryCode = null;
+    _lastMethod = null;
+    _lastSavedMethodStr = null;
+    _lastAdjustments = const {};
   }
 
   PrayerTimeService({
@@ -66,6 +81,23 @@ class PrayerTimeService {
       }
     }
 
+    if (date != null &&
+        _lastLatitude != null &&
+        _lastLongitude != null &&
+        _lastCity != null) {
+      return _buildDay(
+        current,
+        city: _lastCity!,
+        latitude: _lastLatitude!,
+        longitude: _lastLongitude!,
+        countryCode: _lastCountryCode,
+        savedMethod: _lastSavedMethodStr,
+        date: date,
+        method: _lastMethod ?? CalculationMethod.muslim_world_league,
+        adjustments: _lastAdjustments,
+      );
+    }
+
     final prefs = await SharedPreferences.getInstance();
 
     // Load adjustments
@@ -84,6 +116,14 @@ class PrayerTimeService {
         countryCode: location.countryCode,
         latitude: location.latitude,
       );
+
+      _lastLatitude = location.latitude;
+      _lastLongitude = location.longitude;
+      _lastCity = location.city;
+      _lastCountryCode = location.countryCode;
+      _lastMethod = method;
+      _lastSavedMethodStr = savedMethodStr;
+      _lastAdjustments = adjustments;
 
       final result = _buildDay(
         current,

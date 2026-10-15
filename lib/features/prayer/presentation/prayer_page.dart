@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +20,7 @@ import '../../adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../adhkar/presentation/duas_misc_page.dart';
 import '../data/models/prayer_models.dart';
 import 'location_settings_sheet.dart';
+import 'prayer_page_helpers.dart';
 import 'prayer_settings_sheet.dart';
 import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
@@ -40,7 +43,7 @@ class _PrayerPageState extends State<PrayerPage> {
   final AdhanSettingsService _adhanSettingsService = AdhanSettingsService();
   final LocationService _locationService = LocationService();
   late Future<PrayerTimesDay> _prayerFuture;
-  late Future<_LocationInfo> _locationFuture;
+  late Future<LocationInfo> _locationFuture;
   PrayerCountdownController? _countdownController;
   PrayerTimesDay? _cachedDay;
   AdhanSettings? _adhanSettings;
@@ -56,6 +59,10 @@ class _PrayerPageState extends State<PrayerPage> {
 
   void _onLocationChanged() {
     if (!mounted) return;
+    final newLoc = LocationService.onLocationChanged.value;
+    if (newLoc != null && _cachedDay != null && _cachedDay!.city == newLoc.city) {
+      return;
+    }
     PrayerTimeService.clearCache();
     setState(() {
       _loadPrayer();
@@ -78,17 +85,15 @@ class _PrayerPageState extends State<PrayerPage> {
     super.dispose();
   }
 
-  Future<_LocationInfo> _loadLocation() async {
-    // Add small delay to prevent startup resource contention on emulators
+  Future<LocationInfo> _loadLocation() async {
     await Future.delayed(AppMotion.debounce);
     try {
       final manual = await _locationService.getManualLocation();
       final location = await _locationService.getLocation();
-      return _LocationInfo(city: location.city, isManual: manual != null);
+      return LocationInfo(city: location.city, isManual: manual != null);
     } catch (e) {
       debugPrint('Error loading location: $e');
-      // Return a safe default if location fails
-      return const _LocationInfo(city: 'مكة المكرمة', isManual: false);
+      return const LocationInfo(city: 'مكة المكرمة', isManual: false);
     }
   }
 
@@ -104,7 +109,9 @@ class _PrayerPageState extends State<PrayerPage> {
           child: FutureBuilder<PrayerTimesDay>(
             future: _prayerFuture,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              final data = snapshot.data ?? _cachedDay;
+
+              if (data == null && snapshot.connectionState == ConnectionState.waiting) {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpace.xl),
                   child: SingleChildScrollView(
@@ -130,7 +137,7 @@ class _PrayerPageState extends State<PrayerPage> {
                 );
               }
 
-              if (!snapshot.hasData) {
+              if (data == null) {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpace.xl),
                   child: Center(
@@ -147,14 +154,13 @@ class _PrayerPageState extends State<PrayerPage> {
                 );
               }
 
-              final data = snapshot.data!;
               _ensureCountdown(data);
-              final nextName = _findNextPrayerName(data.prayers);
-              final currentName = _findCurrentPrayerName(data.prayers);
+              final nextName = PrayerPageHelpers.findNextPrayerName(data.prayers);
+              final currentName = PrayerPageHelpers.findCurrentPrayerName(data.prayers);
               final times = _buildPrayerTimes(data, nextName, currentName);
-              final gregorianDate = _formatGregorianDate(data.date);
+              final gregorianDate = PrayerPageHelpers.formatGregorianDate(data.date);
 
-              return FutureBuilder<_LocationInfo>(
+              return FutureBuilder<LocationInfo>(
                 future: _locationFuture,
                 builder: (context, locationSnapshot) {
                   final location = locationSnapshot.data;
@@ -262,10 +268,10 @@ class _PrayerPageState extends State<PrayerPage> {
   Widget _buildNextPrayerCard(PrayerTimesDay day) {
     final controller = _countdownController;
     if (controller == null) {
-      final prayer = _buildNextPrayer(day);
+      final prayer = PrayerPageHelpers.buildNextPrayer(day);
       final nextTime = day.prayers[day.nextPrayer] ?? DateTime.now();
       final remaining = nextTime.difference(DateTime.now());
-      final progress = _calculatePrayerProgress(
+      final progress = PrayerPageHelpers.calculatePrayerProgress(
         day,
         day.nextPrayer,
         nextTime,
@@ -273,7 +279,7 @@ class _PrayerPageState extends State<PrayerPage> {
       );
       return NextPrayerCard(
         prayer: prayer,
-        countdownText: _formatCountdown(remaining),
+        countdownText: PrayerPageHelpers.formatCountdown(remaining),
         progress: progress,
         onTap: () => _openPrayerSettings(context),
         onOpenQibla: () => _openQibla(context),
@@ -290,7 +296,7 @@ class _PrayerPageState extends State<PrayerPage> {
           time: state.nextPrayerTime,
           minutesRemaining: state.remaining.inMinutes,
         );
-        final progress = _calculatePrayerProgress(
+        final progress = PrayerPageHelpers.calculatePrayerProgress(
           day,
           state.nextPrayerName,
           state.nextPrayerTime,
@@ -298,7 +304,7 @@ class _PrayerPageState extends State<PrayerPage> {
         );
         final countdownText = state.isInPrayerTime
             ? 'رُفِع الأذان منذ ${state.elapsed.inMinutes} د'
-            : _formatCountdown(state.remaining);
+            : PrayerPageHelpers.formatCountdown(state.remaining);
         return NextPrayerCard(
           prayer: prayer,
           countdownText: countdownText,
@@ -309,40 +315,6 @@ class _PrayerPageState extends State<PrayerPage> {
           onOpenSettings: () => _openPrayerSettings(context),
         );
       },
-    );
-  }
-
-  double _calculatePrayerProgress(
-    PrayerTimesDay day,
-    String nextPrayerLabel,
-    DateTime nextTime,
-    Duration remaining,
-  ) {
-    final order = AppStrings.prayerOrder;
-    final index = order.indexOf(nextPrayerLabel);
-    if (index == -1) return 0.0;
-    final prevLabel = order[(index - 1 + order.length) % order.length];
-    final prevTime = day.prayers[prevLabel];
-    if (prevTime == null) return 0.0;
-    var startTime = prevTime;
-    if (startTime.isAfter(nextTime)) {
-      startTime = startTime.subtract(const Duration(days: 1));
-    }
-    final totalSeconds = nextTime.difference(startTime).inSeconds;
-    if (totalSeconds <= 0) return 0.0;
-    final remainingSeconds = remaining.inSeconds;
-    final progress = 1 - (remainingSeconds / totalSeconds);
-    return progress.clamp(0.0, 1.0);
-  }
-
-  NextPrayer _buildNextPrayer(PrayerTimesDay day) {
-    final now = DateTime.now();
-    final time = day.prayers[day.nextPrayer] ?? now;
-    final minutes = time.difference(now).inMinutes;
-    return NextPrayer(
-      prayer: prayerFromLabel(day.nextPrayer) ?? Prayer.fajr,
-      time: time,
-      minutesRemaining: minutes < 0 ? 0 : minutes,
     );
   }
 
@@ -379,12 +351,22 @@ class _PrayerPageState extends State<PrayerPage> {
     }).toList();
   }
 
-  Future<void> _setPrayerNotificationMode(
+  void _setPrayerNotificationMode(
     String prayerName,
     PrayerNotificationMode newMode,
-  ) async {
-    final currentSettings =
-        _adhanSettings ?? await _adhanSettingsService.getSettings();
+  ) {
+    final currentSettings = _adhanSettings ??
+        const AdhanSettings(
+          enabled: true,
+          sound: AdhanSound.qatami,
+          silentNotifications: false,
+          prayerToggles: {},
+          calculationMethod: 'auto',
+          volume: 1.0,
+          notifyBeforeMinutes: 0,
+          iqamaReminders: false,
+          adjustments: {},
+        );
 
     final updatedModes =
         Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
@@ -400,10 +382,7 @@ class _PrayerPageState extends State<PrayerPage> {
       prayerToggles: updatedToggles,
     );
 
-    await _adhanSettingsService.saveSettings(updatedSettings);
-    await _prayerScheduleService.refreshSchedulesIfNeeded(force: true);
-
-    if (!mounted) return;
+    // Instant optimistic UI update: zero frame lag
     setState(() {
       _adhanSettings = updatedSettings;
     });
@@ -423,35 +402,45 @@ class _PrayerPageState extends State<PrayerPage> {
         '$prayerName: تم ضبط التنبيه إلى ($modeLabel)',
       );
     }
+
+    // Non-blocking asynchronous persistence and alarm scheduling
+    unawaited(() async {
+      try {
+        await _adhanSettingsService.saveSettings(updatedSettings);
+        await _prayerScheduleService.refreshSchedulesIfNeeded(
+          day: _cachedDay,
+          force: true,
+        );
+      } catch (e) {
+        debugPrint('Error saving prayer notification mode: $e');
+      }
+    }());
   }
 
-  Future<void> _togglePrayerNotification(String prayerName) async {
-    final currentSettings =
-        _adhanSettings ?? await _adhanSettingsService.getSettings();
+  void _togglePrayerNotification(String prayerName) {
+    final currentSettings = _adhanSettings ??
+        const AdhanSettings(
+          enabled: true,
+          sound: AdhanSound.qatami,
+          silentNotifications: false,
+          prayerToggles: {},
+          calculationMethod: 'auto',
+          volume: 1.0,
+          notifyBeforeMinutes: 0,
+          iqamaReminders: false,
+          adjustments: {},
+        );
     final currentMode = currentSettings.modeForPrayer(prayerName);
 
     // Cycle: adhan -> takbeer -> announcement -> tone -> silent -> off -> adhan
-    final PrayerNotificationMode nextMode;
-    switch (currentMode) {
-      case PrayerNotificationMode.adhan:
-        nextMode = PrayerNotificationMode.takbeer;
-        break;
-      case PrayerNotificationMode.takbeer:
-        nextMode = PrayerNotificationMode.announcement;
-        break;
-      case PrayerNotificationMode.announcement:
-        nextMode = PrayerNotificationMode.tone;
-        break;
-      case PrayerNotificationMode.tone:
-        nextMode = PrayerNotificationMode.silent;
-        break;
-      case PrayerNotificationMode.silent:
-        nextMode = PrayerNotificationMode.off;
-        break;
-      case PrayerNotificationMode.off:
-        nextMode = PrayerNotificationMode.adhan;
-        break;
-    }
+    final PrayerNotificationMode nextMode = switch (currentMode) {
+      PrayerNotificationMode.adhan => PrayerNotificationMode.takbeer,
+      PrayerNotificationMode.takbeer => PrayerNotificationMode.announcement,
+      PrayerNotificationMode.announcement => PrayerNotificationMode.tone,
+      PrayerNotificationMode.tone => PrayerNotificationMode.silent,
+      PrayerNotificationMode.silent => PrayerNotificationMode.off,
+      PrayerNotificationMode.off => PrayerNotificationMode.adhan,
+    };
 
     final updatedModes =
         Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
@@ -467,37 +456,21 @@ class _PrayerPageState extends State<PrayerPage> {
       prayerToggles: updatedToggles,
     );
 
-    await _adhanSettingsService.saveSettings(updatedSettings);
-    await _prayerScheduleService.refreshSchedulesIfNeeded(force: true);
-
-    if (!mounted) return;
+    // Instant optimistic UI update
     setState(() {
       _adhanSettings = updatedSettings;
     });
 
     HapticFeedback.selectionClick();
     if (mounted) {
-      final String modeName;
-      switch (nextMode) {
-        case PrayerNotificationMode.adhan:
-          modeName = 'أذان كامل';
-          break;
-        case PrayerNotificationMode.takbeer:
-          modeName = 'تكبيرات فقط';
-          break;
-        case PrayerNotificationMode.announcement:
-          modeName = 'نداء وقت الصلاة';
-          break;
-        case PrayerNotificationMode.tone:
-          modeName = 'نغمة هادئة';
-          break;
-        case PrayerNotificationMode.silent:
-          modeName = 'إشعار صامت';
-          break;
-        case PrayerNotificationMode.off:
-          modeName = 'إيقاف التنبيه';
-          break;
-      }
+      final String modeName = switch (nextMode) {
+        PrayerNotificationMode.adhan => 'أذان كامل',
+        PrayerNotificationMode.takbeer => 'تكبيرات فقط',
+        PrayerNotificationMode.announcement => 'نداء وقت الصلاة',
+        PrayerNotificationMode.tone => 'نغمة هادئة',
+        PrayerNotificationMode.silent => 'إشعار صامت',
+        PrayerNotificationMode.off => 'إيقاف التنبيه',
+      };
       AppSnackbar.info(
         context,
         nextMode != PrayerNotificationMode.off
@@ -505,40 +478,19 @@ class _PrayerPageState extends State<PrayerPage> {
             : 'تم إيقاف تنبيه صلاة $prayerName',
       );
     }
-  }
 
-  String? _findNextPrayerName(Map<String, DateTime> prayers) {
-    final current = DateTime.now();
-    final entries = prayers.entries.toList()
-      ..sort((a, b) => a.value.compareTo(b.value));
-
-    for (final entry in entries) {
-      if (!entry.value.isBefore(current)) {
-        return entry.key;
+    // Non-blocking asynchronous persistence and alarm scheduling
+    unawaited(() async {
+      try {
+        await _adhanSettingsService.saveSettings(updatedSettings);
+        await _prayerScheduleService.refreshSchedulesIfNeeded(
+          day: _cachedDay,
+          force: true,
+        );
+      } catch (e) {
+        debugPrint('Error toggling prayer notification mode: $e');
       }
-    }
-
-    return null;
-  }
-
-  String? _findCurrentPrayerName(Map<String, DateTime> prayers) {
-    final now = DateTime.now();
-    const prayerWindow = Duration(minutes: 15);
-
-    final entries = prayers.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    for (final entry in entries) {
-      if (entry.key.contains('الشروق')) continue;
-      final time = entry.value;
-      if (!now.isBefore(time)) {
-        final elapsed = now.difference(time);
-        if (elapsed <= prayerWindow && elapsed >= Duration.zero) {
-          return entry.key;
-        }
-      }
-    }
-    return null;
+    }());
   }
 
   void _ensureCountdown(PrayerTimesDay day) {
@@ -556,10 +508,10 @@ class _PrayerPageState extends State<PrayerPage> {
 
   void _loadPrayer() {
     _prayerFuture = _prayerTimeService.getPrayerTimesDay();
-    _prayerFuture.then((day) async {
+    _prayerFuture.then((day) {
       if (!mounted) return;
       _ensureCountdown(day);
-      await _prayerScheduleService.refreshSchedulesIfNeeded(day: day);
+      unawaited(_prayerScheduleService.refreshSchedulesIfNeeded(day: day));
     });
   }
 
@@ -593,26 +545,4 @@ class _PrayerPageState extends State<PrayerPage> {
   void _openQibla(BuildContext context) {
     Navigator.push(context, buildFadeRoute(page: const QiblaPage()));
   }
-
-  String _formatCountdown(Duration duration) {
-    final totalSeconds = duration.inSeconds;
-    final hours = (totalSeconds ~/ 3600).toString().padLeft(2, '0');
-    final minutes = ((totalSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
-  }
-
-  String _formatGregorianDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year.toString();
-    return '$day/$month/$year';
-  }
-}
-
-class _LocationInfo {
-  final String city;
-  final bool isManual;
-
-  const _LocationInfo({required this.city, required this.isManual});
 }
