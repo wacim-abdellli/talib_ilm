@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
@@ -268,25 +267,6 @@ class _HadithCardState extends State<HadithCard> {
                   ),
                 ),
               const Spacer(),
-              // Dorar.net search button
-              IconButton(
-                tooltip: 'تخريج وتحقيق في الدرر السنية',
-                onPressed: () async {
-                  final query = widget.hadith.cleanTitle.isNotEmpty
-                      ? widget.hadith.cleanTitle
-                      : widget.hadith.matn.split(' ').take(6).join(' ');
-                  final uri = Uri.parse(
-                    'https://dorar.net/hadith/search?q=${Uri.encodeComponent(query)}',
-                  );
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                icon: Icon(
-                  Icons.open_in_new_rounded,
-                  color: palette.textMuted,
-                ),
-              ),
               // Share button
               IconButton(
                 onPressed: _shareHadith,

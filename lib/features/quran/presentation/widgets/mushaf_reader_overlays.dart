@@ -404,7 +404,6 @@ class MushafReaderBottomBar extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildPageScrubber({
     required BuildContext context,
     required AppPalette palette,
@@ -426,7 +425,6 @@ class MushafReaderBottomBar extends StatelessWidget {
           textMutedColor: textMutedColor,
         ),
         const SizedBox(height: AppSpace.xxs),
-
         // ── 2. Mushaf Page Navigation Range Scrubber ─────────────────────
         Row(
           children: [
@@ -460,7 +458,6 @@ class MushafReaderBottomBar extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildTajweedLegend({
     required BuildContext context,
     required AppPalette palette,
@@ -528,7 +525,6 @@ class MushafReaderBottomBar extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildTajweedItem({
     required Color color,
     required String label,
