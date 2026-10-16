@@ -703,6 +703,8 @@ class TajweedPalette {
   static const Color idgham = Color(0xFF7C3AED); // Regal Purple
   static const Color iqlab = Color(0xFFEA580C); // Vivid Coral
   static const Color madd = Color(0xFFDC2626); // Crimson Red
+  static const Color maddShort = Color(0xFFEA580C); // Vivid Coral / Orange (مد حركتان)
+  static const Color silent = Color(0xFF9CA3AF); // Neutral Slate Gray (أحرف لا تُلفظ)
 }
 
 /// Reading surfaces for Mushaf
@@ -746,6 +748,9 @@ class MushafColors {
   static const Color sepiaCardBg = Color(0xFFFAF5EC);
   static const Color sepiaCardBorder = Color(0xFFDFD4C4);
   static const Color sepiaBadgeBg = Color(0xFFEFE6D6);
+  static const Color plaqueBg = Color(0xFFFAF7F0);
+  static const Color plaqueBorder = Color(0xFFC8B482);
+  static const Color plaqueText = Color(0xFF2E241B);
 
   /// Theme-based background lookup — eliminates switch duplication.
   // ignore: import_of_legacy_library_into_null_safe
@@ -847,11 +852,7 @@ class MushafColors {
     MushafThemeMode.dark => darkBadgeBg,
   };
 
-  static Color? bannerFrameTint(MushafThemeMode mode) => switch (mode) {
-    MushafThemeMode.white => null,
-    MushafThemeMode.sepia => const Color(0xFF8B5A2B),
-    MushafThemeMode.dark => const Color(0xFFD4AF37),
-  };
+  static Color? bannerFrameTint(MushafThemeMode mode) => null;
 }
 
 /// Ergonomic theme context extensions

@@ -299,8 +299,8 @@ void main() {
       }
     });
 
-    testWidgets('ShamelaReaderTopBar toggles reader surface on button tap', (tester) async {
-      bool surfaceToggled = false;
+    testWidgets('ShamelaReaderTopBar renders title, author and triggers copy', (tester) async {
+      bool copyTapped = false;
 
       await tester.pumpWidget(
         buildTestableWidget(
@@ -313,22 +313,21 @@ void main() {
             bgColor: Colors.black,
             surface: ShamelaReaderSurface.night,
             onBack: () {},
-            onCopy: () {},
-            onToggleSurface: () => surfaceToggled = true,
+            onCopy: () => copyTapped = true,
           ),
         ),
       );
 
       // Verify book title is rendered
       expect(find.text('ثلاثة الأصول'), findsWidgets);
-      // In night mode, surface toggle button tooltip is 'إلغاء الوضع الداكن'
-      final toggleFinder = find.byTooltip('إلغاء الوضع الداكن');
-      expect(toggleFinder, findsOneWidget);
+      // Verify copy button is present and functional
+      final copyFinder = find.byTooltip('نسخ الصفحة');
+      expect(copyFinder, findsOneWidget);
 
-      await tester.tap(toggleFinder);
+      await tester.tap(copyFinder);
       await tester.pump();
 
-      expect(surfaceToggled, isTrue);
+      expect(copyTapped, isTrue);
     });
   });
 }

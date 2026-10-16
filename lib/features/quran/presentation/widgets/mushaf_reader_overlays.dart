@@ -8,6 +8,7 @@ import '../../../../core/utils/arabic_digits.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../data/services/quran_audio_service.dart';
 import 'quick_jump_sheet.dart';
+import 'tajweed_guide_sheet.dart';
 
 class MushafReaderTopBar extends StatelessWidget {
   final int currentSurah;
@@ -203,10 +204,12 @@ class MushafReaderBottomBar extends StatelessWidget {
                   barBorder: barBorder,
                 )
               : _buildPageScrubber(
+                  context: context,
                   palette: palette,
                   textTheme: textTheme,
                   textMutedColor: textMutedColor,
                   barBorder: barBorder,
+                  pillBg: pillBg,
                 ),
         );
       },
@@ -403,36 +406,152 @@ class MushafReaderBottomBar extends StatelessWidget {
   }
 
   Widget _buildPageScrubber({
+    required BuildContext context,
     required AppPalette palette,
     required AppTextTheme textTheme,
     required Color textMutedColor,
     required Color barBorder,
+    required Color pillBg,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── 1. Authentic Medina Mushaf Tajweed Color Legend Strip ───────
+        _buildTajweedLegend(
+          context: context,
+          palette: palette,
+          textTheme: textTheme,
+          barBorder: barBorder,
+          pillBg: pillBg,
+          textMutedColor: textMutedColor,
+        ),
+        const SizedBox(height: AppSpace.xxs),
+
+        // ── 2. Mushaf Page Navigation Range Scrubber ─────────────────────
+        Row(
+          children: [
+            Text(
+              'صفحة $currentPage',
+              style: textTheme.caption.copyWith(
+                color: palette.gold,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Expanded(
+              child: Slider.adaptive(
+                value: currentPage.toDouble(),
+                min: 1.0,
+                max: 604.0,
+                activeColor: palette.gold,
+                inactiveColor: barBorder,
+                onChanged: (val) {
+                  onPageChanged(val.round());
+                },
+              ),
+            ),
+            Text(
+              '604',
+              style: textTheme.caption.copyWith(
+                color: textMutedColor,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTajweedLegend({
+    required BuildContext context,
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+    required Color barBorder,
+    required Color pillBg,
+    required Color textMutedColor,
+  }) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        TajweedGuideSheet.show(context);
+      },
+      borderRadius: AppRadius.pillRadius,
+      child: Container(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpace.sm,
+          vertical: AppSpace.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: pillBg,
+          borderRadius: AppRadius.pillRadius,
+          border: Border.all(color: barBorder, width: 0.8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildTajweedItem(
+              color: TajweedPalette.madd,
+              label: 'مدود (٤-٦)',
+              textTheme: textTheme,
+              palette: palette,
+            ),
+            _buildTajweedItem(
+              color: TajweedPalette.maddShort,
+              label: 'حركتان',
+              textTheme: textTheme,
+              palette: palette,
+            ),
+            _buildTajweedItem(
+              color: TajweedPalette.ikhfaa,
+              label: 'غنة وإخفاء',
+              textTheme: textTheme,
+              palette: palette,
+            ),
+            _buildTajweedItem(
+              color: TajweedPalette.qalqalah,
+              label: 'قلقلة',
+              textTheme: textTheme,
+              palette: palette,
+            ),
+            _buildTajweedItem(
+              color: TajweedPalette.silent,
+              label: 'لا يُلفظ',
+              textTheme: textTheme,
+              palette: palette,
+            ),
+            Icon(
+              Icons.info_outline_rounded,
+              size: AppIcon.xs,
+              color: textMutedColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTajweedItem({
+    required Color color,
+    required String label,
+    required AppTextTheme textTheme,
+    required AppPalette palette,
   }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'صفحة $currentPage',
-          style: textTheme.caption.copyWith(
-            color: palette.gold,
-            fontWeight: FontWeight.bold,
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
           ),
         ),
-        Expanded(
-          child: Slider.adaptive(
-            value: currentPage.toDouble(),
-            min: 1.0,
-            max: 604.0,
-            activeColor: palette.gold,
-            inactiveColor: barBorder,
-            onChanged: (val) {
-              onPageChanged(val.round());
-            },
-          ),
-        ),
+        const SizedBox(width: AppSpace.xxs),
         Text(
-          '604',
+          label,
           style: textTheme.caption.copyWith(
-            color: textMutedColor,
+            color: palette.text,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

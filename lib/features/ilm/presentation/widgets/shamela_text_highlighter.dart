@@ -42,8 +42,9 @@ class ShamelaTextHighlighter {
     ShamelaAccentColor accentColor = ShamelaAccentColor.emerald,
     ShamelaReaderSurface surface = ShamelaReaderSurface.normal,
   }) {
-    final surfaceTokens = ReaderSurfaceColors.getTokens(surface, isDark: palette.isDark);
-    final accent = ReaderAccentColors.getTokens(accentColor, isDark: palette.isDark);
+    final isEffectiveDark = surface.isEffectiveDark(palette.isDark);
+    final surfaceTokens = ReaderSurfaceColors.getTokens(surface, isDark: isEffectiveDark);
+    final accent = ReaderAccentColors.getTokens(accentColor, isDark: isEffectiveDark);
     final baseFontSize = (textTheme.body.fontSize ?? 18.0) + fontSizeDelta;
     final baseStyle = textTheme.body.copyWith(
       fontFamily: fontFamily,
@@ -80,7 +81,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.success,
+            color: surfaceTokens.hadithGreen,
             fontWeight: FontWeight.w700,
           ),
         ));
@@ -110,10 +111,10 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.primary,
+            color: surfaceTokens.citationBlue,
             fontWeight: FontWeight.w800,
             decoration: TextDecoration.underline,
-            decorationColor: accent.primary.withValues(alpha: 0.45),
+            decorationColor: surfaceTokens.citationBlue.withValues(alpha: 0.45),
             decorationThickness: 1.5,
           ),
         ));
@@ -122,7 +123,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.primary,
+            color: surfaceTokens.citationBlue,
             fontWeight: FontWeight.bold,
           ),
         ));
@@ -131,7 +132,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.textMuted,
+            color: surfaceTokens.textMuted,
             fontWeight: FontWeight.w600,
           ),
         ));
@@ -140,7 +141,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: accent.primary.withValues(alpha: 0.9),
+            color: accent.primary,
             fontSize: baseFontSize * 0.9,
             fontWeight: FontWeight.w600,
           ),

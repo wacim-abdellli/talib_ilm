@@ -38,6 +38,9 @@ class ReaderSurfaceTokens {
   final Color bg;
   final Color surfaceRaised;
   final Color text;
+  final Color textMuted;
+  final Color hadithGreen;
+  final Color citationBlue;
   final Color border;
   final String label;
 
@@ -45,9 +48,20 @@ class ReaderSurfaceTokens {
     required this.bg,
     Color? surfaceRaised,
     required this.text,
+    required this.textMuted,
+    required this.hadithGreen,
+    required this.citationBlue,
     required this.border,
     required this.label,
   }) : surfaceRaised = surfaceRaised ?? bg;
+}
+
+/// Extension for resolving effective dark mode on reading surfaces.
+extension ShamelaReaderSurfaceX on ShamelaReaderSurface {
+  bool isEffectiveDark(bool isAppDark) {
+    return this == ShamelaReaderSurface.night ||
+        (this == ShamelaReaderSurface.normal && isAppDark);
+  }
 }
 
 /// Unified source of truth for reading surface tokens.
@@ -64,6 +78,9 @@ class ReaderSurfaceColors {
           bg: isDark ? const Color(0xFF161817) : const Color(0xFFFAF9F5),
           surfaceRaised: isDark ? const Color(0xFF1E2120) : const Color(0xFFF2EFE9),
           text: isDark ? const Color(0xFFF1F5F3) : const Color(0xFF1E2120),
+          textMuted: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+          hadithGreen: isDark ? const Color(0xFF4ADE80) : const Color(0xFF1B6B3F),
+          citationBlue: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
           border: isDark ? const Color(0xFF2C302E) : const Color(0xFFE2DFD6),
           label: 'الافتراضي',
         );
@@ -72,6 +89,9 @@ class ReaderSurfaceColors {
           bg: Color(0xFFFBF7EE), // Classic authentic Shamwa parchment beige
           surfaceRaised: Color(0xFFF3ECE0),
           text: Color(0xFF2B2520), // High-contrast classical dark sepia book ink
+          textMuted: Color(0xFF786C5E),
+          hadithGreen: Color(0xFF1E5E3A),
+          citationBlue: Color(0xFF1E3A8A),
           border: Color(0xFFDFD4C4),
           label: 'ورق الشاموا (بيج)',
         );
@@ -80,6 +100,9 @@ class ReaderSurfaceColors {
           bg: Color(0xFF101114), // Deep soothing night surface
           surfaceRaised: Color(0xFF181A1F),
           text: Color(0xFFEAE5DC), // High-contrast soft cream night text
+          textMuted: Color(0xFF94A3B8),
+          hadithGreen: Color(0xFF4ADE80),
+          citationBlue: Color(0xFF93C5FD),
           border: Color(0xFF2C3038),
           label: 'داكن هادئ',
         );

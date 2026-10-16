@@ -87,7 +87,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       _memorizationMode = prefs.getBool('shamela_memorization_mode') ?? false;
     });
   }
-
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('shamela_reader_font_delta', _fontSizeDelta);
@@ -319,18 +318,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     );
   }
 
-  void _toggleSurfaceMode() {
-    HapticFeedback.selectionClick();
-    setState(() {
-      if (_surface == ShamelaReaderSurface.night) {
-        _surface = ShamelaReaderSurface.normal;
-      } else {
-        _surface = ShamelaReaderSurface.night;
-      }
-    });
-    _savePreferences();
-  }
-
   Color _getBackgroundColor(AppPalette palette) {
     return ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
   }
@@ -359,7 +346,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               surface: _surface,
               onBack: () => Navigator.maybePop(context),
               onCopy: _copyPageContent,
-              onToggleSurface: _toggleSurfaceMode,
             ),
 
             // ── 2. Reflowable Digital Reader Body ─────────────────────────────

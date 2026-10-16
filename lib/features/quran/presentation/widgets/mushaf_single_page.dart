@@ -205,12 +205,38 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
   }
 
   Widget _buildQcfPlusPage(BuildContext context, AppPalette palette) {
-    if (!QuranRepository.instance.isReady) {
+    final pageNumber = widget.pageNumber;
+    final isReady = QuranRepository.instance.isReady &&
+        QcfFontLoader.isFontLoaded(pageNumber);
+
+    if (!isReady) {
       return FutureBuilder<void>(
-        future: QuranRepository.instance.ensureLoaded(604),
+        future: _ensurePageReady(pageNumber),
         builder: (context, snapshot) {
-          if (!QuranRepository.instance.isReady) {
-            return const Center(child: CircularProgressIndicator());
+          if (!QuranRepository.instance.isReady ||
+              !QcfFontLoader.isFontLoaded(pageNumber)) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: palette.gold,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Text(
+                    'جاري تجهيز صفحة $pageNumber...',
+                    style: context.text.caption.copyWith(
+                      color: palette.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
           return _buildPageWidget(context, palette);
         },
@@ -218,6 +244,15 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     }
 
     return _buildPageWidget(context, palette);
+  }
+
+  static Future<void> _ensurePageReady(int pageNumber) async {
+    if (!QuranRepository.instance.isReady) {
+      await QuranRepository.instance.ensureLoaded(604);
+    }
+    if (!QcfFontLoader.isFontLoaded(pageNumber)) {
+      await QcfFontLoader.ensureFontLoaded(pageNumber);
+    }
   }
 
   Widget _buildPageWidget(BuildContext context, AppPalette palette) {

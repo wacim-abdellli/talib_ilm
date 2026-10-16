@@ -240,6 +240,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   }
 
   void _jumpToPage(int page) {
+    QcfFontLoader.ensureFontLoaded(page);
     _onPageChanged(page);
     if (_pageController.hasClients) {
       _pageController.jumpToPage(page - 1);

@@ -4,7 +4,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart'
-    show getArabicJuzName, getVocalizedSurahName;
+    show getArabicJuzName;
 
 /// Authentic Medina Mushaf Surah Header Banner
 class MushafSurahBanner extends StatelessWidget {
@@ -30,19 +30,17 @@ class MushafSurahBanner extends StatelessWidget {
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
     final revelationType = isMakki ? 'مَكِّيَّةٌ' : 'مَدَنِيَّةٌ';
     final surahName = quran.getSurahNameArabic(surahNumber);
-    final vocalizedTitle = getVocalizedSurahName(surahNumber, fallback: surahName);
+    final title = 'سورة $surahName';
 
-    final Color textColor = switch (themeMode) {
-      MushafThemeMode.white => MushafColors.whiteText,
-      MushafThemeMode.sepia => MushafColors.sepiaText,
-      MushafThemeMode.dark => MushafColors.darkBannerText,
-    };
+    // The cartouche inside the authentic Medina banner is illuminated cream/white in all modes,
+    // so the title calligraphy uses deep classical manuscript ink for highest clarity.
+    const Color textColor = MushafColors.whiteText;
 
     final Color? frameColor = MushafColors.bannerFrameTint(themeMode);
 
-    final Color plaqueBg = MushafColors.bannerBgFor(themeMode);
-    final Color plaqueBorder = MushafColors.bannerBorderFor(themeMode);
-    final Color plaqueText = MushafColors.bannerSubtextFor(themeMode);
+    final Color plaqueBg = MushafColors.plaqueBg;
+    final Color plaqueBorder = MushafColors.plaqueBorder;
+    final Color plaqueText = MushafColors.plaqueText;
 
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -76,15 +74,19 @@ class MushafSurahBanner extends StatelessWidget {
             Center(
               child: SizedBox(
                 width: 196,
-                height: 38,
+                height: 36,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.center,
-                  child: Text(
-                    vocalizedTitle,
-                    textAlign: TextAlign.center,
-                    style: textTheme.surahHeaderTitle.copyWith(
-                      color: textColor,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xxs),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: textTheme.surahHeaderTitle.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -97,7 +99,7 @@ class MushafSurahBanner extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.xs,
-                  vertical: 2,
+                  vertical: AppSpace.xxs,
                 ),
                 decoration: BoxDecoration(
                   color: plaqueBg.withValues(alpha: 0.92),
@@ -125,7 +127,7 @@ class MushafSurahBanner extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.xs,
-                  vertical: 2,
+                  vertical: AppSpace.xxs,
                 ),
                 decoration: BoxDecoration(
                   color: plaqueBg.withValues(alpha: 0.92),

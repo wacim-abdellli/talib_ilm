@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_ui.dart';
 
@@ -16,7 +15,6 @@ class ShamelaReaderTopBar extends StatelessWidget {
   final ShamelaReaderSurface surface;
   final VoidCallback onBack;
   final VoidCallback onCopy;
-  final VoidCallback? onToggleSurface;
 
   const ShamelaReaderTopBar({
     super.key,
@@ -30,7 +28,6 @@ class ShamelaReaderTopBar extends StatelessWidget {
     this.surface = ShamelaReaderSurface.normal,
     required this.onBack,
     required this.onCopy,
-    this.onToggleSurface,
   });
 
   @override
@@ -168,23 +165,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (onToggleSurface != null)
-                        IconButton(
-                          tooltip: surface == ShamelaReaderSurface.night
-                              ? 'إلغاء الوضع الداكن'
-                              : 'الوضع الداكن للقراءة',
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            onToggleSurface!();
-                          },
-                          icon: Icon(
-                            surface == ShamelaReaderSurface.night
-                                ? Icons.wb_sunny_rounded
-                                : Icons.dark_mode_rounded,
-                            color: surfaceTokens.text,
-                            size: AppIcon.sm,
-                          ),
-                        ),
+
                       IconButton(
                         tooltip: 'نسخ الصفحة',
                         onPressed: onCopy,
