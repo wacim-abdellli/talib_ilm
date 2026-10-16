@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
@@ -273,11 +274,59 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                 Expanded(
                   child: _filteredHadiths.isEmpty
                       ? Center(
-                          child: Text(
-                            'لم يتم العثور على أحاديث مطابقة',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: palette.textMuted,
-                              fontFamily: AppTextStyles.cairo,
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xl,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.search_off_rounded,
+                                  color: palette.textSubtle,
+                                ),
+                                const SizedBox(height: AppSpace.sm),
+                                Text(
+                                  'لم يتم العثور على أحاديث مطابقة في المجموعة المحلية',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: palette.textMuted,
+                                    fontFamily: AppTextStyles.cairo,
+                                  ),
+                                ),
+                                if (_searchController.text.trim().isNotEmpty) ...[
+                                  const SizedBox(height: AppSpace.md),
+                                  OutlinedButton.icon(
+                                    onPressed: () async {
+                                      final q = _searchController.text.trim();
+                                      final uri = Uri.parse(
+                                        'https://dorar.net/hadith/search?q=${Uri.encodeComponent(q)}',
+                                      );
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(
+                                          uri,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: palette.primary,
+                                      side: BorderSide(color: palette.primary),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: AppRadius.mdRadius,
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.open_in_new_rounded),
+                                    label: Text(
+                                      'البحث في موسوعة الدرر السنية',
+                                      style: AppTextStyles.labelMedium.copyWith(
+                                        color: palette.primary,
+                                        fontFamily: AppTextStyles.cairo,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         )

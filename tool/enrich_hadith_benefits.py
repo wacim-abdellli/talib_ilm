@@ -37,10 +37,12 @@ def generate_hadith_benefits(hadith):
     collection = hadith.get('collection', '')
     clean_m = clean_arabic(matn + ' ' + title)
 
-    # 1. Preserve 40 Nawawi hadiths (already high quality)
-    if collection == 'الأربعون النووية':
+    # 1. Preserve 40 Nawawi, Fitan, and Sahih hadiths (already high quality)
+    if collection == 'الأربعون النووية' or hid.startswith('sahih_') or hid.startswith('bukhari_') or hid.startswith('muslim_') or cat == 'الفتن وأشراط الساعة':
         existing = hadith.get('benefits', '').strip()
-        if existing and 'حديث جليل من كتاب' not in existing:
+        if existing and 'حديث جليل من كتاب' not in existing and 'هدي نبوي مبارك في بيان العمل الصالح' not in existing:
+            return existing
+
             # Format with bullet points if not already
             if not existing.startswith('•'):
                 parts = [p.strip() for p in re.split(r'[،\n]+', existing) if len(p.strip()) > 5]
