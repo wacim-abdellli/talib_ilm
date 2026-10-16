@@ -244,6 +244,19 @@ class NotificationService {
           enableVibration: false,
         ),
       );
+
+      // ── Daily Adhkar Reminders Channel ────────────────────────────────────
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_adhkar_reminders',
+          'تنبيهات الأذكار اليومية',
+          description: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
+          importance: Importance.high,
+          playSound: true,
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+        ),
+      );
     }
 
     _initialized = true;
@@ -746,4 +759,83 @@ class NotificationService {
     if (prayerName.contains('عشاء')) return 'talib_prayer_announcement_isha_v3';
     return 'talib_prayer_announcement_general_v3';
   }
+
+  /// Schedules a repeating daily notification for Morning, Evening, or Sleep Adhkar.
+  Future<void> scheduleDailyAdhkarNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+    String? payload,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    await init();
+    await requestPermissions();
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1)); // ui-lint: allow
+    }
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_adhkar_reminders',
+      'تنبيهات الأذكار اليومية',
+      channelDescription: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: 'ic_launcher_monochrome',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'أذكار المسلم',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling daily adhkar notification: $e');
+    }
+  }
+
+  /// Cancels a specific notification by ID
+  Future<void> cancelNotification(int id) async {
+    try {
+      await _plugin.cancel(id);
+    } catch (e) {
+      debugPrint('Error cancelling notification $id: $e');
+    }
+  }
 }
+

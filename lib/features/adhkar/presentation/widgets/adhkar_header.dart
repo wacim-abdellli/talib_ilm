@@ -7,6 +7,7 @@ class AdhkarHeader extends StatefulWidget {
   final String selectedCategory;
   final ValueChanged<String> onSelectCategory;
   final ValueChanged<String>? onSearch;
+  final VoidCallback? onNotifications;
 
   const AdhkarHeader({
     super.key,
@@ -14,6 +15,7 @@ class AdhkarHeader extends StatefulWidget {
     required this.selectedCategory,
     required this.onSelectCategory,
     this.onSearch,
+    this.onNotifications,
   });
 
   @override
@@ -216,6 +218,17 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                       ],
                     ),
                   ),
+                  // Notifications / Reminders Icon Button
+                  if (widget.onNotifications != null)
+                    IconButton(
+                      icon: Icon(
+                        Icons.notifications_active_outlined,
+                        size: AppIcon.md,
+                        color: palette.gold,
+                      ),
+                      tooltip: 'تنبيهات الأذكار',
+                      onPressed: widget.onNotifications,
+                    ),
                   // Search Dhikr Icon Button
                   IconButton(
                     icon: Icon(

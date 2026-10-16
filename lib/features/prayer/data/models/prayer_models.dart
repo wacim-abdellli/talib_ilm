@@ -43,6 +43,8 @@ class PrayerTimesDay {
   final Map<String, DateTime> prayers;
   final String nextPrayer;
   final DateTime? nextPrayerTime;
+  final DateTime? sunrise;
+  final DateTime? sunset;
 
   const PrayerTimesDay({
     required this.city,
@@ -50,6 +52,8 @@ class PrayerTimesDay {
     required this.prayers,
     required this.nextPrayer,
     this.nextPrayerTime,
+    this.sunrise,
+    this.sunset,
   });
 }
 

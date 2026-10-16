@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../adhkar/presentation/widgets/adhkar_notification_sheet.dart';
 import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
@@ -329,6 +330,19 @@ class _MorePageState extends State<MorePage> {
                             icon: Icons.explore_rounded,
                             color: palette.success,
                             onTap: () => _openLocationSettings(context),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'تنبيهات الأذكار اليومية',
+                            subtitle:
+                                'تذكير بأذكار الصباح، المساء، والنوم في أوقاتها المسنونة',
+                            icon: Icons.notifications_active_rounded,
+                            color: palette.gold,
+                            onTap: () => AdhkarNotificationSheet.show(context),
                           ),
                         ),
                       ),

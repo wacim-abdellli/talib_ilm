@@ -330,6 +330,8 @@ class PrayerTimeService {
       prayers: prayers,
       nextPrayer: nextPrayer,
       nextPrayerTime: nextPrayerTime,
+      sunrise: times.sunrise,
+      sunset: times.maghrib,
     );
   }
 }

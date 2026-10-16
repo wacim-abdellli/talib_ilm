@@ -26,6 +26,7 @@ import 'qibla_page.dart';
 import 'widgets/next_prayer_card.dart';
 import 'widgets/prayer_dua_card.dart';
 import 'widgets/prayer_header.dart';
+import 'widgets/prayer_solar_stations_card.dart';
 import 'widgets/prayer_time_card.dart';
 import 'widgets/sunan_rawatib_card.dart';
 
@@ -189,6 +190,11 @@ class _PrayerPageState extends State<PrayerPage> {
                             children: [
                               const SizedBox(height: AppSpace.md),
                               _buildNextPrayerCard(data),
+                              const SizedBox(height: AppSpace.sm),
+                              PrayerSolarStationsCard(
+                                sunrise: data.sunrise,
+                                sunset: data.sunset,
+                              ),
                               const SizedBox(height: AppSpace.lg),
                               Text(
                                 AppStrings.prayerDayLabel,

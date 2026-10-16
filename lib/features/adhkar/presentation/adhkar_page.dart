@@ -19,6 +19,7 @@ import 'tasbeeh_istighfar_page.dart';
 import 'widgets/adhkar_category_tile.dart';
 import 'widgets/adhkar_contextual_hero.dart';
 import 'widgets/adhkar_header.dart';
+import 'widgets/adhkar_notification_sheet.dart';
 
 class _DhikrSearchResult {
   final AthkarItem item;
@@ -104,6 +105,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
             selectedCategory: _selectedCategory,
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
             onSearch: (q) => setState(() => _searchQuery = q.trim()),
+            onNotifications: () => AdhkarNotificationSheet.show(context),
           ),
           Expanded(
             child: FutureBuilder<AthkarCatalog>(
