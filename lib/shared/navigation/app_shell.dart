@@ -12,6 +12,7 @@ import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/icon_badge.dart';
 import '../../shared/widgets/nav_bar.dart';
+import '../../shared/widgets/notification_onboarding_dialog.dart';
 
 import '../../features/home/presentation/home_page.dart';
 import '../../features/prayer/presentation/prayer_page.dart';
@@ -53,6 +54,11 @@ class _AppShellState extends State<AppShell> {
     _loadedTabs.add(_currentIndex);
     ForegroundPrayerService().start();
     unawaited(_initPrayerNotifications());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        NotificationOnboardingDialog.checkAndShow(context);
+      }
+    });
   }
 
   Future<void> _initPrayerNotifications() async {
