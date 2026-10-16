@@ -11,6 +11,16 @@ import 'utils/ssl_helper_web.dart'
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('TalibIlm FlutterError: ${details.exception}');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('TalibIlm PlatformError: $error\n$stack');
+    return true; // Prevents app crash
+  };
+
   unawaited(SharedPreferences.getInstance());
   if (kDebugMode) {
     enableBadCertificateCatcher();
