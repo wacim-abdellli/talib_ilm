@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
@@ -91,7 +92,7 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
                 ),
                 const SizedBox(width: AppSpace.xs),
                 Text(
-                  'حديث اليوم',
+                  AppStrings.homeHadithTitle,
                   style: AppTextStyles.titleMedium.copyWith(
                     color: palette.text,
                     fontFamily: AppTextStyles.cairo,

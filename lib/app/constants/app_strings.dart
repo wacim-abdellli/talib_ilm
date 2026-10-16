@@ -48,7 +48,7 @@ class AppStrings {
   static String percentLabel(int percent) => '$percent%';
   static String numberPair(int current, int total) =>
       '\u2066$current / $total\u2069';
-  static const String homeHadithTitle = 'حديث اليوم';
+  static const String homeHadithTitle = 'زاد اليوم النبوي';
   static const String homeDhikrTitle = 'ذكر اليوم';
   static const String dailyMotivationFallback = 'العلم قبل القول والعمل';
 
