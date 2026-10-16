@@ -331,6 +331,7 @@ class _PrayerPageState extends State<PrayerPage> {
   ) {
     const order = AppStrings.prayerOrder;
     final now = DateTime.now();
+    final isFriday = day.date.weekday == DateTime.friday;
     return order.where(day.prayers.containsKey).map((name) {
       final time = day.prayers[name]!;
       final isCurrent = currentName != null && name == currentName;
@@ -340,8 +341,13 @@ class _PrayerPageState extends State<PrayerPage> {
           ? PrayerNotificationMode.off
           : (_adhanSettings?.modeForPrayer(name) ?? PrayerNotificationMode.adhan);
 
+      final displayName =
+          (isFriday && (name.contains('الظهر') || name == 'الظهر'))
+              ? 'صلاة الجمعة'
+              : name;
+
       return PrayerTimeEntry(
-        name: name,
+        name: displayName,
         timeLabel: formatPrayerTime12h(time),
         isNext: isNext,
         isCurrent: isCurrent,
@@ -369,8 +375,8 @@ class _PrayerPageState extends State<PrayerPage> {
           prayerToggles: {},
           calculationMethod: 'auto',
           volume: 1.0,
-          notifyBeforeMinutes: 0,
-          iqamaReminders: false,
+          notifyBeforeMinutes: 15,
+          iqamaReminders: true,
           adjustments: {},
         );
 
@@ -434,8 +440,8 @@ class _PrayerPageState extends State<PrayerPage> {
           prayerToggles: {},
           calculationMethod: 'auto',
           volume: 1.0,
-          notifyBeforeMinutes: 0,
-          iqamaReminders: false,
+          notifyBeforeMinutes: 15,
+          iqamaReminders: true,
           adjustments: {},
         );
     final currentMode = currentSettings.modeForPrayer(prayerName);

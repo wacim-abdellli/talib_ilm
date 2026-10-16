@@ -150,6 +150,9 @@ class HomeHeroTimelineStation extends StatelessWidget {
 /// Helper returning the canonical celestial icon for an Arabic prayer name.
 IconData iconForPrayer(String name) {
   final p = name.trim();
+  if (p.contains('الجمعة')) {
+    return Icons.mosque_rounded;
+  }
   if (p.contains(AppStrings.prayerFajr) || p == 'الفجر') {
     return Icons.wb_twilight_rounded;
   }

@@ -158,6 +158,9 @@ class PrayerTimeTile extends StatelessWidget {
   }
 
   IconData _getPrayerIcon(String name) {
+    if (name.contains('الجمعة')) {
+      return Icons.mosque_rounded;
+    }
     if (name.contains(AppStrings.prayerFajr) || name == 'الفجر') {
       return Icons.wb_twilight_rounded;
     }

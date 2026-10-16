@@ -131,7 +131,7 @@ class AdhanSettingsService {
     final calcMethod = prefs.getString(_keyCalcMethod) ?? 'auto';
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
-    final iqama = prefs.getBool(_keyIqama) ?? false;
+    final iqama = prefs.getBool(_keyIqama) ?? true;
 
     final defaultModeIndex = prefs.getInt(_keyDefaultMode);
     final PrayerNotificationMode defaultMode;

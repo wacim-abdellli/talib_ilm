@@ -321,6 +321,18 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     );
   }
 
+  void _toggleSurfaceMode() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_surface == ShamelaReaderSurface.night) {
+        _surface = ShamelaReaderSurface.normal;
+      } else {
+        _surface = ShamelaReaderSurface.night;
+      }
+    });
+    _savePreferences();
+  }
+
   Color _getBackgroundColor(AppPalette palette) {
     return ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
   }
@@ -346,8 +358,10 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               showControls: _showControls,
               bgColor: bgColor,
               accentColor: _accentColor,
+              surface: _surface,
               onBack: () => Navigator.maybePop(context),
               onCopy: _copyPageContent,
+              onToggleSurface: _toggleSurfaceMode,
             ),
 
             // ── 2. Reflowable Digital Reader Body ─────────────────────────────
@@ -451,6 +465,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               memorizationMode: _memorizationMode,
               showControls: _showControls,
               accentColor: _accentColor,
+              surface: _surface,
               onPreviousPage: _currentPage > 1 ? () => _jumpToPage(_currentPage - 1) : null,
               onNextPage: _currentPage < _totalPages ? () => _jumpToPage(_currentPage + 1) : null,
               onPageIndicatorTap: _showFihrisSheet,

@@ -130,6 +130,10 @@ class QuranRadioService extends ChangeNotifier {
           title: station.name,
           artist: 'إذاعة القرآن الكريم - بث مباشر',
           album: station.category,
+          artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+          displayTitle: station.name,
+          displaySubtitle: 'إذاعة القرآن الكريم - بث مباشر',
+          displayDescription: station.category,
         ),
       );
 
@@ -153,6 +157,24 @@ class QuranRadioService extends ChangeNotifier {
     } else {
       await playStation(station);
     }
+  }
+
+  /// Switch to next radio station in the list
+  Future<void> nextStation() async {
+    if (_stations.isEmpty || _currentStation == null) return;
+    final currentIndex = _stations.indexWhere((s) => s.id == _currentStation!.id);
+    if (currentIndex == -1) return;
+    final nextIndex = (currentIndex + 1) % _stations.length;
+    await playStation(_stations[nextIndex]);
+  }
+
+  /// Switch to previous radio station in the list
+  Future<void> previousStation() async {
+    if (_stations.isEmpty || _currentStation == null) return;
+    final currentIndex = _stations.indexWhere((s) => s.id == _currentStation!.id);
+    if (currentIndex == -1) return;
+    final prevIndex = (currentIndex - 1 + _stations.length) % _stations.length;
+    await playStation(_stations[prevIndex]);
   }
 
   Future<void> pause() async {

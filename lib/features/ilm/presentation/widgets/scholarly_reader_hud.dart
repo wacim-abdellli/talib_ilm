@@ -89,6 +89,7 @@ class ScholarlyReaderHud extends StatelessWidget {
   final VoidCallback onOpenTypography;
   final VoidCallback? onShare;
   final ShamelaAccentColor accentColor;
+  final ShamelaReaderSurface surface;
 
   const ScholarlyReaderHud({
     super.key,
@@ -108,6 +109,7 @@ class ScholarlyReaderHud extends StatelessWidget {
     required this.onOpenTypography,
     this.onShare,
     this.accentColor = ShamelaAccentColor.emerald,
+    this.surface = ShamelaReaderSurface.normal,
   });
 
   static const double hudHeight = 104.0;
@@ -116,9 +118,15 @@ class ScholarlyReaderHud extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final surfaceTokens = ReaderSurfaceColors.getTokens(
+      surface,
+      isDark: palette.isDark,
+    );
+    final isEffectiveDark = surface == ShamelaReaderSurface.night ||
+        (surface == ShamelaReaderSurface.normal && palette.isDark);
     final accent = ReaderAccentColors.getTokens(
       accentColor,
-      isDark: palette.isDark,
+      isDark: isEffectiveDark,
     );
 
     return AnimatedContainer(
@@ -132,9 +140,9 @@ class ScholarlyReaderHud extends StatelessWidget {
           maxHeight: hudHeight,
           child: Container(
             decoration: BoxDecoration(
-              color: palette.surfaceRaised,
+              color: surfaceTokens.surfaceRaised,
               border: Border(
-                top: BorderSide(color: palette.border, width: 1),
+                top: BorderSide(color: surfaceTokens.border, width: 1),
               ),
             ),
             child: Column(
@@ -156,7 +164,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                         ),
                         tooltip: 'الصفحة السابقة',
                         onPressed: onPreviousPage,
-                        color: palette.text,
+                        color: surfaceTokens.text,
                       ),
                       InkWell(
                         onTap: onPageIndicatorTap,
@@ -167,9 +175,9 @@ class ScholarlyReaderHud extends StatelessWidget {
                             vertical: AppSpace.xxs,
                           ),
                           decoration: BoxDecoration(
-                            color: palette.surface,
+                            color: surfaceTokens.bg,
                             borderRadius: AppRadius.pillRadius,
-                            border: Border.all(color: palette.border, width: 1),
+                            border: Border.all(color: surfaceTokens.border, width: 1),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -183,7 +191,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                               Text(
                                 'صفحة $currentPage من $totalPages',
                                 style: textTheme.label.copyWith(
-                                  color: palette.text,
+                                  color: surfaceTokens.text,
                                 ),
                               ),
                             ],
@@ -197,13 +205,13 @@ class ScholarlyReaderHud extends StatelessWidget {
                         ),
                         tooltip: 'الصفحة التالية',
                         onPressed: onNextPage,
-                        color: palette.text,
+                        color: surfaceTokens.text,
                       ),
                     ],
                   ),
                 ),
 
-                Divider(height: 1, thickness: 1, color: palette.border),
+                Divider(height: 1, thickness: 1, color: surfaceTokens.border),
 
                 // ── Row 2: Consolidated Scholarly Toolstrip ───────────
                 Padding(
@@ -219,7 +227,8 @@ class ScholarlyReaderHud extends StatelessWidget {
                             ? Icons.bookmark_rounded
                             : Icons.bookmark_border_rounded,
                         label: isBookmarked ? 'محفوظة' : 'إشارة',
-                        iconColor: isBookmarked ? accent.primary : palette.text,
+                        iconColor: isBookmarked ? accent.primary : surfaceTokens.text,
+                        textColor: surfaceTokens.text,
                         onTap: onToggleBookmark,
                         onLongPress: onShowBookmarks,
                         palette: palette,
@@ -228,7 +237,8 @@ class ScholarlyReaderHud extends StatelessWidget {
                       _buildToolItem(
                         icon: Icons.edit_note_rounded,
                         label: 'ملاحظة',
-                        iconColor: palette.text,
+                        iconColor: surfaceTokens.text,
+                        textColor: surfaceTokens.text,
                         onTap: onAddNote,
                         palette: palette,
                         textTheme: textTheme,
@@ -236,7 +246,8 @@ class ScholarlyReaderHud extends StatelessWidget {
                       _buildToolItem(
                         icon: Icons.format_list_bulleted_rounded,
                         label: 'الفهرس',
-                        iconColor: palette.text,
+                        iconColor: surfaceTokens.text,
+                        textColor: surfaceTokens.text,
                         onTap: onOpenFihris,
                         palette: palette,
                         textTheme: textTheme,
@@ -246,8 +257,9 @@ class ScholarlyReaderHud extends StatelessWidget {
                             ? Icons.visibility_off_rounded
                             : Icons.psychology_outlined,
                         label: 'تسميع',
-                        iconColor: memorizationMode ? palette.primary : palette.text,
-                        bgColor: memorizationMode ? palette.primarySoft : null,
+                        iconColor: memorizationMode ? accent.primary : surfaceTokens.text,
+                        textColor: surfaceTokens.text,
+                        bgColor: memorizationMode ? accent.soft : null,
                         onTap: onToggleMemorization,
                         palette: palette,
                         textTheme: textTheme,
@@ -255,7 +267,8 @@ class ScholarlyReaderHud extends StatelessWidget {
                       _buildToolItem(
                         icon: Icons.text_format_rounded,
                         label: 'الخط',
-                        iconColor: palette.text,
+                        iconColor: surfaceTokens.text,
+                        textColor: surfaceTokens.text,
                         onTap: onOpenTypography,
                         palette: palette,
                         textTheme: textTheme,
@@ -264,7 +277,8 @@ class ScholarlyReaderHud extends StatelessWidget {
                         _buildToolItem(
                           icon: Icons.share_rounded,
                           label: 'مشاركة',
-                          iconColor: palette.text,
+                          iconColor: surfaceTokens.text,
+                          textColor: surfaceTokens.text,
                           onTap: onShare!,
                           palette: palette,
                           textTheme: textTheme,
@@ -284,6 +298,7 @@ class ScholarlyReaderHud extends StatelessWidget {
     required IconData icon,
     required String label,
     required Color iconColor,
+    required Color textColor,
     required VoidCallback onTap,
     VoidCallback? onLongPress,
     Color? bgColor,
@@ -314,7 +329,7 @@ class ScholarlyReaderHud extends StatelessWidget {
               Text(
                 label,
                 style: textTheme.caption.copyWith(
-                  color: palette.text,
+                  color: textColor,
                 ),
               ),
             ],

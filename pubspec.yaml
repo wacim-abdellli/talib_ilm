@@ -49,6 +49,7 @@ dependencies:
   # once upstream relaxes its SDK constraint or when local Flutter/Dart is updated to 3.11+.
   qcf_quran_plus:
     path: packages/qcf_quran_plus
+  sensors_plus: ^7.1.1
 
 dev_dependencies:
   flutter_test:

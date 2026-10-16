@@ -62,6 +62,21 @@ class QuranAudioService {
       subfolder: 'Alafasy_128kbps',
     ),
     QuranReciter(
+      id: 'qatami',
+      name: 'ناصر القطامي',
+      subfolder: 'Nasser_Alqatami_128kbps',
+    ),
+    QuranReciter(
+      id: 'dossari',
+      name: 'ياسر الدوسري',
+      subfolder: 'Yasser_Ad-Dussary_128kbps',
+    ),
+    QuranReciter(
+      id: 'muaiqly',
+      name: 'ماهر المعيقلي',
+      subfolder: 'MaherAlMuaiqly128kbps',
+    ),
+    QuranReciter(
       id: 'husary',
       name: 'محمود خليل الحصري',
       subfolder: 'Husary_128kbps',
@@ -80,6 +95,16 @@ class QuranAudioService {
       id: 'ghamadi',
       name: 'سعد الغامدي',
       subfolder: 'Ghamadi_40kbps',
+    ),
+    QuranReciter(
+      id: 'shatri',
+      name: 'أبو بكر الشاطري',
+      subfolder: 'Abu_Bakr_Ash-Shaatree_128kbps',
+    ),
+    QuranReciter(
+      id: 'shuraym',
+      name: 'سعود الشريم',
+      subfolder: 'Saood_ash-Shuraym_128kbps',
     ),
   ];
 
@@ -214,6 +239,10 @@ class QuranAudioService {
       album: 'سورة $surahName',
       title: 'الآية $ayah - سورة $surahName',
       artist: r.name,
+      artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+      displayTitle: 'سورة $surahName',
+      displaySubtitle: 'الآية $ayah · ${r.name}',
+      displayDescription: 'تلاوة القرآن الكريم - طالب العلم',
     );
 
     try {
@@ -247,6 +276,10 @@ class QuranAudioService {
         album: 'سورة $surahName',
         title: 'الآية $a - سورة $surahName',
         artist: reciter.name,
+        artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+        displayTitle: 'سورة $surahName',
+        displaySubtitle: 'الآية $a · ${reciter.name}',
+        displayDescription: 'تلاوة القرآن الكريم - طالب العلم',
       );
 
       File? localFile;

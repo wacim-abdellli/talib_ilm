@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
 
 /// Prestigious Scholarly Top Bar for Shamela Reader
@@ -14,8 +13,10 @@ class ShamelaReaderTopBar extends StatelessWidget {
   final bool showControls;
   final Color bgColor;
   final ShamelaAccentColor accentColor;
+  final ShamelaReaderSurface surface;
   final VoidCallback onBack;
   final VoidCallback onCopy;
+  final VoidCallback? onToggleSurface;
 
   const ShamelaReaderTopBar({
     super.key,
@@ -26,16 +27,25 @@ class ShamelaReaderTopBar extends StatelessWidget {
     required this.showControls,
     required this.bgColor,
     this.accentColor = ShamelaAccentColor.emerald,
+    this.surface = ShamelaReaderSurface.normal,
     required this.onBack,
     required this.onCopy,
+    this.onToggleSurface,
   });
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final surfaceTokens = ReaderSurfaceColors.getTokens(
+      surface,
+      isDark: palette.isDark,
+    );
+    final isEffectiveDark = surface == ShamelaReaderSurface.night ||
+        (surface == ShamelaReaderSurface.normal && palette.isDark);
     final accent = ReaderAccentColors.getTokens(
       accentColor,
-      isDark: palette.isDark,
+      isDark: isEffectiveDark,
     );
     final topPadding = MediaQuery.paddingOf(context).top;
     final fullBarHeight = topPadding + AppSize.navH;
@@ -45,12 +55,12 @@ class ShamelaReaderTopBar extends StatelessWidget {
       curve: AppMotion.easeOut,
       height: showControls ? fullBarHeight : minimalBarHeight,
       decoration: BoxDecoration(
-        color: showControls ? palette.surfaceRaised : bgColor,
+        color: showControls ? surfaceTokens.surfaceRaised : surfaceTokens.bg,
         border: Border(
           bottom: BorderSide(
             color: showControls
-                ? palette.border
-                : palette.border.withValues(alpha: 0.35),
+                ? surfaceTokens.border
+                : surfaceTokens.border.withValues(alpha: 0.35),
             width: 1,
           ),
         ),
@@ -76,7 +86,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
                       child: Text(
                         title,
                         style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
+                          color: surfaceTokens.text,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -129,7 +139,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
                           size: AppIcon.sm,
                         ),
                         tooltip: 'رجوع',
-                        color: palette.text,
+                        color: surfaceTokens.text,
                         onPressed: onBack,
                       ),
                       Expanded(
@@ -140,7 +150,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
                             Text(
                               title,
                               style: textTheme.titleSmall.copyWith(
-                                color: palette.text,
+                                color: surfaceTokens.text,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
@@ -149,7 +159,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
                             Text(
                               author,
                               style: textTheme.caption.copyWith(
-                                color: palette.primary,
+                                color: accent.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
@@ -158,29 +168,29 @@ class ShamelaReaderTopBar extends StatelessWidget {
                           ],
                         ),
                       ),
-                      ListenableBuilder(
-                        listenable: themeService,
-                        builder: (context, _) {
-                          return IconButton(
-                            tooltip: themeService.themeDisplayName,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              themeService.toggleTheme();
-                            },
-                            icon: Icon(
-                              themeService.themeIcon,
-                              color: palette.text,
-                              size: AppIcon.sm,
-                            ),
-                          );
-                        },
-                      ),
+                      if (onToggleSurface != null)
+                        IconButton(
+                          tooltip: surface == ShamelaReaderSurface.night
+                              ? 'إلغاء الوضع الداكن'
+                              : 'الوضع الداكن للقراءة',
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            onToggleSurface!();
+                          },
+                          icon: Icon(
+                            surface == ShamelaReaderSurface.night
+                                ? Icons.wb_sunny_rounded
+                                : Icons.dark_mode_rounded,
+                            color: surfaceTokens.text,
+                            size: AppIcon.sm,
+                          ),
+                        ),
                       IconButton(
                         tooltip: 'نسخ الصفحة',
                         onPressed: onCopy,
                         icon: Icon(
                           Icons.copy_rounded,
-                          color: palette.text,
+                          color: surfaceTokens.text,
                           size: AppIcon.sm,
                         ),
                       ),

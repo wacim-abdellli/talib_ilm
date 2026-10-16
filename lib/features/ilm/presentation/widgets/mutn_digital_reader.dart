@@ -394,6 +394,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             memorizationMode: _memorizationMode,
             showControls: widget.showControls,
             accentColor: _accentColor,
+            surface: _surface,
             onPreviousPage: _currentPage > 1
                 ? () => _goToPage(_currentPage - 1)
                 : null,

@@ -7,7 +7,9 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../app/constants/app_strings.dart';
+import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
+import 'foreground_prayer_service.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
@@ -21,7 +23,7 @@ class NotificationService {
     if (_initialized) return;
     await _initTimeZones();
 
-    const android = AndroidInitializationSettings('ic_launcher_monochrome');
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -38,7 +40,19 @@ class NotificationService {
       linux: linux,
     );
 
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (response) {
+        if (response.actionId == 'stop_adhan') {
+          try {
+            AdhanService().stop();
+          } catch (_) {}
+          try {
+            ForegroundPrayerService().dismissAlert();
+          } catch (_) {}
+        }
+      },
+    );
 
     // Register all required high-priority notification channels in Android
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
@@ -290,6 +304,7 @@ class NotificationService {
     required DateTime scheduledTime,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
+    bool isJumua = false,
   }) async {
     if (mode == PrayerNotificationMode.off) return;
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
@@ -303,10 +318,14 @@ class NotificationService {
       sound: sound,
       prayerName: prayerName,
     );
-    final title = 'صلاة $prayerName';
-    final body = prayerName.contains('فجر')
-        ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
-        : 'حي على الصلاة · حي على الفلاح';
+    final title = isJumua
+        ? 'حان الآن موعد أذان صلاة الجمعة 🕌'
+        : 'صلاة $prayerName';
+    final body = isJumua
+        ? 'حي على الصلاة · حي على الفلاح · يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ'
+        : (prayerName.contains('فجر')
+            ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
+            : 'حي على الصلاة · حي على الفلاح');
 
     try {
       await _plugin.zonedSchedule(
@@ -321,6 +340,180 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint('Error scheduling prayer notification ($prayerName): $e');
+    }
+  }
+
+  /// Schedules an advance reminder (e.g. 15 minutes before) so the user can make wudhu and prepare.
+  Future<void> schedulePrePrayerNotification({
+    required int id,
+    required String prayerName,
+    required DateTime scheduledTime,
+    required int minutesBefore,
+    bool isJumua = false,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    if (scheduledTime.isBefore(DateTime.now())) return;
+    await init();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_prayer_tone_v3',
+      'تنبيهات اقتراب وقت الصلاة',
+      channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'اقترب وقت الصلاة',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final title = isJumua
+        ? 'اقترب موعد صلاة الجمعة 🕌'
+        : 'اقترب وقت صلاة $prayerName';
+    final body = isJumua
+        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
+        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName.. تهيأ للصلاة وتوضأ';
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling pre-prayer reminder ($prayerName): $e');
+    }
+  }
+
+  /// Schedules an Iqama notification after prayer time
+  Future<void> scheduleIqamaNotification({
+    required int id,
+    required String prayerName,
+    required DateTime scheduledTime,
+    bool isJumua = false,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    if (scheduledTime.isBefore(DateTime.now())) return;
+    await init();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_prayer_tone_v3',
+      'تنبيهات إقامة الصلاة',
+      channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'موعد إقامة الصلاة',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final title = isJumua
+        ? 'موعد خطبة وصلاة الجمعة 🕌'
+        : 'موعد إقامة صلاة $prayerName';
+    final body = isJumua
+        ? 'حان الآن موعد خطبة وصلاة الجمعة المباركة.. استمع وأنصت للخطبة بخشوع'
+        : 'حان الآن موعد إقامة صلاة $prayerName.. أقيمت الصلاة';
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling iqama notification ($prayerName): $e');
+    }
+  }
+
+  /// Schedules a dedicated reminder to recite Surat Al-Kahf on Friday
+  Future<void> scheduleSurahAlKahfNotification({
+    required int id,
+    required DateTime scheduledTime,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    if (scheduledTime.isBefore(DateTime.now())) return;
+    await init();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_adhkar_reminders',
+      'تذكير سورة الكهف يوم الجمعة',
+      channelDescription: 'تذكير بقراءة سورة الكهف والصلاة على النبي ﷺ يوم الجمعة',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'سورة الكهف يوم الجمعة',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    const title = 'نور ما بين الجمعتين 📖 · سورة الكهف';
+    const body =
+        'قال ﷺ: «من قرأ سورة الكهف في يوم الجمعة أضاء له من النور ما بين الجمعتين» · لا تنسَ قراءتها والصلاة على النبي ﷺ';
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: 'surah_18',
+      );
+    } catch (e) {
+      debugPrint('Error scheduling Surah Al-Kahf reminder: $e');
     }
   }
 
@@ -491,14 +684,42 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
+  /// Cancels only prayer-related notification slots (IDs 100-299 and 700-799),
+  /// strictly preserving other notification categories like Athkar reminders (301, 302, 303).
+  Future<void> cancelPrayerNotificationsOnly() async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    // Cancel today & tomorrow prayer, pre-prayer, and iqama IDs (100..299)
+    for (int i = 100; i <= 299; i++) {
+      await _plugin.cancel(i);
+    }
+    // Cancel instant alert IDs (700..710)
+    for (int i = 700; i <= 710; i++) {
+      await _plugin.cancel(i);
+    }
+  }
+
   Future<void> _initTimeZones() async {
     if (_tzInitialized) return;
     tz.initializeTimeZones();
     try {
-      final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
+      final dynamic tzInfo = await FlutterTimezone.getLocalTimezone();
+      final String tzName = tzInfo is String
+          ? tzInfo
+          : (tzInfo?.identifier ?? tzInfo.toString());
+      tz.setLocalLocation(tz.getLocation(tzName));
     } catch (_) {
-      tz.setLocalLocation(tz.getLocation('UTC'));
+      try {
+        final offset = DateTime.now().timeZoneOffset;
+        final matching = tz.timeZoneDatabase.locations.values.firstWhere(
+          (loc) => loc.currentTimeZone.offset == offset.inMilliseconds,
+          orElse: () => tz.getLocation('UTC'),
+        );
+        tz.setLocalLocation(matching);
+      } catch (_) {
+        tz.setLocalLocation(tz.getLocation('UTC'));
+      }
     }
 
     _tzInitialized = true;
@@ -552,9 +773,17 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: 'ic_launcher_monochrome',
+          icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          actions: const <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'stop_adhan',
+              'إيقاف الأذان',
+              cancelNotification: true,
+              showsUserInterface: false,
+            ),
+          ],
         );
       case PrayerNotificationMode.takbeer:
         return AndroidNotificationDetails(
@@ -572,9 +801,17 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: 'ic_launcher_monochrome',
+          icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          actions: const <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'stop_adhan',
+              'إيقاف التكبيرات',
+              cancelNotification: true,
+              showsUserInterface: false,
+            ),
+          ],
         );
       case PrayerNotificationMode.announcement:
         final rawSound = _announcementRawSoundFor(prayerName);
@@ -597,9 +834,17 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: 'ic_launcher_monochrome',
+          icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          actions: const <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'stop_adhan',
+              'إيقاف النداء',
+              cancelNotification: true,
+              showsUserInterface: false,
+            ),
+          ],
         );
       case PrayerNotificationMode.tone:
         return const AndroidNotificationDetails(
@@ -616,7 +861,7 @@ class NotificationService {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: 'ic_launcher_monochrome',
+          icon: '@mipmap/ic_launcher',
           largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
       case PrayerNotificationMode.silent:
@@ -630,7 +875,7 @@ class NotificationService {
           playSound: false,
           enableVibration: false,
           visibility: NotificationVisibility.public,
-          icon: 'ic_launcher_monochrome',
+          icon: '@mipmap/ic_launcher',
           largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
     }
@@ -785,7 +1030,7 @@ class NotificationService {
       minute,
     );
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1)); // ui-lint: allow
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
     const androidDetails = AndroidNotificationDetails(
@@ -796,7 +1041,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: 'ic_launcher_monochrome',
+      icon: '@mipmap/ic_launcher',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'أذكار المسلم',
     );
@@ -818,7 +1063,7 @@ class NotificationService {
         body,
         scheduledDate,
         details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,

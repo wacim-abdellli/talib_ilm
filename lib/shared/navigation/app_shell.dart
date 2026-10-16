@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
 import '../../core/services/adhkar_reminder_service.dart';
+import '../../core/services/flip_to_stop_service.dart';
 import '../../core/services/foreground_prayer_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_schedule_service.dart';
@@ -63,6 +64,7 @@ class _AppShellState extends State<AppShell> {
       final adhkarService = AdhkarReminderService(notificationService: notif);
       final adhkarSettings = await adhkarService.getSettings();
       await adhkarService.applySchedules(adhkarSettings);
+      await FlipToStopService().init();
     } catch (e) {
       debugPrint('AppShell prayer notifications init error: $e');
     }
@@ -71,6 +73,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void dispose() {
     ForegroundPrayerService().stop();
+    FlipToStopService().dispose();
     super.dispose();
   }
 

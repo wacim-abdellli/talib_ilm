@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/app/theme/reader_theme.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/scholarly_reader_hud.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_reader_top_bar.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_typography_sheet.dart';
 
 void main() {
@@ -285,15 +286,49 @@ void main() {
         final darkTokens = ReaderSurfaceColors.getTokens(surface, isDark: true);
 
         expect(lightTokens.bg, isNotNull);
+        expect(lightTokens.surfaceRaised, isNotNull);
         expect(lightTokens.text, isNotNull);
         expect(lightTokens.border, isNotNull);
         expect(lightTokens.label, isNotEmpty);
 
         expect(darkTokens.bg, isNotNull);
+        expect(darkTokens.surfaceRaised, isNotNull);
         expect(darkTokens.text, isNotNull);
         expect(darkTokens.border, isNotNull);
         expect(darkTokens.label, isNotEmpty);
       }
+    });
+
+    testWidgets('ShamelaReaderTopBar toggles reader surface on button tap', (tester) async {
+      bool surfaceToggled = false;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ShamelaReaderTopBar(
+            title: 'ثلاثة الأصول',
+            author: 'محمد بن عبد الوهاب',
+            currentPage: 3,
+            totalPages: 24,
+            showControls: true,
+            bgColor: Colors.black,
+            surface: ShamelaReaderSurface.night,
+            onBack: () {},
+            onCopy: () {},
+            onToggleSurface: () => surfaceToggled = true,
+          ),
+        ),
+      );
+
+      // Verify book title is rendered
+      expect(find.text('ثلاثة الأصول'), findsWidgets);
+      // In night mode, surface toggle button tooltip is 'إلغاء الوضع الداكن'
+      final toggleFinder = find.byTooltip('إلغاء الوضع الداكن');
+      expect(toggleFinder, findsOneWidget);
+
+      await tester.tap(toggleFinder);
+      await tester.pump();
+
+      expect(surfaceToggled, isTrue);
     });
   });
 }

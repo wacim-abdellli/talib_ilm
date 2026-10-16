@@ -7,9 +7,10 @@ void main() {
   group('QuranAudioService Tests', () {
     final service = QuranAudioService();
 
-    test('reciters list contains 5 official reciters', () {
-      expect(QuranAudioService.reciters.length, 5);
+    test('reciters list contains official reciters including Nasser Al-Qatami', () {
+      expect(QuranAudioService.reciters.length, 10);
       expect(service.selectedReciter.id, 'alafasy');
+      expect(QuranAudioService.reciters.any((r) => r.id == 'qatami'), isTrue);
     });
 
     test('getAudioUrl formats surah and ayah with 3 digits padding', () {

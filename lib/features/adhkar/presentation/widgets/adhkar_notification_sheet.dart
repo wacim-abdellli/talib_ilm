@@ -92,59 +92,54 @@ class _AdhkarNotificationSheetState extends State<AdhkarNotificationSheet> {
     final palette = context.palette;
     final textTheme = context.text;
 
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.lg,
-        vertical: AppSpace.md,
+    return AppSheet(
+      showHandle: true,
+      title: Row(
+        children: [
+          Container(
+            width: AppSize.tap - AppSpace.sm,
+            height: AppSize.tap - AppSpace.sm,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: palette.goldSoft,
+              border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.notifications_active_rounded,
+                size: AppIcon.sm,
+                color: palette.gold,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'تنبيهات الأذكار اليومية',
+                  style: textTheme.titleSmall.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: palette.text,
+                  ),
+                ),
+                Text(
+                  'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
+                  style: textTheme.caption.copyWith(
+                    color: palette.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header ──
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.goldSoft,
-                  border: Border.all(color: palette.gold.withValues(alpha: 0.3)),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.notifications_active_rounded,
-                    size: AppIcon.sm,
-                    color: palette.gold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'تنبيهات الأذكار اليومية',
-                      style: textTheme.titleSmall.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: palette.text,
-                      ),
-                    ),
-                    Text(
-                      'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.lg),
-
           if (_isLoading)
             const Center(
               child: Padding(
@@ -245,7 +240,6 @@ class _AdhkarNotificationSheetState extends State<AdhkarNotificationSheet> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
-            const SizedBox(height: AppSpace.sm),
           ],
         ],
       ),
@@ -294,8 +288,8 @@ class _ReminderCard extends StatelessWidget {
         children: [
           // Icon badge
           Container(
-            width: 38,
-            height: 38,
+            width: AppSize.tap - AppSpace.sm,
+            height: AppSize.tap - AppSpace.sm,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isEnabled ? iconBgColor : palette.surface,
@@ -308,7 +302,7 @@ class _ReminderCard extends StatelessWidget {
             child: Center(
               child: Icon(
                 icon,
-                size: AppIcon.xs,
+                size: AppIcon.sm,
                 color: isEnabled ? iconColor : palette.textMuted,
               ),
             ),
@@ -347,7 +341,10 @@ class _ReminderCard extends StatelessWidget {
                 horizontal: AppSpace.sm,
                 vertical: AppSpace.xxs,
               ),
-              constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+              constraints: const BoxConstraints(
+                minHeight: AppSize.tap,
+                minWidth: AppSize.tap,
+              ),
               alignment: Alignment.center,
               child: Container(
                 padding: const EdgeInsetsDirectional.symmetric(

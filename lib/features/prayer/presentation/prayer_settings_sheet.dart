@@ -5,6 +5,7 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
+import '../../../core/services/flip_to_stop_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -324,6 +325,48 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                   onChanged: (val) {
                     HapticFeedback.selectionClick();
                     _updateSettings(settings.copyWith(iqamaReminders: val));
+                  },
+                  activeThumbColor: palette.primary,
+                  activeTrackColor: palette.primarySoft,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpace.md),
+
+          // Flip to silence toggle
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'قلب الهاتف لكتم الصوت والأذان',
+                        style: context.text.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: palette.text,
+                        ),
+                      ),
+                      Text(
+                        'عند وضع الهاتف مقلوباً (الشاشة لأسفل) يتم إيقاف الأذان والتلاوة فوراً',
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: FlipToStopService().isEnabled,
+                  onChanged: (val) {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      FlipToStopService().setEnabled(val);
+                    });
                   },
                   activeThumbColor: palette.primary,
                   activeTrackColor: palette.primarySoft,

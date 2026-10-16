@@ -36,16 +36,18 @@ enum ShamelaReaderSurface {
 /// Resolved semantic color tokens for reading surface environment.
 class ReaderSurfaceTokens {
   final Color bg;
+  final Color surfaceRaised;
   final Color text;
   final Color border;
   final String label;
 
   const ReaderSurfaceTokens({
     required this.bg,
+    Color? surfaceRaised,
     required this.text,
     required this.border,
     required this.label,
-  });
+  }) : surfaceRaised = surfaceRaised ?? bg;
 }
 
 /// Unified source of truth for reading surface tokens.
@@ -60,6 +62,7 @@ class ReaderSurfaceColors {
       case ShamelaReaderSurface.normal:
         return ReaderSurfaceTokens(
           bg: isDark ? const Color(0xFF161817) : const Color(0xFFFAF9F5),
+          surfaceRaised: isDark ? const Color(0xFF1E2120) : const Color(0xFFF2EFE9),
           text: isDark ? const Color(0xFFF1F5F3) : const Color(0xFF1E2120),
           border: isDark ? const Color(0xFF2C302E) : const Color(0xFFE2DFD6),
           label: 'الافتراضي',
@@ -67,6 +70,7 @@ class ReaderSurfaceColors {
       case ShamelaReaderSurface.parchment:
         return const ReaderSurfaceTokens(
           bg: Color(0xFFFBF7EE), // Classic authentic Shamwa parchment beige
+          surfaceRaised: Color(0xFFF3ECE0),
           text: Color(0xFF2B2520), // High-contrast classical dark sepia book ink
           border: Color(0xFFDFD4C4),
           label: 'ورق الشاموا (بيج)',
@@ -74,6 +78,7 @@ class ReaderSurfaceColors {
       case ShamelaReaderSurface.night:
         return const ReaderSurfaceTokens(
           bg: Color(0xFF101114), // Deep soothing night surface
+          surfaceRaised: Color(0xFF181A1F),
           text: Color(0xFFEAE5DC), // High-contrast soft cream night text
           border: Color(0xFF2C3038),
           label: 'داكن هادئ',

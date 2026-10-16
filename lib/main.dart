@@ -18,10 +18,11 @@ Future<void> main() async {
   unawaited(
     JustAudioBackground.init(
       androidNotificationChannelId: 'com.example.talib_ilm.channel.audio',
-      androidNotificationChannelName: 'تلاوة القرآن الكريم',
+      androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
       androidNotificationOngoing: false,
-      androidNotificationIcon: 'drawable/ic_launcher_monochrome',
+      androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
+      preloadArtwork: true,
     ).catchError((e) {
       debugPrint('JustAudioBackground init warning: $e');
     }),
