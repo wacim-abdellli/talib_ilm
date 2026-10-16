@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
 /// Intelligent scholarly text formatting, titling, and multi-tier syntax coloring
@@ -40,7 +39,9 @@ class ShamelaTextHighlighter {
     required String fontFamily,
     required double fontSizeDelta,
     double lineHeight = 1.85,
+    ShamelaAccentColor accentColor = ShamelaAccentColor.emerald,
   }) {
+    final accent = ReaderAccentColors.getTokens(accentColor, isDark: palette.isDark);
     final baseFontSize = (textTheme.body.fontSize ?? 18.0) + fontSizeDelta;
     final baseStyle = textTheme.body.copyWith(
       fontFamily: fontFamily,
@@ -68,7 +69,7 @@ class ShamelaTextHighlighter {
           text: matchedText,
           style: baseStyle.copyWith(
             fontFamily: textTheme.sacred.fontFamily,
-            color: palette.gold,
+            color: accent.primary,
             fontWeight: FontWeight.bold,
           ),
         ));
@@ -87,7 +88,7 @@ class ShamelaTextHighlighter {
           text: matchedText,
           style: baseStyle.copyWith(
             fontFamily: fontFamily,
-            color: palette.gold,
+            color: accent.primary,
             fontWeight: FontWeight.bold,
             fontSize: baseFontSize * 1.08,
             height: lineHeight * 1.2,
@@ -98,7 +99,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.gold,
+            color: accent.primary,
             fontWeight: FontWeight.bold,
           ),
         ));
@@ -110,7 +111,7 @@ class ShamelaTextHighlighter {
             color: palette.primary,
             fontWeight: FontWeight.w800,
             decoration: TextDecoration.underline,
-            decorationColor: palette.gold.withValues(alpha: 0.45),
+            decorationColor: accent.primary.withValues(alpha: 0.45),
             decorationThickness: 1.5,
           ),
         ));
@@ -137,7 +138,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.gold.withValues(alpha: 0.9),
+            color: accent.primary.withValues(alpha: 0.9),
             fontSize: baseFontSize * 0.9,
             fontWeight: FontWeight.w600,
           ),
@@ -147,7 +148,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.gold,
+            color: accent.primary,
             fontWeight: FontWeight.bold,
           ),
         ));
@@ -156,7 +157,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: ' ✤ ',
           style: baseStyle.copyWith(
-            color: palette.gold,
+            color: accent.primary,
             fontWeight: FontWeight.bold,
           ),
         ));
@@ -165,7 +166,7 @@ class ShamelaTextHighlighter {
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(
-            color: palette.gold,
+            color: accent.primary,
             fontSize: baseFontSize * 0.75,
             fontWeight: FontWeight.bold,
           ),

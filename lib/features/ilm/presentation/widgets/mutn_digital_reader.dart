@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
@@ -62,6 +61,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   String _fontFamily = 'Amiri';
   double _lineHeight = 1.85;
   ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
+  ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
 
   // Memorization Mode (وضع التسميع والتحفيظ)
   bool _memorizationMode = false;
@@ -117,6 +117,9 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       _lineHeight = prefs.getDouble('mutn_reader_line_height') ?? 1.85;
       final surfIndex = prefs.getInt('mutn_reader_surface') ?? 0;
       _surface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      final accIndex = prefs.getInt('shamela_reader_accent') ?? 0;
+      _accentColor = ShamelaAccentColor
+          .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
       _memorizationMode = prefs.getBool('mutn_memorization_mode') ?? false;
     });
   }
@@ -127,6 +130,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     await prefs.setString('mutn_reader_font_family', _fontFamily);
     await prefs.setDouble('mutn_reader_line_height', _lineHeight);
     await prefs.setInt('mutn_reader_surface', _surface.index);
+    await prefs.setInt('shamela_reader_accent', _accentColor.index);
     await prefs.setBool('mutn_memorization_mode', _memorizationMode);
   }
 
@@ -205,6 +209,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
         fontFamily: _fontFamily,
         lineHeight: _lineHeight,
         surface: _surface,
+        accentColor: _accentColor,
         onFontSizeChanged: (delta) {
           setState(() => _fontSizeDelta = delta);
           _savePreferences();
@@ -219,6 +224,10 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
         },
         onSurfaceChanged: (surf) {
           setState(() => _surface = surf);
+          _savePreferences();
+        },
+        onAccentColorChanged: (accent) {
+          setState(() => _accentColor = accent);
           _savePreferences();
         },
       ),
@@ -379,6 +388,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                       fontFamily: _fontFamily,
                       fontSizeDelta: _fontSizeDelta,
                       lineHeight: _lineHeight,
+                      accentColor: _accentColor,
                     ),
                   );
                 },
@@ -393,6 +403,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             isBookmarked: widget.isBookmarked,
             memorizationMode: _memorizationMode,
             showControls: widget.showControls,
+            accentColor: _accentColor,
             onPreviousPage: _currentPage > 1
                 ? () => _goToPage(_currentPage - 1)
                 : null,

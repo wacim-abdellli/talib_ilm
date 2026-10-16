@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
@@ -43,6 +42,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   String _fontFamily = 'Amiri';
   double _lineHeight = 1.85;
   ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
+  ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
   bool _isBookmarked = false;
 
   final Map<int, ShamelaPage> _pageCache = {};
@@ -83,6 +83,9 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       _lineHeight = prefs.getDouble('shamela_reader_line_height') ?? 1.85;
       final surfIndex = prefs.getInt('shamela_reader_surface') ?? 0;
       _surface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      final accIndex = prefs.getInt('shamela_reader_accent') ?? 0;
+      _accentColor = ShamelaAccentColor
+          .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
       _memorizationMode = prefs.getBool('shamela_memorization_mode') ?? false;
     });
   }
@@ -93,6 +96,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     await prefs.setString('shamela_reader_font_family', _fontFamily);
     await prefs.setDouble('shamela_reader_line_height', _lineHeight);
     await prefs.setInt('shamela_reader_surface', _surface.index);
+    await prefs.setInt('shamela_reader_accent', _accentColor.index);
     await prefs.setBool('shamela_memorization_mode', _memorizationMode);
   }
 
@@ -292,6 +296,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         fontFamily: _fontFamily,
         lineHeight: _lineHeight,
         surface: _surface,
+        accentColor: _accentColor,
         onFontSizeChanged: (delta) {
           setState(() => _fontSizeDelta = delta);
           _savePreferences();
@@ -306,6 +311,10 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         },
         onSurfaceChanged: (surf) {
           setState(() => _surface = surf);
+          _savePreferences();
+        },
+        onAccentColorChanged: (accent) {
+          setState(() => _accentColor = accent);
           _savePreferences();
         },
       ),
@@ -343,6 +352,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               totalPages: _totalPages,
               showControls: _showControls,
               bgColor: bgColor,
+              accentColor: _accentColor,
               onBack: () => Navigator.maybePop(context),
               onCopy: _copyPageContent,
             ),
@@ -432,6 +442,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                       fontFamily: _fontFamily,
                       fontSizeDelta: _fontSizeDelta,
                       lineHeight: _lineHeight,
+                      accentColor: _accentColor,
                     ),
                   );
                 },
@@ -445,6 +456,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               isBookmarked: _isBookmarked,
               memorizationMode: _memorizationMode,
               showControls: _showControls,
+              accentColor: _accentColor,
               onPreviousPage: _currentPage > 1 ? () => _jumpToPage(_currentPage - 1) : null,
               onNextPage: _currentPage < _totalPages ? () => _jumpToPage(_currentPage + 1) : null,
               onPageIndicatorTap: _showFihrisSheet,

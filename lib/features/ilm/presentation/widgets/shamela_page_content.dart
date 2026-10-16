@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../data/models/shamela_models.dart';
 import 'mutn_memorization_view.dart';
@@ -15,6 +14,7 @@ class ShamelaPageContent extends StatefulWidget {
   final String fontFamily;
   final double fontSizeDelta;
   final double lineHeight;
+  final ShamelaAccentColor accentColor;
 
   const ShamelaPageContent({
     super.key,
@@ -23,6 +23,7 @@ class ShamelaPageContent extends StatefulWidget {
     required this.fontFamily,
     required this.fontSizeDelta,
     required this.lineHeight,
+    this.accentColor = ShamelaAccentColor.emerald,
   });
 
   @override
@@ -48,6 +49,10 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
     final palette = context.palette;
     final textTheme = context.text;
     final page = widget.page;
+    final accent = ReaderAccentColors.getTokens(
+      widget.accentColor,
+      isDark: palette.isDark,
+    );
 
     return SelectionArea(
       child: Scrollbar(
@@ -76,10 +81,10 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: palette.goldSoft.withValues(alpha: 0.6),
+                      color: accent.soft,
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: palette.gold.withValues(alpha: 0.35),
+                        color: accent.border,
                         width: 1,
                       ),
                     ),
@@ -89,14 +94,14 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                         Icon(
                           Icons.auto_stories_rounded,
                           size: AppIcon.xs,
-                          color: palette.gold,
+                          color: accent.primary,
                         ),
                         const SizedBox(width: AppSpace.xs),
                         Flexible(
                           child: Text(
                             page.chapterTitle!,
                             style: textTheme.caption.copyWith(
-                              color: palette.gold,
+                              color: accent.onSoft,
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
@@ -114,7 +119,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                 decoration: BoxDecoration(
                   border: BorderDirectional(
                     start: BorderSide(
-                      color: palette.gold.withValues(alpha: 0.25),
+                      color: accent.border,
                       width: 2.0,
                     ),
                   ),
@@ -138,6 +143,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                           fontFamily: widget.fontFamily,
                           fontSizeDelta: widget.fontSizeDelta,
                           lineHeight: widget.lineHeight,
+                          accentColor: widget.accentColor,
                         ),
                         textAlign: TextAlign.start,
                       ),
@@ -150,7 +156,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color: palette.gold.withValues(alpha: 0.3),
+                        color: accent.border,
                         height: 1,
                       ),
                     ),
@@ -163,14 +169,14 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                         children: [
                           Icon(
                             Icons.history_edu_rounded,
-                            color: palette.gold,
+                            color: accent.primary,
                             size: AppIcon.xs,
                           ),
                           const SizedBox(width: AppSpace.xxs),
                           Text(
                             'الحواشي والتحقيق',
                             style: textTheme.caption.copyWith(
-                              color: palette.gold,
+                              color: accent.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -179,7 +185,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                     ),
                     Expanded(
                       child: Divider(
-                        color: palette.gold.withValues(alpha: 0.3),
+                        color: accent.border,
                         height: 1,
                       ),
                     ),
@@ -204,6 +210,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                       fontFamily: widget.fontFamily,
                       fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
                       lineHeight: 1.6,
+                      accentColor: widget.accentColor,
                     ),
                     textAlign: TextAlign.start,
                   ),

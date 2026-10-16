@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+import 'package:talib_ilm/app/theme/reader_theme.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/scholarly_reader_hud.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_typography_sheet.dart';
 
 void main() {
   Widget buildTestableWidget(Widget child) {
@@ -214,4 +216,63 @@ void main() {
       expect(container.constraints?.maxHeight, equals(0.0));
     });
   });
+
+  group('Reader Accent Colors & Typography Sheet Tests', () {
+    test('ReaderAccentColors provides valid non-null tokens for all accents', () {
+      for (final accent in ShamelaAccentColor.values) {
+        final lightTokens = ReaderAccentColors.getTokens(accent, isDark: false);
+        final darkTokens = ReaderAccentColors.getTokens(accent, isDark: true);
+
+        expect(lightTokens.primary, isNotNull);
+        expect(lightTokens.soft, isNotNull);
+        expect(lightTokens.onSoft, isNotNull);
+        expect(lightTokens.border, isNotNull);
+
+        expect(darkTokens.primary, isNotNull);
+        expect(darkTokens.soft, isNotNull);
+        expect(darkTokens.onSoft, isNotNull);
+        expect(darkTokens.border, isNotNull);
+      }
+    });
+
+    testWidgets('ShamelaTypographySheet renders all 5 accent color options and selects', (tester) async {
+      ShamelaAccentColor selectedAccent = ShamelaAccentColor.emerald;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ShamelaTypographySheet(
+            fontSizeDelta: 0.0,
+            fontFamily: 'Amiri',
+            lineHeight: 1.85,
+            surface: ShamelaReaderSurface.normal,
+            accentColor: selectedAccent,
+            onFontSizeChanged: (_) {},
+            onFontFamilyChanged: (_) {},
+            onLineHeightChanged: (_) {},
+            onSurfaceChanged: (_) {},
+            onAccentColorChanged: (accent) {
+              selectedAccent = accent;
+            },
+          ),
+        ),
+      );
+
+      // Verify header for accent picker is rendered
+      expect(find.text('لون تمييز الآيات والعناوين'), findsOneWidget);
+
+      // Verify all 5 accent labels are rendered
+      expect(find.text('زمردي'), findsOneWidget);
+      expect(find.text('عنابي'), findsOneWidget);
+      expect(find.text('كحلي'), findsOneWidget);
+      expect(find.text('عنبري'), findsOneWidget);
+      expect(find.text('برونزي'), findsOneWidget);
+
+      // Tap on 'كحلي' (navy)
+      await tester.tap(find.text('كحلي'));
+      await tester.pump();
+
+      expect(selectedAccent, equals(ShamelaAccentColor.navy));
+    });
+  });
 }
+

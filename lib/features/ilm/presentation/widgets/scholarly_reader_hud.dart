@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
 /// Transparent pointer-based tap detector for book reading pages.
@@ -89,6 +88,7 @@ class ScholarlyReaderHud extends StatelessWidget {
   final VoidCallback onToggleMemorization;
   final VoidCallback onOpenTypography;
   final VoidCallback? onShare;
+  final ShamelaAccentColor accentColor;
 
   const ScholarlyReaderHud({
     super.key,
@@ -107,6 +107,7 @@ class ScholarlyReaderHud extends StatelessWidget {
     required this.onToggleMemorization,
     required this.onOpenTypography,
     this.onShare,
+    this.accentColor = ShamelaAccentColor.emerald,
   });
 
   static const double hudHeight = 104.0;
@@ -115,6 +116,10 @@ class ScholarlyReaderHud extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final accent = ReaderAccentColors.getTokens(
+      accentColor,
+      isDark: palette.isDark,
+    );
 
     return AnimatedContainer(
       duration: AppMotion.fast,
@@ -172,7 +177,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                               Icon(
                                 Icons.menu_book_rounded,
                                 size: AppIcon.xs,
-                                color: palette.gold,
+                                color: accent.primary,
                               ),
                               const SizedBox(width: AppSpace.xs),
                               Text(
@@ -214,7 +219,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                             ? Icons.bookmark_rounded
                             : Icons.bookmark_border_rounded,
                         label: isBookmarked ? 'محفوظة' : 'إشارة',
-                        iconColor: isBookmarked ? palette.gold : palette.text,
+                        iconColor: isBookmarked ? accent.primary : palette.text,
                         onTap: onToggleBookmark,
                         onLongPress: onShowBookmarks,
                         palette: palette,

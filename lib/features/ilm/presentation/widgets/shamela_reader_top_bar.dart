@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/app.dart';
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
 /// Prestigious Scholarly Top Bar for Shamela Reader
@@ -14,6 +13,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
   final int totalPages;
   final bool showControls;
   final Color bgColor;
+  final ShamelaAccentColor accentColor;
   final VoidCallback onBack;
   final VoidCallback onCopy;
 
@@ -25,6 +25,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
     required this.totalPages,
     required this.showControls,
     required this.bgColor,
+    this.accentColor = ShamelaAccentColor.emerald,
     required this.onBack,
     required this.onCopy,
   });
@@ -32,6 +33,10 @@ class ShamelaReaderTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final accent = ReaderAccentColors.getTokens(
+      accentColor,
+      isDark: palette.isDark,
+    );
     final topPadding = MediaQuery.paddingOf(context).top;
     final fullBarHeight = topPadding + AppSize.navH;
     final minimalBarHeight = topPadding + 42.0;
@@ -85,17 +90,17 @@ class ShamelaReaderTopBar extends StatelessWidget {
                         vertical: AppSpace.xxs,
                       ),
                       decoration: BoxDecoration(
-                        color: palette.goldSoft,
+                        color: accent.soft,
                         borderRadius: AppRadius.pillRadius,
                         border: Border.all(
-                          color: palette.gold.withValues(alpha: 0.3),
+                          color: accent.border,
                           width: 1,
                         ),
                       ),
                       child: Text(
                         'صفحة $currentPage من $totalPages',
                         style: textTheme.caption.copyWith(
-                          color: palette.gold,
+                          color: accent.onSoft,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -4,6 +4,7 @@ import 'app_spacing.dart';
 import 'app_radius.dart';
 
 export 'app_palette.dart';
+export 'reader_theme.dart';
 
 /// Legacy UI constants shim.
 /// Use [AppSpace], [AppRadius], [AppIcon], [AppMotion], [AppSize] instead.

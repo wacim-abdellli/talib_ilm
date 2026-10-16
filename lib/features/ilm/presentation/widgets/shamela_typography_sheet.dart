@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/app.dart';
-import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
 enum ShamelaReaderSurface {
@@ -16,10 +15,12 @@ class ShamelaTypographySheet extends StatefulWidget {
   final String fontFamily;
   final double lineHeight;
   final ShamelaReaderSurface surface;
+  final ShamelaAccentColor accentColor;
   final ValueChanged<double> onFontSizeChanged;
   final ValueChanged<String> onFontFamilyChanged;
   final ValueChanged<double> onLineHeightChanged;
   final ValueChanged<ShamelaReaderSurface> onSurfaceChanged;
+  final ValueChanged<ShamelaAccentColor> onAccentColorChanged;
 
   const ShamelaTypographySheet({
     super.key,
@@ -27,10 +28,12 @@ class ShamelaTypographySheet extends StatefulWidget {
     required this.fontFamily,
     required this.lineHeight,
     required this.surface,
+    this.accentColor = ShamelaAccentColor.emerald,
     required this.onFontSizeChanged,
     required this.onFontFamilyChanged,
     required this.onLineHeightChanged,
     required this.onSurfaceChanged,
+    required this.onAccentColorChanged,
   });
 
   @override
@@ -42,6 +45,7 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
   late String _fontFamily;
   late double _lineHeight;
   late ShamelaReaderSurface _surface;
+  late ShamelaAccentColor _accentColor;
 
   @override
   void initState() {
@@ -50,6 +54,7 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
     _fontFamily = widget.fontFamily;
     _lineHeight = widget.lineHeight;
     _surface = widget.surface;
+    _accentColor = widget.accentColor;
   }
 
   @override
@@ -136,6 +141,87 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppSpace.md),
+
+            // ── Reading Accent Color ──
+            Text(
+              'لون تمييز الآيات والعناوين',
+              style: textTheme.body.copyWith(color: palette.text),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Row(
+              children: ShamelaAccentColor.values.map((col) {
+                final tokens = ReaderAccentColors.getTokens(
+                  col,
+                  isDark: palette.isDark,
+                );
+                final isSelected = col == _accentColor;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xxs,
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _accentColor = col);
+                        widget.onAccentColorChanged(col);
+                      },
+                      borderRadius: AppRadius.mdRadius,
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: AppSpace.xs,
+                          horizontal: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? tokens.soft : palette.surface,
+                          borderRadius: AppRadius.mdRadius,
+                          border: Border.all(
+                            color: isSelected ? tokens.primary : palette.border,
+                            width: isSelected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: tokens.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: isSelected
+                                  ? Icon(
+                                      Icons.check_rounded,
+                                      size: AppIcon.xs,
+                                      color: tokens.soft,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(height: AppSpace.xxs),
+                            Text(
+                              tokens.label,
+                              style: textTheme.caption.copyWith(
+                                color: isSelected
+                                    ? tokens.primary
+                                    : palette.textMuted,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(height: AppSpace.md),
 
