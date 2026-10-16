@@ -70,5 +70,24 @@ void main() {
       final search2 = await service.searchHadiths('مقادير الخلائق');
       expect(search2, isNotEmpty);
     });
+
+    test('All hadiths have meaningful authentic benefits without boilerplate templates', () async {
+      final all = await service.getAllHadiths();
+      expect(all, isNotEmpty);
+
+      // Verify every hadith has populated benefits
+      for (final h in all) {
+        expect(h.benefits, isNotEmpty, reason: 'Hadith ${h.id} has empty benefits');
+        expect(
+          h.benefits.contains('حديث جليل من كتاب'),
+          isFalse,
+          reason: 'Hadith ${h.id} still contains generic book template: ${h.benefits}',
+        );
+      }
+
+      // Verify riyad_1058 specifically (user-reported hadith)
+      final h1058 = all.firstWhere((h) => h.id == 'riyad_1058');
+      expect(h1058.benefits, contains('التقعر والتكلف في الكلام'));
+    });
   });
 }
