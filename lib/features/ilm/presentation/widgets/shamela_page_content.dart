@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_ui.dart';
 import '../../data/models/shamela_models.dart';
+import '../../data/services/shamela_service.dart';
 import 'mutn_memorization_view.dart';
 import 'shamela_text_highlighter.dart';
 
@@ -153,70 +154,84 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
               ),
 
               // Footnotes (الحواشي والتحقيق) Section if present
-              if (page.hamesh != null && page.hamesh!.trim().isNotEmpty) ...[
-                const SizedBox(height: AppSpace.xl),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: accent.border,
-                        height: 1,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.sm,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.history_edu_rounded,
-                            color: accent.primary,
-                            size: AppIcon.xs,
-                          ),
-                          const SizedBox(width: AppSpace.xxs),
-                          Text(
-                            'الحواشي والتحقيق',
-                            style: textTheme.caption.copyWith(
-                              color: accent.primary,
-                              fontWeight: FontWeight.bold,
+              if (page.hamesh != null) ...[
+                Builder(
+                  builder: (context) {
+                    final cleanHamesh = ShamelaService.sanitizeBookText(page.hamesh!);
+                    if (cleanHamesh.trim().isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: AppSpace.xl),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: accent.border,
+                                height: 1,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.sm,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.history_edu_rounded,
+                                    color: accent.primary,
+                                    size: AppIcon.xs,
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Text(
+                                    'الحواشي والتحقيق',
+                                    style: textTheme.caption.copyWith(
+                                      color: accent.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: accent.border,
+                                height: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.sm),
+                        Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                          decoration: BoxDecoration(
+                            color: palette.surfaceRaised,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                              color: palette.border,
+                              width: 1,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: accent.border,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.sm),
-                Container(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceRaised,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(
-                      color: palette.border,
-                      width: 1,
-                    ),
-                  ),
-                  child: Text.rich(
-                    ShamelaTextHighlighter.buildSpans(
-                      text: page.hamesh!,
-                      palette: palette,
-                      textTheme: textTheme,
-                      fontFamily: widget.fontFamily,
-                      fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
-                      lineHeight: 1.6,
-                      accentColor: widget.accentColor,
-                    ),
-                    textAlign: TextAlign.start,
-                  ),
+                          child: Text.rich(
+                            ShamelaTextHighlighter.buildSpans(
+                              text: cleanHamesh,
+                              palette: palette,
+                              textTheme: textTheme,
+                              fontFamily: widget.fontFamily,
+                              fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
+                              lineHeight: 1.6,
+                              accentColor: widget.accentColor,
+                              surface: widget.surface,
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
 

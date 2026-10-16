@@ -87,13 +87,15 @@ class ShamelaService {
 
     if (localRows.isNotEmpty) {
       final row = localRows.first;
+      final rawContent = row['content'] as String;
+      final rawHamesh = row['hamesh'] as String?;
       return ShamelaPage(
         bookId: bookId,
         pageNumber: pageNumber,
         partNumber: row['part_num'] as int?,
         chapterTitle: row['chapter_title'] as String?,
-        content: row['content'] as String,
-        hamesh: row['hamesh'] as String?,
+        content: sanitizeBookText(rawContent),
+        hamesh: rawHamesh != null ? sanitizeBookText(rawHamesh) : null,
       );
     }
 
@@ -194,7 +196,7 @@ class ShamelaService {
 
   /// Clean HTML tags, brackets, and extra spaces
   static String _cleanHtml(String html) {
-    var text = html
+    var text = sanitizeBookText(html)
         .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n\n')
         .replaceAll(RegExp(r'<[^>]*>'), '')
@@ -207,7 +209,60 @@ class ShamelaService {
         .replaceAll(RegExp(r'\n{3,}'), '\n\n')
         .trim();
 
-    return text;
+    return sanitizeBookText(text);
+  }
+
+  /// Sanitize book content and footnotes by stripping email protection artifacts
+  /// (e.g. Cloudflare [email&#160;protected], [email protected], etc.)
+  static String sanitizeBookText(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .replaceAll(
+          RegExp(
+            r"""<a[^>]*class=["'][^"']*__cf_email__[^"']*["'][^>]*>.*?</a>""",
+            caseSensitive: false,
+            dotAll: true,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r"""<a[^>]*href=["'][^"']*/cdn-cgi/l/email-protection[^"']*["'][^>]*>.*?</a>""",
+            caseSensitive: false,
+            dotAll: true,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r'/cdn-cgi/l/email-protection#?[a-f0-9]*',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r'\[\s*email(?:\s*|&#\d+;|&nbsp;)*protected\s*\]',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'\[\s*email[^\]]*\]', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'email&#\d+;protected', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'email&nbsp;protected', caseSensitive: false),
+          '',
+        )
+        .replaceAll(RegExp(r'\([ \t]*\)'), '')
+        .replaceAll(RegExp(r'\[[ \t]*\]'), '')
+        .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+        .trim();
   }
 
   /// Fetch or load Table of Contents (الفهرس)

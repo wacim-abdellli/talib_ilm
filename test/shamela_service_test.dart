@@ -134,5 +134,30 @@ void main() {
       expect(revived.title, equals(original.title));
       expect(revived.pageNumber, equals(original.pageNumber));
     });
+
+    test('sanitizeBookText cleans Cloudflare [email protected] and email obfuscation artifacts', () {
+      // 1. User screenshot case: [email&#160;protected]
+      const userCase = '* اعتنى به: محمد المنصور [email&#160;protected]\n١٧/٨/١٤٢٩هـ - ١٩/٨/٢٠٠٨م';
+      final cleaned1 = ShamelaService.sanitizeBookText(userCase);
+      expect(cleaned1.contains('email'), isFalse);
+      expect(cleaned1.contains('protected'), isFalse);
+      expect(cleaned1, contains('* اعتنى به: محمد المنصور'));
+      expect(cleaned1, contains('١٧/٨/١٤٢٩هـ - ١٩/٨/٢٠٠٨م'));
+
+      // 2. Raw HTML anchor from Cloudflare
+      const htmlCase = '* اعتنى به: محمد المنصور <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="107d4f717c7d717e637f6562506971787f7f3e737f7d">[email&#160;protected]</a>';
+      final cleaned2 = ShamelaService.sanitizeBookText(htmlCase);
+      expect(cleaned2, equals('* اعتنى به: محمد المنصور'));
+
+      // 3. Simple [email protected]
+      const simpleCase = 'للتواصل مع المحقق: [email protected]';
+      final cleaned3 = ShamelaService.sanitizeBookText(simpleCase);
+      expect(cleaned3, equals('للتواصل مع المحقق:'));
+
+      // 4. Preserves authentic Islamic classical footnotes untouched
+      const normalFootnote = '(١) أخرجه البخاري في كتاب الإيمان، باب أمور الإيمان (رقم ٩).';
+      final cleaned4 = ShamelaService.sanitizeBookText(normalFootnote);
+      expect(cleaned4, equals(normalFootnote));
+    });
   });
 }
