@@ -90,26 +90,88 @@ class HadithService {
     return candidate;
   }
 
-  /// Returns list of unique collections
-  Future<List<String>> getCollections() async {
-    final all = await getAllHadiths();
-    final set = <String>{};
-    for (final h in all) {
-      if (h.collection.isNotEmpty) set.add(h.collection);
+  /// Canonical collections and core sources
+  static const List<String> canonicalCollections = [
+    'الكل',
+    'متفق عليه',
+    'صحيح البخاري',
+    'صحيح مسلم',
+    'رياض الصالحين',
+    'الأربعون النووية',
+    'الأحاديث القدسية',
+  ];
+
+  /// Standard pedagogical categories ordering
+  static const List<String> standardCategoryOrder = [
+    'الإخلاص والنية',
+    'أصول العقيدة',
+    'القضاء والقدر',
+    'الاتباع والسنة',
+    'التوبة والاستغفار',
+    'الصبر والتوكل',
+    'الأخلاق والآداب',
+    'الصلوات والعبادات',
+    'الذكر والدعاء',
+    'الزهد والرقائق',
+    'العلم وفضله',
+    'بر الوالدين وحقوق المسلم',
+    'التحذير من المنهيات',
+    'الجهاد والأمر بالمعروف',
+  ];
+
+  /// Filters a list of hadiths by canonical collection or primary source
+  List<GradedHadith> filterByCollection(
+    List<GradedHadith> hadiths,
+    String collection,
+  ) {
+    if (collection.isEmpty || collection == 'الكل') return hadiths;
+    if (collection == 'متفق عليه') {
+      return hadiths.where((h) => h.source.contains('متفق عليه')).toList();
     }
-    return set.toList();
+    if (collection == 'صحيح البخاري') {
+      return hadiths
+          .where(
+            (h) =>
+                h.source.contains('البخاري') || h.collection == 'صحيح البخاري',
+          )
+          .toList();
+    }
+    if (collection == 'صحيح مسلم') {
+      return hadiths
+          .where(
+            (h) => h.source.contains('مسلم') || h.collection == 'صحيح مسلم',
+          )
+          .toList();
+    }
+    return hadiths.where((h) => h.collection == collection).toList();
+  }
+
+  /// Returns list of unique collections including canonical Bukhari/Muslim filters
+  Future<List<String>> getCollections() async {
+    return canonicalCollections;
   }
 
   /// Returns list of unique categories (optionally scoped to a collection)
   Future<List<String>> getCategories([String? collection]) async {
     final all = await getAllHadiths();
+    final scoped = (collection == null || collection == 'الكل')
+        ? all
+        : filterByCollection(all, collection);
+
     final set = <String>{};
-    for (final h in all) {
-      if (collection == null || collection == 'الكل' || h.collection == collection) {
-        if (h.category.isNotEmpty) set.add(h.category);
+    for (final h in scoped) {
+      if (h.category.isNotEmpty) set.add(h.category);
+    }
+
+    final ordered = <String>[];
+    for (final cat in standardCategoryOrder) {
+      if (set.contains(cat)) {
+        ordered.add(cat);
+        set.remove(cat);
       }
     }
-    return set.toList();
+    ordered.addAll(set);
+    return ordered;
   }
 
   /// Filters hadiths by category

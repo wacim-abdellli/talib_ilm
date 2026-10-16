@@ -23,11 +23,11 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
   @override
   void initState() {
     super.initState();
-    _loadRandomHadith();
+    _loadDailyHadith();
   }
 
-  Future<void> _loadRandomHadith() async {
-    final h = await _service.getRandomHadith(excludeId: _hadith?.id);
+  Future<void> _loadDailyHadith() async {
+    final h = await _service.getDailyHadith();
     if (!mounted) return;
     setState(() {
       _hadith = h;
@@ -35,11 +35,16 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
     });
   }
 
-  void _cycleHadith() {
+  Future<void> _cycleHadith() async {
     setState(() {
       _isLoading = true;
     });
-    _loadRandomHadith();
+    final h = await _service.getRandomHadith(excludeId: _hadith?.id);
+    if (!mounted) return;
+    setState(() {
+      _hadith = h;
+      _isLoading = false;
+    });
   }
 
   void _openExplorer(BuildContext context) {

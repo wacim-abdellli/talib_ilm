@@ -56,7 +56,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
 
     setState(() {
       _allHadiths = hadiths;
-      _collections = ['الكل', ...collections];
+      _collections = collections;
       _categories = ['الكل', ...categories];
       if (widget.initialCategory != null &&
           _categories.contains(widget.initialCategory)) {
@@ -83,7 +83,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     List<GradedHadith> list = _allHadiths;
 
     if (_selectedCollection != 'الكل') {
-      list = list.where((h) => h.collection == _selectedCollection).toList();
+      list = _hadithService.filterByCollection(list, _selectedCollection);
     }
 
     if (_selectedCategory != 'الكل') {
