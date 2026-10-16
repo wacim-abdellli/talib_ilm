@@ -1,12 +1,12 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../core/services/compass_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
@@ -100,8 +100,8 @@ class _QiblaPageState extends State<QiblaPage>
       ),
       body: Container(
         color: palette.bg,
-        child: StreamBuilder<CompassEvent>(
-          stream: FlutterCompass.events,
+        child: StreamBuilder<CompassReading>(
+          stream: CompassService().stream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(
@@ -117,19 +117,20 @@ class _QiblaPageState extends State<QiblaPage>
               );
             }
 
-            final event = snapshot.data;
-            final heading = event?.heading ?? 0;
-            final accuracy = event?.accuracy;
+            final reading = snapshot.data;
+            final heading = reading?.heading ?? 0;
+            final accuracy = reading?.accuracy;
+            final isSensorAvailable = reading?.isSensorAvailable ?? true;
 
             // Check alignment (within 3.5 degrees)
             final qibla = _qiblaDirection ?? 0;
             final diff = ((heading - qibla).abs()) % 360;
             final isFacingQibla = diff < 3.5 || diff > 356.5;
 
-            if (isFacingQibla && !_wasAligned) {
+            if (isFacingQibla && !_wasAligned && isSensorAvailable) {
               HapticFeedback.mediumImpact();
               _wasAligned = true;
-            } else if (!isFacingQibla && _wasAligned) {
+            } else if ((!isFacingQibla || !isSensorAvailable) && _wasAligned) {
               _wasAligned = false;
             }
 
@@ -192,35 +193,39 @@ class _QiblaPageState extends State<QiblaPage>
                       vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
-                      color: isFacingQibla
+                      color: isFacingQibla && isSensorAvailable
                           ? palette.goldSoft
                           : palette.surfaceMuted,
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: isFacingQibla
+                        color: isFacingQibla && isSensorAvailable
                             ? gold
                             : palette.border,
-                        width: isFacingQibla ? 1.5 : 1,
+                        width: isFacingQibla && isSensorAvailable ? 1.5 : 1,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isFacingQibla
-                              ? Icons.check_circle_rounded
-                              : Icons.navigation_rounded,
-                          color: isFacingQibla ? gold : palette.textMuted,
+                          !isSensorAvailable
+                              ? Icons.info_outline_rounded
+                              : isFacingQibla
+                                  ? Icons.check_circle_rounded
+                                  : Icons.navigation_rounded,
+                          color: isFacingQibla && isSensorAvailable ? gold : palette.textMuted,
                           size: AppIcon.sm,
                         ),
                         const SizedBox(width: AppSpace.sm),
                         Text(
-                          isFacingQibla
-                              ? 'أنت في اتجاه القبلة تماماً'
-                              : 'وجّه هاتفك نحو الكعبة المشرفة',
+                          !isSensorAvailable
+                              ? 'الهاتف لا يدعم مستشعر البوصلة'
+                              : isFacingQibla
+                                  ? 'أنت في اتجاه القبلة تماماً'
+                                  : 'وجّه هاتفك نحو الكعبة المشرفة',
                           style: textTheme.label.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: isFacingQibla ? gold : palette.text,
+                            color: isFacingQibla && isSensorAvailable ? gold : palette.text,
                           ),
                         ),
                       ],
@@ -294,7 +299,7 @@ class _QiblaPageState extends State<QiblaPage>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildAccuracyBadge(context, accuracy),
+                        _buildAccuracyBadge(context, accuracy, isSensorAvailable),
                         TextButton.icon(
                           onPressed: _checkPermissionsAndStart,
                           icon: Icon(
@@ -321,9 +326,47 @@ class _QiblaPageState extends State<QiblaPage>
     );
   }
 
-  Widget _buildAccuracyBadge(BuildContext context, double? accuracy) {
+  Widget _buildAccuracyBadge(
+    BuildContext context,
+    double? accuracy,
+    bool isSensorAvailable,
+  ) {
     final palette = context.palette;
     final textTheme = context.text;
+
+    if (!isSensorAvailable) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md,
+          vertical: AppSpace.xs,
+        ),
+        decoration: BoxDecoration(
+          color: palette.surfaceMuted,
+          borderRadius: AppRadius.pillRadius,
+          border: Border.all(color: palette.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: palette.textMuted,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            Text(
+              'استدل بالزاوية أعلاه بالنسبة للشمال',
+              style: textTheme.caption.copyWith(
+                color: palette.textMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     bool isAccurate = true;
     if (accuracy != null && accuracy > 20) {
@@ -353,7 +396,7 @@ class _QiblaPageState extends State<QiblaPage>
           ),
           const SizedBox(width: AppSpace.sm),
           Text(
-            isAccurate ? 'دقة عالية' : 'دقة منخفضة (حرّك الهاتف)',
+            isAccurate ? 'دقة عالية' : 'دقة منخفضة (حرّك الهاتف 8)',
             style: textTheme.caption.copyWith(
               color: palette.text,
             ),
