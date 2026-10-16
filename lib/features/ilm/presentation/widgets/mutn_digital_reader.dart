@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
@@ -65,6 +66,10 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   // Memorization Mode (وضع التسميع والتحفيظ)
   bool _memorizationMode = false;
 
+  // Table of Contents (الفهرس)
+  List<ShamelaChapter> _chapters = [];
+  bool _isLoadingChapters = false;
+
   @override
   void initState() {
     super.initState();
@@ -72,11 +77,33 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     _totalPages = widget.digitalEntry.totalPages;
     _pageController = PageController(initialPage: _currentPage - 1);
     _loadPreferences();
+    _loadChapters();
     _preloadSurroundingPages(_currentPage);
+  }
+
+  void _loadChapters() async {
+    setState(() => _isLoadingChapters = true);
+    try {
+      final chapters = await ShamelaService.fetchTableOfContents(
+        widget.digitalEntry.shamelaId,
+      );
+      if (mounted) {
+        setState(() {
+          _chapters = chapters;
+          _isLoadingChapters = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingChapters = false);
+    }
   }
 
   @override
   void dispose() {
+    ShamelaService.saveLastReadPage(
+      widget.digitalEntry.shamelaId,
+      _currentPage,
+    );
     _pageController.dispose();
     super.dispose();
   }
@@ -151,6 +178,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       _currentPage = pageNum;
     });
     _preloadSurroundingPages(pageNum);
+    ShamelaService.saveLastReadPage(widget.digitalEntry.shamelaId, pageNum);
     widget.onPageChanged(pageNum, _totalPages);
   }
 
@@ -163,6 +191,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       _pageController.jumpToPage(safe - 1);
     }
     _preloadSurroundingPages(safe);
+    ShamelaService.saveLastReadPage(widget.digitalEntry.shamelaId, safe);
     widget.onPageChanged(safe, _totalPages);
   }
 
@@ -196,19 +225,18 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     );
   }
 
-  void _openFihrisSheet() async {
-    final chapters = await ShamelaService.fetchTableOfContents(
-      widget.digitalEntry.shamelaId,
-    );
-    if (!mounted) return;
+  void _openFihrisSheet() {
+    HapticFeedback.lightImpact();
+    if (_chapters.isEmpty && !_isLoadingChapters) {
+      _loadChapters();
+    }
 
-    showModalBottomSheet<void>(
+    AppSheet.show<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightFactor: 0.85,
       builder: (sheetContext) => ShamelaFihrisSheet(
-        chapters: chapters,
-        isLoading: false,
+        chapters: _chapters,
+        isLoading: _isLoadingChapters && _chapters.isEmpty,
         currentPage: _currentPage,
         onPageSelected: (page) => _goToPage(page),
       ),

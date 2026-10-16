@@ -253,7 +253,10 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
 
               return AppCard(
                 onTap: () => _openLesson(lesson),
-                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.md,
+                ),
                 child: Row(
                   children: [
                     // Lesson Number / Done Badge
@@ -329,13 +332,15 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
                               if (lesson.scholar != null &&
                                   lesson.scholar!.isNotEmpty) ...[
                                 const SizedBox(width: AppSpace.sm),
-                                Text(
-                                  '•  ${lesson.scholar}',
-                                  style: context.text.caption.copyWith(
-                                    color: palette.textMuted,
+                                Flexible(
+                                  child: Text(
+                                    '•  ${lesson.scholar}',
+                                    style: context.text.caption.copyWith(
+                                      color: palette.textMuted,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ],
@@ -344,16 +349,21 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
                       ),
                     ),
 
-                    const SizedBox(width: AppSpace.sm),
+                    const SizedBox(width: AppSpace.xs),
 
                     // Completion Toggle Button
                     IconButton(
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
                       icon: Icon(
                         isDone
                             ? Icons.check_circle_rounded
                             : Icons.check_circle_outline_rounded,
                         color: isDone ? palette.success : palette.textSubtle,
-                        size: AppIcon.lg,
+                        size: AppIcon.md,
                       ),
                       tooltip: isDone ? 'إلغاء التحديد' : 'تحديد كمكتمل',
                       onPressed: () => _toggleLessonStatus(index),
@@ -361,10 +371,15 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
 
                     // Play Video Action
                     IconButton(
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
                       icon: Icon(
                         Icons.play_circle_fill_rounded,
                         color: palette.primary,
-                        size: AppIcon.lg,
+                        size: AppIcon.md,
                       ),
                       tooltip: 'مشاهدة الدرس',
                       onPressed: () => _openLesson(lesson),

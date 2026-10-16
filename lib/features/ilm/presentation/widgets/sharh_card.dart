@@ -36,17 +36,20 @@ class SharhCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    String subtitleText;
-    if (totalPages != null && totalPages! > 0) {
-      subtitleText = '$totalPages صفحة';
-    } else {
-      subtitleText = scholar;
-      if (difficulty != null) subtitleText += ' • $difficulty';
-    }
+    final metaParts = <String>[
+      scholar,
+      if (totalPages != null && totalPages! > 0) '$totalPages صفحة',
+      if (difficulty != null) difficulty!,
+    ];
+    final subtitleText = metaParts.join(' • ');
 
     String? progressText;
     if (currentPage != null && currentPage! > 0) {
-      progressText = 'وصلت إلى صفحة $currentPage';
+      if (totalPages != null && totalPages! > 0) {
+        progressText = 'وصلت إلى صفحة $currentPage من $totalPages';
+      } else {
+        progressText = 'وصلت إلى صفحة $currentPage';
+      }
     } else if (isLastRead) {
       progressText = 'آخر قراءة';
     }

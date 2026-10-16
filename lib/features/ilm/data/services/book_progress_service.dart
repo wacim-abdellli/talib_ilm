@@ -18,7 +18,12 @@ class BookProgressService {
   // ═══════════════════════════════════════════
   Future<int> getCompletedCount() async {
     final all = await getAllProgress();
-    return all.where((p) => p.isCompleted).length;
+    return all
+        .where((p) =>
+            p.totalPages > 1 &&
+            p.currentPage >= p.totalPages &&
+            p.completedDate != null)
+        .length;
   }
 
   Future<bool> markCompleted(String bookId) async {
@@ -221,7 +226,10 @@ class BookProgressService {
   Future<List<BookProgress>> getCurrentlyReading() async {
     final allProgress = await getAllProgress();
     return allProgress
-        .where((progress) => !progress.isCompleted && progress.currentPage > 1)
+        .where((progress) =>
+            (!progress.isCompleted ||
+                progress.currentPage < progress.totalPages) &&
+            progress.currentPage > 1)
         .toList()
       ..sort((a, b) => b.lastReadDate.compareTo(a.lastReadDate));
   }
@@ -230,7 +238,10 @@ class BookProgressService {
     final allProgress = await getAllProgress();
 
     final completed = allProgress
-        .where((p) => p.isCompleted && p.completedDate != null)
+        .where((p) =>
+            p.totalPages > 1 &&
+            p.currentPage >= p.totalPages &&
+            p.completedDate != null)
         .toList();
 
     completed.sort((a, b) => b.completedDate!.compareTo(a.completedDate!));
@@ -477,7 +488,7 @@ class BookProgressService {
         if (shouldClearComplete || shouldUpdateTotal) {
           all[i] = p.copyWith(
             totalPages: targetTotal,
-            clearCompletedDate: shouldClearComplete,
+            clearCompletedDate: !isCompleted,
           );
           changed = true;
         }

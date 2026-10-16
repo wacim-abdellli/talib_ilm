@@ -36,17 +36,17 @@ class ScholarlyBookCard extends StatelessWidget {
     final palette = context.palette;
     final categoryColors = palette.category(book.subject);
 
-    final totalPages = book.totalPages > 0
-        ? book.totalPages
-        : (progress?.totalPages ?? 0);
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
+        ? digitalEntry.totalPages
+        : (book.totalPages > 0
+            ? book.totalPages
+            : (progress?.totalPages ?? 0));
     final currentPage = progress?.currentPage ?? 0;
     final progressValue = totalPages > 0
         ? (currentPage / totalPages).clamp(0.0, 1.0)
         : 0.0;
-    final isCompleted = totalPages > 1 &&
-        ((progress?.isCompleted ?? false) ||
-            (progress?.completedDate != null && currentPage >= totalPages) ||
-            currentPage >= totalPages);
+    final isCompleted = totalPages > 1 && currentPage >= totalPages;
     final isStarted = !isCompleted &&
         progress != null &&
         (currentPage > 1 || (progress?.totalReadingTimeMinutes ?? 0) > 0);

@@ -14,6 +14,7 @@ class BookSharhTab extends StatelessWidget {
   final Sharh? lastSharh;
   final PdfPageInfo? lastSharhPage;
   final String? lastSharhFile;
+  final Map<String, int> shuruhPages;
   final VoidCallback onGoToMutn;
   final ValueChanged<Sharh> onOpenSharh;
 
@@ -23,6 +24,7 @@ class BookSharhTab extends StatelessWidget {
     required this.lastSharh,
     required this.lastSharhPage,
     required this.lastSharhFile,
+    this.shuruhPages = const {},
     required this.onGoToMutn,
     required this.onOpenSharh,
   });
@@ -77,11 +79,14 @@ class BookSharhTab extends StatelessWidget {
                 const SizedBox(height: AppSpace.md),
             itemBuilder: (context, index) {
               final sharh = shuruh[index];
+              final curPage = shuruhPages[sharh.file];
 
               return SharhCard(
                 title: sharh.title,
                 scholar: sharh.scholar,
                 description: sharh.description,
+                totalPages: sharh.totalPages,
+                currentPage: curPage,
                 isDigital: sharh.shamelaId != null,
                 difficulty: _difficultyLabel(index),
                 recommended: index == 0,

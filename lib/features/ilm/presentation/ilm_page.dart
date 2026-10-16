@@ -10,6 +10,7 @@ import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import 'widgets/ilm_loading_view.dart';
+import '../data/catalogs/mutun_digital_catalog.dart';
 import '../data/models/book_progress_model.dart';
 import '../data/models/mutun_models.dart';
 import '../data/services/book_progress_service.dart';
@@ -140,7 +141,8 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
       final catalogTotals = {
         for (final book in _allBooks)
-          if (book.totalPages > 0) book.id: book.totalPages,
+          book.id: MutunDigitalCatalog.getEntry(book.id)?.totalPages ??
+              (book.totalPages > 0 ? book.totalPages : 1),
       };
       await _progressService?.auditAndHealCatalogProgress(catalogTotals);
 
@@ -306,9 +308,12 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
     final progressNow = _progressById[book.id];
     final isCompletedNow = progressNow?.isCompleted ?? false;
-    final expectedTotal = book.totalPages > 0
-        ? book.totalPages
-        : (progressNow?.totalPages ?? 0);
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final expectedTotal = digitalEntry != null && digitalEntry.totalPages > 0
+        ? digitalEntry.totalPages
+        : (book.totalPages > 0
+            ? book.totalPages
+            : (progressNow?.totalPages ?? 0));
     final isGenuinelyFinished = isCompletedNow &&
         expectedTotal > 1 &&
         (progressNow?.currentPage ?? 0) >= expectedTotal;

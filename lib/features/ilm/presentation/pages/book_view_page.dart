@@ -63,13 +63,12 @@ class _BookViewPageState extends State<BookViewPage>
   final LastSharhService _lastSharhService = LastSharhService();
   final LastActivityService _lastActivityService = LastActivityService();
   final FavoritesService _favoritesService = FavoritesService();
-  late BookProgressService _bookProgressService;
+  BookProgressService? _bookProgressService;
   late Timer _readingTimer;
   int _sessionMinutes = 0;
   bool _showControls = true;
   final TextEditingController _noteController = TextEditingController();
   final Set<int> _bookmarkedPages = <int>{};
-  bool _bookServiceReady = false;
   bool _isBookmarked = false;
   int _currentPage = 1;
   int _totalPages = 0;
@@ -77,6 +76,7 @@ class _BookViewPageState extends State<BookViewPage>
   String? _lastSharhFile;
   Sharh? _lastSharh;
   PdfPageInfo? _lastSharhPage;
+  final Map<String, int> _shuruhPages = <String, int>{};
   late final String _mutunPdfKey;
   late final Future<int> _mutunInitialPage;
   bool _isFavorite = false;
@@ -86,7 +86,6 @@ class _BookViewPageState extends State<BookViewPage>
   int _maxPageReached = 1;
   DateTime? _readingStart;
   int _readingSeconds = 0;
-  bool _hasShownReadHint = false;
   bool get _canCompleteBook {
     if (_totalPages <= 1) return false;
     return (_maxPageReached / _totalPages) >= 0.95 && _readingSeconds >= 120;
@@ -99,6 +98,50 @@ class _BookViewPageState extends State<BookViewPage>
     _readingStart = now;
   }
 
+  Future<BookProgressService> _getProgressService() async {
+    if (_bookProgressService != null) return _bookProgressService!;
+    final prefs = await SharedPreferences.getInstance();
+    _bookProgressService = BookProgressService(prefs);
+    return _bookProgressService!;
+  }
+
+  Future<int> _resolveInitialMutunPage(MutunDigitalEntry? digitalEntry) async {
+    int resolvedPage = 1;
+
+    try {
+      final info = await _lastActivityService.getPdfPage(_mutunPdfKey);
+      if (info != null && info.page > resolvedPage) {
+        resolvedPage = info.page;
+      }
+    } catch (_) {}
+
+    try {
+      final progressService = await _getProgressService();
+      final progress = await progressService.getBookProgress(widget.book.id);
+      if (progress != null && progress.currentPage > resolvedPage) {
+        resolvedPage = progress.currentPage;
+      }
+    } catch (_) {}
+
+    if (digitalEntry != null) {
+      try {
+        final shamelaPage =
+            await ShamelaService.getLastReadPage(digitalEntry.shamelaId);
+        if (shamelaPage > resolvedPage) {
+          resolvedPage = shamelaPage;
+        }
+      } catch (_) {}
+    }
+
+    final maxPage = _totalPages > 0
+        ? _totalPages
+        : (digitalEntry?.totalPages ??
+            (widget.book.totalPages > 0 ? widget.book.totalPages : 1));
+    final safePage = resolvedPage.clamp(1, maxPage);
+    _currentPage = safePage;
+    return safePage;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -109,13 +152,7 @@ class _BookViewPageState extends State<BookViewPage>
     _totalPages = fallbackTotal;
 
     _mutunPdfKey = _lastActivityService.pdfKeyForMutn(widget.book.id);
-    _mutunInitialPage = _lastActivityService.getPdfPage(_mutunPdfKey).then((
-      info,
-    ) {
-      final page = info?.page ?? 1;
-      _currentPage = page;
-      return page;
-    });
+    _mutunInitialPage = _resolveInitialMutunPage(digitalEntry);
     final initialIndex = widget.initialTabIndex.clamp(0, 2).toInt();
     _tabController = TabController(
       length: 3,
@@ -139,9 +176,7 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _initializeService() async {
-    final prefs = await SharedPreferences.getInstance();
-    _bookProgressService = BookProgressService(prefs);
-    _bookServiceReady = true;
+    await _getProgressService();
     await _resolveBookLevel();
     await _refreshBookmarkState();
   }
@@ -159,7 +194,7 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _ensureBookInitialized({int? totalPages}) async {
-    if (!_bookServiceReady) return;
+    final progressService = await _getProgressService();
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
     final canonicalTotal = widget.book.totalPages > 0
         ? widget.book.totalPages
@@ -169,7 +204,7 @@ class _BookViewPageState extends State<BookViewPage>
         ? pages
         : (canonicalTotal > 0 ? canonicalTotal : (pages <= 0 ? 1 : pages));
 
-    await _bookProgressService.initializeBook(
+    await progressService.initializeBook(
       bookId: widget.book.id,
       bookTitle: widget.book.title,
       level: _bookLevelLabel,
@@ -178,8 +213,8 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _refreshBookmarkState() async {
-    if (!_bookServiceReady) return;
-    final progress = await _bookProgressService.getBookProgress(widget.book.id);
+    final progressService = await _getProgressService();
+    final progress = await progressService.getBookProgress(widget.book.id);
     if (!mounted) return;
     final pages = progress?.bookmarkedPages ?? const <int>[];
     setState(() {
@@ -200,21 +235,34 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _saveProgress() async {
-    if (!_bookServiceReady) return;
+    final progressService = await _getProgressService();
     await _ensureBookInitialized(totalPages: _totalPages);
-    await _bookProgressService.updateCurrentPage(
+    await progressService.updateCurrentPage(
       widget.book.id,
       _currentPage,
       totalPages: _totalPages > 0 ? _totalPages : null,
     );
     if (_sessionMinutes == 0) return;
-    await _bookProgressService.addReadingTime(widget.book.id, _sessionMinutes);
+    await progressService.addReadingTime(widget.book.id, _sessionMinutes);
     _sessionMinutes = 0;
+  }
+
+  void _persistLastPositionSync() {
+    _lastActivityService.savePdfPage(
+      key: _mutunPdfKey,
+      page: _currentPage,
+      total: _totalPages > 0 ? _totalPages : 1,
+    );
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
+    if (digitalEntry != null) {
+      ShamelaService.saveLastReadPage(digitalEntry.shamelaId, _currentPage);
+    }
   }
 
   @override
   void dispose() {
     _readingTimer.cancel();
+    _persistLastPositionSync();
     _saveProgress();
     _noteController.dispose();
     _tabController.removeListener(_handleTabChange);
@@ -228,11 +276,29 @@ class _BookViewPageState extends State<BookViewPage>
 
     final sharh = widget.book.shuruh.where((s) => s.file == file).firstOrNull;
 
+    final Map<String, int> pages = {};
+    for (final s in widget.book.shuruh) {
+      if (s.shamelaId != null) {
+        final page = await ShamelaService.getLastReadPage(s.shamelaId!);
+        if (page > 1) {
+          pages[s.file] = page;
+        }
+      } else {
+        final key = _lastActivityService.pdfKeyForSharh(widget.book.id, s.file);
+        final pageInfo = await _lastActivityService.getPdfPage(key);
+        if (pageInfo != null && pageInfo.page > 1) {
+          pages[s.file] = pageInfo.page;
+        }
+      }
+    }
+
     PdfPageInfo? info;
     if (file != null) {
       if (sharh != null && sharh.shamelaId != null) {
-        final page = await ShamelaService.getLastReadPage(sharh.shamelaId!);
-        info = PdfPageInfo(page: page, total: 250);
+        final page =
+            pages[file] ?? await ShamelaService.getLastReadPage(sharh.shamelaId!);
+        final total = sharh.totalPages ?? 50;
+        info = PdfPageInfo(page: page, total: total);
       } else {
         final key = _lastActivityService.pdfKeyForSharh(widget.book.id, file);
         info = await _lastActivityService.getPdfPage(key);
@@ -244,6 +310,9 @@ class _BookViewPageState extends State<BookViewPage>
       _lastSharhFile = file;
       _lastSharh = sharh;
       _lastSharhPage = info;
+      _shuruhPages
+        ..clear()
+        ..addAll(pages);
     });
   }
 
@@ -285,9 +354,8 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _resetProgress() async {
-    if (!_bookServiceReady) return;
-
-    await _bookProgressService.resetBook(widget.book.id);
+    final progressService = await _getProgressService();
+    await progressService.resetBook(widget.book.id);
 
     if (!mounted) return;
 
@@ -296,7 +364,6 @@ class _BookViewPageState extends State<BookViewPage>
       _totalPages = 0;
       _maxPageReached = 1;
       _readingSeconds = 0;
-      _hasShownReadHint = false;
       _bookmarkedPages.clear();
       _isBookmarked = false;
     });
@@ -363,14 +430,15 @@ class _BookViewPageState extends State<BookViewPage>
       final match = TurathCatalog.books
           .where((b) => b.id == sharh.shamelaId)
           .firstOrNull;
-      final shamelaBook = match ??
+      final totalPages = sharh.totalPages ?? match?.totalPages ?? 50;
+      final shamelaBook = match?.copyWith(totalPages: totalPages) ??
           ShamelaBook(
             id: sharh.shamelaId!,
             title: sharh.title,
             author: sharh.scholar,
             category: 'شروح المتون',
             categoryId: 1,
-            totalPages: 250,
+            totalPages: totalPages,
             description: sharh.description ?? sharh.title,
           );
 
@@ -402,6 +470,7 @@ class _BookViewPageState extends State<BookViewPage>
         .getPdfPage(pdfKey)
         .then((info) => info?.page ?? 1);
 
+    final progressService = await _getProgressService();
     if (!mounted) return;
 
     await Navigator.push(
@@ -413,7 +482,7 @@ class _BookViewPageState extends State<BookViewPage>
           pdfPath: pdfPath,
           pdfKey: pdfKey,
           initialPage: initialPage,
-          progressService: _bookProgressService,
+          progressService: progressService,
           lastActivityService: _lastActivityService,
         ),
       ),
@@ -431,15 +500,15 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _toggleBookmark() async {
-    if (!_bookServiceReady) return;
+    final progressService = await _getProgressService();
     await _ensureBookInitialized(totalPages: _totalPages);
-    final progress = await _bookProgressService.getBookProgress(widget.book.id);
+    final progress = await progressService.getBookProgress(widget.book.id);
     if (progress == null) return;
 
     if (progress.bookmarkedPages.contains(_currentPage)) {
-      await _bookProgressService.removeBookmark(widget.book.id, _currentPage);
+      await progressService.removeBookmark(widget.book.id, _currentPage);
     } else {
-      await _bookProgressService.addBookmark(widget.book.id, _currentPage);
+      await progressService.addBookmark(widget.book.id, _currentPage);
     }
 
     if (!mounted) return;
@@ -451,9 +520,9 @@ class _BookViewPageState extends State<BookViewPage>
       context,
       controller: _noteController,
       onSave: () async {
-        if (!_bookServiceReady) return;
+        final progressService = await _getProgressService();
         await _ensureBookInitialized(totalPages: _totalPages);
-        await _bookProgressService.saveNote(
+        await progressService.saveNote(
           widget.book.id,
           _currentPage,
           _noteController.text,
@@ -467,20 +536,22 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   void _showGlobalBookmarksList() async {
-    if (!_bookServiceReady) return;
+    final progressService = await _getProgressService();
+    if (!mounted) return;
     await BookViewBookmarksSheet.loadAndShow(
       context: context,
-      progressService: _bookProgressService,
+      progressService: progressService,
     );
   }
 
   Future<void> _onMutnPageChanged(int page, int total) async {
     if (total <= 0) return;
 
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
     final canonicalTotal = widget.book.totalPages > 0
         ? widget.book.totalPages
-        : total;
-    final safeTotal = canonicalTotal;
+        : (digitalEntry?.totalPages ?? total);
+    final safeTotal = total > canonicalTotal ? total : canonicalTotal;
 
     setState(() {
       _currentPage = page;
@@ -494,34 +565,30 @@ class _BookViewPageState extends State<BookViewPage>
       _maxPageReached = page;
     }
 
-    await _ensureBookInitialized(totalPages: safeTotal);
-    await _bookProgressService.updateCurrentPage(
-      widget.book.id,
-      page,
-      totalPages: safeTotal,
-    );
-
+    // Persist immediately across both storage systems
     _lastActivityService.savePdfPage(
       key: _mutunPdfKey,
       page: page,
       total: safeTotal,
     );
-    final reachedEnd = safeTotal > 1 && page >= safeTotal;
-
-    if (!mounted) return;
-
-    // hint (only once)
-    if (reachedEnd && !_canCompleteBook && !_hasShownReadHint) {
-      _hasShownReadHint = true;
-      AppSnackbar.info(
-        context,
-        'لإتمام الكتاب، يرجى قراءته بتأنٍ وعدم الاكتفاء بالانتقال السريع بين الصفحات 📖',
-      );
+    if (digitalEntry != null) {
+      ShamelaService.saveLastReadPage(digitalEntry.shamelaId, page);
     }
 
-    // completion (one-time)
+    final progressService = await _getProgressService();
+    await _ensureBookInitialized(totalPages: safeTotal);
+    await progressService.updateCurrentPage(
+      widget.book.id,
+      page,
+      totalPages: safeTotal,
+    );
+
+    final reachedEnd = safeTotal > 1 && page >= safeTotal;
+    if (!mounted) return;
+
+    // completion (one-time when actually completed)
     if (reachedEnd && _canCompleteBook) {
-      final justCompleted = await _bookProgressService.markCompleted(
+      final justCompleted = await progressService.markCompleted(
         widget.book.id,
       );
 
@@ -666,6 +733,7 @@ class _BookViewPageState extends State<BookViewPage>
               lastSharh: _lastSharh,
               lastSharhPage: _lastSharhPage,
               lastSharhFile: _lastSharhFile,
+              shuruhPages: _shuruhPages,
               onGoToMutn: _goToMutn,
               onOpenSharh: _openSharhPdf,
             ),

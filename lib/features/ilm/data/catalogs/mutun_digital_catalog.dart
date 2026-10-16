@@ -21,10 +21,10 @@ class MutunDigitalCatalog {
   static const Map<String, MutunDigitalEntry> entries = {
     'bk_adhkar_adab': MutunDigitalEntry(
       id: 'bk_adhkar_adab',
-      shamelaId: 924,
+      shamelaId: 31307,
       title: 'حصن المسلم من أذكار الكتاب والسنة',
       author: 'سعيد بن علي بن وهف القحطاني',
-      totalPages: 160,
+      totalPages: 153,
     ),
     'bk_nawaqid_islam': MutunDigitalEntry(
       id: 'bk_nawaqid_islam',
@@ -42,17 +42,17 @@ class MutunDigitalCatalog {
     ),
     'bk_usul_thalatha': MutunDigitalEntry(
       id: 'bk_usul_thalatha',
-      shamelaId: 11126,
+      shamelaId: 239,
       title: 'ثلاثة الأصول وأدلتها',
       author: 'محمد بن عبد الوهاب',
-      totalPages: 12,
+      totalPages: 25,
     ),
     'bk_arbaeen_nawawi': MutunDigitalEntry(
       id: 'bk_arbaeen_nawawi',
-      shamelaId: 10757,
-      title: 'الأربعون النووية',
+      shamelaId: 147927,
+      title: 'الأربعون النووية مع زيادات ابن رجب',
       author: 'يحيى بن شرف النووي',
-      totalPages: 52,
+      totalPages: 67,
     ),
     'bk_tuhfat_atfal': MutunDigitalEntry(
       id: 'bk_tuhfat_atfal',
@@ -67,14 +67,14 @@ class MutunDigitalCatalog {
       shamelaId: 239,
       title: 'شروط الصلاة وأركانها وواجباتها',
       author: 'محمد بن عبد الوهاب',
-      totalPages: 15,
+      totalPages: 40,
     ),
     'bk_kitab_tawheed': MutunDigitalEntry(
       id: 'bk_kitab_tawheed',
-      shamelaId: 11728,
+      shamelaId: 11318,
       title: 'كتاب التوحيد الذي هو حق الله على العبيد',
       author: 'محمد بن عبد الوهاب',
-      totalPages: 67,
+      totalPages: 147,
     ),
     'bk_manzumah_baiquoni': MutunDigitalEntry(
       id: 'bk_manzumah_baiquoni',
@@ -104,7 +104,7 @@ class MutunDigitalCatalog {
       shamelaId: 22665,
       title: 'العقيدة الواسطية',
       author: 'أحمد بن عبد الحليم بن تيمية',
-      totalPages: 35,
+      totalPages: 72,
     ),
     'bk_waraqat': MutunDigitalEntry(
       id: 'bk_waraqat',
@@ -123,7 +123,7 @@ class MutunDigitalCatalog {
     ),
     'bk_rahibiyyah': MutunDigitalEntry(
       id: 'bk_rahibiyyah',
-      shamelaId: 10915,
+      shamelaId: 11372,
       title: 'بغية الباحث عن جُمل الموارث (متن الرحبية)',
       author: 'محمد بن علي الرحبي',
       totalPages: 30,
@@ -134,21 +134,21 @@ class MutunDigitalCatalog {
       shamelaId: 9568,
       title: 'العقيدة الطحاوية (بيان عقيدة أهل السنة والجماعة)',
       author: 'أحمد بن محمد الطحاوي',
-      totalPages: 40,
+      totalPages: 124,
     ),
     'bk_bulugh_maram': MutunDigitalEntry(
       id: 'bk_bulugh_maram',
       shamelaId: 17757,
       title: 'بلوغ المرام من أدلة الأحكام',
       author: 'أحمد بن علي بن حجر العسقلاني',
-      totalPages: 280,
+      totalPages: 1805,
     ),
     'bk_zad_mustaqni': MutunDigitalEntry(
       id: 'bk_zad_mustaqni',
       shamelaId: 11230,
       title: 'زاد المستقنع في اختصار المقنع',
       author: 'موسى بن أحمد الحجاوي',
-      totalPages: 326,
+      totalPages: 323,
     ),
   };
 

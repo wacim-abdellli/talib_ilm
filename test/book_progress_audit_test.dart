@@ -118,6 +118,15 @@ void main() {
       expect(progress.totalPages, 60);
       expect(progress.isCompleted, isFalse);
       expect(progress.completedDate, isNull);
+
+      final currentlyReading = await service.getCurrentlyReading();
+      expect(currentlyReading.any((b) => b.bookId == 'bk_adhkar_adab'), isTrue);
+
+      final completed = await service.getCompletedBooks();
+      expect(completed.any((b) => b.bookId == 'bk_adhkar_adab'), isFalse);
+
+      final count = await service.getCompletedCount();
+      expect(count, 0);
     });
   });
 }

@@ -86,7 +86,6 @@ flutter:
     - assets/data/
     - assets/data/quran/
     - assets/audio/
-    - assets/pdfs/mutun/
 
 
   fonts:

@@ -5,6 +5,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress.dart';
 import '../../../../shared/widgets/icon_badge.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 
@@ -48,13 +49,17 @@ class IlmContinueReadingCard extends StatelessWidget {
     BookProgress book,
   ) {
     final palette = context.palette;
-    final totalPages = book.totalPages;
+    final bookData = bookCatalog[book.bookId];
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.bookId);
+    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
+        ? digitalEntry.totalPages
+        : (bookData != null && bookData.totalPages > 0
+            ? bookData.totalPages
+            : (book.totalPages > 0 ? book.totalPages : 1));
     final currentPage = book.currentPage;
     final progressValue = totalPages == 0
         ? 0.0
         : (currentPage / totalPages).clamp(0.0, 1.0);
-
-    final bookData = bookCatalog[book.bookId];
 
     return Padding(
       padding: AppSpace.screenPadding,

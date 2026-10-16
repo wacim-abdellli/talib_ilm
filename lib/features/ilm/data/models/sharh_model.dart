@@ -3,6 +3,7 @@ class Sharh {
   final String file;
   final String scholar;
   final int? shamelaId;
+  final int? totalPages;
   final String? description;
 
   Sharh({
@@ -10,6 +11,7 @@ class Sharh {
     required this.file,
     required this.scholar,
     this.shamelaId,
+    this.totalPages,
     this.description,
   });
 
@@ -19,6 +21,7 @@ class Sharh {
       file: json['file'] as String? ?? '',
       scholar: json['scholar'] as String? ?? '',
       shamelaId: json['shamela_id'] as int?,
+      totalPages: json['total_pages'] as int?,
       description: json['description'] as String?,
     );
   }
@@ -29,6 +32,7 @@ class Sharh {
       'file': file,
       'scholar': scholar,
       if (shamelaId != null) 'shamela_id': shamelaId,
+      if (totalPages != null) 'total_pages': totalPages,
       if (description != null) 'description': description,
     };
   }

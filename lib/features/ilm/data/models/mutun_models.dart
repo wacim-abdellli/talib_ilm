@@ -1,3 +1,4 @@
+import '../catalogs/mutun_digital_catalog.dart';
 import 'sharh_model.dart';
 
 class MutunProgram {
@@ -93,14 +94,20 @@ class IlmBook {
   factory IlmBook.fromJson(Map<String, dynamic> json) {
     final resources = json['resources'] as Map<String, dynamic>?;
 
+    final bookId = json['id'] ?? '';
+    final digitalEntry = MutunDigitalCatalog.getEntry(bookId);
+
     return IlmBook(
-      id: json['id'] ?? '',
+      id: bookId,
       title: json['title'] ?? '',
       author: json['author'] ?? '',
       level: json['level'] ?? '',
       subject: json['subject'] ?? '',
       description: json['description'] ?? '',
-      totalPages: json['totalPages'] ?? json['total_pages'] ?? 0,
+      totalPages: json['totalPages'] ??
+          json['total_pages'] ??
+          digitalEntry?.totalPages ??
+          0,
       pdfPath: json['pdf_path'] as String?,
       playlistId: resources?['video_playlist'] as String?,
       shuruh: (resources?['shuruh'] as List<dynamic>? ?? [])

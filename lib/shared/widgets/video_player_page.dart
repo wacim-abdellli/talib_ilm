@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -9,8 +10,8 @@ import '../../app/theme/app_ui.dart';
 import 'app_button.dart';
 import 'primary_app_bar.dart';
 
-/// Bulletproof scholarly YouTube video player page.
-/// Supports clean 11-character video IDs, playlists, external launch, and graceful offline/error fallback.
+/// Bulletproof scholarly YouTube video and playlist player page.
+/// Plays videos and playlists directly inside the app with seamless native & webview support.
 class VideoPlayerPage extends StatefulWidget {
   final String title;
   final String videoId;
@@ -90,6 +91,17 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     return null;
   }
 
+  String? _getEmbedUrl() {
+    if (_cleanVideoId != null) {
+      return 'https://www.youtube-nocookie.com/embed/$_cleanVideoId?autoplay=1&playsinline=1&rel=0';
+    }
+    final pid = _resolvedPlaylistId;
+    if (pid != null && pid.isNotEmpty) {
+      return 'https://www.youtube-nocookie.com/embed/videoseries?list=$pid&autoplay=1&playsinline=1&rel=0';
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _controller?.removeListener(_onPlayerStateChanged);
@@ -150,8 +162,136 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final textTheme = context.text;
     final supported = Platform.isAndroid || Platform.isIOS;
+
+    if (!supported) {
+      return Scaffold(
+        backgroundColor: palette.bg,
+        appBar: UnifiedAppBar(
+          title: widget.title,
+          showBack: true,
+          onLeadingTap: _finish,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+            child: Text(
+              AppStrings.videoUnsupported,
+              textAlign: TextAlign.center,
+              style: context.text.body.copyWith(color: palette.textMuted),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final canUseNativePlayer =
+        _cleanVideoId != null && _controller != null && !_hasPlayerError;
+
+    if (canUseNativePlayer) {
+      return YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: _controller!,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: palette.gold,
+          bottomActions: const [
+            CurrentPosition(),
+            ProgressBar(isExpanded: true),
+            RemainingDuration(),
+            PlaybackSpeedButton(),
+            FullScreenButton(),
+          ],
+        ),
+        builder: (context, player) {
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              _finish();
+            },
+            child: Scaffold(
+              backgroundColor: palette.bg,
+              appBar: UnifiedAppBar(
+                title: widget.title,
+                showBack: true,
+                onLeadingTap: _finish,
+                actions: [
+                  IconButton(
+                    tooltip: 'فتح في تطبيق يوتيوب',
+                    icon: Icon(
+                      Icons.open_in_new_rounded,
+                      color: palette.text,
+                      size: AppIcon.md,
+                    ),
+                    onPressed: _openInYouTube,
+                  ),
+                ],
+              ),
+              body: Column(
+                children: [
+                  player,
+                  Expanded(
+                    child: _buildLessonDetails(context),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    final embedUrl = _getEmbedUrl();
+    if (embedUrl != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          _finish();
+        },
+        child: Scaffold(
+          backgroundColor: palette.bg,
+          appBar: UnifiedAppBar(
+            title: widget.title,
+            showBack: true,
+            onLeadingTap: _finish,
+            actions: [
+              IconButton(
+                tooltip: 'فتح في تطبيق يوتيوب',
+                icon: Icon(
+                  Icons.open_in_new_rounded,
+                  color: palette.text,
+                  size: AppIcon.md,
+                ),
+                onPressed: _openInYouTube,
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: InAppWebView(
+                  initialUrlRequest: URLRequest(
+                    url: WebUri(embedUrl),
+                  ),
+                  initialSettings: InAppWebViewSettings(
+                    allowsInlineMediaPlayback: true,
+                    mediaPlaybackRequiresUserGesture: false,
+                    javaScriptEnabled: true,
+                    transparentBackground: true,
+                    supportZoom: false,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _buildLessonDetails(context),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return PopScope(
       canPop: false,
@@ -165,45 +305,68 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           title: widget.title,
           showBack: true,
           onLeadingTap: _finish,
-          actions: [
-            IconButton(
-              tooltip: 'فتح في تطبيق يوتيوب',
-              icon: Icon(
-                Icons.open_in_new_rounded,
-                color: palette.text,
-                size: AppIcon.md,
-              ),
-              onPressed: _openInYouTube,
-            ),
-          ],
         ),
-        body: !supported
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+        body: _buildFallbackView(context),
+      ),
+    );
+  }
+
+  Widget _buildLessonDetails(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            widget.title,
+            style: textTheme.titleSmall.copyWith(
+              color: palette.text,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (widget.scholar != null && widget.scholar!.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.xs),
+            Row(
+              children: [
+                Icon(
+                  Icons.verified_user_rounded,
+                  size: AppIcon.sm,
+                  color: palette.gold,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                Expanded(
                   child: Text(
-                    AppStrings.videoUnsupported,
-                    textAlign: TextAlign.center,
-                    style: textTheme.body.copyWith(color: palette.textMuted),
+                    widget.scholar!,
+                    style: textTheme.caption.copyWith(
+                      color: palette.gold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              )
-            : (_cleanVideoId != null &&
-                    _controller != null &&
-                    !_hasPlayerError)
-                ? YoutubePlayer(
-                    controller: _controller!,
-                    showVideoProgressIndicator: true,
-                    progressIndicatorColor: palette.gold,
-                    bottomActions: [
-                      const CurrentPosition(),
-                      const ProgressBar(isExpanded: true),
-                      const RemainingDuration(),
-                      const PlaybackSpeedButton(),
-                      const FullScreenButton(),
-                    ],
-                  )
-                : _buildFallbackView(context),
+              ],
+            ),
+          ],
+          const SizedBox(height: AppSpace.lg),
+          AppButton(
+            label: 'تحديد الدرس كمكتمل',
+            icon: Icons.check_circle_outline_rounded,
+            size: AppButtonSize.md,
+            onPressed: () => _finish(true),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          AppButton(
+            label: 'فتح في تطبيق يوتيوب',
+            variant: AppButtonVariant.tonal,
+            icon: Icons.open_in_new_rounded,
+            size: AppButtonSize.md,
+            onPressed: _openInYouTube,
+          ),
+        ],
       ),
     );
   }
@@ -260,9 +423,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               ],
               const SizedBox(height: AppSpace.md),
               Text(
-                _hasPlayerError
-                    ? 'تعذر تشغيل الفيديو المضمّن مباشرة داخل التطبيق. يمكنك مشاهدة الدرس الآن عبر تطبيق يوتيوب بجودة عالية وبدون انقطاع.'
-                    : 'هذا الدرس متاح للمشاهدة المباشرة عبر تطبيق يوتيوب ضمن السلسلة العلمية المعتمدة.',
+                'هذا الدرس متاح للمشاهدة المباشرة عبر تطبيق يوتيوب ضمن السلسلة العلمية المعتمدة.',
                 textAlign: TextAlign.center,
                 style: textTheme.bodySmall.copyWith(
                   color: palette.textMuted,

@@ -53,7 +53,8 @@
               ],
               "video_playlist": "PLZmiPrhyvgsR6wz8q3nQZ3v9x9nLpKm7X"
             },
-            "level": "المستوى التمهيدي"
+            "level": "المستوى التمهيدي",
+            "total_pages": 153
           }
         ]
       },
@@ -84,29 +85,33 @@
               "shuruh": [
                 {
                   "title": "شرح نواقض الإسلام",
-                  "file": "fawzan_nawaqid",
-                  "scholar": "الشيخ صالح بن فوزان الفوزان",
+                  "file": "barrak_nawaqid",
+                  "scholar": "الشيخ عبد الرحمن بن ناصر البراك",
                   "shamela_id": 1351,
+                  "total_pages": 38,
                   "description": "شرح تأصيلي ميسر يوضح أصل التوحيد وحقيقة الشرك ومفسدات الإيمان."
                 },
                 {
-                  "title": "شرح نواقض الإسلام",
+                  "title": "العقيدة الصحيحة ونواقض الإسلام",
                   "file": "ibn_baz_nawaqid",
                   "scholar": "الشيخ عبد العزيز بن باز",
-                  "shamela_id": 30869,
+                  "shamela_id": 311,
+                  "total_pages": 35,
                   "description": "تقريرات سلفية رصينة لأصول العقيدة ونواقض التوحيد العشرة."
                 },
                 {
-                  "title": "شرح نواقض الإسلام",
-                  "file": "al_sheikh_nawaqid",
-                  "scholar": "الشيخ صالح بن عبد العزيز آل الشيخ",
-                  "shamela_id": 311,
-                  "description": "شرح منهجي دقيق يحرر مسائل التكفير وضوابط الحكم على المعين."
+                  "title": "أطايب الزهر شرح نواقض الإسلام",
+                  "file": "mushiqih_nawaqid",
+                  "scholar": "الشيخ خالد بن علي المشيقح",
+                  "shamela_id": 1579,
+                  "total_pages": 102,
+                  "description": "شرح منهجي دقيق ومبسوط لمسائل التكفير وضوابط الحكم على المعين."
                 }
               ],
-              "video_playlist": "PLxO2k_Z9EaG0f1d5e6h7i8j9k0l1m2n3"
+              "video_playlist": "PL3523jgHxjkYWvLtV8hxCbUebngeZMX1k"
             },
-            "level": "المستوى الأول"
+            "level": "المستوى الأول",
+            "total_pages": 2
           },
           {
             "id": "bk_qawaid_arba",
@@ -142,7 +147,8 @@
               ],
               "video_playlist": "PLm8n9p0q1r2s3t4u5v6w7x8y9z0a1b2"
             },
-            "level": "المستوى الأول"
+            "level": "المستوى الأول",
+            "total_pages": 4
           },
           {
             "id": "bk_usul_thalatha",
@@ -178,7 +184,8 @@
               ],
               "video_playlist": "PLk1l2m3n4o5p6q7r8s9t0u1v2w3x4y5"
             },
-            "level": "المستوى الأول"
+            "level": "المستوى الأول",
+            "total_pages": 25
           },
           {
             "id": "bk_arbaeen_nawawi",
@@ -214,7 +221,8 @@
               ],
               "video_playlist": "PL9z8y7x6w5v4u3t2s1r0q9p8o7n6m5l"
             },
-            "level": "المستوى الأول"
+            "level": "المستوى الأول",
+            "total_pages": 67
           }
         ]
       },
@@ -260,7 +268,8 @@
               ],
               "video_playlist": "PL1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o"
             },
-            "level": "المستوى الثاني"
+            "level": "المستوى الثاني",
+            "total_pages": 8
           },
           {
             "id": "bk_shuroot_salah",
@@ -296,7 +305,8 @@
               ],
               "video_playlist": "PL2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p"
             },
-            "level": "المستوى الثاني"
+            "level": "المستوى الثاني",
+            "total_pages": 40
           },
           {
             "id": "bk_kitab_tawheed",
@@ -332,7 +342,8 @@
               ],
               "video_playlist": "PL3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q"
             },
-            "level": "المستوى الثاني"
+            "level": "المستوى الثاني",
+            "total_pages": 147
           }
         ]
       },
@@ -385,7 +396,8 @@
               ],
               "video_playlist": "PL4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r"
             },
-            "level": "المستوى الثالث"
+            "level": "المستوى الثالث",
+            "total_pages": 6
           },
           {
             "id": "bk_manzumah_albiri",
@@ -414,7 +426,8 @@
               ],
               "video_playlist": "PL5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s"
             },
-            "level": "المستوى الثالث"
+            "level": "المستوى الثالث",
+            "total_pages": 18
           },
           {
             "id": "bk_ajrumiyyah",
@@ -450,7 +463,8 @@
               ],
               "video_playlist": "PL6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t"
             },
-            "level": "المستوى الثالث"
+            "level": "المستوى الثالث",
+            "total_pages": 31
           },
           {
             "id": "bk_wasitiyyah",
@@ -486,7 +500,8 @@
               ],
               "video_playlist": "PL7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u"
             },
-            "level": "المستوى الثالث"
+            "level": "المستوى الثالث",
+            "total_pages": 72
           }
         ]
       },
@@ -539,7 +554,8 @@
               ],
               "video_playlist": "PL8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v"
             },
-            "level": "المستوى الرابع"
+            "level": "المستوى الرابع",
+            "total_pages": 25
           },
           {
             "id": "bk_unwan_al_hukm",
@@ -568,7 +584,8 @@
               ],
               "video_playlist": "PL9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w"
             },
-            "level": "المستوى الرابع"
+            "level": "المستوى الرابع",
+            "total_pages": 10
           },
           {
             "id": "bk_rahibiyyah",
@@ -604,7 +621,8 @@
               ],
               "video_playlist": "PL0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x"
             },
-            "level": "المستوى الرابع"
+            "level": "المستوى الرابع",
+            "total_pages": 30
           },
           {
             "id": "bk_aqidah_tahawiyyah",
@@ -640,7 +658,8 @@
               ],
               "video_playlist": "PL1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y"
             },
-            "level": "المستوى الرابع"
+            "level": "المستوى الرابع",
+            "total_pages": 124
           }
         ]
       },
@@ -693,7 +712,8 @@
               ],
               "video_playlist": "PL2w3x4y5z6a7b8c9d0e1f2g3h4i5j6k"
             },
-            "level": "المستوى الخامس"
+            "level": "المستوى الخامس",
+            "total_pages": 1805
           },
           {
             "id": "bk_zad_mustaqni",
@@ -729,7 +749,8 @@
               ],
               "video_playlist": "PL3x4y5z6a7b8c9d0e1f2g3h4i5j6k7l"
             },
-            "level": "المستوى الخامس"
+            "level": "المستوى الخامس",
+            "total_pages": 323
           }
         ]
       }

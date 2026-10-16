@@ -17,6 +17,7 @@ import 'widgets/home_header.dart';
 import 'widgets/home_quick_actions.dart';
 import 'widgets/home_quran_radio_card.dart';
 
+import '../../ilm/data/catalogs/mutun_digital_catalog.dart';
 import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/models/sharh_model.dart';
 import '../../ilm/presentation/ilm_page.dart';
@@ -186,7 +187,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
       int? progressPercent;
       int? safePage = lastActivity.page;
-      int? safeTotal = book.totalPages > 0 ? book.totalPages : lastActivity.total;
+      final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+      int? safeTotal = digitalEntry?.totalPages ?? (book.totalPages > 0 ? book.totalPages : lastActivity.total);
       if (safePage != null && safeTotal != null && safeTotal > 0) {
         final normalizedTotal = safeTotal < safePage ? safePage : safeTotal;
         final normalizedPage = safePage.clamp(1, normalizedTotal);

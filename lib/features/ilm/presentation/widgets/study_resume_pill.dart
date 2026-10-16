@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 
@@ -54,7 +55,12 @@ class StudyResumePill extends StatelessWidget {
     IlmBook book,
     BookProgress progress,
   ) {
-    final totalPages = progress.totalPages > 0 ? progress.totalPages : book.totalPages;
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
+        ? digitalEntry.totalPages
+        : (book.totalPages > 0
+            ? book.totalPages
+            : (progress.totalPages > 0 ? progress.totalPages : 1));
     final currentPage = progress.currentPage;
     final progressRatio = totalPages > 0
         ? (currentPage / totalPages).clamp(0.0, 1.0)

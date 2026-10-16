@@ -68,6 +68,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
 
   @override
   void dispose() {
+    ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
     _pageController.dispose();
     _noteController.dispose();
     super.dispose();
@@ -213,9 +214,19 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       ShamelaService.saveLastReadPage(widget.book.id, pageNum);
     } catch (e) {
       if (mounted) {
+        final errorStr = e.toString();
+        final isNotFound =
+            errorStr.contains('404') || errorStr.contains('غير متوفرة');
         setState(() {
           _loadingPages.remove(pageNum);
-          _pageErrors[pageNum] = 'تعذر تحميل الصفحة. يرجى التحقق من الاتصال بالإنترنت.';
+          if (isNotFound && pageNum > 1) {
+            _totalPages = pageNum - 1;
+            _pageErrors[pageNum] =
+                'نهاية الكتاب. لقد أتممت قراءة جميع صفحات هذا الشرح المبارك ($_totalPages صفحة).';
+          } else {
+            _pageErrors[pageNum] =
+                'تعذر تحميل الصفحة. يرجى التحقق من الاتصال بالإنترنت.';
+          }
         });
       }
     }
@@ -368,24 +379,40 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                   }
 
                   if (error != null) {
+                    final isEnd = error.contains('نهاية الكتاب');
                     return Center(
                       child: Padding(
                         padding: const EdgeInsetsDirectional.all(AppSpace.xl),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.wifi_off_rounded, color: palette.textMuted, size: AppIcon.xl),
+                            Icon(
+                              isEnd
+                                  ? Icons.auto_stories_rounded
+                                  : Icons.wifi_off_rounded,
+                              color: isEnd ? palette.gold : palette.textMuted,
+                              size: AppIcon.xl,
+                            ),
                             const SizedBox(height: AppSpace.md),
                             Text(
                               error,
-                              style: textTheme.body.copyWith(color: palette.textMuted),
+                              style: textTheme.body.copyWith(
+                                color: isEnd ? palette.text : palette.textMuted,
+                                fontWeight: isEnd
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: AppSpace.lg),
                             AppButton(
-                              label: 'إعادة المحاولة',
+                              label: isEnd
+                                  ? 'العودة للصفحة السابقة'
+                                  : 'إعادة المحاولة',
                               size: AppButtonSize.sm,
-                              onPressed: () => _loadPage(pageNum),
+                              onPressed: () => isEnd
+                                  ? _jumpToPage(_totalPages)
+                                  : _loadPage(pageNum),
                             ),
                           ],
                         ),

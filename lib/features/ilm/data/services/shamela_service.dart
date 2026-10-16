@@ -29,7 +29,7 @@ class ShamelaService {
     if (_db != null) return _db!;
 
     final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'shamela_library_v1.db');
+    final path = p.join(dbPath, 'shamela_library_v2.db');
 
     _db = await openDatabase(
       path,
@@ -109,6 +109,9 @@ class ShamelaService {
       },
     ).timeout(AppMotion.networkTimeout);
 
+    if (response.statusCode == 404) {
+      throw Exception('صفحة غير متوفرة في الكتاب (404)');
+    }
     if (response.statusCode != 200) {
       throw Exception('تعذر تحميل الصفحة من المكتبة الشاملة (${response.statusCode})');
     }
@@ -208,24 +211,29 @@ class ShamelaService {
   }
 
   /// Fetch or load Table of Contents (الفهرس)
-  static Future<List<ShamelaChapter>> fetchTableOfContents(int bookId) async {
+  static Future<List<ShamelaChapter>> fetchTableOfContents(
+    int bookId, {
+    bool forceRefresh = false,
+  }) async {
     final db = await _getDatabase();
 
     // 1. Check local cache
-    final localRows = await db.query(
-      _tableNameFihris,
-      where: 'book_id = ?',
-      whereArgs: [bookId],
-      orderBy: 'page_num ASC',
-    );
+    if (!forceRefresh) {
+      final localRows = await db.query(
+        _tableNameFihris,
+        where: 'book_id = ?',
+        whereArgs: [bookId],
+        orderBy: 'page_num ASC',
+      );
 
-    if (localRows.isNotEmpty) {
-      return localRows
-          .map((r) => ShamelaChapter(
-                title: r['title'] as String,
-                pageNumber: r['page_num'] as int,
-              ))
-          .toList();
+      if (localRows.isNotEmpty) {
+        return localRows
+            .map((r) => ShamelaChapter(
+                  title: r['title'] as String,
+                  pageNumber: r['page_num'] as int,
+                ))
+            .toList();
+      }
     }
 
     // 2. Fetch from shamela.ws
@@ -242,38 +250,84 @@ class ShamelaService {
           r"""<a[^>]+href=["'](?:https://shamela\.ws)?/book/\d+/(\d+)["'][^>]*>(.*?)</a>""",
         );
 
-        final matches = linkRegex.allMatches(html);
-        final List<ShamelaChapter> chapters = [];
-        final seenPages = <int>{};
+        final Map<int, String> chaptersMap = {};
 
-        for (final m in matches) {
+        // A. Extract all direct chapters on cover page
+        for (final m in linkRegex.allMatches(html)) {
           final pageNum = int.tryParse(m.group(1)!);
           final rawTitle = _cleanHtml(m.group(2)!);
 
           if (pageNum != null &&
               rawTitle.isNotEmpty &&
-              !seenPages.contains(pageNum) &&
+              rawTitle != '*' &&
               !rawTitle.contains('تصفح') &&
               !rawTitle.contains('الرئيسية')) {
-            seenPages.add(pageNum);
-            chapters.add(ShamelaChapter(title: rawTitle, pageNumber: pageNum));
+            chaptersMap[pageNum] = rawTitle;
           }
         }
 
-        // Cache in SQLite
-        final batch = db.batch();
-        for (final c in chapters) {
-          batch.insert(
-            _tableNameFihris,
-            {
-              'book_id': bookId,
-              'page_num': c.pageNumber,
-              'title': c.title,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+        // B. Check for expandable tree nodes (exp_bu buttons)
+        final rootMatches = RegExp(
+          r"""data-id=["'](\d+)["'][^>]*data-book-id=["'](\d+)["']""",
+        ).allMatches(html);
+
+        if (rootMatches.isNotEmpty) {
+          final futures = rootMatches.map((rm) async {
+            final dataId = rm.group(1)!;
+            final bId = rm.group(2)!;
+            try {
+              final childUrl =
+                  Uri.parse('https://shamela.ws/ajax/titlechilds/$bId/$dataId');
+              final childResp = await _httpClient.get(childUrl, headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'X-Requested-With': 'XMLHttpRequest',
+              }).timeout(AppMotion.networkTimeout);
+
+              if (childResp.statusCode == 200) {
+                final childHtml =
+                    utf8.decode(childResp.bodyBytes, allowMalformed: true);
+                for (final cm in linkRegex.allMatches(childHtml)) {
+                  final cp = int.tryParse(cm.group(1)!);
+                  var ct = _cleanHtml(cm.group(2)!);
+                  if (ct.startsWith('-')) ct = ct.substring(1).trim();
+                  if (cp != null && ct.isNotEmpty && ct != '*') {
+                    chaptersMap[cp] = ct;
+                  }
+                }
+              }
+            } catch (_) {}
+          });
+
+          await Future.wait(futures);
         }
-        await batch.commit(noResult: true);
+
+        final sortedPages = chaptersMap.keys.toList()..sort();
+        final List<ShamelaChapter> chapters = sortedPages
+            .map((p) => ShamelaChapter(title: chaptersMap[p]!, pageNumber: p))
+            .toList();
+
+        if (chapters.isNotEmpty) {
+          // Clear old fihris and cache new chapters in SQLite
+          await db.delete(
+            _tableNameFihris,
+            where: 'book_id = ?',
+            whereArgs: [bookId],
+          );
+          final batch = db.batch();
+          for (final c in chapters) {
+            batch.insert(
+              _tableNameFihris,
+              {
+                'book_id': bookId,
+                'page_num': c.pageNumber,
+                'title': c.title,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+          await batch.commit(noResult: true);
+        }
 
         return chapters;
       }
