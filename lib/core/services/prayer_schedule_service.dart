@@ -43,10 +43,14 @@ class PrayerScheduleService {
     final lastLocation = prefs.getString(_keyLocation);
     final lastSettings = prefs.getString(_keySettings);
 
+    final hasPendingTodayPrayers =
+        today.prayers.values.any((t) => t.isAfter(DateTime.now()));
+
     if (!force &&
         lastDate == dateKey &&
         lastLocation == locationKey &&
-        lastSettings == settingsKey) {
+        lastSettings == settingsKey &&
+        !hasPendingTodayPrayers) {
       return;
     }
 
