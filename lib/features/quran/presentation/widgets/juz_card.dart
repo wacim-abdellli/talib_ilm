@@ -74,7 +74,7 @@ class JuzCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsetsDirectional.symmetric(
             horizontal: AppSpace.lg,
-            vertical: AppSpace.sm + 2,
+            vertical: AppSpace.md,
           ),
           decoration: BoxDecoration(
             border: Border(
@@ -105,11 +105,11 @@ class JuzCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: AppSpace.xs + 2),
+                        const SizedBox(width: AppSpace.sm),
                         Container(
                           padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs + 2,
-                            vertical: 1.5,
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
                           ),
                           decoration: BoxDecoration(
                             color: palette.goldSoft,

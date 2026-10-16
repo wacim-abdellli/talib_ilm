@@ -27,7 +27,7 @@ class HizbCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: AppSpace.lg,
-          vertical: AppSpace.sm + 2,
+          vertical: AppSpace.md,
         ),
         decoration: BoxDecoration(
           border: Border(
@@ -67,11 +67,11 @@ class HizbCard extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: AppSpace.xs + 2),
+                            const SizedBox(width: AppSpace.sm),
                             Container(
                               padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs + 2,
-                                vertical: 1.5,
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xxs,
                               ),
                               decoration: BoxDecoration(
                                 color: palette.goldSoft,
@@ -109,7 +109,7 @@ class HizbCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpace.xxs),
                         Text(
                           'سورة ${hizb.surahNameArabic} • آية ${hizb.startAyah}',
                           style: textTheme.caption.copyWith(
@@ -132,7 +132,7 @@ class HizbCard extends StatelessWidget {
             ),
 
             // 4 Quarters Chips (أرباع الحزب)
-            const SizedBox(height: AppSpace.xs + 2),
+            const SizedBox(height: AppSpace.sm),
             Container(
               padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
               decoration: BoxDecoration(

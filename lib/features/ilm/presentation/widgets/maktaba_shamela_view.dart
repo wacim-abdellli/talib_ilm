@@ -5,13 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import '../pages/shamela_reader_page.dart';
+import 'shamela_book_card.dart';
 import 'shamela_shuruh_sheet.dart';
 
 class MaktabaShamelaView extends StatefulWidget {
@@ -31,11 +30,11 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   final Map<int, bool> _downloadedMap = {};
   final Map<int, double> _downloadProgress = {};
 
-  static const List<({int id, String label, String icon})> _levels = [
-    (id: 0, label: 'جميع المراحل', icon: '📖'),
-    (id: 1, label: 'تأسيسي', icon: '🟢'),
-    (id: 2, label: 'تأصيلي', icon: '🟡'),
-    (id: 3, label: 'مطولات', icon: '🔴'),
+  static const List<({int id, String label})> _levels = [
+    (id: 0, label: 'جميع المستويات'),
+    (id: 1, label: 'تمهيدي'),
+    (id: 2, label: 'تأصيلي'),
+    (id: 3, label: 'مطولات'),
   ];
 
   @override
@@ -130,19 +129,6 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
       level: _selectedLevel,
       rootOnly: _searchQuery.isEmpty,
     );
-  }
-
-  String _levelName(int level) {
-    switch (level) {
-      case 1:
-        return 'مرحلة تأسيسية';
-      case 2:
-        return 'مرحلة متوسطة';
-      case 3:
-        return 'مطولات ومبسوطات';
-      default:
-        return 'علمي';
-    }
   }
 
   @override
@@ -304,22 +290,12 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                               ),
                             ),
                             alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  lvl.icon,
-                                  style: textTheme.caption,
-                                ),
-                                const SizedBox(width: AppSpace.xs),
-                                Text(
-                                  lvl.label,
-                                  style: textTheme.caption.copyWith(
-                                    color: isSelected ? palette.primary : palette.textMuted,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              lvl.label,
+                              style: textTheme.caption.copyWith(
+                                color: isSelected ? palette.primary : palette.textMuted,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
                         ),
@@ -354,294 +330,13 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
               separatorBuilder: (_, index) => const SizedBox(height: AppSpace.sm),
               itemBuilder: (context, index) {
                 final book = books[index];
-                final isDownloaded = _downloadedMap[book.id] ?? false;
-                final progress = _downloadProgress[book.id];
-                final shuruh = ShamelaService.getShuruh(book.id);
-                final parentBook = book.parentBookId != null
-                    ? ShamelaService.getParentBook(book.parentBookId!)
-                    : null;
-
-                return AppCard(
-                  onTap: () => _openBook(book),
-                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: palette.primarySoft,
-                              borderRadius: AppRadius.mdRadius,
-                              border: Border.all(color: palette.border),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.auto_stories_rounded,
-                              color: palette.primary,
-                              size: AppIcon.md,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    // Sullam Level Badge
-                                    Container(
-                                      padding: const EdgeInsetsDirectional.symmetric(
-                                        horizontal: AppSpace.xs,
-                                        vertical: AppSpace.xxs,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: book.level == 1
-                                            ? palette.primarySoft
-                                            : (book.level == 2
-                                                ? palette.surfaceMuted
-                                                : palette.surfaceRaised),
-                                        borderRadius: AppRadius.smRadius,
-                                        border: Border.all(
-                                          color: book.level == 1
-                                              ? palette.primary
-                                              : palette.border,
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        _levelName(book.level),
-                                        style: textTheme.caption.copyWith(
-                                          color: book.level == 1
-                                              ? palette.primary
-                                              : palette.textMuted,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    // Category Pill
-                                    Container(
-                                      padding: const EdgeInsetsDirectional.symmetric(
-                                        horizontal: AppSpace.xs,
-                                        vertical: AppSpace.xxs,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: palette.surfaceMuted,
-                                        borderRadius: AppRadius.smRadius,
-                                      ),
-                                      child: Text(
-                                        book.category,
-                                        style: textTheme.caption.copyWith(
-                                          color: palette.textMuted,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: AppSpace.xs),
-                                Text(
-                                  book.title,
-                                  style: textTheme.titleSmall.copyWith(
-                                    color: palette.text,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: AppSpace.xxs),
-                                Text.rich(
-                                  TextSpan(
-                                    text: book.author,
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    children: [
-                                      if (book.authorDeath != null) ...[
-                                        const TextSpan(text: ' '),
-                                        TextSpan(
-                                          text: '(${book.authorDeath})',
-                                          style: textTheme.caption.copyWith(
-                                            color: palette.textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // If search result is a commentary, indicate parent book
-                      if (parentBook != null) ...[
-                        const SizedBox(height: AppSpace.xs),
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
-                            borderRadius: AppRadius.smRadius,
-                          ),
-                          child: Text(
-                            'شرح لمتن: ${parentBook.title}',
-                            style: textTheme.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      if (book.description.isNotEmpty) ...[
-                        const SizedBox(height: AppSpace.sm),
-                        Text(
-                          book.description,
-                          style: textTheme.bodySmall.copyWith(
-                            color: palette.textMuted,
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-
-                      // ── Shuruh Button for Parent Books ───────────────────
-                      if (shuruh.isNotEmpty) ...[
-                        const SizedBox(height: AppSpace.sm),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: AppRadius.smRadius,
-                            onTap: () => _openShuruhSheet(book, shuruh),
-                            child: Container(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.sm,
-                                vertical: AppSpace.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: palette.primarySoft,
-                                borderRadius: AppRadius.smRadius,
-                                border: Border.all(
-                                  color: palette.primary,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.account_tree_rounded,
-                                    size: AppIcon.sm,
-                                    color: palette.primary,
-                                  ),
-                                  const SizedBox(width: AppSpace.xs),
-                                  Text(
-                                    '${shuruh.length} شروح وحواشي معتمدة',
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpace.xxs),
-                                  Icon(
-                                    Icons.arrow_drop_down_rounded,
-                                    size: AppIcon.sm,
-                                    color: palette.primary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: AppSpace.sm),
-                      Divider(color: palette.border, height: 1),
-                      const SizedBox(height: AppSpace.xs),
-
-                      // Actions Bar: Read vs Offline Download
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: AppSpace.sm,
-                        runSpacing: AppSpace.xs,
-                        children: [
-                          Text(
-                            '${book.totalPages} صفحة',
-                            style: textTheme.caption.copyWith(color: palette.textMuted),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (progress != null) ...[
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    value: progress,
-                                    color: palette.primary,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpace.xs),
-                                Text(
-                                  'جاري التحميل ${(progress * 100).toInt()}%',
-                                  style: textTheme.caption.copyWith(color: palette.primary),
-                                ),
-                              ] else if (isDownloaded) ...[
-                                Icon(
-                                  Icons.offline_pin_rounded,
-                                  color: palette.success,
-                                  size: AppIcon.sm,
-                                ),
-                                const SizedBox(width: AppSpace.xxs),
-                                Text(
-                                  'محمّل للقراءة بدون إنترنت',
-                                  style: textTheme.caption.copyWith(
-                                    color: palette.success,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ] else ...[
-                                TextButton.icon(
-                                  onPressed: () => _downloadBook(book),
-                                  icon: Icon(
-                                    Icons.cloud_download_rounded,
-                                    size: AppIcon.sm,
-                                    color: palette.primary,
-                                  ),
-                                  label: Text(
-                                    'تحميل للقراءة بدون إنترنت',
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(width: AppSpace.sm),
-                              AppButton(
-                                size: AppButtonSize.sm,
-                                label: 'قراءة الكتاب',
-                                onPressed: () => _openBook(book),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                return ShamelaBookCard(
+                  book: book,
+                  isDownloaded: _downloadedMap[book.id] ?? false,
+                  downloadProgress: _downloadProgress[book.id],
+                  onOpen: () => _openBook(book),
+                  onDownload: () => _downloadBook(book),
+                  onOpenShuruh: _openShuruhSheet,
                 );
               },
             ),

@@ -5,7 +5,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 
-/// Clean, high-performance circular medallion for Surah, Juz, and Hizb numbers.
+/// Ornate Islamic medallion for Surah numbers with double concentric border rings.
 class SurahNumberMedallion extends StatelessWidget {
   final int number;
   final double size;
@@ -13,7 +13,7 @@ class SurahNumberMedallion extends StatelessWidget {
   const SurahNumberMedallion({
     super.key,
     required this.number,
-    this.size = 40,
+    this.size = 42,
   });
 
   @override
@@ -29,21 +29,80 @@ class SurahNumberMedallion extends StatelessWidget {
         color: palette.goldSoft,
         border: Border.all(
           color: palette.gold.withValues(alpha: 0.35),
-          width: 1.1,
+          width: 1.2,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            '$number',
-            style: context.text.label.copyWith(
-              fontWeight: FontWeight.w800,
-              color: palette.gold,
+      child: Container(
+        width: size - AppSpace.sm,
+        height: size - AppSpace.sm,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: palette.gold.withValues(alpha: 0.5),
+            width: 0.8,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '$number',
+              style: context.text.label.copyWith(
+                fontWeight: FontWeight.w800,
+                color: palette.gold,
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Distinct, scholarly badge for Makkah vs Madinah revelations with authentic iconography and colors.
+class _RevelationBadge extends StatelessWidget {
+  final bool isMakki;
+
+  const _RevelationBadge({required this.isMakki});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final color = isMakki ? palette.gold : palette.success;
+    final bg = isMakki ? palette.goldSoft : palette.success.withValues(alpha: 0.12);
+
+    return Container(
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: AppRadius.pillRadius,
+        border: Border.all(
+          color: color.withValues(alpha: 0.35),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isMakki ? Icons.crop_square_rounded : Icons.brightness_3_rounded,
+            size: AppIcon.xs,
+            color: color,
+          ),
+          const SizedBox(width: AppSpace.xxs),
+          Text(
+            isMakki ? 'مكية' : 'مدنية',
+            style: context.text.caption.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -74,6 +133,7 @@ class SurahCard extends StatelessWidget {
     final place = quran.getPlaceOfRevelation(surahNumber);
     final isMakki = place == 'Makkah';
     final startPage = quran.getSurahPages(surahNumber)[0];
+    final juzNumber = quran.getJuzNumber(surahNumber, 1);
 
     return Material(
       color: Colors.transparent,
@@ -86,7 +146,7 @@ class SurahCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsetsDirectional.symmetric(
             horizontal: AppSpace.lg,
-            vertical: AppSpace.sm + 2,
+            vertical: AppSpace.md,
           ),
           decoration: BoxDecoration(
             border: Border(
@@ -98,7 +158,7 @@ class SurahCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Clean circular medallion
+              // Ornate Islamic medallion
               SurahNumberMedallion(number: surahNumber),
               const SizedBox(width: AppSpace.md),
 
@@ -132,41 +192,16 @@ class SurahCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpace.xxs + 1),
+                    const SizedBox(height: AppSpace.xs),
                     Row(
                       children: [
-                        // Revelation badge (مكية / مدنية)
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs + 2,
-                            vertical: 1.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isMakki
-                                ? palette.primarySoft
-                                : palette.goldSoft,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: (isMakki ? palette.primary : palette.gold)
-                                  .withValues(alpha: 0.25),
-                              width: 0.7,
-                            ),
-                          ),
-                          child: Text(
-                            isMakki ? 'مكية' : 'مدنية',
-                            style: context.text.caption.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: isMakki
-                                  ? palette.onPrimarySoft
-                                  : palette.gold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs + 2),
-                        // Verses and page count
+                        // Distinct Revelation badge (مكية / مدنية)
+                        _RevelationBadge(isMakki: isMakki),
+                        const SizedBox(width: AppSpace.sm),
+                        // Juz number, Verses and page count
                         Flexible(
                           child: Text(
-                            '$versesCount آية • ص $startPage',
+                            'الجزء $juzNumber • $versesCount آية • ص $startPage',
                             style: context.text.caption.copyWith(
                               color: palette.textMuted,
                             ),
@@ -189,7 +224,7 @@ class SurahCard extends StatelessWidget {
                           ? Icons.bookmark_rounded
                           : Icons.bookmark_border_rounded,
                       color: isBookmarked ? palette.gold : palette.textMuted,
-                      size: AppIcon.sm + 2,
+                      size: AppIcon.md,
                     ),
                     tooltip: isBookmarked
                         ? 'إزالة من المحفوظات'
