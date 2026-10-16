@@ -260,18 +260,40 @@ void main() {
       // Verify header for accent picker is rendered
       expect(find.text('لون تمييز الآيات والعناوين'), findsOneWidget);
 
-      // Verify all 5 accent labels are rendered
-      expect(find.text('زمردي'), findsOneWidget);
-      expect(find.text('عنابي'), findsOneWidget);
-      expect(find.text('كحلي'), findsOneWidget);
-      expect(find.text('عنبري'), findsOneWidget);
-      expect(find.text('برونزي'), findsOneWidget);
+      // Verify all 5 accent labels are rendered with easy Arabic names
+      expect(find.text('أخضر'), findsOneWidget);
+      expect(find.text('أحمر'), findsOneWidget);
+      expect(find.text('أزرق'), findsOneWidget);
+      expect(find.text('برتقالي'), findsOneWidget);
+      expect(find.text('ذهبي'), findsOneWidget);
 
-      // Tap on 'كحلي' (navy)
-      await tester.tap(find.text('كحلي'));
+      // Verify all 3 surface environment options are rendered
+      expect(find.text('الافتراضي'), findsOneWidget);
+      expect(find.text('ورق الشاموا (بيج)'), findsOneWidget);
+      expect(find.text('داكن هادئ'), findsOneWidget);
+
+      // Tap on 'أزرق' (navy)
+      await tester.tap(find.text('أزرق'));
       await tester.pump();
 
       expect(selectedAccent, equals(ShamelaAccentColor.navy));
+    });
+
+    test('ReaderSurfaceColors provides valid high-contrast tokens in light and dark modes', () {
+      for (final surface in ShamelaReaderSurface.values) {
+        final lightTokens = ReaderSurfaceColors.getTokens(surface, isDark: false);
+        final darkTokens = ReaderSurfaceColors.getTokens(surface, isDark: true);
+
+        expect(lightTokens.bg, isNotNull);
+        expect(lightTokens.text, isNotNull);
+        expect(lightTokens.border, isNotNull);
+        expect(lightTokens.label, isNotEmpty);
+
+        expect(darkTokens.bg, isNotNull);
+        expect(darkTokens.text, isNotNull);
+        expect(darkTokens.border, isNotNull);
+        expect(darkTokens.label, isNotEmpty);
+      }
     });
   });
 }

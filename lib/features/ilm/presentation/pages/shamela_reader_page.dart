@@ -322,14 +322,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   }
 
   Color _getBackgroundColor(AppPalette palette) {
-    switch (_surface) {
-      case ShamelaReaderSurface.normal:
-        return palette.bg;
-      case ShamelaReaderSurface.parchment:
-        return palette.goldSoft;
-      case ShamelaReaderSurface.night:
-        return palette.surface;
-    }
+    return ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
   }
 
   @override
@@ -438,6 +431,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                     onTap: _toggleControls,
                     child: ShamelaPageContent(
                       page: page,
+                      surface: _surface,
                       memorizationMode: _memorizationMode,
                       fontFamily: _fontFamily,
                       fontSizeDelta: _fontSizeDelta,

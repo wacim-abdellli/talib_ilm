@@ -15,6 +15,7 @@ class ShamelaPageContent extends StatefulWidget {
   final double fontSizeDelta;
   final double lineHeight;
   final ShamelaAccentColor accentColor;
+  final ShamelaReaderSurface surface;
 
   const ShamelaPageContent({
     super.key,
@@ -24,6 +25,7 @@ class ShamelaPageContent extends StatefulWidget {
     required this.fontSizeDelta,
     required this.lineHeight,
     this.accentColor = ShamelaAccentColor.emerald,
+    this.surface = ShamelaReaderSurface.normal,
   });
 
   @override
@@ -144,6 +146,7 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                           fontSizeDelta: widget.fontSizeDelta,
                           lineHeight: widget.lineHeight,
                           accentColor: widget.accentColor,
+                          surface: widget.surface,
                         ),
                         textAlign: TextAlign.start,
                       ),

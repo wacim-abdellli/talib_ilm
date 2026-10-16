@@ -4,11 +4,6 @@ import 'package:flutter/services.dart';
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
 
-enum ShamelaReaderSurface {
-  normal,
-  parchment,
-  night,
-}
 
 class ShamelaTypographySheet extends StatefulWidget {
   final double fontSizeDelta;
@@ -106,41 +101,60 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
             // ── Reading Surface Mode ──
             Text('بيئة القراءة', style: textTheme.body.copyWith(color: palette.text)),
             const SizedBox(height: AppSpace.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSurfaceOption(
-                    ShamelaReaderSurface.normal,
-                    'الافتراضي',
-                    palette.surface,
-                    palette.text,
-                    palette,
-                    textTheme,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: _buildSurfaceOption(
-                    ShamelaReaderSurface.parchment,
-                    'ورق الشاموا',
-                    palette.goldSoft,
-                    palette.onGold,
-                    palette,
-                    textTheme,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: _buildSurfaceOption(
-                    ShamelaReaderSurface.night,
-                    'داكن هادئ',
-                    palette.brandDark,
-                    palette.surfaceRaised,
-                    palette,
-                    textTheme,
-                  ),
-                ),
-              ],
+            Builder(
+              builder: (context) {
+                final normalTokens = ReaderSurfaceColors.getTokens(
+                  ShamelaReaderSurface.normal,
+                  isDark: palette.isDark,
+                );
+                final parchmentTokens = ReaderSurfaceColors.getTokens(
+                  ShamelaReaderSurface.parchment,
+                  isDark: palette.isDark,
+                );
+                final nightTokens = ReaderSurfaceColors.getTokens(
+                  ShamelaReaderSurface.night,
+                  isDark: palette.isDark,
+                );
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _buildSurfaceOption(
+                        ShamelaReaderSurface.normal,
+                        normalTokens.label,
+                        normalTokens.bg,
+                        normalTokens.text,
+                        normalTokens.border,
+                        palette,
+                        textTheme,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Expanded(
+                      child: _buildSurfaceOption(
+                        ShamelaReaderSurface.parchment,
+                        parchmentTokens.label,
+                        parchmentTokens.bg,
+                        parchmentTokens.text,
+                        parchmentTokens.border,
+                        palette,
+                        textTheme,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Expanded(
+                      child: _buildSurfaceOption(
+                        ShamelaReaderSurface.night,
+                        nightTokens.label,
+                        nightTokens.bg,
+                        nightTokens.text,
+                        nightTokens.border,
+                        palette,
+                        textTheme,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: AppSpace.md),
 
@@ -319,6 +333,7 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
     String label,
     Color bg,
     Color fg,
+    Color border,
     AppPalette palette,
     AppTextTheme textTheme,
   ) {
@@ -346,7 +361,7 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
             color: bg,
             borderRadius: AppRadius.smRadius,
             border: Border.all(
-              color: isSelected ? palette.gold : palette.border,
+              color: isSelected ? palette.gold : border,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -369,6 +384,8 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

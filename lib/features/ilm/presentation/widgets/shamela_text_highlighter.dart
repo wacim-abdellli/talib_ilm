@@ -40,14 +40,16 @@ class ShamelaTextHighlighter {
     required double fontSizeDelta,
     double lineHeight = 1.85,
     ShamelaAccentColor accentColor = ShamelaAccentColor.emerald,
+    ShamelaReaderSurface surface = ShamelaReaderSurface.normal,
   }) {
+    final surfaceTokens = ReaderSurfaceColors.getTokens(surface, isDark: palette.isDark);
     final accent = ReaderAccentColors.getTokens(accentColor, isDark: palette.isDark);
     final baseFontSize = (textTheme.body.fontSize ?? 18.0) + fontSizeDelta;
     final baseStyle = textTheme.body.copyWith(
       fontFamily: fontFamily,
       fontSize: baseFontSize,
       height: lineHeight,
-      color: palette.text,
+      color: surfaceTokens.text,
     );
 
     final List<InlineSpan> spans = [];

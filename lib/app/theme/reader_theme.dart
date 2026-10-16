@@ -26,6 +26,62 @@ class ReaderAccentTokens {
   });
 }
 
+/// Reading surface environment presets for classical books and scholarly mutun.
+enum ShamelaReaderSurface {
+  normal, // الافتراضي (حسب سمة التطبيق)
+  parchment, // ورق الشاموا البيج المريح للعين
+  night, // داكن هادئ للقراءة الليلية
+}
+
+/// Resolved semantic color tokens for reading surface environment.
+class ReaderSurfaceTokens {
+  final Color bg;
+  final Color text;
+  final Color border;
+  final String label;
+
+  const ReaderSurfaceTokens({
+    required this.bg,
+    required this.text,
+    required this.border,
+    required this.label,
+  });
+}
+
+/// Unified source of truth for reading surface tokens.
+class ReaderSurfaceColors {
+  const ReaderSurfaceColors._();
+
+  static ReaderSurfaceTokens getTokens(
+    ShamelaReaderSurface surface, {
+    required bool isDark,
+  }) {
+    switch (surface) {
+      case ShamelaReaderSurface.normal:
+        return ReaderSurfaceTokens(
+          bg: isDark ? const Color(0xFF161817) : const Color(0xFFFAF9F5),
+          text: isDark ? const Color(0xFFF1F5F3) : const Color(0xFF1E2120),
+          border: isDark ? const Color(0xFF2C302E) : const Color(0xFFE2DFD6),
+          label: 'الافتراضي',
+        );
+      case ShamelaReaderSurface.parchment:
+        return const ReaderSurfaceTokens(
+          bg: Color(0xFFFBF7EE), // Classic authentic Shamwa parchment beige
+          text: Color(0xFF2B2520), // High-contrast classical dark sepia book ink
+          border: Color(0xFFDFD4C4),
+          label: 'ورق الشاموا (بيج)',
+        );
+      case ShamelaReaderSurface.night:
+        return const ReaderSurfaceTokens(
+          bg: Color(0xFF101114), // Deep soothing night surface
+          text: Color(0xFFEAE5DC), // High-contrast soft cream night text
+          border: Color(0xFF2C3038),
+          label: 'داكن هادئ',
+        );
+    }
+  }
+}
+
 /// Unified source of truth for reader accent tokens across light and dark modes.
 class ReaderAccentColors {
   const ReaderAccentColors._();
@@ -42,7 +98,7 @@ class ReaderAccentColors {
             soft: Color(0xFF064E3B),
             onSoft: Color(0xFFA7F3D0),
             border: Color(0xFF065F46),
-            label: 'زمردي',
+            label: 'أخضر',
           );
         case ShamelaAccentColor.ruby:
           return const ReaderAccentTokens(
@@ -50,7 +106,7 @@ class ReaderAccentColors {
             soft: Color(0xFF4C0519),
             onSoft: Color(0xFFFECDD3),
             border: Color(0xFF881337),
-            label: 'عنابي',
+            label: 'أحمر',
           );
         case ShamelaAccentColor.navy:
           return const ReaderAccentTokens(
@@ -58,7 +114,7 @@ class ReaderAccentColors {
             soft: Color(0xFF1E293B),
             onSoft: Color(0xFFBFDBFE),
             border: Color(0xFF1E3A8A),
-            label: 'كحلي',
+            label: 'أزرق',
           );
         case ShamelaAccentColor.amber:
           return const ReaderAccentTokens(
@@ -66,7 +122,7 @@ class ReaderAccentColors {
             soft: Color(0xFF431407),
             onSoft: Color(0xFFFED7AA),
             border: Color(0xFF7C2D12),
-            label: 'عنبري',
+            label: 'برتقالي',
           );
         case ShamelaAccentColor.bronze:
           return const ReaderAccentTokens(
@@ -74,7 +130,7 @@ class ReaderAccentColors {
             soft: Color(0xFF451A03),
             onSoft: Color(0xFFFDE68A),
             border: Color(0xFF78350F),
-            label: 'برونزي',
+            label: 'ذهبي',
           );
       }
     } else {
@@ -85,7 +141,7 @@ class ReaderAccentColors {
             soft: Color(0xFFE6F4EA),
             onSoft: Color(0xFF0D5D3B),
             border: Color(0xFFA3D9B8),
-            label: 'زمردي',
+            label: 'أخضر',
           );
         case ShamelaAccentColor.ruby:
           return const ReaderAccentTokens(
@@ -93,7 +149,7 @@ class ReaderAccentColors {
             soft: Color(0xFFFFE4E6),
             onSoft: Color(0xFF881337),
             border: Color(0xFFFDA4AF),
-            label: 'عنابي',
+            label: 'أحمر',
           );
         case ShamelaAccentColor.navy:
           return const ReaderAccentTokens(
@@ -101,7 +157,7 @@ class ReaderAccentColors {
             soft: Color(0xFFEFF6FF),
             onSoft: Color(0xFF1E3A8A),
             border: Color(0xFFBFDBFE),
-            label: 'كحلي',
+            label: 'أزرق',
           );
         case ShamelaAccentColor.amber:
           return const ReaderAccentTokens(
@@ -109,7 +165,7 @@ class ReaderAccentColors {
             soft: Color(0xFFFFEDD5),
             onSoft: Color(0xFF9A3412),
             border: Color(0xFFFED7AA),
-            label: 'عنبري',
+            label: 'برتقالي',
           );
         case ShamelaAccentColor.bronze:
           return const ReaderAccentTokens(
@@ -117,7 +173,7 @@ class ReaderAccentColors {
             soft: Color(0xFFFEF3C7),
             onSoft: Color(0xFF78350F),
             border: Color(0xFFFDE68A),
-            label: 'برونزي',
+            label: 'ذهبي',
           );
       }
     }

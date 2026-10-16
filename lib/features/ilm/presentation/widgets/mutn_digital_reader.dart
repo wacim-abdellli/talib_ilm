@@ -265,18 +265,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     final palette = context.palette;
     final textTheme = context.text;
 
-    final Color bgColor;
-    switch (_surface) {
-      case ShamelaReaderSurface.parchment:
-        bgColor = palette.goldSoft;
-        break;
-      case ShamelaReaderSurface.night:
-        bgColor = palette.surface;
-        break;
-      case ShamelaReaderSurface.normal:
-        bgColor = palette.bg;
-        break;
-    }
+    final bgColor = ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
 
     return Container(
       color: bgColor,
@@ -384,6 +373,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                     onTap: widget.onToggleControls,
                     child: ShamelaPageContent(
                       page: page,
+                      surface: _surface,
                       memorizationMode: _memorizationMode,
                       fontFamily: _fontFamily,
                       fontSizeDelta: _fontSizeDelta,
