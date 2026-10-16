@@ -13,6 +13,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 17,
       totalPages: 240,
       description: 'أشهر متون الفقه الحنبلي وأكثرها استيعاباً للمسائل والضوابط بالقول الراجح في المذهب.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1679,
@@ -24,6 +25,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 1,
       totalPages: 780,
       description: 'الشرح المعتمد الذي لا يستغني عنه فقيه حنبلي، يفكك عبارات الزاد ويبين علل الأحكام.',
+      level: 2,
+      parentBookId: 11230,
+      sharhType: 'الشرح المعتمد للمذهب',
     ),
     ShamelaBook(
       id: 11315,
@@ -34,6 +38,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 17,
       totalPages: 160,
       description: 'الدرجة الأولى في سلم التدرج الحنبلي لابن قدامة، اقتصر فيه على قول واحد مع الدليل غالباً.',
+      level: 2,
     ),
     ShamelaBook(
       id: 19233,
@@ -45,6 +50,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 1,
       totalPages: 520,
       description: 'الدرجة الثانية في سلم التدرج، يذكر فيه الروايات والأوجه في المذهب من غير دليل.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21731,
@@ -56,6 +62,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 4,
       totalPages: 1468,
       description: 'الدرجة الثالثة في سلم ابن قدامة، يورد فيه الروايات مع أدلتها النقلية والعقلية والتوجيه.',
+      level: 3,
     ),
     ShamelaBook(
       id: 6910,
@@ -67,6 +74,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 15,
       totalPages: 7927,
       description: 'درة التاج في الفقه المقارن وأعظم موسوعة فقهية تبسط مذاهب الصحابة والتابعين والأئمة الأربعة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11196,
@@ -77,6 +85,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 17,
       totalPages: 280,
       description: 'متن حنبلي محرر حسن الترتيب والتقسيم، اختصر فيه كتاب منتهى الإرادات بأسلوب عذب.',
+      level: 2,
     ),
     ShamelaBook(
       id: 5463,
@@ -88,6 +97,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 2,
       totalPages: 541,
       description: 'شرح ميسر اعتنى فيه المؤلف بذكر أدلة مسائل دليل الطالب الفقهية وتخريج أحاديثها.',
+      level: 2,
+      parentBookId: 11196,
+      sharhType: 'شرح مع تخريج الأدلة',
     ),
     ShamelaBook(
       id: 30147,
@@ -99,6 +111,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 2,
       totalPages: 940,
       description: 'شرح موسع على دليل الطالب يحرر المعتمد في المذهب بنقولات دقيقة عن كبار المحققين.',
+      level: 2,
+      parentBookId: 11196,
+      sharhType: 'شرح موسع',
     ),
     ShamelaBook(
       id: 6084,
@@ -109,6 +124,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 17,
       totalPages: 184,
       description: 'صفوة مختصرات الفقه الحنبلي، يجمع المسائل الكثيرة في الألفاظ الوجيزة للمبتدئين.',
+      level: 1,
     ),
     ShamelaBook(
       id: 21642,
@@ -120,6 +136,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 6,
       totalPages: 3175,
       description: 'شرح الحجاوي للإقناع الذي يُعد المرجع الأول للفتوى والقضاء في المذهب الحنبلي المتأخر.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21609,
@@ -131,6 +148,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 12,
       totalPages: 5800,
       description: 'الكتاب المعتمد في تحرير المذهب ومعرفة القول الصحيح والراجح وما عليه عمل أصحاب الإمام أحمد.',
+      level: 3,
     ),
     ShamelaBook(
       id: 12052,
@@ -142,6 +160,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 11,
       totalPages: 5057,
       description: 'أدق وأجمع كتاب في تفريع المسائل الحنبلية حتى قيل: من كان عنده الفروع استغنى عن غيره.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7289,
@@ -153,6 +172,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 37,
       totalPages: 16448,
       description: 'دائرة المعارف الإسلامية الكبرى التي حررت الفقه وأصوله والعقيدة والحديث باجتهاد فذ محقق.',
+      level: 3,
     ),
   ];
 
@@ -167,6 +187,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 16,
       totalPages: 80,
       description: 'أشهر متن فقهي للمبتدئين في مذهب الشافعي، رتبه على غاية الإيجاز وحسن الحصر.',
+      level: 1,
     ),
     ShamelaBook(
       id: 6121,
@@ -178,6 +199,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 2,
       totalPages: 820,
       description: 'شرح معتمد محقق يفك ألفاظ متن أبي شجاع ويوضح قيود المسائل بالأدلة المذهبية.',
+      level: 1,
+      parentBookId: 11370,
+      sharhType: 'شرح فقهي ميسر',
     ),
     ShamelaBook(
       id: 6140,
@@ -189,6 +213,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 1,
       totalPages: 565,
       description: 'شرح ممتع يربط بين فروع مذهب الشافعي وأدلتها من السنة المطهرة بأسلوب رائق.',
+      level: 1,
+      parentBookId: 11370,
+      sharhType: 'شرح بالأدلة النبوية',
     ),
     ShamelaBook(
       id: 12096,
@@ -199,6 +226,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 16,
       totalPages: 340,
       description: 'عمدة كتب الشافعية المتأخرين ومدار الفتوى وتدريس الفقه في حلقات العلم عبر القرون.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11444,
@@ -210,6 +238,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 6,
       totalPages: 3251,
       description: 'أحد الشروح الأربعة الكبرى المعتمدة على منهاج النووي، يتميز بالسهولة ووضوح العبارة والتدليل.',
+      level: 3,
+      parentBookId: 12096,
+      sharhType: 'شرح فقهي موسع',
     ),
     ShamelaBook(
       id: 9059,
@@ -221,6 +252,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 10,
       totalPages: 4666,
       description: 'عمدة الفتوى عند شوافع الحجاز ومصر واليمن، يمثل قمة التحرير والتدقيق الفقهي.',
+      level: 3,
+      parentBookId: 12096,
+      sharhType: 'عمدة المتأخرين',
     ),
     ShamelaBook(
       id: 11327,
@@ -231,6 +265,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 16,
       totalPages: 666,
       description: 'كتاب فقهي بديع حاز شهرة واسعة في بلاد الهند واليمن وشرق آسيا لجلالة فوائده.',
+      level: 2,
     ),
     ShamelaBook(
       id: 11813,
@@ -242,6 +277,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 3,
       totalPages: 1063,
       description: 'الأصل البديع الذي شرحه الإمام النووي في المجموع، صاغه الشيرازي بأعذب لفظ وأقوى حجة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 2186,
@@ -253,6 +289,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 23,
       totalPages: 12400,
       description: 'أعظم ما خطته يد الإمام النووي، موسوعة شاملة في الفقه الشافعي والفقه المقارن ونقد الحديث.',
+      level: 3,
+      parentBookId: 11813,
+      sharhType: 'موسوعة الفقه المقارن',
     ),
     ShamelaBook(
       id: 1655,
@@ -264,6 +303,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 8,
       totalPages: 4600,
       description: 'ديوان الإمام المطلبي وأصل مذهبه الجديد برواية الربيع بن سليمان المرادي.',
+      level: 3,
     ),
     ShamelaBook(
       id: 499,
@@ -275,6 +315,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 12,
       totalPages: 4935,
       description: 'اختصار وتحرير متقن لكتاب فتح العزيز للرافعي، يرجع إليه المفتون لمعرفة الأوجه والتفاريع.',
+      level: 3,
     ),
     ShamelaBook(
       id: 6157,
@@ -286,6 +327,7 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 18,
       totalPages: 8413,
       description: 'شرح مختصر المزني الموسع، جمع فيه الماوردي الفقه الشافعي وفقه السلف ببراعة مذهلة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 3565,
@@ -297,6 +339,9 @@ class FiqhHanbaliShafiiCatalog {
       volumes: 8,
       totalPages: 4400,
       description: 'الشرح المعتمد الأكبر لفقهاء الشافعية بمصر، قرئ على أربعمائة عالم وأقروا تحريراته.',
+      level: 3,
+      parentBookId: 12096,
+      sharhType: 'عمدة الفتوى بمصر',
     ),
     ShamelaBook(
       id: 37344,
@@ -307,6 +352,7 @@ class FiqhHanbaliShafiiCatalog {
       categoryId: 16,
       totalPages: 222,
       description: 'مختصر لطيف العبارة جمع معتمد النووي والرافعي في العبادات والمعاملات دون تعقيد.',
+      level: 2,
     ),
   ];
 }

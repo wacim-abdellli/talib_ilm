@@ -13,6 +13,7 @@ class TafsirCatalog {
       volumes: 1,
       totalPages: 1040,
       description: 'من أحسن التفاسير المعاصرة عبارة وأوضحها دلالة، مجرد من الحشو والإسرائيليات وخلافات النحاة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 8473,
@@ -24,6 +25,7 @@ class TafsirCatalog {
       volumes: 8,
       totalPages: 4800,
       description: 'أشهر تفاسير المأثور وأعظمها قبولاً، يعتمد على تفسير القرآن بالقرآن وبالسنة وأقوال الصحابة والتابعين.',
+      level: 2,
     ),
     ShamelaBook(
       id: 7798,
@@ -35,6 +37,7 @@ class TafsirCatalog {
       volumes: 24,
       totalPages: 14500,
       description: 'أم التفاسير ومرجعها الأول، أسند فيه الروايات إلى الصحابة والتابعين مع توجيه الإعراب وترجيح الأقوال.',
+      level: 3,
     ),
     ShamelaBook(
       id: 12217,
@@ -46,6 +49,7 @@ class TafsirCatalog {
       volumes: 8,
       totalPages: 4200,
       description: 'تفسير سلفي متوسط متين، اعتنى فيه محيي السنة بالأحاديث الصحيحة والحسان والآثار المحررة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 20855,
@@ -57,6 +61,7 @@ class TafsirCatalog {
       volumes: 20,
       totalPages: 9800,
       description: 'أوسع وأجل تفاسير آيات الأحكام الفقهية مع الاستدلال اللغوي ومناقشة مذاهب الفقهاء بتجرد وإنصاف.',
+      level: 3,
     ),
     ShamelaBook(
       id: 22918,
@@ -68,6 +73,7 @@ class TafsirCatalog {
       volumes: 9,
       totalPages: 4309,
       description: 'فريد عصره في إيضاح القرآن بالقرآن وتحرير مباحث الأصول والقواعد الفقهية والمسائل اللغوية.',
+      level: 2,
     ),
     ShamelaBook(
       id: 23623,
@@ -79,6 +85,7 @@ class TafsirCatalog {
       volumes: 5,
       totalPages: 3133,
       description: 'جمع فيه بين التفسير بالأثر والتفسير بالنظر مع نقد الروايات والرد على التقليد المذهبي.',
+      level: 2,
     ),
     ShamelaBook(
       id: 12876,
@@ -89,6 +96,7 @@ class TafsirCatalog {
       categoryId: 3,
       totalPages: 604,
       description: 'تفسير وجيز محكم يُعنى ببيان معاني المفردات وتراكيب الآيات بما يوازي كلمات المصحف إيجازاً.',
+      level: 1,
     ),
     ShamelaBook(
       id: 23603,
@@ -100,6 +108,7 @@ class TafsirCatalog {
       volumes: 8,
       totalPages: 6200,
       description: 'الموسوعة الكبرى للآثار المسندة والموقوفة في تفسير الآيات مخرجة من أمهات كتب الحديث والآثار.',
+      level: 3,
     ),
     ShamelaBook(
       id: 23619,
@@ -111,6 +120,7 @@ class TafsirCatalog {
       volumes: 4,
       totalPages: 1767,
       description: 'تفسير متوسط جمع أقوال السلف من غير تطويل مخل ولا إسهاب ممل، مع التنبيه على غرائب اللغة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 12081,
@@ -121,6 +131,7 @@ class TafsirCatalog {
       categoryId: 3,
       totalPages: 95,
       description: 'قواعد كلية تعين على فهم القرآن ومعرفة أحسن طرق التفسير وأسباب اختلاف السلف وكيفية الترجيح.',
+      level: 1,
     ),
     ShamelaBook(
       id: 11728,
@@ -132,6 +143,7 @@ class TafsirCatalog {
       volumes: 4,
       totalPages: 1650,
       description: 'ديوان علوم القرآن العظيم، جمع ثمانين نوعاً من أنواع علوم التنزيل وقواعده ومصطلحاته.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11436,
@@ -143,6 +155,7 @@ class TafsirCatalog {
       volumes: 4,
       totalPages: 1501,
       description: 'الأصل المتقدم الذي استمد منه السيوطي كتابه الإتقان، رتبه في سبعة وأربعين نوعاً بتحقيق بالغ.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7249,
@@ -154,6 +167,7 @@ class TafsirCatalog {
       volumes: 2,
       totalPages: 543,
       description: 'كتاب منهجي محكم يعالج قضايا الوحي وجمع القرآن والقراءات والشبهات المعاصرة بأسلوب علمي رصين.',
+      level: 2,
     ),
     ShamelaBook(
       id: 23606,
@@ -164,6 +178,7 @@ class TafsirCatalog {
       categoryId: 3,
       totalPages: 380,
       description: 'أقدم ما وصل إلينا في فضائل القرآن الكريم وقراءاته وآداب تلاوته بأسانيد السلف الأوائل.',
+      level: 1,
     ),
     ShamelaBook(
       id: 1969,
@@ -174,6 +189,7 @@ class TafsirCatalog {
       categoryId: 3,
       totalPages: 224,
       description: 'كتاب تربوي مبارك يبين آداب قارئ القرآن ومعلمه وحامله وأحكام تعظيمه وتلاوته في الليل والنهار.',
+      level: 1,
     ),
   ];
 }

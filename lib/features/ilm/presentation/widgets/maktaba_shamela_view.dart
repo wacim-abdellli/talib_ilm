@@ -12,6 +12,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import '../pages/shamela_reader_page.dart';
+import 'shamela_shuruh_sheet.dart';
 
 class MaktabaShamelaView extends StatefulWidget {
   const MaktabaShamelaView({super.key});
@@ -22,12 +23,20 @@ class MaktabaShamelaView extends StatefulWidget {
 
 class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   int _selectedCategoryId = 0;
+  int _selectedLevel = 0; // 0 = الكل, 1 = مبتدئ, 2 = متوسط, 3 = متقدم
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
 
   final Map<int, bool> _downloadedMap = {};
   final Map<int, double> _downloadProgress = {};
+
+  static const List<({int id, String label, String icon})> _levels = [
+    (id: 0, label: 'جميع المراحل', icon: '📖'),
+    (id: 1, label: 'تأسيسي', icon: '🟢'),
+    (id: 2, label: 'تأصيلي', icon: '🟡'),
+    (id: 3, label: 'مطولات', icon: '🔴'),
+  ];
 
   @override
   void initState() {
@@ -72,7 +81,10 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
           _downloadProgress.remove(book.id);
           _downloadedMap[book.id] = true;
         });
-        AppSnackbar.success(context, 'تم تحميل كتاب "${book.title}" بنجاح للقراءة بدون إنترنت');
+        AppSnackbar.success(
+          context,
+          'تم تحميل كتاب "${book.title}" بنجاح للقراءة بدون إنترنت',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -98,11 +110,39 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
     );
   }
 
+  void _openShuruhSheet(ShamelaBook parentBook, List<ShamelaBook> shuruh) {
+    HapticFeedback.selectionClick();
+    ShamelaShuruhSheet.show(
+      context: context,
+      parentBook: parentBook,
+      shuruh: shuruh,
+      downloadedMap: _downloadedMap,
+      downloadProgress: _downloadProgress,
+      onOpenSharh: _openBook,
+      onDownloadSharh: _downloadBook,
+    );
+  }
+
   List<ShamelaBook> get _filteredBooks {
     return ShamelaService.searchCatalog(
       query: _searchQuery,
       categoryId: _selectedCategoryId,
+      level: _selectedLevel,
+      rootOnly: _searchQuery.isEmpty,
     );
+  }
+
+  String _levelName(int level) {
+    switch (level) {
+      case 1:
+        return 'مرحلة تأسيسية';
+      case 2:
+        return 'مرحلة متوسطة';
+      case 3:
+        return 'مطولات ومبسوطات';
+      default:
+        return 'علمي';
+    }
   }
 
   @override
@@ -146,7 +186,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                           },
                           style: textTheme.body.copyWith(color: palette.text),
                           decoration: InputDecoration(
-                            hintText: 'ابحث في أمهات كتب المكتبة ومصنفات الأئمة...',
+                            hintText: 'ابحث في أمهات كتب المكتبة والشروح...',
                             hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
                             border: InputBorder.none,
                           ),
@@ -224,6 +264,71 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                 ),
               ),
 
+              const SizedBox(height: AppSpace.xs),
+
+              // ── Sullam / Level Segmentation Filter Bar ────────────────
+              SizedBox(
+                height: AppSize.tap,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+                  itemCount: _levels.length,
+                  separatorBuilder: (_, index) => const SizedBox(width: AppSpace.xs),
+                  itemBuilder: (context, index) {
+                    final lvl = _levels[index];
+                    final isSelected = _selectedLevel == lvl.id;
+
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: AppSize.tap),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: AppRadius.pillRadius,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedLevel = lvl.id);
+                          },
+                          child: AnimatedContainer(
+                            duration: AppMotion.fast,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? palette.primarySoft : palette.surfaceMuted,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isSelected ? palette.primary : palette.border,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  lvl.icon,
+                                  style: textTheme.caption,
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  lvl.label,
+                                  style: textTheme.caption.copyWith(
+                                    color: isSelected ? palette.primary : palette.textMuted,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
               const SizedBox(height: AppSpace.md),
             ],
           ),
@@ -237,7 +342,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
               child: EmptyState(
                 icon: Icons.search_off_rounded,
                 title: 'لا توجد نتائج في المكتبة',
-                subtitle: 'جرب البحث باسم كتاب آخر أو اختيار فن من فنون المكتبة.',
+                subtitle: 'جرب البحث باسم كتاب آخر أو تغيير الفن والمستوى.',
               ),
             ),
           )
@@ -251,6 +356,10 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                 final book = books[index];
                 final isDownloaded = _downloadedMap[book.id] ?? false;
                 final progress = _downloadProgress[book.id];
+                final shuruh = ShamelaService.getShuruh(book.id);
+                final parentBook = book.parentBookId != null
+                    ? ShamelaService.getParentBook(book.parentBookId!)
+                    : null;
 
                 return AppCard(
                   onTap: () => _openBook(book),
@@ -259,6 +368,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             width: 44,
@@ -280,6 +390,59 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Row(
+                                  children: [
+                                    // Sullam Level Badge
+                                    Container(
+                                      padding: const EdgeInsetsDirectional.symmetric(
+                                        horizontal: AppSpace.xs,
+                                        vertical: AppSpace.xxs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: book.level == 1
+                                            ? palette.primarySoft
+                                            : (book.level == 2
+                                                ? palette.surfaceMuted
+                                                : palette.surfaceRaised),
+                                        borderRadius: AppRadius.smRadius,
+                                        border: Border.all(
+                                          color: book.level == 1
+                                              ? palette.primary
+                                              : palette.border,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        _levelName(book.level),
+                                        style: textTheme.caption.copyWith(
+                                          color: book.level == 1
+                                              ? palette.primary
+                                              : palette.textMuted,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    // Category Pill
+                                    Container(
+                                      padding: const EdgeInsetsDirectional.symmetric(
+                                        horizontal: AppSpace.xs,
+                                        vertical: AppSpace.xxs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: palette.surfaceMuted,
+                                        borderRadius: AppRadius.smRadius,
+                                      ),
+                                      child: Text(
+                                        book.category,
+                                        style: textTheme.caption.copyWith(
+                                          color: palette.textMuted,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpace.xs),
                                 Text(
                                   book.title,
                                   style: textTheme.titleSmall.copyWith(
@@ -302,7 +465,9 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                         const TextSpan(text: ' '),
                                         TextSpan(
                                           text: '(${book.authorDeath})',
-                                          style: textTheme.caption.copyWith(color: palette.textMuted),
+                                          style: textTheme.caption.copyWith(
+                                            color: palette.textMuted,
+                                          ),
                                         ),
                                       ],
                                     ],
@@ -313,23 +478,30 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                               ],
                             ),
                           ),
-                          // Category Pill
-                          Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xs,
-                              vertical: AppSpace.xxs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: palette.surfaceMuted,
-                              borderRadius: AppRadius.smRadius,
-                            ),
-                            child: Text(
-                              book.category,
-                              style: textTheme.caption.copyWith(color: palette.textMuted),
-                            ),
-                          ),
                         ],
                       ),
+
+                      // If search result is a commentary, indicate parent book
+                      if (parentBook != null) ...[
+                        const SizedBox(height: AppSpace.xs),
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.surfaceMuted,
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: Text(
+                            'شرح لمتن: ${parentBook.title}',
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
 
                       if (book.description.isNotEmpty) ...[
                         const SizedBox(height: AppSpace.sm),
@@ -341,6 +513,56 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+
+                      // ── Shuruh Button for Parent Books ───────────────────
+                      if (shuruh.isNotEmpty) ...[
+                        const SizedBox(height: AppSpace.sm),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: AppRadius.smRadius,
+                            onTap: () => _openShuruhSheet(book, shuruh),
+                            child: Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.primarySoft,
+                                borderRadius: AppRadius.smRadius,
+                                border: Border.all(
+                                  color: palette.primary,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.account_tree_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.primary,
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    '${shuruh.length} شروح وحواشي معتمدة',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Icon(
+                                    Icons.arrow_drop_down_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.primary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
 
@@ -378,7 +600,11 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                   style: textTheme.caption.copyWith(color: palette.primary),
                                 ),
                               ] else if (isDownloaded) ...[
-                                Icon(Icons.offline_pin_rounded, color: palette.success, size: AppIcon.sm),
+                                Icon(
+                                  Icons.offline_pin_rounded,
+                                  color: palette.success,
+                                  size: AppIcon.sm,
+                                ),
                                 const SizedBox(width: AppSpace.xxs),
                                 Text(
                                   'محمّل للقراءة بدون إنترنت',
@@ -390,7 +616,11 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                               ] else ...[
                                 TextButton.icon(
                                   onPressed: () => _downloadBook(book),
-                                  icon: Icon(Icons.cloud_download_rounded, size: AppIcon.sm, color: palette.primary),
+                                  icon: Icon(
+                                    Icons.cloud_download_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.primary,
+                                  ),
                                   label: Text(
                                     'تحميل للقراءة بدون إنترنت',
                                     style: textTheme.caption.copyWith(

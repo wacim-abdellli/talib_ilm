@@ -12,6 +12,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 24,
       description: 'أصل جامع في معرفة العبد ربه ودينه ونبيه محمد ﷺ بالأدلة من الكتاب والسنة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 8524,
@@ -22,6 +23,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 16,
       description: 'قواعد جليلة في معرفة حقيقة التوحيد والشرك والتمييز بين الموحدين والمشركين.',
+      level: 1,
     ),
     ShamelaBook(
       id: 11318,
@@ -32,6 +34,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 142,
       description: 'عمدة كتب التوحيد بالآيات القرآنية والأحاديث النبوية الصحيحة في إخلاص العبادة لله.',
+      level: 2,
     ),
     ShamelaBook(
       id: 11381,
@@ -42,6 +45,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 66,
       description: 'دحض وتفنيد الشبهات المتعلقة بتوحيد العبادة والاستغاثة وبيان حقيقة ملة إبراهيم.',
+      level: 1,
     ),
     ShamelaBook(
       id: 8529,
@@ -52,6 +56,9 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 185,
       description: 'شرح موجز محكم يبين مقاصد أبواب كتاب التوحيد وأدلته العقدية بلغة واضحة جامعة.',
+      level: 2,
+      parentBookId: 11318,
+      sharhType: 'شرح ميسر',
     ),
     ShamelaBook(
       id: 2386,
@@ -63,6 +70,9 @@ class AqidahCatalog {
       volumes: 1,
       totalPages: 544,
       description: 'أوسع وأجل شروح كتاب التوحيد بالآثار ونصوص السلف المحققة وتحرير المسائل.',
+      level: 2,
+      parentBookId: 11318,
+      sharhType: 'شرح متوسط',
     ),
     ShamelaBook(
       id: 9568,
@@ -73,6 +83,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 124,
       description: 'بيان عقيدة أهل السنة والجماعة على مذهب أئمة السلف والفقهاء المتقدمين.',
+      level: 2,
     ),
     ShamelaBook(
       id: 8352,
@@ -84,6 +95,9 @@ class AqidahCatalog {
       volumes: 2,
       totalPages: 780,
       description: 'الشرح المعتمد الأوفى للعقيدة الطحاوية على منهج أهل السنة والحديث بالدليل والنظر.',
+      level: 3,
+      parentBookId: 9568,
+      sharhType: 'شرح أثري معتمد',
     ),
     ShamelaBook(
       id: 22934,
@@ -94,6 +108,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 80,
       description: 'عمدة كتب المعتقد السلفي في أسماء الله وصفاته واليوم الآخر والقدر والصحابة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 11250,
@@ -105,6 +120,9 @@ class AqidahCatalog {
       volumes: 2,
       totalPages: 835,
       description: 'شرح منهجي رصين يحرر قواعد الأسماء والصفات وأصول الإيمان بأسلوب تعليمي متقن.',
+      level: 2,
+      parentBookId: 22934,
+      sharhType: 'شرح تحليلي',
     ),
     ShamelaBook(
       id: 18381,
@@ -115,6 +133,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 368,
       description: 'جواب جامع في آيات الصفات وأحاديثها وتقرير مذهب السلف ونقض شبهات المؤولة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 21817,
@@ -125,6 +144,9 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 107,
       description: 'تلخيص محكم وقواعد جليلة مستخلصة من رسالة الحموية الكبرى للشيخ العثيمين.',
+      level: 2,
+      parentBookId: 18381,
+      sharhType: 'تلخيص وتقريب',
     ),
     ShamelaBook(
       id: 11100,
@@ -135,6 +157,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 103,
       description: 'أصل أصيل في تحقيق توحيد الأسماء والصفات وتوحيد الشرع والقدر وقواعد الجمع بينهما.',
+      level: 3,
     ),
     ShamelaBook(
       id: 927,
@@ -146,6 +169,7 @@ class AqidahCatalog {
       volumes: 9,
       totalPages: 4149,
       description: 'الموسوعة الكبرى لشيخ الإسلام في الرد على الرافضة والقدرية وبيان فضائل الصحابة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11366,
@@ -156,6 +180,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 23,
       description: 'متن نفيس موجز في إثبات صفات الرب سبحانه والإيمان بالقدر واليوم الآخر.',
+      level: 1,
     ),
     ShamelaBook(
       id: 6418,
@@ -166,6 +191,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 48,
       description: 'رسالة إمام أهل السنة والجماعة في لزوم الاتباع ومجانبة البدع والأهواء والتمسك بالأثر.',
+      level: 1,
     ),
     ShamelaBook(
       id: 6484,
@@ -176,6 +202,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 20,
       description: 'بيان معتقد السلف الصالح لصاحب الإمام الشافعي وناشر فقهه وتلميذه الأجل.',
+      level: 1,
     ),
     ShamelaBook(
       id: 11316,
@@ -186,6 +213,7 @@ class AqidahCatalog {
       categoryId: 1,
       totalPages: 94,
       description: 'أقدم المصنفات المسندة في بيان أن الإيمان قول وعمل يزيد بالطاعة وينقص بالمعصية.',
+      level: 3,
     ),
     ShamelaBook(
       id: 13035,
@@ -197,6 +225,7 @@ class AqidahCatalog {
       volumes: 5,
       totalPages: 2210,
       description: 'من أجمع كتب السلف المسندة في تقرير عقيدة الفرقة الناجية والرد على أهل البدع.',
+      level: 3,
     ),
     ShamelaBook(
       id: 20854,
@@ -208,6 +237,7 @@ class AqidahCatalog {
       volumes: 3,
       totalPages: 1103,
       description: 'شرح موسوعي محقق لمنظومة سلم الوصول في توحيد الله واتباع الرسول ﷺ بأوضح بيان.',
+      level: 3,
     ),
   ];
 }

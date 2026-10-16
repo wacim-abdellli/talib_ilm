@@ -14,6 +14,7 @@ class HadithCatalog {
       volumes: 9,
       totalPages: 7563,
       description: 'أصح كتاب بعد كتاب الله عز وجل، جمع فيه الإمام أصح ما ثبت عن النبي ﷺ بأعلى درجات التوثيق.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1727,
@@ -25,6 +26,7 @@ class HadithCatalog {
       volumes: 5,
       totalPages: 3033,
       description: 'ثاني الصحيحين وأدقها جمعاً للروايات والعلل وترتيباً للأسانيد في سياق متصل فريد.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1726,
@@ -36,6 +38,7 @@ class HadithCatalog {
       volumes: 5,
       totalPages: 5274,
       description: 'عمدة كتب أحاديث الأحكام والسنن المأثورة التي يدور عليها فقه الأئمة والمجتهدين.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7895,
@@ -47,6 +50,7 @@ class HadithCatalog {
       volumes: 6,
       totalPages: 6651,
       description: 'الجامع المتميز بالكلام على علل الأحاديث وتصحيحها وبيان مذاهب فقهاء الأمصار.',
+      level: 3,
     ),
     ShamelaBook(
       id: 829,
@@ -58,6 +62,7 @@ class HadithCatalog {
       volumes: 8,
       totalPages: 8037,
       description: 'أقل السنن الأربعة حديثاً ضعيفاً، تميز ببراعة استنباط التراجم ودقة نقد الروايات.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1198,
@@ -69,6 +74,7 @@ class HadithCatalog {
       volumes: 5,
       totalPages: 5630,
       description: 'رابع السنن وسادس الكتب الستة، يتميز بحسن الترتيب وكثرة الزوائد الفقهية الثمينة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1699,
@@ -80,6 +86,7 @@ class HadithCatalog {
       volumes: 2,
       totalPages: 2642,
       description: 'أول مصنف جامع صحيح في الحديث والفقه وعمل أهل المدينة، زكاه الشافعي وأئمة الإسلام.',
+      level: 3,
     ),
     ShamelaBook(
       id: 25794,
@@ -91,6 +98,7 @@ class HadithCatalog {
       volumes: 50,
       totalPages: 22857,
       description: 'الموسوعة الكبرى للسنة النبوية، ديوان الإسلام الذي استوعب مرويات الصحابة مسنداً مسنداً.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21795,
@@ -102,6 +110,7 @@ class HadithCatalog {
       volumes: 4,
       totalPages: 4609,
       description: 'أحد أصول السنة وأعلاها أسانيد، عُني بالأحكام والمغازي والفضائل ومقدمة علمية جليلة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1729,
@@ -113,6 +122,7 @@ class HadithCatalog {
       volumes: 18,
       totalPages: 9996,
       description: 'من أصح كتب الحديث الجامعة بعد الصحيحين، رتبه ابن بلبان على الأبواب الفقهية بإحكام.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1446,
@@ -124,6 +134,7 @@ class HadithCatalog {
       volumes: 4,
       totalPages: 4146,
       description: 'كتاب جليل اشترط فيه الصحة ودقة الاستنباط الفقهي، وله مكانة علية عند المحدثين.',
+      level: 3,
     ),
     ShamelaBook(
       id: 2266,
@@ -135,6 +146,7 @@ class HadithCatalog {
       volumes: 5,
       totalPages: 9571,
       description: 'استدراك جليل للأحاديث الصحيحة التي هي على شرط الشيخين أو أحدهما ولم يخرجاها.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7861,
@@ -146,6 +158,7 @@ class HadithCatalog {
       volumes: 10,
       totalPages: 24651,
       description: 'أعظم وأوسع ديوان لأحاديث وآثار الأحكام الفقهية مع نقد الأسانيد وبيان العلل بتوسع.',
+      level: 3,
     ),
     ShamelaBook(
       id: 12014,
@@ -156,6 +169,7 @@ class HadithCatalog {
       categoryId: 6,
       totalPages: 805,
       description: 'أشهر كتب الأحاديث التربوية والأخلاقية، استوعب أبواب السلوك والعبادات والآداب.',
+      level: 2,
     ),
     ShamelaBook(
       id: 147927,
@@ -166,6 +180,7 @@ class HadithCatalog {
       categoryId: 6,
       totalPages: 67,
       description: 'خمسون حديثاً نبوياً يدور عليها فلك الإسلام وقواعد الدين الجامعة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 17103,
@@ -176,6 +191,7 @@ class HadithCatalog {
       categoryId: 6,
       totalPages: 191,
       description: 'أحاديث الأحكام المتفق عليها بين البخاري ومسلم، وهي الأصل الأول لمتفقهة الحديث.',
+      level: 2,
     ),
     ShamelaBook(
       id: 17757,
@@ -186,6 +202,7 @@ class HadithCatalog {
       categoryId: 6,
       totalPages: 1805,
       description: 'أجمع متن في أحاديث الأحكام الفقهية مع بيان درجة كل حديث من الصحة والحسن والضعف.',
+      level: 2,
     ),
     ShamelaBook(
       id: 8360,
@@ -197,6 +214,7 @@ class HadithCatalog {
       volumes: 3,
       totalPages: 2400,
       description: 'تهذيب وتوسيع لكتاب مصابيح السنة للبغوي، خرّج أحاديثه من الأمهات وقسّمها إلى صحاح وحسان.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1673,
@@ -208,6 +226,9 @@ class HadithCatalog {
       volumes: 13,
       totalPages: 7978,
       description: 'تاج شروح الحديث النبوي، الذي قيل فيه: لا هجرة بعد الفتح، استوعب الفقه واللغة والروايات.',
+      level: 3,
+      parentBookId: 735,
+      sharhType: 'الشرح الأعظم لصحيح البخاري',
     ),
   ];
 
@@ -222,6 +243,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 6,
       description: 'منظومة عذبة من 34 بيتاً ضبطت ألقاب الحديث وأنواعه، وهي مفتاح هذا الفن للمبتدئ.',
+      level: 1,
     ),
     ShamelaBook(
       id: 5970,
@@ -232,6 +254,9 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 85,
       description: 'شرح ميسر نافع يوضح معاني الأبيات مع التمثيل الواضح لكل نوع من أنواع المصطلح.',
+      level: 1,
+      parentBookId: 8567,
+      sharhType: 'شرح ميسر للمنظومة',
     ),
     ShamelaBook(
       id: 616,
@@ -242,6 +267,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 76,
       description: 'متن بديع حصر فيه الحافظ قواعد المصطلح بالسبر والتقسيم المنطقي المحكم.',
+      level: 2,
     ),
     ShamelaBook(
       id: 37456,
@@ -252,6 +278,9 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 197,
       description: 'شرح المؤلف نفسه لمتنه النخبة، وهو عمدة المتأخرين في فهم دقائق علم الحديث ومصطلحه.',
+      level: 2,
+      parentBookId: 616,
+      sharhType: 'شرح المؤلف لمتنه',
     ),
     ShamelaBook(
       id: 22870,
@@ -262,6 +291,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 401,
       description: 'الكتاب الذي عكف عليه الناس بعده، جمع شتات كلام الخطيب البغدادي والمتقدمين وهذبه.',
+      level: 3,
     ),
     ShamelaBook(
       id: 9329,
@@ -273,6 +303,7 @@ class HadithCatalog {
       volumes: 2,
       totalPages: 920,
       description: 'الموسوعة الشاملة لمسائل المصطلح وفروعه وتحريرات الحفاظ بأمثل الروايات.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1768,
@@ -283,6 +314,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 144,
       description: 'ألف بيت في قواعد وضوابط وأنواع علوم الحديث برجز سلس وبديع الصنعة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7581,
@@ -293,6 +325,9 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 503,
       description: 'حاشية نفيسة وتحرير بالغ الدقة لمسائل مقدمة ابن الصلاح من شيخ الحفاظ العراقي.',
+      level: 3,
+      parentBookId: 22870,
+      sharhType: 'نكت وتحريرات دقيقة',
     ),
     ShamelaBook(
       id: 21571,
@@ -303,6 +338,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 73,
       description: 'تهذيب ابن كثير لمقدمة ابن الصلاح مع تعليقات وتحقيقات نقدية بارعة للعلامة أحمد شاكر.',
+      level: 2,
     ),
     ShamelaBook(
       id: 9552,
@@ -314,6 +350,7 @@ class HadithCatalog {
       volumes: 2,
       totalPages: 264,
       description: 'أنفس ما صُنف في تحرير منهج الأئمة المتقدمين في نقد الأحاديث والتعليل.',
+      level: 3,
     ),
     ShamelaBook(
       id: 13055,
@@ -324,6 +361,7 @@ class HadithCatalog {
       categoryId: 10,
       totalPages: 1543,
       description: 'أصل جامع في قوانين الرواية وضوابط النقل والتحمل والأداء عند نقاد الحديث.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11990,
@@ -335,6 +373,7 @@ class HadithCatalog {
       volumes: 2,
       totalPages: 341,
       description: 'شرح تحقيقي وافٍ لكتاب ابن الوزير في أصول الحديث والمصطلح بنَفَس اجتهادي متين.',
+      level: 3,
     ),
     ShamelaBook(
       id: 5963,
@@ -346,6 +385,7 @@ class HadithCatalog {
       volumes: 4,
       totalPages: 1419,
       description: 'أوسع وأجل شروح ألفية العراقي في مصطلح الحديث، وهو مرجع المشتغلين بهذا الفن.',
+      level: 3,
     ),
   ];
 

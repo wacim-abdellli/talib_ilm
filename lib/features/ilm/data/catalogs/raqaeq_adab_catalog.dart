@@ -12,6 +12,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 420,
       description: 'أعظم كتاب في تشخيص أمراض القلوب وعلاج الذنوب والمعاصي وبيان عواقبها وأدوية الشفاء.',
+      level: 2,
     ),
     ShamelaBook(
       id: 216,
@@ -22,6 +23,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 82,
       description: 'كتاب جليل في فضل ذكر الله وأثره على القلب والروح ومائة فائدة من فوائد الذكر بالأدلة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 212,
@@ -32,6 +34,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 304,
       description: 'خواطر إيمانية وتأملات قرآنية دقيقة وفرائد حكمية في التوحيد والمعرفة والسلوك.',
+      level: 1,
     ),
     ShamelaBook(
       id: 8370,
@@ -43,6 +46,7 @@ class RaqaeqAdabCatalog {
       volumes: 3,
       totalPages: 1650,
       description: 'أكمل ما صنف في أعمال القلوب ومنازل العبودية من التوبة والإنابة واليقين والمحبة والرضا.',
+      level: 3,
     ),
     ShamelaBook(
       id: 251,
@@ -53,6 +57,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 1018,
       description: 'الهجرة إلى الله بالتوحيد والإخلاص، والهجرة إلى رسوله ﷺ بالاتباع والاقتداء في كل شأن.',
+      level: 2,
     ),
     ShamelaBook(
       id: 252,
@@ -63,6 +68,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 590,
       description: 'بيان حقيقة الصبر والشكر وأقسامهما ودلائلهما في القرآن والحديث ومفاضلة الغني الشاكر والفقير الصابر.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1956,
@@ -73,6 +79,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 520,
       description: 'ديوان الأذكار اليومية والأدعية النبوية في كل أحوال المسلم مع بيان الفقه والآداب المصاحبة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 4268,
@@ -84,6 +91,7 @@ class RaqaeqAdabCatalog {
       volumes: 2,
       totalPages: 980,
       description: 'أفضل وأجمع شرح للأربعين النووية وزياداتها، يمزج بين الفقه والحديث والرقائق والسلوك.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1151,
@@ -94,6 +102,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 713,
       description: 'وظائف الشهور والأيام والمواسم الفاضلة من الطاعات والأذكار والتذكير بالآخرة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 12028,
@@ -104,6 +113,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 510,
       description: 'خواطر وتأملات في طبائع النفوس وعلاج أمراضها وحث النفس على علو الهمة في طلب العلم.',
+      level: 2,
     ),
     ShamelaBook(
       id: 12031,
@@ -115,6 +125,7 @@ class RaqaeqAdabCatalog {
       volumes: 4,
       totalPages: 831,
       description: 'تهذيب لكتاب حلية الأولياء، جمع فيه أخبار الزهاد والعباد والصلحاء من الصحابة والتابعين.',
+      level: 2,
     ),
     ShamelaBook(
       id: 26351,
@@ -126,6 +137,7 @@ class RaqaeqAdabCatalog {
       volumes: 2,
       totalPages: 781,
       description: 'مجالس وعظية مؤثرة تهز القلوب الغافلة وترغب في التوبة والدار الآخرة بأسلوب أدبي بديع.',
+      level: 2,
     ),
     ShamelaBook(
       id: 98087,
@@ -136,6 +148,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 251,
       description: 'تهذيب سلفي مبارك لكتاب الغزالي، اختصره ابن قدامة فاقتصر على نافع العلم وطهارة الباطن.',
+      level: 2,
     ),
     ShamelaBook(
       id: 9884,
@@ -146,6 +159,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 180,
       description: 'رسالة معاصرة بليغة في آداب المتعلم مع نفسه ومع شيخه وفي درسه ومع كتبه وحياته كلها.',
+      level: 1,
     ),
     ShamelaBook(
       id: 151180,
@@ -156,6 +170,7 @@ class RaqaeqAdabCatalog {
       categoryId: 23,
       totalPages: 240,
       description: 'عمدة كتب آداب الطلب، فصل فيه آداب العالم والمتعلم وآداب مصاحبة الكتب ومجالس العلم.',
+      level: 1,
     ),
     ShamelaBook(
       id: 10495,
@@ -167,6 +182,7 @@ class RaqaeqAdabCatalog {
       volumes: 10,
       totalPages: 3889,
       description: 'الموسوعة التاريخية الكبرى في تراجم أهل الصفة والزهاد والعلماء العباد بالرواية والإسناد.',
+      level: 3,
     ),
   ];
 }

@@ -12,6 +12,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 35,
       description: 'أشهر متن أصولي للمبتدئين، حصر فيه إمام الحرمين أبواب الأصول ومصطلحاتها بعبارة موجزة.',
+      level: 1,
     ),
     ShamelaBook(
       id: 21547,
@@ -22,6 +23,9 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 90,
       description: 'شرح ميسر حل فيه الإمام المحلي ألفاظ الورقات وضرب الأمثلة الفقهية التطبيقية لكل مسألة.',
+      level: 1,
+      parentBookId: 6297,
+      sharhType: 'شرح ميسر بالأمثلة',
     ),
     ShamelaBook(
       id: 8180,
@@ -32,6 +36,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 670,
       description: 'أول كتاب دُوِّن في علم أصول الفقه وقواعد الاستنباط وحجية الأخبار والبيان القرآني.',
+      level: 2,
     ),
     ShamelaBook(
       id: 12010,
@@ -43,6 +48,7 @@ class UsulCatalog {
       volumes: 2,
       totalPages: 840,
       description: 'عمدة كتب الأصول عند الحنابلة، هذب فيه المستصفى للغزالي وصاغه على مذهب أهل السنة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 282,
@@ -53,6 +59,9 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 340,
       description: 'تقريرات أصولية بديعة للعلامة الشنقيطي توضح غوامض الروضة وتقرب مسائلها بالأمثلة الواقعية.',
+      level: 2,
+      parentBookId: 12010,
+      sharhType: 'مذكرة تحريرية وافية',
     ),
     ShamelaBook(
       id: 20892,
@@ -63,6 +72,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 180,
       description: 'ألف بيت في أصول الفقه على مذهب مالك وأهل السنة، تُعد ديوان هذا الفن عند الشناقطة والمغاربة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 5459,
@@ -74,6 +84,7 @@ class UsulCatalog {
       volumes: 2,
       totalPages: 340,
       description: 'من أركان علم الأصول الأربعة، رتبه على قطب مدار الأحكام: المثمر والمستثمر وطرق الاستثمار والمستثمر.',
+      level: 3,
     ),
     ShamelaBook(
       id: 12019,
@@ -85,6 +96,7 @@ class UsulCatalog {
       volumes: 4,
       totalPages: 1666,
       description: 'أجمع كتاب جمع بين طريقتي المتكلمين والفقهاء (الحنفية) مع تحرير مذهب الإمام أحمد بالأدلة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 11437,
@@ -96,6 +108,7 @@ class UsulCatalog {
       volumes: 2,
       totalPages: 500,
       description: 'كتاب محقق استقصى فيه الإمام الشوكاني مذاهب الأصوليين وحرر المسائل بعيداً عن التعصب.',
+      level: 3,
     ),
     ShamelaBook(
       id: 8608,
@@ -107,6 +120,7 @@ class UsulCatalog {
       volumes: 2,
       totalPages: 820,
       description: 'الكتاب الرائد في مقاصد الشريعة ورد الأحكام إلى جلب المصالح ودرء المفاسد.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21719,
@@ -117,6 +131,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 580,
       description: 'عمدة القواعد الفقهية الكبرى الخمس والقواعد الكلية وما يندرج تحتها من فروع وضوابط.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1666,
@@ -127,6 +142,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 352,
       description: 'صاغ فيه قواعد مذهب الحنفية على نسق كتاب السيوطي وضبط الفروع والألغاز الفقهية.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21592,
@@ -138,6 +154,7 @@ class UsulCatalog {
       volumes: 3,
       totalPages: 1350,
       description: 'معجم ألفبائي فريد رتب فيه الإمام الزركشي القواعد الفقهية والضوابط الأصولية بحسب الحروف.',
+      level: 3,
     ),
     ShamelaBook(
       id: 6330,
@@ -148,6 +165,7 @@ class UsulCatalog {
       categoryId: 11,
       totalPages: 480,
       description: 'شرح معاصر رصين لمجلة الأحكام العدلية وقواعد الفقه الكلية وتطبيقاتها في المعاملات الحديثة.',
+      level: 2,
     ),
   ];
 }

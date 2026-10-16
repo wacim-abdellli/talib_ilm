@@ -12,6 +12,7 @@ class ArabicCatalog {
       categoryId: 31,
       totalPages: 35,
       description: 'أشهر متن للمبتدئين في النحو والإعراب، كُتب له القبول وعمت بركته في مشارق الأرض ومغاربها.',
+      level: 1,
     ),
     ShamelaBook(
       id: 7368,
@@ -22,6 +23,9 @@ class ArabicCatalog {
       categoryId: 31,
       totalPages: 115,
       description: 'الشرح المعاصر الأكمل والأوضح للآجرومية مع تمارين إعرابية وأسئلة تطبيقية في كل باب.',
+      level: 1,
+      parentBookId: 11371,
+      sharhType: 'شرح تأسيسي ميسر',
     ),
     ShamelaBook(
       id: 7368,
@@ -42,6 +46,7 @@ class ArabicCatalog {
       categoryId: 31,
       totalPages: 380,
       description: 'المتن المتوسط الذي ألّفه ابن هشام وشرحه بنفسه، ويعد الركيزة الثانية في تعلم النحو العربي.',
+      level: 2,
     ),
     ShamelaBook(
       id: 6969,
@@ -52,6 +57,7 @@ class ArabicCatalog {
       categoryId: 31,
       totalPages: 420,
       description: 'كتاب جليل يبسط قواعد النحو بأدلة شواهد القرآن وأشعار العرب المحتجة بها.',
+      level: 2,
     ),
     ShamelaBook(
       id: 356,
@@ -62,6 +68,7 @@ class ArabicCatalog {
       categoryId: 31,
       totalPages: 120,
       description: 'الأرجوزة النحوية الأشهر عبر التاريخ التي حوت خلاصة قواعد النحو والصرف في ألف بيت.',
+      level: 3,
     ),
     ShamelaBook(
       id: 9904,
@@ -73,6 +80,9 @@ class ArabicCatalog {
       volumes: 2,
       totalPages: 760,
       description: 'أشهر شروح الألفية وأعدلها عبارة، كُتب له القبول وصار المنهج المعتمد في الجامعات الإسلامية.',
+      level: 3,
+      parentBookId: 356,
+      sharhType: 'شرح مدرسي معتمد',
     ),
     ShamelaBook(
       id: 11825,
@@ -84,6 +94,9 @@ class ArabicCatalog {
       volumes: 4,
       totalPages: 1650,
       description: 'حلل فيه ابن هشام شواهد الألفية ورتب مسائلها وأوضح المبهم من عبارات الناظم بإسهاب متقن.',
+      level: 3,
+      parentBookId: 356,
+      sharhType: 'شرح موسع محرر',
     ),
     ShamelaBook(
       id: 6972,
@@ -95,6 +108,7 @@ class ArabicCatalog {
       volumes: 2,
       totalPages: 1100,
       description: 'كتاب فريد في تفسير الحروف والأدوات وقواعد إعراب الجمل وأشباه الجمل ومزالق الإعراب.',
+      level: 3,
     ),
     ShamelaBook(
       id: 23018,
@@ -106,6 +120,7 @@ class ArabicCatalog {
       volumes: 4,
       totalPages: 2200,
       description: 'قرآن النحو وإنجيله الذي لا يضاهى، أول وأعظم مصنف في علم العربية وأصول لغة العرب.',
+      level: 3,
     ),
     ShamelaBook(
       id: 13301,
@@ -117,6 +132,7 @@ class ArabicCatalog {
       volumes: 6,
       totalPages: 3100,
       description: 'شرح موسوعي محقق لمفصل الزمخشري، يبرز علل النحاة ودقائق الصرف والاشتقاق.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1687,
@@ -128,6 +144,7 @@ class ArabicCatalog {
       volumes: 15,
       totalPages: 8034,
       description: 'أعظم وأشمل معاجم لغة الضاد في التاريخ، جمع فيه أمهات المعاجم الخمسة المعتمدة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7283,
@@ -139,6 +156,7 @@ class ArabicCatalog {
       volumes: 1,
       totalPages: 1324,
       description: 'المعجم السيار الذي غلب اسمه على كل معجم، يمتاز بكثرة المفردات ودقة الضبط واختصار العبارة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21710,
@@ -150,6 +168,7 @@ class ArabicCatalog {
       volumes: 6,
       totalPages: 2694,
       description: 'معجم عبقري فريد يرد كل مادة لغوية إلى أصولها ومعانيها الكلية الجامعة بدقة فلسفية فائقة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7030,
@@ -161,6 +180,7 @@ class ArabicCatalog {
       volumes: 40,
       totalPages: 20995,
       description: 'أضخم موسوعة معجمية ولغوية في تاريخ البشرية، شرح بها القاموس المحيط وزاد عليه ألوف المواد.',
+      level: 3,
     ),
   ];
 }

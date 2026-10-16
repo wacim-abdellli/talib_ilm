@@ -94,15 +94,38 @@ class TurathCatalog {
         ),
       ];
 
-  /// Search and filter catalog with normalized Arabic query matching
+  /// Get all commentaries and explanations (شروح وحواشي) for a mother book
+  static List<ShamelaBook> getShuruh(int parentId) {
+    return books.where((b) => b.parentBookId == parentId).toList();
+  }
+
+  /// Get parent mother book (المتن الأصلي) for a commentary
+  static ShamelaBook? getParentBook(int parentId) {
+    for (final book in books) {
+      if (book.id == parentId) return book;
+    }
+    return null;
+  }
+
+  /// Search and filter catalog with normalized Arabic query matching and level support
   static List<ShamelaBook> search({
     String query = '',
     int categoryId = 0,
+    int level = 0, // 0 = all, 1 = مبتدئ, 2 = متوسط, 3 = متقدم
+    bool rootOnly = false, // true = hide commentaries from main list when browsing
   }) {
     var filtered = books;
 
     if (categoryId > 0) {
       filtered = filtered.where((b) => b.categoryId == categoryId).toList();
+    }
+
+    if (level > 0) {
+      filtered = filtered.where((b) => b.level == level).toList();
+    }
+
+    if (rootOnly) {
+      filtered = filtered.where((b) => b.parentBookId == null).toList();
     }
 
     final trimmed = query.trim();

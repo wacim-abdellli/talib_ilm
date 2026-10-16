@@ -12,6 +12,9 @@ class ShamelaBook {
   final int totalPages;
   final String description;
   final bool isDownloaded;
+  final int level; // 1 = مبتدئ / تمهيدي, 2 = متوسط / تأصيلي, 3 = متقدم / مطولات
+  final int? parentBookId; // ID of the root book / matn if this is a commentary/sharh
+  final String? sharhType; // e.g. 'شرح ميسر', 'شرح موسع', 'حاشية'
 
   const ShamelaBook({
     required this.id,
@@ -27,7 +30,12 @@ class ShamelaBook {
     required this.totalPages,
     this.description = '',
     this.isDownloaded = false,
+    this.level = 1,
+    this.parentBookId,
+    this.sharhType,
   });
+
+  bool get isSharh => parentBookId != null;
 
   factory ShamelaBook.fromJson(Map<String, dynamic> json) {
     return ShamelaBook(
@@ -44,6 +52,9 @@ class ShamelaBook {
       totalPages: json['totalPages'] as int? ?? 1,
       description: json['description'] as String? ?? '',
       isDownloaded: json['isDownloaded'] as bool? ?? false,
+      level: json['level'] as int? ?? 1,
+      parentBookId: json['parentBookId'] as int?,
+      sharhType: json['sharhType'] as String?,
     );
   }
 
@@ -61,12 +72,18 @@ class ShamelaBook {
         'totalPages': totalPages,
         'description': description,
         'isDownloaded': isDownloaded,
+        'level': level,
+        if (parentBookId != null) 'parentBookId': parentBookId,
+        if (sharhType != null) 'sharhType': sharhType,
       };
 
   ShamelaBook copyWith({
     bool? isDownloaded,
     int? totalPages,
     String? description,
+    int? level,
+    int? parentBookId,
+    String? sharhType,
   }) {
     return ShamelaBook(
       id: id,
@@ -82,6 +99,9 @@ class ShamelaBook {
       totalPages: totalPages ?? this.totalPages,
       description: description ?? this.description,
       isDownloaded: isDownloaded ?? this.isDownloaded,
+      level: level ?? this.level,
+      parentBookId: parentBookId ?? this.parentBookId,
+      sharhType: sharhType ?? this.sharhType,
     );
   }
 }

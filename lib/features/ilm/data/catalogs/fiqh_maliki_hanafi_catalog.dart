@@ -13,6 +13,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 15,
       totalPages: 180,
       description: 'باكورة كتب الفقه المالكي وأعظمها بركة، جمع فيها العقيدة والعبادات والمعاملات والآداب.',
+      level: 2,
     ),
     ShamelaBook(
       id: 21589,
@@ -24,6 +25,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 2,
       totalPages: 1120,
       description: 'شرح تحليلي واسع لرسالة ابن أبي زيد يورد المسائل الفقهية ويحررها على مذهب مالك بدقة.',
+      level: 2,
+      parentBookId: 11373,
+      sharhType: 'شرح تحليلي واسع',
     ),
     ShamelaBook(
       id: 7441,
@@ -34,6 +38,9 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 15,
       totalPages: 742,
       description: 'شرح معتمد للمتأخرين يمتاز بسلاسة التعبير واقتصاره على القول الراجح في مذهب المالكية.',
+      level: 2,
+      parentBookId: 11373,
+      sharhType: 'شرح معتمد ميسر',
     ),
     ShamelaBook(
       id: 11355,
@@ -44,6 +51,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 15,
       totalPages: 320,
       description: 'المتن المعجز الذي طار في الآفاق واعتكف عليه علماء المغرب والمشرق وضبط أقوال المذهب بالرموز.',
+      level: 3,
     ),
     ShamelaBook(
       id: 569,
@@ -55,6 +63,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 6,
       totalPages: 3087,
       description: 'أفضل وأدق شروح مختصر خليل تحريراً ونقلاً عن المدونة والأمهات الفقهية الكبرى.',
+      level: 3,
+      parentBookId: 11355,
+      sharhType: 'شرح موسع محرر',
     ),
     ShamelaBook(
       id: 21604,
@@ -66,6 +77,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 4,
       totalPages: 2088,
       description: 'العمدة الكبرى في الإفتاء والتدريس لفقهاء المالكية في العصور المتأخرة مع حاشية الدسوقي.',
+      level: 3,
+      parentBookId: 11355,
+      sharhType: 'عمدة الفتوى للمتأخرين',
     ),
     ShamelaBook(
       id: 21614,
@@ -77,6 +91,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 9,
       totalPages: 4790,
       description: 'موسوعة مالكية واسعة لشيخ المالكية بالأزهر استوعب فيها الفروع ونوازل أهل المغرب وإفريقيا.',
+      level: 3,
+      parentBookId: 11355,
+      sharhType: 'شرح وافٍ بالمسائل',
     ),
     ShamelaBook(
       id: 21739,
@@ -88,6 +105,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 4,
       totalPages: 1650,
       description: 'أعظم كتاب في الفقه المقارن وبيان علل اختلاف الفقهاء وقواعد الاستنباط والأدلة.',
+      level: 3,
     ),
     ShamelaBook(
       id: 37326,
@@ -98,6 +116,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 15,
       totalPages: 45,
       description: 'متن لطيف للمبتدئين في أحكام الطهارة والصلاة على مذهب الإمام مالك بن أنس.',
+      level: 1,
     ),
     ShamelaBook(
       id: 7367,
@@ -109,6 +128,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 2,
       totalPages: 1180,
       description: 'تحرير فقهي ممتع لحافظ المغرب ابن عبد البر يورد فيه أقوال مالك وأصحابه المدنيين والمصريين.',
+      level: 2,
     ),
     ShamelaBook(
       id: 6193,
@@ -119,6 +139,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 15,
       totalPages: 420,
       description: 'كتاب مقارن بديع يذكر مذهب مالك ثم يشير بإيجاز وإحكام إلى وفاق وخلاف المذاهب الثلاثة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 587,
@@ -130,6 +151,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 4,
       totalPages: 2390,
       description: 'أصل الفقه المالكي وأثبته رواية، تدور عليها سائر كتب المذهب ولا يُعدل عنها لغيرها.',
+      level: 3,
     ),
     ShamelaBook(
       id: 1717,
@@ -141,6 +163,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 14,
       totalPages: 5184,
       description: 'موسوعة فقهية وأصولية تبرز القواعد والعلل وحكم التشريع في الفقه المالكي بذكاء باهر.',
+      level: 3,
     ),
     ShamelaBook(
       id: 9627,
@@ -152,6 +175,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 3,
       totalPages: 1702,
       description: 'من أحسن كتب فقهاء المالكية العراقيين تقريراً للأدلة ومناظرة للمخالفين بالبرهان.',
+      level: 2,
     ),
   ];
 
@@ -166,6 +190,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 14,
       totalPages: 270,
       description: 'المتن الميمون المبارك المسمى بالكتاب عند الحنفية، وهو ركيزة دراسة المذهب من قديم.',
+      level: 1,
     ),
     ShamelaBook(
       id: 14262,
@@ -176,6 +201,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 14,
       totalPages: 320,
       description: 'أحد المتون الأربعة المعتمدة عند الحنفية، حوى خلاصة فقه أصحاب المذهب بإيجاز حكيم.',
+      level: 2,
     ),
     ShamelaBook(
       id: 23023,
@@ -187,6 +213,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 6,
       totalPages: 1841,
       description: 'من أقوى شروح الكنز تحقيقاً وتدليلاً ومقارنة بين أدلة أبي حنيفة وصاحبيه وسائر المذاهب.',
+      level: 2,
+      parentBookId: 14262,
+      sharhType: 'شرح بالأدلة والتعليل',
     ),
     ShamelaBook(
       id: 12227,
@@ -198,6 +227,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 8,
       totalPages: 3122,
       description: 'بحر زاخر بالفوائد الفقهية والقواعد الأصولية وفروع النوازل من محقق الحنفية ابن نجيم.',
+      level: 2,
+      parentBookId: 14262,
+      sharhType: 'شرح موسع رصين',
     ),
     ShamelaBook(
       id: 12117,
@@ -208,6 +240,7 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 14,
       totalPages: 160,
       description: 'متن ميسر في فقه العبادات (الطهارة والصلاة والصوم) أقبلت عليه المدارس الإسلامية بالقبول.',
+      level: 1,
     ),
     ShamelaBook(
       id: 412,
@@ -218,6 +251,9 @@ class FiqhMalikiHanafiCatalog {
       categoryId: 14,
       totalPages: 520,
       description: 'شرح المؤلف نفسه لمتنه، يوضح قيود العبادات ويزيدها تفصيلاً بالأدلة والتوجيه.',
+      level: 1,
+      parentBookId: 12117,
+      sharhType: 'شرح المؤلف لمتنه',
     ),
     ShamelaBook(
       id: 11820,
@@ -229,6 +265,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 4,
       totalPages: 2400,
       description: 'كتاب المذهب الحنفي الأكبر الذي طار ذكره شرقاً وغرباً، يجمع بين الفروع ونكت الخلاف والاستدلال.',
+      level: 2,
     ),
     ShamelaBook(
       id: 8183,
@@ -240,6 +277,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 7,
       totalPages: 4600,
       description: 'أعظم كتب الفقه الحنفي تنظيماً وترتيباً منطقياً وعرضاً للأدلة والقواعد والعلل.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21613,
@@ -251,6 +289,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 6,
       totalPages: 5600,
       description: 'خاتمة التحقيقات الحنفية والمرجع الأعلى في الفتوى والقضاء عند المتأخرين في العالم الإسلامي.',
+      level: 3,
     ),
     ShamelaBook(
       id: 5423,
@@ -262,6 +301,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 30,
       totalPages: 6277,
       description: 'الموسوعة الفقهية الضخمة التي أملاها شمس الأئمة من حفظه وهو محبوس في الجب لأسباب سياسية.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21644,
@@ -273,6 +313,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 2,
       totalPages: 1540,
       description: 'شرح فقهي وافٍ لمتن ملتقى الأبحر للحلبي، معتمد القضاء في الدولة العثمانية لعدة قرون.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21744,
@@ -284,6 +325,9 @@ class FiqhMalikiHanafiCatalog {
       volumes: 10,
       totalPages: 3595,
       description: 'شرح عالي التحقيق على الهداية اتصف فيه ابن الهمام برتبة الاجتهاد ومناقشة الأدلة برصانة.',
+      level: 3,
+      parentBookId: 11820,
+      sharhType: 'تحقيق اجتهادي رصين',
     ),
     ShamelaBook(
       id: 1066,
@@ -295,6 +339,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 5,
       totalPages: 786,
       description: 'شرح بديع يذكر مسائل مذهب أبي حنيفة ويعللها ويوجه مأخذ كل حكم بعناية فائقة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 7691,
@@ -306,6 +351,7 @@ class FiqhMalikiHanafiCatalog {
       volumes: 3,
       totalPages: 1055,
       description: 'أصل كتاب بدائع الصنائع لصهره الكاساني، اعتنى فيه بضبط مسائل المذهب وتقسيم أبوابها.',
+      level: 2,
     ),
   ];
 }

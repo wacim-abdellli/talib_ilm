@@ -12,6 +12,7 @@ class SeerahTarikhCatalog {
       categoryId: 24,
       totalPages: 480,
       description: 'الكتاب الفائز بالمركز الأول في مسابقة رابطة العالم الإسلامي للسيرة النبوية، يتميز بحسن العرض والتحقيق.',
+      level: 1,
     ),
     ShamelaBook(
       id: 21713,
@@ -23,6 +24,7 @@ class SeerahTarikhCatalog {
       volumes: 5,
       totalPages: 1893,
       description: 'كتاب فذ لا نظير له، يربط بين سيرة المصطفى ﷺ وهديه في عباداته ومعاملاته وطبه وتشريعاته.',
+      level: 2,
     ),
     ShamelaBook(
       id: 23833,
@@ -34,6 +36,7 @@ class SeerahTarikhCatalog {
       volumes: 2,
       totalPages: 1250,
       description: 'أقدم وأوثق ما دون في السيرة النبوية والمغازي نقلاً عن سيرة ابن إسحاق مع التهذيب والتنقيح.',
+      level: 2,
     ),
     ShamelaBook(
       id: 9241,
@@ -44,6 +47,7 @@ class SeerahTarikhCatalog {
       categoryId: 24,
       totalPages: 240,
       description: 'مختصر تاريخي متقن ومحقق استخلصه الحافظ ابن كثير من كتاب البداية والنهاية لطلاب العلم.',
+      level: 1,
     ),
     ShamelaBook(
       id: 23653,
@@ -55,6 +59,7 @@ class SeerahTarikhCatalog {
       volumes: 2,
       totalPages: 1100,
       description: 'جمع فيه الحافظ ابن سيد الناس أصح روايات السيرة والمغازي وشمائل النبي وأخلاقه الشريفة.',
+      level: 2,
     ),
     ShamelaBook(
       id: 1514,
@@ -66,6 +71,9 @@ class SeerahTarikhCatalog {
       volumes: 4,
       totalPages: 2100,
       description: 'شرح تحليلي لغوي وفقهي استخرج من سيرة ابن هشام دقائق الفوائد وأسرار الغزوات والأنساب.',
+      level: 2,
+      parentBookId: 23833,
+      sharhType: 'شرح تحليلي ولغوي',
     ),
     ShamelaBook(
       id: 13037,
@@ -76,6 +84,7 @@ class SeerahTarikhCatalog {
       categoryId: 24,
       totalPages: 452,
       description: 'أشهر كتاب في وصف خلق وخُلق النبي ﷺ ولباسه وطعامه ومشيه وعبادته بأصح الأسانيد.',
+      level: 1,
     ),
     ShamelaBook(
       id: 8376,
@@ -87,6 +96,7 @@ class SeerahTarikhCatalog {
       volumes: 21,
       totalPages: 2376,
       description: 'الموسوعة التاريخية الكبرى تبدأ ببدء الخلق وقصص الأنبياء، ثم السيرة النبوية، وحوادث الإسلام والفتن والملحم.',
+      level: 3,
     ),
     ShamelaBook(
       id: 9783,
@@ -98,6 +108,7 @@ class SeerahTarikhCatalog {
       volumes: 11,
       totalPages: 6800,
       description: 'أم تواريخ الإسلام، دوّن فيه الإمام الطبري أخبار الأمم والفتوح الإسلامية والدول بالأسانيد.',
+      level: 3,
     ),
     ShamelaBook(
       id: 10906,
@@ -109,6 +120,7 @@ class SeerahTarikhCatalog {
       volumes: 25,
       totalPages: 13833,
       description: 'ديوان تراجم الإسلام الأعظم، جمع فيه الذهبي سير الصحابة والتابعين والعلماء والخلفاء بنقد حديثي فريد.',
+      level: 3,
     ),
     ShamelaBook(
       id: 35100,
@@ -120,6 +132,7 @@ class SeerahTarikhCatalog {
       volumes: 53,
       totalPages: 15118,
       description: 'أوسع تأريخ لتراجم رجالات الإسلام منذ الهجرة حتى القرن الثامن الهجري رتبه على الطبقات والسنوات.',
+      level: 3,
     ),
     ShamelaBook(
       id: 21712,
@@ -131,6 +144,7 @@ class SeerahTarikhCatalog {
       volumes: 10,
       totalPages: 6155,
       description: 'تاريخ حولي محرر استوعب تاريخ المشرق والمغرب والحروب الصليبية بأسلوب أدبي رائع.',
+      level: 3,
     ),
     ShamelaBook(
       id: 7344,
@@ -141,6 +155,7 @@ class SeerahTarikhCatalog {
       categoryId: 24,
       totalPages: 516,
       description: 'تحرير فقهي وتاريخي ونقلي لحكم من سب النبي ﷺ ووجوب نصرته والذب عن عرضه الشريف.',
+      level: 2,
     ),
     ShamelaBook(
       id: 31465,
@@ -151,6 +166,7 @@ class SeerahTarikhCatalog {
       categoryId: 24,
       totalPages: 320,
       description: 'تهذيب مختصر لسيرة ابن هشام مع استنباط الدروس العقدية والدعوية من أحداث العهدين المكي والمدني.',
+      level: 1,
     ),
   ];
 }

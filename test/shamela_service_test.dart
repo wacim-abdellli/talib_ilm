@@ -159,5 +159,58 @@ void main() {
       final cleaned4 = ShamelaService.sanitizeBookText(normalFootnote);
       expect(cleaned4, equals(normalFootnote));
     });
+
+    test('Sullam level categorization contains books across all 3 scholarly levels', () {
+      final classics = ShamelaService.curatedClassics;
+
+      final level1 = classics.where((b) => b.level == 1).toList();
+      final level2 = classics.where((b) => b.level == 2).toList();
+      final level3 = classics.where((b) => b.level == 3).toList();
+
+      expect(level1.isNotEmpty, isTrue, reason: 'Must have level 1 (مبتدئ / تأسيسي) books');
+      expect(level2.isNotEmpty, isTrue, reason: 'Must have level 2 (متوسط / تأصيلي) books');
+      expect(level3.isNotEmpty, isTrue, reason: 'Must have level 3 (متقدم / مطولات) books');
+
+      // Test level filtering via searchCatalog
+      final filteredLevel1 = ShamelaService.searchCatalog(level: 1);
+      expect(filteredLevel1.every((b) => b.level == 1), isTrue);
+
+      final filteredLevel2 = ShamelaService.searchCatalog(level: 2);
+      expect(filteredLevel2.every((b) => b.level == 2), isTrue);
+
+      final filteredLevel3 = ShamelaService.searchCatalog(level: 3);
+      expect(filteredLevel3.every((b) => b.level == 3), isTrue);
+    });
+
+    test('Mother books and commentaries (متن وشروح) are accurately linked', () {
+      // 1. Kitāb at-Tawhīd (ID: 11318) has commentaries
+      final tawhidShuruh = ShamelaService.getShuruh(11318);
+      expect(tawhidShuruh.isNotEmpty, isTrue);
+      expect(tawhidShuruh.any((b) => b.title.contains('فتح المجيد')), isTrue);
+      expect(tawhidShuruh.any((b) => b.title.contains('القول السديد')), isTrue);
+      for (final s in tawhidShuruh) {
+        expect(s.parentBookId, equals(11318));
+        expect(s.isSharh, isTrue);
+        expect(s.sharhType, isNotNull);
+      }
+
+      // 2. Parent book lookup
+      final fatihAlMajid = tawhidShuruh.firstWhere((b) => b.title.contains('فتح المجيد'));
+      final parentOfFath = ShamelaService.getParentBook(fatihAlMajid.parentBookId!);
+      expect(parentOfFath, isNotNull);
+      expect(parentOfFath!.id, equals(11318));
+      expect(parentOfFath.title, contains('كتاب التوحيد'));
+
+      // 3. Zād al-Mustaqni' (ID: 11230) has al-Rawd al-Murbi'
+      final zadShuruh = ShamelaService.getShuruh(11230);
+      expect(zadShuruh.isNotEmpty, isTrue);
+      expect(zadShuruh.any((b) => b.title.contains('الروض المربع')), isTrue);
+
+      // 4. rootOnly filtering separates mother books from nested commentaries
+      final allAqeedah = ShamelaService.searchCatalog(categoryId: 1);
+      final rootAqeedah = ShamelaService.searchCatalog(categoryId: 1, rootOnly: true);
+      expect(rootAqeedah.length, lessThan(allAqeedah.length));
+      expect(rootAqeedah.every((b) => b.parentBookId == null), isTrue);
+    });
   });
 }

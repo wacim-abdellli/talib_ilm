@@ -62,12 +62,29 @@ class ShamelaService {
     return _db!;
   }
 
-  /// Search books across curated collection
+  /// Search books across curated collection with level & rootOnly filtering
   static List<ShamelaBook> searchCatalog({
     String query = '',
     int categoryId = 0,
+    int level = 0,
+    bool rootOnly = false,
   }) {
-    return TurathCatalog.search(query: query, categoryId: categoryId);
+    return TurathCatalog.search(
+      query: query,
+      categoryId: categoryId,
+      level: level,
+      rootOnly: rootOnly,
+    );
+  }
+
+  /// Get verified commentaries (شروح وحواشي) for a mother book
+  static List<ShamelaBook> getShuruh(int parentId) {
+    return TurathCatalog.getShuruh(parentId);
+  }
+
+  /// Get parent mother book for a commentary
+  static ShamelaBook? getParentBook(int parentId) {
+    return TurathCatalog.getParentBook(parentId);
   }
 
   /// Fetch single page content from local cache or stream from shamela.ws
