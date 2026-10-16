@@ -107,6 +107,7 @@ class BookNoteDialog extends StatelessWidget {
           hintText: 'اكتب ملاحظتك هنا...',
           hintStyle: context.text.bodySmall.copyWith(color: palette.textMuted),
         ),
+        minLines: 3,
         maxLines: 5,
       ),
       actions: [

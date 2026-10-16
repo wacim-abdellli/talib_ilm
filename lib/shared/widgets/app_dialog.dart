@@ -33,16 +33,7 @@ class AppDialog extends StatelessWidget {
       context: context,
       barrierDismissible: barrierDismissible,
       barrierColor: context.palette.brandDark.withValues(alpha: 0.55),
-      builder: (dialogContext) {
-        return AnimatedPadding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(dialogContext).viewInsets.bottom,
-          ),
-          duration: AppMotion.fast,
-          curve: Curves.easeOutCubic,
-          child: builder(dialogContext),
-        );
-      },
+      builder: (dialogContext) => builder(dialogContext),
     );
   }
 
@@ -56,10 +47,11 @@ class AppDialog extends StatelessWidget {
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(
         horizontal: AppSpace.xl,
-        vertical: AppSpace.xxl,
+        vertical: AppSpace.lg,
       ),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 420),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: palette.surfaceRaised,
           borderRadius: AppRadius.xlRadius,
@@ -113,9 +105,11 @@ class AppDialog extends StatelessWidget {
             ),
 
             // Content
-            Padding(
-              padding: contentPadding,
-              child: content,
+            Flexible(
+              child: SingleChildScrollView(
+                padding: contentPadding,
+                child: content,
+              ),
             ),
 
             // Actions

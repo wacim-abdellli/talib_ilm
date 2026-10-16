@@ -65,7 +65,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _checkBookmark();
     _loadFihris();
   }
-
   @override
   void dispose() {
     ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
@@ -73,7 +72,6 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _noteController.dispose();
     super.dispose();
   }
-
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
