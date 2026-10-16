@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../core/services/adhkar_session_service.dart';
@@ -9,6 +10,8 @@ import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 import 'widgets/adhkar_fahras_sheet.dart';
+import 'widgets/adhkar_font_size_sheet.dart';
+import 'widgets/adhkar_session_bottom_dock.dart';
 import 'widgets/adhkar_session_card.dart';
 import 'widgets/dhikr_counter_dial.dart';
 
@@ -35,6 +38,11 @@ class AdhkarSessionPage extends StatefulWidget {
 }
 
 class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
+  static const String _fontScalePrefKey = 'adhkar_session_font_scale';
+  static const double _minFontScale = 0.85;
+  static const double _maxFontScale = 1.60;
+  static const double _fontScaleStep = 0.15;
+
   final AthkarService _athkarService = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
 
@@ -54,6 +62,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _loadSavedFontScale();
     _loadItems();
   }
 
@@ -130,17 +139,77 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
   }
 
-  void _cycleFontSize() {
-    HapticFeedback.selectionClick();
-    setState(() {
-      if (_fontScale == 1.0) {
-        _fontScale = 1.15;
-      } else if (_fontScale == 1.15) {
-        _fontScale = 1.30;
-      } else {
-        _fontScale = 1.0;
+  Future<void> _loadSavedFontScale() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getDouble(_fontScalePrefKey);
+      if (saved != null && mounted) {
+        setState(() {
+          _fontScale = saved.clamp(_minFontScale, _maxFontScale);
+        });
       }
-    });
+    } catch (_) {}
+  }
+
+  Future<void> _saveFontScale(double scale) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_fontScalePrefKey, scale);
+    } catch (_) {}
+  }
+
+  void _increaseFontSize() {
+    if (_fontScale >= _maxFontScale - 0.01) return;
+    HapticFeedback.selectionClick();
+    final next = (_fontScale + _fontScaleStep).clamp(_minFontScale, _maxFontScale);
+    final rounded = (next * 100).round() / 100.0;
+    setState(() => _fontScale = rounded);
+    _saveFontScale(rounded);
+  }
+
+  void _decreaseFontSize() {
+    if (_fontScale <= _minFontScale + 0.01) return;
+    HapticFeedback.selectionClick();
+    final prev = (_fontScale - _fontScaleStep).clamp(_minFontScale, _maxFontScale);
+    final rounded = (prev * 100).round() / 100.0;
+    setState(() => _fontScale = rounded);
+    _saveFontScale(rounded);
+  }
+
+  void _resetFontSize() {
+    HapticFeedback.selectionClick();
+    setState(() => _fontScale = 1.0);
+    _saveFontScale(1.0);
+  }
+
+  void _setFontScale(double scale) {
+    final clamped = (scale.clamp(_minFontScale, _maxFontScale) * 100).round() / 100.0;
+    setState(() => _fontScale = clamped);
+    _saveFontScale(clamped);
+  }
+
+  void _cycleFontSize() {
+    if (_fontScale < 1.15 - 0.01) {
+      _setFontScale(1.15);
+    } else if (_fontScale < 1.30 - 0.01) {
+      _setFontScale(1.30);
+    } else {
+      _resetFontSize();
+    }
+  }
+
+  Future<void> _openFontSizeSheet() async {
+    HapticFeedback.selectionClick();
+    await showAdhkarFontSizeSheet(
+      context: context,
+      currentScale: _fontScale,
+      showTashkeel: _showTashkeel,
+      onFontScaleChanged: _setFontScale,
+      onToggleTashkeel: (val) {
+        setState(() => _showTashkeel = val);
+      },
+      onReset: _resetFontSize,
+    );
   }
 
   void _toggleTashkeel() {
@@ -242,6 +311,15 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
         title: title,
         showBack: true,
         actions: [
+          IconButton(
+            tooltip: 'حجم الخط وتنسيق النص',
+            icon: Icon(
+              Icons.format_size_rounded,
+              color: palette.gold,
+              size: AppIcon.md,
+            ),
+            onPressed: _openFontSizeSheet,
+          ),
           if (totalItems > 1)
             IconButton(
               tooltip: 'فهرس الأذكار',
@@ -373,6 +451,9 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                         onShare: _shareCurrentDhikr,
                                         onToggleTashkeel: _toggleTashkeel,
                                         onCycleFontSize: _cycleFontSize,
+                                        onIncreaseFontSize: _fontScale < _maxFontScale - 0.01 ? _increaseFontSize : null,
+                                        onDecreaseFontSize: _fontScale > _minFontScale + 0.01 ? _decreaseFontSize : null,
+                                        onResetFontSize: _resetFontSize,
                                       );
                                     },
                                   ),
@@ -416,75 +497,13 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                           const SizedBox(height: AppSpace.md),
 
                           // ── 3. Ergonomic Bottom Navigation Dock ────────────
-                          Padding(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xl,
-                              vertical: AppSpace.sm,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Previous Dhikr Button (Right in RTL)
-                                NavigationPillButton(
-                                  icon: Icons.chevron_left_rounded,
-                                  label: 'السابق',
-                                  isLeadingIcon: true,
-                                  isEnabled: _index > 0,
-                                  onTap: _index > 0 ? _goPrev : null,
-                                ),
-
-                                // Reset Counter Button (Center)
-                                Tooltip(
-                                  message: 'إعادة العداد',
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: _resetCount,
-                                      borderRadius: AppRadius.pillRadius,
-                                      child: Container(
-                                        padding: const EdgeInsetsDirectional.symmetric(
-                                          horizontal: AppSpace.md,
-                                          vertical: AppSpace.sm,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: palette.surfaceMuted,
-                                          borderRadius: AppRadius.pillRadius,
-                                          border: Border.all(color: palette.border),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.refresh_rounded,
-                                              size: AppIcon.sm,
-                                              color: palette.textMuted,
-                                            ),
-                                            const SizedBox(width: AppSpace.xs),
-                                            Text(
-                                              'إعادة',
-                                              style: context.text.caption.copyWith(
-                                                color: palette.textMuted,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                // Next Dhikr Button (Left in RTL)
-                                NavigationPillButton(
-                                  icon: Icons.chevron_right_rounded,
-                                  label: 'التالي',
-                                  isLeadingIcon: false,
-                                  isHighlighted: isCurrentComplete,
-                                  isEnabled: _index + 1 < totalItems,
-                                  onTap: _index + 1 < totalItems ? _goNext : null,
-                                ),
-                              ],
-                            ),
+                          AdhkarSessionBottomDock(
+                            hasPrev: _index > 0,
+                            hasNext: _index + 1 < totalItems,
+                            isComplete: isCurrentComplete,
+                            onPrev: _index > 0 ? _goPrev : null,
+                            onNext: _index + 1 < totalItems ? _goNext : null,
+                            onReset: _resetCount,
                           ),
                           const SizedBox(height: AppSpace.xs),
                         ],
@@ -535,41 +554,24 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   }
 
   String _catalogIdFor(AdhkarCategory category) {
-    switch (category) {
-      case AdhkarCategory.sleeping:
-        return 'sleeping';
-      case AdhkarCategory.afterPrayer:
-        return 'after_prayer';
-      case AdhkarCategory.prayerSunan:
-        return 'prayer_sunan';
-      case AdhkarCategory.beforePrayer:
-        return 'before_prayer';
-      case AdhkarCategory.waking:
-        return 'waking';
-      case AdhkarCategory.home:
-        return 'home';
-      case AdhkarCategory.mosqueAdhan:
-        return 'mosque_adhan';
-      case AdhkarCategory.wuduFood:
-      case AdhkarCategory.wuduTaharah:
-        return 'wudu_taharah';
-      case AdhkarCategory.foodDrink:
-        return 'food_drink';
-      case AdhkarCategory.distress:
-        return 'distress';
-      case AdhkarCategory.travel:
-        return 'travel';
-      case AdhkarCategory.sicknessFunerals:
-        return 'sickness_funerals';
-      case AdhkarCategory.natureWeather:
-        return 'nature_weather';
-      case AdhkarCategory.socialManners:
-        return 'social_manners';
-      case AdhkarCategory.fastingHajj:
-        return 'fasting_hajj';
-      default:
-        return category.name;
-    }
+    return switch (category) {
+      AdhkarCategory.sleeping => 'sleeping',
+      AdhkarCategory.afterPrayer => 'after_prayer',
+      AdhkarCategory.prayerSunan => 'prayer_sunan',
+      AdhkarCategory.beforePrayer => 'before_prayer',
+      AdhkarCategory.waking => 'waking',
+      AdhkarCategory.home => 'home',
+      AdhkarCategory.mosqueAdhan => 'mosque_adhan',
+      AdhkarCategory.wuduFood || AdhkarCategory.wuduTaharah => 'wudu_taharah',
+      AdhkarCategory.foodDrink => 'food_drink',
+      AdhkarCategory.distress => 'distress',
+      AdhkarCategory.travel => 'travel',
+      AdhkarCategory.sicknessFunerals => 'sickness_funerals',
+      AdhkarCategory.natureWeather => 'nature_weather',
+      AdhkarCategory.socialManners => 'social_manners',
+      AdhkarCategory.fastingHajj => 'fasting_hajj',
+      _ => category.name,
+    };
   }
 
   String _favoriteIdFor(AthkarItem item) {

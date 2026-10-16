@@ -17,6 +17,9 @@ class AdhkarSessionCard extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onToggleTashkeel;
   final VoidCallback? onCycleFontSize;
+  final VoidCallback? onIncreaseFontSize;
+  final VoidCallback? onDecreaseFontSize;
+  final VoidCallback? onResetFontSize;
 
   const AdhkarSessionCard({
     super.key,
@@ -29,6 +32,9 @@ class AdhkarSessionCard extends StatelessWidget {
     this.onShare,
     this.onToggleTashkeel,
     this.onCycleFontSize,
+    this.onIncreaseFontSize,
+    this.onDecreaseFontSize,
+    this.onResetFontSize,
   });
 
   String _cleanText(String text) {
@@ -115,9 +121,101 @@ class AdhkarSessionCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // Font Size Controls (Minimize & Maximize)
+                    if (onIncreaseFontSize != null || onDecreaseFontSize != null) ...[
+                      const SizedBox(width: AppSpace.xs),
+                      Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xxs,
+                          vertical: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: palette.surfaceMuted,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Minimize button (-)
+                            Tooltip(
+                              message: 'تصغير الخط',
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onDecreaseFontSize,
+                                  borderRadius: AppRadius.pillRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                                    child: Icon(
+                                      Icons.remove_rounded,
+                                      size: AppIcon.xs,
+                                      color: onDecreaseFontSize != null
+                                          ? palette.text
+                                          : palette.textMuted.withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Current scale percentage indicator
+                            Tooltip(
+                              message: 'إعادة ضبط الحجم (100%)',
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onResetFontSize,
+                                  borderRadius: AppRadius.pillRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.xs,
+                                      vertical: AppSpace.xxs,
+                                    ),
+                                    child: Text(
+                                      '${(fontScale * 100).round()}%',
+                                      style: textTheme.caption.copyWith(
+                                        color: (fontScale - 1.0).abs() > 0.01
+                                            ? palette.gold
+                                            : palette.textMuted,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Maximize button (+)
+                            Tooltip(
+                              message: 'تكبير الخط',
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onIncreaseFontSize,
+                                  borderRadius: AppRadius.pillRadius,
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                                    child: Icon(
+                                      Icons.add_rounded,
+                                      size: AppIcon.xs,
+                                      color: onIncreaseFontSize != null
+                                          ? palette.text
+                                          : palette.textMuted.withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     // Quick share button
                     if (onShare != null) ...[
-                      const SizedBox(width: AppSpace.sm),
+                      const SizedBox(width: AppSpace.xs),
                       Tooltip(
                         message: 'مشاركة الذكر',
                         child: Material(
@@ -180,6 +278,7 @@ class AdhkarSessionCard extends StatelessWidget {
                           child: Text(
                             item.fadl,
                             textAlign: TextAlign.center,
+                            textScaler: TextScaler.linear(fontScale.clamp(0.85, 1.5)),
                             style: textTheme.caption.copyWith(
                               color: palette.gold,
                               fontWeight: FontWeight.w600,
@@ -208,6 +307,7 @@ class AdhkarSessionCard extends StatelessWidget {
                         child: Text(
                           item.source,
                           textAlign: TextAlign.center,
+                          textScaler: TextScaler.linear(fontScale.clamp(0.85, 1.4)),
                           style: textTheme.caption.copyWith(
                             color: palette.textMuted,
                             fontWeight: FontWeight.w600,
