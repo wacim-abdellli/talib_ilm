@@ -48,7 +48,13 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
     _fontSizeDelta = widget.fontSizeDelta;
     _fontFamily = widget.fontFamily;
     _lineHeight = widget.lineHeight;
-    _surface = widget.surface;
+    if (themeService.isDark) {
+      _surface = ShamelaReaderSurface.night;
+    } else {
+      _surface = widget.surface == ShamelaReaderSurface.night
+          ? ShamelaReaderSurface.normal
+          : widget.surface;
+    }
     _accentColor = widget.accentColor;
   }
 
@@ -347,9 +353,13 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
           setState(() => _surface = surface);
           widget.onSurfaceChanged(surface);
           if (surface == ShamelaReaderSurface.night) {
-            themeService.setThemeMode(ThemeMode.dark);
-          } else if (surface == ShamelaReaderSurface.normal) {
-            themeService.setThemeMode(ThemeMode.light);
+            if (!themeService.isDark) {
+              themeService.setThemeMode(ThemeMode.dark);
+            }
+          } else {
+            if (themeService.isDark) {
+              themeService.setThemeMode(ThemeMode.light);
+            }
           }
         },
         child: Container(

@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/shamela_models.dart';
+import '../../data/services/book_progress_service.dart';
 import '../../data/services/shamela_service.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
 import '../widgets/book_view_controls.dart' show BookNoteDialog;
@@ -56,6 +58,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   @override
   void initState() {
     super.initState();
+    themeService.addListener(_onThemeChanged);
     _currentPage = widget.initialPage;
     _totalPages = widget.book.totalPages > 0 ? widget.book.totalPages : 100;
     _pageController = PageController(initialPage: _currentPage - 1);
@@ -65,13 +68,30 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _checkBookmark();
     _loadFihris();
   }
+
+  void _onThemeChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        if (_surface == ShamelaReaderSurface.night) {
+          _surface = ShamelaReaderSurface.normal;
+        }
+      }
+    });
+    _savePreferences();
+  }
+
   @override
   void dispose() {
+    themeService.removeListener(_onThemeChanged);
     ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
     _pageController.dispose();
     _noteController.dispose();
     super.dispose();
   }
+
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -80,7 +100,14 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       _fontFamily = prefs.getString('shamela_reader_font_family') ?? 'Amiri';
       _lineHeight = prefs.getDouble('shamela_reader_line_height') ?? 1.85;
       final surfIndex = prefs.getInt('shamela_reader_surface') ?? 0;
-      _surface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      final savedSurface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        _surface = savedSurface == ShamelaReaderSurface.night
+            ? ShamelaReaderSurface.normal
+            : savedSurface;
+      }
       final accIndex = prefs.getInt('shamela_reader_accent') ?? 0;
       _accentColor = ShamelaAccentColor
           .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
@@ -213,6 +240,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         });
       }
       ShamelaService.saveLastReadPage(widget.book.id, pageNum);
+      _recordProgress(pageNum);
     } catch (e) {
       if (mounted) {
         final errorStr = e.toString();
@@ -316,6 +344,22 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         },
       ),
     );
+  }
+
+  Future<void> _recordProgress(int pageNum) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final progressService = BookProgressService(prefs);
+      await progressService.updateCurrentPage(
+        'shamela_${widget.book.id}',
+        pageNum,
+        totalPages: _totalPages,
+        title: widget.book.title,
+        level: widget.book.category.isNotEmpty
+            ? widget.book.category
+            : 'المكتبة الإسلامية',
+      );
+    } catch (_) {}
   }
 
   Color _getBackgroundColor(AppPalette palette) {

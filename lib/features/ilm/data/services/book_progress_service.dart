@@ -106,9 +106,27 @@ class BookProgressService {
     String bookId,
     int page, {
     int? totalPages,
+    String? title,
+    String? level,
   }) async {
     final progress = await getBookProgress(bookId);
-    if (progress == null) return;
+    if (progress == null) {
+      final now = DateTime.now();
+      final effectiveTotal = totalPages ?? 1;
+      final isActuallyCompleted = effectiveTotal > 1 && page >= effectiveTotal;
+      final newProgress = BookProgress(
+        bookId: bookId,
+        bookTitle: title ?? bookId,
+        level: level ?? 'المكتبة الإسلامية',
+        totalPages: effectiveTotal > 0 ? effectiveTotal : 1,
+        currentPage: page,
+        lastReadDate: now,
+        startedDate: now,
+        completedDate: isActuallyCompleted ? now : null,
+      );
+      await saveBookProgress(newProgress);
+      return;
+    }
 
     final effectiveTotal =
         (totalPages != null && totalPages > progress.totalPages)

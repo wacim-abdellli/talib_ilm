@@ -17,6 +17,7 @@ import '../data/catalogs/raqaeq_adab_catalog.dart';
 import '../data/catalogs/seerah_tarikh_catalog.dart';
 import '../data/catalogs/tafsir_catalog.dart';
 import '../data/catalogs/usul_catalog.dart';
+import '../data/catalogs/turath_catalog.dart';
 import '../data/models/book_progress_model.dart';
 import '../data/models/islamic_quiz_models.dart';
 import '../data/models/mutun_models.dart';
@@ -35,6 +36,7 @@ import 'widgets/ilm_loading_view.dart';
 import 'widgets/ilm_mutn_card.dart';
 import 'widgets/ilm_partition_header.dart';
 import 'widgets/ilm_quiz_banner_card.dart';
+import 'widgets/ilm_reading_tracker_sheet.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/maktaba_shamela_view.dart';
 import 'widgets/motivation_widgets.dart';
@@ -94,6 +96,10 @@ class _IlmPageState extends State<IlmPage> {
 
   int get _completedBooksCount {
     return _progressById.values.where((p) => p.isCompleted).length;
+  }
+
+  int get _totalLibraryBooksCount {
+    return _allBooks.length + TurathCatalog.books.length;
   }
 
   IlmBook? get _recommendedFirstBook {
@@ -298,6 +304,65 @@ class _IlmPageState extends State<IlmPage> {
     );
   }
 
+  void _showReadingProgressSheet() async {
+    final inProgress = _progressById.values
+        .where((p) =>
+            (!p.isCompleted || p.currentPage < p.totalPages) &&
+            p.currentPage > 1)
+        .toList()
+      ..sort((a, b) => b.lastReadDate.compareTo(a.lastReadDate));
+
+    final completed = _progressById.values
+        .where((p) => p.isCompleted)
+        .toList()
+      ..sort((a, b) => (b.completedDate ?? b.lastReadDate)
+          .compareTo(a.completedDate ?? a.lastReadDate));
+
+    await IlmReadingTrackerSheet.show(
+      context: context,
+      inProgressBooks: inProgress,
+      completedBooks: completed,
+      totalLibraryBooks: _totalLibraryBooksCount,
+      bookCatalog: _bookCatalog,
+      onOpenBook: _openBookFromTracker,
+    );
+  }
+
+  void _openBookFromTracker(String bookId) {
+    if (bookId.startsWith('shamela_')) {
+      final shamelaId = int.tryParse(bookId.replaceFirst('shamela_', ''));
+      if (shamelaId != null) {
+        final match = TurathCatalog.books.cast<ShamelaBook?>().firstWhere(
+              (b) => b?.id == shamelaId,
+              orElse: () => null,
+            );
+        if (match != null) {
+          _openShamelaReader(match);
+          return;
+        }
+        final p = _progressById[bookId];
+        if (p != null) {
+          _openShamelaReader(
+            ShamelaBook(
+              id: shamelaId,
+              title: p.bookTitle,
+              author: 'علم شرعي',
+              category: p.level,
+              categoryId: 0,
+              totalPages: p.totalPages,
+            ),
+          );
+          return;
+        }
+      }
+    }
+
+    final book = _bookCatalog[bookId];
+    if (book != null) {
+      _navigateToBook(book);
+    }
+  }
+
   void _toggleFavorite(String bookId) async {
     final book = _bookCatalog[bookId];
     if (book == null) return;
@@ -359,8 +424,9 @@ class _IlmPageState extends State<IlmPage> {
             // ── 1. Native Calm Scholar Header ───────────────────────
             IlmHeader(
               dailyMicrocopy: _dailyMicrocopy,
-              totalBooksCount: _allBooks.length,
+              totalBooksCount: _totalLibraryBooksCount,
               completedBooksCount: _completedBooksCount,
+              onStatsTap: _showReadingProgressSheet,
             ),
 
             const SizedBox(height: AppSpace.sm),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
@@ -76,12 +77,27 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   @override
   void initState() {
     super.initState();
+    themeService.addListener(_onThemeChanged);
     _currentPage = widget.initialPage.clamp(1, widget.digitalEntry.totalPages);
     _totalPages = widget.digitalEntry.totalPages;
     _pageController = PageController(initialPage: _currentPage - 1);
     _loadPreferences();
     _loadChapters();
     _preloadSurroundingPages(_currentPage);
+  }
+
+  void _onThemeChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        if (_surface == ShamelaReaderSurface.night) {
+          _surface = ShamelaReaderSurface.normal;
+        }
+      }
+    });
+    _savePreferences();
   }
 
   void _loadChapters() async {
@@ -103,6 +119,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
 
   @override
   void dispose() {
+    themeService.removeListener(_onThemeChanged);
     ShamelaService.saveLastReadPage(
       widget.digitalEntry.shamelaId,
       _currentPage,
@@ -119,7 +136,14 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       _fontFamily = prefs.getString('mutn_reader_font_family') ?? 'Amiri';
       _lineHeight = prefs.getDouble('mutn_reader_line_height') ?? 1.85;
       final surfIndex = prefs.getInt('mutn_reader_surface') ?? 0;
-      _surface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      final savedSurface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        _surface = savedSurface == ShamelaReaderSurface.night
+            ? ShamelaReaderSurface.normal
+            : savedSurface;
+      }
       final accIndex = prefs.getInt('shamela_reader_accent') ?? 0;
       _accentColor = ShamelaAccentColor
           .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
 
@@ -7,12 +8,14 @@ class IlmHeader extends StatelessWidget {
   final String dailyMicrocopy;
   final int totalBooksCount;
   final int completedBooksCount;
+  final VoidCallback? onStatsTap;
 
   const IlmHeader({
     super.key,
     required this.dailyMicrocopy,
     this.totalBooksCount = 0,
     this.completedBooksCount = 0,
+    this.onStatsTap,
   });
 
   @override
@@ -64,36 +67,56 @@ class IlmHeader extends StatelessWidget {
                 ),
               ),
               if (totalBooksCount > 0)
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
+                Semantics(
+                  button: true,
+                  label: 'عرض الكتب المنجزة وقيد المتابعة',
+                  child: Material(
                     color: palette.surfaceMuted,
                     borderRadius: AppRadius.pillRadius,
-                    border: Border.all(
-                      color: palette.border,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.collections_bookmark_rounded,
-                        size: AppIcon.sm,
-                        color: palette.primary,
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        '$completedBooksCount/$totalBooksCount مُنجز',
-                        style: context.text.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.bold,
+                    child: InkWell(
+                      borderRadius: AppRadius.pillRadius,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onStatsTap?.call();
+                      },
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.collections_bookmark_rounded,
+                              size: AppIcon.sm,
+                              color: palette.primary,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              '$completedBooksCount/$totalBooksCount مُنجز',
+                              style: context.text.caption.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: AppIcon.sm,
+                              color: palette.primary,
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
             ],
