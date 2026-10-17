@@ -874,10 +874,24 @@ FAILED (54 violations)
      - Added an Islamic category watermark (`alpha: 0.04`) in the corner using `Transform.scale` and `PositionedDirectional`.
      - Integrated `progressLoader` so tracked categories (Morning & Evening) display a live completion ratio (`AppProgress`) and percentage when active, or the mirrored forward chevron when idle.
      - Wrapped title and subtitle in `Flexible` with `TextOverflow.ellipsis` to guarantee full text-scaling resilience (1.0 to 1.5x) without overflow.
+---
+
+## Quran Reader: Vocalized Surah Title with Chakl & Dark Mode Contrast Fixes
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Clean Vocalized Surah Titles with Chakl (`quran_section_header.dart` & `mushaf_reader_overlays.dart`):**
+     - Sourced authentic vocalized Medina Mushaf surah titles via `getVocalizedSurahName` (e.g., `سُورَةُ البَقَرَةِ`, `سُورَةُ الفَاتِحَةِ`) for both the top reader app bar and the in-page Surah header banner.
+     - Replaced unvocalized plain strings with proper classical Arabic tashkeel/chakl without font clipping or rendering conflicts.
+  2. **Surah Header Banner Dark Mode Contrast (`quran_section_header.dart`):**
+     - Fixed hardcoded dark ink (`MushafColors.whiteText` / `#1A1A1A`) in `MushafSurahBanner`. In dark mode, text now dynamically renders in crisp manuscript cream (`MushafColors.darkText` / `#EAE5DC`).
+     - Adapted revelation and ayah count side plaques to dark mode with illuminated gold borders and text (`MushafColors.darkBadgeBg`, `MushafColors.darkBannerBorder`, `MushafColors.darkBannerText`).
+  3. **Tajweed Color Legend Bar Dark Mode Bug (`mushaf_reader_overlays.dart`):**
+     - Fixed `_buildTajweedItem` which previously used `palette.text` (dark slate in light app theme), causing text labels ("مدود (٤-٦)", "حركتان", "غنة وإخفاء", "قلقلة", "لا يُلفظ") to become pitch black and illegible when toggling into dark Mushaf mode.
+     - Passed `textColor` (`MushafColors.overlayTextFor(themeMode, palette)`) so Tajweed labels render with high-contrast, crystal-clear cream text (`#EAE5DC`) in dark mode.
   4. **Verification:**
      - `flutter analyze`: 0 issues found.
-     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs, 2 fewer warnings).
-     - `flutter test test/golden/adhkar_golden_test.dart`: 4/4 passed (visually verified goldens in light 1.0 and dark 1.5).
-     - `flutter test`: 18/18 Adhkar tests passed.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
+     - `flutter test test/golden/adhkar_golden_test.dart`: 4/4 passed.
 - **Open Issues:** None.
+
 
