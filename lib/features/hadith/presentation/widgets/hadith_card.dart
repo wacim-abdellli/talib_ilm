@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/services/hadith_favorites_service.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/hadith_models.dart';
 
 class HadithCard extends StatefulWidget {
@@ -48,6 +50,16 @@ class _HadithCardState extends State<HadithCard> {
   Future<void> _toggleFavorite() async {
     final next = await _favService.toggleSaved(widget.hadith.toLegacyHadith());
     if (mounted) setState(() => _isFavorite = next);
+  }
+
+  void _copyHadith() {
+    final text = '«${widget.hadith.matn}»\n\n'
+        '• الراوي: ${widget.hadith.narrator}\n'
+        '• التخريج: ${widget.hadith.source}\n'
+        '• الدرجة: ${widget.hadith.grade}\n\n'
+        'من تطبيق طالب العلم';
+    Clipboard.setData(ClipboardData(text: text));
+    AppSnackbar.success(context, 'تم نسخ الحديث الشريف بنجاح');
   }
 
   void _shareHadith() {
@@ -267,6 +279,15 @@ class _HadithCardState extends State<HadithCard> {
                   ),
                 ),
               const Spacer(),
+              // Copy button
+              IconButton(
+                onPressed: _copyHadith,
+                icon: Icon(
+                  Icons.copy_rounded,
+                  color: palette.textMuted,
+                ),
+                tooltip: 'نسخ الحديث',
+              ),
               // Share button
               IconButton(
                 onPressed: _shareHadith,

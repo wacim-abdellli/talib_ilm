@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../hadith/data/models/hadith_models.dart';
 import '../../../hadith/data/services/hadith_service.dart';
 import '../../../hadith/presentation/pages/hadith_explorer_page.dart';
@@ -55,6 +57,17 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
     );
   }
 
+  void _copyCurrentHadith() {
+    if (_hadith == null) return;
+    final text = '«${_hadith!.matn}»\n\n'
+        '• الراوي: ${_hadith!.narrator}\n'
+        '• التخريج: ${_hadith!.source}\n'
+        '• الدرجة: ${_hadith!.grade}\n\n'
+        'من تطبيق طالب العلم';
+    Clipboard.setData(ClipboardData(text: text));
+    AppSnackbar.success(context, 'تم نسخ الحديث الشريف بنجاح');
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -102,6 +115,15 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
             ),
             Row(
               children: [
+                // Copy Hadith
+                IconButton(
+                  onPressed: _copyCurrentHadith,
+                  icon: Icon(
+                    Icons.copy_rounded,
+                    color: palette.textMuted,
+                  ),
+                  tooltip: 'نسخ الحديث',
+                ),
                 // Shuffle / Next Hadith
                 IconButton(
                   onPressed: _cycleHadith,
