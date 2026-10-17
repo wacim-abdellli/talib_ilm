@@ -6,10 +6,13 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
+import '../../data/catalogs/mutun_categories_catalog.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
+import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
+import 'mutun_audio_player_hud.dart';
 import 'scholarly_reader_hud.dart';
 import 'shamela_fihris_sheet.dart';
 import 'shamela_page_content.dart';
@@ -267,10 +270,41 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
 
     final bgColor = ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
 
+    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
+    final mutunItem = MutunCategoriesCatalog.getItemById(widget.book.id);
+
     return Container(
       color: bgColor,
       child: Column(
         children: [
+          // ── Quick Jump Bar « الانتقال السريع » ────────────────────
+          AnimatedContainer(
+            duration: AppMotion.fast,
+            height: widget.showControls ? 36.0 : 0.0,
+            color: tokens.headerBrown.withValues(alpha: 0.08),
+            child: widget.showControls
+                ? Center(
+                    child: InkWell(
+                      onTap: _openFihrisSheet,
+                      borderRadius: AppRadius.pillRadius,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.xxs,
+                        ),
+                        child: Text(
+                          '« الانتقال السريع »',
+                          style: textTheme.caption.copyWith(
+                            color: tokens.rosetteGold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+
           // ── Reader Body: Horizontal Swipe (Slide side) PageView ──
           Expanded(
             child: Directionality(
@@ -385,6 +419,13 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
               ),
             ),
           ),
+
+          // ── Mutun Audio Player HUD ───────────────────────────────
+          if (mutunItem != null)
+            MutunAudioPlayerHud(
+              audioService: MutunAudioService(),
+              onOpenQuickJump: _openFihrisSheet,
+            ),
 
           // ── Unified Bottom Scholarly HUD ───────────────────────
           ScholarlyReaderHud(

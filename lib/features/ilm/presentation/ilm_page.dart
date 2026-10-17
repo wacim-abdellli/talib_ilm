@@ -22,9 +22,11 @@ import 'widgets/ilm_header.dart';
 import 'widgets/ilm_level_header_card.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/ilm_search_filter_bar.dart';
+import 'package:flutter/services.dart';
 import 'widgets/ilm_section_switcher.dart';
 import 'widgets/maktaba_shamela_view.dart';
 import 'widgets/motivation_widgets.dart';
+import 'widgets/mutun_categories_view.dart';
 import 'widgets/study_resume_pill.dart';
 import 'logic/ilm_search_engine.dart';
 
@@ -60,6 +62,7 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
 
   // Navigation & Search State
   IlmSection _selectedSection = IlmSection.mutun;
+  bool _showMutunCategories = true;
   String? _selectedLevelId;
   String _searchQuery = '';
 
@@ -376,6 +379,37 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
               onSectionChanged: (sec) => setState(() => _selectedSection = sec),
             ),
 
+            if (_selectedSection == IlmSection.mutun)
+              Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.xxs,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildSubSwitcherItem(
+                        title: 'جميع المتون والأقسام',
+                        icon: Icons.grid_view_rounded,
+                        isSelected: _showMutunCategories,
+                        onTap: () => setState(() => _showMutunCategories = true),
+                        palette: palette,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: _buildSubSwitcherItem(
+                        title: 'خطة المستويات والمنهج',
+                        icon: Icons.timeline_rounded,
+                        isSelected: !_showMutunCategories,
+                        onTap: () => setState(() => _showMutunCategories = false),
+                        palette: palette,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // ── 3. Scrollable Library Content ─────────────────────
             Expanded(
               child: AnimatedSwitcher(
@@ -384,15 +418,21 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
                 switchOutCurve: AppMotion.easeIn,
                 child: _selectedSection == IlmSection.shamela
                     ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
-                    : CustomScrollView(
-                        key: const ValueKey('mutun_section'),
-                        controller: _scrollController,
-                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                        slivers: [
-                        SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                    : _showMutunCategories
+                        ? const MutunCategoriesView(
+                            key: ValueKey('mutun_categories_view'),
+                          )
+                        : CustomScrollView(
+                            key: const ValueKey('mutun_levels_section'),
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            slivers: [
+                            SliverToBoxAdapter(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                               const SizedBox(height: AppSpace.md),
 
                               // ── Dedicated Minimalist Search Bar ───────────
@@ -559,4 +599,61 @@ class _IlmPageState extends State<IlmPage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  Widget _buildSubSwitcherItem({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required AppPalette palette,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: AppRadius.pillRadius,
+        child: Container(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.xs,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? palette.surfaceRaised : palette.surfaceMuted,
+            borderRadius: AppRadius.pillRadius,
+            border: Border.all(
+              color: isSelected ? palette.primary : palette.border,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: AppIcon.xs,
+                color: isSelected ? palette.primary : palette.textMuted,
+              ),
+              const SizedBox(width: AppSpace.xs),
+              Flexible(
+                child: Text(
+                  title,
+                  style: context.text.caption.copyWith(
+                    color: isSelected ? palette.text : palette.textMuted,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+

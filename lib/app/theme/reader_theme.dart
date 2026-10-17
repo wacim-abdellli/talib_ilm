@@ -207,3 +207,69 @@ class ReaderAccentColors {
     }
   }
 }
+
+/// Clean scholarly tokens for Mutun categories, reader highlight, and audio HUD.
+class MutunThemeTokens {
+  final Color headerBrown;
+  final Color headerTitle;
+  final Color headerSubtitle;
+  final Color rosetteGold;
+  final Color activeParagraphBg;
+  final Color activeParagraphBorder;
+  final Color paragraphNumber;
+  final Color cardBg;
+  final Color cardBorder;
+  final Color audioBarBg;
+  final Color audioBarBorder;
+
+  const MutunThemeTokens({
+    required this.headerBrown,
+    required this.headerTitle,
+    required this.headerSubtitle,
+    required this.rosetteGold,
+    required this.activeParagraphBg,
+    required this.activeParagraphBorder,
+    required this.paragraphNumber,
+    required this.cardBg,
+    required this.cardBorder,
+    required this.audioBarBg,
+    required this.audioBarBorder,
+  });
+}
+
+class MutunThemeColors {
+  const MutunThemeColors._();
+
+  static MutunThemeTokens getTokens({required bool isDark}) {
+    if (isDark) {
+      return const MutunThemeTokens(
+        headerBrown: Color(0xFF1E1916),
+        headerTitle: Color(0xFFFAF8F5),
+        headerSubtitle: Color(0xFFD4AF37),
+        rosetteGold: Color(0xFFD4AF37),
+        activeParagraphBg: Color(0xFF28231C),
+        activeParagraphBorder: Color(0xFF453C30),
+        paragraphNumber: Color(0xFFB3A89B),
+        cardBg: Color(0xFF161412),
+        cardBorder: Color(0xFF2A241E),
+        audioBarBg: Color(0xFF1C1916),
+        audioBarBorder: Color(0xFF2F2922),
+      );
+    } else {
+      return const MutunThemeTokens(
+        headerBrown: Color(0xFF534338),
+        headerTitle: Color(0xFFFFFFFF),
+        headerSubtitle: Color(0xFFE6D2B5),
+        rosetteGold: Color(0xFFA67A2E),
+        activeParagraphBg: Color(0xFFF5EEDB),
+        activeParagraphBorder: Color(0xFFE2D6BE),
+        paragraphNumber: Color(0xFF8A7D6E),
+        cardBg: Color(0xFFFFFFFF),
+        cardBorder: Color(0xFFF0EBE3),
+        audioBarBg: Color(0xFFFBF8F2),
+        audioBarBorder: Color(0xFFE7DEC0),
+      );
+    }
+  }
+}
+

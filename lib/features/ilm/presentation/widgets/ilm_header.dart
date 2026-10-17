@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/reader_theme.dart';
 
 /// Dignified header for the Ilm scholarly library.
 class IlmHeader extends StatelessWidget {
@@ -18,18 +19,19 @@ class IlmHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
+      padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.xl,
         vertical: AppSpace.md,
       ),
       decoration: BoxDecoration(
-        color: palette.surface,
+        color: tokens.headerBrown,
         border: Border(
           bottom: BorderSide(
-            color: palette.border,
+            color: tokens.headerBrown,
             width: 1,
           ),
         ),
@@ -44,8 +46,9 @@ class IlmHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'المكتبة العلمية',
+                      'المتون والمكتبة',
                       style: context.text.title.copyWith(
+                        color: tokens.headerTitle,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -54,7 +57,7 @@ class IlmHeader extends StatelessWidget {
                     Text(
                       dailyMicrocopy,
                       style: context.text.bodySmall.copyWith(
-                        color: palette.textMuted,
+                        color: tokens.headerSubtitle,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -64,15 +67,15 @@ class IlmHeader extends StatelessWidget {
               ),
               if (totalBooksCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: AppSpace.md,
                     vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
+                    color: tokens.rosetteGold.withValues(alpha: 0.2),
                     borderRadius: AppRadius.pillRadius,
                     border: Border.all(
-                      color: palette.gold.withAlpha(80),
+                      color: tokens.rosetteGold.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -82,13 +85,13 @@ class IlmHeader extends StatelessWidget {
                       Icon(
                         Icons.collections_bookmark_rounded,
                         size: AppIcon.sm,
-                        color: palette.primary,
+                        color: tokens.rosetteGold,
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Text(
                         '$completedBooksCount/$totalBooksCount مُنجز',
                         style: context.text.caption.copyWith(
-                          color: palette.primary,
+                          color: tokens.headerTitle,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

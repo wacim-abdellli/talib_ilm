@@ -4,6 +4,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutn_memorization_view.dart';
+import 'mutn_paragraphs_view.dart';
 import 'shamela_text_highlighter.dart';
 
 /// Single page content viewer for Shamela scholarly reader.
@@ -138,18 +139,13 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                         fontSizeDelta: widget.fontSizeDelta,
                         lineHeight: widget.lineHeight,
                       )
-                    : Text.rich(
-                        ShamelaTextHighlighter.buildSpans(
-                          text: page.content,
-                          palette: palette,
-                          textTheme: textTheme,
-                          fontFamily: widget.fontFamily,
-                          fontSizeDelta: widget.fontSizeDelta,
-                          lineHeight: widget.lineHeight,
-                          accentColor: widget.accentColor,
-                          surface: widget.surface,
-                        ),
-                        textAlign: TextAlign.start,
+                    : MutnParagraphsView(
+                        content: page.content,
+                        fontFamily: widget.fontFamily,
+                        fontSizeDelta: widget.fontSizeDelta,
+                        lineHeight: widget.lineHeight,
+                        accentColor: widget.accentColor,
+                        surface: widget.surface,
                       ),
               ),
 
