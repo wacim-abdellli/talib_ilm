@@ -84,6 +84,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   void initState() {
     super.initState();
     themeService.addListener(_onThemeChanged);
+    _showAudioBar = MutunAudioCatalog.hasAudio(widget.book.id);
     _audioService.activeParagraphNotifier.addListener(_onActiveParagraphChanged);
     _audioService.isPlayingNotifier.addListener(_onAudioPlayingChanged);
     _currentPage = widget.initialPage.clamp(1, widget.digitalEntry.totalPages);
@@ -575,6 +576,10 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             onOpenFihris: _openFihrisSheet,
             onToggleMemorization: _toggleMemorizationMode,
             onOpenTypography: _openTypographySheet,
+            onToggleAudio: MutunAudioCatalog.hasAudio(widget.book.id)
+                ? () => setState(() => _showAudioBar = !_showAudioBar)
+                : null,
+            isAudioActive: _showAudioBar,
           ),
         ],
       ),

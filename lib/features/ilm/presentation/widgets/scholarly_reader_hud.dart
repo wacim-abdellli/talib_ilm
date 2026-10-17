@@ -88,6 +88,8 @@ class ScholarlyReaderHud extends StatelessWidget {
   final VoidCallback onToggleMemorization;
   final VoidCallback onOpenTypography;
   final VoidCallback? onShare;
+  final VoidCallback? onToggleAudio;
+  final bool isAudioActive;
   final ShamelaAccentColor accentColor;
   final ShamelaReaderSurface surface;
 
@@ -108,6 +110,8 @@ class ScholarlyReaderHud extends StatelessWidget {
     required this.onToggleMemorization,
     required this.onOpenTypography,
     this.onShare,
+    this.onToggleAudio,
+    this.isAudioActive = false,
     this.accentColor = ShamelaAccentColor.emerald,
     this.surface = ShamelaReaderSurface.normal,
   });
@@ -252,6 +256,19 @@ class ScholarlyReaderHud extends StatelessWidget {
                         palette: palette,
                         textTheme: textTheme,
                       ),
+                      if (onToggleAudio != null)
+                        _buildToolItem(
+                          icon: isAudioActive
+                              ? Icons.headphones_rounded
+                              : Icons.headphones_outlined,
+                          label: 'استماع',
+                          iconColor: isAudioActive ? accent.primary : surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          bgColor: isAudioActive ? accent.soft : null,
+                          onTap: onToggleAudio!,
+                          palette: palette,
+                          textTheme: textTheme,
+                        ),
                       _buildToolItem(
                         icon: memorizationMode
                             ? Icons.visibility_off_rounded
