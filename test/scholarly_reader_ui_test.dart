@@ -3,7 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/app/theme/app_ui.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/mutun_digital_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/book_mutn_tab.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutun_audio_player_hud.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/scholarly_reader_hud.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_reader_top_bar.dart';
@@ -351,6 +355,55 @@ void main() {
       expect(qawaidTimestamps, isNotNull);
       expect(qawaidTimestamps!.length, 8);
       expect(qawaidTimestamps[0], 0);
+
+      final usulTimestamps =
+          MutunAudioCatalog.getParagraphTimestamps('bk_usul_thalatha');
+      expect(usulTimestamps, isNotNull);
+      expect(usulTimestamps!.length, 28);
+      expect(usulTimestamps[0], 0);
+      expect(usulTimestamps[1], 30000);
+    });
+
+    test('MutunDigitalCatalog has startPage checkpoint for bk_usul_thalatha', () {
+      final entry = MutunDigitalCatalog.getEntry('bk_usul_thalatha');
+      expect(entry, isNotNull);
+      expect(entry!.startPage, 2);
+    });
+
+    testWidgets('BookMutnTab prioritizes authentic MutnCurriculumReaderView for syllabus books', (tester) async {
+      final book = IlmBook(
+        id: 'bk_usul_thalatha',
+        title: 'ثلاثة الأصول وأدلتها',
+        author: 'محمد بن عبد الوهاب',
+        level: 'المستوى الأول',
+        subject: 'العقيدة',
+        description: 'متن ثلاثة الأصول وأدلتها',
+        totalPages: 25,
+        shuruh: const [],
+      );
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          BookMutnTab(
+            book: book,
+            mutunInitialPage: Future.value(1),
+            onPageChanged: (_, _) async {},
+            showControls: true,
+            onToggleControls: () {},
+            isBookmarked: false,
+            onToggleBookmark: () {},
+            onAddNote: () {},
+            onShowBookmarks: () {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Verified: renders MutnCurriculumReaderView (not Shamela)
+      expect(find.byType(MutnCurriculumReaderView), findsOneWidget);
+      // Starts directly on the first line the reciter says, without fahras
+      expect(find.textContaining('المسائل الأربع التي يجب تعلمها'), findsOneWidget);
     });
 
     testWidgets('MutunAudioPlayerHud renders seek slider, ±5s skip buttons and controls', (tester) async {

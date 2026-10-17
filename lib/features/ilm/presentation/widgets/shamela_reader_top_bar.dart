@@ -15,6 +15,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
   final ShamelaReaderSurface surface;
   final VoidCallback onBack;
   final VoidCallback onCopy;
+  final VoidCallback? onSwitchToCurriculum;
 
   const ShamelaReaderTopBar({
     super.key,
@@ -28,6 +29,7 @@ class ShamelaReaderTopBar extends StatelessWidget {
     this.surface = ShamelaReaderSurface.normal,
     required this.onBack,
     required this.onCopy,
+    this.onSwitchToCurriculum,
   });
 
   @override
@@ -165,6 +167,17 @@ class ShamelaReaderTopBar extends StatelessWidget {
                           ],
                         ),
                       ),
+
+                      if (onSwitchToCurriculum != null)
+                        IconButton(
+                          tooltip: 'العودة لمتن التحفيظ المعتمد',
+                          onPressed: onSwitchToCurriculum,
+                          icon: Icon(
+                            Icons.auto_stories_rounded,
+                            color: accent.primary,
+                            size: AppIcon.sm,
+                          ),
+                        ),
 
                       IconButton(
                         tooltip: 'نسخ الصفحة',

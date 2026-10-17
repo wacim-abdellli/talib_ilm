@@ -480,28 +480,31 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
               height: 1,
             ),
           ),
-          Padding(
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.sm,
-            ),
-            child: Container(
+          Flexible(
+            child: Padding(
               padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.xs,
+                horizontal: AppSpace.sm,
               ),
-              decoration: BoxDecoration(
-                color: surfaceTokens.surfaceRaised,
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(
-                  color: surfaceTokens.border,
-                  width: 1,
+              child: Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.xs,
                 ),
-              ),
-              child: Text(
-                title,
-                style: textTheme.caption.copyWith(
-                  color: tokens.rosetteGold,
-                  fontWeight: FontWeight.bold,
+                decoration: BoxDecoration(
+                  color: surfaceTokens.surfaceRaised,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: surfaceTokens.border,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: textTheme.caption.copyWith(
+                    color: tokens.rosetteGold,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

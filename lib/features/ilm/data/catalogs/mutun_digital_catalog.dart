@@ -6,6 +6,7 @@ class MutunDigitalEntry {
   final String author;
   final int totalPages;
   final bool isPoem;
+  final int startPage;
 
   const MutunDigitalEntry({
     required this.id,
@@ -14,6 +15,7 @@ class MutunDigitalEntry {
     required this.author,
     required this.totalPages,
     this.isPoem = false,
+    this.startPage = 1,
   });
 }
 
@@ -46,6 +48,7 @@ class MutunDigitalCatalog {
       title: 'ثلاثة الأصول وأدلتها',
       author: 'محمد بن عبد الوهاب',
       totalPages: 25,
+      startPage: 2,
     ),
     'bk_arbaeen_nawawi': MutunDigitalEntry(
       id: 'bk_arbaeen_nawawi',

@@ -87,7 +87,10 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     _showAudioBar = MutunAudioCatalog.hasAudio(widget.book.id);
     _audioService.activeParagraphNotifier.addListener(_onActiveParagraphChanged);
     _audioService.isPlayingNotifier.addListener(_onAudioPlayingChanged);
-    _currentPage = widget.initialPage.clamp(1, widget.digitalEntry.totalPages);
+    final resolvedInitial = (widget.initialPage > 1 || widget.digitalEntry.startPage <= 1)
+        ? widget.initialPage
+        : widget.digitalEntry.startPage;
+    _currentPage = resolvedInitial.clamp(1, widget.digitalEntry.totalPages);
     _totalPages = widget.digitalEntry.totalPages;
     _pageController = PageController(initialPage: _currentPage - 1);
     _loadPreferences();
@@ -123,11 +126,13 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       if (paragraphIndex <= 6) return 3;
       return 4;
     }
+    final startPage = widget.digitalEntry.startPage;
+    final usablePages = totalPages - startPage + 1;
     final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
-    if (totalParas <= 1) return 1;
+    if (totalParas <= 1 || usablePages <= 1) return startPage;
     final ratio = (paragraphIndex - 1) / totalParas;
-    final page = (ratio * totalPages).floor() + 1;
-    return page.clamp(1, totalPages);
+    final page = (ratio * usablePages).floor() + startPage;
+    return page.clamp(startPage, totalPages);
   }
 
   int _getStartingParagraphForPage(String bookId, int pageNum, int totalPages) {
@@ -140,9 +145,12 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       if (pageNum == 3) return 4;
       return 7;
     }
+    final startPage = widget.digitalEntry.startPage;
+    if (pageNum < startPage) return 1;
+    final usablePages = totalPages - startPage + 1;
     final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
-    if (totalParas <= 1) return 1;
-    final start = ((pageNum - 1) * totalParas / totalPages).round() + 1;
+    if (totalParas <= 1 || usablePages <= 1) return 1;
+    final start = ((pageNum - startPage) * totalParas / usablePages).round() + 1;
     return start.clamp(1, totalParas);
   }
 
@@ -375,11 +383,53 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'الشرح الموسع (المكتبة الشاملة)',
-                    style: textTheme.caption.copyWith(
-                      color: palette.textMuted,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'الشرح الموسع (المكتبة الشاملة)',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      InkWell(
+                        onTap: widget.onSwitchToCurriculum,
+                        borderRadius: AppRadius.pillRadius,
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.primary.withValues(alpha: 0.12),
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: palette.primary,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_stories_rounded,
+                                size: AppIcon.xs,
+                                color: palette.primary,
+                              ),
+                              const SizedBox(width: AppSpace.xxs),
+                              Text(
+                                'متن التحفيظ',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (MutunAudioCatalog.hasAudio(widget.book.id))
                     InkWell(

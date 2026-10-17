@@ -94,46 +94,51 @@ class MutunAudioService {
 
     _player.positionStream.listen((pos) {
       positionNotifier.value = pos;
-      final dur = durationNotifier.value;
-      // Auto-advance active paragraph highlight with reader recitation progress
-      if (dur > Duration.zero && _totalParagraphs > 1 && _player.playing) {
-        final bookId = activeBookIdNotifier.value;
-        final timestamps = bookId != null
-            ? MutunAudioCatalog.getParagraphTimestamps(
-                bookId,
-                reciterId: _selectedReciter.id,
-              )
-            : null;
-
-        int activeIndex;
-        if (timestamps != null && timestamps.isNotEmpty) {
-          final posMs = pos.inMilliseconds;
-          int idx = 1;
-          for (int i = 0; i < timestamps.length; i++) {
-            if (posMs >= timestamps[i]) {
-              idx = i + 1;
-            } else {
-              break;
-            }
-          }
-          activeIndex = idx.clamp(1, _totalParagraphs);
-        } else {
-          final ratio = pos.inMilliseconds / dur.inMilliseconds;
-          final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
-          activeIndex = estimatedPara.clamp(1, _totalParagraphs);
-        }
-
-        if (activeParagraphNotifier.value != activeIndex) {
-          activeParagraphNotifier.value = activeIndex;
-        }
-      }
+      _updateActiveParagraph(pos);
     });
 
     _player.durationStream.listen((dur) {
       if (dur != null) {
         durationNotifier.value = dur;
+        _updateActiveParagraph(_player.position);
       }
     });
+  }
+
+  void _updateActiveParagraph(Duration pos) {
+    final bookId = activeBookIdNotifier.value;
+    final timestamps = bookId != null
+        ? MutunAudioCatalog.getParagraphTimestamps(
+            bookId,
+            reciterId: _selectedReciter.id,
+          )
+        : null;
+
+    int? activeIndex;
+    if (timestamps != null && timestamps.isNotEmpty) {
+      final posMs = pos.inMilliseconds;
+      int idx = 1;
+      for (int i = 0; i < timestamps.length; i++) {
+        if (posMs >= timestamps[i]) {
+          idx = i + 1;
+        } else {
+          break;
+        }
+      }
+      final maxP = _totalParagraphs > 1 ? _totalParagraphs : timestamps.length;
+      activeIndex = idx.clamp(1, maxP);
+    } else {
+      final dur = durationNotifier.value;
+      if (dur > Duration.zero && _totalParagraphs > 1) {
+        final ratio = pos.inMilliseconds / dur.inMilliseconds;
+        final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
+        activeIndex = estimatedPara.clamp(1, _totalParagraphs);
+      }
+    }
+
+    if (activeIndex != null && activeParagraphNotifier.value != activeIndex) {
+      activeParagraphNotifier.value = activeIndex;
+    }
   }
 
   void _handleTrackCompletion() {
@@ -234,7 +239,10 @@ class MutunAudioService {
     activeBookIdNotifier.value = bookId;
     activeParagraphNotifier.value = paragraphIndex;
     _currentAudioUrl = audioUrl;
-    _totalParagraphs = totalParagraphs;
+    final resolvedTotal = totalParagraphs > 1
+        ? totalParagraphs
+        : MutunAudioCatalog.getTotalParagraphs(bookId, reciterId: _selectedReciter.id);
+    _totalParagraphs = resolvedTotal > 1 ? resolvedTotal : 1;
     isLoadingNotifier.value = true;
     playbackErrorNotifier.value = null;
 
@@ -347,6 +355,7 @@ class MutunAudioService {
 
   Future<void> seek(Duration position) async {
     await _player.seek(position);
+    _updateActiveParagraph(position);
   }
 
   Future<void> seekForward5s() async {
@@ -355,6 +364,7 @@ class MutunAudioService {
     final target = current + AppMotion.seekStep;
     final clamped = dur > Duration.zero && target > dur ? dur : target;
     await _player.seek(clamped);
+    _updateActiveParagraph(clamped);
   }
 
   Future<void> seekBackward5s() async {
@@ -362,6 +372,7 @@ class MutunAudioService {
     final target = current - AppMotion.seekStep;
     final clamped = target < Duration.zero ? Duration.zero : target;
     await _player.seek(clamped);
+    _updateActiveParagraph(clamped);
   }
 
   void clearActiveParagraph() {

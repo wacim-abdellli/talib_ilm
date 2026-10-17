@@ -12,7 +12,7 @@ import '../../data/services/mutun_audio_service.dart';
 import 'mutn_curriculum_reader_view.dart';
 import 'mutn_digital_reader.dart';
 
-class BookMutnTab extends StatelessWidget {
+class BookMutnTab extends StatefulWidget {
   final IlmBook book;
   final Future<int> mutunInitialPage;
   final Future<void> Function(int page, int total) onPageChanged;
@@ -37,15 +37,35 @@ class BookMutnTab extends StatelessWidget {
   });
 
   @override
+  State<BookMutnTab> createState() => _BookMutnTabState();
+}
+
+class _BookMutnTabState extends State<BookMutnTab> {
+  bool _preferShamela = false;
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final curriculumBook = MutunCurriculumCatalog.getBook(book.id);
-    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final curriculumBook = MutunCurriculumCatalog.getBook(widget.book.id);
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
 
-    // 1. Digital Text Reader (Authentic Pages + Audio Sync)
+    // 1. Authentic Curriculum Reader (Priority 1: Verified vocalized text matching recitation word-for-word)
+    if (curriculumBook != null && !_preferShamela) {
+      return MutnCurriculumReaderView(
+        book: widget.book,
+        curriculumBook: curriculumBook,
+        audioService: MutunAudioService(),
+        onAddNote: widget.onAddNote,
+        onSwitchToShamela: digitalEntry != null
+            ? () => setState(() => _preferShamela = true)
+            : null,
+      );
+    }
+
+    // 2. Digital Text Reader (Maktaba Shamela with checkpoint start)
     if (digitalEntry != null) {
       return FutureBuilder<int>(
-        future: mutunInitialPage,
+        future: widget.mutunInitialPage,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(
@@ -55,45 +75,42 @@ class BookMutnTab extends StatelessWidget {
               ),
             );
           }
+          final resolvedPage = (snapshot.data != null && snapshot.data! > 1)
+              ? snapshot.data!
+              : digitalEntry.startPage;
+
           return MutnDigitalReaderView(
-            book: book,
+            book: widget.book,
             digitalEntry: digitalEntry,
-            initialPage: snapshot.data!,
-            onPageChanged: onPageChanged,
-            showControls: showControls,
-            onToggleControls: onToggleControls,
-            isBookmarked: isBookmarked,
-            onToggleBookmark: onToggleBookmark,
-            onAddNote: onAddNote,
-            onShowBookmarks: onShowBookmarks,
+            initialPage: resolvedPage,
+            onPageChanged: widget.onPageChanged,
+            showControls: widget.showControls,
+            onToggleControls: widget.onToggleControls,
+            isBookmarked: widget.isBookmarked,
+            onToggleBookmark: widget.onToggleBookmark,
+            onAddNote: widget.onAddNote,
+            onShowBookmarks: widget.onShowBookmarks,
+            onSwitchToCurriculum: curriculumBook != null
+                ? () => setState(() => _preferShamela = false)
+                : null,
           );
         },
       );
     }
 
-    // 2. Curriculum Text Reader Fallback (if no digital edition available)
-    if (curriculumBook != null) {
-      return MutnCurriculumReaderView(
-        book: book,
-        curriculumBook: curriculumBook,
-        audioService: MutunAudioService(),
-        onAddNote: onAddNote,
-      );
-    }
-
     // 3. Fallback to PDF Viewer
-    if (book.pdfPath != null) {
+    if (widget.book.pdfPath != null) {
       return FutureBuilder<int>(
-        future: mutunInitialPage,
+        future: widget.mutunInitialPage,
         builder: (context, snapshot) {
           return PdfViewerPage(
-            assetPath: book.pdfPath!,
-            title: book.title,
+            assetPath: widget.book.pdfPath!,
+            title: widget.book.title,
             initialPage: snapshot.data ?? 1,
             showAppBar: false,
-            onPageChanged: (page, total) => onPageChanged(page, total),
-            isBookmarked: isBookmarked,
-            onBookmarkToggle: onToggleBookmark,
+            onPageChanged: (page, total) => widget.onPageChanged(page, total),
+            isBookmarked: widget.isBookmarked,
+            onBookmarkToggle: widget.onToggleBookmark,
           );
         },
       );
