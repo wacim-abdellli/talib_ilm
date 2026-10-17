@@ -17,6 +17,7 @@ class IlmMutnCard extends StatelessWidget {
   final BookProgress? progress;
   final VoidCallback onOpenReader;
   final VoidCallback onToggleFavorite;
+  final bool? isFavoriteOverride;
 
   const IlmMutnCard({
     super.key,
@@ -24,6 +25,7 @@ class IlmMutnCard extends StatelessWidget {
     required this.progress,
     required this.onOpenReader,
     required this.onToggleFavorite,
+    this.isFavoriteOverride,
   });
 
   void _startAudioStream(BuildContext context) {
@@ -55,7 +57,7 @@ class IlmMutnCard extends StatelessWidget {
     final isStarted = !isCompleted && currentPage > 1;
     final progressPercent = (progress?.progressPercentage ?? 0).round();
     final hasAudio = MutunAudioCatalog.hasAudio(book.id);
-    final isFavorite = progress?.isFavorite ?? false;
+    final isFavorite = isFavoriteOverride ?? (progress?.isFavorite ?? false);
 
     return AppCard(
       onTap: onOpenReader,

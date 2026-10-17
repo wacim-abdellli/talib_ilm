@@ -53,12 +53,12 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         IconButton(
           tooltip: isFavorite
-              ? AppStrings.bookFavoriteRemove
-              : AppStrings.bookFavoriteAdd,
+              ? 'إزالة من المفضلة (قائمة المحفوظات)'
+              : 'إضافة إلى المفضلة (قائمة المحفوظات)',
           onPressed: onToggleFavorite,
           icon: Icon(
-            isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-            color: isFavorite ? palette.gold : palette.text,
+            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            color: isFavorite ? palette.error : palette.text,
           ),
         ),
         IconButton(

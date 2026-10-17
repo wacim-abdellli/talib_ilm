@@ -191,11 +191,47 @@ class BookProgressService {
     await saveBookProgress(updatedProgress);
   }
 
-  Future<void> toggleFavorite(String bookId) async {
+  Future<void> toggleFavorite(String bookId, {String? title, String? level}) async {
     final progress = await getBookProgress(bookId);
-    if (progress == null) return;
+    if (progress == null) {
+      final now = DateTime.now();
+      final initial = BookProgress(
+        bookId: bookId,
+        bookTitle: title ?? bookId,
+        level: level ?? 'المستوى التمهيدي',
+        totalPages: 1,
+        currentPage: 1,
+        lastReadDate: now,
+        startedDate: now,
+        isFavorite: true,
+      );
+      await saveBookProgress(initial);
+      return;
+    }
 
     final updatedProgress = progress.copyWith(isFavorite: !progress.isFavorite);
+    await saveBookProgress(updatedProgress);
+  }
+
+  Future<void> setFavorite(String bookId, bool isFavorite, {String? title, String? level}) async {
+    final progress = await getBookProgress(bookId);
+    if (progress == null) {
+      final now = DateTime.now();
+      final initial = BookProgress(
+        bookId: bookId,
+        bookTitle: title ?? bookId,
+        level: level ?? 'المستوى التمهيدي',
+        totalPages: 1,
+        currentPage: 1,
+        lastReadDate: now,
+        startedDate: now,
+        isFavorite: isFavorite,
+      );
+      await saveBookProgress(initial);
+      return;
+    }
+
+    final updatedProgress = progress.copyWith(isFavorite: isFavorite);
     await saveBookProgress(updatedProgress);
   }
 

@@ -46,6 +46,19 @@ class FavoritesService {
     return true;
   }
 
+  Future<void> add(FavoriteItem item) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? <String>[];
+    final items = raw.map(_decode).toList();
+    final exists = items.any(
+      (existing) => existing.type == item.type && existing.id == item.id,
+    );
+    if (!exists) {
+      items.add(item);
+      await prefs.setStringList(_key, items.map(_encode).toList());
+    }
+  }
+
   Future<void> remove(FavoriteType type, String id) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? <String>[];

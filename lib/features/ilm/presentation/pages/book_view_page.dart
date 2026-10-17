@@ -321,6 +321,8 @@ class _BookViewPageState extends State<BookViewPage>
       FavoriteType.book,
       widget.book.id,
     );
+    final progressService = await _getProgressService();
+    await progressService.setFavorite(widget.book.id, saved);
     if (!mounted) return;
     setState(() => _isFavorite = saved);
   }
@@ -334,8 +336,16 @@ class _BookViewPageState extends State<BookViewPage>
         subtitle: widget.book.author,
       ),
     );
+    final progressService = await _getProgressService();
+    await progressService.setFavorite(widget.book.id, saved);
     if (!mounted) return;
     setState(() => _isFavorite = saved);
+
+    if (saved) {
+      AppSnackbar.success(context, 'تمت إضافة الكتاب إلى المفضلة (قائمة المحفوظات)');
+    } else {
+      AppSnackbar.info(context, 'تمت إزالة الكتاب من المفضلة');
+    }
   }
 
   Future<void> _markStartedIfNeeded() async {

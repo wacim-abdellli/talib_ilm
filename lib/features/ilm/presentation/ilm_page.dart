@@ -7,6 +7,7 @@ import '../../../core/models/favorite_item.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../data/catalogs/aqidah_catalog.dart';
 import '../data/catalogs/arabic_catalog.dart';
 import '../data/catalogs/fiqh_catalog.dart';
@@ -68,6 +69,7 @@ class _IlmPageState extends State<IlmPage> {
   List<IlmBook> _allBooks = [];
   Map<String, IlmBook> _bookCatalog = {};
   Map<String, BookProgress> _progressById = {};
+  Set<String> _favoriteBookIds = {};
   List<IlmLevel> _sortedLevels = [];
   BookProgress? _continueReadingBook;
 
@@ -153,6 +155,34 @@ class _IlmPageState extends State<IlmPage> {
       _progressById = {
         for (final progress in allProgress) progress.bookId: progress,
       };
+
+      _favoriteBookIds =
+          await FavoritesService().getIdsByType(FavoriteType.book);
+
+      // Automatically reconcile and sync favorites bidirectionally
+      for (final bookId in _favoriteBookIds) {
+        if (_progressById.containsKey(bookId)) {
+          final p = _progressById[bookId]!;
+          if (!p.isFavorite) {
+            _progressById[bookId] = p.copyWith(isFavorite: true);
+            await _progressService?.setFavorite(bookId, true);
+          }
+        }
+      }
+      for (final p in _progressById.values) {
+        if (p.isFavorite && !_favoriteBookIds.contains(p.bookId)) {
+          final book = _bookCatalog[p.bookId];
+          if (book != null) {
+            _favoriteBookIds.add(p.bookId);
+            await FavoritesService().add(FavoriteItem(
+              id: book.id,
+              title: book.title,
+              type: FavoriteType.book,
+              subtitle: book.author,
+            ));
+          }
+        }
+      }
 
       final currentlyReading = await _progressService?.getCurrentlyReading();
       _continueReadingBook = currentlyReading?.isNotEmpty == true
@@ -268,8 +298,6 @@ class _IlmPageState extends State<IlmPage> {
     final book = _bookCatalog[bookId];
     if (book == null) return;
 
-    await _progressService?.toggleFavorite(bookId);
-
     final favItem = FavoriteItem(
       id: book.id,
       title: book.title,
@@ -277,9 +305,34 @@ class _IlmPageState extends State<IlmPage> {
       subtitle: book.author,
     );
 
-    await FavoritesService().toggle(favItem);
+    final isFavNow = await FavoritesService().toggle(favItem);
+    await _progressService?.setFavorite(bookId, isFavNow);
 
-    await _loadData();
+    setState(() {
+      if (isFavNow) {
+        _favoriteBookIds.add(bookId);
+      } else {
+        _favoriteBookIds.remove(bookId);
+      }
+      if (_progressById.containsKey(bookId)) {
+        _progressById[bookId] =
+            _progressById[bookId]!.copyWith(isFavorite: isFavNow);
+      }
+    });
+
+    if (mounted) {
+      if (isFavNow) {
+        AppSnackbar.success(
+          context,
+          'تمت إضافة "${book.title}" إلى المفضلة (قائمة المحفوظات)',
+        );
+      } else {
+        AppSnackbar.info(
+          context,
+          'تمت إزالة "${book.title}" من المفضلة',
+        );
+      }
+    }
   }
 
   @override
@@ -527,6 +580,7 @@ class _IlmPageState extends State<IlmPage> {
                 child: IlmMutnCard(
                   book: book,
                   progress: _progressById[book.id],
+                  isFavoriteOverride: _favoriteBookIds.contains(book.id),
                   onOpenReader: () => _navigateToBook(book),
                   onToggleFavorite: () => _toggleFavorite(book.id),
                 ),
@@ -695,6 +749,7 @@ class _IlmPageState extends State<IlmPage> {
                     child: IlmMutnCard(
                       book: book,
                       progress: _progressById[book.id],
+                      isFavoriteOverride: _favoriteBookIds.contains(book.id),
                       onOpenReader: () => _navigateToBook(book),
                       onToggleFavorite: () => _toggleFavorite(book.id),
                     ),
