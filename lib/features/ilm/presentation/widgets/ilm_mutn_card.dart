@@ -31,9 +31,16 @@ class IlmMutnCard extends StatelessWidget {
   void _startAudioStream(BuildContext context) {
     HapticFeedback.mediumImpact();
     final audioService = MutunAudioService();
-    final audioUrl = MutunAudioCatalog.getAudioUrl(book.id, reciterId: audioService.selectedReciter.id) ?? '';
-    final totalParas = MutunAudioCatalog.getTotalParagraphs(book.id);
+    final available = MutunAudioCatalog.getRecitersForBook(book.id);
+    final reciter = available.any((r) => r.id == audioService.selectedReciter.id)
+        ? audioService.selectedReciter
+        : (available.isNotEmpty ? available.first : audioService.selectedReciter);
+    final audioUrl =
+        MutunAudioCatalog.getAudioUrl(book.id, reciterId: reciter.id) ?? '';
+    final totalParas =
+        MutunAudioCatalog.getTotalParagraphs(book.id, reciterId: reciter.id);
 
+    audioService.setSelectedReciter(reciter);
     audioService.playMatnAudio(
       bookId: book.id,
       audioUrl: audioUrl,

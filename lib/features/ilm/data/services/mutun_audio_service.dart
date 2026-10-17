@@ -3,23 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../catalogs/mutun_audio_catalog.dart';
+export '../catalogs/mutun_audio_catalog.dart' show MutunReciter, MutunReciterDefaults;
 
 enum MutunRepeatMode {
   none,
   singleParagraph,
   entireMatn,
-}
-
-class MutunReciter {
-  final String id;
-  final String name;
-  final String description;
-
-  const MutunReciter({
-    required this.id,
-    required this.name,
-    required this.description,
-  });
 }
 
 class MutunAudioService {
@@ -32,20 +21,17 @@ class MutunAudioService {
 
   final AudioPlayer _player = AudioPlayer();
 
-  static const List<MutunReciter> availableReciters = [
-    MutunReciter(
-      id: 'sini',
-      name: 'د. عبد العزيز الصيني',
-      description: 'قراءة محققة متقنة وفق نشرة الشيخ د. عبدالمحسن القاسم',
-    ),
-    MutunReciter(
-      id: 'faqeeh',
-      name: 'القارئ عبد الغني الفقيه',
-      description: 'تسجيل صوتي معتمد لنخبة من متون طالب العلم',
-    ),
+  static const List<MutunReciter> defaultReciters = [
+    MutunReciterDefaults.sini,
+    MutunReciterDefaults.fahad,
+    MutunReciterDefaults.faqeeh,
+    MutunReciterDefaults.shaydzmi,
+    MutunReciterDefaults.afasy,
   ];
 
-  MutunReciter _selectedReciter = availableReciters[0];
+  static const List<MutunReciter> availableReciters = defaultReciters;
+
+  MutunReciter _selectedReciter = MutunReciterDefaults.sini;
   MutunReciter get selectedReciter => _selectedReciter;
 
   // Reactive state notifiers
@@ -57,13 +43,18 @@ class MutunAudioService {
   final ValueNotifier<MutunRepeatMode> repeatModeNotifier =
       ValueNotifier<MutunRepeatMode>(MutunRepeatMode.none);
   final ValueNotifier<MutunReciter> selectedReciterNotifier =
-      ValueNotifier<MutunReciter>(availableReciters[0]);
+      ValueNotifier<MutunReciter>(MutunReciterDefaults.sini);
   final ValueNotifier<Duration> positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<String?> playbackErrorNotifier = ValueNotifier<String?>(null);
 
   String? _currentAudioUrl;
   int _totalParagraphs = 1;
+
+  /// Returns the specific verified reciters available for a book.
+  List<MutunReciter> getAvailableRecitersForBook(String? bookId) {
+    return MutunAudioCatalog.getRecitersForBook(bookId);
+  }
 
   void _initAudioListener() {
     _player.playerStateStream.listen((state) {
@@ -102,6 +93,16 @@ class MutunAudioService {
 
     _player.positionStream.listen((pos) {
       positionNotifier.value = pos;
+      final dur = durationNotifier.value;
+      // Auto-advance active paragraph highlight with reader recitation progress
+      if (dur > Duration.zero && _totalParagraphs > 1 && _player.playing) {
+        final ratio = pos.inMilliseconds / dur.inMilliseconds;
+        final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
+        final clamped = estimatedPara.clamp(1, _totalParagraphs);
+        if (activeParagraphNotifier.value != clamped) {
+          activeParagraphNotifier.value = clamped;
+        }
+      }
     });
 
     _player.durationStream.listen((dur) {
@@ -272,8 +273,15 @@ class MutunAudioService {
 
   void seekToParagraph(int index) {
     activeParagraphNotifier.value = index;
-    // If playing, restart paragraph or seek
-    if (isPlayingNotifier.value) {
+    final dur = durationNotifier.value;
+    if (dur > Duration.zero && _totalParagraphs > 1) {
+      final targetMs =
+          ((index - 1) / _totalParagraphs * dur.inMilliseconds).round();
+      _player.seek(Duration(days: 0, milliseconds: targetMs));
+      if (!isPlayingNotifier.value) {
+        _player.play();
+      }
+    } else if (isPlayingNotifier.value) {
       _player.seek(Duration.zero);
       _player.play();
     }
@@ -300,6 +308,17 @@ class MutunAudioService {
   Future<void> togglePlayPause({String? bookId}) async {
     final targetBookId = bookId ?? activeBookIdNotifier.value;
 
+    // Check if target reciter is available for this book, otherwise pick the first available
+    if (targetBookId != null) {
+      final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
+      final hasSelected =
+          availableReciters.any((r) => r.id == _selectedReciter.id);
+      if (!hasSelected && availableReciters.isNotEmpty) {
+        _selectedReciter = availableReciters.first;
+        selectedReciterNotifier.value = _selectedReciter;
+      }
+    }
+
     // If starting a new book or first-time playback
     if (targetBookId != null &&
         (_currentAudioUrl == null ||
@@ -307,14 +326,17 @@ class MutunAudioService {
             _player.audioSource == null)) {
       final audioUrl = MutunAudioCatalog.getAudioUrl(
             targetBookId,
-            reciterId: selectedReciter.id,
+            reciterId: _selectedReciter.id,
           ) ??
           MutunAudioCatalog.getAudioUrl(
             targetBookId,
             reciterId: 'sini',
           ) ??
           '';
-      final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId);
+      final totalParas = MutunAudioCatalog.getTotalParagraphs(
+        targetBookId,
+        reciterId: _selectedReciter.id,
+      );
       await playMatnAudio(
         bookId: targetBookId,
         audioUrl: audioUrl,

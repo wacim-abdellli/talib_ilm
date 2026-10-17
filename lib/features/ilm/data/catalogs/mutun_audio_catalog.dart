@@ -1,23 +1,95 @@
-/// Scholarly audio recitations catalog linking real syllabus mutun (bk_*)
-/// to high-quality authentic audio streams by prominent scholars (Dr. Abdul Aziz As-Sini).
+/// Scholarly audio recitations catalog linking syllabus and classical mutun
+/// to verified high-quality streaming audio sources across prominent reciters.
+class MutunReciter {
+  final String id;
+  final String name;
+  final String description;
+
+  const MutunReciter({
+    required this.id,
+    required this.name,
+    required this.description,
+  });
+}
+
+class MutunReciterDefaults {
+  static const sini = MutunReciter(
+    id: 'sini',
+    name: 'د. عبد العزيز الصيني',
+    description: 'قراءة محققة متقنة وفق منهج متون طالب العلم بالمسجد النبوي',
+  );
+
+  static const fahad = MutunReciter(
+    id: 'fahad',
+    name: 'الشيخ طه الفهد',
+    description: 'قراءة المنظومات العلمية بضبط عروضي وشجي متقن',
+  );
+
+  static const faqeeh = MutunReciter(
+    id: 'faqeeh',
+    name: 'القارئ عبد الغني الفقيه',
+    description: 'تسجيل صوتي معتمد لنخبة من المتون العلمية',
+  );
+
+  static const shaydzmi = MutunReciter(
+    id: 'shaydzmi',
+    name: 'القارئ أبو أحمد الشيظمي',
+    description: 'قراءة صوتية مسجلة وواضحة للمتون والمنظومات',
+  );
+
+  static const afasy = MutunReciter(
+    id: 'afasy',
+    name: 'الشيخ مشاري راشد العفاسي',
+    description: 'قراءة متون التجويد والمنظومات الكبرى',
+  );
+
+  static const bahour = MutunReciter(
+    id: 'bahour',
+    name: 'القارئ عبد الرحمن بحور',
+    description: 'تسجيل صوتي معتمد في منصة حفاظ المتون',
+  );
+}
+
+class MatnAudioSource {
+  final MutunReciter reciter;
+  final String audioUrl;
+  final String? fallbackUrl;
+  final int totalParagraphs;
+
+  const MatnAudioSource({
+    required this.reciter,
+    required this.audioUrl,
+    this.fallbackUrl,
+    this.totalParagraphs = 1,
+  });
+}
+
 class MutunAudioEntry {
   final String bookId;
   final String title;
-  final String siniAudioFileName;
-  final String? archiveFileName;
-  final String? directUrl;
-  final String? fallbackUrl;
-  final int totalParagraphs;
+  final List<MatnAudioSource> sources;
 
   const MutunAudioEntry({
     required this.bookId,
     required this.title,
-    required this.siniAudioFileName,
-    this.archiveFileName,
-    this.directUrl,
-    this.fallbackUrl,
-    this.totalParagraphs = 1,
+    required this.sources,
   });
+
+  MatnAudioSource? getSource([String? reciterId]) {
+    if (sources.isEmpty) return null;
+    if (reciterId == null) return sources.first;
+    return sources.firstWhere(
+      (s) => s.reciter.id == reciterId,
+      orElse: () => sources.first,
+    );
+  }
+
+  // Backwards compatibility properties
+  String get siniAudioFileName => sources.first.audioUrl;
+  String? get archiveFileName => null;
+  String? get directUrl => sources.first.audioUrl;
+  String? get fallbackUrl => sources.first.fallbackUrl;
+  int get totalParagraphs => sources.first.totalParagraphs;
 }
 
 class MutunAudioCatalog {
@@ -33,215 +105,458 @@ class MutunAudioCatalog {
     'bk_adhkar_adab': MutunAudioEntry(
       bookId: 'bk_adhkar_adab',
       title: 'الآداب والأذكار',
-      archiveFileName: '03.mp3',
-      siniAudioFileName: '0101AlAthkaar_AbdulAzizAsSini.mp3',
-      totalParagraphs: 24,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/03.mp3',
+          fallbackUrl: '$siniBaseUrl/0101AlAthkaar_AbdulAzizAsSini.mp3',
+          totalParagraphs: 24,
+        ),
+      ],
     ),
 
     // ── المستوى الأول ─────────────────────────────────────────
     'bk_nawaqid_islam': MutunAudioEntry(
       bookId: 'bk_nawaqid_islam',
       title: 'نواقض الإسلام',
-      archiveFileName: '04.mp3',
-      siniAudioFileName: '0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3',
-      totalParagraphs: 10,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/04.mp3',
+          fallbackUrl: '$siniBaseUrl/0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3',
+          totalParagraphs: 10,
+        ),
+      ],
     ),
     'bk_qawaid_arba': MutunAudioEntry(
       bookId: 'bk_qawaid_arba',
       title: 'القواعد الأربع',
-      archiveFileName: '05.mp3',
-      siniAudioFileName: '0202AlQawaidAlArba_AbdulAzizAsSini.mp3',
-      totalParagraphs: 8,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/05.mp3',
+          fallbackUrl: '$siniBaseUrl/0202AlQawaidAlArba_AbdulAzizAsSini.mp3',
+          totalParagraphs: 8,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.shaydzmi,
+          audioUrl: 'https://archive.org/download/shaydzmi16/shaydzmi16.mp3',
+          totalParagraphs: 8,
+        ),
+      ],
     ),
     'bk_usul_thalatha': MutunAudioEntry(
       bookId: 'bk_usul_thalatha',
       title: 'ثلاثة الأصول وأدلتها',
-      archiveFileName: '06.mp3',
-      siniAudioFileName: '0201AlUsulAtThalaath_AbdulAzizAsSini.mp3',
-      totalParagraphs: 28,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/06.mp3',
+          fallbackUrl: '$siniBaseUrl/0201AlUsulAtThalaath_AbdulAzizAsSini.mp3',
+          totalParagraphs: 28,
+        ),
+      ],
     ),
     'bk_arbaeen_nawawi': MutunAudioEntry(
       bookId: 'bk_arbaeen_nawawi',
       title: 'الأربعون النووية',
-      archiveFileName: '07.mp3',
-      siniAudioFileName: '0204AlArbaunAnNawawiyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 42,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/07.mp3',
+          fallbackUrl:
+              '$siniBaseUrl/0204AlArbaunAnNawawiyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 42,
+        ),
+      ],
     ),
 
     // ── المستوى الثاني ─────────────────────────────────────────
     'bk_tuhfat_atfal': MutunAudioEntry(
       bookId: 'bk_tuhfat_atfal',
       title: 'تحفة الأطفال في تجويد القرآن',
-      archiveFileName: '08.mp3',
-      siniAudioFileName: '0301ThufatUlAtfaal_AbdulAzizAsSini.mp3',
-      totalParagraphs: 61,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/08.mp3',
+          fallbackUrl: '$siniBaseUrl/0301ThufatUlAtfaal_AbdulAzizAsSini.mp3',
+          totalParagraphs: 61,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_kiraat_mufrada/atfaal.mp3',
+          totalParagraphs: 61,
+        ),
+      ],
     ),
     'bk_shuroot_salah': MutunAudioEntry(
       bookId: 'bk_shuroot_salah',
       title: 'شروط الصلاة وأركانها وواجباتها',
-      archiveFileName: '09.mp3',
-      siniAudioFileName: '0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 14,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/09.mp3',
+          fallbackUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 14,
+        ),
+      ],
     ),
     'bk_shurut_salah': MutunAudioEntry(
       bookId: 'bk_shurut_salah',
       title: 'شروط الصلاة وأركانها وواجباتها',
-      archiveFileName: '09.mp3',
-      siniAudioFileName: '0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 14,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/09.mp3',
+          fallbackUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 14,
+        ),
+      ],
     ),
     'bk_kitab_tawheed': MutunAudioEntry(
       bookId: 'bk_kitab_tawheed',
       title: 'كتاب التوحيد',
-      archiveFileName: '10.mp3',
-      siniAudioFileName: '0303KitaabAtTawheed_AbdulAzizAsSini.mp3',
-      totalParagraphs: 67,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/10.mp3',
+          fallbackUrl: '$siniBaseUrl/0303KitaabAtTawheed_AbdulAzizAsSini.mp3',
+          totalParagraphs: 67,
+        ),
+      ],
     ),
     'bk_kashf_shubuhat': MutunAudioEntry(
       bookId: 'bk_kashf_shubuhat',
       title: 'كشف الشبهات',
-      siniAudioFileName: '0804Kashf_AbdulGhaniSaadiqAlFaqeeh.mp3',
-      directUrl:
-          'https://files.a-alqasim.com/audio/Mutoon/AbdulGhaniSaadiqAlFaqeeh/0804Kashf_AbdulGhaniSaadiqAlFaqeeh.mp3',
-      totalParagraphs: 20,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.faqeeh,
+          audioUrl: 'https://archive.org/download/shaydzmi16/shaydzmi16.mp3',
+          fallbackUrl:
+              'https://files.a-alqasim.com/audio/Mutoon/AbdulGhaniSaadiqAlFaqeeh/0804Kashf_AbdulGhaniSaadiqAlFaqeeh.mp3',
+          totalParagraphs: 20,
+        ),
+      ],
     ),
 
     // ── المستوى الثالث ─────────────────────────────────────────
     'bk_manzumah_baiquoni': MutunAudioEntry(
       bookId: 'bk_manzumah_baiquoni',
       title: 'المنظومة البيقونية',
-      archiveFileName: '11.mp3',
-      siniAudioFileName: '0401AlBayqooni_AbdulAzizAsSini.mp3',
-      totalParagraphs: 34,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
+          totalParagraphs: 34,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/11.mp3',
+          fallbackUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
+          totalParagraphs: 34,
+        ),
+      ],
     ),
     'bk_manzooma_bayquniyya': MutunAudioEntry(
       bookId: 'bk_manzooma_bayquniyya',
       title: 'المنظومة البيقونية',
-      archiveFileName: '11.mp3',
-      siniAudioFileName: '0401AlBayqooni_AbdulAzizAsSini.mp3',
-      totalParagraphs: 34,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
+          totalParagraphs: 34,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/11.mp3',
+          fallbackUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
+          totalParagraphs: 34,
+        ),
+      ],
     ),
     'bk_manzumah_albiri': MutunAudioEntry(
       bookId: 'bk_manzumah_albiri',
       title: 'منظومة أبي إسحاق الإلبيري',
-      archiveFileName: '12.mp3',
-      siniAudioFileName: '0402AlIlbiri_AbdulAzizAsSini.mp3',
-      totalParagraphs: 25,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/12.mp3',
+          fallbackUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          totalParagraphs: 25,
+        ),
+      ],
     ),
     'bk_ilbiri': MutunAudioEntry(
       bookId: 'bk_ilbiri',
       title: 'منظومة أبي إسحاق الإلبيري',
-      archiveFileName: '12.mp3',
-      siniAudioFileName: '0402AlIlbiri_AbdulAzizAsSini.mp3',
-      totalParagraphs: 25,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/12.mp3',
+          fallbackUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          totalParagraphs: 25,
+        ),
+      ],
     ),
     'bk_ajrumiyyah': MutunAudioEntry(
       bookId: 'bk_ajrumiyyah',
       title: 'الآجرومية',
-      archiveFileName: '13.mp3',
-      siniAudioFileName: '0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 30,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/13.mp3',
+          fallbackUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 30,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_al-Arabiya/ajromyah.mp3',
+          totalParagraphs: 30,
+        ),
+      ],
     ),
     'bk_ajrumiyya': MutunAudioEntry(
       bookId: 'bk_ajrumiyya',
       title: 'الآجرومية',
-      archiveFileName: '13.mp3',
-      siniAudioFileName: '0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 30,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/13.mp3',
+          fallbackUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 30,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_al-Arabiya/ajromyah.mp3',
+          totalParagraphs: 30,
+        ),
+      ],
     ),
     'bk_wasitiyyah': MutunAudioEntry(
       bookId: 'bk_wasitiyyah',
       title: 'العقيدة الواسطية',
-      archiveFileName: '14.mp3',
-      siniAudioFileName: '0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 35,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/14.mp3',
+          fallbackUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 35,
+        ),
+      ],
     ),
     'bk_wasitiyya': MutunAudioEntry(
       bookId: 'bk_wasitiyya',
       title: 'العقيدة الواسطية',
-      archiveFileName: '14.mp3',
-      siniAudioFileName: '0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 35,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/14.mp3',
+          fallbackUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 35,
+        ),
+      ],
     ),
 
     // ── المستوى الرابع ─────────────────────────────────────────
     'bk_waraqat': MutunAudioEntry(
       bookId: 'bk_waraqat',
       title: 'الورقات في أصول الفقه',
-      archiveFileName: '15.mp3',
-      siniAudioFileName: '0501AlWaraqat_AbdulAzizAsSini.mp3',
-      totalParagraphs: 22,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/15.mp3',
+          fallbackUrl: '$siniBaseUrl/0501AlWaraqat_AbdulAzizAsSini.mp3',
+          totalParagraphs: 22,
+        ),
+      ],
     ),
     'bk_unwan_al_hukm': MutunAudioEntry(
       bookId: 'bk_unwan_al_hukm',
       title: 'عنوان الحكم',
-      archiveFileName: '16.mp3',
-      siniAudioFileName: '0502UnwanAlHikm_AbdulAzizAsSini.mp3',
-      totalParagraphs: 20,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/16.mp3',
+          fallbackUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          totalParagraphs: 20,
+        ),
+      ],
     ),
     'bk_unwan_alhikam': MutunAudioEntry(
       bookId: 'bk_unwan_alhikam',
       title: 'عنوان الحكم',
-      archiveFileName: '16.mp3',
-      siniAudioFileName: '0502UnwanAlHikm_AbdulAzizAsSini.mp3',
-      totalParagraphs: 20,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/16.mp3',
+          fallbackUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          totalParagraphs: 20,
+        ),
+      ],
     ),
     'bk_rahibiyyah': MutunAudioEntry(
       bookId: 'bk_rahibiyyah',
       title: 'الرحبية في علم الفرائض',
-      archiveFileName: '17.mp3',
-      siniAudioFileName: '0503ArRahbiyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 30,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/17.mp3',
+          fallbackUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 30,
+        ),
+      ],
     ),
     'bk_rahbiyya': MutunAudioEntry(
       bookId: 'bk_rahbiyya',
       title: 'الرحبية في علم الفرائض',
-      archiveFileName: '17.mp3',
-      siniAudioFileName: '0503ArRahbiyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 30,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/17.mp3',
+          fallbackUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 30,
+        ),
+      ],
     ),
     'bk_aqidah_tahawiyyah': MutunAudioEntry(
       bookId: 'bk_aqidah_tahawiyyah',
       title: 'العقيدة الطحاوية',
-      archiveFileName: '18.mp3',
-      siniAudioFileName: '0504AtTahawiyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 50,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/18.mp3',
+          fallbackUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 50,
+        ),
+      ],
     ),
     'bk_tahawiyya': MutunAudioEntry(
       bookId: 'bk_tahawiyya',
       title: 'العقيدة الطحاوية',
-      archiveFileName: '18.mp3',
-      siniAudioFileName: '0504AtTahawiyah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 50,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$archiveBaseUrl/18.mp3',
+          fallbackUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 50,
+        ),
+      ],
     ),
 
-    // ── المطولات المتقدمة ──────────────────────────────────────
+    // ── المطولات المتقدمة والمنظومات الكبرى ────────────────────
     'bk_bulugh_maram': MutunAudioEntry(
       bookId: 'bk_bulugh_maram',
       title: 'بلوغ المرام من أدلة الأحكام',
-      siniAudioFileName: '0601Buloogh_AbdulAzizAsSini.mp3',
-      totalParagraphs: 120,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl:
+              'https://files.a-alqasim.com/audio/Mutoon/AbdulAzizAsSini/0601Buloogh_AbdulAzizAsSini.mp3',
+          totalParagraphs: 120,
+        ),
+      ],
     ),
     'bk_zad_mustaqni': MutunAudioEntry(
       bookId: 'bk_zad_mustaqni',
       title: 'زاد المستقنع في اختصار المقنع',
-      siniAudioFileName:
-          '0602Zaad/0602Zaad_01_KitaabAtTahaarah_AbdulAzizAsSini.mp3',
-      totalParagraphs: 140,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl:
+              'https://files.a-alqasim.com/audio/Mutoon/AbdulAzizAsSini/0602Zaad/0602Zaad_01_KitaabAtTahaarah_AbdulAzizAsSini.mp3',
+          totalParagraphs: 140,
+        ),
+      ],
+    ),
+    'bk_jawhar_maknoon': MutunAudioEntry(
+      bookId: 'bk_jawhar_maknoon',
+      title: 'الجوهر المكنون في صدف الثلاثة الفنون',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_al-Arabiya/aljawhar.mp3',
+          totalParagraphs: 50,
+        ),
+      ],
+    ),
+    'bk_nokhbat_al_fikar': MutunAudioEntry(
+      bookId: 'bk_nokhbat_al_fikar',
+      title: 'نظم نخبة الفكر في مصطلح أهل الأثر',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/nokbatulfeekar.mp3',
+          totalParagraphs: 35,
+        ),
+      ],
+    ),
+    'bk_alfiyyah_ibn_malik': MutunAudioEntry(
+      bookId: 'bk_alfiyyah_ibn_malik',
+      title: 'ألفية ابن مالك في النحو والتصريف',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_al-Arabiya/ebnmalek.mp3',
+          totalParagraphs: 100,
+        ),
+      ],
+    ),
+    'bk_shatibiyyah': MutunAudioEntry(
+      bookId: 'bk_shatibiyyah',
+      title: 'حرز الأماني ووجه التهاني (الشاطبية)',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_kiraat_mujtami3a/shatbeya.mp3',
+          totalParagraphs: 110,
+        ),
+      ],
     ),
     'bk_umdat_ahkam': MutunAudioEntry(
       bookId: 'bk_umdat_ahkam',
-      title: 'عمدة الأحكام',
-      siniAudioFileName: '0802AlUmdatuFilAhkaam_AbdulAzizAsSini.mp3',
-      totalParagraphs: 85,
+      title: 'عمدة الأحكام من كلام خير الأنام',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl:
+              'https://files.a-alqasim.com/audio/Mutoon/AbdulAzizAsSini/0802AlUmdatuFilAhkaam_AbdulAzizAsSini.mp3',
+          totalParagraphs: 85,
+        ),
+      ],
     ),
     'bk_qawaid_fiqhiyya': MutunAudioEntry(
       bookId: 'bk_qawaid_fiqhiyya',
       title: 'منظومة القواعد الفقهية',
-      siniAudioFileName: 'Mandhoumat_al-qawid_al-fiqhiyah_As-saady.mp3',
-      directUrl:
-          'https://archive.org/download/shaydzmi111/Mandhoumat_al-qawid_al-fiqhiyah_As-saady.mp3',
-      totalParagraphs: 18,
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.shaydzmi,
+          audioUrl:
+              'https://archive.org/download/shaydzmi111/Mandhoumat_al-qawid_al-fiqhiyah_As-saady.mp3',
+          totalParagraphs: 18,
+        ),
+      ],
+    ),
+    'bk_lamiyyat_al_afal': MutunAudioEntry(
+      bookId: 'bk_lamiyyat_al_afal',
+      title: 'لامية الأفعال لابن مالك',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl: 'https://archive.org/download/Mutun_al-Arabiya/malk.mp3',
+          totalParagraphs: 20,
+        ),
+      ],
     ),
   };
 
@@ -251,41 +566,41 @@ class MutunAudioCatalog {
   /// Get audio recitation entry.
   static MutunAudioEntry? getEntry(String bookId) => _entries[bookId];
 
+  /// Get list of available reciters for a given book ID.
+  static List<MutunReciter> getRecitersForBook(String? bookId) {
+    if (bookId == null) {
+      return [
+        MutunReciterDefaults.sini,
+        MutunReciterDefaults.fahad,
+        MutunReciterDefaults.faqeeh,
+        MutunReciterDefaults.shaydzmi,
+      ];
+    }
+    final entry = _entries[bookId];
+    if (entry == null || entry.sources.isEmpty) {
+      return [MutunReciterDefaults.sini];
+    }
+    return entry.sources.map((s) => s.reciter).toList();
+  }
+
   /// Get primary streaming audio URL for the specified matn and reciter.
-  static String? getAudioUrl(String bookId, {String reciterId = 'sini'}) {
+  static String? getAudioUrl(String bookId, {String? reciterId}) {
     final entry = _entries[bookId];
     if (entry == null) return null;
-
-    if (entry.directUrl != null) {
-      return entry.directUrl;
-    }
-
-    // High-speed CDN mirror for Dr. Abdul Aziz As-Sini recordings
-    if (entry.archiveFileName != null) {
-      return '$archiveBaseUrl/${entry.archiveFileName}';
-    }
-
-    return '$siniBaseUrl/${entry.siniAudioFileName}';
+    return entry.getSource(reciterId)?.audioUrl;
   }
 
   /// Get backup fallback URL in case of network or mirror failure.
-  static String? getFallbackAudioUrl(String bookId, {String reciterId = 'sini'}) {
+  static String? getFallbackAudioUrl(String bookId, {String? reciterId}) {
     final entry = _entries[bookId];
     if (entry == null) return null;
-
-    if (entry.fallbackUrl != null) {
-      return entry.fallbackUrl;
-    }
-
-    if (entry.archiveFileName != null) {
-      return '$siniBaseUrl/${entry.siniAudioFileName}';
-    }
-
-    return null;
+    return entry.getSource(reciterId)?.fallbackUrl;
   }
 
   /// Get total paragraphs / lines for reader synchronization.
-  static int getTotalParagraphs(String bookId) {
-    return _entries[bookId]?.totalParagraphs ?? 1;
+  static int getTotalParagraphs(String bookId, {String? reciterId}) {
+    final entry = _entries[bookId];
+    if (entry == null) return 1;
+    return entry.getSource(reciterId)?.totalParagraphs ?? 1;
   }
 }

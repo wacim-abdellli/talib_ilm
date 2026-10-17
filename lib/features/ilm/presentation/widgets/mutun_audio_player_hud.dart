@@ -17,6 +17,16 @@ class MutunAudioPlayerHud extends StatelessWidget {
     this.bookId,
   });
 
+  String _getEffectiveReciterName(MutunReciter selected) {
+    if (bookId != null) {
+      final available = audioService.getAvailableRecitersForBook(bookId);
+      if (available.isNotEmpty && !available.any((r) => r.id == selected.id)) {
+        return available.first.name;
+      }
+    }
+    return selected.name;
+  }
+
   void _showReciterPicker(BuildContext context) {
     HapticFeedback.lightImpact();
     final palette = context.palette;
@@ -63,7 +73,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpace.md),
-                  ...MutunAudioService.availableReciters.map((reciter) {
+                  ...audioService.getAvailableRecitersForBook(bookId).map((reciter) {
                     final isSelected =
                         audioService.selectedReciter.id == reciter.id;
                     return Material(
@@ -188,7 +198,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 120),
                             child: Text(
-                              reciter.name,
+                              _getEffectiveReciterName(reciter),
                               style: textTheme.caption.copyWith(
                                 color: palette.text,
                                 fontWeight: FontWeight.bold,

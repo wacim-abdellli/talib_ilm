@@ -11,14 +11,21 @@ void main() {
       expect(MutunAudioCatalog.hasAudio('bk_usul_thalatha'), isTrue);
       expect(MutunAudioCatalog.hasAudio('bk_qawaid_arba'), isTrue);
       expect(MutunAudioCatalog.hasAudio('bk_kitab_tawheed'), isTrue);
+      expect(MutunAudioCatalog.hasAudio('bk_jawhar_maknoon'), isTrue);
+      expect(MutunAudioCatalog.hasAudio('bk_manzumah_baiquoni'), isTrue);
 
       final siniUrl = MutunAudioCatalog.getAudioUrl('bk_usul_thalatha', reciterId: 'sini');
       expect(siniUrl, isNotNull);
-      expect(siniUrl!, contains('AbdulAzizAsSini'));
+      expect(siniUrl!, contains('06.mp3'));
 
-      final tayyibUrl = MutunAudioCatalog.getAudioUrl('bk_usul_thalatha', reciterId: 'tayyib');
-      expect(tayyibUrl, isNotNull);
-      expect(tayyibUrl!, contains('MuadhAlTayyib'));
+      final fallbackUrl = MutunAudioCatalog.getFallbackAudioUrl('bk_usul_thalatha', reciterId: 'sini');
+      expect(fallbackUrl, isNotNull);
+      expect(fallbackUrl!, contains('AbdulAzizAsSini'));
+
+      final baiquoniReciters = MutunAudioCatalog.getRecitersForBook('bk_manzumah_baiquoni');
+      expect(baiquoniReciters.length, greaterThanOrEqualTo(2));
+      expect(baiquoniReciters.any((r) => r.id == 'fahad'), isTrue);
+      expect(baiquoniReciters.any((r) => r.id == 'sini'), isTrue);
     });
 
     test('MutunThemeColors provides high-contrast tokens in light and dark modes', () {
@@ -51,13 +58,13 @@ void main() {
       expect(service.repeatModeNotifier.value, MutunRepeatMode.none);
     });
 
-    test('MutunAudioService supports Dr. Al-Sini and Sheikh Al-Tayyib', () {
+    test('MutunAudioService supports Dr. Al-Sini and multiple verified reciters', () {
       final service = MutunAudioService();
-      expect(MutunAudioService.availableReciters.length, 2);
+      expect(MutunAudioService.availableReciters.length, greaterThanOrEqualTo(2));
 
-      final tayyib = MutunAudioService.availableReciters[1];
-      service.setSelectedReciter(tayyib);
-      expect(service.selectedReciter.id, 'tayyib');
+      final secondReciter = MutunAudioService.availableReciters[1];
+      service.setSelectedReciter(secondReciter);
+      expect(service.selectedReciter.id, secondReciter.id);
 
       final sini = MutunAudioService.availableReciters[0];
       service.setSelectedReciter(sini);
