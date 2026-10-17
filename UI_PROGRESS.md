@@ -932,7 +932,44 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
      - `flutter test test/adhan_asset_test.dart`: Passed.
      - `flutter test test/adhan_notification_settings_test.dart`: Passed.
+---
+
+## Islamic Knowledge: Quizzes, Tests & Interactive Lessons System (المسابقات والاختبارات الشرعية)
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Comprehensive Scholarly Coverage (7 Core Sciences):**
+     - Authored and integrated authentic, verified question banks across all major disciplines:
+       - **العقيدة والتوحيد (Aqidah & Tawheed):** 3 progressive levels (أصول التوحيد، الأسماء والصفات ومراتب القدر، دقائق المعتقد وضوابط التكفير).
+       - **الفقه الإسلامي وأصوله (Fiqh & Usul):** 3 progressive levels (الطهارة والصلاة، الزكاة والصيام والحج، القواعد الخمس الكبرى وأصول الفقه).
+       - **الحديث الشريف وعلومه (Hadith & Mustalah):** 3 progressive levels (الأربعين النووية وجوامع الكلم، شروط الصحيح والمصطلح، علل الحديث والتدليس).
+       - **القرآن الكريم وتفسيره (The Holy Quran & Tafsir):** 3 progressive levels (فضائل السور والآيات، غريب القرآن وأسباب النزول، الناسخ والمنسوخ وتاريخ المصحف).
+       - **السيرة النبوية والتاريخ (Seerah & Islamic History):** 3 progressive levels (العهد المكي والبعثة، العهد المدني والغزوات الكبرى، عصر الخلفاء الراشدين).
+       - **قصص الأنبياء وأسماء الله الحسنى (Prophets & Asma' Allah):** 3 progressive levels (أولو العزم ومعجزاتهم، فقه الأسماء الحسنى وآثارها، إحصاء الأسماء).
+       - **الآداب الشرعية والأذكار (Adab, Adhkar & Heart Softeners):** 3 progressive levels (أذكار اليوم والليلة، أدب طالب العلم وبر الوالدين، أعمال القلوب والخوف والرجاء).
+  2. **Interactive "Like Lessons" Educational Model:**
+     - Every single question provides instant feedback with:
+       - **الدرس المستفاد والشرح التوضيحي (The Lesson & Takeaway):** Detailed scholarly explanation of the rule or wisdom.
+       - **الدليل الشرعي (Evidence):** Authentic Quranic verses, Sahih Hadiths, or consensus rules.
+       - **المصدر والمراجع (Citations):** Specific references to classical books (صحيح البخاري، صحيح مسلم، العقيدة الواسطية، عمدة الفقه، الرحيق المختوم، إلخ).
+     - Full review mode allows learners to review all questions and reread lessons at any time.
+  3. **Competitive Gamification & Progression Layer:**
+     - **نقاط طالب العلم (XP):** Earned through correct answers, streaks, and mastery bonuses.
+     - **رتبة طالب العلم (Scholarly Ranks):** Titles from "مبتدئ في رياض المعرفة" up to "علّامة باحث ومتقن".
+     - **نجوم الإتقان (Mastery Stars):** 1-3 stars awarded per level based on percentage.
+     - **Level Unlocking:** Reaching >= 70% in Level 1 unlocks Level 2, and so forth.
+     - **التحدي اليومي السريع (Daily Rapid Challenge):** 10 randomized, fresh questions drawn across all sciences for competitive daily practice.
+  4. **Seamless Clean UI & Calm Scholar Integration:**
+     - `IslamicQuizHubPage`: Standalone and embedded hub with user rank, stats pills, daily challenge card, categories chips, and discipline progress cards.
+     - `FanQuizLevelsPage`: Level selection with unlocked/locked states, star ratings, and high score tracking.
+     - `QuizSessionPage`: Fluid test runner with animated progress bar, streak flame badge, tactile option tiles, and auto-expanding lesson cards.
+     - `QuizResultPage`: Celebration screen with score ring, stars, XP breakdown, question review, retake, and next level transitions.
+     - `IlmQuizBannerCard`: Contextual banner embedded directly in `IlmPage` and category chips.
+  5. **Verification:**
+     - `flutter test test/islamic_quiz_test.dart`: 7/7 tests passed.
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
 - **Open Issues:** None.
+
 
 
 

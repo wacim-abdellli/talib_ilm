@@ -17,19 +17,23 @@ import '../data/catalogs/seerah_tarikh_catalog.dart';
 import '../data/catalogs/tafsir_catalog.dart';
 import '../data/catalogs/usul_catalog.dart';
 import '../data/models/book_progress_model.dart';
+import '../data/models/islamic_quiz_models.dart';
 import '../data/models/mutun_models.dart';
 import '../data/models/shamela_models.dart';
 import '../data/services/book_progress_service.dart';
 import '../data/services/daily_reading_service.dart';
 import '../data/services/motivation_service.dart';
+import '../data/services/quiz_progress_service.dart';
 import '../data/services/shamela_service.dart';
 import 'pages/book_view_page.dart';
+import 'pages/islamic_quiz_hub_page.dart';
 import 'pages/shamela_reader_page.dart';
 import 'widgets/ilm_category_chips.dart';
 import 'widgets/ilm_header.dart';
 import 'widgets/ilm_loading_view.dart';
 import 'widgets/ilm_mutn_card.dart';
 import 'widgets/ilm_partition_header.dart';
+import 'widgets/ilm_quiz_banner_card.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/maktaba_shamela_view.dart';
 import 'widgets/motivation_widgets.dart';
@@ -53,6 +57,8 @@ class _IlmPageState extends State<IlmPage> {
   BookProgressService? _progressService;
   DailyReadingService? _dailyReadingService;
   MotivationService? _motivationService;
+  QuizProgressService? _quizProgressService;
+  UserQuizStats? _quizStats;
 
   bool _isLoading = true;
   String _selectedCategory = 'all';
@@ -110,6 +116,7 @@ class _IlmPageState extends State<IlmPage> {
     _progressService = BookProgressService(prefs);
     _dailyReadingService = DailyReadingService(prefs);
     _motivationService = MotivationService(prefs);
+    _quizProgressService = QuizProgressService(prefs);
     await _loadData();
   }
 
@@ -157,6 +164,8 @@ class _IlmPageState extends State<IlmPage> {
         _pagesReadToday = _dailyReadingService!.getPagesReadToday();
         _currentStreak = _dailyReadingService!.getCurrentStreak();
       }
+
+      _quizStats = _quizProgressService?.getUserStats();
 
       if (_motivationService != null) {
         final milestone = await _motivationService!.checkMilestone(
@@ -329,7 +338,9 @@ class _IlmPageState extends State<IlmPage> {
             Expanded(
               child: _selectedCategory == 'shamela'
                   ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
-                  : _buildScrollablePartitions(context, palette),
+                  : (_selectedCategory == 'quiz'
+                      ? const IslamicQuizHubPage(showAppBar: false)
+                      : _buildScrollablePartitions(context, palette)),
             ),
           ],
         ),
@@ -370,6 +381,15 @@ class _IlmPageState extends State<IlmPage> {
               ),
             ),
           ),
+
+        // Islamic Knowledge Quizzes Banner (competitions, levels & lessons)
+        SliverToBoxAdapter(
+          child: IlmQuizBannerCard(
+            currentCategory: _selectedCategory,
+            userStats: _quizStats,
+            onReturnFromQuiz: _loadData,
+          ),
+        ),
 
         // Section 1: Mutun Taleb Al-Ilm
         if (_selectedCategory == 'all' || _selectedCategory == 'mutun')
