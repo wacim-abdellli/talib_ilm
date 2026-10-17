@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
-import '../../../../app/theme/reader_theme.dart';
 
-/// Dignified header for the Ilm scholarly library.
+/// Dignified header for the Ilm scholarly library adhering strictly to the Calm Scholar design system.
 class IlmHeader extends StatelessWidget {
   final String dailyMicrocopy;
   final int totalBooksCount;
@@ -19,7 +18,6 @@ class IlmHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
 
     return Container(
       width: double.infinity,
@@ -28,10 +26,10 @@ class IlmHeader extends StatelessWidget {
         vertical: AppSpace.md,
       ),
       decoration: BoxDecoration(
-        color: tokens.headerBrown,
+        color: palette.surface,
         border: Border(
           bottom: BorderSide(
-            color: tokens.headerBrown,
+            color: palette.border,
             width: 1,
           ),
         ),
@@ -46,9 +44,9 @@ class IlmHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'المتون والمكتبة',
+                      'المكتبة العلمية',
                       style: context.text.title.copyWith(
-                        color: tokens.headerTitle,
+                        color: palette.text,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -57,7 +55,7 @@ class IlmHeader extends StatelessWidget {
                     Text(
                       dailyMicrocopy,
                       style: context.text.bodySmall.copyWith(
-                        color: tokens.headerSubtitle,
+                        color: palette.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -72,10 +70,10 @@ class IlmHeader extends StatelessWidget {
                     vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: tokens.rosetteGold.withValues(alpha: 0.2),
+                    color: palette.surfaceMuted,
                     borderRadius: AppRadius.pillRadius,
                     border: Border.all(
-                      color: tokens.rosetteGold.withValues(alpha: 0.5),
+                      color: palette.border,
                       width: 1,
                     ),
                   ),
@@ -85,13 +83,13 @@ class IlmHeader extends StatelessWidget {
                       Icon(
                         Icons.collections_bookmark_rounded,
                         size: AppIcon.sm,
-                        color: tokens.rosetteGold,
+                        color: palette.primary,
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Text(
                         '$completedBooksCount/$totalBooksCount مُنجز',
                         style: context.text.caption.copyWith(
-                          color: tokens.headerTitle,
+                          color: palette.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

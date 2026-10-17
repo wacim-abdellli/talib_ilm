@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/reader_theme.dart';
-import 'package:talib_ilm/features/ilm/data/catalogs/mutun_categories_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutun_rosette_icon.dart';
 
 void main() {
   group('Mutun Catalog & Theme Tests', () {
-    test('MutunCategoriesCatalog contains all expected categories and items', () {
-      expect(MutunCategoriesCatalog.categories.isNotEmpty, isTrue);
+    test('MutunAudioCatalog contains authentic audio for syllabus mutun', () {
+      expect(MutunAudioCatalog.hasAudio('bk_usul_thalatha'), isTrue);
+      expect(MutunAudioCatalog.hasAudio('bk_qawaid_arba'), isTrue);
+      expect(MutunAudioCatalog.hasAudio('bk_kitab_tawheed'), isTrue);
 
-      final aqidah = MutunCategoriesCatalog.categories
-          .firstWhere((c) => c.id == 'aqidah');
-      expect(aqidah.items.any((i) => i.id == 'bk_nawaqid_islam'), isTrue);
-      expect(aqidah.items.any((i) => i.id == 'bk_usul_thalatha'), isTrue);
+      final siniUrl = MutunAudioCatalog.getAudioUrl('bk_usul_thalatha', reciterId: 'sini');
+      expect(siniUrl, isNotNull);
+      expect(siniUrl!, contains('AbdulAzizAsSini'));
 
-      final nawaqid = MutunCategoriesCatalog.getItemById('bk_nawaqid_islam');
-      expect(nawaqid, isNotNull);
-      expect(nawaqid!.audioUrlSini, contains('AbdulAzizAsSini'));
-      expect(nawaqid.pdfPath, isNotNull);
+      final tayyibUrl = MutunAudioCatalog.getAudioUrl('bk_usul_thalatha', reciterId: 'tayyib');
+      expect(tayyibUrl, isNotNull);
+      expect(tayyibUrl!, contains('MuadhAlTayyib'));
     });
 
     test('MutunThemeColors provides high-contrast tokens in light and dark modes', () {
       final lightTokens = MutunThemeColors.getTokens(isDark: false);
-      expect(lightTokens.headerBrown, isNotNull);
       expect(lightTokens.rosetteGold, isNotNull);
       expect(lightTokens.activeParagraphBg, isNotNull);
+      expect(lightTokens.cardBg, isNotNull);
 
       final darkTokens = MutunThemeColors.getTokens(isDark: true);
-      expect(darkTokens.headerBrown, isNotNull);
       expect(darkTokens.rosetteGold, isNotNull);
       expect(darkTokens.activeParagraphBg, isNotNull);
+      expect(darkTokens.cardBg, isNotNull);
     });
   });
 

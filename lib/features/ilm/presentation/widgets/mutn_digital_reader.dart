@@ -6,7 +6,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
-import '../../data/catalogs/mutun_categories_catalog.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
@@ -271,7 +271,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     final bgColor = ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
 
     final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
-    final mutunItem = MutunCategoriesCatalog.getItemById(widget.book.id);
 
     return Container(
       color: bgColor,
@@ -281,7 +280,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
           AnimatedContainer(
             duration: AppMotion.fast,
             height: widget.showControls ? 36.0 : 0.0,
-            color: tokens.headerBrown.withValues(alpha: 0.08),
+            color: palette.surfaceMuted,
             child: widget.showControls
                 ? Center(
                     child: InkWell(
@@ -421,7 +420,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
           ),
 
           // ── Mutun Audio Player HUD ───────────────────────────────
-          if (mutunItem != null)
+          if (MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: MutunAudioService(),
               onOpenQuickJump: _openFihrisSheet,

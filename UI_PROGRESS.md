@@ -894,4 +894,27 @@ FAILED (54 violations)
      - `flutter test test/golden/adhkar_golden_test.dart`: 4/4 passed.
 - **Open Issues:** None.
 
+---
+
+## Ilm Section: Restoration of Native Calm Scholar Design System & Dynamic Subject Partitioning
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Purged Hardcoded Dummy Data & Foreign Palette Overrides:**
+     - Removed artificial static catalog (`mutun_categories_catalog.dart`) and foreign brown pages (`mutun_categories_view.dart`, `mutun_category_items_page.dart`, `matn_overview_page.dart`).
+     - Removed foreign brown tokens (`headerBrown`, `headerTitle`, `headerSubtitle`) from `reader_theme.dart`.
+     - Reverted `IlmHeader` to native `talib_ilm` Calm Scholar styling (`palette.surface`, `palette.border`, `palette.text`, `palette.textMuted`, and `palette.primary`).
+  2. **Unified Single-Section Partitioning (`IlmPage` & `IlmCategoryChips`):**
+     - Replaced clunky dual-switchers with a unified horizontal category filter: "الكل", "متون المنهاج", "العقيدة والتوحيد", "الحديث الشريف", "الفقه وأصوله", "الآداب والأذكار", "التفسير وعلومه", "السيرة والتاريخ", "اللغة العربية", "المكتبة الشاملة".
+     - When "الكل" is active, scrolls through cleanly partitioned scholarly sections with `IlmPartitionHeader` (rosette emblem, title, subtitle, count badge, and deep section jump).
+     - Bound dynamically to real syllabus mutun (`mutun_program.json`, `MutunDigitalCatalog`) and verified Shamela classical catalogs (`AqidahCatalog`, `HadithCatalog`, `FiqhCatalog`, `UsulCatalog`, `RaqaeqAdabCatalog`, `TafsirCatalog`, `SeerahTarikhCatalog`, `ArabicCatalog`).
+  3. **Scholarly Readers & Authentic Reciters Integration (`IlmMutnCard` & `mutun_audio_catalog.dart`):**
+     - Created `IlmMutnCard` featuring level badges, subjects, author attribution, description, Dr. As-Sini audio recitation tags, reading progress, and dual primary actions ("قراءة المتن" and "استماع").
+     - Created `mutun_audio_catalog.dart` mapping syllabus book IDs (`bk_*`) to verified recitations by Dr. Abdul Aziz As-Sini and Sheikh Muadh Al-Tayyib.
+     - Enhanced `MutnDigitalReaderView` and `MutunAudioPlayerHud` to synchronize audio recitation with paragraph-level highlighting without foreign styling.
+  4. **Verification:**
+     - `flutter analyze`: 0 issues found (ran in 9.2s).
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
+     - `flutter test test/mutun_audio_catalog_ui_test.dart`: 5/5 tests passed.
+- **Open Issues:** None.
+
 

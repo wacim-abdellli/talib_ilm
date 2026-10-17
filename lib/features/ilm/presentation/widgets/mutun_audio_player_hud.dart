@@ -252,14 +252,14 @@ class MutunAudioPlayerHud extends StatelessWidget {
                                         height: AppIcon.md,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: tokens.headerTitle,
+                                          color: palette.surface,
                                         ),
                                       )
                                     : Icon(
                                         isPlaying
                                             ? Icons.pause_rounded
                                             : Icons.play_arrow_rounded,
-                                        color: tokens.headerTitle,
+                                        color: palette.surface,
                                         size: AppIcon.lg,
                                       ),
                               ),
