@@ -859,3 +859,25 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10).
      - `flutter test`: 19/19 tests passed.
 - **Open Issues:** None.
+
+---
+
+## Adhkar Section: Category Card Empty Void Fix & Rich Tile Aesthetics
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Card Proportions & Grid Aspect Ratio (`adhkar_page.dart`):**
+     - Adjusted `childAspectRatio` from `0.86` (~201dp tall cards with awkward vertical blank space) to `0.94` (~182dp tall), creating grounded, elegant, and balanced card dimensions.
+  2. **Content Enrichment & Scholarly Guidance (`adhkar_category_tile.dart` & `adhkar_page.dart`):**
+     - Wired up `subtitle` across `CategoryCardData` and `CategoryTile`, sourcing authentic spiritual benefits and descriptions from `adhkar.json` and fallback definitions.
+     - Vertically centered the title and subtitle in the card body between the header badges and footer action.
+  3. **Visual Depth & Progress Tracking:**
+     - Added an Islamic category watermark (`alpha: 0.04`) in the corner using `Transform.scale` and `PositionedDirectional`.
+     - Integrated `progressLoader` so tracked categories (Morning & Evening) display a live completion ratio (`AppProgress`) and percentage when active, or the mirrored forward chevron when idle.
+     - Wrapped title and subtitle in `Flexible` with `TextOverflow.ellipsis` to guarantee full text-scaling resilience (1.0 to 1.5x) without overflow.
+  4. **Verification:**
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs, 2 fewer warnings).
+     - `flutter test test/golden/adhkar_golden_test.dart`: 4/4 passed (visually verified goldens in light 1.0 and dark 1.5).
+     - `flutter test`: 18/18 Adhkar tests passed.
+- **Open Issues:** None.
+
