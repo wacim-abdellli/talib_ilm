@@ -87,6 +87,7 @@ class ScholarlyReaderHud extends StatelessWidget {
   final VoidCallback onOpenFihris;
   final VoidCallback onToggleMemorization;
   final VoidCallback onOpenTypography;
+  final bool showPageNavigation;
   final VoidCallback? onShare;
   final VoidCallback? onToggleAudio;
   final bool isAudioActive;
@@ -100,6 +101,7 @@ class ScholarlyReaderHud extends StatelessWidget {
     required this.isBookmarked,
     required this.memorizationMode,
     required this.showControls,
+    this.showPageNavigation = true,
     required this.onPreviousPage,
     required this.onNextPage,
     required this.onPageIndicatorTap,
@@ -117,6 +119,7 @@ class ScholarlyReaderHud extends StatelessWidget {
   });
 
   static const double hudHeight = 104.0;
+  static const double toolstripHeight = 56.0;
 
   @override
   Widget build(BuildContext context) {
@@ -133,15 +136,17 @@ class ScholarlyReaderHud extends StatelessWidget {
       isDark: isEffectiveDark,
     );
 
+    final effectiveHeight = showPageNavigation ? hudHeight : toolstripHeight;
+
     return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
-      height: showControls ? hudHeight : 0.0,
+      height: showControls ? effectiveHeight : 0.0,
       child: ClipRect(
         child: OverflowBox(
           alignment: Alignment.topCenter,
-          minHeight: hudHeight,
-          maxHeight: hudHeight,
+          minHeight: effectiveHeight,
+          maxHeight: effectiveHeight,
           child: Container(
             decoration: BoxDecoration(
               color: surfaceTokens.surfaceRaised,
@@ -152,70 +157,71 @@ class ScholarlyReaderHud extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Row 1: Fast Page Navigation ────────────────────────
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xxs,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: AppIcon.sm,
+                // ── Row 1: Fast Page Navigation (if enabled) ────────
+                if (showPageNavigation) ...[
+                  Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xxs,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: AppIcon.sm,
+                          ),
+                          tooltip: 'الصفحة السابقة',
+                          onPressed: onPreviousPage,
+                          color: surfaceTokens.text,
                         ),
-                        tooltip: 'الصفحة السابقة',
-                        onPressed: onPreviousPage,
-                        color: surfaceTokens.text,
-                      ),
-                      InkWell(
-                        onTap: onPageIndicatorTap,
-                        borderRadius: AppRadius.pillRadius,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.md,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: surfaceTokens.bg,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(color: surfaceTokens.border, width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.menu_book_rounded,
-                                size: AppIcon.xs,
-                                color: accent.primary,
-                              ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                'صفحة $currentPage من $totalPages',
-                                style: textTheme.label.copyWith(
-                                  color: surfaceTokens.text,
+                        InkWell(
+                          onTap: onPageIndicatorTap,
+                          borderRadius: AppRadius.pillRadius,
+                          child: Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: surfaceTokens.bg,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(color: surfaceTokens.border, width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  size: AppIcon.xs,
+                                  color: accent.primary,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  'صفحة $currentPage من $totalPages',
+                                  style: textTheme.label.copyWith(
+                                    color: surfaceTokens.text,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: AppIcon.sm,
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: AppIcon.sm,
+                          ),
+                          tooltip: 'الصفحة التالية',
+                          onPressed: onNextPage,
+                          color: surfaceTokens.text,
                         ),
-                        tooltip: 'الصفحة التالية',
-                        onPressed: onNextPage,
-                        color: surfaceTokens.text,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-
-                Divider(height: 1, thickness: 1, color: surfaceTokens.border),
+                  Divider(height: 1, thickness: 1, color: surfaceTokens.border),
+                ],
 
                 // ── Row 2: Consolidated Scholarly Toolstrip ───────────
                 Padding(

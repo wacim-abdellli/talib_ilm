@@ -41,6 +41,20 @@ class BookMutnTab extends StatefulWidget {
 }
 
 class _BookMutnTabState extends State<BookMutnTab> {
+  late final MutunAudioService _audioService;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioService = MutunAudioService();
+  }
+
+  @override
+  void dispose() {
+    _audioService.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -52,10 +66,13 @@ class _BookMutnTabState extends State<BookMutnTab> {
       return MutnCurriculumReaderView(
         book: widget.book,
         curriculumBook: curriculumBook,
-        audioService: MutunAudioService(),
+        audioService: _audioService,
         onAddNote: widget.onAddNote,
         showControls: widget.showControls,
         onToggleControls: widget.onToggleControls,
+        isBookmarked: widget.isBookmarked,
+        onToggleBookmark: widget.onToggleBookmark,
+        onShowBookmarks: widget.onShowBookmarks,
       );
     }
 

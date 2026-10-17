@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/app.dart';
@@ -10,9 +11,11 @@ import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/catalogs/mutun_curriculum_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
+import 'mutn_memorization_view.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
-import 'scholarly_reader_hud.dart' show BookPageTapDetector;
+import 'scholarly_reader_hud.dart'
+    show BookPageTapDetector, ScholarlyReaderHud;
 import 'shamela_text_highlighter.dart';
 import 'shamela_typography_sheet.dart';
 
@@ -26,6 +29,9 @@ class MutnCurriculumReaderView extends StatefulWidget {
   final VoidCallback onAddNote;
   final bool showControls;
   final VoidCallback? onToggleControls;
+  final bool isBookmarked;
+  final VoidCallback? onToggleBookmark;
+  final VoidCallback? onShowBookmarks;
 
   const MutnCurriculumReaderView({
     super.key,
@@ -35,6 +41,9 @@ class MutnCurriculumReaderView extends StatefulWidget {
     required this.onAddNote,
     this.showControls = true,
     this.onToggleControls,
+    this.isBookmarked = false,
+    this.onToggleBookmark,
+    this.onShowBookmarks,
   });
 
   @override
@@ -45,6 +54,9 @@ class MutnCurriculumReaderView extends StatefulWidget {
 class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   late final ScrollController _scrollController;
   final Map<int, GlobalKey> _paragraphKeys = {};
+
+  bool _showAudioBar = true;
+  bool _memorizationMode = false;
 
   // Typography & Surface settings
   double _fontSizeDelta = 2.0;
@@ -369,12 +381,54 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         ),
 
           // ── Bottom Floating Audio Player HUD ──────────────────────
-          if (widget.showControls && MutunAudioCatalog.hasAudio(widget.book.id))
+          if (widget.showControls &&
+              _showAudioBar &&
+              MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: widget.audioService,
               bookId: widget.book.id,
               onOpenQuickJump: _openQuickJumpSheet,
+              onClose: () => setState(() => _showAudioBar = false),
             ),
+
+          // ── Consolidated Bottom Scholarly Toolstrip ───────────────
+          ScholarlyReaderHud(
+            currentPage: 1,
+            totalPages: 1,
+            showPageNavigation: false,
+            isBookmarked: widget.isBookmarked,
+            memorizationMode: _memorizationMode,
+            showControls: widget.showControls,
+            accentColor: _accentColor,
+            surface: _surface,
+            onPreviousPage: null,
+            onNextPage: null,
+            onPageIndicatorTap: _openQuickJumpSheet,
+            onToggleBookmark: widget.onToggleBookmark ?? () {},
+            onShowBookmarks: widget.onShowBookmarks,
+            onAddNote: widget.onAddNote,
+            onOpenFihris: _openQuickJumpSheet,
+            onToggleMemorization: () {
+              HapticFeedback.selectionClick();
+              setState(() => _memorizationMode = !_memorizationMode);
+            },
+            onOpenTypography: _openTypographySheet,
+            onToggleAudio: MutunAudioCatalog.hasAudio(widget.book.id)
+                ? () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _showAudioBar = !_showAudioBar);
+                  }
+                : null,
+            isAudioActive: _showAudioBar,
+            onShare: () {
+              HapticFeedback.lightImpact();
+              Share.share(
+                '${widget.book.title}\n\n'
+                '${widget.curriculumBook.sections.first.paragraphs.first.text}\n\n'
+                '— تطبيق طالب العلم',
+              );
+            },
+          ),
         ],
       ),
     );
@@ -487,20 +541,27 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Clean Dignified Scholarly Text ──────────────
-              Text.rich(
-                ShamelaTextHighlighter.buildSpans(
-                  text: para.text,
-                  palette: palette,
-                  textTheme: textTheme,
-                  fontFamily: _fontFamily,
-                  fontSizeDelta: _fontSizeDelta,
-                  lineHeight: _lineHeight,
-                  accentColor: _accentColor,
-                  surface: _surface,
-                ),
-                textAlign: TextAlign.start,
-              ),
+              // ── Clean Dignified Scholarly Text or Memorization Mode ──
+              _memorizationMode
+                  ? MutnMemorizationView(
+                      content: para.text,
+                      fontFamily: _fontFamily,
+                      fontSizeDelta: _fontSizeDelta,
+                      lineHeight: _lineHeight,
+                    )
+                  : Text.rich(
+                      ShamelaTextHighlighter.buildSpans(
+                        text: para.text,
+                        palette: palette,
+                        textTheme: textTheme,
+                        fontFamily: _fontFamily,
+                        fontSizeDelta: _fontSizeDelta,
+                        lineHeight: _lineHeight,
+                        accentColor: _accentColor,
+                        surface: _surface,
+                      ),
+                      textAlign: TextAlign.start,
+                    ),
 
               const SizedBox(height: AppSpace.xs),
 
