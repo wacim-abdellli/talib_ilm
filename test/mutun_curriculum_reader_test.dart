@@ -125,9 +125,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify Quick Jump pill exists
-      expect(find.text('الانتقال السريع'), findsOneWidget);
-
       // Verify Section headers exist
       expect(find.text('فضل طلب العلم'), findsOneWidget);
 
@@ -137,8 +134,9 @@ void main() {
 
       // Verify tap on paragraph seeks audio
       await tester.tap(find.text('- 2 -'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(audioService.activeParagraphNotifier.value, 2);
+      audioService.dispose();
     });
 
     testWidgets('MutunQuickJumpSheet lists all sections and handles selection', (tester) async {

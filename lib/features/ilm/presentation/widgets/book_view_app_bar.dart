@@ -69,6 +69,8 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
       bottom: TabBar(
         controller: tabController,
+        dividerColor: Colors.transparent,
+        dividerHeight: 0.0,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
           color: palette.primarySoft,

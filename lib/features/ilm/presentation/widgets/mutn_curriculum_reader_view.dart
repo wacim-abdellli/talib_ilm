@@ -12,19 +12,20 @@ import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
+import 'scholarly_reader_hud.dart' show BookPageTapDetector;
 import 'shamela_text_highlighter.dart';
 import 'shamela_typography_sheet.dart';
 
 /// Authentic Continuous Scholarly Reader for curriculum mutun matching Hafed Mutun.
-/// Features continuous text flow, group section headers, active paragraph auto-follow
-/// highlighting, instant paragraph seeking on tap, and quick jump navigation.
+/// Features continuous text flow, group section headers, instant paragraph seeking on tap,
+/// and quick jump navigation with docked audio controls.
 class MutnCurriculumReaderView extends StatefulWidget {
   final IlmBook book;
   final MutunCurriculumBook curriculumBook;
   final MutunAudioService audioService;
   final VoidCallback onAddNote;
-  final VoidCallback? onSwitchToShamela;
-  final VoidCallback? onSwitchToPdf;
+  final bool showControls;
+  final VoidCallback? onToggleControls;
 
   const MutnCurriculumReaderView({
     super.key,
@@ -32,8 +33,8 @@ class MutnCurriculumReaderView extends StatefulWidget {
     required this.curriculumBook,
     required this.audioService,
     required this.onAddNote,
-    this.onSwitchToShamela,
-    this.onSwitchToPdf,
+    this.showControls = true,
+    this.onToggleControls,
   });
 
   @override
@@ -192,6 +193,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         activeParagraph: widget.audioService.activeParagraphNotifier.value,
         onParagraphSelected: (para) {
           _scrollToParagraph(para);
+          widget.audioService.seekToParagraph(para, bookId: widget.book.id);
         },
       ),
     );
@@ -270,6 +272,18 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                   ),
                   ListTile(
                     leading:
+                        Icon(Icons.format_size_rounded, color: palette.text),
+                    title: const Text('تنسيق الخط والمظهر'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.mdRadius,
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _openTypographySheet();
+                    },
+                  ),
+                  ListTile(
+                    leading:
                         Icon(Icons.edit_note_rounded, color: palette.text),
                     title: const Text('إضافة ملاحظة حول الفقرة'),
                     shape: RoundedRectangleBorder(
@@ -303,157 +317,59 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
       color: surfaceTokens.bg,
       child: Column(
         children: [
-          // ── Quick Jump & Toolbar Header ───────────────────────────
-          Container(
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
-            ),
-            decoration: BoxDecoration(
-              color: surfaceTokens.surfaceRaised,
-              border: Border(
-                bottom: BorderSide(color: surfaceTokens.border, width: 0.8),
-              ),
-            ),
-            child: Row(
-              children: [
-                // Quick Jump Pill matching Hafed Mutun
-                Expanded(
-                  child: Center(
-                    child: InkWell(
-                      onTap: _openQuickJumpSheet,
-                      borderRadius: AppRadius.pillRadius,
-                      child: Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.md,
-                          vertical: AppSpace.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tokens.activeParagraphBg,
-                          borderRadius: AppRadius.pillRadius,
-                          border: Border.all(
-                            color: tokens.activeParagraphBorder,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.keyboard_double_arrow_right_rounded,
-                              size: AppIcon.xs,
-                              color: tokens.rosetteGold,
-                            ),
-                            const SizedBox(width: AppSpace.xxs),
-                            Text(
-                              'الانتقال السريع',
-                              style: textTheme.caption.copyWith(
-                                color: tokens.rosetteGold,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.xxs),
-                            Icon(
-                              Icons.keyboard_double_arrow_left_rounded,
-                              size: AppIcon.xs,
-                              color: tokens.rosetteGold,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Typography & Theme Button
-                IconButton(
-                  tooltip: 'تنسيق الخط والمظهر',
-                  icon: Icon(
-                    Icons.format_size_rounded,
-                    color: palette.textMuted,
-                    size: AppIcon.sm,
-                  ),
-                  onPressed: _openTypographySheet,
-                ),
-
-                // View Modes Switcher (Shamela or PDF if available)
-                if (widget.onSwitchToShamela != null)
-                  IconButton(
-                    tooltip: 'الشرح الموسع (المكتبة الشاملة)',
-                    icon: Icon(
-                      Icons.menu_book_rounded,
-                      color: palette.textMuted,
-                      size: AppIcon.sm,
-                    ),
-                    onPressed: widget.onSwitchToShamela,
-                  ),
-              ],
-            ),
-          ),
-
           // ── Scholarly Continuous Reading Feed ─────────────────────
           Expanded(
-            child: ValueListenableBuilder<bool>(
-              valueListenable: widget.audioService.isPlayingNotifier,
-              builder: (context, isPlaying, _) {
-                return ValueListenableBuilder<int?>(
-                  valueListenable: widget.audioService.activeParagraphNotifier,
-                  builder: (context, activeParagraph, _) {
-                    return Scrollbar(
-                      controller: _scrollController,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.lg,
-                          vertical: AppSpace.md,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            for (final section
-                                in widget.curriculumBook.sections) ...[
-                              // Section Divider Header Pill
-                              _buildSectionHeader(
-                                title: section.title,
-                                surfaceTokens: surfaceTokens,
-                                textTheme: textTheme,
-                                tokens: tokens,
-                              ),
-
-                              const SizedBox(height: AppSpace.md),
-
-                              // Paragraphs in this section
-                              for (final para in section.paragraphs) ...[
-                                _buildParagraphBlock(
-                                  para: para,
-                                  isActive: activeParagraph == para.index,
-                                  isPlaying: isPlaying,
-                                  surfaceTokens: surfaceTokens,
-                                  tokens: tokens,
-                                  palette: palette,
-                                  textTheme: textTheme,
-                                ),
-                                const SizedBox(height: AppSpace.md),
-                              ],
-
-                              const SizedBox(height: AppSpace.md),
-                            ],
-
-                            const SizedBox(height: AppSpace.xxxl),
-                          ],
-                        ),
+            child: BookPageTapDetector(
+              onTap: () => widget.onToggleControls?.call(),
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final section in widget.curriculumBook.sections) ...[
+                      // Section Divider Header Pill
+                      _buildSectionHeader(
+                        section: section,
+                        surfaceTokens: surfaceTokens,
+                        textTheme: textTheme,
+                        tokens: tokens,
                       ),
-                    );
-                  },
-                );
-              },
+
+                      const SizedBox(height: AppSpace.md),
+
+                      // Paragraphs in this section
+                      for (final para in section.paragraphs) ...[
+                        _buildParagraphBlock(
+                          para: para,
+                          surfaceTokens: surfaceTokens,
+                          tokens: tokens,
+                          palette: palette,
+                          textTheme: textTheme,
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                      ],
+
+                      const SizedBox(height: AppSpace.md),
+                    ],
+
+                    const SizedBox(height: AppSpace.xxxl),
+                  ],
+                ),
+              ),
             ),
           ),
+        ),
 
           // ── Bottom Floating Audio Player HUD ──────────────────────
-          if (MutunAudioCatalog.hasAudio(widget.book.id))
+          if (widget.showControls && MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: widget.audioService,
               bookId: widget.book.id,
@@ -465,11 +381,14 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   }
 
   Widget _buildSectionHeader({
-    required String title,
+    required MutunSection section,
     required ReaderSurfaceTokens surfaceTokens,
     required AppTextTheme textTheme,
     required MutunThemeTokens tokens,
   }) {
+    final firstPara =
+        section.paragraphs.isNotEmpty ? section.paragraphs.first.index : 1;
+
     return Padding(
       padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.md),
       child: Row(
@@ -485,25 +404,42 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpace.sm,
               ),
-              child: Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: surfaceTokens.surfaceRaised,
+              child: Material(
+                color: surfaceTokens.surfaceRaised,
+                borderRadius: AppRadius.pillRadius,
+                child: InkWell(
                   borderRadius: AppRadius.pillRadius,
-                  border: Border.all(
-                    color: surfaceTokens.border,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: textTheme.caption.copyWith(
-                    color: tokens.rosetteGold,
-                    fontWeight: FontWeight.bold,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    if (!widget.showControls) {
+                      widget.onToggleControls?.call();
+                    }
+                    widget.audioService.seekToParagraph(
+                      firstPara,
+                      bookId: widget.book.id,
+                    );
+                    _scrollToParagraph(firstPara);
+                  },
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: surfaceTokens.border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      section.title,
+                      textAlign: TextAlign.center,
+                      style: textTheme.caption.copyWith(
+                        color: tokens.rosetteGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -522,39 +458,28 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
 
   Widget _buildParagraphBlock({
     required MutunParagraph para,
-    required bool isActive,
-    required bool isPlaying,
     required ReaderSurfaceTokens surfaceTokens,
     required MutunThemeTokens tokens,
     required AppPalette palette,
     required AppTextTheme textTheme,
   }) {
-    final bool showHighlight = isActive && isPlaying;
     final key = _paragraphKeys[para.index];
 
     return KeyedSubtree(
       key: key,
-      child: AnimatedContainer(
-        duration: AppMotion.base,
-        curve: AppMotion.easeOut,
-        decoration: BoxDecoration(
-          color: showHighlight ? tokens.activeParagraphBg : Colors.transparent,
-          borderRadius: AppRadius.mdRadius,
-          border: showHighlight
-              ? Border.all(
-                  color: tokens.activeParagraphBorder,
-                  width: 1.2,
-                )
-              : null,
-        ),
-        padding: EdgeInsetsDirectional.all(
-          showHighlight ? AppSpace.md : AppSpace.xs,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.symmetric(
+          vertical: AppSpace.xs,
+          horizontal: AppSpace.xxs,
         ),
         child: InkWell(
           onTap: () {
             HapticFeedback.selectionClick();
-            // Tapping seeks audio recitation directly to this paragraph
-            widget.audioService.seekToParagraph(para.index);
+            if (!widget.showControls) {
+              widget.onToggleControls?.call();
+            }
+            widget.audioService
+                .seekToParagraph(para.index, bookId: widget.book.id);
             _scrollToParagraph(para.index);
           },
           onLongPress: () => _showParagraphOptions(para),
@@ -562,7 +487,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Paragraph Scholarly Text ──────────────────────────
+              // ── Clean Dignified Scholarly Text ──────────────
               Text.rich(
                 ShamelaTextHighlighter.buildSpans(
                   text: para.text,
@@ -588,23 +513,17 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                     vertical: AppSpace.xxs,
                   ),
                   decoration: BoxDecoration(
-                    color: showHighlight
-                        ? tokens.rosetteGold.withValues(alpha: 0.15)
-                        : surfaceTokens.surfaceRaised,
+                    color: surfaceTokens.surfaceRaised,
                     borderRadius: AppRadius.pillRadius,
                     border: Border.all(
-                      color: showHighlight
-                          ? tokens.rosetteGold
-                          : surfaceTokens.border.withValues(alpha: 0.6),
+                      color: surfaceTokens.border.withValues(alpha: 0.6),
                       width: 0.8,
                     ),
                   ),
                   child: Text(
                     '- ${para.index} -',
                     style: textTheme.caption.copyWith(
-                      color: showHighlight
-                          ? tokens.rosetteGold
-                          : tokens.paragraphNumber,
+                      color: tokens.paragraphNumber,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

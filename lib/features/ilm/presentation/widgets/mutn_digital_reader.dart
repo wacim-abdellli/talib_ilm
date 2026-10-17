@@ -14,10 +14,9 @@ import '../../data/models/shamela_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutun_audio_player_hud.dart';
-import 'scholarly_reader_hud.dart';
+import 'scholarly_reader_hud.dart' show BookPageTapDetector;
 import 'shamela_fihris_sheet.dart';
 import 'shamela_page_content.dart';
-import 'shamela_typography_sheet.dart';
 
 /// Reflowable digital text reader for Islamic Mutun with horizontal side sliding (PageView),
 /// distraction-free immersive mode, unified scholarly toolbar, syntax coloring, and self-testing recall.
@@ -32,7 +31,6 @@ class MutnDigitalReaderView extends StatefulWidget {
   final VoidCallback onToggleBookmark;
   final VoidCallback onAddNote;
   final VoidCallback onShowBookmarks;
-  final VoidCallback? onSwitchToCurriculum;
 
   const MutnDigitalReaderView({
     super.key,
@@ -46,7 +44,6 @@ class MutnDigitalReaderView extends StatefulWidget {
     required this.onToggleBookmark,
     required this.onAddNote,
     required this.onShowBookmarks,
-    this.onSwitchToCurriculum,
   });
 
   @override
@@ -296,41 +293,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     widget.onPageChanged(safe, _totalPages);
   }
 
-  void _openTypographySheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => ShamelaTypographySheet(
-        fontSizeDelta: _fontSizeDelta,
-        fontFamily: _fontFamily,
-        lineHeight: _lineHeight,
-        surface: _surface,
-        accentColor: _accentColor,
-        onFontSizeChanged: (delta) {
-          setState(() => _fontSizeDelta = delta);
-          _savePreferences();
-        },
-        onFontFamilyChanged: (family) {
-          setState(() => _fontFamily = family);
-          _savePreferences();
-        },
-        onLineHeightChanged: (lh) {
-          setState(() => _lineHeight = lh);
-          _savePreferences();
-        },
-        onSurfaceChanged: (surf) {
-          setState(() => _surface = surf);
-          _savePreferences();
-        },
-        onAccentColorChanged: (accent) {
-          setState(() => _accentColor = accent);
-          _savePreferences();
-        },
-      ),
-    );
-  }
-
   void _openFihrisSheet() {
     HapticFeedback.lightImpact();
     if (_chapters.isEmpty && !_isLoadingChapters) {
@@ -349,14 +311,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     );
   }
 
-  void _toggleMemorizationMode() {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _memorizationMode = !_memorizationMode;
-    });
-    _savePreferences();
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -368,112 +322,6 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       color: bgColor,
       child: Column(
         children: [
-          if (widget.onSwitchToCurriculum != null)
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surfaceRaised,
-                border: Border(
-                  bottom: BorderSide(color: palette.border, width: 0.8),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'الشرح الموسع (المكتبة الشاملة)',
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      InkWell(
-                        onTap: widget.onSwitchToCurriculum,
-                        borderRadius: AppRadius.pillRadius,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.primary.withValues(alpha: 0.12),
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: palette.primary,
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.auto_stories_rounded,
-                                size: AppIcon.xs,
-                                color: palette.primary,
-                              ),
-                              const SizedBox(width: AppSpace.xxs),
-                              Text(
-                                'متن التحفيظ',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (MutunAudioCatalog.hasAudio(widget.book.id))
-                    InkWell(
-                      onTap: () => setState(() => _showAudioBar = !_showAudioBar),
-                      borderRadius: AppRadius.pillRadius,
-                      child: Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.sm,
-                          vertical: AppSpace.xxs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _showAudioBar
-                              ? palette.gold.withValues(alpha: 0.25)
-                              : palette.gold.withValues(alpha: 0.12),
-                          borderRadius: AppRadius.pillRadius,
-                          border: Border.all(
-                            color: palette.gold,
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.headphones_rounded,
-                              size: AppIcon.xs,
-                              color: palette.gold,
-                            ),
-                            const SizedBox(width: AppSpace.xxs),
-                            Text(
-                              _showAudioBar ? 'إخفاء الصوت' : 'استماع للمتن',
-                              style: textTheme.caption.copyWith(
-                                color: palette.gold,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
           // ── Reader Body: Horizontal Swipe (Slide side) PageView ──
           Expanded(
             child: Directionality(
@@ -596,41 +444,12 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
           ),
 
           // ── Mutun Audio Player HUD ───────────────────────────────
-          if (MutunAudioCatalog.hasAudio(widget.book.id) && _showAudioBar)
+          if (MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: _audioService,
               bookId: widget.book.id,
               onOpenQuickJump: _openFihrisSheet,
-              onClose: () => setState(() => _showAudioBar = false),
             ),
-
-          // ── Unified Bottom Scholarly HUD ───────────────────────
-          ScholarlyReaderHud(
-            currentPage: _currentPage,
-            totalPages: _totalPages,
-            isBookmarked: widget.isBookmarked,
-            memorizationMode: _memorizationMode,
-            showControls: widget.showControls,
-            accentColor: _accentColor,
-            surface: _surface,
-            onPreviousPage: _currentPage > 1
-                ? () => _goToPage(_currentPage - 1)
-                : null,
-            onNextPage: _currentPage < _totalPages
-                ? () => _goToPage(_currentPage + 1)
-                : null,
-            onPageIndicatorTap: _openFihrisSheet,
-            onToggleBookmark: widget.onToggleBookmark,
-            onShowBookmarks: widget.onShowBookmarks,
-            onAddNote: widget.onAddNote,
-            onOpenFihris: _openFihrisSheet,
-            onToggleMemorization: _toggleMemorizationMode,
-            onOpenTypography: _openTypographySheet,
-            onToggleAudio: MutunAudioCatalog.hasAudio(widget.book.id)
-                ? () => setState(() => _showAudioBar = !_showAudioBar)
-                : null,
-            isAudioActive: _showAudioBar,
-          ),
         ],
       ),
     );

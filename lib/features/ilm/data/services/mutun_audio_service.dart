@@ -106,6 +106,7 @@ class MutunAudioService {
   }
 
   void _updateActiveParagraph(Duration pos) {
+    if (isLoadingNotifier.value) return;
     final bookId = activeBookIdNotifier.value;
     final timestamps = bookId != null
         ? MutunAudioCatalog.getParagraphTimestamps(
@@ -229,6 +230,7 @@ class MutunAudioService {
     required String audioUrl,
     int paragraphIndex = 1,
     int totalParagraphs = 1,
+    Duration? initialPosition,
     bool isFallbackAttempt = false,
   }) async {
     if (audioUrl.isEmpty) {
@@ -255,6 +257,7 @@ class MutunAudioService {
     } catch (_) {}
 
     bool loaded = false;
+    Duration? loadedDuration;
 
     // Primary Attempt: setAudioSource with background MediaItem
     try {
@@ -271,14 +274,20 @@ class MutunAudioService {
         Uri.parse(audioUrl),
         tag: mediaItem,
       );
-      await _player.setAudioSource(audioSource);
+      loadedDuration = await _player.setAudioSource(
+        audioSource,
+        initialPosition: initialPosition,
+      );
       loaded = true;
     } catch (sourceErr) {
       debugPrint('AudioSource.uri failed ($audioUrl): $sourceErr, trying direct setUrl...');
       // Direct setUrl fallback: Bypasses JustAudioBackground/MediaItem metadata serialization
       try {
         await _player.stop();
-        await _player.setUrl(audioUrl);
+        loadedDuration = await _player.setUrl(
+          audioUrl,
+          initialPosition: initialPosition,
+        );
         loaded = true;
       } catch (urlErr) {
         debugPrint('Direct setUrl failed ($audioUrl): $urlErr');
@@ -288,6 +297,36 @@ class MutunAudioService {
 
     if (loaded) {
       try {
+        if (loadedDuration != null) {
+          durationNotifier.value = loadedDuration;
+        }
+
+        // If initialPosition was not provided or was zero, but paragraphIndex > 1:
+        // calculate target and seek BEFORE calling play() so 0:00 never leaks!
+        if ((initialPosition == null || initialPosition == Duration.zero) &&
+            paragraphIndex > 1) {
+          final timestamps = MutunAudioCatalog.getParagraphTimestamps(
+            bookId,
+            reciterId: _selectedReciter.id,
+          );
+          int targetMs = 0;
+          if (timestamps != null &&
+              paragraphIndex >= 1 &&
+              paragraphIndex <= timestamps.length) {
+            targetMs = timestamps[paragraphIndex - 1];
+          } else {
+            final dur = loadedDuration ?? durationNotifier.value;
+            if (dur > Duration.zero && _totalParagraphs > 1) {
+              targetMs =
+                  ((paragraphIndex - 1) / _totalParagraphs * dur.inMilliseconds)
+                      .round();
+            }
+          }
+          if (targetMs > 0) {
+            await _player.seek(_audioPosition(targetMs));
+          }
+        }
+
         await _player.setSpeed(speedNotifier.value);
         await _player.play();
         isLoadingNotifier.value = false;
@@ -310,6 +349,7 @@ class MutunAudioService {
           audioUrl: fallbackUrl,
           paragraphIndex: paragraphIndex,
           totalParagraphs: totalParagraphs,
+          initialPosition: initialPosition,
           isFallbackAttempt: true,
         );
         return;
@@ -321,37 +361,65 @@ class MutunAudioService {
     isPlayingNotifier.value = false;
   }
 
-  void seekToParagraph(int index) {
+  Future<void> seekToParagraph(int index, {String? bookId}) async {
+    final targetBookId = bookId ?? activeBookIdNotifier.value;
     activeParagraphNotifier.value = index;
-    final bookId = activeBookIdNotifier.value;
-    final timestamps = bookId != null
+
+    final timestamps = targetBookId != null
         ? MutunAudioCatalog.getParagraphTimestamps(
-            bookId,
+            targetBookId,
             reciterId: _selectedReciter.id,
           )
         : null;
 
+    int targetMs = 0;
     if (timestamps != null && index >= 1 && index <= timestamps.length) {
-      final targetMs = timestamps[index - 1];
-      _player.seek(Duration(days: 0, milliseconds: targetMs));
-      if (!isPlayingNotifier.value) {
-        _player.play();
-      }
+      targetMs = timestamps[index - 1];
     } else {
       final dur = durationNotifier.value;
       if (dur > Duration.zero && _totalParagraphs > 1) {
-        final targetMs =
+        targetMs =
             ((index - 1) / _totalParagraphs * dur.inMilliseconds).round();
-        _player.seek(Duration(days: 0, milliseconds: targetMs));
-        if (!isPlayingNotifier.value) {
-          _player.play();
-        }
-      } else if (isPlayingNotifier.value) {
-        _player.seek(Duration.zero);
-        _player.play();
       }
     }
+
+    final isNotReady = _player.audioSource == null ||
+        _player.processingState == ProcessingState.idle ||
+        _currentAudioUrl == null ||
+        (targetBookId != null && activeBookIdNotifier.value != targetBookId);
+
+    if (targetBookId != null && isNotReady) {
+      final audioUrl = MutunAudioCatalog.getAudioUrl(
+            targetBookId,
+            reciterId: _selectedReciter.id,
+          ) ??
+          MutunAudioCatalog.getAudioUrl(
+            targetBookId,
+            reciterId: 'sini',
+          ) ??
+          '';
+      final totalParas = MutunAudioCatalog.getTotalParagraphs(
+        targetBookId,
+        reciterId: _selectedReciter.id,
+      );
+      await playMatnAudio(
+        bookId: targetBookId,
+        audioUrl: audioUrl,
+        paragraphIndex: index,
+        totalParagraphs: totalParas,
+        initialPosition: targetMs > 0 ? _audioPosition(targetMs) : null,
+      );
+      return;
+    }
+
+    await _player.seek(_audioPosition(targetMs));
+    if (!_player.playing) {
+      await _player.play();
+    }
   }
+
+  static Duration _audioPosition(int ms) =>
+      Duration(milliseconds: ms); // ui-lint: allow audio seek position
 
   Future<void> seek(Duration position) async {
     await _player.seek(position);

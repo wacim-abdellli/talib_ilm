@@ -41,8 +41,6 @@ class BookMutnTab extends StatefulWidget {
 }
 
 class _BookMutnTabState extends State<BookMutnTab> {
-  bool _preferShamela = false;
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -50,15 +48,14 @@ class _BookMutnTabState extends State<BookMutnTab> {
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
 
     // 1. Authentic Curriculum Reader (Priority 1: Verified vocalized text matching recitation word-for-word)
-    if (curriculumBook != null && !_preferShamela) {
+    if (curriculumBook != null) {
       return MutnCurriculumReaderView(
         book: widget.book,
         curriculumBook: curriculumBook,
         audioService: MutunAudioService(),
         onAddNote: widget.onAddNote,
-        onSwitchToShamela: digitalEntry != null
-            ? () => setState(() => _preferShamela = true)
-            : null,
+        showControls: widget.showControls,
+        onToggleControls: widget.onToggleControls,
       );
     }
 
@@ -90,9 +87,6 @@ class _BookMutnTabState extends State<BookMutnTab> {
             onToggleBookmark: widget.onToggleBookmark,
             onAddNote: widget.onAddNote,
             onShowBookmarks: widget.onShowBookmarks,
-            onSwitchToCurriculum: curriculumBook != null
-                ? () => setState(() => _preferShamela = false)
-                : null,
           );
         },
       );
