@@ -4,7 +4,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart'
-    show getArabicJuzName;
+    show getArabicJuzName, getVocalizedSurahName;
 
 /// Authentic Medina Mushaf Surah Header Banner
 class MushafSurahBanner extends StatelessWidget {
@@ -30,17 +30,28 @@ class MushafSurahBanner extends StatelessWidget {
     final isMakki = quran.getPlaceOfRevelation(surahNumber) == 'Makkah';
     final revelationType = isMakki ? 'مَكِّيَّةٌ' : 'مَدَنِيَّةٌ';
     final surahName = quran.getSurahNameArabic(surahNumber);
-    final title = 'سورة $surahName';
+    final title = getVocalizedSurahName(surahNumber, fallback: surahName);
 
-    // The cartouche inside the authentic Medina banner is illuminated cream/white in all modes,
-    // so the title calligraphy uses deep classical manuscript ink for highest clarity.
-    const Color textColor = MushafColors.whiteText;
+    final Color textColor = switch (themeMode) {
+      MushafThemeMode.white => MushafColors.whiteText,
+      MushafThemeMode.sepia => MushafColors.sepiaText,
+      MushafThemeMode.dark => MushafColors.darkText,
+    };
 
     final Color? frameColor = MushafColors.bannerFrameTint(themeMode);
 
-    final Color plaqueBg = MushafColors.plaqueBg;
-    final Color plaqueBorder = MushafColors.plaqueBorder;
-    final Color plaqueText = MushafColors.plaqueText;
+    final Color plaqueBg = switch (themeMode) {
+      MushafThemeMode.white || MushafThemeMode.sepia => MushafColors.plaqueBg,
+      MushafThemeMode.dark => MushafColors.darkBadgeBg,
+    };
+    final Color plaqueBorder = switch (themeMode) {
+      MushafThemeMode.white || MushafThemeMode.sepia => MushafColors.plaqueBorder,
+      MushafThemeMode.dark => MushafColors.darkBannerBorder,
+    };
+    final Color plaqueText = switch (themeMode) {
+      MushafThemeMode.white || MushafThemeMode.sepia => MushafColors.plaqueText,
+      MushafThemeMode.dark => MushafColors.darkBannerText,
+    };
 
     return FittedBox(
       fit: BoxFit.scaleDown,

@@ -34,7 +34,10 @@ class MushafReaderTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final surahName = quran.getSurahNameArabic(currentSurah);
+    final surahTitle = getVocalizedSurahName(
+      currentSurah,
+      fallback: quran.getSurahNameArabic(currentSurah),
+    );
     final juzNum = quran.getJuzNumber(currentSurah, currentAyah);
 
     final barBg = MushafColors.overlayBgFor(themeMode, palette);
@@ -83,7 +86,7 @@ class MushafReaderTopBar extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'سورة $surahName',
+                          surahTitle,
                           style: textTheme.titleSmall.copyWith(
                             color: textColor,
                             fontWeight: FontWeight.bold,
@@ -207,6 +210,7 @@ class MushafReaderBottomBar extends StatelessWidget {
                   context: context,
                   palette: palette,
                   textTheme: textTheme,
+                  textColor: textColor,
                   textMutedColor: textMutedColor,
                   barBorder: barBorder,
                   pillBg: pillBg,
@@ -255,7 +259,7 @@ class MushafReaderBottomBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'سورة $playingSurahName • آية $ayah',
+                '${getVocalizedSurahName(surah, fallback: playingSurahName)} • آية $ayah',
                 style: textTheme.bodySmall.copyWith(
                   color: textColor,
                   fontWeight: FontWeight.bold,
@@ -408,6 +412,7 @@ class MushafReaderBottomBar extends StatelessWidget {
     required BuildContext context,
     required AppPalette palette,
     required AppTextTheme textTheme,
+    required Color textColor,
     required Color textMutedColor,
     required Color barBorder,
     required Color pillBg,
@@ -422,6 +427,7 @@ class MushafReaderBottomBar extends StatelessWidget {
           textTheme: textTheme,
           barBorder: barBorder,
           pillBg: pillBg,
+          textColor: textColor,
           textMutedColor: textMutedColor,
         ),
         const SizedBox(height: AppSpace.xxs),
@@ -464,6 +470,7 @@ class MushafReaderBottomBar extends StatelessWidget {
     required AppTextTheme textTheme,
     required Color barBorder,
     required Color pillBg,
+    required Color textColor,
     required Color textMutedColor,
   }) {
     return InkWell(
@@ -489,31 +496,31 @@ class MushafReaderBottomBar extends StatelessWidget {
               color: TajweedPalette.madd,
               label: 'مدود (٤-٦)',
               textTheme: textTheme,
-              palette: palette,
+              textColor: textColor,
             ),
             _buildTajweedItem(
               color: TajweedPalette.maddShort,
               label: 'حركتان',
               textTheme: textTheme,
-              palette: palette,
+              textColor: textColor,
             ),
             _buildTajweedItem(
               color: TajweedPalette.ikhfaa,
               label: 'غنة وإخفاء',
               textTheme: textTheme,
-              palette: palette,
+              textColor: textColor,
             ),
             _buildTajweedItem(
               color: TajweedPalette.qalqalah,
               label: 'قلقلة',
               textTheme: textTheme,
-              palette: palette,
+              textColor: textColor,
             ),
             _buildTajweedItem(
               color: TajweedPalette.silent,
               label: 'لا يُلفظ',
               textTheme: textTheme,
-              palette: palette,
+              textColor: textColor,
             ),
             Icon(
               Icons.info_outline_rounded,
@@ -529,7 +536,7 @@ class MushafReaderBottomBar extends StatelessWidget {
     required Color color,
     required String label,
     required AppTextTheme textTheme,
-    required AppPalette palette,
+    required Color textColor,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -546,7 +553,7 @@ class MushafReaderBottomBar extends StatelessWidget {
         Text(
           label,
           style: textTheme.caption.copyWith(
-            color: palette.text,
+            color: textColor,
             fontWeight: FontWeight.w600,
           ),
         ),
