@@ -207,68 +207,86 @@ class MutunAudioService {
       return;
     }
 
+    activeBookIdNotifier.value = bookId;
+    activeParagraphNotifier.value = paragraphIndex;
+    _currentAudioUrl = audioUrl;
+    _totalParagraphs = totalParagraphs;
+    isLoadingNotifier.value = true;
+    playbackErrorNotifier.value = null;
+
+    final entry = MutunAudioCatalog.getEntry(bookId);
+    final mediaTitle = entry?.title ?? 'متن طالب العلم';
+
+    // Cleanly stop any existing stream to prevent player deadlock
     try {
-      activeBookIdNotifier.value = bookId;
-      activeParagraphNotifier.value = paragraphIndex;
-      _currentAudioUrl = audioUrl;
-      _totalParagraphs = totalParagraphs;
-      isLoadingNotifier.value = true;
-      playbackErrorNotifier.value = null;
-
-      // Cleanly stop any existing stream to prevent player deadlock
       await _player.stop();
+    } catch (_) {}
 
-      final entry = MutunAudioCatalog.getEntry(bookId);
-      final mediaTitle = entry?.title ?? 'متن طالب العلم';
+    bool loaded = false;
 
+    // Primary Attempt: setAudioSource with background MediaItem
+    try {
+      final mediaItem = MediaItem(
+        id: bookId,
+        title: mediaTitle,
+        artist: _selectedReciter.name,
+        album: 'متون طالب العلم',
+        displayTitle: mediaTitle,
+        displaySubtitle: _selectedReciter.name,
+        displayDescription: 'متون طالب العلم - تحقيق الشيخ د. عبدالمحسن القاسم',
+      );
       final audioSource = AudioSource.uri(
         Uri.parse(audioUrl),
-        headers: const {
-          'User-Agent':
-              'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-          'Accept': '*/*',
-        },
-        tag: MediaItem(
-          id: bookId,
-          title: mediaTitle,
-          artist: _selectedReciter.name,
-          album: 'متون طالب العلم',
-          artUri: Uri.parse(
-            'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
-          ),
-          displayTitle: mediaTitle,
-          displaySubtitle: _selectedReciter.name,
-          displayDescription: 'متون طالب العلم - تحقيق الشيخ د. عبدالمحسن القاسم',
-        ),
+        tag: mediaItem,
       );
-
       await _player.setAudioSource(audioSource);
-      await _player.setSpeed(speedNotifier.value);
-      await _player.play();
-    } catch (e) {
-      debugPrint('Error playing mutn audio ($audioUrl): $e');
-      if (!isFallbackAttempt) {
-        final fallbackUrl =
-            MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: _selectedReciter.id) ??
-            MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
-        if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != audioUrl) {
-          debugPrint('Retrying with backup audio stream ($fallbackUrl)...');
-          await playMatnAudio(
-            bookId: bookId,
-            audioUrl: fallbackUrl,
-            paragraphIndex: paragraphIndex,
-            totalParagraphs: totalParagraphs,
-            isFallbackAttempt: true,
-          );
-          return;
-        }
+      loaded = true;
+    } catch (sourceErr) {
+      debugPrint('AudioSource.uri failed ($audioUrl): $sourceErr, trying direct setUrl...');
+      // Direct setUrl fallback: Bypasses JustAudioBackground/MediaItem metadata serialization
+      try {
+        await _player.stop();
+        await _player.setUrl(audioUrl);
+        loaded = true;
+      } catch (urlErr) {
+        debugPrint('Direct setUrl failed ($audioUrl): $urlErr');
+        loaded = false;
       }
-      playbackErrorNotifier.value = 'تعذر تشغيل الصوت. يرجى التحقق من الاتصال بالإنترنت';
-      isLoadingNotifier.value = false;
-      isPlayingNotifier.value = false;
-    } finally {
-      isLoadingNotifier.value = false;
     }
+
+    if (loaded) {
+      try {
+        await _player.setSpeed(speedNotifier.value);
+        await _player.play();
+        isLoadingNotifier.value = false;
+        isPlayingNotifier.value = true;
+        return;
+      } catch (playErr) {
+        debugPrint('Player play error ($audioUrl): $playErr');
+      }
+    }
+
+    // If primary URL completely failed and we haven't tried fallback yet
+    if (!isFallbackAttempt) {
+      final fallbackUrl =
+          MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: _selectedReciter.id) ??
+          MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
+      if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != audioUrl) {
+        debugPrint('Retrying with backup audio stream ($fallbackUrl)...');
+        await playMatnAudio(
+          bookId: bookId,
+          audioUrl: fallbackUrl,
+          paragraphIndex: paragraphIndex,
+          totalParagraphs: totalParagraphs,
+          isFallbackAttempt: true,
+        );
+        return;
+      }
+    }
+
+    playbackErrorNotifier.value = 'تعذر تشغيل الصوت. يرجى التحقق من الاتصال بالإنترنت';
+    isLoadingNotifier.value = false;
+    isPlayingNotifier.value = false;
   }
 
   void seekToParagraph(int index) {
@@ -319,11 +337,15 @@ class MutunAudioService {
       }
     }
 
-    // If starting a new book or first-time playback
+    final isStaleOrIdle = _player.processingState == ProcessingState.idle ||
+        _player.processingState == ProcessingState.completed ||
+        _player.audioSource == null;
+
+    // If starting a new book, first-time playback, or player in idle/completed state
     if (targetBookId != null &&
         (_currentAudioUrl == null ||
             activeBookIdNotifier.value != targetBookId ||
-            _player.audioSource == null)) {
+            isStaleOrIdle)) {
       final audioUrl = MutunAudioCatalog.getAudioUrl(
             targetBookId,
             reciterId: _selectedReciter.id,

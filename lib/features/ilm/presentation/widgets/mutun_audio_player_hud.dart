@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/services/mutun_audio_service.dart';
 
 /// Refined scholarly Audio Player HUD mirroring media_1792193062531.jpg and media_1792193064810.jpg.
-class MutunAudioPlayerHud extends StatelessWidget {
+class MutunAudioPlayerHud extends StatefulWidget {
   final MutunAudioService audioService;
   final VoidCallback onOpenQuickJump;
   final String? bookId;
@@ -17,9 +18,42 @@ class MutunAudioPlayerHud extends StatelessWidget {
     this.bookId,
   });
 
+  @override
+  State<MutunAudioPlayerHud> createState() => _MutunAudioPlayerHudState();
+}
+
+class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
+  @override
+  void initState() {
+    super.initState();
+    widget.audioService.playbackErrorNotifier.addListener(_onPlaybackError);
+  }
+
+  @override
+  void didUpdateWidget(covariant MutunAudioPlayerHud oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.audioService != widget.audioService) {
+      oldWidget.audioService.playbackErrorNotifier.removeListener(_onPlaybackError);
+      widget.audioService.playbackErrorNotifier.addListener(_onPlaybackError);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.audioService.playbackErrorNotifier.removeListener(_onPlaybackError);
+    super.dispose();
+  }
+
+  void _onPlaybackError() {
+    final err = widget.audioService.playbackErrorNotifier.value;
+    if (err != null && mounted) {
+      AppSnackbar.error(context, err);
+    }
+  }
+
   String _getEffectiveReciterName(MutunReciter selected) {
-    if (bookId != null) {
-      final available = audioService.getAvailableRecitersForBook(bookId);
+    if (widget.bookId != null) {
+      final available = widget.audioService.getAvailableRecitersForBook(widget.bookId);
       if (available.isNotEmpty && !available.any((r) => r.id == selected.id)) {
         return available.first.name;
       }
@@ -73,9 +107,9 @@ class MutunAudioPlayerHud extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpace.md),
-                  ...audioService.getAvailableRecitersForBook(bookId).map((reciter) {
+                  ...widget.audioService.getAvailableRecitersForBook(widget.bookId).map((reciter) {
                     final isSelected =
-                        audioService.selectedReciter.id == reciter.id;
+                        widget.audioService.selectedReciter.id == reciter.id;
                     return Material(
                       color: isSelected
                           ? tokens.activeParagraphBg
@@ -85,7 +119,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                         borderRadius: AppRadius.mdRadius,
                         onTap: () {
                           HapticFeedback.selectionClick();
-                          audioService.setSelectedReciter(reciter);
+                          widget.audioService.setSelectedReciter(reciter);
                           Navigator.of(sheetContext).pop();
                         },
                         child: Padding(
@@ -171,7 +205,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
             children: [
               // ── Reciter Selector Button ───────────────────────────
               ValueListenableBuilder<MutunReciter>(
-                valueListenable: audioService.selectedReciterNotifier,
+                valueListenable: widget.audioService.selectedReciterNotifier,
                 builder: (context, reciter, _) {
                   return InkWell(
                     onTap: () => _showReciterPicker(context),
@@ -233,16 +267,16 @@ class MutunAudioPlayerHud extends StatelessWidget {
                     tooltip: 'إيقاف',
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      audioService.stop();
+                      widget.audioService.stop();
                     },
                   ),
 
                   // Play / Pause main button
                   ValueListenableBuilder<bool>(
-                    valueListenable: audioService.isPlayingNotifier,
+                    valueListenable: widget.audioService.isPlayingNotifier,
                     builder: (context, isPlaying, _) {
                       return ValueListenableBuilder<bool>(
-                        valueListenable: audioService.isLoadingNotifier,
+                        valueListenable: widget.audioService.isLoadingNotifier,
                         builder: (context, isLoading, _) {
                           return Material(
                             color: tokens.rosetteGold,
@@ -252,7 +286,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                               customBorder: const CircleBorder(),
                               onTap: () {
                                 HapticFeedback.mediumImpact();
-                                audioService.togglePlayPause(bookId: bookId);
+                                widget.audioService.togglePlayPause(bookId: widget.bookId);
                               },
                               child: Padding(
                                 padding: const EdgeInsetsDirectional.all(
@@ -284,7 +318,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
 
                   // Repeat / Loop button
                   ValueListenableBuilder<MutunRepeatMode>(
-                    valueListenable: audioService.repeatModeNotifier,
+                    valueListenable: widget.audioService.repeatModeNotifier,
                     builder: (context, mode, _) {
                       IconData icon;
                       Color color = palette.textMuted;
@@ -306,7 +340,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                         tooltip: 'تكرار الفقرة أو المتن',
                         onPressed: () {
                           HapticFeedback.selectionClick();
-                          audioService.toggleRepeatMode();
+                          widget.audioService.toggleRepeatMode();
                         },
                       );
                     },
@@ -314,12 +348,12 @@ class MutunAudioPlayerHud extends StatelessWidget {
 
                   // Speed button (x1.0, x1.25...)
                   ValueListenableBuilder<double>(
-                    valueListenable: audioService.speedNotifier,
+                    valueListenable: widget.audioService.speedNotifier,
                     builder: (context, speed, _) {
                       return InkWell(
                         onTap: () {
                           HapticFeedback.selectionClick();
-                          audioService.cycleSpeed();
+                          widget.audioService.cycleSpeed();
                         },
                         borderRadius: AppRadius.pillRadius,
                         child: Padding(
@@ -358,7 +392,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                       size: AppIcon.md,
                     ),
                     tooltip: 'فهرس المتن',
-                    onPressed: onOpenQuickJump,
+                    onPressed: widget.onOpenQuickJump,
                   ),
                 ],
               ),

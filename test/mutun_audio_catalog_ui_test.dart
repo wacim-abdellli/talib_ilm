@@ -16,11 +16,11 @@ void main() {
 
       final siniUrl = MutunAudioCatalog.getAudioUrl('bk_usul_thalatha', reciterId: 'sini');
       expect(siniUrl, isNotNull);
-      expect(siniUrl!, contains('06.mp3'));
+      expect(siniUrl!, contains('AbdulAzizAsSini'));
 
       final fallbackUrl = MutunAudioCatalog.getFallbackAudioUrl('bk_usul_thalatha', reciterId: 'sini');
       expect(fallbackUrl, isNotNull);
-      expect(fallbackUrl!, contains('AbdulAzizAsSini'));
+      expect(fallbackUrl!, contains('06.mp3'));
 
       final baiquoniReciters = MutunAudioCatalog.getRecitersForBook('bk_manzumah_baiquoni');
       expect(baiquoniReciters.length, greaterThanOrEqualTo(2));
@@ -69,6 +69,57 @@ void main() {
       final sini = MutunAudioService.availableReciters[0];
       service.setSelectedReciter(sini);
       expect(service.selectedReciter.id, 'sini');
+    });
+
+    test('Nawaqid Al-Islam has verified Al-Qasim CDN primary and fallback audio', () {
+      final primary = MutunAudioCatalog.getAudioUrl('bk_nawaqid_islam', reciterId: 'sini');
+      expect(primary, isNotNull);
+      expect(primary, contains('files.a-alqasim.com'));
+      expect(primary, contains('0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3'));
+
+      final fallback = MutunAudioCatalog.getFallbackAudioUrl('bk_nawaqid_islam', reciterId: 'sini');
+      expect(fallback, isNotNull);
+      expect(fallback, contains('04.mp3'));
+    });
+
+    test('Every book in MutunAudioCatalog has verified audio source and reciter', () {
+      const bookIds = [
+        'bk_adhkar_adab',
+        'bk_nawaqid_islam',
+        'bk_qawaid_arba',
+        'bk_usul_thalatha',
+        'bk_arbaeen_nawawi',
+        'bk_tuhfat_atfal',
+        'bk_shuroot_salah',
+        'bk_kitab_tawheed',
+        'bk_kashf_shubuhat',
+        'bk_manzumah_baiquoni',
+        'bk_manzumah_albiri',
+        'bk_ajrumiyyah',
+        'bk_wasitiyyah',
+        'bk_waraqat',
+        'bk_unwan_al_hukm',
+        'bk_rahibiyyah',
+        'bk_aqidah_tahawiyyah',
+        'bk_bulugh_maram',
+        'bk_zad_mustaqni',
+        'bk_jawhar_maknoon',
+        'bk_nokhbat_al_fikar',
+        'bk_alfiyyah_ibn_malik',
+        'bk_shatibiyyah',
+        'bk_umdat_ahkam',
+        'bk_qawaid_fiqhiyya',
+        'bk_lamiyyat_al_afal',
+      ];
+
+      for (final id in bookIds) {
+        expect(MutunAudioCatalog.hasAudio(id), isTrue, reason: 'Missing audio for $id');
+        final reciters = MutunAudioCatalog.getRecitersForBook(id);
+        expect(reciters, isNotEmpty, reason: 'No reciters found for $id');
+        final url = MutunAudioCatalog.getAudioUrl(id, reciterId: reciters.first.id);
+        expect(url, isNotNull, reason: 'Null audioUrl for $id');
+        expect(url!.startsWith('https://'), isTrue, reason: 'Invalid URL scheme for $id: $url');
+      }
     });
   });
 

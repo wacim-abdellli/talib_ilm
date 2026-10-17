@@ -108,8 +108,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/03.mp3',
-          fallbackUrl: '$siniBaseUrl/0101AlAthkaar_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0101AlAthkaar_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/03.mp3',
           totalParagraphs: 24,
         ),
       ],
@@ -122,8 +122,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/04.mp3',
-          fallbackUrl: '$siniBaseUrl/0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/04.mp3',
           totalParagraphs: 10,
         ),
       ],
@@ -134,13 +134,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/05.mp3',
-          fallbackUrl: '$siniBaseUrl/0202AlQawaidAlArba_AbdulAzizAsSini.mp3',
-          totalParagraphs: 8,
-        ),
-        MatnAudioSource(
-          reciter: MutunReciterDefaults.shaydzmi,
-          audioUrl: 'https://archive.org/download/shaydzmi16/shaydzmi16.mp3',
+          audioUrl: '$siniBaseUrl/0202AlQawaidAlArba_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/05.mp3',
           totalParagraphs: 8,
         ),
       ],
@@ -151,8 +146,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/06.mp3',
-          fallbackUrl: '$siniBaseUrl/0201AlUsulAtThalaath_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0201AlUsulAtThalaath_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/06.mp3',
           totalParagraphs: 28,
         ),
       ],
@@ -163,9 +158,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/07.mp3',
-          fallbackUrl:
-              '$siniBaseUrl/0204AlArbaunAnNawawiyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0204AlArbaunAnNawawiyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/07.mp3',
           totalParagraphs: 42,
         ),
       ],
@@ -178,14 +172,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/08.mp3',
-          fallbackUrl: '$siniBaseUrl/0301ThufatUlAtfaal_AbdulAzizAsSini.mp3',
-          totalParagraphs: 61,
-        ),
-        MatnAudioSource(
-          reciter: MutunReciterDefaults.fahad,
-          audioUrl:
-              'https://archive.org/download/Mutun_kiraat_mufrada/atfaal.mp3',
+          audioUrl: '$siniBaseUrl/0301ThufatUlAtfaal_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/08.mp3',
           totalParagraphs: 61,
         ),
       ],
@@ -196,8 +184,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/09.mp3',
-          fallbackUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/09.mp3',
           totalParagraphs: 14,
         ),
       ],
@@ -208,8 +196,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/09.mp3',
-          fallbackUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0302ShurutAsSalaah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/09.mp3',
           totalParagraphs: 14,
         ),
       ],
@@ -220,8 +208,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/10.mp3',
-          fallbackUrl: '$siniBaseUrl/0303KitaabAtTawheed_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0303KitaabAtTawheed_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/10.mp3',
           totalParagraphs: 67,
         ),
       ],
@@ -232,8 +220,7 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.faqeeh,
-          audioUrl: 'https://archive.org/download/shaydzmi16/shaydzmi16.mp3',
-          fallbackUrl:
+          audioUrl:
               'https://files.a-alqasim.com/audio/Mutoon/AbdulGhaniSaadiqAlFaqeeh/0804Kashf_AbdulGhaniSaadiqAlFaqeeh.mp3',
           totalParagraphs: 20,
         ),
@@ -246,16 +233,16 @@ class MutunAudioCatalog {
       title: 'المنظومة البيقونية',
       sources: [
         MatnAudioSource(
-          reciter: MutunReciterDefaults.fahad,
-          audioUrl:
-              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
           fallbackUrl: '$archiveBaseUrl/11.mp3',
           totalParagraphs: 34,
         ),
         MatnAudioSource(
-          reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/11.mp3',
-          fallbackUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
           totalParagraphs: 34,
         ),
       ],
@@ -265,16 +252,16 @@ class MutunAudioCatalog {
       title: 'المنظومة البيقونية',
       sources: [
         MatnAudioSource(
-          reciter: MutunReciterDefaults.fahad,
-          audioUrl:
-              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
           fallbackUrl: '$archiveBaseUrl/11.mp3',
           totalParagraphs: 34,
         ),
         MatnAudioSource(
-          reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/11.mp3',
-          fallbackUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
           totalParagraphs: 34,
         ),
       ],
@@ -285,8 +272,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/12.mp3',
-          fallbackUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/12.mp3',
           totalParagraphs: 25,
         ),
       ],
@@ -297,8 +284,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/12.mp3',
-          fallbackUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0402AlIlbiri_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/12.mp3',
           totalParagraphs: 25,
         ),
       ],
@@ -309,8 +296,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/13.mp3',
-          fallbackUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/13.mp3',
           totalParagraphs: 30,
         ),
         MatnAudioSource(
@@ -327,8 +314,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/13.mp3',
-          fallbackUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/13.mp3',
           totalParagraphs: 30,
         ),
         MatnAudioSource(
@@ -345,8 +332,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/14.mp3',
-          fallbackUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/14.mp3',
           totalParagraphs: 35,
         ),
       ],
@@ -357,8 +344,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/14.mp3',
-          fallbackUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0404AlWaasitiyyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/14.mp3',
           totalParagraphs: 35,
         ),
       ],
@@ -371,8 +358,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/15.mp3',
-          fallbackUrl: '$siniBaseUrl/0501AlWaraqat_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0501AlWaraqat_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/15.mp3',
           totalParagraphs: 22,
         ),
       ],
@@ -383,8 +370,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/16.mp3',
-          fallbackUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/16.mp3',
           totalParagraphs: 20,
         ),
       ],
@@ -395,8 +382,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/16.mp3',
-          fallbackUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0502UnwanAlHikm_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/16.mp3',
           totalParagraphs: 20,
         ),
       ],
@@ -407,8 +394,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/17.mp3',
-          fallbackUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/17.mp3',
           totalParagraphs: 30,
         ),
       ],
@@ -419,8 +406,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/17.mp3',
-          fallbackUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0503ArRahbiyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/17.mp3',
           totalParagraphs: 30,
         ),
       ],
@@ -431,8 +418,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/18.mp3',
-          fallbackUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/18.mp3',
           totalParagraphs: 50,
         ),
       ],
@@ -443,8 +430,8 @@ class MutunAudioCatalog {
       sources: [
         MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
-          audioUrl: '$archiveBaseUrl/18.mp3',
-          fallbackUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          audioUrl: '$siniBaseUrl/0504AtTahawiyah_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/18.mp3',
           totalParagraphs: 50,
         ),
       ],
