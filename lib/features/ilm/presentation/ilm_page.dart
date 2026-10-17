@@ -38,7 +38,10 @@ import 'widgets/ilm_quiz_banner_card.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/maktaba_shamela_view.dart';
 import 'widgets/motivation_widgets.dart';
+import 'widgets/mutun_rosette_icon.dart';
+import 'widgets/mutun_shelf_card.dart';
 import 'widgets/shamela_book_card.dart';
+import 'widgets/shamela_shelf_card.dart';
 import 'widgets/shamela_shuruh_sheet.dart';
 import 'widgets/study_resume_pill.dart';
 
@@ -146,7 +149,8 @@ class _IlmPageState extends State<IlmPage> {
 
       final catalogTotals = {
         for (final book in _allBooks)
-          book.id: MutunDigitalCatalog.getEntry(book.id)?.totalPages ??
+          book.id:
+              MutunDigitalCatalog.getEntry(book.id)?.totalPages ??
               (book.totalPages > 0 ? book.totalPages : 1),
       };
       await _progressService?.auditAndHealCatalogProgress(catalogTotals);
@@ -156,8 +160,9 @@ class _IlmPageState extends State<IlmPage> {
         for (final progress in allProgress) progress.bookId: progress,
       };
 
-      _favoriteBookIds =
-          await FavoritesService().getIdsByType(FavoriteType.book);
+      _favoriteBookIds = await FavoritesService().getIdsByType(
+        FavoriteType.book,
+      );
 
       // Automatically reconcile and sync favorites bidirectionally
       for (final bookId in _favoriteBookIds) {
@@ -174,12 +179,14 @@ class _IlmPageState extends State<IlmPage> {
           final book = _bookCatalog[p.bookId];
           if (book != null) {
             _favoriteBookIds.add(p.bookId);
-            await FavoritesService().add(FavoriteItem(
-              id: book.id,
-              title: book.title,
-              type: FavoriteType.book,
-              subtitle: book.author,
-            ));
+            await FavoritesService().add(
+              FavoriteItem(
+                id: book.id,
+                title: book.title,
+                type: FavoriteType.book,
+                subtitle: book.author,
+              ),
+            );
           }
         }
       }
@@ -249,9 +256,10 @@ class _IlmPageState extends State<IlmPage> {
     final expectedTotal = digitalEntry != null && digitalEntry.totalPages > 0
         ? digitalEntry.totalPages
         : (book.totalPages > 0
-            ? book.totalPages
-            : (progressNow?.totalPages ?? 0));
-    final isGenuinelyFinished = isCompletedNow &&
+              ? book.totalPages
+              : (progressNow?.totalPages ?? 0));
+    final isGenuinelyFinished =
+        isCompletedNow &&
         expectedTotal > 1 &&
         (progressNow?.currentPage ?? 0) >= expectedTotal;
 
@@ -272,13 +280,9 @@ class _IlmPageState extends State<IlmPage> {
 
   void _openShamelaReader(ShamelaBook book) {
     HapticFeedback.selectionClick();
-    Navigator.of(context).push(
-      buildFadeRoute(
-        page: ShamelaReaderPage(
-          book: book,
-        ),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(buildFadeRoute(page: ShamelaReaderPage(book: book)));
   }
 
   void _openShuruhSheet(ShamelaBook parentBook, List<ShamelaBook> shuruh) {
@@ -315,8 +319,9 @@ class _IlmPageState extends State<IlmPage> {
         _favoriteBookIds.remove(bookId);
       }
       if (_progressById.containsKey(bookId)) {
-        _progressById[bookId] =
-            _progressById[bookId]!.copyWith(isFavorite: isFavNow);
+        _progressById[bookId] = _progressById[bookId]!.copyWith(
+          isFavorite: isFavNow,
+        );
       }
     });
 
@@ -327,10 +332,7 @@ class _IlmPageState extends State<IlmPage> {
           'تمت إضافة "${book.title}" إلى المفضلة (قائمة المحفوظات)',
         );
       } else {
-        AppSnackbar.info(
-          context,
-          'تمت إزالة "${book.title}" من المفضلة',
-        );
+        AppSnackbar.info(context, 'تمت إزالة "${book.title}" من المفضلة');
       }
     }
   }
@@ -392,8 +394,8 @@ class _IlmPageState extends State<IlmPage> {
               child: _selectedCategory == 'shamela'
                   ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
                   : (_selectedCategory == 'quiz'
-                      ? const IslamicQuizHubPage(showAppBar: false)
-                      : _buildScrollablePartitions(context, palette)),
+                        ? const IslamicQuizHubPage(showAppBar: false)
+                        : _buildScrollablePartitions(context, palette)),
             ),
           ],
         ),
@@ -443,6 +445,10 @@ class _IlmPageState extends State<IlmPage> {
             onReturnFromQuiz: _loadData,
           ),
         ),
+
+        // Quick Disciplines Instant Index (فهرس الفنون السريع - انتقال فوري بدون تمرير)
+        if (_selectedCategory == 'all')
+          SliverToBoxAdapter(child: _buildQuickDisciplinesBar(palette)),
 
         // Section 1: Mutun Taleb Al-Ilm
         if (_selectedCategory == 'all' || _selectedCategory == 'mutun')
@@ -518,8 +524,169 @@ class _IlmPageState extends State<IlmPage> {
             categoryKey: 'arabic',
           ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: AppSpace.xxl)),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: AppSize.navClearance(context) + AppSpace.xxxl,
+          ),
+        ),
       ],
+    );
+  }
+
+  /// Quick Disciplines Instant Index Bar — eliminates scroll fatigue and search overhead
+  Widget _buildQuickDisciplinesBar(AppPalette palette) {
+    final disciplines = [
+      (
+        id: 'mutun',
+        label: 'متون طالب العلم',
+        count: _allBooks.length,
+        icon: Icons.menu_book_rounded,
+      ),
+      (
+        id: 'aqidah',
+        label: 'العقيدة',
+        count: AqidahCatalog.books.length,
+        icon: Icons.shield_outlined,
+      ),
+      (
+        id: 'hadith',
+        label: 'الحديث',
+        count: HadithCatalog.allBooks.length,
+        icon: Icons.format_quote_rounded,
+      ),
+      (
+        id: 'fiqh',
+        label: 'الفقه والأصول',
+        count: FiqhCatalog.allBooks.length + UsulCatalog.books.length,
+        icon: Icons.balance_rounded,
+      ),
+      (
+        id: 'adab',
+        label: 'الآداب والرقائق',
+        count: RaqaeqAdabCatalog.books.length,
+        icon: Icons.favorite_border_rounded,
+      ),
+      (
+        id: 'tafsir',
+        label: 'التفسير',
+        count: TafsirCatalog.books.length,
+        icon: Icons.auto_stories_outlined,
+      ),
+      (
+        id: 'seerah',
+        label: 'السيرة',
+        count: SeerahTarikhCatalog.books.length,
+        icon: Icons.history_edu_rounded,
+      ),
+      (
+        id: 'arabic',
+        label: 'اللغة العربية',
+        count: ArabicCatalog.books.length,
+        icon: Icons.edit_note_rounded,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpace.lg,
+        AppSpace.xs,
+        AppSpace.lg,
+        AppSpace.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.explore_outlined,
+                size: AppIcon.xs,
+                color: palette.gold,
+              ),
+              const SizedBox(width: AppSpace.xs),
+              Text(
+                'فهرس الفنون والعلوم (انتقال فوري)',
+                style: context.text.caption.copyWith(
+                  color: palette.textMuted,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.xs),
+          SizedBox(
+            height: AppSize.tap,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: disciplines.length,
+              separatorBuilder: (context, index) =>
+                  const SizedBox(width: AppSpace.xs),
+              itemBuilder: (context, index) {
+                final d = disciplines[index];
+                final catColors = palette.category(d.id);
+                return Material(
+                  color: palette.surfaceRaised,
+                  borderRadius: AppRadius.pillRadius,
+                  child: InkWell(
+                    borderRadius: AppRadius.pillRadius,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _selectedCategory = d.id;
+                        _selectedMutunLevel = null;
+                      });
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: AppSize.tap),
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(color: palette.border, width: 0.8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(d.icon, size: AppIcon.xs, color: catColors.fg),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            d.label,
+                            style: context.text.caption.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xxs),
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xxs,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: catColors.bg,
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            child: Text(
+                              '${d.count}',
+                              style: context.text.caption.copyWith(
+                                color: catColors.fg,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -529,16 +696,211 @@ class _IlmPageState extends State<IlmPage> {
         ? _allBooks
         : _allBooks.where((b) => b.level == _selectedMutunLevel).toList();
 
+    if (!isFocused) {
+      // ── Overview Shelf Pavilion for Mutun (Compact, zero scroll fatigue) ──
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: AppSpace.lg,
+              end: AppSpace.lg,
+              bottom: AppSpace.lg,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: AppRadius.lgRadius,
+                border: Border.all(color: palette.border, width: 0.9),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: MutunRosetteIcon(
+                            size: AppIcon.sm,
+                            color: palette.primary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'متون طالب العلم',
+                                style: context.text.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'المنهاج العلمي التأصيلي (٥ مستويات)',
+                                style: context.text.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Semantics(
+                          button: true,
+                          label: 'عرض كل المتون',
+                          child: Material(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.pillRadius,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _selectedCategory = 'mutun');
+                              },
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xs,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'عرض الكل (${_allBooks.length})',
+                                      style: context.text.caption.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpace.xxs),
+                                    Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      size: AppIcon.xs,
+                                      color: palette.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpace.xs),
+
+                  // Horizontal Mutun Bookshelf with real book cover colors
+                  SizedBox(
+                    height: 165,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        AppSpace.md,
+                        0,
+                        AppSpace.md,
+                        AppSpace.md,
+                      ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _allBooks.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpace.sm),
+                      itemBuilder: (context, index) {
+                        final book = _allBooks[index];
+                        return MutunShelfCard(
+                          book: book,
+                          progress: _progressById[book.id],
+                          onOpenReader: () => _navigateToBook(book),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // ── Focused View for Mutun (Full vertical list with level filters) ──
     return [
       SliverToBoxAdapter(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.lg,
+              ),
+              child: Row(
+                children: [
+                  Semantics(
+                    button: true,
+                    label: 'العودة لجميع الأقسام',
+                    child: Material(
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
+                      child: InkWell(
+                        borderRadius: AppRadius.pillRadius,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedCategory = 'all';
+                            _selectedMutunLevel = null;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: AppIcon.xs,
+                                color: palette.primary,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Text(
+                                'العودة لجميع الأقسام',
+                                style: context.text.caption.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
             IlmPartitionHeader(
               title: 'متون طالب العلم (المنهاج التأصيلي)',
               subtitle: 'منهج علمي مدرج يبدأ بالتمهيدي حتى المطولات',
               countLabel: '${_allBooks.length} متون',
-              onShowAll: !isFocused ? () => setState(() => _selectedCategory = 'mutun') : null,
             ),
 
             // Horizontal Level Selector Filter
@@ -546,7 +908,9 @@ class _IlmPageState extends State<IlmPage> {
               height: AppSize.tap,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.lg,
+                ),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _buildLevelChip(
@@ -559,8 +923,10 @@ class _IlmPageState extends State<IlmPage> {
                     _buildLevelChip(
                       label: lvl.label.isNotEmpty ? lvl.label : lvl.title,
                       isSelected: _selectedMutunLevel == lvl.title,
-                      onTap: () => setState(() => _selectedMutunLevel = lvl.title),
+                      onTap: () =>
+                          setState(() => _selectedMutunLevel = lvl.title),
                       palette: palette,
+                      levelKey: lvl.title,
                     ),
                 ],
               ),
@@ -572,22 +938,19 @@ class _IlmPageState extends State<IlmPage> {
       SliverPadding(
         padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
         sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final book = filteredMutun[index];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                child: IlmMutnCard(
-                  book: book,
-                  progress: _progressById[book.id],
-                  isFavoriteOverride: _favoriteBookIds.contains(book.id),
-                  onOpenReader: () => _navigateToBook(book),
-                  onToggleFavorite: () => _toggleFavorite(book.id),
-                ),
-              );
-            },
-            childCount: isFocused ? filteredMutun.length : filteredMutun.take(3).length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final book = filteredMutun[index];
+            return Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+              child: IlmMutnCard(
+                book: book,
+                progress: _progressById[book.id],
+                isFavoriteOverride: _favoriteBookIds.contains(book.id),
+                onOpenReader: () => _navigateToBook(book),
+                onToggleFavorite: () => _toggleFavorite(book.id),
+              ),
+            );
+          }, childCount: filteredMutun.length),
         ),
       ),
     ];
@@ -601,37 +964,229 @@ class _IlmPageState extends State<IlmPage> {
     required String categoryKey,
   }) {
     final isFocused = _selectedCategory == categoryKey;
-    final displayBooks = isFocused ? books : books.take(3).toList();
+    final catColors = palette.category(categoryKey);
 
+    if (!isFocused) {
+      // ── Overview Pavilion Card with Horizontal Bookshelf ──
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: AppSpace.lg,
+              end: AppSpace.lg,
+              bottom: AppSpace.lg,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: AppRadius.lgRadius,
+                border: Border.all(color: palette.border, width: 0.9),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Pavilion Section Header inside card
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            color: catColors.bg,
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: MutunRosetteIcon(
+                            size: AppIcon.sm,
+                            color: catColors.fg,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                style: context.text.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (subtitle.isNotEmpty)
+                                Text(
+                                  subtitle,
+                                  style: context.text.caption.copyWith(
+                                    color: palette.textMuted,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                        Semantics(
+                          button: true,
+                          label: 'عرض كل كتب $title',
+                          child: Material(
+                            color: catColors.bg,
+                            borderRadius: AppRadius.pillRadius,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _selectedCategory = categoryKey);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xs,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'عرض الكل (${books.length})',
+                                      style: context.text.caption.copyWith(
+                                        color: catColors.fg,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpace.xxs),
+                                    Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      size: AppIcon.xs,
+                                      color: catColors.fg,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpace.xs),
+
+                  // Horizontal Bookshelf
+                  SizedBox(
+                    height: 165,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        AppSpace.md,
+                        0,
+                        AppSpace.md,
+                        AppSpace.md,
+                      ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: books.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpace.sm),
+                      itemBuilder: (context, index) {
+                        final book = books[index];
+                        return ShamelaShelfCard(
+                          book: book,
+                          onOpen: () => _openShamelaReader(book),
+                          onOpenShuruh: _openShuruhSheet,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // ── Focused View for Discipline (Full Vertical List) ──
     return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.lg,
+          ),
+          child: Row(
+            children: [
+              Semantics(
+                button: true,
+                label: 'العودة لجميع الأقسام',
+                child: Material(
+                  color: palette.surfaceRaised,
+                  borderRadius: AppRadius.pillRadius,
+                  child: InkWell(
+                    borderRadius: AppRadius.pillRadius,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedCategory = 'all');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xs,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: AppIcon.xs,
+                            color: palette.primary,
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            'العودة لجميع الأقسام',
+                            style: context.text.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       SliverToBoxAdapter(
         child: IlmPartitionHeader(
           title: title,
           subtitle: subtitle,
           countLabel: '${books.length} كتب',
-          onShowAll: !isFocused ? () => setState(() => _selectedCategory = categoryKey) : null,
         ),
       ),
       SliverPadding(
         padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
         sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final book = displayBooks[index];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                child: ShamelaBookCard(
-                  book: book,
-                  isDownloaded: true,
-                  downloadProgress: null,
-                  onOpen: () => _openShamelaReader(book),
-                  onDownload: () {},
-                  onOpenShuruh: _openShuruhSheet,
-                ),
-              );
-            },
-            childCount: displayBooks.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final book = books[index];
+            return Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+              child: ShamelaBookCard(
+                book: book,
+                isDownloaded: true,
+                downloadProgress: null,
+                onOpen: () => _openShamelaReader(book),
+                onDownload: () {},
+                onOpenShuruh: _openShuruhSheet,
+              ),
+            );
+          }, childCount: books.length),
         ),
       ),
     ];
@@ -642,11 +1197,23 @@ class _IlmPageState extends State<IlmPage> {
     required bool isSelected,
     required VoidCallback onTap,
     required AppPalette palette,
+    String? levelKey,
   }) {
+    final levelColors = levelKey != null ? palette.mutunLevel(levelKey) : null;
+    final Color bgColor = isSelected
+        ? (levelColors?.bg ?? palette.primary)
+        : palette.surfaceRaised;
+    final Color fgColor = isSelected
+        ? (levelColors?.fg ?? palette.onPrimary)
+        : palette.textMuted;
+    final Color borderColor = isSelected
+        ? (levelColors?.border ?? palette.primary)
+        : palette.border;
+
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
       child: Material(
-        color: isSelected ? palette.primary : palette.surfaceRaised,
+        color: bgColor,
         borderRadius: AppRadius.pillRadius,
         child: InkWell(
           borderRadius: AppRadius.pillRadius,
@@ -662,18 +1229,33 @@ class _IlmPageState extends State<IlmPage> {
             ),
             decoration: BoxDecoration(
               borderRadius: AppRadius.pillRadius,
-              border: Border.all(
-                color: isSelected ? palette.primary : palette.border,
-                width: 1.0,
-              ),
+              border: Border.all(color: borderColor, width: 1.0),
             ),
             child: Center(
-              child: Text(
-                label,
-                style: context.text.caption.copyWith(
-                  color: isSelected ? palette.onPrimary : palette.textMuted,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (levelColors != null && !isSelected) ...[
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: levelColors.fg,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
+                  Text(
+                    label,
+                    style: context.text.caption.copyWith(
+                      color: fgColor,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -723,7 +1305,9 @@ class _IlmPageState extends State<IlmPage> {
                     ),
                     child: Text(
                       'إلغاء البحث',
-                      style: context.text.caption.copyWith(color: palette.textMuted),
+                      style: context.text.caption.copyWith(
+                        color: palette.textMuted,
+                      ),
                     ),
                   ),
                 ),
@@ -739,24 +1323,25 @@ class _IlmPageState extends State<IlmPage> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
             sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final book = matchedMutun[index];
-                  return Padding(
-                    padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                    child: IlmMutnCard(
-                      book: book,
-                      progress: _progressById[book.id],
-                      isFavoriteOverride: _favoriteBookIds.contains(book.id),
-                      onOpenReader: () => _navigateToBook(book),
-                      onToggleFavorite: () => _toggleFavorite(book.id),
-                    ),
-                  );
-                },
-                childCount: matchedMutun.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final book = matchedMutun[index];
+                return Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    bottom: AppSpace.md,
+                  ),
+                  child: IlmMutnCard(
+                    book: book,
+                    progress: _progressById[book.id],
+                    isFavoriteOverride: _favoriteBookIds.contains(book.id),
+                    onOpenReader: () => _navigateToBook(book),
+                    onToggleFavorite: () => _toggleFavorite(book.id),
+                  ),
+                );
+              }, childCount: matchedMutun.length),
             ),
           ),
         ],
@@ -768,29 +1353,34 @@ class _IlmPageState extends State<IlmPage> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
             sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final book = matchedShamela[index];
-                  return Padding(
-                    padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                    child: ShamelaBookCard(
-                      book: book,
-                      isDownloaded: true,
-                      downloadProgress: null,
-                      onOpen: () => _openShamelaReader(book),
-                      onDownload: () {},
-                      onOpenShuruh: _openShuruhSheet,
-                    ),
-                  );
-                },
-                childCount: matchedShamela.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final book = matchedShamela[index];
+                return Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    bottom: AppSpace.md,
+                  ),
+                  child: ShamelaBookCard(
+                    book: book,
+                    isDownloaded: true,
+                    downloadProgress: null,
+                    onOpen: () => _openShamelaReader(book),
+                    onDownload: () {},
+                    onOpenShuruh: _openShuruhSheet,
+                  ),
+                );
+              }, childCount: matchedShamela.length),
             ),
           ),
         ],
-        const SliverToBoxAdapter(child: SizedBox(height: AppSpace.xxl)),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: AppSize.navClearance(context) + AppSpace.xxxl,
+          ),
+        ),
       ],
     );
   }

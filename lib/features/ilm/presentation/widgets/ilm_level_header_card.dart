@@ -23,13 +23,14 @@ class IlmLevelHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final levelColors = palette.mutunLevel(level.title);
 
     return Padding(
       padding: AppSpace.screenPadding,
       child: AppCard(
         padding: const EdgeInsets.all(AppSpace.lg),
         border: Border.all(
-          color: palette.gold.withAlpha(70),
+          color: levelColors.border,
           width: 1,
         ),
         child: Column(
@@ -44,13 +45,14 @@ class IlmLevelHeaderCard extends StatelessWidget {
                     vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: palette.primarySoft,
+                    color: levelColors.bg,
                     borderRadius: AppRadius.smRadius,
+                    border: Border.all(color: levelColors.border, width: 0.8),
                   ),
                   child: Text(
                     level.label.isNotEmpty ? level.label : level.title,
                     style: context.text.label.copyWith(
-                      color: palette.primary,
+                      color: levelColors.fg,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

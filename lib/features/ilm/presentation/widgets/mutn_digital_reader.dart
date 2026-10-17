@@ -270,39 +270,10 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
 
     final bgColor = ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
 
-    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
-
     return Container(
       color: bgColor,
       child: Column(
         children: [
-          // ── Quick Jump Bar « الانتقال السريع » ────────────────────
-          AnimatedContainer(
-            duration: AppMotion.fast,
-            height: widget.showControls ? 36.0 : 0.0,
-            color: palette.surfaceMuted,
-            child: widget.showControls
-                ? Center(
-                    child: InkWell(
-                      onTap: _openFihrisSheet,
-                      borderRadius: AppRadius.pillRadius,
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.md,
-                          vertical: AppSpace.xxs,
-                        ),
-                        child: Text(
-                          '« الانتقال السريع »',
-                          style: textTheme.caption.copyWith(
-                            color: tokens.rosetteGold,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
 
           // ── Reader Body: Horizontal Swipe (Slide side) PageView ──
           Expanded(
@@ -423,6 +394,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
           if (MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: MutunAudioService(),
+              bookId: widget.book.id,
               onOpenQuickJump: _openFihrisSheet,
             ),
 

@@ -38,7 +38,7 @@ class IlmCategoryChips extends StatelessWidget {
     ),
     IlmCategoryChipItem(
       id: 'mutun',
-      label: 'متون المنهاج',
+      label: 'متون طالب العلم',
       icon: Icons.menu_book_rounded,
     ),
     IlmCategoryChipItem(
@@ -99,7 +99,8 @@ class IlmCategoryChips extends StatelessWidget {
           ),
           physics: const BouncingScrollPhysics(),
           itemCount: categories.length,
-          separatorBuilder: (context, index) => const SizedBox(width: AppSpace.xs),
+          separatorBuilder: (context, index) =>
+              const SizedBox(width: AppSpace.xs),
           itemBuilder: (context, index) {
             final cat = categories[index];
             final isSelected = selectedCategoryId == cat.id;

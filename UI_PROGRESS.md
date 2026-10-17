@@ -904,7 +904,7 @@ FAILED (54 violations)
      - Removed foreign brown tokens (`headerBrown`, `headerTitle`, `headerSubtitle`) from `reader_theme.dart`.
      - Reverted `IlmHeader` to native `talib_ilm` Calm Scholar styling (`palette.surface`, `palette.border`, `palette.text`, `palette.textMuted`, and `palette.primary`).
   2. **Unified Single-Section Partitioning (`IlmPage` & `IlmCategoryChips`):**
-     - Replaced clunky dual-switchers with a unified horizontal category filter: "الكل", "متون المنهاج", "العقيدة والتوحيد", "الحديث الشريف", "الفقه وأصوله", "الآداب والأذكار", "التفسير وعلومه", "السيرة والتاريخ", "اللغة العربية", "المكتبة الشاملة".
+     - Replaced clunky dual-switchers with a unified horizontal category filter: "الكل", "متون طالب العلم", "العقيدة والتوحيد", "الحديث الشريف", "الفقه وأصوله", "الآداب والأذكار", "التفسير وعلومه", "السيرة والتاريخ", "اللغة العربية", "المكتبة الشاملة".
      - When "الكل" is active, scrolls through cleanly partitioned scholarly sections with `IlmPartitionHeader` (rosette emblem, title, subtitle, count badge, and deep section jump).
      - Bound dynamically to real syllabus mutun (`mutun_program.json`, `MutunDigitalCatalog`) and verified Shamela classical catalogs (`AqidahCatalog`, `HadithCatalog`, `FiqhCatalog`, `UsulCatalog`, `RaqaeqAdabCatalog`, `TafsirCatalog`, `SeerahTarikhCatalog`, `ArabicCatalog`).
   3. **Scholarly Readers & Authentic Reciters Integration (`IlmMutnCard` & `mutun_audio_catalog.dart`):**

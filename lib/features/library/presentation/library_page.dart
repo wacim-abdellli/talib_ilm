@@ -189,6 +189,7 @@ class _LibraryLevelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final levelColors = palette.mutunLevel(level.title);
 
     return AppCard(
       onTap: level.onTap,
@@ -199,16 +200,16 @@ class _LibraryLevelCard extends StatelessWidget {
             width: AppSize.tap,
             height: AppSize.tap,
             decoration: BoxDecoration(
-              color: palette.primarySoft,
+              color: levelColors.bg,
               borderRadius: AppRadius.mdRadius,
               border: Border.all(
-                color: palette.primary.withValues(alpha: 0.15),
+                color: levelColors.border,
                 width: 1,
               ),
             ),
             child: Icon(
               level.icon,
-              color: palette.primary,
+              color: levelColors.fg,
               size: AppIcon.lg,
             ),
           ),

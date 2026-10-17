@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import '../catalogs/mutun_audio_catalog.dart';
 
 enum MutunRepeatMode {
   none,
@@ -37,9 +39,9 @@ class MutunAudioService {
       description: 'قراءة محققة متقنة وفق نشرة الشيخ د. عبدالمحسن القاسم',
     ),
     MutunReciter(
-      id: 'tayyib',
-      name: 'الشيخ معاذ الطيب',
-      description: 'قراءة تعليمية مرتلة لمتون طالب العلم',
+      id: 'faqeeh',
+      name: 'القارئ عبد الغني الفقيه',
+      description: 'تسجيل صوتي معتمد لنخبة من متون طالب العلم',
     ),
   ];
 
@@ -58,6 +60,7 @@ class MutunAudioService {
       ValueNotifier<MutunReciter>(availableReciters[0]);
   final ValueNotifier<Duration> positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier<Duration>(Duration.zero);
+  final ValueNotifier<String?> playbackErrorNotifier = ValueNotifier<String?>(null);
 
   String? _currentAudioUrl;
   int _totalParagraphs = 1;
@@ -67,8 +70,9 @@ class MutunAudioService {
       final isPlaying = state.playing &&
           state.processingState != ProcessingState.completed &&
           state.processingState != ProcessingState.idle;
-      final isLoading = state.processingState == ProcessingState.loading ||
-          state.processingState == ProcessingState.buffering;
+      final isLoading = (state.processingState == ProcessingState.loading ||
+              state.processingState == ProcessingState.buffering) &&
+          !state.playing;
 
       if (isPlayingNotifier.value != isPlaying) {
         isPlayingNotifier.value = isPlaying;
@@ -80,7 +84,21 @@ class MutunAudioService {
       if (state.processingState == ProcessingState.completed) {
         _handleTrackCompletion();
       }
+    }, onError: (Object err) {
+      debugPrint('Audio player state error: $err');
+      isLoadingNotifier.value = false;
+      isPlayingNotifier.value = false;
+      playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
     });
+
+    _player.playbackEventStream.listen(
+      (event) {},
+      onError: (Object err) {
+        debugPrint('Audio playback error: $err');
+        isLoadingNotifier.value = false;
+        isPlayingNotifier.value = false;
+      },
+    );
 
     _player.positionStream.listen((pos) {
       positionNotifier.value = pos;
@@ -119,14 +137,19 @@ class MutunAudioService {
     if (_selectedReciter.id != reciter.id) {
       _selectedReciter = reciter;
       selectedReciterNotifier.value = reciter;
-      // Reload audio if currently playing
-      if (activeBookIdNotifier.value != null && isPlayingNotifier.value) {
-        playMatnAudio(
-          bookId: activeBookIdNotifier.value!,
-          audioUrl: _currentAudioUrl ?? '',
-          paragraphIndex: activeParagraphNotifier.value ?? 1,
-          totalParagraphs: _totalParagraphs,
-        );
+      final bookId = activeBookIdNotifier.value;
+      if (bookId != null) {
+        final newUrl =
+            MutunAudioCatalog.getAudioUrl(bookId, reciterId: reciter.id) ?? '';
+        final shouldPlay = isPlayingNotifier.value || isLoadingNotifier.value;
+        if (newUrl.isNotEmpty && shouldPlay) {
+          playMatnAudio(
+            bookId: bookId,
+            audioUrl: newUrl,
+            paragraphIndex: activeParagraphNotifier.value ?? 1,
+            totalParagraphs: _totalParagraphs,
+          );
+        }
       }
     }
   }
@@ -176,21 +199,72 @@ class MutunAudioService {
     required String audioUrl,
     int paragraphIndex = 1,
     int totalParagraphs = 1,
+    bool isFallbackAttempt = false,
   }) async {
+    if (audioUrl.isEmpty) {
+      isLoadingNotifier.value = false;
+      return;
+    }
+
     try {
       activeBookIdNotifier.value = bookId;
       activeParagraphNotifier.value = paragraphIndex;
       _currentAudioUrl = audioUrl;
       _totalParagraphs = totalParagraphs;
       isLoadingNotifier.value = true;
+      playbackErrorNotifier.value = null;
 
-      if (audioUrl.isNotEmpty) {
-        await _player.setUrl(audioUrl);
-        await _player.setSpeed(speedNotifier.value);
-        await _player.play();
-      }
+      // Cleanly stop any existing stream to prevent player deadlock
+      await _player.stop();
+
+      final entry = MutunAudioCatalog.getEntry(bookId);
+      final mediaTitle = entry?.title ?? 'متن طالب العلم';
+
+      final audioSource = AudioSource.uri(
+        Uri.parse(audioUrl),
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+          'Accept': '*/*',
+        },
+        tag: MediaItem(
+          id: bookId,
+          title: mediaTitle,
+          artist: _selectedReciter.name,
+          album: 'متون طالب العلم',
+          artUri: Uri.parse(
+            'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
+          ),
+          displayTitle: mediaTitle,
+          displaySubtitle: _selectedReciter.name,
+          displayDescription: 'متون طالب العلم - تحقيق الشيخ د. عبدالمحسن القاسم',
+        ),
+      );
+
+      await _player.setAudioSource(audioSource);
+      await _player.setSpeed(speedNotifier.value);
+      await _player.play();
     } catch (e) {
-      debugPrint('Error playing mutn audio: $e');
+      debugPrint('Error playing mutn audio ($audioUrl): $e');
+      if (!isFallbackAttempt) {
+        final fallbackUrl =
+            MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: _selectedReciter.id) ??
+            MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
+        if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != audioUrl) {
+          debugPrint('Retrying with backup audio stream ($fallbackUrl)...');
+          await playMatnAudio(
+            bookId: bookId,
+            audioUrl: fallbackUrl,
+            paragraphIndex: paragraphIndex,
+            totalParagraphs: totalParagraphs,
+            isFallbackAttempt: true,
+          );
+          return;
+        }
+      }
+      playbackErrorNotifier.value = 'تعذر تشغيل الصوت. يرجى التحقق من الاتصال بالإنترنت';
+      isLoadingNotifier.value = false;
+      isPlayingNotifier.value = false;
     } finally {
       isLoadingNotifier.value = false;
     }
@@ -203,6 +277,10 @@ class MutunAudioService {
       _player.seek(Duration.zero);
       _player.play();
     }
+  }
+
+  void clearActiveParagraph() {
+    activeParagraphNotifier.value = null;
   }
 
   void nextParagraph() {
@@ -219,7 +297,33 @@ class MutunAudioService {
     }
   }
 
-  Future<void> togglePlayPause() async {
+  Future<void> togglePlayPause({String? bookId}) async {
+    final targetBookId = bookId ?? activeBookIdNotifier.value;
+
+    // If starting a new book or first-time playback
+    if (targetBookId != null &&
+        (_currentAudioUrl == null ||
+            activeBookIdNotifier.value != targetBookId ||
+            _player.audioSource == null)) {
+      final audioUrl = MutunAudioCatalog.getAudioUrl(
+            targetBookId,
+            reciterId: selectedReciter.id,
+          ) ??
+          MutunAudioCatalog.getAudioUrl(
+            targetBookId,
+            reciterId: 'sini',
+          ) ??
+          '';
+      final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId);
+      await playMatnAudio(
+        bookId: targetBookId,
+        audioUrl: audioUrl,
+        paragraphIndex: 1,
+        totalParagraphs: totalParas,
+      );
+      return;
+    }
+
     if (_player.playing) {
       await _player.pause();
     } else {

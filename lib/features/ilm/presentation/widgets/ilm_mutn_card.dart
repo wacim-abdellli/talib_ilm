@@ -58,6 +58,7 @@ class IlmMutnCard extends StatelessWidget {
     final progressPercent = (progress?.progressPercentage ?? 0).round();
     final hasAudio = MutunAudioCatalog.hasAudio(book.id);
     final isFavorite = isFavoriteOverride ?? (progress?.isFavorite ?? false);
+    final levelColors = palette.mutunLevel(book.level);
 
     return AppCard(
       onTap: onOpenReader,
@@ -68,29 +69,29 @@ class IlmMutnCard extends StatelessWidget {
           // ── Top Row: Level & Subject Badges + Favorite Action ─────
           Row(
             children: [
-              // Rosette + Level Badge
+              // Rosette + Level Badge (colored with authentic real book cover colors)
               Container(
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.sm,
                   vertical: AppSpace.xxs,
                 ),
                 decoration: BoxDecoration(
-                  color: palette.surfaceMuted,
+                  color: levelColors.bg,
                   borderRadius: AppRadius.pillRadius,
-                  border: Border.all(color: palette.border, width: 0.8),
+                  border: Border.all(color: levelColors.border, width: 0.8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     MutunRosetteIcon(
                       size: AppIcon.xs,
-                      color: palette.primary,
+                      color: levelColors.fg,
                     ),
                     const SizedBox(width: AppSpace.xs),
                     Text(
                       book.level,
                       style: textTheme.caption.copyWith(
-                        color: palette.primary,
+                        color: levelColors.fg,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

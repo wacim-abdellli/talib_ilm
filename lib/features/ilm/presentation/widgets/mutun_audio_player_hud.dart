@@ -8,11 +8,13 @@ import '../../data/services/mutun_audio_service.dart';
 class MutunAudioPlayerHud extends StatelessWidget {
   final MutunAudioService audioService;
   final VoidCallback onOpenQuickJump;
+  final String? bookId;
 
   const MutunAudioPlayerHud({
     super.key,
     required this.audioService,
     required this.onOpenQuickJump,
+    this.bookId,
   });
 
   void _showReciterPicker(BuildContext context) {
@@ -240,13 +242,13 @@ class MutunAudioPlayerHud extends StatelessWidget {
                               customBorder: const CircleBorder(),
                               onTap: () {
                                 HapticFeedback.mediumImpact();
-                                audioService.togglePlayPause();
+                                audioService.togglePlayPause(bookId: bookId);
                               },
                               child: Padding(
                                 padding: const EdgeInsetsDirectional.all(
                                   AppSpace.sm,
                                 ),
-                                child: isLoading
+                                child: isLoading && !isPlaying
                                     ? SizedBox(
                                         width: AppIcon.md,
                                         height: AppIcon.md,
@@ -345,7 +347,7 @@ class MutunAudioPlayerHud extends StatelessWidget {
                       color: palette.textMuted,
                       size: AppIcon.md,
                     ),
-                    tooltip: 'الانتقال السريع',
+                    tooltip: 'فهرس المتن',
                     onPressed: onOpenQuickJump,
                   ),
                 ],
