@@ -251,7 +251,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: AppSpace.md,
                             mainAxisSpacing: AppSpace.md,
-                            childAspectRatio: 0.86,
+                            childAspectRatio: 0.94,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -329,12 +329,60 @@ class _AdhkarPageState extends State<AdhkarPage> {
       return CategoryCardData(
         id: cat.id,
         title: cat.title,
+        subtitle: cat.subtitle.trim().isNotEmpty
+            ? cat.subtitle.trim()
+            : _fallbackSubtitle(cat.id),
         total: cat.items.length,
         icon: _iconForCategory(cat.id),
         showProgress: isMorning || isEvening,
         onTap: () => _openCategory(context, cat),
       );
     }).toList();
+  }
+
+  String _fallbackSubtitle(String id) {
+    switch (id) {
+      case 'morning':
+        return 'الحفظ والسكينة وبداية اليوم بذكر الله';
+      case 'evening':
+        return 'حصن المسلم والسكينة عند إقبال الليل';
+      case 'after_prayer':
+        return 'الاستغفار والتسبيح دبر الصلوات المكتوبة';
+      case 'prayer_sunan':
+        return 'أدعية الاستفتاح والركوع والسجود وقنوت الوتر';
+      case 'waking':
+        return 'حمد الله والثناء عليه بعد بعث الروح';
+      case 'sleeping':
+        return 'الحفظ والسكينة وأدعية النوم والاستيقاظ';
+      case 'mosque_adhan':
+        return 'المشي إلى المسجد ودخوله وإجابة المؤذن';
+      case 'home':
+        return 'أذكار الدخول والخروج والسلام على الأهل';
+      case 'wudu_taharah':
+      case 'wudu_food':
+        return 'أذكار الوضوء والخلاء وطهارة البدن';
+      case 'food_drink':
+        return 'الآداب النبوية عند الأكل والشرب والضيافة';
+      case 'travel':
+        return 'الحفظ والمعونة والبركة في السفر والترحال';
+      case 'distress':
+        return 'الفرار إلى الله عند الشدائد وطلب الفرج';
+      case 'sickness_funerals':
+        return 'عيادة المريض والرقية والمصائب والصبر';
+      case 'nature_weather':
+        return 'أدعية الرياح ونزول المطر ورؤية الهلال';
+      case 'social_manners':
+        return 'كفارة المجلس وإفشاء السلام والعطاس';
+      case 'fasting_hajj':
+        return 'أدعية الصائم والإفطار ومناسك الحج';
+      case 'tasbeeh':
+        return 'فضائل التسبيح والتحميد والأجور المضاعفة';
+      case 'istighfar':
+        return 'صيغ الاستغفار الثابتة وأبواب الرحمة';
+      case 'duas':
+      default:
+        return 'جوامع الدعاء من القرآن وصحيح السنة';
+    }
   }
 
   IconData _iconForCategory(String id) {

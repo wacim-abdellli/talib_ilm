@@ -43,6 +43,7 @@ void main() {
         data: CategoryCardData(
           id: 'morning',
           title: 'أذكار الصباح',
+          subtitle: 'الحفظ والسكينة وبداية اليوم بذكر الله',
           total: 24,
           icon: Icons.wb_sunny_rounded,
           showProgress: true,
