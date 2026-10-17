@@ -917,4 +917,22 @@ FAILED (54 violations)
      - `flutter test test/mutun_audio_catalog_ui_test.dart`: 5/5 tests passed.
 - **Open Issues:** None.
 
+---
+
+## Prayer Settings: Calm & Quiet Adhan Takbeer Replacement
+- **Status:** Complete
+- **Deliverables & Enhancements:**
+  1. **Purged Loud Eid Chanting Audio:**
+     - Replaced the previously loud 68-second Eid crowd chant (`-14.0 dB` mean volume, `-3.0 dB` peak) in both `assets/audio/adhan_takbeer.mp3` and `android/app/src/main/res/raw/adhan_takbeer.mp3`.
+  2. **Calm, Quiet & Reverent Adhan Takbeer:**
+     - Mastered a calm, serene dual-takbeer call ("الله أكبر، الله أكبر ... الله أكبر، الله أكبر") recited by Sheikh Nasser Al-Qatami.
+     - Normalized to gentle, soothing levels (`-21.4 dB` mean volume, `-8.0 dB` peak) with smooth 0.4s fade-in and 1.6s fade-out, ensuring peaceful notification delivery without harshness or startling volume.
+  3. **Verification:**
+     - `flutter analyze`: 0 issues found.
+     - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
+     - `flutter test test/adhan_asset_test.dart`: Passed.
+     - `flutter test test/adhan_notification_settings_test.dart`: Passed.
+- **Open Issues:** None.
+
+
 
