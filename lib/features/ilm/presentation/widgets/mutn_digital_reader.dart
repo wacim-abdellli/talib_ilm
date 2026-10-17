@@ -32,6 +32,7 @@ class MutnDigitalReaderView extends StatefulWidget {
   final VoidCallback onToggleBookmark;
   final VoidCallback onAddNote;
   final VoidCallback onShowBookmarks;
+  final VoidCallback? onSwitchToCurriculum;
 
   const MutnDigitalReaderView({
     super.key,
@@ -45,6 +46,7 @@ class MutnDigitalReaderView extends StatefulWidget {
     required this.onToggleBookmark,
     required this.onAddNote,
     required this.onShowBookmarks,
+    this.onSwitchToCurriculum,
   });
 
   @override
@@ -298,6 +300,66 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       color: bgColor,
       child: Column(
         children: [
+          if (widget.onSwitchToCurriculum != null)
+            Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                border: Border(
+                  bottom: BorderSide(color: palette.border, width: 0.8),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'الشرح الموسع (المكتبة الشاملة)',
+                    style: textTheme.caption.copyWith(
+                      color: palette.textMuted,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: widget.onSwitchToCurriculum,
+                    borderRadius: AppRadius.pillRadius,
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: palette.gold.withValues(alpha: 0.15),
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: palette.gold,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.headphones_rounded,
+                            size: AppIcon.xs,
+                            color: palette.gold,
+                          ),
+                          const SizedBox(width: AppSpace.xxs),
+                          Text(
+                            'العودة للمتن المسموع',
+                            style: textTheme.caption.copyWith(
+                              color: palette.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // ── Reader Body: Horizontal Swipe (Slide side) PageView ──
           Expanded(

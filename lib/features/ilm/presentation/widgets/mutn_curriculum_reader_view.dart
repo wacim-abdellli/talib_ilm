@@ -1,0 +1,616 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../app/app.dart';
+import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_sheet.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
+import '../../data/catalogs/mutun_curriculum_catalog.dart';
+import '../../data/models/mutun_models.dart';
+import '../../data/services/mutun_audio_service.dart';
+import 'mutn_quick_jump_sheet.dart';
+import 'mutun_audio_player_hud.dart';
+import 'shamela_text_highlighter.dart';
+import 'shamela_typography_sheet.dart';
+
+/// Authentic Continuous Scholarly Reader for curriculum mutun matching Hafed Mutun.
+/// Features continuous text flow, group section headers, active paragraph auto-follow
+/// highlighting, instant paragraph seeking on tap, and quick jump navigation.
+class MutnCurriculumReaderView extends StatefulWidget {
+  final IlmBook book;
+  final MutunCurriculumBook curriculumBook;
+  final MutunAudioService audioService;
+  final VoidCallback onAddNote;
+  final VoidCallback? onSwitchToShamela;
+  final VoidCallback? onSwitchToPdf;
+
+  const MutnCurriculumReaderView({
+    super.key,
+    required this.book,
+    required this.curriculumBook,
+    required this.audioService,
+    required this.onAddNote,
+    this.onSwitchToShamela,
+    this.onSwitchToPdf,
+  });
+
+  @override
+  State<MutnCurriculumReaderView> createState() =>
+      _MutnCurriculumReaderViewState();
+}
+
+class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
+  late final ScrollController _scrollController;
+  final Map<int, GlobalKey> _paragraphKeys = {};
+
+  // Typography & Surface settings
+  double _fontSizeDelta = 2.0;
+  String _fontFamily = 'Amiri';
+  double _lineHeight = 1.95;
+  ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
+  ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
+
+  int? _lastAutoScrolledParagraph;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    themeService.addListener(_onThemeChanged);
+    widget.audioService.activeParagraphNotifier
+        .addListener(_onActiveParagraphChanged);
+    _loadPreferences();
+
+    // Prepare global keys for each paragraph
+    for (final sec in widget.curriculumBook.sections) {
+      for (final p in sec.paragraphs) {
+        _paragraphKeys[p.index] = GlobalKey();
+      }
+    }
+  }
+
+  void _onThemeChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        if (_surface == ShamelaReaderSurface.night) {
+          _surface = ShamelaReaderSurface.normal;
+        }
+      }
+    });
+  }
+
+  void _onActiveParagraphChanged() {
+    final active = widget.audioService.activeParagraphNotifier.value;
+    if (active == null || active == _lastAutoScrolledParagraph) return;
+    if (!widget.audioService.isPlayingNotifier.value) return;
+
+    _lastAutoScrolledParagraph = active;
+    _scrollToParagraph(active);
+  }
+
+  void _scrollToParagraph(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _paragraphKeys[index];
+      final currentCtx = key?.currentContext;
+      if (currentCtx != null && currentCtx.mounted) {
+        Scrollable.ensureVisible(
+          currentCtx,
+          duration: AppMotion.slow,
+          curve: Curves.easeInOutCubic,
+          alignment: 0.22,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    themeService.removeListener(_onThemeChanged);
+    widget.audioService.activeParagraphNotifier
+        .removeListener(_onActiveParagraphChanged);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _fontSizeDelta = prefs.getDouble('mutn_reader_font_delta') ?? 2.0;
+      _fontFamily = prefs.getString('mutn_reader_font_family') ?? 'Amiri';
+      _lineHeight = prefs.getDouble('mutn_reader_line_height') ?? 1.95;
+      final surfIndex = prefs.getInt('mutn_reader_surface') ?? 0;
+      final savedSurface = ShamelaReaderSurface.values[surfIndex.clamp(0, 2)];
+      if (themeService.isDark) {
+        _surface = ShamelaReaderSurface.night;
+      } else {
+        _surface = savedSurface == ShamelaReaderSurface.night
+            ? ShamelaReaderSurface.normal
+            : savedSurface;
+      }
+      final accIndex = prefs.getInt('shamela_reader_accent') ?? 0;
+      _accentColor = ShamelaAccentColor
+          .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('mutn_reader_font_delta', _fontSizeDelta);
+    await prefs.setString('mutn_reader_font_family', _fontFamily);
+    await prefs.setDouble('mutn_reader_line_height', _lineHeight);
+    await prefs.setInt('mutn_reader_surface', _surface.index);
+    await prefs.setInt('shamela_reader_accent', _accentColor.index);
+  }
+
+  void _openTypographySheet() {
+    HapticFeedback.lightImpact();
+    AppSheet.show<void>(
+      context: context,
+      builder: (sheetContext) => ShamelaTypographySheet(
+        fontFamily: _fontFamily,
+        fontSizeDelta: _fontSizeDelta,
+        lineHeight: _lineHeight,
+        surface: _surface,
+        accentColor: _accentColor,
+        onFontFamilyChanged: (font) {
+          setState(() => _fontFamily = font);
+          _savePreferences();
+        },
+        onFontSizeChanged: (delta) {
+          setState(() => _fontSizeDelta = delta);
+          _savePreferences();
+        },
+        onLineHeightChanged: (lh) {
+          setState(() => _lineHeight = lh);
+          _savePreferences();
+        },
+        onSurfaceChanged: (surf) {
+          setState(() => _surface = surf);
+          _savePreferences();
+        },
+        onAccentColorChanged: (accent) {
+          setState(() => _accentColor = accent);
+          _savePreferences();
+        },
+      ),
+    );
+  }
+
+  void _openQuickJumpSheet() {
+    HapticFeedback.lightImpact();
+    AppSheet.show<void>(
+      context: context,
+      maxHeightFactor: 0.85,
+      builder: (sheetContext) => MutunQuickJumpSheet(
+        sections: widget.curriculumBook.sections,
+        activeParagraph: widget.audioService.activeParagraphNotifier.value,
+        onParagraphSelected: (para) {
+          _scrollToParagraph(para);
+        },
+      ),
+    );
+  }
+
+  void _showParagraphOptions(MutunParagraph para) {
+    HapticFeedback.mediumImpact();
+    final palette = context.palette;
+    final textTheme = context.text;
+    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: palette.surfaceRaised,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.lg),
+            ),
+            border: Border.all(color: palette.border),
+          ),
+          padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+          child: SafeArea(
+            top: false,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: palette.textMuted.withValues(alpha: 0.3),
+                        borderRadius: AppRadius.pillRadius,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  Text(
+                    'خيارات الفقرة - ${para.index} -',
+                    style: textTheme.titleSmall.copyWith(
+                      color: palette.text,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  ListTile(
+                    leading: Icon(Icons.play_circle_fill_rounded,
+                        color: tokens.rosetteGold),
+                    title: const Text('تشغيل التلاوة من هذه الفقرة'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.mdRadius,
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      widget.audioService.seekToParagraph(para.index);
+                      _scrollToParagraph(para.index);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.copy_rounded, color: palette.text),
+                    title: const Text('نسخ نص الفقرة'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.mdRadius,
+                    ),
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: para.text));
+                      Navigator.of(sheetContext).pop();
+                      AppSnackbar.success(context, 'تم نسخ الفقرة بنجاح');
+                    },
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(Icons.edit_note_rounded, color: palette.text),
+                    title: const Text('إضافة ملاحظة حول الفقرة'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.mdRadius,
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      widget.onAddNote();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
+    final surfaceTokens = ReaderSurfaceColors.getTokens(
+      _surface,
+      isDark: palette.isDark,
+    );
+
+    return Container(
+      color: surfaceTokens.bg,
+      child: Column(
+        children: [
+          // ── Quick Jump & Toolbar Header ───────────────────────────
+          Container(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.md,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceTokens.surfaceRaised,
+              border: Border(
+                bottom: BorderSide(color: surfaceTokens.border, width: 0.8),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Quick Jump Pill matching Hafed Mutun
+                Expanded(
+                  child: Center(
+                    child: InkWell(
+                      onTap: _openQuickJumpSheet,
+                      borderRadius: AppRadius.pillRadius,
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tokens.activeParagraphBg,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: tokens.activeParagraphBorder,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.keyboard_double_arrow_right_rounded,
+                              size: AppIcon.xs,
+                              color: tokens.rosetteGold,
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Text(
+                              'الانتقال السريع',
+                              style: textTheme.caption.copyWith(
+                                color: tokens.rosetteGold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Icon(
+                              Icons.keyboard_double_arrow_left_rounded,
+                              size: AppIcon.xs,
+                              color: tokens.rosetteGold,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Typography & Theme Button
+                IconButton(
+                  tooltip: 'تنسيق الخط والمظهر',
+                  icon: Icon(
+                    Icons.format_size_rounded,
+                    color: palette.textMuted,
+                    size: AppIcon.sm,
+                  ),
+                  onPressed: _openTypographySheet,
+                ),
+
+                // View Modes Switcher (Shamela or PDF if available)
+                if (widget.onSwitchToShamela != null)
+                  IconButton(
+                    tooltip: 'الشرح الموسع (المكتبة الشاملة)',
+                    icon: Icon(
+                      Icons.menu_book_rounded,
+                      color: palette.textMuted,
+                      size: AppIcon.sm,
+                    ),
+                    onPressed: widget.onSwitchToShamela,
+                  ),
+              ],
+            ),
+          ),
+
+          // ── Scholarly Continuous Reading Feed ─────────────────────
+          Expanded(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: widget.audioService.isPlayingNotifier,
+              builder: (context, isPlaying, _) {
+                return ValueListenableBuilder<int?>(
+                  valueListenable: widget.audioService.activeParagraphNotifier,
+                  builder: (context, activeParagraph, _) {
+                    return Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.lg,
+                          vertical: AppSpace.md,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final section
+                                in widget.curriculumBook.sections) ...[
+                              // Section Divider Header Pill
+                              _buildSectionHeader(
+                                title: section.title,
+                                surfaceTokens: surfaceTokens,
+                                textTheme: textTheme,
+                                tokens: tokens,
+                              ),
+
+                              const SizedBox(height: AppSpace.md),
+
+                              // Paragraphs in this section
+                              for (final para in section.paragraphs) ...[
+                                _buildParagraphBlock(
+                                  para: para,
+                                  isActive: activeParagraph == para.index,
+                                  isPlaying: isPlaying,
+                                  surfaceTokens: surfaceTokens,
+                                  tokens: tokens,
+                                  palette: palette,
+                                  textTheme: textTheme,
+                                ),
+                                const SizedBox(height: AppSpace.md),
+                              ],
+
+                              const SizedBox(height: AppSpace.md),
+                            ],
+
+                            const SizedBox(height: AppSpace.xxxl),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          // ── Bottom Floating Audio Player HUD ──────────────────────
+          if (MutunAudioCatalog.hasAudio(widget.book.id))
+            MutunAudioPlayerHud(
+              audioService: widget.audioService,
+              bookId: widget.book.id,
+              onOpenQuickJump: _openQuickJumpSheet,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required ReaderSurfaceTokens surfaceTokens,
+    required AppTextTheme textTheme,
+    required MutunThemeTokens tokens,
+  }) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: surfaceTokens.border.withValues(alpha: 0.7),
+              height: 1,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+            ),
+            child: Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: surfaceTokens.surfaceRaised,
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(
+                  color: surfaceTokens.border,
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                title,
+                style: textTheme.caption.copyWith(
+                  color: tokens.rosetteGold,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              color: surfaceTokens.border.withValues(alpha: 0.7),
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParagraphBlock({
+    required MutunParagraph para,
+    required bool isActive,
+    required bool isPlaying,
+    required ReaderSurfaceTokens surfaceTokens,
+    required MutunThemeTokens tokens,
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+  }) {
+    final bool showHighlight = isActive && isPlaying;
+    final key = _paragraphKeys[para.index];
+
+    return KeyedSubtree(
+      key: key,
+      child: AnimatedContainer(
+        duration: AppMotion.base,
+        curve: AppMotion.easeOut,
+        decoration: BoxDecoration(
+          color: showHighlight ? tokens.activeParagraphBg : Colors.transparent,
+          borderRadius: AppRadius.mdRadius,
+          border: showHighlight
+              ? Border.all(
+                  color: tokens.activeParagraphBorder,
+                  width: 1.2,
+                )
+              : null,
+        ),
+        padding: EdgeInsetsDirectional.all(
+          showHighlight ? AppSpace.md : AppSpace.xs,
+        ),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            // Tapping seeks audio recitation directly to this paragraph
+            widget.audioService.seekToParagraph(para.index);
+            _scrollToParagraph(para.index);
+          },
+          onLongPress: () => _showParagraphOptions(para),
+          borderRadius: AppRadius.mdRadius,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Paragraph Scholarly Text ──────────────────────────
+              Text.rich(
+                ShamelaTextHighlighter.buildSpans(
+                  text: para.text,
+                  palette: palette,
+                  textTheme: textTheme,
+                  fontFamily: _fontFamily,
+                  fontSizeDelta: _fontSizeDelta,
+                  lineHeight: _lineHeight,
+                  accentColor: _accentColor,
+                  surface: _surface,
+                ),
+                textAlign: TextAlign.start,
+              ),
+
+              const SizedBox(height: AppSpace.xs),
+
+              // ── Paragraph Number Badge (- 1 -, - 2 - ...) ─────────
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: showHighlight
+                        ? tokens.rosetteGold.withValues(alpha: 0.15)
+                        : surfaceTokens.surfaceRaised,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: showHighlight
+                          ? tokens.rosetteGold
+                          : surfaceTokens.border.withValues(alpha: 0.6),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    '- ${para.index} -',
+                    style: textTheme.caption.copyWith(
+                      color: showHighlight
+                          ? tokens.rosetteGold
+                          : tokens.paragraphNumber,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

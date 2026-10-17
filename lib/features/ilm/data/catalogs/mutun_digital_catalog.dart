@@ -22,9 +22,9 @@ class MutunDigitalCatalog {
     'bk_adhkar_adab': MutunDigitalEntry(
       id: 'bk_adhkar_adab',
       shamelaId: 31307,
-      title: 'حصن المسلم من أذكار الكتاب والسنة',
-      author: 'سعيد بن علي بن وهف القحطاني',
-      totalPages: 153,
+      title: 'الأذكار والآداب',
+      author: 'د. عبد المحسن بن محمد القاسم',
+      totalPages: 24,
     ),
     'bk_nawaqid_islam': MutunDigitalEntry(
       id: 'bk_nawaqid_islam',
