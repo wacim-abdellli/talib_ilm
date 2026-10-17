@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_ui.dart';
 import '../../data/models/shamela_models.dart';
+import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutn_memorization_view.dart';
 import 'mutn_paragraphs_view.dart';
@@ -18,6 +19,8 @@ class ShamelaPageContent extends StatefulWidget {
   final double lineHeight;
   final ShamelaAccentColor accentColor;
   final ShamelaReaderSurface surface;
+  final int startingParagraphIndex;
+  final MutunAudioService? audioService;
 
   const ShamelaPageContent({
     super.key,
@@ -28,6 +31,8 @@ class ShamelaPageContent extends StatefulWidget {
     required this.lineHeight,
     this.accentColor = ShamelaAccentColor.emerald,
     this.surface = ShamelaReaderSurface.normal,
+    this.startingParagraphIndex = 1,
+    this.audioService,
   });
 
   @override
@@ -146,6 +151,8 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                         lineHeight: widget.lineHeight,
                         accentColor: widget.accentColor,
                         surface: widget.surface,
+                        startingIndex: widget.startingParagraphIndex,
+                        audioService: widget.audioService,
                       ),
               ),
 

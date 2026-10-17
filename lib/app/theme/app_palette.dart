@@ -803,6 +803,9 @@ class AppMotion {
   /// 600ms (extended micro-interaction transition)
   static const Duration deliberate = Duration(milliseconds: 600);
 
+  /// 5000ms / 5s (audio player seek forward/backward step)
+  static const Duration seekStep = Duration(seconds: 5);
+
   /// 1 second (interval timers, clocks)
   static const Duration oneSecond = Duration(seconds: 1);
 

@@ -12,13 +12,7 @@ import '../../data/services/mutun_audio_service.dart';
 import 'mutn_curriculum_reader_view.dart';
 import 'mutn_digital_reader.dart';
 
-enum MutnReaderMode {
-  curriculum,
-  shamela,
-  pdf,
-}
-
-class BookMutnTab extends StatefulWidget {
+class BookMutnTab extends StatelessWidget {
   final IlmBook book;
   final Future<int> mutunInitialPage;
   final Future<void> Function(int page, int total) onPageChanged;
@@ -43,50 +37,15 @@ class BookMutnTab extends StatefulWidget {
   });
 
   @override
-  State<BookMutnTab> createState() => _BookMutnTabState();
-}
-
-class _BookMutnTabState extends State<BookMutnTab> {
-  late MutnReaderMode _mode;
-
-  @override
-  void initState() {
-    super.initState();
-    if (MutunCurriculumCatalog.hasBook(widget.book.id)) {
-      _mode = MutnReaderMode.curriculum;
-    } else if (MutunDigitalCatalog.hasDigitalText(widget.book.id)) {
-      _mode = MutnReaderMode.shamela;
-    } else {
-      _mode = MutnReaderMode.pdf;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final curriculumBook = MutunCurriculumCatalog.getBook(widget.book.id);
-    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
+    final curriculumBook = MutunCurriculumCatalog.getBook(book.id);
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
 
-    // 1. Authentic Curriculum Continuous Reader (Word-for-Word Audio Synced)
-    if (_mode == MutnReaderMode.curriculum && curriculumBook != null) {
-      return MutnCurriculumReaderView(
-        book: widget.book,
-        curriculumBook: curriculumBook,
-        audioService: MutunAudioService(),
-        onAddNote: widget.onAddNote,
-        onSwitchToShamela: digitalEntry != null
-            ? () => setState(() => _mode = MutnReaderMode.shamela)
-            : null,
-        onSwitchToPdf: widget.book.pdfPath != null
-            ? () => setState(() => _mode = MutnReaderMode.pdf)
-            : null,
-      );
-    }
-
-    // 2. Maktaba Shamela Digital Reader
-    if (_mode == MutnReaderMode.shamela && digitalEntry != null) {
+    // 1. Digital Text Reader (Authentic Pages + Audio Sync)
+    if (digitalEntry != null) {
       return FutureBuilder<int>(
-        future: widget.mutunInitialPage,
+        future: mutunInitialPage,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(
@@ -97,37 +56,44 @@ class _BookMutnTabState extends State<BookMutnTab> {
             );
           }
           return MutnDigitalReaderView(
-            book: widget.book,
+            book: book,
             digitalEntry: digitalEntry,
             initialPage: snapshot.data!,
-            onPageChanged: widget.onPageChanged,
-            showControls: widget.showControls,
-            onToggleControls: widget.onToggleControls,
-            isBookmarked: widget.isBookmarked,
-            onToggleBookmark: widget.onToggleBookmark,
-            onAddNote: widget.onAddNote,
-            onShowBookmarks: widget.onShowBookmarks,
-            onSwitchToCurriculum: curriculumBook != null
-                ? () => setState(() => _mode = MutnReaderMode.curriculum)
-                : null,
+            onPageChanged: onPageChanged,
+            showControls: showControls,
+            onToggleControls: onToggleControls,
+            isBookmarked: isBookmarked,
+            onToggleBookmark: onToggleBookmark,
+            onAddNote: onAddNote,
+            onShowBookmarks: onShowBookmarks,
           );
         },
       );
     }
 
+    // 2. Curriculum Text Reader Fallback (if no digital edition available)
+    if (curriculumBook != null) {
+      return MutnCurriculumReaderView(
+        book: book,
+        curriculumBook: curriculumBook,
+        audioService: MutunAudioService(),
+        onAddNote: onAddNote,
+      );
+    }
+
     // 3. Fallback to PDF Viewer
-    if (widget.book.pdfPath != null) {
+    if (book.pdfPath != null) {
       return FutureBuilder<int>(
-        future: widget.mutunInitialPage,
+        future: mutunInitialPage,
         builder: (context, snapshot) {
           return PdfViewerPage(
-            assetPath: widget.book.pdfPath!,
-            title: widget.book.title,
+            assetPath: book.pdfPath!,
+            title: book.title,
             initialPage: snapshot.data ?? 1,
             showAppBar: false,
-            onPageChanged: (page, total) => widget.onPageChanged(page, total),
-            isBookmarked: widget.isBookmarked,
-            onBookmarkToggle: widget.onToggleBookmark,
+            onPageChanged: (page, total) => onPageChanged(page, total),
+            isBookmarked: isBookmarked,
+            onBookmarkToggle: onToggleBookmark,
           );
         },
       );

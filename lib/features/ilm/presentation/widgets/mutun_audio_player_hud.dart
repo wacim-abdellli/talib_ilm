@@ -10,12 +10,14 @@ class MutunAudioPlayerHud extends StatefulWidget {
   final MutunAudioService audioService;
   final VoidCallback onOpenQuickJump;
   final String? bookId;
+  final VoidCallback? onClose;
 
   const MutunAudioPlayerHud({
     super.key,
     required this.audioService,
     required this.onOpenQuickJump,
     this.bookId,
+    this.onClose,
   });
 
   @override
@@ -178,6 +180,12 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
     );
   }
 
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -200,199 +208,310 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
         top: false,
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Reciter Selector Button ───────────────────────────
-              ValueListenableBuilder<MutunReciter>(
-                valueListenable: widget.audioService.selectedReciterNotifier,
-                builder: (context, reciter, _) {
-                  return InkWell(
-                    onTap: () => _showReciterPicker(context),
-                    borderRadius: AppRadius.pillRadius,
-                    child: Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tokens.cardBg,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(color: tokens.cardBorder),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+              // ── Row 1: Seek Bar with Timestamps & Close ───────────────
+              ValueListenableBuilder<Duration>(
+                valueListenable: widget.audioService.positionNotifier,
+                builder: (context, position, _) {
+                  return ValueListenableBuilder<Duration>(
+                    valueListenable: widget.audioService.durationNotifier,
+                    builder: (context, duration, _) {
+                      final maxMs = duration.inMilliseconds > 0
+                          ? duration.inMilliseconds.toDouble()
+                          : 1.0;
+                      final currentMs = position.inMilliseconds
+                          .toDouble()
+                          .clamp(0.0, maxMs);
+
+                      return Row(
                         children: [
-                          Icon(
-                            Icons.record_voice_over_rounded,
-                            size: AppIcon.sm,
-                            color: tokens.rosetteGold,
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 120),
-                            child: Text(
-                              _getEffectiveReciterName(reciter),
-                              style: textTheme.caption.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            _formatDuration(position),
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Icon(
-                            Icons.arrow_drop_down_rounded,
-                            size: AppIcon.sm,
-                            color: palette.textMuted,
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: tokens.rosetteGold,
+                                inactiveTrackColor: tokens.cardBorder,
+                                thumbColor: tokens.rosetteGold,
+                                overlayColor: tokens.activeParagraphBg,
+                                trackHeight: 2.5,
+                                thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 5.0,
+                                ),
+                              ),
+                              child: Slider(
+                                value: currentMs,
+                                min: 0.0,
+                                max: maxMs,
+                                onChanged: (val) {
+                                  widget.audioService.seek(
+                                    Duration(
+                                      days: 0,
+                                      milliseconds: val.round(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
+                          Text(
+                            _formatDuration(duration),
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                          ),
+                          if (widget.onClose != null) ...[
+                            const SizedBox(width: AppSpace.xs),
+                            IconButton(
+                              icon: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: palette.textMuted,
+                                size: AppIcon.sm,
+                              ),
+                              tooltip: 'إخفاء شريط الصوت',
+                              onPressed: widget.onClose,
+                            ),
+                          ],
                         ],
-                      ),
-                    ),
+                      );
+                    },
                   );
                 },
               ),
 
-              // ── Playback Controls Group ───────────────────────────
+              // ── Row 2: Controls & Reciter ─────────────────────────────
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Stop button
-                  IconButton(
-                    icon: Icon(
-                      Icons.stop_rounded,
-                      color: palette.textMuted,
-                      size: AppIcon.md,
-                    ),
-                    tooltip: 'إيقاف',
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      widget.audioService.stop();
-                    },
-                  ),
-
-                  // Play / Pause main button
-                  ValueListenableBuilder<bool>(
-                    valueListenable: widget.audioService.isPlayingNotifier,
-                    builder: (context, isPlaying, _) {
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: widget.audioService.isLoadingNotifier,
-                        builder: (context, isLoading, _) {
-                          return Material(
-                            color: tokens.rosetteGold,
-                            shape: const CircleBorder(),
-                            elevation: 1,
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () {
-                                HapticFeedback.mediumImpact();
-                                widget.audioService.togglePlayPause(bookId: widget.bookId);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.all(
-                                  AppSpace.sm,
-                                ),
-                                child: isLoading && !isPlaying
-                                    ? SizedBox(
-                                        width: AppIcon.md,
-                                        height: AppIcon.md,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: palette.surface,
-                                        ),
-                                      )
-                                    : Icon(
-                                        isPlaying
-                                            ? Icons.pause_rounded
-                                            : Icons.play_arrow_rounded,
-                                        color: palette.surface,
-                                        size: AppIcon.lg,
-                                      ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-
-                  // Repeat / Loop button
-                  ValueListenableBuilder<MutunRepeatMode>(
-                    valueListenable: widget.audioService.repeatModeNotifier,
-                    builder: (context, mode, _) {
-                      IconData icon;
-                      Color color = palette.textMuted;
-                      switch (mode) {
-                        case MutunRepeatMode.none:
-                          icon = Icons.repeat_rounded;
-                          break;
-                        case MutunRepeatMode.singleParagraph:
-                          icon = Icons.repeat_one_rounded;
-                          color = tokens.rosetteGold;
-                          break;
-                        case MutunRepeatMode.entireMatn:
-                          icon = Icons.repeat_rounded;
-                          color = tokens.rosetteGold;
-                          break;
-                      }
-                      return IconButton(
-                        icon: Icon(icon, color: color, size: AppIcon.md),
-                        tooltip: 'تكرار الفقرة أو المتن',
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          widget.audioService.toggleRepeatMode();
-                        },
-                      );
-                    },
-                  ),
-
-                  // Speed button (x1.0, x1.25...)
-                  ValueListenableBuilder<double>(
-                    valueListenable: widget.audioService.speedNotifier,
-                    builder: (context, speed, _) {
+                  // ── Reciter Selector Button ──
+                  ValueListenableBuilder<MutunReciter>(
+                    valueListenable: widget.audioService.selectedReciterNotifier,
+                    builder: (context, reciter, _) {
                       return InkWell(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          widget.audioService.cycleSpeed();
-                        },
+                        onTap: () => _showReciterPicker(context),
                         borderRadius: AppRadius.pillRadius,
-                        child: Padding(
+                        child: Container(
                           padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
+                            horizontal: AppSpace.sm,
                             vertical: AppSpace.xs,
                           ),
-                          child: Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xs,
-                              vertical: AppSpace.xxs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: tokens.cardBg,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(color: tokens.cardBorder),
-                            ),
-                            child: Text(
-                              'x${speed.toStringAsFixed(speed % 1 == 0 ? 0 : 2)}',
-                              style: textTheme.caption.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: tokens.cardBg,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(color: tokens.cardBorder),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.record_voice_over_rounded,
+                                size: AppIcon.xs,
+                                color: tokens.rosetteGold,
                               ),
-                            ),
+                              const SizedBox(width: AppSpace.xxs),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 85),
+                                child: Text(
+                                  _getEffectiveReciterName(reciter),
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_drop_down_rounded,
+                                size: AppIcon.xs,
+                                color: palette.textMuted,
+                              ),
+                            ],
                           ),
                         ),
                       );
                     },
                   ),
 
-                  // Quick jump icon
-                  IconButton(
-                    icon: Icon(
-                      Icons.format_list_numbered_rounded,
-                      color: palette.textMuted,
-                      size: AppIcon.md,
-                    ),
-                    tooltip: 'فهرس المتن',
-                    onPressed: widget.onOpenQuickJump,
+                  // ── Center Controls: Stop, -5s, Play/Pause, +5s ──
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Stop button
+                      IconButton(
+                        icon: Icon(
+                          Icons.stop_rounded,
+                          color: palette.textMuted,
+                          size: AppIcon.md,
+                        ),
+                        tooltip: 'إيقاف',
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          widget.audioService.stop();
+                        },
+                      ),
+
+                      // Rewind 5s
+                      IconButton(
+                        icon: Icon(
+                          Icons.replay_5_rounded,
+                          color: palette.textMuted,
+                          size: AppIcon.md,
+                        ),
+                        tooltip: 'رجوع 5 ثوانٍ',
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          widget.audioService.seekBackward5s();
+                        },
+                      ),
+
+                      // Play / Pause main button
+                      ValueListenableBuilder<bool>(
+                        valueListenable: widget.audioService.isPlayingNotifier,
+                        builder: (context, isPlaying, _) {
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: widget.audioService.isLoadingNotifier,
+                            builder: (context, isLoading, _) {
+                              return Material(
+                                color: tokens.rosetteGold,
+                                shape: const CircleBorder(),
+                                elevation: 1,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () {
+                                    HapticFeedback.mediumImpact();
+                                    widget.audioService.togglePlayPause(
+                                      bookId: widget.bookId,
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.all(
+                                      AppSpace.sm,
+                                    ),
+                                    child: isLoading && !isPlaying
+                                        ? SizedBox(
+                                            width: AppIcon.md,
+                                            height: AppIcon.md,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: palette.surface,
+                                            ),
+                                          )
+                                        : Icon(
+                                            isPlaying
+                                                ? Icons.pause_rounded
+                                                : Icons.play_arrow_rounded,
+                                            color: palette.surface,
+                                            size: AppIcon.lg,
+                                          ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+
+                      // Forward 5s
+                      IconButton(
+                        icon: Icon(
+                          Icons.forward_5_rounded,
+                          color: palette.textMuted,
+                          size: AppIcon.md,
+                        ),
+                        tooltip: 'تقديم 5 ثوانٍ',
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          widget.audioService.seekForward5s();
+                        },
+                      ),
+                    ],
+                  ),
+
+                  // ── Trailing: Repeat, Speed, Fihris ──
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Repeat button
+                      ValueListenableBuilder<MutunRepeatMode>(
+                        valueListenable: widget.audioService.repeatModeNotifier,
+                        builder: (context, mode, _) {
+                          IconData icon;
+                          Color color = palette.textMuted;
+                          switch (mode) {
+                            case MutunRepeatMode.none:
+                              icon = Icons.repeat_rounded;
+                              break;
+                            case MutunRepeatMode.singleParagraph:
+                              icon = Icons.repeat_one_rounded;
+                              color = tokens.rosetteGold;
+                              break;
+                            case MutunRepeatMode.entireMatn:
+                              icon = Icons.repeat_rounded;
+                              color = tokens.rosetteGold;
+                              break;
+                          }
+                          return IconButton(
+                            icon: Icon(icon, color: color, size: AppIcon.sm),
+                            tooltip: 'تكرار الفقرة أو المتن',
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              widget.audioService.toggleRepeatMode();
+                            },
+                          );
+                        },
+                      ),
+
+                      // Speed button (x1.0, x1.25...)
+                      ValueListenableBuilder<double>(
+                        valueListenable: widget.audioService.speedNotifier,
+                        builder: (context, speed, _) {
+                          return InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              widget.audioService.cycleSpeed();
+                            },
+                            borderRadius: AppRadius.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.xs,
+                                vertical: AppSpace.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: tokens.cardBg,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(color: tokens.cardBorder),
+                              ),
+                              child: Text(
+                                'x${speed.toStringAsFixed(speed % 1 == 0 ? 0 : 2)}',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Quick jump icon
+                      IconButton(
+                        icon: Icon(
+                          Icons.format_list_numbered_rounded,
+                          color: palette.textMuted,
+                          size: AppIcon.sm,
+                        ),
+                        tooltip: 'فهرس المتن',
+                        onPressed: widget.onOpenQuickJump,
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -76,16 +76,73 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   List<ShamelaChapter> _chapters = [];
   bool _isLoadingChapters = false;
 
+  // Authentic Audio Service & Overlay Visibility
+  final MutunAudioService _audioService = MutunAudioService();
+  bool _showAudioBar = false;
+
   @override
   void initState() {
     super.initState();
     themeService.addListener(_onThemeChanged);
+    _audioService.activeParagraphNotifier.addListener(_onActiveParagraphChanged);
+    _audioService.isPlayingNotifier.addListener(_onAudioPlayingChanged);
     _currentPage = widget.initialPage.clamp(1, widget.digitalEntry.totalPages);
     _totalPages = widget.digitalEntry.totalPages;
     _pageController = PageController(initialPage: _currentPage - 1);
     _loadPreferences();
     _loadChapters();
     _preloadSurroundingPages(_currentPage);
+  }
+
+  void _onActiveParagraphChanged() {
+    final active = _audioService.activeParagraphNotifier.value;
+    if (active == null || !_audioService.isPlayingNotifier.value) return;
+
+    final targetPage = _getPageForParagraph(widget.book.id, active, _totalPages);
+    if (targetPage != _currentPage && targetPage >= 1 && targetPage <= _totalPages) {
+      _goToPage(targetPage);
+    }
+  }
+
+  void _onAudioPlayingChanged() {
+    if (_audioService.isPlayingNotifier.value && !_showAudioBar) {
+      if (mounted) {
+        setState(() => _showAudioBar = true);
+      }
+    }
+  }
+
+  int _getPageForParagraph(String bookId, int paragraphIndex, int totalPages) {
+    if (bookId == 'bk_nawaqid_islam') {
+      return paragraphIndex <= 5 ? 1 : 2;
+    }
+    if (bookId == 'bk_qawaid_arba') {
+      if (paragraphIndex <= 2) return 1;
+      if (paragraphIndex <= 3) return 2;
+      if (paragraphIndex <= 6) return 3;
+      return 4;
+    }
+    final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
+    if (totalParas <= 1) return 1;
+    final ratio = (paragraphIndex - 1) / totalParas;
+    final page = (ratio * totalPages).floor() + 1;
+    return page.clamp(1, totalPages);
+  }
+
+  int _getStartingParagraphForPage(String bookId, int pageNum, int totalPages) {
+    if (bookId == 'bk_nawaqid_islam') {
+      return pageNum == 1 ? 1 : 6;
+    }
+    if (bookId == 'bk_qawaid_arba') {
+      if (pageNum == 1) return 1;
+      if (pageNum == 2) return 3;
+      if (pageNum == 3) return 4;
+      return 7;
+    }
+    final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
+    if (totalParas <= 1) return 1;
+    final start = ((pageNum - 1) * totalParas / totalPages).round() + 1;
+    return start.clamp(1, totalParas);
   }
 
   void _onThemeChanged() {
@@ -122,6 +179,8 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   @override
   void dispose() {
     themeService.removeListener(_onThemeChanged);
+    _audioService.activeParagraphNotifier.removeListener(_onActiveParagraphChanged);
+    _audioService.isPlayingNotifier.removeListener(_onAudioPlayingChanged);
     ShamelaService.saveLastReadPage(
       widget.digitalEntry.shamelaId,
       _currentPage,
@@ -321,42 +380,45 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                       color: palette.textMuted,
                     ),
                   ),
-                  InkWell(
-                    onTap: widget.onSwitchToCurriculum,
-                    borderRadius: AppRadius.pillRadius,
-                    child: Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.gold.withValues(alpha: 0.15),
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(
-                          color: palette.gold,
-                          width: 0.8,
+                  if (MutunAudioCatalog.hasAudio(widget.book.id))
+                    InkWell(
+                      onTap: () => setState(() => _showAudioBar = !_showAudioBar),
+                      borderRadius: AppRadius.pillRadius,
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _showAudioBar
+                              ? palette.gold.withValues(alpha: 0.25)
+                              : palette.gold.withValues(alpha: 0.12),
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.gold,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.headphones_rounded,
+                              size: AppIcon.xs,
+                              color: palette.gold,
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Text(
+                              _showAudioBar ? 'إخفاء الصوت' : 'استماع للمتن',
+                              style: textTheme.caption.copyWith(
+                                color: palette.gold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.headphones_rounded,
-                            size: AppIcon.xs,
-                            color: palette.gold,
-                          ),
-                          const SizedBox(width: AppSpace.xxs),
-                          Text(
-                            'العودة للمتن المسموع',
-                            style: textTheme.caption.copyWith(
-                              color: palette.gold,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -469,6 +531,12 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
                       fontSizeDelta: _fontSizeDelta,
                       lineHeight: _lineHeight,
                       accentColor: _accentColor,
+                      startingParagraphIndex: _getStartingParagraphForPage(
+                        widget.book.id,
+                        pageNum,
+                        _totalPages,
+                      ),
+                      audioService: _audioService,
                     ),
                   );
                 },
@@ -477,11 +545,12 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
           ),
 
           // ── Mutun Audio Player HUD ───────────────────────────────
-          if (MutunAudioCatalog.hasAudio(widget.book.id))
+          if (MutunAudioCatalog.hasAudio(widget.book.id) && _showAudioBar)
             MutunAudioPlayerHud(
-              audioService: MutunAudioService(),
+              audioService: _audioService,
               bookId: widget.book.id,
               onOpenQuickJump: _openFihrisSheet,
+              onClose: () => setState(() => _showAudioBar = false),
             ),
 
           // ── Unified Bottom Scholarly HUD ───────────────────────

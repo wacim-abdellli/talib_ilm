@@ -15,6 +15,7 @@ class MutnParagraphsView extends StatelessWidget {
   final ShamelaAccentColor accentColor;
   final ShamelaReaderSurface surface;
   final MutunAudioService? audioService;
+  final int startingIndex;
 
   const MutnParagraphsView({
     super.key,
@@ -25,6 +26,7 @@ class MutnParagraphsView extends StatelessWidget {
     this.accentColor = ShamelaAccentColor.emerald,
     this.surface = ShamelaReaderSurface.normal,
     this.audioService,
+    this.startingIndex = 1,
   });
 
   List<String> _extractParagraphs(String raw) {
@@ -71,9 +73,9 @@ class MutnParagraphsView extends StatelessWidget {
                 for (int i = 0; i < paragraphs.length; i++) ...[
                   _buildParagraphBlock(
                     context: context,
-                    index: i + 1,
+                    index: startingIndex + i,
                     text: paragraphs[i],
-                    isActive: activeIndex == (i + 1),
+                    isActive: activeIndex == (startingIndex + i),
                     isPlaying: isPlaying,
                     palette: palette,
                     textTheme: textTheme,

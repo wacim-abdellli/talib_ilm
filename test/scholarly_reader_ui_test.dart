@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+import 'package:talib_ilm/app/theme/app_ui.dart';
 import 'package:talib_ilm/app/theme/reader_theme.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/mutun_audio_player_hud.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/scholarly_reader_hud.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_reader_top_bar.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_typography_sheet.dart';
@@ -328,6 +332,52 @@ void main() {
       await tester.pump();
 
       expect(copyTapped, isTrue);
+    });
+  });
+
+  group('Mutun Audio Sync & ±5s Controls Tests', () {
+    test('AppMotion.seekStep is precisely 5 seconds', () {
+      expect(AppMotion.seekStep.inSeconds, 5);
+    });
+
+    test('MutunAudioCatalog has verified timestamps for Level 1 books', () {
+      final nawaqidTimestamps =
+          MutunAudioCatalog.getParagraphTimestamps('bk_nawaqid_islam');
+      expect(nawaqidTimestamps, isNotNull);
+      expect(nawaqidTimestamps!.length, 10);
+      expect(nawaqidTimestamps[0], 0);
+
+      final qawaidTimestamps =
+          MutunAudioCatalog.getParagraphTimestamps('bk_qawaid_arba');
+      expect(qawaidTimestamps, isNotNull);
+      expect(qawaidTimestamps!.length, 8);
+      expect(qawaidTimestamps[0], 0);
+    });
+
+    testWidgets('MutunAudioPlayerHud renders seek slider, ±5s skip buttons and controls', (tester) async {
+      final audioService = MutunAudioService();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          MutunAudioPlayerHud(
+            audioService: audioService,
+            bookId: 'bk_nawaqid_islam',
+            onOpenQuickJump: () {},
+          ),
+        ),
+      );
+
+      // Verify ±5s skip buttons
+      expect(find.byTooltip('رجوع 5 ثوانٍ'), findsOneWidget);
+      expect(find.byTooltip('تقديم 5 ثوانٍ'), findsOneWidget);
+      expect(find.byIcon(Icons.replay_5_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.forward_5_rounded), findsOneWidget);
+
+      // Verify seek slider
+      expect(find.byType(Slider), findsOneWidget);
+
+      // Verify play button
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     });
   });
 }

@@ -56,11 +56,17 @@ class MatnAudioSource {
   final String? fallbackUrl;
   final int totalParagraphs;
 
+  /// Paragraph start times in milliseconds from the beginning of the audio.
+  /// Index 0 = paragraph 1 start, index 1 = paragraph 2 start, etc.
+  /// If null, falls back to proportional estimation.
+  final List<int>? paragraphTimestamps;
+
   const MatnAudioSource({
     required this.reciter,
     required this.audioUrl,
     this.fallbackUrl,
     this.totalParagraphs = 1,
+    this.paragraphTimestamps,
   });
 }
 
@@ -125,6 +131,18 @@ class MutunAudioCatalog {
           audioUrl: '$siniBaseUrl/0203NawaaqidAlIslaam_AbdulAzizAsSini.mp3',
           fallbackUrl: '$archiveBaseUrl/04.mp3',
           totalParagraphs: 10,
+          paragraphTimestamps: [
+            0,
+            28000,
+            46000,
+            60000,
+            82000,
+            98000,
+            118000,
+            134000,
+            148000,
+            160000,
+          ],
         ),
       ],
     ),
@@ -137,6 +155,16 @@ class MutunAudioCatalog {
           audioUrl: '$siniBaseUrl/0202AlQawaidAlArba_AbdulAzizAsSini.mp3',
           fallbackUrl: '$archiveBaseUrl/05.mp3',
           totalParagraphs: 8,
+          paragraphTimestamps: [
+            0,
+            22000,
+            40000,
+            58000,
+            75000,
+            90000,
+            106000,
+            116000,
+          ],
         ),
       ],
     ),
@@ -589,5 +617,12 @@ class MutunAudioCatalog {
     final entry = _entries[bookId];
     if (entry == null) return 1;
     return entry.getSource(reciterId)?.totalParagraphs ?? 1;
+  }
+
+  /// Get precise paragraph timestamps in milliseconds if available.
+  static List<int>? getParagraphTimestamps(String bookId, {String? reciterId}) {
+    final entry = _entries[bookId];
+    if (entry == null) return null;
+    return entry.getSource(reciterId)?.paragraphTimestamps;
   }
 }

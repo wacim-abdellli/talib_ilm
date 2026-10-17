@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../catalogs/mutun_audio_catalog.dart';
 export '../catalogs/mutun_audio_catalog.dart' show MutunReciter, MutunReciterDefaults;
 
@@ -96,11 +97,34 @@ class MutunAudioService {
       final dur = durationNotifier.value;
       // Auto-advance active paragraph highlight with reader recitation progress
       if (dur > Duration.zero && _totalParagraphs > 1 && _player.playing) {
-        final ratio = pos.inMilliseconds / dur.inMilliseconds;
-        final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
-        final clamped = estimatedPara.clamp(1, _totalParagraphs);
-        if (activeParagraphNotifier.value != clamped) {
-          activeParagraphNotifier.value = clamped;
+        final bookId = activeBookIdNotifier.value;
+        final timestamps = bookId != null
+            ? MutunAudioCatalog.getParagraphTimestamps(
+                bookId,
+                reciterId: _selectedReciter.id,
+              )
+            : null;
+
+        int activeIndex;
+        if (timestamps != null && timestamps.isNotEmpty) {
+          final posMs = pos.inMilliseconds;
+          int idx = 1;
+          for (int i = 0; i < timestamps.length; i++) {
+            if (posMs >= timestamps[i]) {
+              idx = i + 1;
+            } else {
+              break;
+            }
+          }
+          activeIndex = idx.clamp(1, _totalParagraphs);
+        } else {
+          final ratio = pos.inMilliseconds / dur.inMilliseconds;
+          final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
+          activeIndex = estimatedPara.clamp(1, _totalParagraphs);
+        }
+
+        if (activeParagraphNotifier.value != activeIndex) {
+          activeParagraphNotifier.value = activeIndex;
         }
       }
     });
@@ -291,18 +315,53 @@ class MutunAudioService {
 
   void seekToParagraph(int index) {
     activeParagraphNotifier.value = index;
-    final dur = durationNotifier.value;
-    if (dur > Duration.zero && _totalParagraphs > 1) {
-      final targetMs =
-          ((index - 1) / _totalParagraphs * dur.inMilliseconds).round();
+    final bookId = activeBookIdNotifier.value;
+    final timestamps = bookId != null
+        ? MutunAudioCatalog.getParagraphTimestamps(
+            bookId,
+            reciterId: _selectedReciter.id,
+          )
+        : null;
+
+    if (timestamps != null && index >= 1 && index <= timestamps.length) {
+      final targetMs = timestamps[index - 1];
       _player.seek(Duration(days: 0, milliseconds: targetMs));
       if (!isPlayingNotifier.value) {
         _player.play();
       }
-    } else if (isPlayingNotifier.value) {
-      _player.seek(Duration.zero);
-      _player.play();
+    } else {
+      final dur = durationNotifier.value;
+      if (dur > Duration.zero && _totalParagraphs > 1) {
+        final targetMs =
+            ((index - 1) / _totalParagraphs * dur.inMilliseconds).round();
+        _player.seek(Duration(days: 0, milliseconds: targetMs));
+        if (!isPlayingNotifier.value) {
+          _player.play();
+        }
+      } else if (isPlayingNotifier.value) {
+        _player.seek(Duration.zero);
+        _player.play();
+      }
     }
+  }
+
+  Future<void> seek(Duration position) async {
+    await _player.seek(position);
+  }
+
+  Future<void> seekForward5s() async {
+    final current = _player.position;
+    final dur = durationNotifier.value;
+    final target = current + AppMotion.seekStep;
+    final clamped = dur > Duration.zero && target > dur ? dur : target;
+    await _player.seek(clamped);
+  }
+
+  Future<void> seekBackward5s() async {
+    final current = _player.position;
+    final target = current - AppMotion.seekStep;
+    final clamped = target < Duration.zero ? Duration.zero : target;
+    await _player.seek(clamped);
   }
 
   void clearActiveParagraph() {
