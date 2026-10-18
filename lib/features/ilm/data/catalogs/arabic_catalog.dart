@@ -15,7 +15,7 @@ class ArabicCatalog {
       level: 1,
     ),
     ShamelaBook(
-      id: 7368,
+      id: 7369,
       title: 'التحفة السنية بشرح المقدمة الآجرومية',
       author: 'محمد محيي الدين عبد الحميد',
       authorDeath: 'ت ١٣٩٢ هـ',
