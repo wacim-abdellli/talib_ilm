@@ -110,6 +110,8 @@ void main() {
 
       final audioService = MutunAudioService();
 
+      bool controlsToggled = false;
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -118,6 +120,7 @@ void main() {
               curriculumBook: curriculumBook,
               audioService: audioService,
               onAddNote: () {},
+              onToggleControls: () => controlsToggled = true,
             ),
           ),
         ),
@@ -132,10 +135,11 @@ void main() {
       expect(find.text('- 1 -'), findsOneWidget);
       expect(find.text('- 2 -'), findsOneWidget);
 
-      // Verify tap on paragraph seeks audio
+      // Verify tap on paragraph toggles controls without hijacking audio
       await tester.tap(find.text('- 2 -'));
       await tester.pump();
-      expect(audioService.activeParagraphNotifier.value, 2);
+      expect(controlsToggled, isTrue);
+      expect(audioService.activeParagraphNotifier.value, isNull);
       audioService.dispose();
     });
 

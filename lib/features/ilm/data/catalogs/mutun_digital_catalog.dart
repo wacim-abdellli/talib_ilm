@@ -26,7 +26,7 @@ class MutunDigitalCatalog {
       shamelaId: 31307,
       title: 'الأذكار والآداب',
       author: 'د. عبد المحسن بن محمد القاسم',
-      totalPages: 24,
+      totalPages: 151,
     ),
     'bk_nawaqid_islam': MutunDigitalEntry(
       id: 'bk_nawaqid_islam',

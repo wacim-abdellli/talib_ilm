@@ -15,8 +15,7 @@ import 'mutn_memorization_view.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
 import 'mutun_rosette_icon.dart';
-import 'scholarly_reader_hud.dart'
-    show BookPageTapDetector, ScholarlyReaderHud;
+import 'scholarly_reader_hud.dart' show BookPageTapDetector, ScholarlyReaderHud;
 import 'shamela_text_highlighter.dart';
 import 'shamela_typography_sheet.dart';
 
@@ -56,7 +55,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   late final ScrollController _scrollController;
   final Map<int, GlobalKey> _paragraphKeys = {};
 
-  bool _showAudioBar = true;
+  bool _showAudioBar = false;
   bool _memorizationMode = false;
 
   // Typography & Surface settings
@@ -99,6 +98,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   }
 
   void _onActiveParagraphChanged() {
+    if (!_showAudioBar) return;
     final active = widget.audioService.activeParagraphNotifier.value;
     if (active == null || active == _lastAutoScrolledParagraph) return;
     if (!widget.audioService.isPlayingNotifier.value) return;
@@ -267,7 +267,11 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                     ),
                     onTap: () {
                       Navigator.of(sheetContext).pop();
-                      widget.audioService.seekToParagraph(para.index);
+                      setState(() => _showAudioBar = true);
+                      widget.audioService.seekToParagraph(
+                        para.index,
+                        bookId: widget.book.id,
+                      );
                       _scrollToParagraph(para.index);
                     },
                   ),
@@ -357,7 +361,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                       ),
 
                       const SizedBox(height: AppSpace.md),
-
                       // Paragraphs in this section
                       for (final para in section.paragraphs) ...[
                         _buildParagraphBlock(
@@ -369,7 +372,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                         ),
                         const SizedBox(height: AppSpace.md),
                       ],
-
                       const SizedBox(height: AppSpace.md),
                     ],
 
@@ -441,8 +443,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     required AppTextTheme textTheme,
     required MutunThemeTokens tokens,
   }) {
-    final firstPara =
-        section.paragraphs.isNotEmpty ? section.paragraphs.first.index : 1;
     final isFirstSection = section == widget.curriculumBook.sections.first;
 
     return Padding(
@@ -466,15 +466,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
             child: InkWell(
               borderRadius: AppRadius.mdRadius,
               onTap: () {
-                HapticFeedback.selectionClick();
-                if (!widget.showControls) {
-                  widget.onToggleControls?.call();
-                }
-                widget.audioService.seekToParagraph(
-                  firstPara,
-                  bookId: widget.book.id,
-                );
-                _scrollToParagraph(firstPara);
+                widget.onToggleControls?.call();
               },
               child: Container(
                 width: double.infinity,
@@ -542,13 +534,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         ),
         child: InkWell(
           onTap: () {
-            HapticFeedback.selectionClick();
-            if (!widget.showControls) {
-              widget.onToggleControls?.call();
-            }
-            widget.audioService
-                .seekToParagraph(para.index, bookId: widget.book.id);
-            _scrollToParagraph(para.index);
+            widget.onToggleControls?.call();
           },
           onLongPress: () => _showParagraphOptions(para),
           borderRadius: AppRadius.mdRadius,
