@@ -1018,3 +1018,38 @@ FAILED (54 violations)
      - `flutter test test/catalog_integrity_test.dart`: **100% pass** (5/5).
      - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 59.3s).
 - **Open Issues:** None.
+
+---
+
+## Stage D2 — Shamela Reader Feature Parity
+- **Status:** Complete
+- **Branch:** `ui/d2-shamela-parity`
+- **Deliverables & Verification:**
+  1. **Shamela Bookmarks Sheet (`lib/features/ilm/presentation/widgets/shamela_bookmarks_sheet.dart`):**
+     - Built `ShamelaBookmarksSheet` using `AppSheet`, `AppListTile`, and Calm Scholar tokens.
+     - Reads bookmarked pages via `ShamelaService.getBookmarkedPages(bookId)`.
+     - Supports tap-to-navigate (`onNavigate(page)`) and swipe-to-dismiss deletion via `ShamelaService.toggleBookmark()`.
+     - Displays `AppEmptyState` with `Icons.bookmark_border_rounded` and "لا توجد صفحات محفوظة" when empty.
+  2. **Collapsible Footnotes (Hamesh) Panel (`lib/features/ilm/presentation/widgets/shamela_page_content.dart`):**
+     - Displays collapsible footnotes section separated by a 1px `palette.border` hairline divider.
+     - Header row with icon, "الهامش والحواشي" label in `context.text.caption` + `palette.textMuted`, and chevron icon.
+     - Collapsed by default; expands via `AppMotion.fast` `AnimatedCrossFade`.
+     - Reflowable text wrapped with `Expanded`/`Flexible` and ellipsis overflow handling to survive text scale 1.5/2.0 without overflow.
+  3. **Completion Tracking (`lib/features/ilm/presentation/pages/shamela_reader_page.dart`):**
+     - Senses completion when navigating to `page >= effectiveTotalPages` using dynamically discovered total pages.
+     - Records last read page via `ShamelaService.saveLastReadPage`.
+     - Fires `AchievementToast.show(context, message: 'أتممت قراءة [title] بحمد الله')` gated once per book with `shamela_completed_{bookId}`.
+  4. **Top Bar Actions (`lib/features/ilm/presentation/widgets/shamela_reader_top_bar.dart`):**
+     - Added `AppIconButton` for bookmarks (`Icons.bookmark_outlined`, tooltip: "الصفحات المحفوظة", min 48dp hit area, RTL Semantics).
+     - Opens `ShamelaBookmarksSheet` via `showModalBottomSheet`.
+  5. **Golden & Unit Tests (`test/golden/shamela_reader_golden_test.dart`):**
+     - Verified `ShamelaBookmarksSheet` in light mode (1.0x) and dark mode (1.5x text scale).
+     - Verified `ShamelaPageContent` with hamesh closed and open in light (1.0x) and dark (1.5x text scale).
+     - All golden scenarios pass.
+  6. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 10.4s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test test/catalog_integrity_test.dart test/scholarly_reader_ui_test.dart test/shamela_service_test.dart test/golden/shamela_reader_golden_test.dart`: **100% pass** (36/36).
+     - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 53.9s).
+- **Open Issues:** None.
+

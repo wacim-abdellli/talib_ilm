@@ -602,4 +602,20 @@ class ShamelaService {
       return true;
     }
   }
+
+  /// Get all bookmarked page numbers for a book
+  static Future<List<int>> getBookmarkedPages(int bookId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_bookmarksKey) ?? [];
+    final prefix = '${bookId}_';
+    final pages = <int>[];
+    for (final item in list) {
+      if (item.startsWith(prefix)) {
+        final p = int.tryParse(item.substring(prefix.length));
+        if (p != null) pages.add(p);
+      }
+    }
+    pages.sort();
+    return pages;
+  }
 }

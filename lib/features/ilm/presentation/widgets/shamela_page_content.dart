@@ -6,7 +6,6 @@ import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutn_memorization_view.dart';
 import 'mutn_paragraphs_view.dart';
-import 'shamela_text_highlighter.dart';
 
 /// Single page content viewer for Shamela scholarly reader.
 /// Each page owns its dedicated ScrollController to ensure isolated scrollbars
@@ -21,6 +20,7 @@ class ShamelaPageContent extends StatefulWidget {
   final ShamelaReaderSurface surface;
   final int startingParagraphIndex;
   final MutunAudioService? audioService;
+  final bool initialHameshExpanded;
 
   const ShamelaPageContent({
     super.key,
@@ -33,6 +33,7 @@ class ShamelaPageContent extends StatefulWidget {
     this.surface = ShamelaReaderSurface.normal,
     this.startingParagraphIndex = 1,
     this.audioService,
+    this.initialHameshExpanded = false,
   });
 
   @override
@@ -41,11 +42,13 @@ class ShamelaPageContent extends StatefulWidget {
 
 class _ShamelaPageContentState extends State<ShamelaPageContent> {
   late final ScrollController _scrollController;
+  late bool _isHameshExpanded;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _isHameshExpanded = widget.initialHameshExpanded;
   }
 
   @override
@@ -156,11 +159,12 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                       ),
               ),
 
-              // Footnotes (الحواشي والتحقيق) Section if present
+              // Footnotes (الهامش والحواشي) Section if present
               if (page.hamesh != null) ...[
                 Builder(
                   builder: (context) {
-                    final cleanHamesh = ShamelaService.sanitizeBookText(page.hamesh!);
+                    final cleanHamesh =
+                        ShamelaService.sanitizeBookText(page.hamesh!);
                     if (cleanHamesh.trim().isEmpty) {
                       return const SizedBox.shrink();
                     }
@@ -168,69 +172,88 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: AppSpace.xl),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: accent.border,
-                                height: 1,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
+                        Divider(
+                          color: palette.border,
+                          height: 1,
+                          thickness: 1,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isHameshExpanded = !_isHameshExpanded;
+                            });
+                          },
+                          borderRadius: AppRadius.smRadius,
+                          child: ConstrainedBox(
+                            constraints:
+                                const BoxConstraints(minHeight: AppSize.tap),
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.symmetric(
                                 horizontal: AppSpace.sm,
+                                vertical: AppSpace.sm,
                               ),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(
-                                    Icons.history_edu_rounded,
-                                    color: accent.primary,
-                                    size: AppIcon.xs,
-                                  ),
-                                  const SizedBox(width: AppSpace.xxs),
-                                  Text(
-                                    'الحواشي والتحقيق',
-                                    style: textTheme.caption.copyWith(
-                                      color: accent.primary,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.format_quote_rounded,
+                                          size: AppIcon.sm,
+                                          color: palette.textMuted,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Flexible(
+                                          child: Text(
+                                            'الهامش والحواشي',
+                                            style: textTheme.caption.copyWith(
+                                              color: palette.textMuted,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Icon(
+                                    _isHameshExpanded
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    size: AppIcon.md,
+                                    color: palette.textMuted,
                                   ),
                                 ],
                               ),
                             ),
-                            Expanded(
-                              child: Divider(
-                                color: accent.border,
-                                height: 1,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: AppSpace.sm),
-                        Container(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceRaised,
-                            borderRadius: AppRadius.mdRadius,
-                            border: Border.all(
-                              color: palette.border,
-                              width: 1,
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox.shrink(),
+                          secondChild: Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                              top: AppSpace.xs,
+                              bottom: AppSpace.md,
+                              start: AppSpace.sm,
+                              end: AppSpace.sm,
+                            ),
+                            child: Text(
+                              cleanHamesh,
+                              style: textTheme.bodySmall.copyWith(
+                                color: palette.textMuted,
+                                height: 1.6,
+                                fontFamily: widget.fontFamily,
+                              ),
+                              textAlign: TextAlign.start,
                             ),
                           ),
-                          child: Text.rich(
-                            ShamelaTextHighlighter.buildSpans(
-                              text: cleanHamesh,
-                              palette: palette,
-                              textTheme: textTheme,
-                              fontFamily: widget.fontFamily,
-                              fontSizeDelta: widget.fontSizeDelta * 0.7 - 2.0,
-                              lineHeight: 1.6,
-                              accentColor: widget.accentColor,
-                              surface: widget.surface,
-                            ),
-                            textAlign: TextAlign.start,
-                          ),
+                          crossFadeState: _isHameshExpanded
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: AppMotion.fast,
                         ),
                       ],
                     );

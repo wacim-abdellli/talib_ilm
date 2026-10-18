@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_button.dart';
 
 /// Prestigious Scholarly Top Bar for Shamela Reader
 /// Smoothly transitions between minimal reading HUD and full action toolbar.
@@ -16,6 +17,8 @@ class ShamelaReaderTopBar extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onCopy;
   final VoidCallback? onSwitchToCurriculum;
+  final VoidCallback? onOpenFihris;
+  final VoidCallback? onOpenBookmarks;
 
   const ShamelaReaderTopBar({
     super.key,
@@ -30,6 +33,8 @@ class ShamelaReaderTopBar extends StatelessWidget {
     required this.onBack,
     required this.onCopy,
     this.onSwitchToCurriculum,
+    this.onOpenFihris,
+    this.onOpenBookmarks,
   });
 
   @override
@@ -132,11 +137,9 @@ class ShamelaReaderTopBar extends StatelessWidget {
                   opacity: showControls ? 1.0 : 0.0,
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: AppIcon.sm,
-                        ),
+                      AppIconButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        iconSize: AppIcon.sm,
                         tooltip: 'رجوع',
                         color: surfaceTokens.text,
                         onPressed: onBack,
@@ -169,24 +172,38 @@ class ShamelaReaderTopBar extends StatelessWidget {
                       ),
 
                       if (onSwitchToCurriculum != null)
-                        IconButton(
+                        AppIconButton(
                           tooltip: 'العودة لمتن التحفيظ المعتمد',
                           onPressed: onSwitchToCurriculum,
-                          icon: Icon(
-                            Icons.auto_stories_rounded,
-                            color: accent.primary,
-                            size: AppIcon.sm,
-                          ),
+                          icon: Icons.auto_stories_rounded,
+                          color: accent.primary,
+                          iconSize: AppIcon.sm,
                         ),
 
-                      IconButton(
+                      if (onOpenFihris != null)
+                        AppIconButton(
+                          tooltip: 'فهرس الكتاب',
+                          onPressed: onOpenFihris,
+                          icon: Icons.format_list_bulleted_rounded,
+                          color: surfaceTokens.text,
+                          iconSize: AppIcon.sm,
+                        ),
+
+                      if (onOpenBookmarks != null)
+                        AppIconButton(
+                          tooltip: 'الصفحات المحفوظة',
+                          onPressed: onOpenBookmarks,
+                          icon: Icons.bookmark_outlined,
+                          color: surfaceTokens.text,
+                          iconSize: AppIcon.sm,
+                        ),
+
+                      AppIconButton(
                         tooltip: 'نسخ الصفحة',
                         onPressed: onCopy,
-                        icon: Icon(
-                          Icons.copy_rounded,
-                          color: surfaceTokens.text,
-                          size: AppIcon.sm,
-                        ),
+                        icon: Icons.copy_rounded,
+                        color: surfaceTokens.text,
+                        iconSize: AppIcon.sm,
                       ),
                     ],
                   ),

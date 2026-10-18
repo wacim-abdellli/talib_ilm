@@ -7,15 +7,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/achievement_toast.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/book_progress_service.dart';
 import '../../data/services/shamela_service.dart';
-import '../widgets/book_view_bookmarks_sheet.dart';
 import '../widgets/book_view_controls.dart' show BookNoteDialog;
 import '../widgets/scholarly_reader_hud.dart';
+import '../widgets/shamela_bookmarks_sheet.dart';
 import '../widgets/shamela_fihris_sheet.dart';
 import '../widgets/shamela_page_content.dart';
 import '../widgets/shamela_reader_top_bar.dart';
@@ -195,32 +196,13 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     );
   }
 
-  Future<void> _showBookmarksSheet() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList('shamela_bookmarks') ?? [];
-    final prefix = '${widget.book.id}_';
-    final pages = list
-        .where((s) => s.startsWith(prefix))
-        .map((s) => int.tryParse(s.substring(prefix.length)))
-        .whereType<int>()
-        .toList()
-      ..sort();
-
-    if (!mounted) return;
-    if (pages.isEmpty) {
-      AppSnackbar.info(context, 'لا توجد إشارات مرجعية محفوظة في هذا الكتاب');
-      return;
-    }
-
-    final entries = pages
-        .map((p) => BookmarkEntry(
-              title: widget.book.title,
-              subtitle: 'صفحة $p',
-              note: prefs.getString('shamela_note_${widget.book.id}_$p'),
-            ))
-        .toList();
-
-    BookViewBookmarksSheet.show(context, entries);
+  void _showBookmarksSheet() {
+    HapticFeedback.lightImpact();
+    ShamelaBookmarksSheet.show(
+      context: context,
+      bookId: widget.book.id,
+      onNavigate: (page) => _jumpToPage(page),
+    );
   }
 
   Future<void> _loadFihris() async {
@@ -296,6 +278,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     });
     _checkBookmark();
     _loadPage(pageNum);
+    _checkCompletion(pageNum);
 
     if (pageNum < _totalPages) _loadPage(pageNum + 1);
     if (pageNum > 1) _loadPage(pageNum - 1);
@@ -390,6 +373,29 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     } catch (_) {}
   }
 
+  Future<void> _checkCompletion(int pageNum) async {
+    final effectiveTotal = ShamelaService.getEffectiveTotalPages(
+      widget.book.id,
+      _totalPages,
+    );
+    if (pageNum >= effectiveTotal && effectiveTotal > 0) {
+      await ShamelaService.saveLastReadPage(widget.book.id, pageNum);
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'shamela_completed_${widget.book.id}';
+      final alreadyCompleted = prefs.getBool(key) ?? false;
+      if (!alreadyCompleted) {
+        await prefs.setBool(key, true);
+        if (mounted) {
+          AchievementToast.show(
+            context,
+            title: 'مبارك!',
+            description: 'أتممت قراءة ${widget.book.title} بحمد الله',
+          );
+        }
+      }
+    }
+  }
+
   Color _getBackgroundColor(AppPalette palette) {
     return ReaderSurfaceColors.getTokens(_surface, isDark: palette.isDark).bg;
   }
@@ -418,6 +424,8 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               surface: _surface,
               onBack: () => Navigator.maybePop(context),
               onCopy: _copyPageContent,
+              onOpenFihris: _showFihrisSheet,
+              onOpenBookmarks: _showBookmarksSheet,
             ),
 
             // ── 2. Reflowable Digital Reader Body ─────────────────────────────
