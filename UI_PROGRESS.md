@@ -1053,3 +1053,30 @@ FAILED (54 violations)
      - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 53.9s).
 - **Open Issues:** None.
 
+---
+
+## Stage D3 — Audio Timestamp Expansion
+- **Status:** Complete
+- **Branch:** `ui/d3-audio-timestamps`
+- **Deliverables & Verification:**
+  1. **Timestamp Generation Tooling (`tool/gen_timestamps.sh` & `tool/extract_and_format_timestamps.py`):**
+     - Shell script `tool/gen_timestamps.sh` performing silence detection via ffmpeg.
+     - Advanced analyzer `tool/extract_and_format_timestamps.py` detecting silence intervals and computing paragraph alignment using dynamic programming partition.
+  2. **Expanded Mutun Audio Catalog (`lib/features/ilm/data/catalogs/mutun_audio_catalog.dart`):**
+     - Added public getter `MutunAudioCatalog.entries`.
+     - Added 42 paragraph timestamps to `bk_arbaeen_nawawi` (42 Hadiths).
+     - Added 30 paragraph timestamps to `bk_ajrumiyyah` and `bk_ajrumiyya` (30 grammar chapters).
+     - Added 35 paragraph timestamps to `bk_wasitiyyah` and `bk_wasitiyya` (35 theological sections).
+  3. **Audio Timestamp Unit Tests (`test/audio_timestamp_test.dart`):**
+     - Validates that all books with timestamps have `timestamps.first == 0`.
+     - Validates strictly ascending order for all timestamp sequences.
+     - Validates `timestamps.length == totalParagraphs` exactly.
+     - Validates no gap between consecutive timestamps exceeds 600,000 ms (10 minutes).
+     - 100% pass on all test assertions.
+  4. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 75.4s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test test/audio_timestamp_test.dart test/catalog_integrity_test.dart test/golden/shamela_reader_golden_test.dart`: **100% pass** (8/8).
+- **Open Issues:** None.
+
+
