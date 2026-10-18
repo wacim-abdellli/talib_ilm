@@ -1110,5 +1110,30 @@ FAILED (54 violations)
      - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 69.5s).
 - **Open Issues:** None.
 
+---
+
+## Dual-Edition Resolution: Adhkar & Adab (`bk_adhkar_adab`)
+- **Status:** Complete
+- **Branch:** `feat/quran-word-search` (merged to `main`)
+- **Deliverables & Verification:**
+  1. **Dual Edition Switcher (`lib/features/ilm/presentation/widgets/book_mutn_tab.dart`):**
+     - When a book possesses both an authentic curriculum memorization syllabus and an expanded digital edition (such as *الآداب والأذكار*), presents a top segmented pill switcher:
+       - **متن الحفظ والتسميع (٢٤ فقرة)**: The vocalized syllabus recited by Dr. As-Sini matching audio timestamps.
+       - **الكتاب كاملاً (١٠٠ صفحة)**: The complete scholarly work with all chapters.
+  2. **End-of-Syllabus Completion Banner (`lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart`):**
+     - Rendered an authentic scholarly completion card at the conclusion of paragraph 24 notifying the user of syllabus completion and providing a direct button to continue reading the full 100-page book.
+  3. **Visual Parity for `MutnDigitalReaderView` (`lib/features/ilm/presentation/widgets/mutn_digital_reader.dart`):**
+     - Integrated `ScholarlyReaderHud` (Bookmark, Note, Fihris, Audio toggle, Memorization toggle, Font/Typography, Share) with page indicator.
+     - Audio player HUD only slides up on-demand when "استماع" is activated, removing persistent bottom dock clutter.
+  4. **Authentic Shamela ID Fixed (`lib/features/ilm/data/catalogs/mutun_digital_catalog.dart`):**
+     - Corrected `bk_adhkar_adab` from proxy ID 31307 (*Hisn Al-Muslim*) to authentic Shamela ID **576** (*مختصر الأذكار والآداب* by Dr. Abdul Mohsen Al-Qasim, 100 pages, startPage: 4).
+  5. **Modular Paragraph Options (`lib/features/ilm/presentation/widgets/mutn_paragraph_options_sheet.dart`):**
+     - Extracted paragraph modal options to maintain all files strictly under 600 lines.
+  6. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 11.1s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test`: **100% pass** across `mutun_curriculum_reader_test.dart`, `catalog_integrity_test.dart`, `quran_search_word_test.dart`.
+
+
 
 
