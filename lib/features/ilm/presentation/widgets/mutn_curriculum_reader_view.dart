@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -35,6 +37,7 @@ class MutnCurriculumReaderView extends StatefulWidget {
   final VoidCallback? onShowBookmarks;
   final VoidCallback? onSwitchToFullBook;
   final String? fullBookLabel;
+  final Future<void> Function(int page, int total)? onPageChanged;
 
   const MutnCurriculumReaderView({
     super.key,
@@ -49,6 +52,7 @@ class MutnCurriculumReaderView extends StatefulWidget {
     this.onShowBookmarks,
     this.onSwitchToFullBook,
     this.fullBookLabel,
+    this.onPageChanged,
   });
 
   @override
@@ -110,6 +114,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
 
     _lastAutoScrolledParagraph = active;
     _scrollToParagraph(active);
+    _recordParagraphProgress(active);
   }
 
   void _scrollToParagraph(int index) {
@@ -156,6 +161,27 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
       _accentColor = ShamelaAccentColor
           .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
     });
+
+    final savedPara = prefs.getInt('mutn_last_para_${widget.book.id}');
+    if (savedPara != null && savedPara > 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToParagraph(savedPara);
+      });
+    }
+  }
+
+  void _recordParagraphProgress(int paraIndex) {
+    unawaited(SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('mutn_last_para_${widget.book.id}', paraIndex);
+    }));
+    final totalParas = widget.curriculumBook.totalParagraphs;
+    final totalPages = widget.book.totalPages > 0
+        ? widget.book.totalPages
+        : (totalParas > 0 ? totalParas : 1);
+    final calcPage = totalParas > 0
+        ? ((paraIndex / totalParas) * totalPages).ceil().clamp(1, totalPages)
+        : paraIndex;
+    widget.onPageChanged?.call(calcPage, totalPages);
   }
 
   Future<void> _savePreferences() async {
@@ -211,6 +237,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         activeParagraph: widget.audioService.activeParagraphNotifier.value,
         onParagraphSelected: (para) {
           _scrollToParagraph(para);
+          _recordParagraphProgress(para);
           widget.audioService.seekToParagraph(para, bookId: widget.book.id);
         },
       ),
@@ -229,6 +256,7 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         setState(() => _showAudioBar = true);
         widget.audioService.seekToParagraph(index, bookId: widget.book.id);
         _scrollToParagraph(index);
+        _recordParagraphProgress(index);
       },
     );
   }
@@ -501,9 +529,13 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         ),
         child: InkWell(
           onTap: () {
+            _recordParagraphProgress(para.index);
             widget.onToggleControls?.call();
           },
-          onLongPress: () => _showParagraphOptions(para),
+          onLongPress: () {
+            _recordParagraphProgress(para.index);
+            _showParagraphOptions(para);
+          },
           borderRadius: AppRadius.mdRadius,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../catalogs/islamic_quiz_catalog.dart';
@@ -218,5 +220,71 @@ class QuizProgressService {
     final currentXp = _prefs.getInt(_keyXp) ?? 0;
     final xp = (correct * 12) + 20; // Extra daily bonus XP
     await _prefs.setInt(_keyXp, currentXp + xp);
+  }
+
+  static const String _keySessionPrefix = 'quiz_active_session_';
+
+  /// Saves the active progress of a quiz session so the user can resume where they left off.
+  Future<void> saveActiveSession(
+    String sessionId,
+    QuizActiveSession session,
+  ) async {
+    final raw = jsonEncode(session.toJson());
+    await _prefs.setString('$_keySessionPrefix$sessionId', raw);
+  }
+
+  /// Retrieves the saved active quiz session, if any.
+  QuizActiveSession? getActiveSession(String sessionId) {
+    final raw = _prefs.getString('$_keySessionPrefix$sessionId');
+    if (raw == null) return null;
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return QuizActiveSession.fromJson(map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Clears the active session once the quiz is finished or reset.
+  Future<void> clearActiveSession(String sessionId) async {
+    await _prefs.remove('$_keySessionPrefix$sessionId');
+  }
+}
+
+/// Represents an active ongoing quiz session allowing seamless resume if interrupted.
+class QuizActiveSession {
+  final int currentIndex;
+  final int correctAnswers;
+  final int currentStreak;
+  final int maxStreak;
+  final List<int?> userAnswers;
+
+  const QuizActiveSession({
+    required this.currentIndex,
+    required this.correctAnswers,
+    required this.currentStreak,
+    required this.maxStreak,
+    required this.userAnswers,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'currentIndex': currentIndex,
+        'correctAnswers': correctAnswers,
+        'currentStreak': currentStreak,
+        'maxStreak': maxStreak,
+        'userAnswers': userAnswers,
+      };
+
+  factory QuizActiveSession.fromJson(Map<String, dynamic> json) {
+    return QuizActiveSession(
+      currentIndex: json['currentIndex'] as int? ?? 0,
+      correctAnswers: json['correctAnswers'] as int? ?? 0,
+      currentStreak: json['currentStreak'] as int? ?? 0,
+      maxStreak: json['maxStreak'] as int? ?? 0,
+      userAnswers: (json['userAnswers'] as List<dynamic>?)
+              ?.map((e) => e as int?)
+              .toList() ??
+          [],
+    );
   }
 }

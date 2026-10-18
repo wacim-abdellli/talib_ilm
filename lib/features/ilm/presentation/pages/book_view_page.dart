@@ -620,9 +620,19 @@ class _BookViewPageState extends State<BookViewPage>
     final topBarHeight = topPadding + kToolbarHeight + 48.0;
     final minimalBarHeight = topPadding + 42.0;
 
-    return Scaffold(
-      backgroundColor: context.palette.bg,
-      floatingActionButton: null,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _saveProgress();
+        _persistLastPositionSync();
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: context.palette.bg,
+        floatingActionButton: null,
       body: Column(
         children: [
           AnimatedContainer(
@@ -762,6 +772,8 @@ class _BookViewPageState extends State<BookViewPage>
       ),
     ],
   ),
+),
 );
-  }
+}
+
 }

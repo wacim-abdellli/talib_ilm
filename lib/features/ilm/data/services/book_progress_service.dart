@@ -283,9 +283,19 @@ class BookProgressService {
         .where((progress) =>
             (!progress.isCompleted ||
                 progress.currentPage < progress.totalPages) &&
-            progress.currentPage > 1)
+            progress.currentPage >= 1)
         .toList()
       ..sort((a, b) => b.lastReadDate.compareTo(a.lastReadDate));
+  }
+
+  /// Retrieves the absolute last book touched by the user for real-time instant resume.
+  Future<BookProgress?> getLastReadBook() async {
+    final active = await getCurrentlyReading();
+    if (active.isNotEmpty) return active.first;
+    final all = await getAllProgress();
+    if (all.isEmpty) return null;
+    all.sort((a, b) => b.lastReadDate.compareTo(a.lastReadDate));
+    return all.first;
   }
 
   Future<List<BookProgress>> getCompletedBooks() async {

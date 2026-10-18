@@ -82,6 +82,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
           onShowBookmarks: widget.onShowBookmarks,
           onSwitchToFullBook: () => setState(() => _selectedEdition = 1),
           fullBookLabel: 'قراءة الكتاب كاملاً (${digitalEntry.totalPages} صفحة)',
+          onPageChanged: widget.onPageChanged,
         );
       } else {
         readerContent = _buildDigitalReader(palette, digitalEntry);
@@ -218,6 +219,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
         isBookmarked: widget.isBookmarked,
         onToggleBookmark: widget.onToggleBookmark,
         onShowBookmarks: widget.onShowBookmarks,
+        onPageChanged: widget.onPageChanged,
       );
     }
 

@@ -20,6 +20,7 @@ class StudyResumePill extends StatelessWidget {
   final int pagesReadToday;
   final int currentStreak;
   final ValueChanged<IlmBook> onNavigateToBook;
+  final ValueChanged<String>? onOpenBookId;
 
   const StudyResumePill({
     super.key,
@@ -30,6 +31,7 @@ class StudyResumePill extends StatelessWidget {
     required this.pagesReadToday,
     required this.currentStreak,
     required this.onNavigateToBook,
+    this.onOpenBookId,
   });
 
   @override
@@ -38,9 +40,12 @@ class StudyResumePill extends StatelessWidget {
 
     if (continueReadingBook != null) {
       final book = bookCatalog[continueReadingBook!.bookId];
-      if (book != null) {
-        return _buildActiveResumeCard(context, palette, book, continueReadingBook!);
-      }
+      return _buildActiveResumeCard(
+        context,
+        palette,
+        book,
+        continueReadingBook!,
+      );
     }
 
     if (recommendedFirstBook != null) {
@@ -53,10 +58,11 @@ class StudyResumePill extends StatelessWidget {
   Widget _buildActiveResumeCard(
     BuildContext context,
     AppPalette palette,
-    IlmBook book,
+    IlmBook? book,
     BookProgress progress,
   ) {
-    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final digitalEntry =
+        book != null ? MutunDigitalCatalog.getEntry(book.id) : null;
     final effectiveDigital = digitalEntry != null
         ? ShamelaService.getEffectiveTotalPages(
             digitalEntry.shamelaId,
@@ -65,18 +71,26 @@ class StudyResumePill extends StatelessWidget {
         : 0;
     final totalPages = effectiveDigital > 0
         ? effectiveDigital
-        : (book.totalPages > 0
-            ? book.totalPages
+        : ((book?.totalPages ?? 0) > 0
+            ? book!.totalPages
             : (progress.totalPages > 0 ? progress.totalPages : 1));
     final currentPage = progress.currentPage;
     final progressRatio = totalPages > 0
         ? (currentPage / totalPages).clamp(0.0, 1.0)
         : 0.0;
 
+    final title = book?.title ?? progress.bookTitle;
+
     return Padding(
       padding: AppSpace.screenPadding,
       child: AppCard(
-        onTap: () => onNavigateToBook(book),
+        onTap: () {
+          if (onOpenBookId != null) {
+            onOpenBookId!(progress.bookId);
+          } else if (book != null) {
+            onNavigateToBook(book);
+          }
+        },
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpace.lg,
           vertical: AppSpace.md,
@@ -138,7 +152,7 @@ class StudyResumePill extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpace.xs),
                       Text(
-                        book.title,
+                        title,
                         style: context.text.titleSmall.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

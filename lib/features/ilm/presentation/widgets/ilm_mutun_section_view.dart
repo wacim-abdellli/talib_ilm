@@ -1,0 +1,449 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../../app/theme/app_palette.dart';
+import '../../data/models/book_progress_model.dart';
+import '../../data/models/mutun_models.dart';
+import 'ilm_mutn_card.dart';
+import 'ilm_partition_header.dart';
+import 'mutun_rosette_icon.dart';
+import 'mutun_shelf_card.dart';
+
+/// Presentation slivers for Mutun Taleb Al-Ilm section in both overview and focused modes.
+class IlmMutunSectionView {
+  IlmMutunSectionView._();
+
+  static List<Widget> buildSlivers({
+    required BuildContext context,
+    required AppPalette palette,
+    required List<IlmBook> allBooks,
+    required List<IlmLevel> sortedLevels,
+    required Map<String, BookProgress> progressById,
+    required Set<String> favoriteBookIds,
+    required bool isFocused,
+    required String? selectedMutunLevel,
+    required ValueChanged<String?> onSelectLevel,
+    required VoidCallback onViewAll,
+    required VoidCallback onBackToAll,
+    required ValueChanged<IlmBook> onNavigateToBook,
+    required ValueChanged<String> onToggleFavorite,
+    required VoidCallback onOpenCurriculumQuiz,
+  }) {
+    final filteredMutun = selectedMutunLevel == null
+        ? allBooks
+        : allBooks.where((b) => b.level == selectedMutunLevel).toList();
+
+    if (!isFocused) {
+      // ── Overview Shelf Pavilion for Mutun (Compact, zero scroll fatigue) ──
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: AppSpace.lg,
+              end: AppSpace.lg,
+              bottom: AppSpace.lg,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: AppRadius.lgRadius,
+                border: Border.all(color: palette.border, width: 0.9),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: MutunRosetteIcon(
+                            size: AppIcon.sm,
+                            color: palette.primary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'متون طالب العلم',
+                                style: context.text.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'المنهاج العلمي التأصيلي (٥ مستويات)',
+                                style: context.text.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+
+                        // Curriculum Quiz Launcher Button
+                        Semantics(
+                          button: true,
+                          label: 'مسابقات المنهاج التأصيلي',
+                          child: Material(
+                            color: palette.goldSoft,
+                            borderRadius: AppRadius.pillRadius,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                onOpenCurriculumQuiz();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xs,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events_outlined,
+                                      size: AppIcon.xs,
+                                      color: palette.gold,
+                                    ),
+                                    const SizedBox(width: AppSpace.xxs),
+                                    Text(
+                                      'اختبار المنهاج',
+                                      style: context.text.caption.copyWith(
+                                        color: palette.gold,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+
+                        // View All Button
+                        Semantics(
+                          button: true,
+                          label: 'عرض كل المتون',
+                          child: Material(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.pillRadius,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                onViewAll();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xs,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'عرض الكل (${allBooks.length})',
+                                      style: context.text.caption.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpace.xxs),
+                                    Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      size: AppIcon.xs,
+                                      color: palette.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpace.xs),
+
+                  // Horizontal Mutun Bookshelf with real book cover colors
+                  SizedBox(
+                    height: 165,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        AppSpace.md,
+                        0,
+                        AppSpace.md,
+                        AppSpace.md,
+                      ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: allBooks.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpace.sm),
+                      itemBuilder: (context, index) {
+                        final book = allBooks[index];
+                        return MutunShelfCard(
+                          book: book,
+                          progress: progressById[book.id],
+                          onOpenReader: () => onNavigateToBook(book),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // ── Focused View for Mutun (Full vertical list with level filters) ──
+    return [
+      SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.lg,
+              ),
+              child: Row(
+                children: [
+                  Semantics(
+                    button: true,
+                    label: 'العودة لجميع الأقسام',
+                    child: Material(
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
+                      child: InkWell(
+                        borderRadius: AppRadius.pillRadius,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onBackToAll();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: AppIcon.xs,
+                                color: palette.primary,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Text(
+                                'العودة لجميع الأقسام',
+                                style: context.text.caption.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Material(
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.pillRadius,
+                    child: InkWell(
+                      borderRadius: AppRadius.pillRadius,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onOpenCurriculumQuiz();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.xs,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.emoji_events_outlined,
+                              size: AppIcon.xs,
+                              color: palette.gold,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              'مسابقات المنهاج',
+                              style: context.text.caption.copyWith(
+                                color: palette.gold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            IlmPartitionHeader(
+              title: 'متون طالب العلم (المنهاج التأصيلي)',
+              subtitle: 'منهج علمي مدرج يبدأ بالتمهيدي حتى المطولات',
+              countLabel: '${allBooks.length} متون',
+            ),
+
+            // Horizontal Level Selector Filter
+            SizedBox(
+              height: AppSize.tap,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.lg,
+                ),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildLevelChip(
+                    context: context,
+                    label: 'جميع المستويات',
+                    isSelected: selectedMutunLevel == null,
+                    onTap: () => onSelectLevel(null),
+                    palette: palette,
+                  ),
+                  for (final lvl in sortedLevels)
+                    _buildLevelChip(
+                      context: context,
+                      label: lvl.label.isNotEmpty ? lvl.label : lvl.title,
+                      isSelected: selectedMutunLevel == lvl.title,
+                      onTap: () => onSelectLevel(lvl.title),
+                      palette: palette,
+                      levelKey: lvl.title,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+          ],
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final book = filteredMutun[index];
+              return Padding(
+                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+                child: IlmMutnCard(
+                  book: book,
+                  progress: progressById[book.id],
+                  isFavoriteOverride: favoriteBookIds.contains(book.id),
+                  onOpenReader: () => onNavigateToBook(book),
+                  onToggleFavorite: () => onToggleFavorite(book.id),
+                ),
+              );
+            },
+            childCount: filteredMutun.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  static Widget _buildLevelChip({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required AppPalette palette,
+    String? levelKey,
+  }) {
+    final levelColors = levelKey != null ? palette.mutunLevel(levelKey) : null;
+    final Color bgColor = isSelected
+        ? (levelColors?.bg ?? palette.primary)
+        : palette.surfaceRaised;
+    final Color fgColor = isSelected
+        ? (levelColors?.fg ?? palette.onPrimary)
+        : palette.textMuted;
+    final Color borderColor = isSelected
+        ? (levelColors?.border ?? palette.primary)
+        : palette.border;
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
+      child: Material(
+        color: bgColor,
+        borderRadius: AppRadius.pillRadius,
+        child: InkWell(
+          borderRadius: AppRadius.pillRadius,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.md,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(color: borderColor, width: 1.0),
+            ),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (levelColors != null && !isSelected) ...[
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: levelColors.fg,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
+                  Text(
+                    label,
+                    style: context.text.caption.copyWith(
+                      color: fgColor,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

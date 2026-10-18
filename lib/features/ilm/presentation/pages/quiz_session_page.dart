@@ -6,6 +6,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/services/quiz_progress_service.dart';
+import '../widgets/quiz_lesson_explanation_card.dart';
 import 'quiz_result_page.dart';
 
 /// The active test and lesson runner for an Islamic quiz session.
@@ -43,6 +44,52 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
   QuizQuestion get _currentQuestion => widget.questions[_currentIndex];
 
+  String get _sessionKey =>
+      widget.levelId ?? (widget.isDailyChallenge ? 'daily' : widget.title);
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreActiveSession();
+  }
+
+  Future<void> _restoreActiveSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final service = QuizProgressService(prefs);
+    final session = service.getActiveSession(_sessionKey);
+    if (session != null &&
+        session.currentIndex > 0 &&
+        session.currentIndex < widget.questions.length &&
+        mounted) {
+      setState(() {
+        _currentIndex = session.currentIndex;
+        _correctAnswers = session.correctAnswers;
+        _currentStreak = session.currentStreak;
+        _maxStreak = session.maxStreak;
+        _userAnswers
+          ..clear()
+          ..addAll(session.userAnswers);
+        _selectedOptionIndex = null;
+        _isAnswered = false;
+      });
+    }
+  }
+
+  Future<void> _persistSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final service = QuizProgressService(prefs);
+    await service.saveActiveSession(
+      _sessionKey,
+      QuizActiveSession(
+        currentIndex: _currentIndex,
+        correctAnswers: _correctAnswers,
+        currentStreak: _currentStreak,
+        maxStreak: _maxStreak,
+        userAnswers: _userAnswers,
+      ),
+    );
+  }
+
   void _onOptionSelected(int index) {
     if (_isAnswered) return;
 
@@ -66,6 +113,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       _userAnswers.add(index);
     });
 
+    _persistSession();
+
     // Gently scroll down so the lesson and explanation are in full view
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -88,6 +137,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         _isAnswered = false;
       });
 
+      _persistSession();
+
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);
       }
@@ -100,6 +151,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   Future<void> _finishQuiz() async {
     final prefs = await SharedPreferences.getInstance();
     final progressService = QuizProgressService(prefs);
+
+    await progressService.clearActiveSession(_sessionKey);
 
     QuizRecordResult? recordResult;
     if (widget.levelId != null) {
@@ -148,9 +201,14 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     final total = widget.questions.length;
     final progressFraction = (_currentIndex + 1) / total;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        _persistSession();
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
         backgroundColor: palette.bg,
         appBar: AppBar(
           backgroundColor: palette.surface,
@@ -291,7 +349,11 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             // Interactive lesson & explanation card (revealed upon answer)
             if (_isAnswered) ...[
               const SizedBox(height: AppSpace.md),
-              _buildLessonCard(palette: palette, textTheme: textTheme),
+              QuizLessonExplanationCard(
+                question: _currentQuestion,
+                isUserCorrect:
+                    _selectedOptionIndex == _currentQuestion.correctIndex,
+              ),
               const SizedBox(height: AppSpace.xl),
             ],
 
@@ -342,8 +404,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               )
             : null,
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOptionTile({
     required int index,
@@ -436,114 +499,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     );
   }
 
-  Widget _buildLessonCard({
-    required AppPalette palette,
-    required dynamic textTheme,
-  }) {
-    final isUserCorrect =
-        _selectedOptionIndex == _currentQuestion.correctIndex;
-
-    return Container(
-      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: isUserCorrect ? palette.primarySoft : palette.surfaceMuted,
-        borderRadius: AppRadius.lgRadius,
-        border: Border.all(
-          color: isUserCorrect
-              ? palette.primary.withAlpha(90)
-              : palette.border,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isUserCorrect
-                    ? Icons.lightbulb_outline_rounded
-                    : Icons.menu_book_rounded,
-                color:
-                    isUserCorrect ? palette.primary : palette.textMuted,
-                size: AppIcon.md,
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Text(
-                'الدرس المستفاد والشرح التوضيحي:',
-                style: textTheme.label.copyWith(
-                  color: isUserCorrect
-                      ? palette.primary
-                      : palette.text,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            _currentQuestion.lesson,
-            style: textTheme.bodySmall.copyWith(
-              color: palette.text,
-              height: 1.6,
-            ),
-          ),
-          if (_currentQuestion.evidence.isNotEmpty) ...[
-            const SizedBox(height: AppSpace.md),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsetsDirectional.all(AppSpace.md),
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: AppRadius.smRadius,
-                border: Border.all(color: palette.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.verified_outlined,
-                        color: palette.gold,
-                        size: AppIcon.sm,
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        'الدليل الشرعي:',
-                        style: textTheme.caption.copyWith(
-                          color: palette.gold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    _currentQuestion.evidence,
-                    style: textTheme.sacred.copyWith(
-                      color: palette.text,
-                      height: 1.7,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (_currentQuestion.reference.isNotEmpty) ...[
-            const SizedBox(height: AppSpace.sm),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                'المصدر: ${_currentQuestion.reference}',
-                style: textTheme.caption.copyWith(
-                  color: palette.textSubtle,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   String _getOptionLetter(int index) {
     switch (index) {
       case 0:
@@ -571,11 +526,11 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             borderRadius: AppRadius.xlRadius,
           ),
           title: Text(
-            'إنهاء الاختبار؟',
+            'حفظ ومتابعة لاحقاً؟',
             style: textTheme.titleSmall,
           ),
           content: Text(
-            'هل تود الخروج من جلسة الاختبار؟ لن يتم حفظ إجابات الأسئلة المتبقية.',
+            'سيتم حفظ تقدمك تلقائياً لتستأنف الاختبار من نفس السؤال عند عودتك.',
             style: textTheme.bodySmall,
           ),
           actions: [
@@ -587,12 +542,15 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
+              onPressed: () async {
+                await _persistSession();
+                if (context.mounted) {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
+                }
               },
               child: Text(
-                'خروج',
+                'خروج وحفظ',
                 style: textTheme.label.copyWith(color: palette.error),
               ),
             ),

@@ -94,6 +94,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   void dispose() {
     themeService.removeListener(_onThemeChanged);
     ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
+    _recordProgress(_currentPage);
     _pageController.dispose();
     _noteController.dispose();
     super.dispose();
@@ -279,6 +280,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _checkBookmark();
     _loadPage(pageNum);
     _checkCompletion(pageNum);
+    _recordProgress(pageNum);
 
     if (pageNum < _totalPages) _loadPage(pageNum + 1);
     if (pageNum > 1) _loadPage(pageNum - 1);
@@ -406,9 +408,15 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     final textTheme = context.text;
     final bgColor = _getBackgroundColor(palette);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
+        _recordProgress(_currentPage);
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
         backgroundColor: bgColor,
         body: Column(
           children: [
@@ -545,6 +553,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
