@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
@@ -24,6 +25,22 @@ import 'widgets/quran_sliver_header.dart';
 import 'widgets/quran_stats_banner.dart';
 import 'widgets/reading_history_sheet.dart';
 
+List<Map<String, dynamic>> _performAyahSearch(String query) {
+  final searchResult = searchWords(query, limit: 100);
+  final rawList = searchResult['result'] as List? ?? const [];
+  final results = <Map<String, dynamic>>[];
+  for (final raw in rawList) {
+    if (raw is Map) {
+      results.add({
+        'sora': (raw['sora'] as num).toInt(),
+        'aya_no': (raw['aya_no'] as num).toInt(),
+        'text': raw['text']?.toString(),
+      });
+    }
+  }
+  return results;
+}
+
 class QuranPage extends StatefulWidget {
   const QuranPage({super.key});
 
@@ -33,6 +50,7 @@ class QuranPage extends StatefulWidget {
 
 class _QuranPageState extends State<QuranPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final ReadingStatsService _statsService = ReadingStatsService();
 
   List<int> _filteredSurahs = List.generate(114, (i) => i + 1);
@@ -51,6 +69,7 @@ class _QuranPageState extends State<QuranPage> {
   LastRead? _lastRead;
   List<Bookmark> _bookmarks = [];
   Timer? _searchDebounce;
+  int _searchGeneration = 0;
 
   @override
   void initState() {
@@ -68,6 +87,7 @@ class _QuranPageState extends State<QuranPage> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -126,8 +146,10 @@ class _QuranPageState extends State<QuranPage> {
       }(),
   };
 
-  void _filterIndex() {
+  void _filterIndex() async {
     final query = _searchController.text.trim();
+    final currentGen = ++_searchGeneration;
+
     if (query.isEmpty) {
       if (mounted) {
         setState(() {
@@ -158,42 +180,52 @@ class _QuranPageState extends State<QuranPage> {
         .where((i) => _hizbSearchIndex[i]?.contains(normalizedQuery) ?? false)
         .toList();
 
-    final matchingAyahs = <QuranAyahMatch>[];
-    if (query.length >= 2) {
-      final searchResult = searchWords(query, limit: 100);
-      final rawList = searchResult['result'] as List? ?? const [];
-      for (final raw in rawList) {
-        if (raw is Map) {
-          final sora = (raw['sora'] as num).toInt();
-          final ayaNo = (raw['aya_no'] as num).toInt();
-          final page = quran.getPageNumber(sora, ayaNo);
-          final juz = quran.getJuzNumber(sora, ayaNo);
-          final surahName = quran.getSurahNameArabic(sora);
-          final verseText = raw['text']?.toString() ??
-              quran.getVerse(sora, ayaNo, verseEndSymbol: false);
-
-          matchingAyahs.add(
-            QuranAyahMatch(
-              surahNumber: sora,
-              ayahNumber: ayaNo,
-              pageNumber: page,
-              juzNumber: juz,
-              surahName: surahName,
-              verseText: verseText,
-              query: query,
-            ),
-          );
-        }
-      }
-    }
-
     if (mounted) {
       setState(() {
         _filteredSurahs = matchingSurahs;
         _filteredJuzs = matchingJuzs;
         _filteredHizbs = matchingHizbs;
-        _filteredAyahs = matchingAyahs;
       });
+    }
+
+    if (query.length >= 2) {
+      final rawList = await compute(_performAyahSearch, query);
+      if (_searchGeneration != currentGen || !mounted) return;
+
+      final matchingAyahs = <QuranAyahMatch>[];
+      for (final raw in rawList) {
+        final sora = raw['sora'] as int;
+        final ayaNo = raw['aya_no'] as int;
+        final page = quran.getPageNumber(sora, ayaNo);
+        final juz = quran.getJuzNumber(sora, ayaNo);
+        final surahName = quran.getSurahNameArabic(sora);
+        final verseText = raw['text'] ??
+            quran.getVerse(sora, ayaNo, verseEndSymbol: false);
+
+        matchingAyahs.add(
+          QuranAyahMatch(
+            surahNumber: sora,
+            ayahNumber: ayaNo,
+            pageNumber: page,
+            juzNumber: juz,
+            surahName: surahName,
+            verseText: verseText,
+            query: query,
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _filteredAyahs = matchingAyahs;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _filteredAyahs = const [];
+        });
+      }
     }
   }
 
@@ -354,88 +386,97 @@ class _QuranPageState extends State<QuranPage> {
           ? Center(child: CircularProgressIndicator(color: palette.gold))
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
-                if (!isSearching)
-                  SliverToBoxAdapter(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Stats row (أيام التتابع • قراءة اليوم • المحفوظات)
-                        Padding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                            AppSpace.lg,
-                            AppSpace.xs,
-                            AppSpace.lg,
-                            AppSpace.xs,
-                          ),
-                          child: Row(
+                SliverToBoxAdapter(
+                  key: const ValueKey('quran_stats_banner'),
+                  child: AnimatedSize(
+                    duration: AppMotion.base,
+                    curve: Curves.easeInOut,
+                    child: isSearching
+                        ? const SizedBox.shrink()
+                        : Column(
+                            key: const ValueKey('quran_stats_content'),
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: QuranStatCard(
-                                  label: 'أيام التتابع',
-                                  value: '$_streak',
-                                  icon: Icons.local_fire_department_rounded,
-                                  iconColor: palette.gold,
+                              // Stats row (أيام التتابع • قراءة اليوم • المحفوظات)
+                              Padding(
+                                padding: const EdgeInsetsDirectional.fromSTEB(
+                                  AppSpace.lg,
+                                  AppSpace.xs,
+                                  AppSpace.lg,
+                                  AppSpace.xs,
                                 ),
-                              ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(
-                                child: QuranStatCard(
-                                  label: 'قراءة اليوم',
-                                  value: '$_minutesToday د',
-                                  icon: Icons.timer_outlined,
-                                  iconColor: palette.primary,
-                                  subtitle:
-                                      '${(_minutesToday / _dailyGoal * 100).clamp(0, 100).toInt()}% من الهدف',
-                                ),
-                              ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(
-                                child: QuranStatCard(
-                                  label: 'المحفوظات',
-                                  value: '${_bookmarks.length}',
-                                  icon: Icons.bookmark_rounded,
-                                  iconColor: palette.gold,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const BookmarksPage(),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: QuranStatCard(
+                                        label: 'أيام التتابع',
+                                        value: '$_streak',
+                                        icon: Icons.local_fire_department_rounded,
+                                        iconColor: palette.gold,
                                       ),
-                                    ).then((_) => _loadData());
-                                  },
+                                    ),
+                                    const SizedBox(width: AppSpace.sm),
+                                    Expanded(
+                                      child: QuranStatCard(
+                                        label: 'قراءة اليوم',
+                                        value: '$_minutesToday د',
+                                        icon: Icons.timer_outlined,
+                                        iconColor: palette.primary,
+                                        subtitle:
+                                            '${(_minutesToday / _dailyGoal * 100).clamp(0, 100).toInt()}% من الهدف',
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpace.sm),
+                                    Expanded(
+                                      child: QuranStatCard(
+                                        label: 'المحفوظات',
+                                        value: '${_bookmarks.length}',
+                                        icon: Icons.bookmark_rounded,
+                                        iconColor: palette.gold,
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => const BookmarksPage(),
+                                            ),
+                                          ).then((_) => _loadData());
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+
+                              // Last read banner (آخر قراءة)
+                              if (_lastRead != null)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.fromSTEB(
+                                    AppSpace.lg,
+                                    AppSpace.xs,
+                                    AppSpace.lg,
+                                    AppSpace.xs,
+                                  ),
+                                  child: QuranLastReadBanner(
+                                    lastRead: _lastRead!,
+                                    onTap: () => _openSurah(
+                                      _lastRead!.surah,
+                                      ayah: _lastRead!.ayah,
+                                    ),
+                                  ),
+                                ),
+
+                              const SizedBox(height: AppSpace.xs),
                             ],
                           ),
-                        ),
-
-                        // Last read banner (آخر قراءة)
-                        if (_lastRead != null)
-                          Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                              AppSpace.lg,
-                              AppSpace.xs,
-                              AppSpace.lg,
-                              AppSpace.xs,
-                            ),
-                            child: QuranLastReadBanner(
-                              lastRead: _lastRead!,
-                              onTap: () => _openSurah(
-                                _lastRead!.surah,
-                                ayah: _lastRead!.ayah,
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: AppSpace.xs),
-                      ],
-                    ),
                   ),
+                ),
 
                 // Pinned Category Tabs & Search Bar
                 SliverPersistentHeader(
+                  key: const ValueKey('quran_pinned_header'),
                   pinned: true,
                   delegate: QuranPinnedHeaderDelegate(
                     selectedTabIndex: _selectedTabIndex,
@@ -445,6 +486,7 @@ class _QuranPageState extends State<QuranPage> {
                       setState(() => _selectedTabIndex = index);
                     },
                     searchController: _searchController,
+                    searchFocusNode: _searchFocusNode,
                     onSearchChanged: _filterIndex,
                     isSearching: isSearching,
                     searchFilterIndex: _searchFilterIndex,
@@ -471,7 +513,10 @@ class _QuranPageState extends State<QuranPage> {
                     onOpenSurah: _openSurah,
                     onToggleBookmark: _toggleBookmark,
                     onOpenAyah: _openAyahMatch,
-                    onResetSearch: () => _searchController.clear(),
+                    onResetSearch: () {
+                      _searchController.clear();
+                      _searchFocusNode.requestFocus();
+                    },
                     onFilterChanged: (index) =>
                         setState(() => _searchFilterIndex = index),
                   )

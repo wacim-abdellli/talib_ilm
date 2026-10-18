@@ -1,11 +1,35 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:talib_ilm/core/utils/arabic_search_utils.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/quran_ayah_search_card.dart';
 
+List<Map<String, dynamic>> _performAyahSearch(String query) {
+  final searchResult = searchWords(query, limit: 100);
+  final rawList = searchResult['result'] as List? ?? const [];
+  final results = <Map<String, dynamic>>[];
+  for (final raw in rawList) {
+    if (raw is Map) {
+      results.add({
+        'sora': (raw['sora'] as num).toInt(),
+        'aya_no': (raw['aya_no'] as num).toInt(),
+        'text': raw['text']?.toString(),
+      });
+    }
+  }
+  return results;
+}
+
 void main() {
   group('Quran Word & Ayah Search Tests', () {
+    test('compute background search works without blocking', () async {
+      final res = await compute(_performAyahSearch, 'الكوثر');
+      expect(res.isNotEmpty, isTrue);
+      expect(res.first['sora'], 108);
+      expect(res.first['aya_no'], 1);
+    });
+
     test('Arabic word matching in ayah finds Al-Kawthar', () {
       final res = searchWords('الكوثر', limit: 5);
       expect(res['occurences'], greaterThan(0));

@@ -10,6 +10,7 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int bookmarksCount;
   final ValueChanged<int> onTabSelected;
   final TextEditingController searchController;
+  final FocusNode searchFocusNode;
   final VoidCallback onSearchChanged;
   final bool isSearching;
   final int searchFilterIndex;
@@ -22,6 +23,7 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.bookmarksCount,
     required this.onTabSelected,
     required this.searchController,
+    required this.searchFocusNode,
     required this.onSearchChanged,
     this.isSearching = false,
     this.searchFilterIndex = 0,
@@ -164,7 +166,9 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
             child: SizedBox(
               height: 48,
               child: TextField(
+                key: const ValueKey('quran_search_text_field'),
                 controller: searchController,
+                focusNode: searchFocusNode,
                 textDirection: TextDirection.rtl,
                 textInputAction: TextInputAction.search,
                 style: textTheme.body.copyWith(color: palette.text),
