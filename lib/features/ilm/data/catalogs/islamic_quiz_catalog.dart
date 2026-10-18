@@ -1,22 +1,26 @@
 import 'dart:math';
 
 import '../models/islamic_quiz_models.dart';
-import 'quiz_aqidah_fiqh_catalog.dart';
-import 'quiz_hadith_quran_catalog.dart';
-import 'quiz_seerah_prophets_adab_catalog.dart';
+import 'quiz_adab_catalog.dart';
+import 'quiz_aqidah_catalog.dart';
+import 'quiz_fiqh_catalog.dart';
+import 'quiz_hadith_catalog.dart';
+import 'quiz_prophets_catalog.dart';
+import 'quiz_quran_catalog.dart';
+import 'quiz_seerah_catalog.dart';
 
 /// The master catalog aggregating all authentic Islamic disciplines, levels, and questions.
 class IslamicQuizCatalog {
   IslamicQuizCatalog._();
 
   static List<FanQuiz> get founoun => [
-        QuizAqidahFiqhCatalog.aqidahFan,
-        QuizAqidahFiqhCatalog.fiqhFan,
-        QuizHadithQuranCatalog.hadithFan,
-        QuizHadithQuranCatalog.quranFan,
-        QuizSeerahProphetsAdabCatalog.seerahFan,
-        QuizSeerahProphetsAdabCatalog.prophetsNamesFan,
-        QuizSeerahProphetsAdabCatalog.adabFan,
+        QuizAqidahCatalog.aqidahFan,
+        QuizFiqhCatalog.fiqhFan,
+        QuizHadithCatalog.hadithFan,
+        QuizQuranCatalog.quranFan,
+        QuizSeerahCatalog.seerahFan,
+        QuizProphetsCatalog.prophetsNamesFan,
+        QuizAdabCatalog.adabFan,
       ];
 
   static FanQuiz? getFan(String id) {

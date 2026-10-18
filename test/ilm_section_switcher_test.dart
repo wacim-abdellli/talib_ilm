@@ -38,8 +38,8 @@ void main() {
         ),
       );
 
-      expect(find.text('متون طالب العلم'), findsOneWidget);
-      expect(find.text('المكتبة'), findsOneWidget);
+      expect(find.text('المتون العلمية'), findsOneWidget);
+      expect(find.text('المكتبة الشاملة'), findsOneWidget);
       expect(find.text('خزانة التراث'), findsNothing);
     });
 
@@ -59,12 +59,12 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('المكتبة'));
+      await tester.tap(find.text('المكتبة الشاملة'));
       await tester.pumpAndSettle();
 
       expect(selected, equals(IlmSection.shamela));
 
-      await tester.tap(find.text('متون طالب العلم'));
+      await tester.tap(find.text('المتون العلمية'));
       await tester.pumpAndSettle();
 
       expect(selected, equals(IlmSection.mutun));
@@ -90,8 +90,8 @@ void main() {
           isNull,
           reason: 'Failed at textScale $scale',
         );
-        expect(find.text('متون طالب العلم'), findsOneWidget);
-        expect(find.text('المكتبة'), findsOneWidget);
+        expect(find.text('المتون العلمية'), findsOneWidget);
+        expect(find.text('المكتبة الشاملة'), findsOneWidget);
       }
     });
 
@@ -111,7 +111,7 @@ void main() {
 
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        expect(find.text('المكتبة'), findsOneWidget);
+        expect(find.text('المكتبة الشاملة'), findsOneWidget);
       }
     });
   });

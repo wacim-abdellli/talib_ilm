@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/features/ilm/data/models/book_progress_model.dart';
 import 'package:talib_ilm/features/ilm/data/services/book_progress_service.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/islamic_quiz_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/services/quiz_progress_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/ilm_discipline_section.dart';
 
@@ -129,6 +130,32 @@ void main() {
       final aqidah = disciplines.firstWhere((d) => d.key == 'aqidah');
       expect(aqidah.fan, isNotNull);
       expect(aqidah.fan!.id, equals('aqidah'));
+    });
+
+    test('IslamicQuizCatalog has 210 authentic questions across 7 disciplines', () {
+      final founoun = IslamicQuizCatalog.founoun;
+      expect(founoun.length, equals(7));
+
+      expect(IslamicQuizCatalog.totalQuestionsCount, equals(210));
+      expect(IslamicQuizCatalog.totalLevelsCount, equals(21));
+
+      for (final fan in founoun) {
+        expect(fan.levels.length, equals(3), reason: '${fan.id} should have 3 levels');
+        for (final level in fan.levels) {
+          expect(level.questions.length, equals(10), reason: '${level.id} should have 10 questions');
+          for (final q in level.questions) {
+            expect(q.options.length, equals(4), reason: '${q.id} should have 4 options');
+            expect(q.correctIndex, inInclusiveRange(0, 3), reason: '${q.id} correctIndex must be 0-3');
+            expect(q.question.trim().isNotEmpty, isTrue, reason: '${q.id} question text must not be empty');
+            expect(q.lesson.trim().isNotEmpty, isTrue, reason: '${q.id} lesson text must not be empty');
+            expect(q.evidence.trim().isNotEmpty, isTrue, reason: '${q.id} evidence text must not be empty');
+            expect(q.reference.trim().isNotEmpty, isTrue, reason: '${q.id} reference text must not be empty');
+          }
+        }
+      }
+
+      final daily = IslamicQuizCatalog.getDailyChallengeQuestions(count: 10);
+      expect(daily.length, equals(10));
     });
   });
 }
