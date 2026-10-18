@@ -11,6 +11,11 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<int> onTabSelected;
   final TextEditingController searchController;
   final VoidCallback onSearchChanged;
+  final bool isSearching;
+  final int searchFilterIndex;
+  final ValueChanged<int>? onSearchFilterSelected;
+  final int surahsCount;
+  final int ayahsCount;
 
   const QuranPinnedHeaderDelegate({
     required this.selectedTabIndex,
@@ -18,6 +23,11 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onTabSelected,
     required this.searchController,
     required this.onSearchChanged,
+    this.isSearching = false,
+    this.searchFilterIndex = 0,
+    this.onSearchFilterSelected,
+    this.surahsCount = 0,
+    this.ayahsCount = 0,
   });
 
   @override
@@ -30,7 +40,11 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant QuranPinnedHeaderDelegate oldDelegate) {
     return oldDelegate.selectedTabIndex != selectedTabIndex ||
         oldDelegate.bookmarksCount != bookmarksCount ||
-        oldDelegate.searchController.text != searchController.text;
+        oldDelegate.searchController.text != searchController.text ||
+        oldDelegate.isSearching != isSearching ||
+        oldDelegate.searchFilterIndex != searchFilterIndex ||
+        oldDelegate.surahsCount != surahsCount ||
+        oldDelegate.ayahsCount != ayahsCount;
   }
 
   @override
@@ -62,7 +76,7 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // 1. Index Category Tabs (السور، الأجزاء، الأحزاب، المحفوظات)
+          // 1. Index Category Tabs (السور، الأجزاء، الأحزاب، المحفوظات) OR Search Filter Tabs
           Padding(
             padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.lg,
@@ -75,40 +89,67 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
                 border: Border.all(color: palette.border),
               ),
               child: Row(
-                children: [
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      title: 'السور (114)',
-                      isSelected: selectedTabIndex == 0,
-                      onTap: () => onTabSelected(0),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      title: 'الأجزاء (30)',
-                      isSelected: selectedTabIndex == 1,
-                      onTap: () => onTabSelected(1),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      title: 'الأحزاب (60)',
-                      isSelected: selectedTabIndex == 2,
-                      onTap: () => onTabSelected(2),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      title: 'المحفوظات ($bookmarksCount)',
-                      isSelected: selectedTabIndex == 3,
-                      onTap: () => onTabSelected(3),
-                    ),
-                  ),
-                ],
+                children: isSearching
+                    ? [
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'الكل (${surahsCount + ayahsCount})',
+                            isSelected: searchFilterIndex == 0,
+                            onTap: () => onSearchFilterSelected?.call(0),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'السور ($surahsCount)',
+                            isSelected: searchFilterIndex == 1,
+                            onTap: () => onSearchFilterSelected?.call(1),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'الآيات ($ayahsCount)',
+                            isSelected: searchFilterIndex == 2,
+                            onTap: () => onSearchFilterSelected?.call(2),
+                          ),
+                        ),
+                      ]
+                    : [
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'السور (114)',
+                            isSelected: selectedTabIndex == 0,
+                            onTap: () => onTabSelected(0),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'الأجزاء (30)',
+                            isSelected: selectedTabIndex == 1,
+                            onTap: () => onTabSelected(1),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'الأحزاب (60)',
+                            isSelected: selectedTabIndex == 2,
+                            onTap: () => onTabSelected(2),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildTabButton(
+                            context: context,
+                            title: 'المحفوظات ($bookmarksCount)',
+                            isSelected: selectedTabIndex == 3,
+                            onTap: () => onTabSelected(3),
+                          ),
+                        ),
+                      ],
               ),
             ),
           ),
@@ -129,13 +170,9 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
                 style: textTheme.body.copyWith(color: palette.text),
                 cursorColor: palette.primary,
                 decoration: InputDecoration(
-                  hintText: selectedTabIndex == 0
-                      ? 'ابحث عن سورة بالاسم أو الرقم...'
-                      : selectedTabIndex == 1
-                          ? 'ابحث عن جزء بالاسم أو الرقم أو الآية...'
-                          : selectedTabIndex == 2
-                              ? 'ابحث عن حزب بالاسم أو الرقم...'
-                              : 'ابحث في المحفوظات والتدبر...',
+                  hintText: isSearching || selectedTabIndex != 3
+                      ? 'ابحث عن سورة، آية، أو كلمة...'
+                      : 'ابحث في المحفوظات والتدبر...',
                   hintStyle: textTheme.bodySmall.copyWith(
                     color: palette.textMuted,
                   ),

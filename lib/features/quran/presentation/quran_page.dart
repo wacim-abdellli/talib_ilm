@@ -8,22 +8,21 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/utils/arabic_search_utils.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/models/hizb_catalog.dart';
 import '../data/services/bookmark_service.dart';
 import '../data/services/reading_history_service.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
-import 'widgets/hizb_card.dart';
-import 'widgets/juz_card.dart';
 import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
+import 'widgets/quran_ayah_search_card.dart';
 import 'widgets/quran_bookmarks_tab_view.dart';
+import 'widgets/quran_index_slivers.dart';
+import 'widgets/quran_search_results_view.dart';
 import 'widgets/quran_sliver_header.dart';
 import 'widgets/quran_stats_banner.dart';
 import 'widgets/reading_history_sheet.dart';
-import 'widgets/surah_card.dart';
 
 class QuranPage extends StatefulWidget {
   const QuranPage({super.key});
@@ -39,6 +38,8 @@ class _QuranPageState extends State<QuranPage> {
   List<int> _filteredSurahs = List.generate(114, (i) => i + 1);
   List<int> _filteredJuzs = List.generate(30, (i) => i + 1);
   List<int> _filteredHizbs = List.generate(60, (i) => i + 1);
+  List<QuranAyahMatch> _filteredAyahs = const [];
+  int _searchFilterIndex = 0; // 0: All, 1: Surahs, 2: Ayahs
   int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs, 2: Hizbs, 3: Bookmarks
   bool _isLoading = true;
 
@@ -133,25 +134,65 @@ class _QuranPageState extends State<QuranPage> {
           _filteredSurahs = List.generate(114, (i) => i + 1);
           _filteredJuzs = List.generate(30, (i) => i + 1);
           _filteredHizbs = List.generate(60, (i) => i + 1);
+          _filteredAyahs = const [];
+          _searchFilterIndex = 0;
         });
       }
       return;
     }
 
     final normalizedQuery = ArabicSearchUtils.normalize(query);
+    final isNumeric = int.tryParse(query) != null;
+    final queryNumber = int.tryParse(query);
+
+    final matchingSurahs = List.generate(114, (i) => i + 1).where((i) {
+      if (isNumeric && queryNumber == i) return true;
+      return _surahSearchIndex[i]?.contains(normalizedQuery) ?? false;
+    }).toList();
+
+    final matchingJuzs = List.generate(30, (i) => i + 1)
+        .where((i) => _juzSearchIndex[i]?.contains(normalizedQuery) ?? false)
+        .toList();
+
+    final matchingHizbs = List.generate(60, (i) => i + 1)
+        .where((i) => _hizbSearchIndex[i]?.contains(normalizedQuery) ?? false)
+        .toList();
+
+    final matchingAyahs = <QuranAyahMatch>[];
+    if (query.length >= 2) {
+      final searchResult = searchWords(query, limit: 100);
+      final rawList = searchResult['result'] as List? ?? const [];
+      for (final raw in rawList) {
+        if (raw is Map) {
+          final sora = (raw['sora'] as num).toInt();
+          final ayaNo = (raw['aya_no'] as num).toInt();
+          final page = quran.getPageNumber(sora, ayaNo);
+          final juz = quran.getJuzNumber(sora, ayaNo);
+          final surahName = quran.getSurahNameArabic(sora);
+          final verseText = raw['text']?.toString() ??
+              quran.getVerse(sora, ayaNo, verseEndSymbol: false);
+
+          matchingAyahs.add(
+            QuranAyahMatch(
+              surahNumber: sora,
+              ayahNumber: ayaNo,
+              pageNumber: page,
+              juzNumber: juz,
+              surahName: surahName,
+              verseText: verseText,
+              query: query,
+            ),
+          );
+        }
+      }
+    }
+
     if (mounted) {
       setState(() {
-        _filteredSurahs = List.generate(114, (i) => i + 1)
-            .where((i) => _surahSearchIndex[i]?.contains(normalizedQuery) ?? false)
-            .toList();
-
-        _filteredJuzs = List.generate(30, (i) => i + 1)
-            .where((i) => _juzSearchIndex[i]?.contains(normalizedQuery) ?? false)
-            .toList();
-
-        _filteredHizbs = List.generate(60, (i) => i + 1)
-            .where((i) => _hizbSearchIndex[i]?.contains(normalizedQuery) ?? false)
-            .toList();
+        _filteredSurahs = matchingSurahs;
+        _filteredJuzs = matchingJuzs;
+        _filteredHizbs = matchingHizbs;
+        _filteredAyahs = matchingAyahs;
       });
     }
   }
@@ -223,6 +264,41 @@ class _QuranPageState extends State<QuranPage> {
         durationSeconds: duration,
         versesRead: 0,
         surahNumber: _lastRead?.surah ?? 1,
+      );
+    }
+
+    _loadData();
+  }
+
+  Future<void> _openAyahMatch(QuranAyahMatch match) async {
+    final startTime = DateTime.now();
+    QcfFontLoader.preloadPages(match.pageNumber, radius: 2);
+
+    ReadingHistoryService.recordReading(
+      surah: match.surahNumber,
+      ayah: match.ayahNumber,
+      page: match.pageNumber,
+    );
+
+    if (!mounted) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MushafPageViewer(
+          initialPage: match.pageNumber,
+          initialSurah: match.surahNumber,
+          initialAyah: match.ayahNumber,
+        ),
+      ),
+    );
+
+    final duration = DateTime.now().difference(startTime).inSeconds;
+    if (duration > 5) {
+      await _statsService.recordSession(
+        durationSeconds: duration,
+        versesRead: 0,
+        surahNumber: match.surahNumber,
       );
     }
 
@@ -370,15 +446,61 @@ class _QuranPageState extends State<QuranPage> {
                     },
                     searchController: _searchController,
                     onSearchChanged: _filterIndex,
+                    isSearching: isSearching,
+                    searchFilterIndex: _searchFilterIndex,
+                    onSearchFilterSelected: (index) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _searchFilterIndex = index);
+                    },
+                    surahsCount: _filteredSurahs.length,
+                    ayahsCount: _filteredAyahs.length,
                   ),
                 ),
 
-                if (_selectedTabIndex == 0)
-                  ..._buildSurahsSlivers(context)
+                if (isSearching)
+                  ...buildQuranSearchResultsSlivers(
+                    context: context,
+                    query: _searchController.text.trim(),
+                    searchFilterIndex: _searchFilterIndex,
+                    filteredSurahs: _filteredSurahs,
+                    filteredAyahs: _filteredAyahs,
+                    bookmarkedSurahSet: _bookmarks
+                        .where((b) => b.isSurah)
+                        .map((b) => b.surah)
+                        .toSet(),
+                    onOpenSurah: _openSurah,
+                    onToggleBookmark: _toggleBookmark,
+                    onOpenAyah: _openAyahMatch,
+                    onResetSearch: () => _searchController.clear(),
+                    onFilterChanged: (index) =>
+                        setState(() => _searchFilterIndex = index),
+                  )
+                else if (_selectedTabIndex == 0)
+                  ...QuranIndexSlivers.buildSurahsSlivers(
+                    context: context,
+                    filteredSurahs: _filteredSurahs,
+                    bookmarkedSurahSet: _bookmarks
+                        .where((b) => b.isSurah)
+                        .map((b) => b.surah)
+                        .toSet(),
+                    onOpenSurah: _openSurah,
+                    onToggleBookmark: _toggleBookmark,
+                    onResetSearch: () => _searchController.clear(),
+                  )
                 else if (_selectedTabIndex == 1)
-                  ..._buildJuzsSlivers(context)
+                  ...QuranIndexSlivers.buildJuzsSlivers(
+                    context: context,
+                    filteredJuzs: _filteredJuzs,
+                    onOpenPage: _openPage,
+                    onResetSearch: () => _searchController.clear(),
+                  )
                 else if (_selectedTabIndex == 2)
-                  ..._buildHizbsSlivers(context)
+                  ...QuranIndexSlivers.buildHizbsSlivers(
+                    context: context,
+                    filteredHizbs: _filteredHizbs,
+                    onOpenPage: _openPage,
+                    onResetSearch: () => _searchController.clear(),
+                  )
                 else
                   SliverFillRemaining(
                     hasScrollBody: true,
@@ -392,141 +514,5 @@ class _QuranPageState extends State<QuranPage> {
               ],
             ),
     );
-  }
-
-  List<Widget> _buildSurahsSlivers(BuildContext context) {
-    if (_filteredSurahs.isEmpty) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-            child: EmptyState(
-              icon: Icons.search_off_rounded,
-              title: 'لا توجد نتائج',
-              subtitle:
-                  'لم نتمكن من العثور على سورة تطابق بحثك. جرّب كتابة اسم السورة أو رقمها.',
-              actionLabel: 'إعادة ضبط البحث',
-              onAction: () => _searchController.clear(),
-            ),
-          ),
-        ),
-      ];
-    }
-
-    final bookmarkedSurahSet = _bookmarks
-        .where((b) => b.isSurah)
-        .map((b) => b.surah)
-        .toSet();
-
-    return [
-      SliverList.builder(
-        itemCount: _filteredSurahs.length,
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: true,
-        itemBuilder: (context, index) {
-          final surahNum = _filteredSurahs[index];
-          final isBookmarked = bookmarkedSurahSet.contains(surahNum);
-
-          return SurahCard(
-            key: ValueKey('surah_$surahNum'),
-            surahNumber: surahNum,
-            isBookmarked: isBookmarked,
-            onTap: () => _openSurah(surahNum),
-            onBookmarkTap: () => _toggleBookmark(surahNum),
-          );
-        },
-      ),
-      SliverToBoxAdapter(
-        child: SizedBox(height: AppSize.navClearance(context)),
-      ),
-    ];
-  }
-
-  List<Widget> _buildJuzsSlivers(BuildContext context) {
-    if (_filteredJuzs.isEmpty) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-            child: EmptyState(
-              icon: Icons.search_off_rounded,
-              title: 'لا توجد نتائج',
-              subtitle:
-                  'لم نتمكن من العثور على جزء يطابق بحثك. جرّب كتابة رقم الجزء أو اسم السورة.',
-              actionLabel: 'إعادة ضبط البحث',
-              onAction: () => _searchController.clear(),
-            ),
-          ),
-        ),
-      ];
-    }
-
-    return [
-      SliverList.builder(
-        itemCount: _filteredJuzs.length,
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: true,
-        itemBuilder: (context, index) {
-          final juzNum = _filteredJuzs[index];
-          return JuzCard(
-            key: ValueKey('juz_$juzNum'),
-            juzNumber: juzNum,
-            onTap: () {
-              final map = quran.getSurahAndVersesFromJuz(juzNum);
-              final firstSurah = map.keys.first;
-              final firstVerse = map[firstSurah]!.first;
-              final page = quran.getPageNumber(firstSurah, firstVerse);
-              _openPage(page);
-            },
-          );
-        },
-      ),
-      SliverToBoxAdapter(
-        child: SizedBox(height: AppSize.navClearance(context)),
-      ),
-    ];
-  }
-
-  List<Widget> _buildHizbsSlivers(BuildContext context) {
-    if (_filteredHizbs.isEmpty) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-            child: EmptyState(
-              icon: Icons.search_off_rounded,
-              title: 'لا توجد نتائج',
-              subtitle:
-                  'لم نتمكن من العثور على حزب يطابق بحثك. جرّب كتابة اسم الحزب أو السورة.',
-              actionLabel: 'إعادة ضبط البحث',
-              onAction: () => _searchController.clear(),
-            ),
-          ),
-        ),
-      ];
-    }
-
-    return [
-      SliverList.builder(
-        itemCount: _filteredHizbs.length,
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: true,
-        itemBuilder: (context, index) {
-          final hizbNum = _filteredHizbs[index];
-          final hizb = HizbCatalog.getHizb(hizbNum);
-          return HizbCard(
-            key: ValueKey('hizb_$hizbNum'),
-            hizb: hizb,
-            onOpenPage: _openPage,
-          );
-        },
-      ),
-      SliverToBoxAdapter(
-        child: SizedBox(height: AppSize.navClearance(context)),
-      ),
-    ];
   }
 }
