@@ -34,187 +34,206 @@ class IlmMutunSectionView {
         : allBooks.where((b) => b.level == selectedMutunLevel).toList();
 
     if (!isFocused) {
-      // ── Overview Shelf Pavilion for Mutun (Compact, zero scroll fatigue) ──
+      // ── Clean Partitioned Shelf Section ──────────────────────────
       return [
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsetsDirectional.only(
-              start: AppSpace.lg,
-              end: AppSpace.lg,
-              bottom: AppSpace.lg,
+              bottom: AppSpace.xl,
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: AppRadius.lgRadius,
-                border: Border.all(color: palette.border, width: 0.9),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      AppSpace.md,
-                      AppSpace.md,
-                      AppSpace.md,
-                      AppSpace.xs,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                          decoration: BoxDecoration(
-                            color: palette.primarySoft,
-                            borderRadius: AppRadius.smRadius,
-                          ),
-                          child: MutunRosetteIcon(
-                            size: AppIcon.sm,
-                            color: palette.primary,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'متون طالب العلم',
-                                style: context.text.titleSmall.copyWith(
-                                  color: palette.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'المنهاج العلمي التأصيلي (٥ مستويات)',
-                                style: context.text.caption.copyWith(
-                                  color: palette.textMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-
-                        // Curriculum Quiz Launcher Button
-                        Semantics(
-                          button: true,
-                          label: 'مسابقات المنهاج التأصيلي',
-                          child: Material(
-                            color: palette.goldSoft,
-                            borderRadius: AppRadius.pillRadius,
-                            child: InkWell(
-                              borderRadius: AppRadius.pillRadius,
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                onOpenCurriculumQuiz();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xs,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.emoji_events_outlined,
-                                      size: AppIcon.xs,
-                                      color: palette.gold,
-                                    ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Text(
-                                      'اختبار المنهاج',
-                                      style: context.text.caption.copyWith(
-                                        color: palette.gold,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-
-                        // View All Button
-                        Semantics(
-                          button: true,
-                          label: 'عرض كل المتون',
-                          child: Material(
-                            color: palette.primarySoft,
-                            borderRadius: AppRadius.pillRadius,
-                            child: InkWell(
-                              borderRadius: AppRadius.pillRadius,
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                onViewAll();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xs,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'عرض الكل (${allBooks.length})',
-                                      style: context.text.caption.copyWith(
-                                        color: palette.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Icon(
-                                      Icons.arrow_back_ios_new_rounded,
-                                      size: AppIcon.xs,
-                                      color: palette.primary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── 1. Elegant Two-Tier Mutun Header ──
+                Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.lg,
                   ),
-
-                  const SizedBox(height: AppSpace.xs),
-
-                  // Horizontal Mutun Bookshelf with real book cover colors
-                  SizedBox(
-                    height: 165,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        AppSpace.md,
-                        0,
-                        AppSpace.md,
-                        AppSpace.md,
-                      ),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: allBooks.length,
-                      separatorBuilder: (context, index) =>
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Tier 1: Mutun Rosette + Full Title + Count Pill <---> View All
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                            decoration: BoxDecoration(
+                              color: palette.primarySoft,
+                              borderRadius: AppRadius.smRadius,
+                            ),
+                            child: MutunRosetteIcon(
+                              size: AppIcon.sm,
+                              color: palette.primary,
+                            ),
+                          ),
                           const SizedBox(width: AppSpace.sm),
-                      itemBuilder: (context, index) {
-                        final book = allBooks[index];
-                        return MutunShelfCard(
-                          book: book,
-                          progress: progressById[book.id],
-                          onOpenReader: () => onNavigateToBook(book),
-                        );
-                      },
-                    ),
+                          Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    'متون طالب العلم',
+                                    style: context.text.title.copyWith(
+                                      color: palette.text,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xs,
+                                    vertical: AppSpace.xxs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: palette.primarySoft,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    '٥ مستويات • ${allBooks.length}',
+                                    style: context.text.caption.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+
+                          // View All Button with arrow
+                          Semantics(
+                            button: true,
+                            label: 'عرض كل المتون',
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: AppRadius.pillRadius,
+                              child: InkWell(
+                                borderRadius: AppRadius.pillRadius,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  onViewAll();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xs,
+                                    vertical: AppSpace.xs,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'عرض الكل',
+                                        style: context.text.caption.copyWith(
+                                          color: palette.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpace.xxs),
+                                      Icon(
+                                        Icons.arrow_back_ios_new_rounded,
+                                        size: AppIcon.xs,
+                                        color: palette.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: AppSpace.xxs),
+
+                      // Tier 2: Subtitle Description + Curriculum Quiz Launcher Pill
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'المنهاج العلمي التأصيلي المتدرج لحفظ المتون',
+                              style: context.text.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Semantics(
+                            button: true,
+                            label: 'مسابقات المنهاج التأصيلي',
+                            child: Material(
+                              color: palette.goldSoft,
+                              borderRadius: AppRadius.pillRadius,
+                              child: InkWell(
+                                borderRadius: AppRadius.pillRadius,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  onOpenCurriculumQuiz();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.xxs,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.emoji_events_outlined,
+                                        size: AppIcon.xs,
+                                        color: palette.gold,
+                                      ),
+                                      const SizedBox(width: AppSpace.xxs),
+                                      Text(
+                                        'اختبار المنهاج',
+                                        style: context.text.caption.copyWith(
+                                          color: palette.gold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: AppSpace.sm),
+
+                // ── 2. Horizontal Mutun Bookshelf ──
+                SizedBox(
+                  height: 195,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.lg,
+                    ),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: allBooks.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: AppSpace.sm),
+                    itemBuilder: (context, index) {
+                      final book = allBooks[index];
+                      return MutunShelfCard(
+                        book: book,
+                        progress: progressById[book.id],
+                        onOpenReader: () => onNavigateToBook(book),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),

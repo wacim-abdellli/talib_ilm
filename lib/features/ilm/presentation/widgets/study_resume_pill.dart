@@ -81,9 +81,7 @@ class StudyResumePill extends StatelessWidget {
 
     final title = book?.title ?? progress.bookTitle;
 
-    return Padding(
-      padding: AppSpace.screenPadding,
-      child: AppCard(
+    return AppCard(
         onTap: () {
           if (onOpenBookId != null) {
             onOpenBookId!(progress.bookId);
@@ -199,8 +197,7 @@ class StudyResumePill extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildStartJourneyCard(
@@ -208,9 +205,7 @@ class StudyResumePill extends StatelessWidget {
     AppPalette palette,
     IlmBook book,
   ) {
-    return Padding(
-      padding: AppSpace.screenPadding,
-      child: AppCard(
+    return AppCard(
         onTap: () => onNavigateToBook(book),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpace.lg,
@@ -269,7 +264,6 @@ class StudyResumePill extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

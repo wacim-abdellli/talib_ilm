@@ -109,108 +109,110 @@ class IlmDisciplineSection {
     final catColors = palette.category(categoryKey);
 
     if (!isFocused) {
-      // ── Overview Shelf Pavilion Card ─────────────────────────────
+      // ── Clean Partitioned Shelf Section ──────────────────────────
       return [
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsetsDirectional.only(
-              start: AppSpace.lg,
-              end: AppSpace.lg,
-              bottom: AppSpace.lg,
+              bottom: AppSpace.xl,
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: AppRadius.lgRadius,
-                border: Border.all(color: palette.border, width: 0.9),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Pavilion Section Header inside card
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      AppSpace.md,
-                      AppSpace.md,
-                      AppSpace.md,
-                      AppSpace.xs,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                          decoration: BoxDecoration(
-                            color: catColors.bg,
-                            borderRadius: AppRadius.smRadius,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── 1. Elegant Two-Tier Discipline Header ──
+                Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Tier 1: Category Icon + Full Title + Count Pill <---> View All
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                            decoration: BoxDecoration(
+                              color: catColors.bg,
+                              borderRadius: AppRadius.smRadius,
+                            ),
+                            child: MutunRosetteIcon(
+                              size: AppIcon.sm,
+                              color: catColors.fg,
+                            ),
                           ),
-                          child: MutunRosetteIcon(
-                            size: AppIcon.sm,
-                            color: catColors.fg,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                title,
-                                style: context.text.titleSmall.copyWith(
-                                  color: palette.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (subtitle.isNotEmpty)
-                                Text(
-                                  subtitle,
-                                  style: context.text.caption.copyWith(
-                                    color: palette.textMuted,
+                          const SizedBox(width: AppSpace.sm),
+                          Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    title,
+                                    style: context.text.title.copyWith(
+                                      color: palette.text,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                            ],
+                                const SizedBox(width: AppSpace.xs),
+                                Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xs,
+                                    vertical: AppSpace.xxs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: catColors.bg,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    '${books.length}',
+                                    style: context.text.caption.copyWith(
+                                      color: catColors.fg,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
+                          const SizedBox(width: AppSpace.xs),
 
-                        // Dedicated Discipline Quiz Button (اختبار الفن)
-                        if (fan != null) ...[
+                          // View All Button with arrow
                           Semantics(
                             button: true,
-                            label: 'اختبار $title',
+                            label: 'عرض كل كتب $title',
                             child: Material(
-                              color: palette.goldSoft,
+                              color: Colors.transparent,
                               borderRadius: AppRadius.pillRadius,
                               child: InkWell(
                                 borderRadius: AppRadius.pillRadius,
                                 onTap: () {
                                   HapticFeedback.selectionClick();
-                                  onOpenQuiz(fan);
+                                  onViewAll();
                                 },
                                 child: Padding(
                                   padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.sm,
+                                    horizontal: AppSpace.xs,
                                     vertical: AppSpace.xs,
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
-                                        Icons.quiz_outlined,
-                                        size: AppIcon.xs,
-                                        color: palette.gold,
-                                      ),
-                                      const SizedBox(width: AppSpace.xxs),
                                       Text(
-                                        'اختبار الفن',
+                                        'عرض الكل',
                                         style: context.text.caption.copyWith(
-                                          color: palette.gold,
+                                          color: palette.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
+                                      ),
+                                      const SizedBox(width: AppSpace.xxs),
+                                      Icon(
+                                        Icons.arrow_back_ios_new_rounded,
+                                        size: AppIcon.xs,
+                                        color: palette.primary,
                                       ),
                                     ],
                                   ),
@@ -218,82 +220,97 @@ class IlmDisciplineSection {
                               ),
                             ),
                           ),
-                          const SizedBox(width: AppSpace.xs),
                         ],
+                      ),
 
-                        // View All Button
-                        Semantics(
-                          button: true,
-                          label: 'عرض كل كتب $title',
-                          child: Material(
-                            color: catColors.bg,
-                            borderRadius: AppRadius.pillRadius,
-                            child: InkWell(
-                              borderRadius: AppRadius.pillRadius,
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                onViewAll();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xs,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'عرض الكل (${books.length})',
-                                      style: context.text.caption.copyWith(
-                                        color: catColors.fg,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                      const SizedBox(height: AppSpace.xxs),
+
+                      // Tier 2: Subtitle Description + Discipline Quiz Pill
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              style: context.text.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (fan != null) ...[
+                            const SizedBox(width: AppSpace.xs),
+                            Semantics(
+                              button: true,
+                              label: 'اختبار $title',
+                              child: Material(
+                                color: palette.goldSoft,
+                                borderRadius: AppRadius.pillRadius,
+                                child: InkWell(
+                                  borderRadius: AppRadius.pillRadius,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    onOpenQuiz(fan);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.sm,
+                                      vertical: AppSpace.xxs,
                                     ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Icon(
-                                      Icons.arrow_back_ios_new_rounded,
-                                      size: AppIcon.xs,
-                                      color: catColors.fg,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.emoji_events_outlined,
+                                          size: AppIcon.xs,
+                                          color: palette.gold,
+                                        ),
+                                        const SizedBox(width: AppSpace.xxs),
+                                        Text(
+                                          'اختبار الفن',
+                                          style: context.text.caption.copyWith(
+                                            color: palette.gold,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpace.xs),
-
-                  // Horizontal Bookshelf
-                  SizedBox(
-                    height: 165,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        AppSpace.md,
-                        0,
-                        AppSpace.md,
-                        AppSpace.md,
+                          ],
+                        ],
                       ),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: books.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: AppSpace.sm),
-                      itemBuilder: (context, index) {
-                        final book = books[index];
-                        return ShamelaShelfCard(
-                          book: book,
-                          onOpen: () => onOpenBook(book),
-                          onOpenShuruh: onOpenShuruh,
-                        );
-                      },
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: AppSpace.sm),
+
+                // ── 2. Horizontal Bookshelf ──
+                SizedBox(
+                  height: 195,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.lg,
+                    ),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: books.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: AppSpace.sm),
+                    itemBuilder: (context, index) {
+                      final book = books[index];
+                      return ShamelaShelfCard(
+                        book: book,
+                        onOpen: () => onOpenBook(book),
+                        onOpenShuruh: onOpenShuruh,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
