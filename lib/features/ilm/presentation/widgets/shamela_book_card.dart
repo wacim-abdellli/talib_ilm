@@ -9,7 +9,7 @@ import '../../data/services/shamela_service.dart';
 
 /// Minimalist, scholarly book card for Maktaba Shamela with clean level indicator
 /// and integrated parent-child commentary link.
-class ShamelaBookCard extends StatelessWidget {
+class ShamelaBookCard extends StatefulWidget {
   final ShamelaBook book;
   final bool isDownloaded;
   final double? downloadProgress;
@@ -41,125 +41,174 @@ class ShamelaBookCard extends StatelessWidget {
   }
 
   @override
+  State<ShamelaBookCard> createState() => _ShamelaBookCardState();
+}
+
+class _ShamelaBookCardState extends State<ShamelaBookCard> {
+  late Future<bool> _isDownloadedFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDownloadedFuture = ShamelaService.isBookDownloaded(widget.book.id);
+  }
+
+  @override
+  void didUpdateWidget(covariant ShamelaBookCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.book.id != oldWidget.book.id ||
+        widget.isDownloaded != oldWidget.isDownloaded) {
+      _isDownloadedFuture = ShamelaService.isBookDownloaded(widget.book.id);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final book = widget.book;
     final shuruh = ShamelaService.getShuruh(book.id);
     final parentBook = book.parentBookId != null
         ? ShamelaService.getParentBook(book.parentBookId!)
         : null;
 
-    return AppCard(
-      onTap: onOpen,
-      padding: const EdgeInsetsDirectional.all(AppSpace.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return FutureBuilder<bool>(
+      future: _isDownloadedFuture,
+      initialData: widget.isDownloaded,
+      builder: (context, snapshot) {
+        final isDownloaded = snapshot.data ?? widget.isDownloaded;
+
+        return AppCard(
+          onTap: widget.onOpen,
+          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: AppIcon.hero,
-                height: AppIcon.hero,
-                decoration: BoxDecoration(
-                  color: palette.surfaceMuted,
-                  borderRadius: AppRadius.smRadius,
-                  border: Border.all(color: palette.border, width: 0.8),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.auto_stories_outlined,
-                  color: palette.primary,
-                  size: AppIcon.sm,
-                ),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: AppIcon.hero,
+                    height: AppIcon.hero,
+                    decoration: BoxDecoration(
+                      color: palette.surfaceMuted,
+                      borderRadius: AppRadius.smRadius,
+                      border: Border.all(color: palette.border, width: 0.8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.auto_stories_outlined,
+                      color: palette.primary,
+                      size: AppIcon.sm,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Clean, minimalist level indicator (No emojis)
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceRaised,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: palette.border,
-                              width: 0.7,
+                        Row(
+                          children: [
+                            // Clean, minimalist level indicator (No emojis)
+                            Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.surfaceRaised,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: palette.border,
+                                  width: 0.7,
+                                ),
+                              ),
+                              child: Text(
+                                ShamelaBookCard.levelLabel(book.level),
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            levelLabel(book.level),
-                            style: textTheme.caption.copyWith(
-                              color: palette.textMuted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        // Category Pill
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
-                            borderRadius: AppRadius.pillRadius,
-                          ),
-                          child: Text(
-                            book.category,
-                            style: textTheme.caption.copyWith(
-                              color: palette.textMuted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.xs),
-                    Text(
-                      book.title,
-                      style: textTheme.titleSmall.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpace.xxs),
-                    Text.rich(
-                      TextSpan(
-                        text: book.author,
-                        style: textTheme.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        children: [
-                          if (book.authorDeath != null) ...[
-                            const TextSpan(text: ' '),
-                            TextSpan(
-                              text: '(${book.authorDeath})',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
+                            if (isDownloaded) ...[
+                              const SizedBox(width: AppSpace.xs),
+                              Container(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xxs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: palette.primarySoft,
+                                  borderRadius: AppRadius.pillRadius,
+                                ),
+                                child: Text(
+                                  'محفوظ',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.onPrimarySoft,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const Spacer(),
+                            // Category Pill
+                            Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.surfaceMuted,
+                                borderRadius: AppRadius.pillRadius,
+                              ),
+                              child: Text(
+                                book.category,
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpace.xs),
+                        Text(
+                          book.title,
+                          style: textTheme.titleSmall.copyWith(
+                            color: palette.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpace.xxs),
+                        Text.rich(
+                          TextSpan(
+                            text: book.author,
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            children: [
+                              if (book.authorDeath != null) ...[
+                                const TextSpan(text: ' '),
+                                TextSpan(
+                                  text: '(${book.authorDeath})',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
 
           // If search result is a commentary, indicate parent book cleanly
           if (parentBook != null) ...[
@@ -204,7 +253,7 @@ class ShamelaBookCard extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: AppRadius.smRadius,
-                onTap: () => onOpenShuruh(book, shuruh),
+                onTap: () => widget.onOpenShuruh(book, shuruh),
                 child: Container(
                   padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: AppSpace.sm,
@@ -265,19 +314,19 @@ class ShamelaBookCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (downloadProgress != null) ...[
+                  if (widget.downloadProgress != null) ...[
                     SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                        value: downloadProgress,
+                        value: widget.downloadProgress,
                         color: palette.primary,
                         strokeWidth: 2,
                       ),
                     ),
                     const SizedBox(width: AppSpace.xs),
                     Text(
-                      'جاري التحميل ${(downloadProgress! * 100).toInt()}%',
+                      'جاري التحميل ${(widget.downloadProgress! * 100).toInt()}%',
                       style: textTheme.caption.copyWith(color: palette.primary),
                     ),
                   ] else if (isDownloaded) ...[
@@ -296,7 +345,7 @@ class ShamelaBookCard extends StatelessWidget {
                     ),
                   ] else ...[
                     TextButton.icon(
-                      onPressed: onDownload,
+                      onPressed: widget.onDownload,
                       icon: Icon(
                         Icons.cloud_download_rounded,
                         size: AppIcon.sm,
@@ -315,7 +364,7 @@ class ShamelaBookCard extends StatelessWidget {
                   AppButton(
                     size: AppButtonSize.sm,
                     label: 'قراءة الكتاب',
-                    onPressed: onOpen,
+                    onPressed: widget.onOpen,
                   ),
                 ],
               ),
@@ -324,5 +373,7 @@ class ShamelaBookCard extends StatelessWidget {
         ],
       ),
     );
+  },
+);
   }
 }

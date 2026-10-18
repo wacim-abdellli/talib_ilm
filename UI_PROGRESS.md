@@ -1079,4 +1079,36 @@ FAILED (54 violations)
      - `flutter test test/audio_timestamp_test.dart test/catalog_integrity_test.dart test/golden/shamela_reader_golden_test.dart`: **100% pass** (8/8).
 - **Open Issues:** None.
 
+---
+
+## Stage D4 — Offline Download UX
+- **Status:** Complete
+- **Branch:** `ui/d4-offline-download`
+- **Deliverables & Verification:**
+  1. **Shamela Reader Download Action & Feedback (`lib/features/ilm/presentation/widgets/shamela_reader_top_bar.dart`):**
+     - Converted `ShamelaReaderTopBar` to `StatefulWidget` accepting `ShamelaBook? book`.
+     - Added offline download action button using `Icons.download_outlined` (min 48dp hit area, RTL semantics, tooltip "حفظ الكتاب للقراءة دون اتصال").
+     - When book is already cached or download completes, replaces download button with `Icons.download_done_outlined` in `palette.primary` with semantics "تم حفظ الكتاب للقراءة دون اتصال".
+     - Wired download lifecycle via `ShamelaService.downloadBook(book, onProgress: ...)` with `_downloadProgress` `ValueNotifier`.
+     - Integrated a 6px `AppProgress` bar along the bottom edge of the top bar inside `Positioned` above the hairline divider.
+  2. **Shamela Book Card Offline Indicator (`lib/features/ilm/presentation/widgets/shamela_book_card.dart`):**
+     - Converted `ShamelaBookCard` to `StatefulWidget` checking `ShamelaService.isBookDownloaded(book.id)`.
+     - Displays "محفوظ" badge pill in `palette.primarySoft` and `palette.onPrimarySoft` with `context.text.caption` alongside the category chip.
+     - Preserves all card tap semantics, commentary buttons, and text-scale resilience.
+  3. **Reader Page Integration (`lib/features/ilm/presentation/pages/shamela_reader_page.dart`):**
+     - Passes `book: widget.book` to `ShamelaReaderTopBar`.
+  4. **Offline Download UX Unit Tests (`test/offline_download_ux_test.dart`):**
+     - Verified `ShamelaReaderTopBar` displays download button when not downloaded.
+     - Verified `ShamelaReaderTopBar` displays `download_done` icon when book is offline.
+     - Verified `ShamelaBookCard` displays "محفوظ" badge when downloaded.
+     - Verified `ShamelaBookCard` hides "محفوظ" badge when not downloaded.
+     - 4/4 tests pass.
+  5. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 10.5s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test test/offline_download_ux_test.dart test/catalog_integrity_test.dart test/audio_timestamp_test.dart test/scholarly_reader_ui_test.dart test/shamela_service_test.dart test/golden/shamela_reader_golden_test.dart`: **100% pass** (41/41).
+     - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 69.5s).
+- **Open Issues:** None.
+
+
 

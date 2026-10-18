@@ -414,6 +414,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           children: [
             // ── 1. Prestigious Scholarly Top Bar (Hides smoothly on immersion) ──
             ShamelaReaderTopBar(
+              book: widget.book,
               title: widget.book.title,
               author: widget.book.author,
               currentPage: _currentPage,
