@@ -23,10 +23,11 @@ class MutunDigitalCatalog {
   static const Map<String, MutunDigitalEntry> entries = {
     'bk_adhkar_adab': MutunDigitalEntry(
       id: 'bk_adhkar_adab',
-      shamelaId: 31307,
-      title: 'الأذكار والآداب',
+      shamelaId: 576,
+      title: 'مختصر الأذكار والآداب',
       author: 'د. عبد المحسن بن محمد القاسم',
-      totalPages: 151,
+      totalPages: 100,
+      startPage: 4,
     ),
     'bk_nawaqid_islam': MutunDigitalEntry(
       id: 'bk_nawaqid_islam',

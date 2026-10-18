@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -14,9 +16,10 @@ import '../../data/models/shamela_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutun_audio_player_hud.dart';
-import 'scholarly_reader_hud.dart' show BookPageTapDetector;
+import 'scholarly_reader_hud.dart' show BookPageTapDetector, ScholarlyReaderHud;
 import 'shamela_fihris_sheet.dart';
 import 'shamela_page_content.dart';
+import 'shamela_typography_sheet.dart';
 
 /// Reflowable digital text reader for Islamic Mutun with horizontal side sliding (PageView),
 /// distraction-free immersive mode, unified scholarly toolbar, syntax coloring, and self-testing recall.
@@ -81,7 +84,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   void initState() {
     super.initState();
     themeService.addListener(_onThemeChanged);
-    _showAudioBar = MutunAudioCatalog.hasAudio(widget.book.id);
+    _showAudioBar = false;
     _audioService.activeParagraphNotifier.addListener(_onActiveParagraphChanged);
     _audioService.isPlayingNotifier.addListener(_onAudioPlayingChanged);
     final resolvedInitial = (widget.initialPage > 1 || widget.digitalEntry.startPage <= 1)
@@ -311,6 +314,40 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     );
   }
 
+  void _openTypographySheet() {
+    HapticFeedback.lightImpact();
+    AppSheet.show<void>(
+      context: context,
+      builder: (sheetContext) => ShamelaTypographySheet(
+        fontFamily: _fontFamily,
+        fontSizeDelta: _fontSizeDelta,
+        lineHeight: _lineHeight,
+        surface: _surface,
+        accentColor: _accentColor,
+        onFontFamilyChanged: (font) {
+          setState(() => _fontFamily = font);
+          _savePreferences();
+        },
+        onFontSizeChanged: (delta) {
+          setState(() => _fontSizeDelta = delta);
+          _savePreferences();
+        },
+        onLineHeightChanged: (lh) {
+          setState(() => _lineHeight = lh);
+          _savePreferences();
+        },
+        onSurfaceChanged: (surf) {
+          setState(() => _surface = surf);
+          _savePreferences();
+        },
+        onAccentColorChanged: (accent) {
+          setState(() => _accentColor = accent);
+          _savePreferences();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -443,13 +480,62 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
             ),
           ),
 
-          // ── Mutun Audio Player HUD ───────────────────────────────
-          if (MutunAudioCatalog.hasAudio(widget.book.id))
+          // ── Bottom Floating Audio Player HUD ──────────────────────
+          if (widget.showControls &&
+              _showAudioBar &&
+              MutunAudioCatalog.hasAudio(widget.book.id))
             MutunAudioPlayerHud(
               audioService: _audioService,
               bookId: widget.book.id,
               onOpenQuickJump: _openFihrisSheet,
+              onClose: () => setState(() => _showAudioBar = false),
             ),
+
+          // ── Consolidated Bottom Scholarly Toolstrip ───────────────
+          ScholarlyReaderHud(
+            currentPage: _currentPage,
+            totalPages: _totalPages,
+            showPageNavigation: true,
+            isBookmarked: widget.isBookmarked,
+            memorizationMode: _memorizationMode,
+            showControls: widget.showControls,
+            accentColor: _accentColor,
+            surface: _surface,
+            onPreviousPage:
+                _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+            onNextPage: _currentPage < _totalPages
+                ? () => _goToPage(_currentPage + 1)
+                : null,
+            onPageIndicatorTap: _openFihrisSheet,
+            onToggleBookmark: widget.onToggleBookmark,
+            onShowBookmarks: widget.onShowBookmarks,
+            onAddNote: widget.onAddNote,
+            onOpenFihris: _openFihrisSheet,
+            onToggleMemorization: () {
+              HapticFeedback.selectionClick();
+              setState(() => _memorizationMode = !_memorizationMode);
+            },
+            onOpenTypography: _openTypographySheet,
+            onToggleAudio: MutunAudioCatalog.hasAudio(widget.book.id)
+                ? () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _showAudioBar = !_showAudioBar);
+                  }
+                : null,
+            isAudioActive: _showAudioBar,
+            onShare: () {
+              HapticFeedback.lightImpact();
+              final currentText = _pageCache[_currentPage]?.content ?? '';
+              final snippet = currentText.length > 300
+                  ? '${currentText.substring(0, 300)}...'
+                  : currentText;
+              Share.share(
+                '${widget.book.title} (صفحة $_currentPage من $_totalPages)\n\n'
+                '$snippet\n\n'
+                '— تطبيق طالب العلم',
+              );
+            },
+          ),
         ],
       ),
     );

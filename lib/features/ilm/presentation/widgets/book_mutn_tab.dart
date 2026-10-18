@@ -42,6 +42,7 @@ class BookMutnTab extends StatefulWidget {
 
 class _BookMutnTabState extends State<BookMutnTab> {
   late final MutunAudioService _audioService;
+  int _selectedEdition = 0;
 
   @override
   void initState() {
@@ -58,10 +59,154 @@ class _BookMutnTabState extends State<BookMutnTab> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
     final curriculumBook = MutunCurriculumCatalog.getBook(widget.book.id);
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
 
-    // 1. Authentic Curriculum Reader (for complete mutun texts)
+    // If both curriculum syllabus and full digital book exist, offer dual-edition switcher
+    final hasDualEditions = curriculumBook != null && digitalEntry != null;
+
+    Widget readerContent;
+
+    if (hasDualEditions) {
+      if (_selectedEdition == 0) {
+        readerContent = MutnCurriculumReaderView(
+          book: widget.book,
+          curriculumBook: curriculumBook,
+          audioService: _audioService,
+          onAddNote: widget.onAddNote,
+          showControls: widget.showControls,
+          onToggleControls: widget.onToggleControls,
+          isBookmarked: widget.isBookmarked,
+          onToggleBookmark: widget.onToggleBookmark,
+          onShowBookmarks: widget.onShowBookmarks,
+          onSwitchToFullBook: () => setState(() => _selectedEdition = 1),
+          fullBookLabel: 'قراءة الكتاب كاملاً (${digitalEntry.totalPages} صفحة)',
+        );
+      } else {
+        readerContent = _buildDigitalReader(palette, digitalEntry);
+      }
+
+      return Column(
+        children: [
+          // ── Dual Edition Mode Switcher Pill ───────────────────────
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              color: palette.surface,
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedEdition = 0),
+                      borderRadius: AppRadius.pillRadius,
+                      child: AnimatedContainer(
+                        duration: AppMotion.fast,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedEdition == 0
+                              ? palette.primarySoft
+                              : palette.surfaceRaised,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: _selectedEdition == 0
+                                ? palette.primary
+                                : palette.border,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.record_voice_over_rounded,
+                              size: AppIcon.sm,
+                              color: _selectedEdition == 0
+                                  ? palette.primary
+                                  : palette.textMuted,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              'متن الحفظ (${curriculumBook.totalParagraphs} فقرة)',
+                              style: textTheme.caption.copyWith(
+                                color: _selectedEdition == 0
+                                    ? palette.primary
+                                    : palette.textMuted,
+                                fontWeight: _selectedEdition == 0
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedEdition = 1),
+                      borderRadius: AppRadius.pillRadius,
+                      child: AnimatedContainer(
+                        duration: AppMotion.fast,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedEdition == 1
+                              ? palette.primarySoft
+                              : palette.surfaceRaised,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: _selectedEdition == 1
+                                ? palette.primary
+                                : palette.border,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_stories_rounded,
+                              size: AppIcon.sm,
+                              color: _selectedEdition == 1
+                                  ? palette.primary
+                                  : palette.textMuted,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              'الكتاب كاملاً (${digitalEntry.totalPages} صفحة)',
+                              style: textTheme.caption.copyWith(
+                                color: _selectedEdition == 1
+                                    ? palette.primary
+                                    : palette.textMuted,
+                                fontWeight: _selectedEdition == 1
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Active Reader View ────────────────────────────────────
+          Expanded(child: readerContent),
+        ],
+      );
+    }
+
+    // 1. Authentic Curriculum Reader (for single-edition mutun)
     if (curriculumBook != null) {
       return MutnCurriculumReaderView(
         book: widget.book,
@@ -76,37 +221,9 @@ class _BookMutnTabState extends State<BookMutnTab> {
       );
     }
 
-    // 2. Digital Text Reader (Maktaba Shamela with checkpoint start)
+    // 2. Digital Text Reader (single-edition digital books)
     if (digitalEntry != null) {
-      return FutureBuilder<int>(
-        future: widget.mutunInitialPage,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: palette.primary,
-                strokeWidth: 2.5,
-              ),
-            );
-          }
-          final resolvedPage = (snapshot.data != null && snapshot.data! > 1)
-              ? snapshot.data!
-              : digitalEntry.startPage;
-
-          return MutnDigitalReaderView(
-            book: widget.book,
-            digitalEntry: digitalEntry,
-            initialPage: resolvedPage,
-            onPageChanged: widget.onPageChanged,
-            showControls: widget.showControls,
-            onToggleControls: widget.onToggleControls,
-            isBookmarked: widget.isBookmarked,
-            onToggleBookmark: widget.onToggleBookmark,
-            onAddNote: widget.onAddNote,
-            onShowBookmarks: widget.onShowBookmarks,
-          );
-        },
-      );
+      return _buildDigitalReader(palette, digitalEntry);
     }
 
     // 3. Fallback to PDF Viewer
@@ -141,6 +258,41 @@ class _BookMutnTabState extends State<BookMutnTab> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDigitalReader(
+    AppPalette palette,
+    MutunDigitalEntry digitalEntry,
+  ) {
+    return FutureBuilder<int>(
+      future: widget.mutunInitialPage,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: palette.primary,
+              strokeWidth: 2.5,
+            ),
+          );
+        }
+        final resolvedPage = (snapshot.data != null && snapshot.data! > 1)
+            ? snapshot.data!
+            : digitalEntry.startPage;
+
+        return MutnDigitalReaderView(
+          book: widget.book,
+          digitalEntry: digitalEntry,
+          initialPage: resolvedPage,
+          onPageChanged: widget.onPageChanged,
+          showControls: widget.showControls,
+          onToggleControls: widget.onToggleControls,
+          isBookmarked: widget.isBookmarked,
+          onToggleBookmark: widget.onToggleBookmark,
+          onAddNote: widget.onAddNote,
+          onShowBookmarks: widget.onShowBookmarks,
+        );
+      },
     );
   }
 }

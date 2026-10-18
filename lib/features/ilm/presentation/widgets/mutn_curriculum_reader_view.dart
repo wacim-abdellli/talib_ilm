@@ -5,13 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/catalogs/mutun_curriculum_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 import 'mutn_memorization_view.dart';
+import 'mutn_paragraph_options_sheet.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
 import 'mutun_rosette_icon.dart';
@@ -32,6 +33,8 @@ class MutnCurriculumReaderView extends StatefulWidget {
   final bool isBookmarked;
   final VoidCallback? onToggleBookmark;
   final VoidCallback? onShowBookmarks;
+  final VoidCallback? onSwitchToFullBook;
+  final String? fullBookLabel;
 
   const MutnCurriculumReaderView({
     super.key,
@@ -44,6 +47,8 @@ class MutnCurriculumReaderView extends StatefulWidget {
     this.isBookmarked = false,
     this.onToggleBookmark,
     this.onShowBookmarks,
+    this.onSwitchToFullBook,
+    this.fullBookLabel,
   });
 
   @override
@@ -213,109 +218,17 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   }
 
   void _showParagraphOptions(MutunParagraph para) {
-    HapticFeedback.mediumImpact();
-    final palette = context.palette;
-    final textTheme = context.text;
-    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
-
-    showModalBottomSheet<void>(
+    MutnParagraphOptionsSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return Container(
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppRadius.lg),
-            ),
-            border: Border.all(color: palette.border),
-          ),
-          padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-          child: SafeArea(
-            top: false,
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: palette.textMuted.withValues(alpha: 0.3),
-                        borderRadius: AppRadius.pillRadius,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpace.md),
-                  Text(
-                    'خيارات الفقرة - ${para.index} -',
-                    style: textTheme.titleSmall.copyWith(
-                      color: palette.text,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpace.md),
-                  ListTile(
-                    leading: Icon(Icons.play_circle_fill_rounded,
-                        color: tokens.rosetteGold),
-                    title: const Text('تشغيل التلاوة من هذه الفقرة'),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.mdRadius,
-                    ),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop();
-                      setState(() => _showAudioBar = true);
-                      widget.audioService.seekToParagraph(
-                        para.index,
-                        bookId: widget.book.id,
-                      );
-                      _scrollToParagraph(para.index);
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.copy_rounded, color: palette.text),
-                    title: const Text('نسخ نص الفقرة'),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.mdRadius,
-                    ),
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: para.text));
-                      Navigator.of(sheetContext).pop();
-                      AppSnackbar.success(context, 'تم نسخ الفقرة بنجاح');
-                    },
-                  ),
-                  ListTile(
-                    leading:
-                        Icon(Icons.format_size_rounded, color: palette.text),
-                    title: const Text('تنسيق الخط والمظهر'),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.mdRadius,
-                    ),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop();
-                      _openTypographySheet();
-                    },
-                  ),
-                  ListTile(
-                    leading:
-                        Icon(Icons.edit_note_rounded, color: palette.text),
-                    title: const Text('إضافة ملاحظة حول الفقرة'),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.mdRadius,
-                    ),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop();
-                      widget.onAddNote();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+      paragraph: para,
+      book: widget.book,
+      audioService: widget.audioService,
+      onAddNote: widget.onAddNote,
+      onOpenTypography: _openTypographySheet,
+      onPlayFromParagraph: (index) {
+        setState(() => _showAudioBar = true);
+        widget.audioService.seekToParagraph(index, bookId: widget.book.id);
+        _scrollToParagraph(index);
       },
     );
   }
@@ -374,6 +287,60 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                       ],
                       const SizedBox(height: AppSpace.md),
                     ],
+
+                    // ── End of Memorization Syllabus / Switch to Full Book Banner ──
+                    if (widget.onSwitchToFullBook != null)
+                      Container(
+                        margin: const EdgeInsetsDirectional.only(
+                          top: AppSpace.md,
+                          bottom: AppSpace.lg,
+                        ),
+                        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                        decoration: BoxDecoration(
+                          color: surfaceTokens.surfaceRaised,
+                          borderRadius: AppRadius.lgRadius,
+                          border: Border.all(
+                            color: tokens.rosetteGold.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                MutunRosetteIcon(
+                                  size: AppIcon.md,
+                                  color: tokens.rosetteGold,
+                                ),
+                                const SizedBox(width: AppSpace.sm),
+                                Expanded(
+                                  child: Text(
+                                    'نهاية متن الحفظ (${widget.curriculumBook.totalParagraphs} فقرة)',
+                                    style: textTheme.titleSmall.copyWith(
+                                      color: palette.text,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpace.sm),
+                            Text(
+                              'أتممت بحمد الله مادة الحفظ والتسميع. يمكنك مواصلة القراءة في النسخة الكاملة للكتاب (${widget.fullBookLabel ?? "الكتاب كاملاً"}).',
+                              style: textTheme.bodySmall.copyWith(
+                                color: palette.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpace.md),
+                            AppButton(
+                              label: widget.fullBookLabel ?? 'قراءة الكتاب كاملاً',
+                              icon: Icons.auto_stories_rounded,
+                              size: AppButtonSize.md,
+                              onPressed: widget.onSwitchToFullBook,
+                            ),
+                          ],
+                        ),
+                      ),
 
                     const SizedBox(height: AppSpace.xxxl),
                   ],
