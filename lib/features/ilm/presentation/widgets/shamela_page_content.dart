@@ -33,7 +33,7 @@ class ShamelaPageContent extends StatefulWidget {
     this.surface = ShamelaReaderSurface.normal,
     this.startingParagraphIndex = 1,
     this.audioService,
-    this.initialHameshExpanded = false,
+    this.initialHameshExpanded = true,
   });
 
   @override

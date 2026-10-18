@@ -246,48 +246,49 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
             ),
           ],
 
-          // ── Minimalist Shuruh Button for Parent Books ───────────────────
+          // ── Prominent Shuruh Banner for Parent Books ───────────────────
           if (shuruh.isNotEmpty) ...[
             const SizedBox(height: AppSpace.sm),
             Material(
-              color: Colors.transparent,
+              color: palette.goldSoft,
+              borderRadius: AppRadius.smRadius,
               child: InkWell(
                 borderRadius: AppRadius.smRadius,
                 onTap: () => widget.onOpenShuruh(book, shuruh),
                 child: Container(
                   padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.sm,
+                    horizontal: AppSpace.md,
                     vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
                     borderRadius: AppRadius.smRadius,
                     border: Border.all(
-                      color: palette.border,
-                      width: 0.8,
+                      color: palette.gold.withAlpha(150),
+                      width: 1.1,
                     ),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.menu_book_outlined,
+                        Icons.auto_stories_rounded,
                         size: AppIcon.xs,
-                        color: palette.primary,
+                        color: palette.gold,
                       ),
                       const SizedBox(width: AppSpace.xs),
-                      Text(
-                        '${shuruh.length} شروح معتمدة',
-                        style: textTheme.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          'تصفح شروح وتعليقات الكتاب (${shuruh.length} شروح متوفرة)',
+                          style: textTheme.caption.copyWith(
+                            color: palette.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: AppSpace.xxs),
                       Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: AppIcon.sm,
-                        color: palette.primary,
+                        Icons.arrow_back_ios_new_rounded,
+                        size: AppIcon.xs,
+                        color: palette.gold,
                       ),
                     ],
                   ),

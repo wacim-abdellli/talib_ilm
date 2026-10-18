@@ -99,37 +99,47 @@ class ShamelaShelfCard extends StatelessWidget {
                               Semantics(
                                 button: true,
                                 label: 'شروح كتاب ${book.title}',
-                                child: Material(
-                                  color: palette.goldSoft,
-                                  borderRadius: AppRadius.pillRadius,
-                                  child: InkWell(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: palette.goldSoft,
                                     borderRadius: AppRadius.pillRadius,
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      onOpenShuruh!(book, shuruh);
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsetsDirectional.symmetric(
-                                        horizontal: AppSpace.xs,
-                                        vertical: AppSpace.xxs,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.menu_book_rounded,
-                                            size: AppIcon.xs,
-                                            color: palette.gold,
-                                          ),
-                                          const SizedBox(width: AppSpace.xxs),
-                                          Text(
-                                            '${shuruh.length}',
-                                            style: textTheme.caption.copyWith(
+                                    border: Border.all(
+                                      color: palette.gold.withAlpha(160),
+                                      width: 1.1,
+                                    ),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    borderRadius: AppRadius.pillRadius,
+                                    child: InkWell(
+                                      borderRadius: AppRadius.pillRadius,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        onOpenShuruh!(book, shuruh);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsetsDirectional.symmetric(
+                                          horizontal: AppSpace.sm,
+                                          vertical: AppSpace.xxs,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.auto_stories_rounded,
+                                              size: AppIcon.xs,
                                               color: palette.gold,
-                                              fontWeight: FontWeight.bold,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: AppSpace.xxs),
+                                            Text(
+                                              '${shuruh.length} شروح',
+                                              style: textTheme.caption.copyWith(
+                                                color: palette.gold,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),

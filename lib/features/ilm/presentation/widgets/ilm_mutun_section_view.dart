@@ -176,26 +176,39 @@ class IlmMutunSectionView {
                                   HapticFeedback.selectionClick();
                                   onOpenCurriculumQuiz();
                                 },
-                                child: Padding(
+                                child: Container(
                                   padding: const EdgeInsetsDirectional.symmetric(
                                     horizontal: AppSpace.sm,
-                                    vertical: AppSpace.xxs,
+                                    vertical: AppSpace.xs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: AppRadius.pillRadius,
+                                    border: Border.all(
+                                      color: palette.gold.withAlpha(160),
+                                      width: 1.2,
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.emoji_events_outlined,
-                                        size: AppIcon.xs,
+                                        Icons.emoji_events_rounded,
+                                        size: AppIcon.sm,
                                         color: palette.gold,
                                       ),
-                                      const SizedBox(width: AppSpace.xxs),
+                                      const SizedBox(width: AppSpace.xs),
                                       Text(
                                         'اختبار المنهاج',
                                         style: context.text.caption.copyWith(
                                           color: palette.gold,
                                           fontWeight: FontWeight.bold,
                                         ),
+                                      ),
+                                      const SizedBox(width: AppSpace.xxs),
+                                      Icon(
+                                        Icons.arrow_back_ios_new_rounded,
+                                        size: AppIcon.xs,
+                                        color: palette.gold,
                                       ),
                                     ],
                                   ),
@@ -301,17 +314,24 @@ class IlmMutunSectionView {
                         HapticFeedback.selectionClick();
                         onOpenCurriculumQuiz();
                       },
-                      child: Padding(
+                      child: Container(
                         padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: AppSpace.md,
                           vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.gold.withAlpha(160),
+                            width: 1.2,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.emoji_events_outlined,
-                              size: AppIcon.xs,
+                              Icons.emoji_events_rounded,
+                              size: AppIcon.sm,
                               color: palette.gold,
                             ),
                             const SizedBox(width: AppSpace.xs),
@@ -321,6 +341,12 @@ class IlmMutunSectionView {
                                 color: palette.gold,
                                 fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: AppIcon.xs,
+                              color: palette.gold,
                             ),
                           ],
                         ),

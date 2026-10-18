@@ -13,6 +13,7 @@ import '../../data/catalogs/tafsir_catalog.dart';
 import '../../data/catalogs/usul_catalog.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/models/shamela_models.dart';
+import 'discipline_quiz_shelf_card.dart';
 import 'ilm_partition_header.dart';
 import 'mutun_rosette_icon.dart';
 import 'shamela_book_card.dart';
@@ -87,7 +88,7 @@ class IlmDisciplineSection {
           title: 'اللغة العربية وعلومها',
           subtitle: 'النحو والصرف والبلاغة مفتاح فهم الوحيين',
           books: ArabicCatalog.books,
-          fan: null,
+          fan: IslamicQuizCatalog.getFan('arabic'),
         ),
       ];
 
@@ -242,7 +243,7 @@ class IlmDisciplineSection {
                             const SizedBox(width: AppSpace.xs),
                             Semantics(
                               button: true,
-                              label: 'اختبار $title',
+                              label: 'اختبار $title (${fan.totalQuestions} سؤالاً)',
                               child: Material(
                                 color: palette.goldSoft,
                                 borderRadius: AppRadius.pillRadius,
@@ -252,26 +253,39 @@ class IlmDisciplineSection {
                                     HapticFeedback.selectionClick();
                                     onOpenQuiz(fan);
                                   },
-                                  child: Padding(
+                                  child: Container(
                                     padding: const EdgeInsetsDirectional.symmetric(
                                       horizontal: AppSpace.sm,
-                                      vertical: AppSpace.xxs,
+                                      vertical: AppSpace.xs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: AppRadius.pillRadius,
+                                      border: Border.all(
+                                        color: palette.gold.withAlpha(160),
+                                        width: 1.2,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          Icons.emoji_events_outlined,
-                                          size: AppIcon.xs,
+                                          Icons.emoji_events_rounded,
+                                          size: AppIcon.sm,
                                           color: palette.gold,
                                         ),
-                                        const SizedBox(width: AppSpace.xxs),
+                                        const SizedBox(width: AppSpace.xs),
                                         Text(
-                                          'اختبار الفن',
+                                          'اختبار الفن • ${fan.totalQuestions} س',
                                           style: context.text.caption.copyWith(
                                             color: palette.gold,
                                             fontWeight: FontWeight.bold,
                                           ),
+                                        ),
+                                        const SizedBox(width: AppSpace.xxs),
+                                        Icon(
+                                          Icons.arrow_back_ios_new_rounded,
+                                          size: AppIcon.xs,
+                                          color: palette.gold,
                                         ),
                                       ],
                                     ),
@@ -288,7 +302,7 @@ class IlmDisciplineSection {
 
                 const SizedBox(height: AppSpace.sm),
 
-                // ── 2. Horizontal Bookshelf ──
+                // ── 2. Horizontal Bookshelf (featuring DisciplineQuizShelfCard) ──
                 SizedBox(
                   height: 195,
                   child: ListView.separated(
@@ -297,11 +311,18 @@ class IlmDisciplineSection {
                       horizontal: AppSpace.lg,
                     ),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: books.length,
+                    itemCount: (fan != null ? 1 : 0) + books.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(width: AppSpace.sm),
                     itemBuilder: (context, index) {
-                      final book = books[index];
+                      if (fan != null && index == 0) {
+                        return DisciplineQuizShelfCard(
+                          fan: fan,
+                          onOpenQuiz: () => onOpenQuiz(fan),
+                        );
+                      }
+                      final bookIndex = fan != null ? index - 1 : index;
+                      final book = books[bookIndex];
                       return ShamelaShelfCard(
                         book: book,
                         onOpen: () => onOpenBook(book),
@@ -376,26 +397,39 @@ class IlmDisciplineSection {
                       HapticFeedback.selectionClick();
                       onOpenQuiz(fan);
                     },
-                    child: Padding(
+                    child: Container(
                       padding: const EdgeInsetsDirectional.symmetric(
                         horizontal: AppSpace.md,
                         vertical: AppSpace.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: palette.gold.withAlpha(160),
+                          width: 1.2,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.emoji_events_outlined,
-                            size: AppIcon.xs,
+                            Icons.emoji_events_rounded,
+                            size: AppIcon.sm,
                             color: palette.gold,
                           ),
                           const SizedBox(width: AppSpace.xs),
                           Text(
-                            'اختبر فهمك (${fan.levels.length} مستويات)',
+                            'اختبر فهمك للفن (${fan.totalQuestions} سؤالاً)',
                             style: context.text.caption.copyWith(
                               color: palette.gold,
                               fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: AppIcon.xs,
+                            color: palette.gold,
                           ),
                         ],
                       ),

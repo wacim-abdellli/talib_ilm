@@ -7,6 +7,8 @@ import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/services/quiz_progress_service.dart';
 import '../widgets/quiz_lesson_explanation_card.dart';
+import '../widgets/quiz_lifelines_bar.dart';
+import '../widgets/quiz_option_tile.dart';
 import 'quiz_result_page.dart';
 
 /// The active test and lesson runner for an Islamic quiz session.
@@ -38,6 +40,13 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   int _correctAnswers = 0;
   int _currentStreak = 0;
   int _maxStreak = 0;
+
+  // Lifelines (وسائل المساعدة التعليمية)
+  int _fiftyFiftyRemaining = 2;
+  int _hintRemaining = 3;
+  final Set<int> _eliminatedIndices = <int>{};
+  bool _isFiftyFiftyUsedOnCurrent = false;
+  bool _isHintRevealed = false;
 
   final List<int?> _userAnswers = [];
   final ScrollController _scrollController = ScrollController();
@@ -71,6 +80,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
           ..addAll(session.userAnswers);
         _selectedOptionIndex = null;
         _isAnswered = false;
+        _eliminatedIndices.clear();
+        _isFiftyFiftyUsedOnCurrent = false;
+        _isHintRevealed = false;
       });
     }
   }
@@ -90,8 +102,38 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     );
   }
 
+  void _onUseFiftyFifty() {
+    if (_isAnswered || _isFiftyFiftyUsedOnCurrent || _fiftyFiftyRemaining <= 0) {
+      return;
+    }
+    final wrongIndices = <int>[];
+    for (int i = 0; i < _currentQuestion.options.length; i++) {
+      if (i != _currentQuestion.correctIndex) {
+        wrongIndices.add(i);
+      }
+    }
+    wrongIndices.shuffle();
+    final toEliminate = wrongIndices.take(2).toSet();
+
+    setState(() {
+      _eliminatedIndices.addAll(toEliminate);
+      _isFiftyFiftyUsedOnCurrent = true;
+      _fiftyFiftyRemaining--;
+    });
+  }
+
+  void _onUseHint() {
+    if (_isAnswered || _isHintRevealed || _hintRemaining <= 0) {
+      return;
+    }
+    setState(() {
+      _isHintRevealed = true;
+      _hintRemaining--;
+    });
+  }
+
   void _onOptionSelected(int index) {
-    if (_isAnswered) return;
+    if (_isAnswered || _eliminatedIndices.contains(index)) return;
 
     final isCorrect = _currentQuestion.isCorrect(index);
     HapticFeedback.selectionClick();
@@ -135,6 +177,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         _currentIndex++;
         _selectedOptionIndex = null;
         _isAnswered = false;
+        _eliminatedIndices.clear();
+        _isFiftyFiftyUsedOnCurrent = false;
+        _isHintRevealed = false;
       });
 
       _persistSession();
@@ -209,309 +254,219 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-        backgroundColor: palette.bg,
-        appBar: AppBar(
-          backgroundColor: palette.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'خروج من الاختبار',
-            onPressed: () => _confirmExit(context),
-          ),
-          centerTitle: true,
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                widget.title,
-                style: textTheme.titleSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                widget.subtitle,
-                style: textTheme.caption.copyWith(color: palette.textSubtle),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          actions: [
-            if (_currentStreak >= 2)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: AppSpace.md),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.sm,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.goldSoft,
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(color: palette.gold.withAlpha(80)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '🔥 $_currentStreak',
-                          style: textTheme.label.copyWith(
-                            color: palette.gold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(AppSpace.xs),
-            child: LinearProgressIndicator(
-              value: progressFraction,
-              backgroundColor: palette.border,
-              valueColor: AlwaysStoppedAnimation<Color>(palette.primary),
-              minHeight: AppSpace.xs,
+          backgroundColor: palette.bg,
+          appBar: AppBar(
+            backgroundColor: palette.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              tooltip: 'خروج من الاختبار',
+              onPressed: () => _confirmExit(context),
             ),
-          ),
-        ),
-        body: ListView(
-          controller: _scrollController,
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.xl,
-            vertical: AppSpace.lg,
-          ),
-          children: [
-            // Question Counter & Badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            centerTitle: true,
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.primarySoft,
-                    borderRadius: AppRadius.pillRadius,
-                  ),
-                  child: Text(
-                    'السؤال ${_currentIndex + 1} من $total',
-                    style: textTheme.label.copyWith(
-                      color: palette.onPrimarySoft,
-                    ),
-                  ),
+                Text(
+                  widget.title,
+                  style: textTheme.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'الصواب: $_correctAnswers',
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
-                  ),
+                  widget.subtitle,
+                  style: textTheme.caption.copyWith(color: palette.textSubtle),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-            const SizedBox(height: AppSpace.md),
-
-            // Question Card
-            Container(
-              padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: AppRadius.lgRadius,
-                border: Border.all(color: palette.border),
-                boxShadow: palette.shadow,
-              ),
-              child: Text(
-                _currentQuestion.question,
-                style: textTheme.titleSmall.copyWith(
-                  height: 1.6,
-                ),
-                textAlign: TextAlign.start,
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-
-            // Options list
-            ...List.generate(_currentQuestion.options.length, (index) {
-              final optionText = _currentQuestion.options[index];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-                child: _buildOptionTile(
-                  index: index,
-                  text: optionText,
-                  palette: palette,
-                  textTheme: textTheme,
-                ),
-              );
-            }),
-
-            // Interactive lesson & explanation card (revealed upon answer)
-            if (_isAnswered) ...[
-              const SizedBox(height: AppSpace.md),
-              QuizLessonExplanationCard(
-                question: _currentQuestion,
-                isUserCorrect:
-                    _selectedOptionIndex == _currentQuestion.correctIndex,
-              ),
-              const SizedBox(height: AppSpace.xl),
-            ],
-
-            // Navigation Bottom Spacer
-            SizedBox(height: AppSize.navClearance(context)),
-          ],
-        ),
-        bottomNavigationBar: _isAnswered
-            ? Container(
-                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  color: palette.surfaceRaised,
-                  border: Border(top: BorderSide(color: palette.border)),
-                ),
-                child: SafeArea(
-                  child: SizedBox(
-                    height: AppSize.buttonH,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: palette.primary,
-                        foregroundColor: palette.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.mdRadius,
-                        ),
+            actions: [
+              if (_currentStreak >= 2)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: AppSpace.md),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.xs,
                       ),
-                      onPressed: _onNextQuestion,
+                      decoration: BoxDecoration(
+                        color: palette.goldSoft,
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(color: palette.gold.withAlpha(80)),
+                      ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _currentIndex + 1 < total
-                                ? 'السؤال التالي'
-                                : 'عرض النتيجة النهائية',
+                            '🔥 $_currentStreak',
                             style: textTheme.label.copyWith(
-                              color: palette.onPrimary,
+                              color: palette.gold,
                             ),
-                          ),
-                          const SizedBox(width: AppSpace.sm),
-                          const Icon(
-                            Icons.arrow_back_rounded,
-                            size: AppIcon.sm,
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-              )
-            : null,
-      ),
-    ),
-  );
-}
-
-  Widget _buildOptionTile({
-    required int index,
-    required String text,
-    required AppPalette palette,
-    required dynamic textTheme,
-  }) {
-    Color bgColor = palette.surface;
-    Color borderColor = palette.border;
-    Color textColor = palette.text;
-    Widget? trailingIcon;
-
-    if (_isAnswered) {
-      final isCorrect = _currentQuestion.correctIndex == index;
-      final isSelected = _selectedOptionIndex == index;
-
-      if (isCorrect) {
-        bgColor = palette.primarySoft;
-        borderColor = palette.primary;
-        textColor = palette.onPrimarySoft;
-        trailingIcon = Icon(
-          Icons.check_circle_rounded,
-          color: palette.primary,
-          size: AppIcon.md,
-        );
-      } else if (isSelected) {
-        bgColor = palette.errorSoft;
-        borderColor = palette.error;
-        textColor = palette.error;
-        trailingIcon = Icon(
-          Icons.cancel_rounded,
-          color: palette.error,
-          size: AppIcon.md,
-        );
-      }
-    }
-
-    return Material(
-      color: bgColor,
-      borderRadius: AppRadius.mdRadius,
-      child: InkWell(
-        borderRadius: AppRadius.mdRadius,
-        onTap: _isAnswered ? null : () => _onOptionSelected(index),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: AppSize.tap),
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.lg,
-            vertical: AppSpace.md,
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(AppSpace.xs),
+              child: LinearProgressIndicator(
+                value: progressFraction,
+                backgroundColor: palette.border,
+                valueColor: AlwaysStoppedAnimation<Color>(palette.primary),
+                minHeight: AppSpace.xs,
+              ),
+            ),
           ),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.mdRadius,
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
+          body: ListView(
+            controller: _scrollController,
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.xl,
+              vertical: AppSpace.lg,
+            ),
             children: [
+              // Question Counter & Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                    child: Text(
+                      'السؤال ${_currentIndex + 1} من $total',
+                      style: textTheme.label.copyWith(
+                        color: palette.onPrimarySoft,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'الصواب: $_correctAnswers',
+                    style: textTheme.caption.copyWith(
+                      color: palette.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.md),
+
+              // Question Card
               Container(
-                width: AppSpace.xxl,
-                height: AppSpace.xxl,
-                alignment: Alignment.center,
+                padding: const EdgeInsetsDirectional.all(AppSpace.xl),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.surfaceMuted,
+                  color: palette.surface,
+                  borderRadius: AppRadius.lgRadius,
                   border: Border.all(color: palette.border),
+                  boxShadow: palette.shadow,
                 ),
                 child: Text(
-                  _getOptionLetter(index),
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
+                  _currentQuestion.question,
+                  style: textTheme.titleSmall.copyWith(
+                    height: 1.6,
                   ),
+                  textAlign: TextAlign.start,
                 ),
               ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Text(
-                  text,
-                  style: textTheme.body.copyWith(
-                    color: textColor,
-                    height: 1.5,
-                  ),
-                ),
+              const SizedBox(height: AppSpace.md),
+
+              // Educational Lifelines Bar (50:50 & Scholarly Clue)
+              QuizLifelinesBar(
+                question: _currentQuestion,
+                isAnswered: _isAnswered,
+                fiftyFiftyRemaining: _fiftyFiftyRemaining,
+                isFiftyFiftyUsedOnCurrent: _isFiftyFiftyUsedOnCurrent,
+                onUseFiftyFifty: _onUseFiftyFifty,
+                hintRemaining: _hintRemaining,
+                isHintRevealed: _isHintRevealed,
+                onUseHint: _onUseHint,
               ),
-              if (trailingIcon != null) ...[
-                const SizedBox(width: AppSpace.sm),
-                trailingIcon,
+              const SizedBox(height: AppSpace.md),
+
+              // Options list
+              ...List.generate(_currentQuestion.options.length, (index) {
+                final optionText = _currentQuestion.options[index];
+                return Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+                  child: QuizOptionTile(
+                    index: index,
+                    text: optionText,
+                    isAnswered: _isAnswered,
+                    isSelected: _selectedOptionIndex == index,
+                    isCorrect: _currentQuestion.correctIndex == index,
+                    isEliminated: _eliminatedIndices.contains(index),
+                    onTap: () => _onOptionSelected(index),
+                  ),
+                );
+              }),
+
+              // Interactive lesson & explanation card (revealed upon answer)
+              if (_isAnswered) ...[
+                const SizedBox(height: AppSpace.md),
+                QuizLessonExplanationCard(
+                  question: _currentQuestion,
+                  isUserCorrect:
+                      _selectedOptionIndex == _currentQuestion.correctIndex,
+                ),
+                const SizedBox(height: AppSpace.xl),
               ],
+
+              // Navigation Bottom Spacer
+              SizedBox(height: AppSize.navClearance(context)),
             ],
           ),
+          bottomNavigationBar: _isAnswered
+              ? Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceRaised,
+                    border: Border(top: BorderSide(color: palette.border)),
+                  ),
+                  child: SafeArea(
+                    child: SizedBox(
+                      height: AppSize.buttonH,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: palette.primary,
+                          foregroundColor: palette.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.mdRadius,
+                          ),
+                        ),
+                        onPressed: _onNextQuestion,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _currentIndex + 1 < total
+                                  ? 'السؤال التالي'
+                                  : 'عرض النتيجة النهائية',
+                              style: textTheme.label.copyWith(
+                                color: palette.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            const Icon(
+                              Icons.arrow_back_rounded,
+                              size: AppIcon.sm,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
         ),
       ),
     );
-  }
-
-  String _getOptionLetter(int index) {
-    switch (index) {
-      case 0:
-        return 'أ';
-      case 1:
-        return 'ب';
-      case 2:
-        return 'ج';
-      case 3:
-        return 'د';
-      default:
-        return '${index + 1}';
-    }
   }
 
   void _confirmExit(BuildContext context) {

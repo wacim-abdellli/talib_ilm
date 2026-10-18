@@ -130,14 +130,18 @@ void main() {
       final aqidah = disciplines.firstWhere((d) => d.key == 'aqidah');
       expect(aqidah.fan, isNotNull);
       expect(aqidah.fan!.id, equals('aqidah'));
+
+      final arabic = disciplines.firstWhere((d) => d.key == 'arabic');
+      expect(arabic.fan, isNotNull);
+      expect(arabic.fan!.id, equals('arabic'));
     });
 
-    test('IslamicQuizCatalog has 210 authentic questions across 7 disciplines', () {
+    test('IslamicQuizCatalog has 240 authentic questions across 8 disciplines', () {
       final founoun = IslamicQuizCatalog.founoun;
-      expect(founoun.length, equals(7));
+      expect(founoun.length, equals(8));
 
-      expect(IslamicQuizCatalog.totalQuestionsCount, equals(210));
-      expect(IslamicQuizCatalog.totalLevelsCount, equals(21));
+      expect(IslamicQuizCatalog.totalQuestionsCount, equals(240));
+      expect(IslamicQuizCatalog.totalLevelsCount, equals(24));
 
       for (final fan in founoun) {
         expect(fan.levels.length, equals(3), reason: '${fan.id} should have 3 levels');

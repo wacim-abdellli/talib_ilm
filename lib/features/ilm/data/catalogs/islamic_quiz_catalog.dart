@@ -3,6 +3,7 @@ import 'dart:math';
 import '../models/islamic_quiz_models.dart';
 import 'quiz_adab_catalog.dart';
 import 'quiz_aqidah_catalog.dart';
+import 'quiz_arabic_catalog.dart';
 import 'quiz_fiqh_catalog.dart';
 import 'quiz_hadith_catalog.dart';
 import 'quiz_prophets_catalog.dart';
@@ -21,6 +22,7 @@ class IslamicQuizCatalog {
         QuizSeerahCatalog.seerahFan,
         QuizProphetsCatalog.prophetsNamesFan,
         QuizAdabCatalog.adabFan,
+        QuizArabicCatalog.arabicFan,
       ];
 
   static FanQuiz? getFan(String id) {
