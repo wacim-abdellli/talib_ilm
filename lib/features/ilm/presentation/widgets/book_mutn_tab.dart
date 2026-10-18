@@ -62,8 +62,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
 
     // 1. Authentic Curriculum Reader (for complete mutun texts)
-    // Note: bk_adhkar_adab curriculum text is a 24-paragraph excerpt; its full edition is 151 pages in Shamela.
-    if (widget.book.id != 'bk_adhkar_adab' && curriculumBook != null) {
+    if (curriculumBook != null) {
       return MutnCurriculumReaderView(
         book: widget.book,
         curriculumBook: curriculumBook,
