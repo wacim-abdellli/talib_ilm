@@ -67,10 +67,10 @@ class MutunDigitalCatalog {
     ),
     'bk_shuroot_salah': MutunDigitalEntry(
       id: 'bk_shuroot_salah',
-      shamelaId: 239,
+      shamelaId: 11266,
       title: 'شروط الصلاة وأركانها وواجباتها',
       author: 'محمد بن عبد الوهاب',
-      totalPages: 40,
+      totalPages: 10,
     ),
     'bk_kitab_tawheed': MutunDigitalEntry(
       id: 'bk_kitab_tawheed',

@@ -135,6 +135,7 @@ class ShamelaPage {
   final String? chapterTitle;
   final String content;
   final String? hamesh;
+  final int? detectedTotalPages;
 
   const ShamelaPage({
     required this.bookId,
@@ -143,6 +144,7 @@ class ShamelaPage {
     this.chapterTitle,
     required this.content,
     this.hamesh,
+    this.detectedTotalPages,
   });
 
   factory ShamelaPage.fromJson(Map<String, dynamic> json) {
@@ -153,6 +155,7 @@ class ShamelaPage {
       chapterTitle: json['chapterTitle'] as String?,
       content: json['content'] as String? ?? '',
       hamesh: json['hamesh'] as String?,
+      detectedTotalPages: json['detectedTotalPages'] as int?,
     );
   }
 
@@ -163,6 +166,7 @@ class ShamelaPage {
         'chapterTitle': chapterTitle,
         'content': content,
         'hamesh': hamesh,
+        if (detectedTotalPages != null) 'detectedTotalPages': detectedTotalPages,
       };
 }
 

@@ -13,7 +13,7 @@ class AppPopup {
     IconData icon = Icons.check_circle_rounded,
     String buttonText = 'حسناً',
     bool autoDismiss = true,
-    Duration dismissAfter = const Duration(seconds: 2), // ui-lint: allow service timeout
+    Duration dismissAfter = AppMotion.twoSeconds,
     bool haptic = true,
   }) {
     if (haptic) {

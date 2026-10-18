@@ -14,6 +14,7 @@ import '../../data/services/mutun_audio_service.dart';
 import 'mutn_memorization_view.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
+import 'mutun_rosette_icon.dart';
 import 'scholarly_reader_hud.dart'
     show BookPageTapDetector, ScholarlyReaderHud;
 import 'shamela_text_highlighter.dart';
@@ -442,67 +443,80 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   }) {
     final firstPara =
         section.paragraphs.isNotEmpty ? section.paragraphs.first.index : 1;
+    final isFirstSection = section == widget.curriculumBook.sections.first;
 
     return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.md),
-      child: Row(
+      padding: EdgeInsetsDirectional.only(
+        top: isFirstSection ? AppSpace.xs : AppSpace.xl,
+        bottom: AppSpace.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Divider(
-              color: surfaceTokens.border.withValues(alpha: 0.7),
+          if (!isFirstSection) ...[
+            Divider(
+              color: surfaceTokens.border.withValues(alpha: 0.5),
               height: 1,
             ),
-          ),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-              ),
-              child: Material(
-                color: surfaceTokens.surfaceRaised,
-                borderRadius: AppRadius.pillRadius,
-                child: InkWell(
-                  borderRadius: AppRadius.pillRadius,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    if (!widget.showControls) {
-                      widget.onToggleControls?.call();
-                    }
-                    widget.audioService.seekToParagraph(
-                      firstPara,
-                      bookId: widget.book.id,
-                    );
-                    _scrollToParagraph(firstPara);
-                  },
-                  child: Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: surfaceTokens.border,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      section.title,
-                      textAlign: TextAlign.center,
-                      style: textTheme.caption.copyWith(
-                        color: tokens.rosetteGold,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+            const SizedBox(height: AppSpace.md),
+          ],
+          Material(
+            color: surfaceTokens.surfaceRaised,
+            borderRadius: AppRadius.mdRadius,
+            child: InkWell(
+              borderRadius: AppRadius.mdRadius,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                if (!widget.showControls) {
+                  widget.onToggleControls?.call();
+                }
+                widget.audioService.seekToParagraph(
+                  firstPara,
+                  bookId: widget.book.id,
+                );
+                _scrollToParagraph(firstPara);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: tokens.rosetteGold.withValues(alpha: 0.35),
+                    width: 1,
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    MutunRosetteIcon(
+                      size: AppIcon.sm,
+                      color: tokens.rosetteGold.withValues(alpha: 0.85),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Flexible(
+                      child: Text(
+                        section.title,
+                        textAlign: TextAlign.center,
+                        style: textTheme.titleSmall.copyWith(
+                          color: tokens.rosetteGold,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: _fontFamily,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    MutunRosetteIcon(
+                      size: AppIcon.sm,
+                      color: tokens.rosetteGold.withValues(alpha: 0.85),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Divider(
-              color: surfaceTokens.border.withValues(alpha: 0.7),
-              height: 1,
             ),
           ),
         ],

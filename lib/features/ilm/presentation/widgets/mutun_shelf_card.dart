@@ -6,6 +6,7 @@ import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
+import '../../data/services/shamela_service.dart';
 import 'mutun_rosette_icon.dart';
 
 /// Compact card for Mutun Talib Al-Ilm on horizontal bookshelves.
@@ -29,8 +30,14 @@ class MutunShelfCard extends StatelessWidget {
     final levelColors = palette.mutunLevel(book.level);
     final hasAudio = MutunAudioCatalog.hasAudio(book.id);
     final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
-    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
-        ? digitalEntry.totalPages
+    final effectiveDigital = digitalEntry != null
+        ? ShamelaService.getEffectiveTotalPages(
+            digitalEntry.shamelaId,
+            digitalEntry.totalPages,
+          )
+        : 0;
+    final totalPages = effectiveDigital > 0
+        ? effectiveDigital
         : (book.totalPages > 0 ? book.totalPages : 1);
     final isCompleted = progress?.isCompleted ?? false;
 

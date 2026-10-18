@@ -970,6 +970,51 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: OK (allow markers: 9 / cap 10, 0 FAILs).
 - **Open Issues:** None.
 
+---
 
-
-
+## Stage D1 — Catalog Data Integrity
+- **Status:** Complete
+- **Branch:** `ui/d1-catalog-integrity`
+- **Deliverables & Verification:**
+  1. **Verification Tool (`tool/verify_shamela_ids.dart`):**
+     - Script verifying all entries in `MutunDigitalCatalog` via HTTP GET to `https://shamela.ws/book/{id}`.
+     - Extracted titles and normalized Arabic text against the catalog.
+     - **Verification Results Logged:**
+       - `[OK] bk_shuroot_salah (ID: 11266)` -> "كتاب شروط الصلاة وأركانها وواجباتها (مطبوع ضمن مؤلفات الشيخ محمد بن عبد الوهاب، الجزء الثالث)"
+       - `[OK] bk_nawaqid_islam (ID: 30869)` -> "كتاب نواقض الإسلام"
+       - `[OK] bk_qawaid_arba (ID: 8524)` -> "كتاب القواعد الأربع"
+       - `[OK] bk_usul_thalatha (ID: 239)` -> "كتاب ثلاثة الأصول وشروط الصلاة والقواعد الأربع"
+       - `[OK] bk_arbaeen_nawawi (ID: 147927)` -> "كتاب الأربعون النووية مع زيادات ابن رجب"
+       - `[OK] bk_tuhfat_atfal (ID: 9632)` -> "كتاب تحفة الأطفال والغلمان في تجويد القرآن"
+       - `[OK] bk_kitab_tawheed (ID: 11318)` -> "كتاب التوحيد لابن عبد الوهاب"
+       - `[OK] bk_manzumah_baiquoni (ID: 8567)` -> "كتاب المنظومة البيقونية"
+       - `[OK] bk_manzumah_albiri (ID: 6869)` -> "كتاب ديوان أبي إسحاق الإلبيري"
+       - `[OK] bk_ajrumiyyah (ID: 11371)` -> "كتاب الآجرومية"
+       - `[OK] bk_wasitiyyah (ID: 22665)` -> "كتاب العقيدة الواسطية - ت أشرف عبد المقصود"
+       - `[OK] bk_waraqat (ID: 6297)` -> "كتاب الورقات"
+       - `[OK] bk_unwan_al_hukm (ID: 6873)` -> "كتاب قصيدة عنوان الحكم"
+       - `[OK] bk_rahibiyyah (ID: 11372)` -> "كتاب متن الرحبية = بغية الباحث عن جمل الموارث"
+       - `[OK] bk_aqidah_tahawiyyah (ID: 9568)` -> "كتاب متن العقيدة الطحاوية - شرح وتعليق الألباني"
+       - `[OK] bk_bulugh_maram (ID: 17757)` -> "كتاب بلوغ المرام من أدلة الأحكام - ت الفحل"
+       - `[OK] bk_zad_mustaqni (ID: 11230)` -> "كتاب زاد المستقنع في اختصار المقنع - ت العسكر"
+       - `[MISMATCH] bk_adhkar_adab (ID: 31307)` -> "حصن المسلم من أذكار الكتاب والسنة" (by design; proxy used for Adhkar matn).
+       - Total: 17 OK, 1 proxy mismatch, 0 404/errors.
+  2. **Fixed `bk_shuroot_salah` Collision (BUG 1 Resolved):**
+     - Located authentic Shamela book ID **11266** for *شروط الصلاة وأركانها وواجباتها* by Sheikh Muhammad ibn Abd al-Wahhab.
+     - Verified actual page count on shamela.ws is **10** pages (pages 1-10 HTTP 200, page 11 HTTP 404).
+     - Updated `MutunDigitalCatalog.entries['bk_shuroot_salah']` with `shamelaId: 11266` and `totalPages: 10`.
+  3. **Fixed `downloadBook()` Dynamic Discovery (BUG 2 Resolved):**
+     - Updated `ShamelaService.downloadBook()` to query `getDiscoveredTotalPages(book.id)` first, discover page count via page 1 `detectedTotalPages`, save to preferences/memory, and bound offline loops accurately.
+  4. **Catalog Integrity Unit Tests (`test/catalog_integrity_test.dart`):**
+     - Verified all digital mutun syllabus IDs are unique.
+     - Verified all Shamela IDs are unique (zero collisions).
+     - Verified all `totalPages` are strictly > 0.
+     - Verified all `shamelaIds` are strictly > 0.
+     - Verified `bk_shuroot_salah` ID is 11266 with 10 pages and distinct from `bk_usul_thalatha`.
+     - 5/5 tests passed (`flutter test test/catalog_integrity_test.dart`).
+  5. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 9.3s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 10 allow markers / cap 10).
+     - `flutter test test/catalog_integrity_test.dart`: **100% pass** (5/5).
+     - `flutter build apk --debug`: **Succeeded** (`build\app\outputs\flutter-apk\app-debug.apk` built in 59.3s).
+- **Open Issues:** None.

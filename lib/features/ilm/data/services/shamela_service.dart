@@ -15,7 +15,9 @@ class ShamelaService {
   static const String _tableNameFihris = 'shamela_fihris';
   static const String _lastReadPrefix = 'shamela_last_read_';
   static const String _bookmarksKey = 'shamela_bookmarks';
+  static const String _totalPagesPrefix = 'shamela_total_pages_';
 
+  static final Map<int, int> _knownTotalPages = {};
   static final http.Client _httpClient = http.Client();
 
   /// Curated Top Disciplines in the Heritage Library
@@ -23,6 +25,39 @@ class ShamelaService {
 
   /// Curated Classics Library across all disciplines
   static List<ShamelaBook> get curatedClassics => TurathCatalog.books;
+
+  /// Get in-memory or fallback total pages for a book synchronously
+  static int getEffectiveTotalPages(int bookId, int fallbackPages) {
+    final cached = _knownTotalPages[bookId];
+    if (cached != null && cached > 0) return cached;
+    return fallbackPages;
+  }
+
+  /// Get discovered total pages from memory or SharedPreferences asynchronously
+  static Future<int?> getDiscoveredTotalPages(int bookId) async {
+    if (_knownTotalPages.containsKey(bookId) && _knownTotalPages[bookId]! > 0) {
+      return _knownTotalPages[bookId];
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getInt('$_totalPagesPrefix$bookId');
+      if (saved != null && saved > 0) {
+        _knownTotalPages[bookId] = saved;
+        return saved;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Save discovered total pages to memory and SharedPreferences
+  static Future<void> saveDiscoveredTotalPages(int bookId, int totalPages) async {
+    if (totalPages <= 0) return;
+    _knownTotalPages[bookId] = totalPages;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('$_totalPagesPrefix$bookId', totalPages);
+    } catch (_) {}
+  }
 
   /// Initialize local database for caching pages and table of contents
   static Future<Database> _getDatabase() async {
@@ -33,7 +68,7 @@ class ShamelaService {
 
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableNamePages (
@@ -44,6 +79,7 @@ class ShamelaService {
             content TEXT,
             hamesh TEXT,
             cached_at INTEGER,
+            detected_total_pages INTEGER,
             PRIMARY KEY (book_id, page_num)
           )
         ''');
@@ -56,6 +92,15 @@ class ShamelaService {
             PRIMARY KEY (book_id, page_num)
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          try {
+            await db.execute(
+              'ALTER TABLE $_tableNamePages ADD COLUMN detected_total_pages INTEGER',
+            );
+          } catch (_) {}
+        }
       },
     );
 
@@ -106,6 +151,10 @@ class ShamelaService {
       final row = localRows.first;
       final rawContent = row['content'] as String;
       final rawHamesh = row['hamesh'] as String?;
+      final detected = row['detected_total_pages'] as int?;
+      if (detected != null && detected > 0) {
+        _knownTotalPages[bookId] = detected;
+      }
       return ShamelaPage(
         bookId: bookId,
         pageNumber: pageNumber,
@@ -113,6 +162,7 @@ class ShamelaService {
         chapterTitle: row['chapter_title'] as String?,
         content: sanitizeBookText(rawContent),
         hamesh: rawHamesh != null ? sanitizeBookText(rawHamesh) : null,
+        detectedTotalPages: detected ?? _knownTotalPages[bookId],
       );
     }
 
@@ -138,6 +188,11 @@ class ShamelaService {
     final html = utf8.decode(response.bodyBytes, allowMalformed: true);
     final parsed = _parsePageHtml(bookId, pageNumber, html);
 
+    // Save discovered total pages if parsed from page navigation
+    if (parsed.detectedTotalPages != null && parsed.detectedTotalPages! > 0) {
+      unawaited(saveDiscoveredTotalPages(bookId, parsed.detectedTotalPages!));
+    }
+
     // 3. Save to local cache
     await db.insert(
       _tableNamePages,
@@ -149,6 +204,7 @@ class ShamelaService {
         'content': parsed.content,
         'hamesh': parsed.hamesh,
         'cached_at': DateTime.now().millisecondsSinceEpoch,
+        'detected_total_pages': parsed.detectedTotalPages,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -200,6 +256,7 @@ class ShamelaService {
     }
 
     final cleanContent = _cleanHtml(rawBody);
+    final detectedTotal = extractTotalPagesFromHtml(bookId, html);
 
     return ShamelaPage(
       bookId: bookId,
@@ -208,7 +265,61 @@ class ShamelaService {
       chapterTitle: chapterTitle,
       content: cleanContent,
       hamesh: hamesh,
+      detectedTotalPages: detectedTotal,
     );
+  }
+
+  /// Extract total pages dynamically from Maktaba Shamela page navigation HTML
+  static int? extractTotalPagesFromHtml(int bookId, String html) {
+    if (html.isEmpty) return null;
+
+    final idStr = bookId.toString();
+
+    // Direct regex for pagination links:
+    // Matches: <a ... href=".../book/11126/12..." ...>...>>...</a>
+    final lastLinkRegex = RegExp(
+      r'''<a\s+[^>]*href=["'](?:https?://shamela\.ws)?/book/''' +
+          idStr +
+          r'''/(\d+)(?:#[^"']*)?["'][^>]*>(.*?)</a>''',
+      caseSensitive: false,
+      dotAll: true,
+    );
+
+    int? candidate;
+    for (final m in lastLinkRegex.allMatches(html)) {
+      final page = int.tryParse(m.group(1)!);
+      if (page == null) continue;
+      final fullTag = m.group(0) ?? '';
+      final inner = m.group(2) ?? '';
+
+      // High confidence: this link has >>, &gt;&gt;, », or says 'أخيرة' / 'last'
+      if (inner.contains('>>') ||
+          inner.contains('&gt;&gt;') ||
+          inner.contains('»') ||
+          fullTag.contains('أخيرة') ||
+          fullTag.contains('last') ||
+          fullTag.contains('الصفحة الأخيرة')) {
+        return page;
+      }
+
+      // Track max page number linked
+      if (candidate == null || page > candidate) {
+        candidate = page;
+      }
+    }
+
+    // Also check if there's any button/input with data-page or data-last
+    final dataLastRegex = RegExp(
+      r'''data-(?:last|total|max-page)=["'](\d+)["']''',
+      caseSensitive: false,
+    );
+    final dataMatch = dataLastRegex.firstMatch(html);
+    if (dataMatch != null) {
+      final val = int.tryParse(dataMatch.group(1)!);
+      if (val != null && val > 0) return val;
+    }
+
+    return candidate;
   }
 
   /// Clean HTML tags, brackets, and extra spaces
@@ -379,6 +490,15 @@ class ShamelaService {
             .map((p) => ShamelaChapter(title: chaptersMap[p]!, pageNumber: p))
             .toList();
 
+        final maxChapterPage =
+            chaptersMap.keys.fold<int>(0, (prev, elem) => elem > prev ? elem : prev);
+        if (maxChapterPage > 0) {
+          final current = _knownTotalPages[bookId] ?? 0;
+          if (maxChapterPage > current) {
+            unawaited(saveDiscoveredTotalPages(bookId, maxChapterPage));
+          }
+        }
+
         if (chapters.isNotEmpty) {
           // Clear old fihris and cache new chapters in SQLite
           await db.delete(
@@ -413,17 +533,29 @@ class ShamelaService {
     ShamelaBook book, {
     Function(int current, int total)? onProgress,
   }) async {
-    final total = book.totalPages > 0 ? book.totalPages : 50;
-
+    // Try to use dynamically discovered total first
+    int total = await getDiscoveredTotalPages(book.id) ?? 0;
+    // If not known, fetch page 1 to discover it
+    if (total <= 0) {
+      try {
+        final firstPage = await fetchPage(bookId: book.id, pageNumber: 1);
+        total = firstPage.detectedTotalPages ?? book.totalPages;
+        if (total > 0) {
+          await saveDiscoveredTotalPages(book.id, total);
+        }
+      } catch (_) {
+        total = book.totalPages;
+      }
+    }
+    if (total <= 0) total = book.totalPages;
+    if (total <= 0) total = 50; // absolute fallback
     for (int p = 1; p <= total; p++) {
       try {
         await fetchPage(bookId: book.id, pageNumber: p);
         onProgress?.call(p, total);
-        // Micro yield to keep UI silky smooth
         await Future.delayed(AppMotion.microPause);
       } catch (_) {}
     }
-
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('shamela_downloaded_${book.id}', true);
   }

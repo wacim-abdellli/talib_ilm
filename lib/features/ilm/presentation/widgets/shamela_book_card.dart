@@ -259,7 +259,7 @@ class ShamelaBookCard extends StatelessWidget {
             runSpacing: AppSpace.xs,
             children: [
               Text(
-                '${book.totalPages} صفحة',
+                '${ShamelaService.getEffectiveTotalPages(book.id, book.totalPages)} صفحة',
                 style: textTheme.caption.copyWith(color: palette.textMuted),
               ),
               Row(

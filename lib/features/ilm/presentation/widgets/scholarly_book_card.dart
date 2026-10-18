@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_tag.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
+import '../../data/services/shamela_service.dart';
 
 /// A luxury Islamic manuscript card for the scholarly library.
 ///
@@ -37,8 +38,14 @@ class ScholarlyBookCard extends StatelessWidget {
     final categoryColors = palette.category(book.subject);
 
     final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
-    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
-        ? digitalEntry.totalPages
+    final effectiveDigital = digitalEntry != null
+        ? ShamelaService.getEffectiveTotalPages(
+            digitalEntry.shamelaId,
+            digitalEntry.totalPages,
+          )
+        : 0;
+    final totalPages = effectiveDigital > 0
+        ? effectiveDigital
         : (book.totalPages > 0
             ? book.totalPages
             : (progress?.totalPages ?? 0));

@@ -6,6 +6,7 @@ import '../../../../shared/widgets/app_progress.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
+import '../../data/services/shamela_service.dart';
 
 /// A sleek, space-efficient resume card displayed above the library content.
 ///
@@ -56,8 +57,14 @@ class StudyResumePill extends StatelessWidget {
     BookProgress progress,
   ) {
     final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
-    final totalPages = digitalEntry != null && digitalEntry.totalPages > 0
-        ? digitalEntry.totalPages
+    final effectiveDigital = digitalEntry != null
+        ? ShamelaService.getEffectiveTotalPages(
+            digitalEntry.shamelaId,
+            digitalEntry.totalPages,
+          )
+        : 0;
+    final totalPages = effectiveDigital > 0
+        ? effectiveDigital
         : (book.totalPages > 0
             ? book.totalPages
             : (progress.totalPages > 0 ? progress.totalPages : 1));

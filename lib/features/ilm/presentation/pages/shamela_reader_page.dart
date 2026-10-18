@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -60,7 +62,11 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     super.initState();
     themeService.addListener(_onThemeChanged);
     _currentPage = widget.initialPage;
-    _totalPages = widget.book.totalPages > 0 ? widget.book.totalPages : 100;
+    final initialTotal = ShamelaService.getEffectiveTotalPages(
+      widget.book.id,
+      widget.book.totalPages,
+    );
+    _totalPages = initialTotal > 0 ? initialTotal : 100;
     _pageController = PageController(initialPage: _currentPage - 1);
 
     _loadPreferences();
@@ -113,6 +119,13 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
       _memorizationMode = prefs.getBool('shamela_memorization_mode') ?? false;
     });
+
+    final savedTotal = await ShamelaService.getDiscoveredTotalPages(widget.book.id);
+    if (savedTotal != null && savedTotal > 0 && mounted) {
+      if (_totalPages != savedTotal) {
+        setState(() => _totalPages = savedTotal);
+      }
+    }
   }
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
@@ -216,6 +229,12 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
       setState(() {
         _chapters = list;
         _isLoadingChapters = false;
+        final maxCh =
+            list.fold<int>(0, (m, c) => c.pageNumber > m ? c.pageNumber : m);
+        if (maxCh > _totalPages) {
+          _totalPages = maxCh;
+          ShamelaService.saveDiscoveredTotalPages(widget.book.id, maxCh);
+        }
       });
     }
   }
@@ -237,6 +256,11 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
         setState(() {
           _pageCache[pageNum] = page;
           _loadingPages.remove(pageNum);
+          if (page.detectedTotalPages != null &&
+              page.detectedTotalPages! > 0 &&
+              page.detectedTotalPages != _totalPages) {
+            _totalPages = page.detectedTotalPages!;
+          }
         });
       }
       ShamelaService.saveLastReadPage(widget.book.id, pageNum);
@@ -250,6 +274,10 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
           _loadingPages.remove(pageNum);
           if (isNotFound && pageNum > 1) {
             _totalPages = pageNum - 1;
+            unawaited(ShamelaService.saveDiscoveredTotalPages(
+              widget.book.id,
+              _totalPages,
+            ));
             _pageErrors[pageNum] =
                 'نهاية الكتاب. لقد أتممت قراءة جميع صفحات هذا الشرح المبارك ($_totalPages صفحة).';
           } else {

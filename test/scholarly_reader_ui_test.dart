@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/app/theme/app_ui.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/aqidah_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_digital_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
+import 'package:talib_ilm/features/ilm/data/services/shamela_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/book_mutn_tab.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutun_audio_player_hud.dart';
@@ -430,6 +432,40 @@ void main() {
 
       // Verify play button
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    });
+
+    test('AqidahCatalog has verified totalPages for classic texts', () {
+      final usulThalatha =
+          AqidahCatalog.books.firstWhere((b) => b.id == 11126);
+      expect(usulThalatha.totalPages, 12);
+
+      final qawaidArba =
+          AqidahCatalog.books.firstWhere((b) => b.id == 8524);
+      expect(qawaidArba.totalPages, 4);
+    });
+
+    test('ShamelaService extracts true total pages from page navigation HTML', () {
+      const mockShamelaPage1Html = '''
+<div class="nass">
+<p>بسم الله الرحمن الرحيم</p>
+</div>
+<div class="pagination">
+  <a href="/book/11126/2#p1">&gt;</a>
+  <a href="/book/11126/12#p1">&gt;&gt;</a>
+</div>
+''';
+      final detected =
+          ShamelaService.extractTotalPagesFromHtml(11126, mockShamelaPage1Html);
+      expect(detected, 12);
+    });
+
+    test('ShamelaService resolves effective total pages dynamically', () {
+      // Fallback if not discovered
+      expect(ShamelaService.getEffectiveTotalPages(999999, 50), 50);
+
+      // Save discovered total pages
+      ShamelaService.saveDiscoveredTotalPages(999999, 12);
+      expect(ShamelaService.getEffectiveTotalPages(999999, 50), 12);
     });
   });
 }
