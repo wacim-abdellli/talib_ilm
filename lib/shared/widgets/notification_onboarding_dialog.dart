@@ -111,7 +111,7 @@ class NotificationOnboardingDialog extends StatelessWidget {
             if (context.mounted) {
               AppSnackbar.success(
                 context,
-                'تم تفعيل تنبيهات الأذان والصلوات بنجاح 🕌',
+                'تم تفعيل تنبيهات الأذان والصلوات بنجاح',
                 duration: AppMotion.toastShort,
                 hasNavBar: true,
               );

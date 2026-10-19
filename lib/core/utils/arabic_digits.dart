@@ -1,6 +1,16 @@
 /// Formats numbers using standard Western numerals (1, 2, 3) per app guidelines.
 String toArabicDigits(int number) => number.toString();
 
+/// Converts any Eastern Arabic (Indic) numerals (٠-٩) in a string to Western Arabic numerals (0-9).
+String toWesternDigits(String input) {
+  const indic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  var result = input;
+  for (var i = 0; i < indic.length; i++) {
+    result = result.replaceAll(indic[i], i.toString());
+  }
+  return result;
+}
+
 /// Formal Arabic juz ordinal titles (Medina Mushaf style).
 String getArabicJuzName(int juzNumber) {
   const juzNames = [

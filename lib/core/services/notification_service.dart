@@ -235,17 +235,44 @@ class NotificationService {
         ),
       );
 
+      // ── Dedicated Pre-Prayer Advance Reminder Channel (v3) ───────────────
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_pre_reminder_v3',
+          'تنبيهات اقتراب وقت الصلاة',
+          description: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          enableLights: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+        ),
+      );
+
+      // ── Dedicated Iqama Channel (v3) ─────────────────────────────────────
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_prayer_iqama_v3',
+          'تنبيهات إقامة الصلاة',
+          description: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
+          importance: Importance.high,
+          playSound: true,
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+        ),
+      );
+
       // ── Tone & Silent Channels (v3) ───────────────────────────────────────
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           'talib_prayer_tone_v3',
           'نغمة التنبيه الهادئة',
           description: 'نغمة هادئة عند دخول وقت الصلاة',
-          importance: Importance.high,
+          importance: Importance.max,
           playSound: true,
           enableVibration: true,
           enableLights: true,
-          audioAttributesUsage: AudioAttributesUsage.notification,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
       await androidPlugin.createNotificationChannel(
@@ -265,9 +292,10 @@ class NotificationService {
           'talib_adhkar_reminders',
           'تنبيهات الأذكار اليومية',
           description: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
-          importance: Importance.high,
+          importance: Importance.max,
           playSound: true,
           enableVibration: true,
+          enableLights: true,
           audioAttributesUsage: AudioAttributesUsage.notification,
         ),
       );
@@ -307,6 +335,7 @@ class NotificationService {
         uiLocalNotificationDateInterpretation,
     DateTimeComponents? matchDateTimeComponents,
     String? payload,
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle,
   }) async {
     try {
       await _plugin.zonedSchedule(
@@ -315,7 +344,7 @@ class NotificationService {
         body,
         scheduledDate,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             uiLocalNotificationDateInterpretation,
         matchDateTimeComponents: matchDateTimeComponents,
@@ -323,7 +352,7 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint(
-        'Warning: Exact alarm restricted ($e). Falling back to inexact alarm for notification $id.',
+        'Warning: Schedule mode $scheduleMode restricted ($e) for $id. Retrying with exactAllowWhileIdle.',
       );
       try {
         await _plugin.zonedSchedule(
@@ -332,19 +361,38 @@ class NotificationService {
           body,
           scheduledDate,
           notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.inexact,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               uiLocalNotificationDateInterpretation,
           matchDateTimeComponents: matchDateTimeComponents,
           payload: payload,
         );
       } catch (fallbackError) {
-        debugPrint('Fallback inexact scheduling error ($id): $fallbackError');
+        debugPrint(
+          'Warning: exactAllowWhileIdle failed ($fallbackError) for $id. Retrying with inexactAllowWhileIdle.',
+        );
+        try {
+          await _plugin.zonedSchedule(
+            id,
+            title,
+            body,
+            scheduledDate,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                uiLocalNotificationDateInterpretation,
+            matchDateTimeComponents: matchDateTimeComponents,
+            payload: payload,
+          );
+        } catch (inexactError) {
+          debugPrint('Final fallback inexact scheduling error ($id): $inexactError');
+        }
       }
     }
   }
 
   /// Schedules a prayer notification according to the chosen mode (Adhan, Takbeer, Tone, Silent)
+  /// using Android AlarmClock mode for guaranteed execution even during deep Doze.
   Future<void> schedulePrayerNotification({
     required int id,
     required String prayerName,
@@ -366,7 +414,7 @@ class NotificationService {
       prayerName: prayerName,
     );
     final title = isJumua
-        ? 'حان الآن موعد أذان صلاة الجمعة 🕌'
+        ? 'حان الآن موعد أذان صلاة الجمعة'
         : 'صلاة $prayerName';
     final body = isJumua
         ? 'حي على الصلاة · حي على الفلاح · يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ'
@@ -382,6 +430,7 @@ class NotificationService {
       notificationDetails: details,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      scheduleMode: AndroidScheduleMode.alarmClock,
     );
   }
 
@@ -400,13 +449,16 @@ class NotificationService {
     await init();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_tone_v3',
+      'talib_prayer_pre_reminder_v3',
       'تنبيهات اقتراب وقت الصلاة',
       channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       playSound: true,
       enableVibration: true,
+      enableLights: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'اقترب وقت الصلاة',
@@ -415,6 +467,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
     const details = NotificationDetails(
       android: androidDetails,
@@ -423,7 +476,7 @@ class NotificationService {
     );
 
     final title = isJumua
-        ? 'اقترب موعد صلاة الجمعة 🕌'
+        ? 'اقترب موعد صلاة الجمعة'
         : 'اقترب وقت صلاة $prayerName';
     final body = isJumua
         ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
@@ -437,6 +490,61 @@ class NotificationService {
       notificationDetails: details,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      scheduleMode: AndroidScheduleMode.alarmClock,
+    );
+  }
+
+  /// Displays an instant heads-up advance reminder for foreground prayer detection.
+  Future<void> showInstantPrePrayerNotification({
+    required int id,
+    required String prayerName,
+    required int minutesBefore,
+    bool isJumua = false,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    await init();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_prayer_pre_reminder_v3',
+      'تنبيهات اقتراب وقت الصلاة',
+      channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'اقترب وقت الصلاة',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final title = isJumua
+        ? 'اقترب موعد صلاة الجمعة'
+        : 'اقترب وقت صلاة $prayerName';
+    final body = isJumua
+        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
+        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName.. تهيأ للصلاة وتوضأ';
+
+    await _plugin.show(
+      id,
+      title,
+      body,
+      details,
     );
   }
 
@@ -454,13 +562,14 @@ class NotificationService {
     await init();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_tone_v3',
+      'talib_prayer_iqama_v3',
       'تنبيهات إقامة الصلاة',
       channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+      category: AndroidNotificationCategory.reminder,
       icon: '@mipmap/ic_launcher',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'موعد إقامة الصلاة',
@@ -469,6 +578,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
     const details = NotificationDetails(
       android: androidDetails,
@@ -477,7 +587,7 @@ class NotificationService {
     );
 
     final title = isJumua
-        ? 'موعد خطبة وصلاة الجمعة 🕌'
+        ? 'موعد خطبة وصلاة الجمعة'
         : 'موعد إقامة صلاة $prayerName';
     final body = isJumua
         ? 'حان الآن موعد خطبة وصلاة الجمعة المباركة.. استمع وأنصت للخطبة بخشوع'
@@ -491,6 +601,7 @@ class NotificationService {
       notificationDetails: details,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
@@ -528,7 +639,7 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
-    const title = 'نور ما بين الجمعتين 📖 · سورة الكهف';
+    const title = 'نور ما بين الجمعتين · سورة الكهف';
     const body =
         'قال ﷺ: «من قرأ سورة الكهف في يوم الجمعة أضاء له من النور ما بين الجمعتين» · لا تنسَ قراءتها والصلاة على النبي ﷺ';
 
@@ -706,18 +817,72 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
-  /// Cancels only prayer-related notification slots (IDs 100-299 and 700-799),
-  /// strictly preserving other notification categories like Athkar reminders (301, 302, 303).
-  Future<void> cancelPrayerNotificationsOnly() async {
+  /// Dismisses only the active in-progress heads-up prayer alerts and tone notifications (700..710, 750..760)
+  /// without clearing any of the 7-day scheduled future prayer alarms.
+  Future<void> cancelActivePrayerAlertsOnly() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return;
     }
-    // Cancel today & tomorrow prayer, pre-prayer, and iqama IDs (100..299)
+    for (int i = 700; i <= 710; i++) {
+      await _plugin.cancel(i);
+    }
+    for (int i = 750; i <= 760; i++) {
+      await _plugin.cancel(i);
+    }
+    for (int i = 1000; i <= 1005; i++) {
+      await _plugin.cancel(i);
+    }
+    for (int i = 100; i <= 105; i++) {
+      await _plugin.cancel(i);
+    }
+  }
+
+  /// Cancels all scheduled prayer-related notification slots across the 7-day rolling schedule,
+  /// strictly preserving other notification categories like Athkar reminders (301, 302, 303),
+  /// and preserving any actively sounding prayer notification IDs.
+  Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    // Cancel 7-day rolling schedule IDs:
+    // Adhans: 1000..1605 (base: 1000 + d * 100 + i)
+    // Pre-prayers: 2000..2605 (base: 2000 + d * 100 + i)
+    // Iqamas: 3000..3605 (base: 3000 + d * 100 + i)
+    // Friday Kahf: 4000..4600 (base: 4000 + d * 100)
+    for (var d = 0; d < 7; d++) {
+      for (var i = 0; i <= 5; i++) {
+        final adhanId = 1000 + (d * 100) + i;
+        if (preserveIds == null || !preserveIds.contains(adhanId)) {
+          await _plugin.cancel(adhanId);
+        }
+        final preId = 2000 + (d * 100) + i;
+        if (preserveIds == null || !preserveIds.contains(preId)) {
+          await _plugin.cancel(preId);
+        }
+        final iqamaId = 3000 + (d * 100) + i;
+        if (preserveIds == null || !preserveIds.contains(iqamaId)) {
+          await _plugin.cancel(iqamaId);
+        }
+      }
+      final kahfId = 4000 + (d * 100);
+      if (preserveIds == null || !preserveIds.contains(kahfId)) {
+        await _plugin.cancel(kahfId);
+      }
+    }
+
+    // Cancel legacy IDs (100..299)
     for (int i = 100; i <= 299; i++) {
+      if (preserveIds != null && preserveIds.contains(i)) continue;
       await _plugin.cancel(i);
     }
     // Cancel instant alert IDs (700..710)
     for (int i = 700; i <= 710; i++) {
+      if (preserveIds != null && preserveIds.contains(i)) continue;
+      await _plugin.cancel(i);
+    }
+    // Cancel instant pre-prayer alert IDs (750..760)
+    for (int i = 750; i <= 760; i++) {
+      if (preserveIds != null && preserveIds.contains(i)) continue;
       await _plugin.cancel(i);
     }
   }
@@ -777,9 +942,11 @@ class NotificationService {
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
-        final soundName = _soundName(sound);
-        final channelId = _channelIdForAdhan(sound);
-        final channelName = _channelNameForAdhan(sound);
+        final effectiveSound =
+            (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+        final soundName = _soundName(effectiveSound);
+        final channelId = _channelIdForAdhan(effectiveSound);
+        final channelName = _channelNameForAdhan(effectiveSound);
         return AndroidNotificationDetails(
           channelId,
           channelName,
@@ -910,8 +1077,10 @@ class NotificationService {
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
+        final effectiveSound =
+            (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
         return DarwinNotificationDetails(
-          sound: '${_soundName(sound)}.mp3',
+          sound: '${_soundName(effectiveSound)}.mp3',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,
@@ -951,7 +1120,10 @@ class NotificationService {
   }
 
   String _soundName(AdhanSound? sound) {
-    switch (sound) {
+    final effectiveSound = (sound == null || sound == AdhanSound.takbeer)
+        ? AdhanSound.qatami
+        : sound;
+    switch (effectiveSound) {
       case AdhanSound.madinah:
         return 'adhan_madinah';
       case AdhanSound.alafasy:
@@ -962,17 +1134,17 @@ class NotificationService {
         return 'adhan_qatami';
       case AdhanSound.aqsa:
         return 'adhan_aqsa';
-      case AdhanSound.takbeer:
-        return 'adhan_takbeer';
       case AdhanSound.makkah:
         return 'adhan_makkah';
-      default:
+      case AdhanSound.takbeer:
         return 'adhan_qatami';
     }
   }
 
   String _channelIdForAdhan(AdhanSound sound) {
-    switch (sound) {
+    final effectiveSound =
+        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+    switch (effectiveSound) {
       case AdhanSound.madinah:
         return 'talib_prayer_madinah_v3';
       case AdhanSound.alafasy:
@@ -983,14 +1155,17 @@ class NotificationService {
         return 'talib_prayer_qatami_v3';
       case AdhanSound.aqsa:
         return 'talib_prayer_aqsa_v3';
-      case AdhanSound.takbeer:
       case AdhanSound.makkah:
         return 'talib_prayer_makkah_v3';
+      case AdhanSound.takbeer:
+        return 'talib_prayer_qatami_v3';
     }
   }
 
   String _channelNameForAdhan(AdhanSound sound) {
-    switch (sound) {
+    final effectiveSound =
+        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+    switch (effectiveSound) {
       case AdhanSound.madinah:
         return 'أذان المسجد النبوي الشريف';
       case AdhanSound.alafasy:
@@ -1001,9 +1176,10 @@ class NotificationService {
         return 'أذان الشيخ ناصر القطامي';
       case AdhanSound.aqsa:
         return 'أذان المسجد الأقصى (القدس الشريف)';
-      case AdhanSound.takbeer:
       case AdhanSound.makkah:
         return 'أذان مكة المكرمة (الشيخ علي ملا)';
+      case AdhanSound.takbeer:
+        return 'أذان الشيخ ناصر القطامي';
     }
   }
 
@@ -1059,10 +1235,13 @@ class NotificationService {
       'talib_adhkar_reminders',
       'تنبيهات الأذكار اليومية',
       channelDescription: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       playSound: true,
       enableVibration: true,
+      enableLights: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'أذكار المسلم',
@@ -1071,6 +1250,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
     const details = NotificationDetails(
       android: androidDetails,
@@ -1087,6 +1267,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
+      scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );
   }

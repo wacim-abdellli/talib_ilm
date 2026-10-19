@@ -15,6 +15,8 @@ import 'quiz_usul_catalog.dart';
 
 import '../services/quiz_dump_service.dart';
 
+import 'quiz_manhaj_syllabus.dart';
+
 /// The master catalog aggregating all authentic Islamic disciplines, levels, and questions.
 class IslamicQuizCatalog {
   IslamicQuizCatalog._();
@@ -35,16 +37,46 @@ class IslamicQuizCatalog {
 
   static List<FanQuiz> get founoun {
     final dumpService = QuizDumpService.instance;
+    if (!dumpService.isLoaded) {
+      return _baseFounoun;
+    }
+
     return _baseFounoun.map((fan) {
+      final dumpQuestions = dumpService.getQuestionsForFan(fan.id);
+      if (dumpQuestions.isEmpty) return fan;
+
+      // When the full offline syllabus dump is loaded, partition into authentic manhaj levels (<= 20 questions)
+      if (dumpService.totalDumpQuestionsCount > 50) {
+        final allQuestions = <QuizQuestion>[];
+        for (final lvl in fan.levels) {
+          allQuestions.addAll(lvl.questions);
+        }
+        allQuestions.addAll(dumpQuestions);
+
+        final manhajLevels = QuizManhajSyllabus.partitionQuestionsIntoManhajLevels(
+          fanId: fan.id,
+          allQuestions: allQuestions,
+        );
+
+        return FanQuiz(
+          id: fan.id,
+          title: fan.title,
+          subtitle: fan.subtitle,
+          icon: fan.icon,
+          levels: manhajLevels.isNotEmpty ? manhajLevels : fan.levels,
+        );
+      }
+
+      // Fallback for targeted test dumps with 1-2 questions
       final updatedLevels = fan.levels.map((level) {
-        final dumpQuestions = dumpService.getQuestionsForLevel(level.id);
-        if (dumpQuestions.isEmpty) return level;
+        final levelDump = dumpService.getQuestionsForLevel(level.id);
+        if (levelDump.isEmpty) return level;
         return QuizLevel(
           id: level.id,
           levelNumber: level.levelNumber,
           title: level.title,
           description: level.description,
-          questions: [...level.questions, ...dumpQuestions],
+          questions: [...level.questions, ...levelDump],
           passingPercentage: level.passingPercentage,
         );
       }).toList();

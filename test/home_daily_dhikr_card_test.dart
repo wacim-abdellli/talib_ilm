@@ -10,7 +10,7 @@ void main() {
     arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
     transliteration: '',
     target: 3,
-    countDescription: '٣ مرات',
+    countDescription: '3 مرات',
     fadl: 'حُطَّتْ خَطَايَاهُ',
     source: 'صحيح البخاري',
     meaning: '',

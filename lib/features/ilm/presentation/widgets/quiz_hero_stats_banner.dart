@@ -20,36 +20,44 @@ class QuizHeroStatsBanner extends StatelessWidget {
 
     final stars = stats?.totalStars ?? 0;
     final completed = stats?.completedLevelsCount ?? 0;
+    final totalLevels = IslamicQuizCatalog.totalLevelsCount;
     final rank = stats?.rankTitle ?? 'مبتدئ في طلب العلم';
-    final rankIcon = stats?.rankIcon ?? '🌱';
+    final rankIcon = stats?.rankIconData ?? Icons.spa_rounded;
+    final xp = stats?.totalXp ?? 0;
+
+    final masteryProgress = totalLevels > 0
+        ? (completed / totalLevels).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
-      padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: palette.surface,
         borderRadius: AppRadius.xlRadius,
-        border: Border.all(color: palette.gold.withAlpha(60), width: 1.2),
+        border: Border.all(color: palette.gold.withAlpha(70), width: 1.2),
         boxShadow: palette.shadow,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: AppSpace.xxl * 1.5,
-                height: AppSpace.xxl * 1.5,
+                width: AppSpace.xxl * 1.4,
+                height: AppSpace.xxl * 1.4,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: palette.goldSoft,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: palette.gold.withAlpha(90),
+                    color: palette.gold.withAlpha(100),
                     width: 1.5,
                   ),
                 ),
-                child: Text(
+                child: Icon(
                   rankIcon,
-                  style: textTheme.titleSmall,
+                  color: palette.gold,
+                  size: AppIcon.md,
                 ),
               ),
               const SizedBox(width: AppSpace.md),
@@ -58,7 +66,7 @@ class QuizHeroStatsBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'رتبة طالب العلم',
+                      'رتبة طالب العلم المنهجي',
                       style: textTheme.caption.copyWith(color: palette.textSubtle),
                     ),
                     const SizedBox(height: AppSpace.xxs),
@@ -66,7 +74,36 @@ class QuizHeroStatsBanner extends StatelessWidget {
                       rank,
                       style: textTheme.titleSmall.copyWith(
                         color: palette.text,
-                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: AppSpace.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.goldSoft,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: palette.gold.withAlpha(80),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.stars_rounded,
+                      color: palette.gold,
+                      size: AppIcon.xs,
+                    ),
+                    const SizedBox(width: AppSpace.xxs),
+                    Text(
+                      '$xp XP',
+                      style: textTheme.caption.copyWith(
+                        color: palette.gold,
                       ),
                     ),
                   ],
@@ -74,36 +111,62 @@ class QuizHeroStatsBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpace.lg),
+          const SizedBox(height: AppSpace.md),
+          ClipRRect(
+            borderRadius: AppRadius.pillRadius,
+            child: LinearProgressIndicator(
+              value: masteryProgress,
+              backgroundColor: palette.surfaceMuted,
+              color: palette.gold,
+              minHeight: 4,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
           Container(
-            padding: const EdgeInsetsDirectional.all(AppSpace.md),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+              vertical: AppSpace.md,
+            ),
             decoration: BoxDecoration(
               color: palette.surfaceMuted,
-              borderRadius: AppRadius.mdRadius,
+              borderRadius: AppRadius.lgRadius,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildMetric(
                   icon: Icons.star_rounded,
                   iconColor: palette.gold,
-                  value: '$stars',
+                  primaryText: '$stars',
+                  secondaryText: '',
                   label: 'نجوم الإتقان',
                   palette: palette,
                   textTheme: textTheme,
                 ),
+                Container(
+                  width: 1,
+                  height: AppSpace.xl,
+                  color: palette.border,
+                ),
                 _buildMetric(
-                  icon: Icons.check_circle_outline_rounded,
+                  icon: Icons.military_tech_rounded,
                   iconColor: palette.primary,
-                  value: '$completed / ${IslamicQuizCatalog.totalLevelsCount}',
+                  primaryText: '$completed',
+                  secondaryText: ' من $totalLevels',
                   label: 'المستويات المتقنة',
                   palette: palette,
                   textTheme: textTheme,
                 ),
+                Container(
+                  width: 1,
+                  height: AppSpace.xl,
+                  color: palette.border,
+                ),
                 _buildMetric(
                   icon: Icons.verified_rounded,
                   iconColor: palette.primary,
-                  value: '${stats?.totalCorrectAnswers ?? 0}',
+                  primaryText: '${stats?.totalCorrectAnswers ?? 0}',
+                  secondaryText: '',
                   label: 'إجابة صحيحة',
                   palette: palette,
                   textTheme: textTheme,
@@ -119,7 +182,8 @@ class QuizHeroStatsBanner extends StatelessWidget {
   Widget _buildMetric({
     required IconData icon,
     required Color iconColor,
-    required String value,
+    required String primaryText,
+    required String secondaryText,
     required String label,
     required AppPalette palette,
     required dynamic textTheme,
@@ -129,14 +193,32 @@ class QuizHeroStatsBanner extends StatelessWidget {
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
+          textDirection: TextDirection.rtl,
           children: [
             Icon(icon, color: iconColor, size: AppIcon.sm),
             const SizedBox(width: AppSpace.xxs),
-            Text(value, style: textTheme.label.copyWith(color: palette.text)),
+            Text(
+              primaryText,
+              style: textTheme.label.copyWith(
+                color: palette.text,
+              ),
+            ),
+            if (secondaryText.isNotEmpty)
+              Text(
+                secondaryText,
+                style: textTheme.caption.copyWith(
+                  color: palette.textSubtle,
+                ),
+              ),
           ],
         ),
         const SizedBox(height: AppSpace.xxs),
-        Text(label, style: textTheme.caption.copyWith(color: palette.textSubtle)),
+        Text(
+          label,
+          style: textTheme.caption.copyWith(
+            color: palette.textSubtle,
+          ),
+        ),
       ],
     );
   }

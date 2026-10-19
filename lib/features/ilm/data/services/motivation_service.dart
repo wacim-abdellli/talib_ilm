@@ -43,7 +43,7 @@ class MotivationService {
         message: 'أتممت أول كتاب في رحلتك العلمية\n«بورك في العلم وأهله»',
         verse:
             'قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ',
-        verseRef: 'الزمر: ٩',
+        verseRef: 'الزمر: 9',
         icon: '📚',
       );
       await _recordMilestone('first_book');
@@ -83,7 +83,7 @@ class MotivationService {
         title: 'سددك الله!',
         message: 'شهر كامل من المثابرة\nهذا من توفيق الله لك',
         verse: 'وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا',
-        verseRef: 'العنكبوت: ٦٩',
+        verseRef: 'العنكبوت: 69',
         icon: '⭐',
       );
       await _recordMilestone('streak_30');
@@ -108,7 +108,7 @@ class MotivationService {
         message: 'عشرة كتب أكملتها بتوفيق الله\nعلمٌ يُبنى وأجرٌ يُرجى',
         verse:
             'يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ',
-        verseRef: 'المجادلة: ١١',
+        verseRef: 'المجادلة: 11',
         icon: '🌟',
       );
       await _recordMilestone('books_10');

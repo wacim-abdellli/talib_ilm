@@ -43,13 +43,14 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   late int _currentIndex;
   final Set<int> _loadedTabs = <int>{};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex.clamp(0, 4);
     _loadedTabs.add(_currentIndex);
     ForegroundPrayerService().start();
@@ -59,6 +60,14 @@ class _AppShellState extends State<AppShell> {
         NotificationOnboardingDialog.checkAndShow(context);
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ForegroundPrayerService().start();
+      unawaited(PrayerScheduleService().refreshSchedulesIfNeeded());
+    }
   }
 
   Future<void> _initPrayerNotifications() async {
@@ -78,6 +87,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     ForegroundPrayerService().stop();
     FlipToStopService().dispose();
     super.dispose();

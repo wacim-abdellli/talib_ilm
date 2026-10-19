@@ -181,4 +181,13 @@ class UserQuizStats {
     if (totalXp >= 100) return '📖';
     return '🌱';
   }
+
+  IconData get rankIconData {
+    if (totalXp >= 1500) return Icons.workspace_premium_rounded;
+    if (totalXp >= 900) return Icons.military_tech_rounded;
+    if (totalXp >= 500) return Icons.auto_stories_rounded;
+    if (totalXp >= 250) return Icons.school_rounded;
+    if (totalXp >= 100) return Icons.menu_book_rounded;
+    return Icons.spa_rounded;
+  }
 }

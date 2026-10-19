@@ -136,7 +136,7 @@ class IlmQuizBannerCard extends StatelessWidget {
                       const SizedBox(height: AppSpace.xxs),
                       Text(
                         currentFan != null
-                          ? '٣ مستويات متدرجة مع الدروس والأدلة الشرعية'
+                          ? '3 مستويات متدرجة مع الدروس والأدلة الشرعية'
                           : 'اختبر حفظك وفهمك في العقيدة، الفقه، الحديث، والتفسير مع الشروحات',
                         style: textTheme.caption.copyWith(
                           color: palette.textMuted,

@@ -10,9 +10,17 @@ import 'adhan_settings_service.dart';
 export 'package:just_audio/just_audio.dart' show PlayerState;
 
 class AdhanService {
-  final AudioPlayer _player;
+  static final AdhanService _instance = AdhanService._internal();
+  factory AdhanService({AudioPlayer? player}) {
+    if (player != null) {
+      return AdhanService._withPlayer(player);
+    }
+    return _instance;
+  }
+  AdhanService._internal() : _player = AudioPlayer();
+  AdhanService._withPlayer(this._player);
 
-  AdhanService({AudioPlayer? player}) : _player = player ?? AudioPlayer();
+  final AudioPlayer _player;
 
   bool get isPlaying => _player.playing;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
@@ -32,14 +40,22 @@ class AdhanService {
         QuranRadioService().pause();
       } catch (_) {}
 
-      final assetPath = _assetFor(sound: sound, mode: mode, prayerName: prayerName);
-      final title = _titleFor(sound: sound, mode: mode, prayerName: prayerName);
+      // Ensure Full Adhan mode strictly plays a full muezzin sound
+      final effectiveSound =
+          (mode == PrayerNotificationMode.adhan && sound == AdhanSound.takbeer)
+              ? AdhanSound.qatami
+              : sound;
+
+      final assetPath =
+          _assetFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
+      final title =
+          _titleFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
 
       // Create AudioSource with required MediaItem tag for just_audio_background
       final source = AudioSource.asset(
         assetPath,
         tag: MediaItem(
-          id: 'adhan_${mode.name}_${sound.name}_${prayerName ?? "default"}',
+          id: 'adhan_${mode.name}_${effectiveSound.name}_${prayerName ?? "default"}',
           album: 'أذان ومواقيت الصلاة',
           title: title,
           artist: 'طالب العلم',
@@ -110,7 +126,11 @@ class AdhanService {
       return AppAssets.adhanTakbeer;
     }
 
-    switch (sound) {
+    // For Full Adhan mode, strictly ensure a full muezzin asset is used
+    final effectiveSound =
+        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+
+    switch (effectiveSound) {
       case AdhanSound.makkah:
         return AppAssets.adhanMakkah;
       case AdhanSound.madinah:
@@ -124,7 +144,7 @@ class AdhanService {
       case AdhanSound.aqsa:
         return AppAssets.adhanAqsa;
       case AdhanSound.takbeer:
-        return AppAssets.adhanTakbeer;
+        return AppAssets.adhanQatami;
     }
   }
 
@@ -142,7 +162,10 @@ class AdhanService {
       return 'تكبيرات الأذان المباركة';
     }
 
-    switch (sound) {
+    final effectiveSound =
+        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+
+    switch (effectiveSound) {
       case AdhanSound.makkah:
         return 'أذان الحرم المكي الشريف (الشيخ علي ملا)';
       case AdhanSound.madinah:
@@ -156,7 +179,7 @@ class AdhanService {
       case AdhanSound.aqsa:
         return 'أذان المسجد الأقصى المبارك (القدس الشريف)';
       case AdhanSound.takbeer:
-        return 'تكبيرات الأذان';
+        return 'أذان الشيخ ناصر القطامي';
     }
   }
 }

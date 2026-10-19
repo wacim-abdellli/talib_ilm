@@ -14,15 +14,18 @@ class PrayerScheduleService {
   final PrayerTimeService _prayerTimeService;
   final NotificationService _notificationService;
   final AdhanSettingsService _adhanSettingsService;
+  final DateTime Function() _now;
 
   PrayerScheduleService({
     PrayerTimeService? prayerTimeService,
     NotificationService? notificationService,
     AdhanSettingsService? adhanSettingsService,
+    DateTime Function()? now,
   })  : _prayerTimeService = prayerTimeService ?? PrayerTimeService(),
         _notificationService = notificationService ?? NotificationService(),
         _adhanSettingsService =
-            adhanSettingsService ?? AdhanSettingsService();
+            adhanSettingsService ?? AdhanSettingsService(),
+        _now = now ?? (prayerTimeService?.now ?? DateTime.now);
 
   Future<void> refreshSchedulesIfNeeded({
     PrayerTimesDay? day,
@@ -30,9 +33,6 @@ class PrayerScheduleService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final today = day ?? await _prayerTimeService.getPrayerTimesDay();
-    final tomorrow = await _prayerTimeService.getPrayerTimesDay(
-      date: DateTime.now().add(const Duration(days: 1)),
-    );
     final settings = await _adhanSettingsService.getSettings();
 
     final dateKey = _formatDate(today.date);
@@ -42,27 +42,59 @@ class PrayerScheduleService {
     final lastDate = prefs.getString(_keyDate);
     final lastLocation = prefs.getString(_keyLocation);
     final lastSettings = prefs.getString(_keySettings);
+    final lastRefreshTimeMs = prefs.getInt('prayer_schedule_timestamp') ?? 0;
+    final now = _now();
+    final hoursSinceLastRefresh =
+        (now.millisecondsSinceEpoch - lastRefreshTimeMs) / (1000 * 60 * 60);
 
-    final hasPendingTodayPrayers =
-        today.prayers.values.any((t) => t.isAfter(DateTime.now()));
-
+    // If not forced, same day, same location, same settings, and refreshed within 12 hours:
+    // the 7-day rolling window is fully saturated, so return early to avoid redundant work.
     if (!force &&
         lastDate == dateKey &&
         lastLocation == locationKey &&
         lastSettings == settingsKey &&
-        !hasPendingTodayPrayers) {
+        hoursSinceLastRefresh < 12) {
       return;
+    }
+
+    // Preserve notification IDs for any prayer currently sounding / active
+    // within an active window of [-60s, +360s]
+    final sortedTodayPrayers = today.prayers.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    final preserveIds = <int>{};
+    var prayerIdx = 0;
+    for (final entry in sortedTodayPrayers) {
+      if (!entry.key.contains('الشروق')) {
+        final diff = now.difference(entry.value).inSeconds;
+        if (diff >= -60 && diff <= 360) {
+          preserveIds.add(1000 + prayerIdx); // Scheduled notification ID (day 0)
+          preserveIds.add(100 + prayerIdx);  // Legacy scheduled notification ID
+          preserveIds.add(700 + prayerIdx);  // Instant alert ID
+          preserveIds.add(750 + prayerIdx);  // Instant pre-prayer ID
+        }
+      }
+      prayerIdx++;
     }
 
     await _notificationService.init();
     await _notificationService.requestPermissions();
-    await _notificationService.cancelPrayerNotificationsOnly();
+    await _notificationService.cancelPrayerNotificationsOnly(
+      preserveIds: preserveIds,
+    );
 
-    // Schedule Today's upcoming prayers (base ID 100)
-    await _scheduleDay(today, settings, baseId: 100);
+    // Schedule 7 rolling days (Day 0 = Today, Day 1 = Tomorrow, ..., Day 6 = 6 days ahead)
+    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final targetDate = now.add(Duration(days: dayOffset));
+      final dayPrayerTimes = (dayOffset == 0 && day != null)
+          ? day
+          : await _prayerTimeService.getPrayerTimesDay(date: targetDate);
 
-    // Schedule Tomorrow's prayers (base ID 200)
-    await _scheduleDay(tomorrow, settings, baseId: 200);
+      await _scheduleDay(
+        dayPrayerTimes,
+        settings,
+        dayOffset: dayOffset,
+      );
+    }
 
     // Ensure daily Adhkar reminders are also scheduled and preserved
     try {
@@ -77,17 +109,23 @@ class PrayerScheduleService {
     await prefs.setString(_keyDate, dateKey);
     await prefs.setString(_keyLocation, locationKey);
     await prefs.setString(_keySettings, settingsKey);
+    await prefs.setInt('prayer_schedule_timestamp', now.millisecondsSinceEpoch);
   }
 
   Future<void> _scheduleDay(
     PrayerTimesDay day,
     AdhanSettings settings, {
-    required int baseId,
+    required int dayOffset,
   }) async {
-    final now = DateTime.now();
+    final now = _now();
     final isFriday = day.date.weekday == DateTime.friday;
     final entries = day.prayers.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
+
+    final baseAdhanId = 1000 + (dayOffset * 100);
+    final basePrePrayerId = 2000 + (dayOffset * 100);
+    final baseIqamaId = 3000 + (dayOffset * 100);
+    final kahfId = 4000 + (dayOffset * 100);
 
     // Friday Special: Surat Al-Kahf reminder at 09:00 AM
     if (isFriday) {
@@ -100,7 +138,7 @@ class PrayerScheduleService {
       );
       if (kahfTime.isAfter(now)) {
         await _notificationService.scheduleSurahAlKahfNotification(
-          id: baseId + 90,
+          id: kahfId,
           scheduledTime: kahfTime,
         );
       }
@@ -130,7 +168,7 @@ class PrayerScheduleService {
               prayerTime.subtract(Duration(minutes: notifyBefore));
           if (prePrayerTime.isAfter(now)) {
             await _notificationService.schedulePrePrayerNotification(
-              id: baseId + 30 + index,
+              id: basePrePrayerId + index,
               prayerName: effectivePrayerName,
               scheduledTime: prePrayerTime,
               minutesBefore: notifyBefore,
@@ -142,7 +180,7 @@ class PrayerScheduleService {
         // 2. Prayer / Adhan notification at prayer time
         if (prayerTime.isAfter(now)) {
           await _notificationService.schedulePrayerNotification(
-            id: baseId + index,
+            id: baseAdhanId + index,
             prayerName: effectivePrayerName,
             scheduledTime: prayerTime,
             mode: mode,
@@ -159,7 +197,7 @@ class PrayerScheduleService {
           final iqamaTime = prayerTime.add(Duration(minutes: iqamaMinutes));
           if (iqamaTime.isAfter(now)) {
             await _notificationService.scheduleIqamaNotification(
-              id: baseId + 60 + index,
+              id: baseIqamaId + index,
               prayerName: effectivePrayerName,
               scheduledTime: iqamaTime,
               isJumua: isJumua,

@@ -258,7 +258,7 @@ class _IlmPageState extends State<IlmPage> {
           message: 'أتممت كتاب "${book.title}" بفضل الله.',
           icon: '🌿',
           verse: 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
-          verseRef: 'سورة طه: ١١٤',
+          verseRef: 'سورة طه: 114',
         ),
       );
     }
@@ -458,9 +458,7 @@ class _IlmPageState extends State<IlmPage> {
             Expanded(
               child: _selectedCategory == 'shamela'
                   ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
-                  : (_selectedCategory == 'quiz'
-                        ? const IslamicQuizHubPage(showAppBar: false)
-                        : _buildScrollablePartitions(context, palette)),
+                  : _buildScrollablePartitions(context, palette),
             ),
           ],
         ),

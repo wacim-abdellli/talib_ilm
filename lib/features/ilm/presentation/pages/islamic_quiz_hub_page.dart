@@ -58,7 +58,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
       buildFadeRoute(
         page: QuizSessionPage(
           title: 'التحدي اليومي السريع',
-          subtitle: '١٠ أسئلة منوعة من سائر فنون الشريعة',
+          subtitle: '10 أسئلة منوعة من سائر فنون الشريعة',
           questions: questions,
           isDailyChallenge: true,
         ),
@@ -93,21 +93,37 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
         ? Center(child: CircularProgressIndicator(color: palette.primary))
         : ListView(
             padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.xl,
-              vertical: AppSpace.lg,
+              horizontal: AppSpace.lg,
+              vertical: AppSpace.md,
             ),
             children: [
               // Scholarly Rank & Stats Hero Banner
               QuizHeroStatsBanner(stats: _userStats),
-              const SizedBox(height: AppSpace.lg),
+              const SizedBox(height: AppSpace.md),
 
               // Daily Challenge Card
               _buildDailyChallengeCard(palette: palette, textTheme: textTheme),
-              const SizedBox(height: AppSpace.xl),
+              const SizedBox(height: AppSpace.lg),
+
+              // Section Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'فنون العلم الشرعي المنهجية',
+                    style: textTheme.titleSmall,
+                  ),
+                  Text(
+                    '${allFounoun.length} فنون · ${IslamicQuizCatalog.totalLevelsCount} مستويات',
+                    style: textTheme.caption.copyWith(color: palette.textSubtle),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.sm),
 
               // Discipline Filter Chips
               _buildCategoryFilter(palette: palette, textTheme: textTheme),
-              const SizedBox(height: AppSpace.lg),
+              const SizedBox(height: AppSpace.md),
 
               // Founoun List
               ...filteredFounoun.map((fan) {
@@ -146,7 +162,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
           ),
           centerTitle: true,
           title: Text(
-            'مسابقات واختبارات الفنون',
+            'المسابقات والمنهج العلمي',
             style: textTheme.titleSmall,
           ),
         ),
@@ -162,17 +178,20 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
     final isDone = _progressService?.isDailyChallengeCompletedToday() ?? false;
 
     return Material(
-      color: palette.goldSoft,
-      borderRadius: AppRadius.lgRadius,
+      color: palette.surface,
+      borderRadius: AppRadius.xlRadius,
       child: InkWell(
-        borderRadius: AppRadius.lgRadius,
+        borderRadius: AppRadius.xlRadius,
         onTap: _openDailyChallenge,
         child: Container(
           padding: const EdgeInsetsDirectional.all(AppSpace.lg),
           decoration: BoxDecoration(
-            borderRadius: AppRadius.lgRadius,
+            color: palette.surface,
+            borderRadius: AppRadius.xlRadius,
             border: Border.all(
-              color: palette.gold.withAlpha(90),
+              color: isDone
+                  ? palette.primary.withAlpha(90)
+                  : palette.gold.withAlpha(100),
               width: 1.2,
             ),
             boxShadow: palette.shadow,
@@ -183,13 +202,18 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                 width: AppSpace.xxl * 1.3,
                 height: AppSpace.xxl * 1.3,
                 decoration: BoxDecoration(
-                  color: palette.gold,
+                  color: isDone ? palette.primarySoft : palette.goldSoft,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDone
+                        ? palette.primary.withAlpha(80)
+                        : palette.gold.withAlpha(90),
+                  ),
                 ),
                 child: Icon(
-                  Icons.bolt_rounded,
-                  color: palette.onGold,
-                  size: AppIcon.lg,
+                  isDone ? Icons.check_circle_rounded : Icons.bolt_rounded,
+                  color: isDone ? palette.primary : palette.gold,
+                  size: AppIcon.md,
                 ),
               ),
               const SizedBox(width: AppSpace.md),
@@ -197,18 +221,38 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'التحدي اليومي السريع',
-                      style: textTheme.titleSmall.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'التحدي اليومي السريع',
+                          style: textTheme.titleSmall.copyWith(
+                            color: palette.text,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xs,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDone ? palette.primarySoft : palette.goldSoft,
+                            borderRadius: AppRadius.pillRadius,
+                          ),
+                          child: Text(
+                            isDone ? 'مكتمل' : '+50 XP',
+                            style: textTheme.caption.copyWith(
+                              color: isDone ? palette.primary : palette.gold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpace.xxs),
                     Text(
                       isDone
                           ? 'أُنجز تحدي اليوم بحمد الله ✓'
-                          : '١٠ أسئلة متجددة يومياً لتثبيت العلم ومدارسته',
+                          : '10 أسئلة منتقاة يومياً لتثبيت العلم ومدارسته',
                       style: textTheme.caption.copyWith(color: palette.textMuted),
                     ),
                   ],
@@ -218,12 +262,12 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
               Container(
                 padding: const EdgeInsetsDirectional.all(AppSpace.xs),
                 decoration: BoxDecoration(
-                  color: palette.surface,
+                  color: palette.surfaceMuted,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.arrow_back_rounded,
-                  color: palette.gold,
+                  color: palette.textSubtle,
                   size: AppIcon.sm,
                 ),
               ),
@@ -240,17 +284,21 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
   }) {
     final categories = [
       {'id': 'all', 'label': 'جميع الفنون'},
+      {'id': 'quran', 'label': 'القرآن وعلومه'},
+      {'id': 'tajweed', 'label': 'التجويد'},
+      {'id': 'hadith', 'label': 'الحديث'},
       {'id': 'aqidah', 'label': 'العقيدة'},
       {'id': 'fiqh', 'label': 'الفقه'},
-      {'id': 'hadith', 'label': 'الحديث'},
-      {'id': 'quran', 'label': 'القرآن'},
+      {'id': 'usul', 'label': 'أصول الفقه'},
       {'id': 'seerah', 'label': 'السيرة'},
+      {'id': 'sahaba', 'label': 'الصحابة'},
       {'id': 'prophets_names', 'label': 'الأنبياء والأسماء'},
       {'id': 'adab', 'label': 'الآداب'},
+      {'id': 'arabic', 'label': 'العربية'},
     ];
 
     return SizedBox(
-      height: AppSize.buttonH,
+      height: AppSpace.xxl,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
@@ -259,26 +307,34 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
           final cat = categories[index];
           final isSelected = _selectedCategory == cat['id'];
 
-          return ChoiceChip(
-            label: Text(
-              cat['label']!,
-              style: textTheme.caption.copyWith(
-                color: isSelected ? palette.onPrimarySoft : palette.textMuted,
-              ),
-            ),
-            selected: isSelected,
-            selectedColor: palette.primarySoft,
-            backgroundColor: palette.surface,
-            shape: RoundedRectangleBorder(
+          return Material(
+            color: isSelected ? palette.primary : palette.surface,
+            borderRadius: AppRadius.pillRadius,
+            child: InkWell(
               borderRadius: AppRadius.pillRadius,
-              side: BorderSide(
-                color: isSelected ? palette.primary : palette.border,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _selectedCategory = cat['id']!);
+              },
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: isSelected ? palette.primary : palette.border,
+                  ),
+                ),
+                child: Text(
+                  cat['label']!,
+                  style: textTheme.caption.copyWith(
+                    color: isSelected ? palette.onPrimary : palette.textMuted,
+                  ),
+                ),
               ),
             ),
-            onSelected: (_) {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedCategory = cat['id']!);
-            },
           );
         },
       ),
@@ -293,6 +349,10 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
     int fanStars = 0;
     int fanCompletedLevels = 0;
     int totalQuestionsInFan = 0;
+
+    QuizActiveSession? fanActiveSession;
+    QuizLevel? fanActiveLevel;
+
     for (final level in fan.levels) {
       totalQuestionsInFan += level.totalQuestions;
       final p = _userStats?.levelProgress[level.id];
@@ -300,23 +360,42 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
         fanStars += p.stars;
         if (p.isCompleted) fanCompletedLevels++;
       }
+
+      if (fanActiveSession == null) {
+        final active = _progressService?.getActiveSession(level.id);
+        if (active != null &&
+            active.currentIndex > 0 &&
+            active.currentIndex < level.totalQuestions) {
+          fanActiveSession = active;
+          fanActiveLevel = level;
+        }
+      }
     }
+
     final maxStars = fan.levels.length * 3;
     final progressFraction = fan.levels.isEmpty
         ? 0.0
         : (fanCompletedLevels / fan.levels.length).clamp(0.0, 1.0);
 
+    final hasActiveResume = fanActiveSession != null && fanActiveLevel != null;
+    final fanTheme = palette.fanColor(fan.id);
+
     return Material(
       color: palette.surface,
-      borderRadius: AppRadius.lgRadius,
+      borderRadius: AppRadius.xlRadius,
       child: InkWell(
-        borderRadius: AppRadius.lgRadius,
+        borderRadius: AppRadius.xlRadius,
         onTap: () => _openFanLevels(fan),
         child: Container(
           padding: const EdgeInsetsDirectional.all(AppSpace.lg),
           decoration: BoxDecoration(
-            borderRadius: AppRadius.lgRadius,
-            border: Border.all(color: palette.border),
+            borderRadius: AppRadius.xlRadius,
+            border: Border.all(
+              color: hasActiveResume
+                  ? fanTheme.primary.withValues(alpha: 0.6)
+                  : fanTheme.border.withValues(alpha: 0.45),
+              width: hasActiveResume ? 1.4 : 1.0,
+            ),
             boxShadow: palette.shadow,
           ),
           child: Column(
@@ -328,13 +407,18 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                     width: AppSpace.xxl * 1.3,
                     height: AppSpace.xxl * 1.3,
                     decoration: BoxDecoration(
-                      color: palette.primarySoft,
+                      color: fanTheme.softBg,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: palette.primary.withAlpha(40),
+                        color: fanTheme.border,
+                        width: 1.2,
                       ),
                     ),
-                    child: Icon(fan.icon, color: palette.primary, size: AppIcon.md),
+                    child: Icon(
+                      fan.icon,
+                      color: fanTheme.primary,
+                      size: AppIcon.md,
+                    ),
                   ),
                   const SizedBox(width: AppSpace.md),
                   Expanded(
@@ -355,19 +439,74 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                   const SizedBox(width: AppSpace.sm),
                   Icon(
                     Icons.arrow_back_rounded,
-                    color: palette.textSubtle,
+                    color: fanTheme.primary.withValues(alpha: 0.7),
                     size: AppIcon.md,
                   ),
                 ],
               ),
+
+              // Active Resume Box on Outside Card (if stopped mid-level)
+              if (hasActiveResume) ...[
+                const SizedBox(height: AppSpace.sm),
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: fanTheme.softBg,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: fanTheme.border,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.play_circle_fill_rounded,
+                        color: fanTheme.primary,
+                        size: AppIcon.sm,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Expanded(
+                        child: Text(
+                          'متابعة: المستوى ${fanActiveLevel.levelNumber} (السؤال ${fanActiveSession.currentIndex + 1} من ${fanActiveLevel.totalQuestions})',
+                          style: textTheme.caption.copyWith(
+                            color: fanTheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: fanTheme.primary,
+                          borderRadius: AppRadius.pillRadius,
+                        ),
+                        child: Text(
+                          'استئناف',
+                          style: textTheme.caption.copyWith(
+                            color: palette.onPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: AppSpace.sm),
               ClipRRect(
                 borderRadius: AppRadius.pillRadius,
                 child: LinearProgressIndicator(
                   value: progressFraction,
                   backgroundColor: palette.surfaceMuted,
-                  color: palette.primary,
-                  minHeight: 3.5,
+                  color: fanTheme.primary,
+                  minHeight: 4,
                 ),
               ),
               const SizedBox(height: AppSpace.sm),
@@ -380,23 +519,30 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                   const SizedBox(width: AppSpace.sm),
                   Container(
                     padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.xs,
+                      horizontal: AppSpace.sm,
                       vertical: AppSpace.xxs,
                     ),
                     decoration: BoxDecoration(
-                      color: palette.surfaceMuted,
+                      color: fanTheme.softBg,
                       borderRadius: AppRadius.pillRadius,
                     ),
                     child: Text(
-                      '$totalQuestionsInFan سؤال',
-                      style: textTheme.caption.copyWith(color: palette.textMuted),
+                      '$totalQuestionsInFan سؤالاً',
+                      style: textTheme.caption.copyWith(
+                        color: fanTheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const Spacer(),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star_rounded, color: palette.gold, size: AppIcon.sm),
+                      Icon(
+                        Icons.star_rounded,
+                        color: palette.gold,
+                        size: AppIcon.sm,
+                      ),
                       const SizedBox(width: AppSpace.xxs),
                       Text(
                         '$fanStars / $maxStars',

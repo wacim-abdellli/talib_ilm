@@ -105,7 +105,7 @@ class IlmEnhancedBookCard extends StatelessWidget {
             AppProgress(progress: 1.0),
             const SizedBox(height: AppSpace.xs),
             Text(
-              '١٠٠٪ مكتمل',
+              '100% مكتمل',
               style: context.text.caption.copyWith(
                 color: palette.primary,
                 fontWeight: FontWeight.w600,

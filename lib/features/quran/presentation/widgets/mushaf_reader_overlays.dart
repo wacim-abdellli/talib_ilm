@@ -494,7 +494,7 @@ class MushafReaderBottomBar extends StatelessWidget {
           children: [
             _buildTajweedItem(
               color: TajweedPalette.madd,
-              label: 'مدود (٤-٦)',
+              label: 'مدود (4-6)',
               textTheme: textTheme,
               textColor: textColor,
             ),

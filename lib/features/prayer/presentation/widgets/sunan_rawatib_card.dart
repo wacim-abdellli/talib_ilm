@@ -135,7 +135,7 @@ class _SunanRawatibCardState extends State<SunanRawatibCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'السنن الرواتب (١٢ ركعة)',
+                      'السنن الرواتب (12 ركعة)',
                       style: context.text.titleSmall.copyWith(
                         color: palette.text,
                         fontWeight: FontWeight.bold,
@@ -165,7 +165,7 @@ class _SunanRawatibCardState extends State<SunanRawatibCard> {
                   ),
                 ),
                 child: Text(
-                  '$total / ١٢',
+                  '$total / 12',
                   style: context.text.caption.copyWith(
                     color: isAllDone ? palette.gold : palette.text,
                     fontWeight: FontWeight.w700,
@@ -191,27 +191,27 @@ class _SunanRawatibCardState extends State<SunanRawatibCard> {
             runSpacing: AppSpace.xs,
             children: [
               _SunnahPill(
-                label: 'الفجر (٢)',
+                label: 'الفجر (2)',
                 isDone: _fajr,
                 onTap: () => _toggle('fajr', _fajr),
               ),
               _SunnahPill(
-                label: 'قبل الظهر (٤)',
+                label: 'قبل الظهر (4)',
                 isDone: _dhuhrBefore,
                 onTap: () => _toggle('dhuhr_before', _dhuhrBefore),
               ),
               _SunnahPill(
-                label: 'بعد الظهر (٢)',
+                label: 'بعد الظهر (2)',
                 isDone: _dhuhrAfter,
                 onTap: () => _toggle('dhuhr_after', _dhuhrAfter),
               ),
               _SunnahPill(
-                label: 'بعد المغرب (٢)',
+                label: 'بعد المغرب (2)',
                 isDone: _maghrib,
                 onTap: () => _toggle('maghrib', _maghrib),
               ),
               _SunnahPill(
-                label: 'بعد العشاء (٢)',
+                label: 'بعد العشاء (2)',
                 isDone: _isha,
                 onTap: () => _toggle('isha', _isha),
               ),

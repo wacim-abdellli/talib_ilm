@@ -89,5 +89,93 @@ void main() {
       final h1058 = all.firstWhere((h) => h.id == 'riyad_1058');
       expect(h1058.benefits, contains('التقعر والتكلف في الكلام'));
     });
+
+    test('Zero repeated Salawat and zero سلمى typos across all hadiths', () async {
+      final all = await service.getAllHadiths();
+      final repeatedRegex = RegExp(r'(?:صلى\s+)?الله\s+عليه\s+وسلم[ى]?\s+(?:صلى\s+)?الله\s+عليه\s+وسلم');
+
+      for (final h in all) {
+        expect(
+          repeatedRegex.hasMatch(h.matn),
+          isFalse,
+          reason: 'Hadith ${h.id} has repeated salawat: ${h.matn}',
+        );
+        expect(
+          h.matn.contains('وسلمى'),
+          isFalse,
+          reason: 'Hadith ${h.id} has وسلمى typo in matn',
+        );
+        expect(
+          h.title.contains('وسلمى'),
+          isFalse,
+          reason: 'Hadith ${h.id} has وسلمى typo in title',
+        );
+      }
+    });
+
+    test('Narrator honorific gender and dual agreement are 100% accurate', () async {
+      final all = await service.getAllHadiths();
+      final femaleKeywords = [
+        'عائشة', 'أم سلمة', 'حفصة', 'زينب', 'ميمونة', 'صفية', 'جويرية',
+        'سودة', 'أم حبيبة', 'خديجة', 'فاطمة', 'أسماء', 'أم عطية', 'أم سليم'
+      ];
+      final dualKeywords = [
+        'ابن عباس', 'ابن عمر', 'ابن عمرو', 'أسامة بن زيد', 'ابن الزبير',
+        'عبد الله بن عباس', 'عبد الله بن عمر', 'عبد الله بن عمرو', 'عبد الله بن الزبير',
+        'جابر بن عبد الله', 'النعمان بن بشير', 'البراء بن عازب'
+      ];
+
+      final anhRegex = RegExp(r'رضي\s+الله\s+عنه(?![ماهم])');
+
+      for (final h in all) {
+        // Female companions must have عنها
+        for (final f in femaleKeywords) {
+          if (h.narrator.contains(f)) {
+            expect(
+              anhRegex.hasMatch(h.narrator) && !h.narrator.contains('عنها'),
+              isFalse,
+              reason: 'Hadith ${h.id} has wrong gender for female narrator: ${h.narrator}',
+            );
+          }
+        }
+
+        // Dual companions must have عنهما
+        for (final d in dualKeywords) {
+          if (h.narrator.contains(d)) {
+            expect(
+              anhRegex.hasMatch(h.narrator) && !h.narrator.contains('عنهما') && !h.narrator.contains('عنهم'),
+              isFalse,
+              reason: 'Hadith ${h.id} has wrong dual honorific: ${h.narrator}',
+            );
+          }
+        }
+      }
+    });
+
+    test('User-reported hadiths (riyad_209, riyad_222, riyad_265) are fully pristine', () async {
+      final all = await service.getAllHadiths();
+
+      // riyad_209: Title was 'أفيلتزمه ويقبله؟فال'
+      final h209 = all.firstWhere((h) => h.id == 'riyad_209');
+      expect(h209.title, isNot(contains('؟فال')));
+      expect(h209.title, isNot(contains('فال')));
+      expect(h209.title, contains('أدب لقاء'));
+      expect(h209.matn, contains('أينحني'));
+      expect(h209.matn, contains('أفيلتزمه ويقبله؟ قال:'));
+
+      // riyad_222: Had repeated salawat, وسلمى, عائشة رضي الله عنه, اشتكي, الأنسان, عيينه
+      final h222 = all.firstWhere((h) => h.id == 'riyad_222');
+      expect(h222.narrator, contains('رضي الله عنها'));
+      expect(h222.matn, contains('اشتكى الإنسان'));
+      expect(h222.matn, contains('سفيان بن عيينة'));
+      expect(h222.matn.contains('وسلمى'), isFalse);
+      expect(h222.matn.contains('صلى الله عليه وسلم الله عليه وسلم'), isFalse);
+
+      // riyad_265: Title was 'الله عليه وسلمى الله عليه وسلم الله عليه وسلم يعوده فقال'
+      final h265 = all.firstWhere((h) => h.id == 'riyad_265');
+      expect(h265.title, contains('عيادة المريض'));
+      expect(h265.matn.contains('وسلمى'), isFalse);
+      expect(h265.matn, contains('لا أرى طلحة'));
+    });
   });
 }

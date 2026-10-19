@@ -92,7 +92,7 @@ class FlipToStopService {
         adhanService.stop();
         stoppedSomething = true;
       }
-      NotificationService().cancelPrayerNotificationsOnly();
+      NotificationService().cancelActivePrayerAlertsOnly();
     } catch (_) {}
 
     // 2. Pause Quran recitation audio

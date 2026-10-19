@@ -112,7 +112,36 @@ class ForegroundPrayerService {
         final mode = settings.modeForPrayer(name);
         if (mode == PrayerNotificationMode.off) continue;
 
-        // Check if now is within [prayerTime, prayerTime + 90 seconds]
+        final isJumua = day.date.weekday == DateTime.friday &&
+            (name.contains('الظهر') || name == 'الظهر');
+        final effectiveName = isJumua ? 'صلاة الجمعة' : name;
+
+        // 1. Advance reminder check in foreground (e.g. 15 minutes before)
+        final notifyBefore = settings.notifyBeforeMinutes.toInt();
+        if (notifyBefore > 0) {
+          final preTime = time.subtract(Duration(minutes: notifyBefore));
+          final preDiff = now.difference(preTime);
+          if (preDiff.inSeconds >= 0 && preDiff.inSeconds <= 60) {
+            final preAlertKey = '${todayStr}_pre_$name';
+            if (!_alertedKeys.contains(preAlertKey)) {
+              _alertedKeys.add(preAlertKey);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setStringList(
+                  'adhan_alerted_keys', _alertedKeys.toList());
+
+              final orderIndex = AppStrings.prayerOrder.indexOf(name);
+              final preNotifId = 750 + (orderIndex >= 0 ? orderIndex : 0);
+              await _notificationService.showInstantPrePrayerNotification(
+                id: preNotifId,
+                prayerName: effectiveName,
+                minutesBefore: notifyBefore,
+                isJumua: isJumua,
+              );
+            }
+          }
+        }
+
+        // 2. Check if now is within [prayerTime, prayerTime + 90 seconds]
         final diff = now.difference(time);
         if (diff.inSeconds >= 0 && diff.inSeconds <= 90) {
           final alertKey = '${todayStr}_$name';
@@ -121,22 +150,37 @@ class ForegroundPrayerService {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setStringList('adhan_alerted_keys', _alertedKeys.toList());
 
-            // 1. Trigger instant system notification with heads-up alarm presentation and sound
+            final effectiveSound = settings.effectiveMuezzinSound;
+
+            // 1. Play audio via AdhanService foreground media session if not already playing
+            if (mode != PrayerNotificationMode.silent &&
+                mode != PrayerNotificationMode.off) {
+              if (!_adhanService.isPlaying) {
+                unawaited(_adhanService.play(
+                  sound: effectiveSound,
+                  mode: mode,
+                  volume: settings.volume,
+                  prayerName: effectiveName,
+                ));
+              }
+            }
+
+            // 2. Trigger instant system notification with heads-up alarm presentation
             final orderIndex = AppStrings.prayerOrder.indexOf(name);
             final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
             await _notificationService.showInstantPrayerAlert(
               id: notifId,
-              prayerName: name,
+              prayerName: effectiveName,
               mode: mode,
-              sound: settings.sound,
+              sound: effectiveSound,
             );
 
-            // 2. Post in-app alert banner
+            // 3. Post in-app alert banner with stop controls
             activeAlert.value = ActivePrayerAlert(
-              prayerName: name,
+              prayerName: effectiveName,
               prayerTime: time,
               mode: mode,
-              sound: settings.sound,
+              sound: effectiveSound,
             );
           }
         }

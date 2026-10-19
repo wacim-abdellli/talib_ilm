@@ -50,9 +50,9 @@ class TajweedGuideSheet extends StatelessWidget {
                 palette: palette,
                 textTheme: textTheme,
                 color: TajweedPalette.madd,
-                title: 'المدود الطويلة (٤ إلى ٦ حركات)',
+                title: 'المدود الطويلة (4 إلى 6 حركات)',
                 description:
-                    'المد اللازم (٦ حركات)، والمد المتصل والمنفصل والصلة الكبرى (٤ أو ٥ حركات).',
+                    'المد اللازم (6 حركات)، والمد المتصل والمنفصل والصلة الكبرى (4 أو 5 حركات).',
                 example: '﴿الضَّآلِّينَ﴾ • ﴿جَآءَ﴾ • ﴿بِمَآ أُنزِلَ﴾',
               ),
               const SizedBox(height: AppSpace.sm),

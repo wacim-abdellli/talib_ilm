@@ -12,7 +12,7 @@ void main() {
     transliteration: 'Subhan Allahi wa bihamdihi',
     meaning: 'Glory be to Allah and His is the praise',
     target: 33,
-    countDescription: '٣٣ مرة',
+    countDescription: '33 مرة',
     fadl: 'تُحط خطاياه وإن كانت مثل زبد البحر',
     source: 'صحيح مسلم',
     audio: '',

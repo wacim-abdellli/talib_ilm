@@ -13,6 +13,7 @@ class QuizDumpService {
   static const String dumpAssetPath = 'assets/data/quiz_questions_dump.json';
 
   final Map<String, List<QuizQuestion>> _dumpQuestionsByLevel = {};
+  final Map<String, List<QuizQuestion>> _dumpQuestionsByFan = {};
   bool _isLoaded = false;
 
   bool get isLoaded => _isLoaded;
@@ -24,6 +25,13 @@ class QuizDumpService {
         .replaceAll('_level_', '_l')
         .replaceAll('_level', '_l')
         .replaceAll('_lvl', '_l');
+  }
+
+  /// Normalizes fan IDs
+  static String normalizeFanId(String fanId) {
+    if (fanId == 'taj') return 'tajweed';
+    if (fanId == 'prophets') return 'prophets_names';
+    return fanId;
   }
 
   /// Loads questions directly from a JSON string. Returns count of loaded questions.
@@ -40,8 +48,14 @@ class QuizDumpService {
               final question = QuizQuestion.fromJson(qJson);
               final rawLevelId = question.levelId ?? qJson['levelId'] as String? ?? 'general';
               final levelId = normalizeLevelId(rawLevelId);
+              final rawFan = question.fanId ?? qJson['fanId'] as String? ?? levelId.split('_').first;
+              final fanId = normalizeFanId(rawFan);
+
               _dumpQuestionsByLevel
                   .putIfAbsent(levelId, () => [])
+                  .add(question);
+              _dumpQuestionsByFan
+                  .putIfAbsent(fanId, () => [])
                   .add(question);
               loadedCount++;
             }
@@ -75,6 +89,12 @@ class QuizDumpService {
     return _dumpQuestionsByLevel[norm] ?? _dumpQuestionsByLevel[levelId] ?? const [];
   }
 
+  /// Returns supplemental dump questions for an entire discipline.
+  List<QuizQuestion> getQuestionsForFan(String fanId) {
+    final norm = normalizeFanId(fanId);
+    return _dumpQuestionsByFan[norm] ?? _dumpQuestionsByFan[fanId] ?? const [];
+  }
+
   /// Returns all supplemental dump questions across all disciplines.
   List<QuizQuestion> getAllDumpQuestions() {
     final all = <QuizQuestion>[];
@@ -91,6 +111,7 @@ class QuizDumpService {
 
   void clearForTest() {
     _dumpQuestionsByLevel.clear();
+    _dumpQuestionsByFan.clear();
     _isLoaded = false;
   }
 

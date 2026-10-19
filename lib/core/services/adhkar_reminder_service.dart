@@ -116,7 +116,7 @@ class AdhkarReminderService {
     if (settings.morningEnabled) {
       await _notificationService.scheduleDailyAdhkarNotification(
         id: idMorning,
-        title: 'أذكار الصباح ☀️',
+        title: 'أذكار الصباح',
         body: 'أصبحنا وأصبح الملك لله.. ابدأ يومك بحفظ الله وذكره',
         hour: settings.morningHour,
         minute: settings.morningMinute,
@@ -130,7 +130,7 @@ class AdhkarReminderService {
     if (settings.eveningEnabled) {
       await _notificationService.scheduleDailyAdhkarNotification(
         id: idEvening,
-        title: 'أذكار المساء 🌙',
+        title: 'أذكار المساء',
         body: 'أمسينا وأمسى الملك لله.. حصّن نفسك بحفظ الله وذكره',
         hour: settings.eveningHour,
         minute: settings.eveningMinute,
@@ -144,7 +144,7 @@ class AdhkarReminderService {
     if (settings.sleepEnabled) {
       await _notificationService.scheduleDailyAdhkarNotification(
         id: idSleep,
-        title: 'أذكار النوم 🛏️',
+        title: 'أذكار النوم',
         body: 'باسمك ربي وضعت جنبي وبك أرفعه.. لا تنسَ أذكار النوم وسورة الملك',
         hour: settings.sleepHour,
         minute: settings.sleepMinute,

@@ -11,7 +11,7 @@ void main() {
     arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
     transliteration: 'Subhan Allahi wa bihamdihi',
     target: 33,
-    countDescription: '٣٣ مرة',
+    countDescription: '33 مرة',
     fadl: 'حُطَّتْ خَطَايَاهُ وَإِنْ كَانَتْ مِثْلَ زَبَدِ الْبَحْرِ',
     source: 'صحيح مسلم',
     meaning: 'سبحان الله وبحمده، تنزيهاً له عن كل نقص',
@@ -47,7 +47,7 @@ void main() {
       );
 
       expect(find.text('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ'), findsOneWidget);
-      expect(find.text('٣٣ مرة'), findsOneWidget);
+      expect(find.text('33 مرة'), findsOneWidget);
       expect(find.text(sampleItem.meaning), findsNothing);
     });
 
@@ -139,7 +139,7 @@ void main() {
 
       // Without tashkeel: 'سبحان الله وبحمده'
       expect(find.text('سبحان الله وبحمده'), findsOneWidget);
-      expect(find.text('٣٣ مرة'), findsOneWidget);
+      expect(find.text('33 مرة'), findsOneWidget);
 
       // Tap share
       await tester.tap(find.byIcon(Icons.share_outlined));

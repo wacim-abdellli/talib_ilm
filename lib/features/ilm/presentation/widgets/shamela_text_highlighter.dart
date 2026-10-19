@@ -147,7 +147,7 @@ class ShamelaTextHighlighter {
           ),
         ));
       } else if (match.group(9) != null) {
-        // ── 9. Divisions, Principles & Numerals (أولاً / الشرط الأول / ١ -) ──
+        // ── 9. Divisions, Principles & Numerals (أولاً / الشرط الأول / 1 -) ──
         spans.add(TextSpan(
           text: matchedText,
           style: baseStyle.copyWith(

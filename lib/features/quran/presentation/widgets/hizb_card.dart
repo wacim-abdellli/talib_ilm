@@ -150,7 +150,7 @@ class HizbCard extends StatelessWidget {
                   } else if (quarter.quarterInHizb == 3) {
                     shortQuarterLabel = 'النصف (ص ${quarter.page})';
                   } else {
-                    shortQuarterLabel = '٣/٤ (ص ${quarter.page})';
+                    shortQuarterLabel = '3/4 (ص ${quarter.page})';
                   }
 
                   return Expanded(

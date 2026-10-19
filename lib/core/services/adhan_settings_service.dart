@@ -76,15 +76,38 @@ class AdhanSettings {
     );
   }
 
+  /// Returns the effective muezzin sound for full adhan playback.
+  /// If legacy takbeer was stored as sound, falls back to the default Sheikh Qatami.
+  AdhanSound get effectiveMuezzinSound =>
+      (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+
   /// Resolves the specific notification mode for a given prayer.
   PrayerNotificationMode modeForPrayer(String name) {
     if (!enabled) return PrayerNotificationMode.off;
-    final specific = prayerModes[name];
+    final specific = prayerModes[name] ?? _findModeFuzzy(name);
     if (specific != null) return specific;
-    final isToggled = prayerToggles[name] ?? true;
+    final isToggled = prayerToggles[name] ?? _findToggleFuzzy(name) ?? true;
     if (!isToggled) return PrayerNotificationMode.off;
     if (silentNotifications) return PrayerNotificationMode.silent;
     return defaultMode;
+  }
+
+  PrayerNotificationMode? _findModeFuzzy(String name) {
+    for (final entry in prayerModes.entries) {
+      if (entry.key.contains(name) || name.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  bool? _findToggleFuzzy(String name) {
+    for (final entry in prayerToggles.entries) {
+      if (entry.key.contains(name) || name.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
   /// Whether a prayer notification is actively enabled (non-silent or silent)

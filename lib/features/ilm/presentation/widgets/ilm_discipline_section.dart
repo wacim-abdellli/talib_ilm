@@ -225,75 +225,12 @@ class IlmDisciplineSection {
 
                       const SizedBox(height: AppSpace.xxs),
 
-                      // Tier 2: Subtitle Description + Discipline Quiz Pill
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              subtitle,
-                              style: context.text.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (fan != null) ...[
-                            const SizedBox(width: AppSpace.xs),
-                            Semantics(
-                              button: true,
-                              label: 'اختبار $title (${fan.totalQuestions} سؤالاً)',
-                              child: Material(
-                                color: palette.goldSoft,
-                                borderRadius: AppRadius.pillRadius,
-                                child: InkWell(
-                                  borderRadius: AppRadius.pillRadius,
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    onOpenQuiz(fan);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsetsDirectional.symmetric(
-                                      horizontal: AppSpace.sm,
-                                      vertical: AppSpace.xs,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: AppRadius.pillRadius,
-                                      border: Border.all(
-                                        color: palette.gold.withAlpha(160),
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.emoji_events_rounded,
-                                          size: AppIcon.sm,
-                                          color: palette.gold,
-                                        ),
-                                        const SizedBox(width: AppSpace.xs),
-                                        Text(
-                                          'اختبار الفن • ${fan.totalQuestions} س',
-                                          style: context.text.caption.copyWith(
-                                            color: palette.gold,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppSpace.xxs),
-                                        Icon(
-                                          Icons.arrow_back_ios_new_rounded,
-                                          size: AppIcon.xs,
-                                          color: palette.gold,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      // Tier 2: Subtitle Description
+                      Text(
+                        subtitle,
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
                       ),
                     ],
                   ),
