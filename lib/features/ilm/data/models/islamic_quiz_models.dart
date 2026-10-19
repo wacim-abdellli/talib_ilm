@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 /// Single multiple-choice question with rich educational lesson, evidence, and reference.
 class QuizQuestion {
   final String id;
+  final String? levelId;
+  final String? fanId;
   final String question;
   final List<String> options;
   final int correctIndex;
@@ -12,6 +14,8 @@ class QuizQuestion {
 
   const QuizQuestion({
     required this.id,
+    this.levelId,
+    this.fanId,
     required this.question,
     required this.options,
     required this.correctIndex,
@@ -21,6 +25,34 @@ class QuizQuestion {
   });
 
   bool isCorrect(int selectedIndex) => selectedIndex == correctIndex;
+
+  factory QuizQuestion.fromJson(Map<String, dynamic> json) {
+    return QuizQuestion(
+      id: json['id'] as String? ?? '',
+      levelId: json['levelId'] as String?,
+      fanId: json['fanId'] as String?,
+      question: json['question'] as String? ?? '',
+      options: (json['options'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
+      correctIndex: json['correctIndex'] as int? ?? 0,
+      lesson: json['lesson'] as String? ?? '',
+      evidence: json['evidence'] as String? ?? '',
+      reference: json['reference'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        if (levelId != null) 'levelId': levelId,
+        if (fanId != null) 'fanId': fanId,
+        'question': question,
+        'options': options,
+        'correctIndex': correctIndex,
+        'lesson': lesson,
+        'evidence': evidence,
+        'reference': reference,
+      };
 }
 
 /// A level containing a curated set of questions within an Islamic science.

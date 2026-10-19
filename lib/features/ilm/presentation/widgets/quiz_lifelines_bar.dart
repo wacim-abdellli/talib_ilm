@@ -50,7 +50,9 @@ class QuizLifelinesBar extends StatelessWidget {
                 button: true,
                 label: 'حذف خيارين، المتبقي $fiftyFiftyRemaining',
                 child: Material(
-                  color: canFiftyFifty ? palette.surface : palette.surfaceMuted,
+                  color: canFiftyFifty
+                      ? palette.surface
+                      : palette.surfaceMuted,
                   borderRadius: AppRadius.mdRadius,
                   child: InkWell(
                     borderRadius: AppRadius.mdRadius,
@@ -71,13 +73,14 @@ class QuizLifelinesBar extends StatelessWidget {
                           color: canFiftyFifty
                               ? palette.primary.withAlpha(120)
                               : palette.border,
+                          width: canFiftyFifty ? 1.4 : 1.0,
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.pie_chart_outline_rounded,
+                            Icons.filter_2_rounded,
                             size: AppIcon.sm,
                             color: canFiftyFifty
                                 ? palette.primary
@@ -130,7 +133,7 @@ class QuizLifelinesBar extends StatelessWidget {
                 button: true,
                 label: 'إضاءة وتلميح، المتبقي $hintRemaining',
                 child: Material(
-                  color: canHint ? palette.goldSoft : palette.surfaceMuted,
+                  color: canHint ? palette.surface : palette.surfaceMuted,
                   borderRadius: AppRadius.mdRadius,
                   child: InkWell(
                     borderRadius: AppRadius.mdRadius,
@@ -149,15 +152,16 @@ class QuizLifelinesBar extends StatelessWidget {
                         borderRadius: AppRadius.mdRadius,
                         border: Border.all(
                           color: canHint
-                              ? palette.gold.withAlpha(140)
+                              ? palette.gold.withAlpha(150)
                               : palette.border,
+                          width: canHint ? 1.4 : 1.0,
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.lightbulb_outline_rounded,
+                            Icons.lightbulb_rounded,
                             size: AppIcon.sm,
                             color: canHint ? palette.gold : palette.textSubtle,
                           ),
@@ -178,7 +182,7 @@ class QuizLifelinesBar extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: canHint
-                                  ? palette.surface
+                                  ? palette.goldSoft
                                   : palette.surfaceMuted,
                               borderRadius: AppRadius.pillRadius,
                             ),
@@ -186,7 +190,7 @@ class QuizLifelinesBar extends StatelessWidget {
                               '$hintRemaining',
                               style: textTheme.caption.copyWith(
                                 color:
-                                  canHint ? palette.gold : palette.textSubtle,
+                                    canHint ? palette.gold : palette.textSubtle,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

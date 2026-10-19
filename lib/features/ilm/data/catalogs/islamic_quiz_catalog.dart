@@ -13,6 +13,8 @@ import 'quiz_seerah_catalog.dart';
 import 'quiz_tajweed_catalog.dart';
 import 'quiz_usul_catalog.dart';
 
+import '../services/quiz_dump_service.dart';
+
 /// The master catalog aggregating all authentic Islamic disciplines, levels, and questions.
 class IslamicQuizCatalog {
   IslamicQuizCatalog._();
@@ -41,7 +43,21 @@ class IslamicQuizCatalog {
   static QuizLevel? getLevel(String levelId) {
     for (final fan in founoun) {
       for (final level in fan.levels) {
-        if (level.id == levelId) return level;
+        if (level.id == levelId) {
+          final dumpQuestions =
+              QuizDumpService.instance.getQuestionsForLevel(levelId);
+          if (dumpQuestions.isNotEmpty) {
+            return QuizLevel(
+              id: level.id,
+              levelNumber: level.levelNumber,
+              title: level.title,
+              description: level.description,
+              questions: [...level.questions, ...dumpQuestions],
+              passingPercentage: level.passingPercentage,
+            );
+          }
+          return level;
+        }
       }
     }
     return null;
@@ -57,7 +73,8 @@ class IslamicQuizCatalog {
   }
 
   static int get totalQuestionsCount =>
-      founoun.fold(0, (sum, fan) => sum + fan.totalQuestions);
+      founoun.fold(0, (sum, fan) => sum + fan.totalQuestions) +
+      QuizDumpService.instance.totalDumpQuestionsCount;
 
   static int get totalLevelsCount =>
       founoun.fold(0, (sum, fan) => sum + fan.levels.length);
@@ -70,6 +87,7 @@ class IslamicQuizCatalog {
         allQuestions.addAll(level.questions);
       }
     }
+    allQuestions.addAll(QuizDumpService.instance.getAllDumpQuestions());
 
     if (allQuestions.isEmpty) return [];
 

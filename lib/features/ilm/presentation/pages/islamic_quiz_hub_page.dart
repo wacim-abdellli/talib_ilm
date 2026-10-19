@@ -6,7 +6,9 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/catalogs/islamic_quiz_catalog.dart';
 import '../../data/models/islamic_quiz_models.dart';
+import '../../data/services/quiz_dump_service.dart';
 import '../../data/services/quiz_progress_service.dart';
+import '../widgets/quiz_hero_stats_banner.dart';
 import 'fan_quiz_levels_page.dart';
 import 'quiz_session_page.dart';
 
@@ -36,6 +38,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
   }
 
   Future<void> _loadStats() async {
+    await QuizDumpService.instance.loadDump();
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     _progressService = QuizProgressService(prefs);
@@ -95,7 +98,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
             ),
             children: [
               // Scholarly Rank & Stats Hero Banner
-              _buildHeroStatsBanner(palette: palette, textTheme: textTheme),
+              QuizHeroStatsBanner(stats: _userStats),
               const SizedBox(height: AppSpace.lg),
 
               // Daily Challenge Card
@@ -152,149 +155,6 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
     );
   }
 
-  Widget _buildHeroStatsBanner({
-    required AppPalette palette,
-    required dynamic textTheme,
-  }) {
-    final stats = _userStats;
-    final xp = stats?.totalXp ?? 0;
-    final stars = stats?.totalStars ?? 0;
-    final completed = stats?.completedLevelsCount ?? 0;
-    final rank = stats?.rankTitle ?? 'مبتدئ في طلب العلم';
-    final rankIcon = stats?.rankIcon ?? '🌱';
-
-    return Container(
-      padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: AppRadius.xlRadius,
-        border: Border.all(color: palette.border),
-        boxShadow: palette.shadow,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: AppSpace.xxl * 1.5,
-                height: AppSpace.xxl * 1.5,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: palette.primarySoft,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  rankIcon,
-                  style: textTheme.title,
-                ),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'رتبة طالب العلم',
-                      style: textTheme.caption.copyWith(color: palette.textSubtle),
-                    ),
-                    Text(
-                      rank,
-                      style: textTheme.titleSmall.copyWith(color: palette.primary),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.goldSoft,
-                  borderRadius: AppRadius.pillRadius,
-                  border: Border.all(color: palette.gold.withAlpha(70)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.workspace_premium_rounded, color: palette.gold, size: AppIcon.sm),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      '$xp XP',
-                      style: textTheme.label.copyWith(color: palette.gold),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Container(
-            padding: const EdgeInsetsDirectional.all(AppSpace.md),
-            decoration: BoxDecoration(
-              color: palette.surfaceMuted,
-              borderRadius: AppRadius.mdRadius,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildMetric(
-                  icon: Icons.star_rounded,
-                  iconColor: palette.gold,
-                  value: '$stars',
-                  label: 'نجوم الإتقان',
-                  palette: palette,
-                  textTheme: textTheme,
-                ),
-                _buildMetric(
-                  icon: Icons.check_circle_outline_rounded,
-                  iconColor: palette.primary,
-                  value: '$completed / ${IslamicQuizCatalog.totalLevelsCount}',
-                  label: 'المستويات المتقنة',
-                  palette: palette,
-                  textTheme: textTheme,
-                ),
-                _buildMetric(
-                  icon: Icons.question_answer_outlined,
-                  iconColor: palette.textMuted,
-                  value: '${stats?.totalCorrectAnswers ?? 0}',
-                  label: 'إجابة صحيحة',
-                  palette: palette,
-                  textTheme: textTheme,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetric({
-    required IconData icon,
-    required Color iconColor,
-    required String value,
-    required String label,
-    required AppPalette palette,
-    required dynamic textTheme,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: iconColor, size: AppIcon.sm),
-            const SizedBox(width: AppSpace.xxs),
-            Text(value, style: textTheme.label.copyWith(color: palette.text)),
-          ],
-        ),
-        const SizedBox(height: AppSpace.xxs),
-        Text(label, style: textTheme.caption.copyWith(color: palette.textSubtle)),
-      ],
-    );
-  }
-
   Widget _buildDailyChallengeCard({
     required AppPalette palette,
     required dynamic textTheme,
@@ -302,7 +162,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
     final isDone = _progressService?.isDailyChallengeCompletedToday() ?? false;
 
     return Material(
-      color: palette.primarySoft,
+      color: palette.goldSoft,
       borderRadius: AppRadius.lgRadius,
       child: InkWell(
         borderRadius: AppRadius.lgRadius,
@@ -311,7 +171,11 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
           padding: const EdgeInsetsDirectional.all(AppSpace.lg),
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgRadius,
-            border: Border.all(color: palette.primary.withAlpha(90)),
+            border: Border.all(
+              color: palette.gold.withAlpha(90),
+              width: 1.2,
+            ),
+            boxShadow: palette.shadow,
           ),
           child: Row(
             children: [
@@ -319,12 +183,12 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                 width: AppSpace.xxl * 1.3,
                 height: AppSpace.xxl * 1.3,
                 decoration: BoxDecoration(
-                  color: palette.primary,
+                  color: palette.gold,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.bolt_rounded,
-                  color: palette.onPrimary,
+                  color: palette.onGold,
                   size: AppIcon.lg,
                 ),
               ),
@@ -337,40 +201,54 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                       children: [
                         Text(
                           'التحدي اليومي السريع',
-                          style: textTheme.titleSmall.copyWith(color: palette.primary),
+                          style: textTheme.titleSmall.copyWith(
+                            color: palette.text,
+                          ),
                         ),
-                        if (isDone) ...[
-                          const SizedBox(width: AppSpace.xs),
-                          Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xs,
-                              vertical: AppSpace.xxs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: palette.surface,
-                              borderRadius: AppRadius.pillRadius,
-                            ),
-                            child: Text(
-                              'أُنجز اليوم ✓',
-                              style: textTheme.caption.copyWith(color: palette.primary),
+                        const SizedBox(width: AppSpace.xs),
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xs,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.surface,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: isDone
+                                  ? palette.primary.withAlpha(60)
+                                  : palette.gold.withAlpha(90),
                             ),
                           ),
-                        ],
+                          child: Text(
+                            isDone ? 'أُنجز اليوم ✓' : 'مضاعفة النقاط 2x ⚡',
+                            style: textTheme.caption.copyWith(
+                              color: isDone ? palette.primary : palette.gold,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpace.xxs),
                     Text(
                       '١٠ أسئلة عشوائية متجددة يومياً لتثبيت العلم ومضاعفة النقاط',
-                      style: textTheme.caption.copyWith(color: palette.text),
+                      style: textTheme.caption.copyWith(color: palette.textMuted),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              Icon(
-                Icons.arrow_back_rounded,
-                color: palette.primary,
-                size: AppIcon.md,
+              Container(
+                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: palette.gold,
+                  size: AppIcon.sm,
+                ),
               ),
             ],
           ),
@@ -437,7 +315,9 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
   }) {
     int fanStars = 0;
     int fanCompletedLevels = 0;
+    int totalQuestionsInFan = 0;
     for (final level in fan.levels) {
+      totalQuestionsInFan += level.totalQuestions;
       final p = _userStats?.levelProgress[level.id];
       if (p != null) {
         fanStars += p.stars;
@@ -445,6 +325,9 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
       }
     }
     final maxStars = fan.levels.length * 3;
+    final progressFraction = fan.levels.isEmpty
+        ? 0.0
+        : (fanCompletedLevels / fan.levels.length).clamp(0.0, 1.0);
 
     return Material(
       color: palette.surface,
@@ -459,56 +342,93 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
             border: Border.all(color: palette.border),
             boxShadow: palette.shadow,
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: AppSpace.xxl * 1.4,
-                height: AppSpace.xxl * 1.4,
-                decoration: BoxDecoration(
-                  color: palette.primarySoft,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(fan.icon, color: palette.primary, size: AppIcon.lg),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(fan.title, style: textTheme.titleSmall),
-                    const SizedBox(height: AppSpace.xxs),
-                    Text(
-                      fan.subtitle,
-                      style: textTheme.caption.copyWith(color: palette.textMuted),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Container(
+                    width: AppSpace.xxl * 1.3,
+                    height: AppSpace.xxl * 1.3,
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: palette.primary.withAlpha(40),
+                      ),
                     ),
-                    const SizedBox(height: AppSpace.sm),
-                    Row(
+                    child: Icon(fan.icon, color: palette.primary, size: AppIcon.md),
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(fan.title, style: textTheme.titleSmall),
+                        const SizedBox(height: AppSpace.xxs),
                         Text(
-                          '$fanCompletedLevels من ${fan.levels.length} مستويات',
-                          style: textTheme.caption.copyWith(color: palette.textSubtle),
-                        ),
-                        const Spacer(),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star_rounded, color: palette.gold, size: AppIcon.sm),
-                            const SizedBox(width: AppSpace.xxs),
-                            Text(
-                              '$fanStars / $maxStars',
-                              style: textTheme.caption.copyWith(color: palette.gold),
-                            ),
-                          ],
+                          fan.subtitle,
+                          style: textTheme.caption.copyWith(color: palette.textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Icon(
+                    Icons.arrow_back_rounded,
+                    color: palette.textSubtle,
+                    size: AppIcon.md,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.sm),
+              ClipRRect(
+                borderRadius: AppRadius.pillRadius,
+                child: LinearProgressIndicator(
+                  value: progressFraction,
+                  backgroundColor: palette.surfaceMuted,
+                  color: palette.primary,
+                  minHeight: 3.5,
                 ),
               ),
-              const SizedBox(width: AppSpace.sm),
-              Icon(Icons.arrow_back_rounded, color: palette.textSubtle, size: AppIcon.md),
+              const SizedBox(height: AppSpace.sm),
+              Row(
+                children: [
+                  Text(
+                    '$fanCompletedLevels من ${fan.levels.length} مستويات',
+                    style: textTheme.caption.copyWith(color: palette.textSubtle),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.surfaceMuted,
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                    child: Text(
+                      '$totalQuestionsInFan سؤال',
+                      style: textTheme.caption.copyWith(color: palette.textMuted),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_rounded, color: palette.gold, size: AppIcon.sm),
+                      const SizedBox(width: AppSpace.xxs),
+                      Text(
+                        '$fanStars / $maxStars',
+                        style: textTheme.caption.copyWith(color: palette.gold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
         ),

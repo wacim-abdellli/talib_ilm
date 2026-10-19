@@ -47,30 +47,56 @@ class QuizOptionTile extends StatelessWidget {
     Color bgColor = palette.surface;
     Color borderColor = palette.border;
     Color textColor = palette.text;
+    Color medallionBg = palette.surfaceRaised;
+    Color medallionBorder = palette.gold.withAlpha(100);
+    Color medallionTextColor = palette.gold;
     Widget? trailingIcon;
 
     if (isEliminated) {
       bgColor = palette.surfaceMuted;
       borderColor = palette.border;
       textColor = palette.textSubtle;
+      medallionBg = palette.surfaceMuted;
+      medallionBorder = palette.border;
+      medallionTextColor = palette.textSubtle;
     } else if (isAnswered) {
       if (isCorrect) {
         bgColor = palette.primarySoft;
         borderColor = palette.primary;
         textColor = palette.onPrimarySoft;
-        trailingIcon = Icon(
-          Icons.check_circle_rounded,
-          color: palette.primary,
-          size: AppIcon.md,
+        medallionBg = palette.primary;
+        medallionBorder = palette.primary;
+        medallionTextColor = palette.onPrimary;
+        trailingIcon = Container(
+          padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+          decoration: BoxDecoration(
+            color: palette.primary,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.check_rounded,
+            color: palette.onPrimary,
+            size: AppIcon.sm,
+          ),
         );
       } else if (isSelected) {
         bgColor = palette.errorSoft;
         borderColor = palette.error;
         textColor = palette.error;
-        trailingIcon = Icon(
-          Icons.cancel_rounded,
-          color: palette.error,
-          size: AppIcon.md,
+        medallionBg = palette.error;
+        medallionBorder = palette.error;
+        medallionTextColor = palette.onPrimary;
+        trailingIcon = Container(
+          padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+          decoration: BoxDecoration(
+            color: palette.error,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.close_rounded,
+            color: palette.onPrimary,
+            size: AppIcon.sm,
+          ),
         );
       }
     }
@@ -81,74 +107,78 @@ class QuizOptionTile extends StatelessWidget {
       button: true,
       enabled: canTap,
       label: 'خيار ${_getOptionLetter(index)}: $text',
-      child: Material(
-        color: bgColor,
-        borderRadius: AppRadius.mdRadius,
-        child: InkWell(
+      child: AnimatedOpacity(
+        duration: AppMotion.base,
+        opacity: isEliminated ? 0.4 : 1.0,
+        child: Material(
+          color: bgColor,
           borderRadius: AppRadius.mdRadius,
-          onTap: canTap ? onTap : null,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: AppSize.tap),
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.lg,
-              vertical: AppSpace.md,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              children: [
-                // Option Letter Circle
-                Container(
-                  width: AppSpace.xxl,
-                  height: AppSpace.xxl,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isEliminated
-                        ? palette.surface
-                        : palette.surfaceMuted,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: Text(
-                    _getOptionLetter(index),
-                    style: textTheme.caption.copyWith(
-                      color: isEliminated
-                          ? palette.textSubtle
-                          : palette.textMuted,
-                      fontWeight: FontWeight.bold,
+          child: InkWell(
+            borderRadius: AppRadius.mdRadius,
+            onTap: canTap ? onTap : null,
+            child: Container(
+              constraints: const BoxConstraints(minHeight: AppSize.tap),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.lg,
+                vertical: AppSpace.md,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(
+                  color: borderColor,
+                  width: (isAnswered && (isCorrect || isSelected)) ? 1.8 : 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Scholarly Option Letter Medallion
+                  Container(
+                    width: AppSpace.xxl,
+                    height: AppSpace.xxl,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.smRadius,
+                      color: medallionBg,
+                      border: Border.all(color: medallionBorder, width: 1.2),
+                    ),
+                    child: Text(
+                      _getOptionLetter(index),
+                      style: textTheme.caption.copyWith(
+                        color: medallionTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSpace.md),
+                  const SizedBox(width: AppSpace.md),
 
-                // Option Content Text
-                Expanded(
-                  child: Text(
-                    text,
-                    style: textTheme.body.copyWith(
-                      color: textColor,
-                      height: 1.5,
-                      decoration: isEliminated
-                          ? TextDecoration.lineThrough
-                          : null,
+                  // Option Content Text
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: textTheme.body.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                        decoration: isEliminated
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
                     ),
                   ),
-                ),
 
-                if (trailingIcon != null) ...[
-                  const SizedBox(width: AppSpace.sm),
-                  trailingIcon,
-                ] else if (isEliminated) ...[
-                  const SizedBox(width: AppSpace.sm),
-                  Icon(
-                    Icons.block_rounded,
-                    size: AppIcon.xs,
-                    color: palette.textSubtle,
-                  ),
+                  if (trailingIcon != null) ...[
+                    const SizedBox(width: AppSpace.sm),
+                    trailingIcon,
+                  ] else if (isEliminated) ...[
+                    const SizedBox(width: AppSpace.sm),
+                    Icon(
+                      Icons.block_rounded,
+                      size: AppIcon.xs,
+                      color: palette.textSubtle,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

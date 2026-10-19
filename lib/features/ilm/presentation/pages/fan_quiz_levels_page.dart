@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/islamic_quiz_models.dart';
+import '../../data/services/quiz_dump_service.dart';
 import '../../data/services/quiz_progress_service.dart';
 import 'quiz_session_page.dart';
 
@@ -33,6 +34,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
   }
 
   Future<void> _loadProgress() async {
+    await QuizDumpService.instance.loadDump();
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     _progressService = QuizProgressService(prefs);
@@ -94,6 +96,9 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
       totalEarnedStars += p.stars;
     }
     final maxStars = widget.fan.levels.length * 3;
+    final disciplineProgress = maxStars > 0
+        ? (totalEarnedStars / maxStars).clamp(0.0, 1.0)
+        : 0.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -124,21 +129,28 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
                     decoration: BoxDecoration(
                       color: palette.surface,
                       borderRadius: AppRadius.xlRadius,
-                      border: Border.all(color: palette.border),
+                      border: Border.all(
+                        color: palette.gold.withAlpha(60),
+                        width: 1.2,
+                      ),
                       boxShadow: palette.shadow,
                     ),
                     child: Column(
                       children: [
                         Container(
-                          width: AppSpace.xxl * 2,
-                          height: AppSpace.xxl * 2,
+                          width: AppSpace.xxl * 1.8,
+                          height: AppSpace.xxl * 1.8,
                           decoration: BoxDecoration(
-                            color: palette.primarySoft,
+                            color: palette.goldSoft,
                             shape: BoxShape.circle,
+                            border: Border.all(
+                              color: palette.gold.withAlpha(90),
+                              width: 1.5,
+                            ),
                           ),
                           child: Icon(
                             widget.fan.icon,
-                            color: palette.primary,
+                            color: palette.gold,
                             size: AppIcon.hero,
                           ),
                         ),
@@ -156,15 +168,28 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: AppSpace.lg),
+                        const SizedBox(height: AppSpace.md),
+                        ClipRRect(
+                          borderRadius: AppRadius.pillRadius,
+                          child: LinearProgressIndicator(
+                            value: disciplineProgress,
+                            backgroundColor: palette.surfaceMuted,
+                            color: palette.gold,
+                            minHeight: 4,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.md),
                         Container(
                           padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: AppSpace.lg,
                             vertical: AppSpace.sm,
                           ),
                           decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
+                            color: palette.goldSoft,
                             borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: palette.gold.withAlpha(70),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -178,7 +203,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
                               Text(
                                 '$totalEarnedStars من $maxStars نجوم الإتقان',
                                 style: textTheme.label.copyWith(
-                                  color: palette.text,
+                                  color: palette.gold,
                                 ),
                               ),
                             ],
@@ -248,6 +273,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
               color: isCompleted
                   ? palette.primary.withAlpha(90)
                   : palette.border,
+              width: isCompleted ? 1.2 : 1.0,
             ),
             boxShadow: palette.shadow,
           ),
@@ -257,17 +283,28 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
               Row(
                 children: [
                   Container(
-                    width: AppSpace.xxl,
-                    height: AppSpace.xxl,
+                    width: AppSpace.xxl * 1.2,
+                    height: AppSpace.xxl * 1.2,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isUnlocked ? palette.primarySoft : palette.surfaceMuted,
+                      color: isCompleted
+                          ? palette.primarySoft
+                          : (isUnlocked ? palette.goldSoft : palette.surfaceMuted),
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isCompleted
+                            ? palette.primary.withAlpha(80)
+                            : (isUnlocked
+                                ? palette.gold.withAlpha(80)
+                                : palette.border),
+                      ),
                     ),
                     child: Text(
                       '${level.levelNumber}',
                       style: textTheme.label.copyWith(
-                        color: isUnlocked ? palette.primary : palette.textSubtle,
+                        color: isCompleted
+                            ? palette.primary
+                            : (isUnlocked ? palette.gold : palette.textSubtle),
                       ),
                     ),
                   ),
@@ -337,8 +374,15 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: isUnlocked ? palette.primary : palette.surfaceMuted,
+                      color: isCompleted
+                          ? palette.primarySoft
+                          : (isUnlocked ? palette.primary : palette.surfaceMuted),
                       borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: isCompleted
+                            ? palette.primary.withAlpha(60)
+                            : (isUnlocked ? palette.primary : palette.border),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -348,14 +392,20 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
                               ? 'إعادة الاختبار'
                               : (isUnlocked ? 'بدء الاختبار' : 'مقفل'),
                           style: textTheme.caption.copyWith(
-                            color: isUnlocked ? palette.onPrimary : palette.textSubtle,
+                            color: isCompleted
+                                ? palette.primary
+                                : (isUnlocked
+                                    ? palette.onPrimary
+                                    : palette.textSubtle),
                           ),
                         ),
                         if (isUnlocked) ...[
                           const SizedBox(width: AppSpace.xs),
                           Icon(
                             Icons.arrow_back_rounded,
-                            color: palette.onPrimary,
+                            color: isCompleted
+                                ? palette.primary
+                                : palette.onPrimary,
                             size: AppIcon.xs,
                           ),
                         ],

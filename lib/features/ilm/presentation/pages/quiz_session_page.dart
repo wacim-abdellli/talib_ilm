@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
 import '../../data/models/islamic_quiz_models.dart';
+import '../../data/services/quiz_dump_service.dart';
 import '../../data/services/quiz_progress_service.dart';
 import '../widgets/quiz_lesson_explanation_card.dart';
 import '../widgets/quiz_lifelines_bar.dart';
@@ -59,6 +60,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   @override
   void initState() {
     super.initState();
+    QuizDumpService.instance.loadDump();
     _restoreActiveSession();
   }
 
@@ -313,11 +315,21 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             ],
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(AppSpace.xs),
-              child: LinearProgressIndicator(
-                value: progressFraction,
-                backgroundColor: palette.border,
-                valueColor: AlwaysStoppedAnimation<Color>(palette.primary),
-                minHeight: AppSpace.xs,
+              child: ClipRRect(
+                borderRadius: AppRadius.pillRadius,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: progressFraction),
+                  duration: AppMotion.base,
+                  curve: AppMotion.easeOut,
+                  builder: (context, value, _) {
+                    return LinearProgressIndicator(
+                      value: value,
+                      backgroundColor: palette.surfaceMuted,
+                      valueColor: AlwaysStoppedAnimation<Color>(palette.gold),
+                      minHeight: AppSpace.xs,
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -328,7 +340,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               vertical: AppSpace.lg,
             ),
             children: [
-              // Question Counter & Badge
+              // Question Counter & Badge Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -338,41 +350,115 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: palette.primarySoft,
+                      color: palette.goldSoft,
                       borderRadius: AppRadius.pillRadius,
-                    ),
-                    child: Text(
-                      'السؤال ${_currentIndex + 1} من $total',
-                      style: textTheme.label.copyWith(
-                        color: palette.onPrimarySoft,
+                      border: Border.all(
+                        color: palette.gold.withAlpha(120),
+                        width: 1.0,
                       ),
                     ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.menu_book_rounded,
+                          size: AppIcon.xs,
+                          color: palette.gold,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          'السؤال ${_currentIndex + 1} من $total',
+                          style: textTheme.label.copyWith(
+                            color: palette.gold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(
-                    'الصواب: $_correctAnswers',
-                    style: textTheme.caption.copyWith(
-                      color: palette.textMuted,
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(color: palette.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: AppIcon.xs,
+                          color: palette.primary,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          'الصواب: $_correctAnswers',
+                          style: textTheme.caption.copyWith(
+                            color: palette.text,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpace.md),
 
-              // Question Card
+              // Scholarly Question Card with Illumination Badge
               Container(
                 padding: const EdgeInsetsDirectional.all(AppSpace.xl),
                 decoration: BoxDecoration(
                   color: palette.surface,
-                  borderRadius: AppRadius.lgRadius,
-                  border: Border.all(color: palette.border),
+                  borderRadius: AppRadius.xlRadius,
+                  border: Border.all(
+                    color: palette.gold.withAlpha(90),
+                    width: 1.2,
+                  ),
                   boxShadow: palette.shadow,
                 ),
-                child: Text(
-                  _currentQuestion.question,
-                  style: textTheme.titleSmall.copyWith(
-                    height: 1.6,
-                  ),
-                  textAlign: TextAlign.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: AppSpace.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: palette.primarySoft,
+                            borderRadius: AppRadius.pillRadius,
+                          ),
+                          child: Text(
+                            widget.title,
+                            style: textTheme.caption.copyWith(
+                              color: palette.onPrimarySoft,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.stars_rounded,
+                          size: AppIcon.sm,
+                          color: palette.gold,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.md),
+                    Text(
+                      _currentQuestion.question,
+                      style: textTheme.titleSmall.copyWith(
+                        color: palette.text,
+                        fontWeight: FontWeight.bold,
+                        height: 1.55,
+                      ),
+                      textAlign: TextAlign.start,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpace.md),
@@ -432,32 +518,17 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                   child: SafeArea(
                     child: SizedBox(
                       height: AppSize.buttonH,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: palette.primary,
                           foregroundColor: palette.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.mdRadius,
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
                         ),
                         onPressed: _onNextQuestion,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _currentIndex + 1 < total
-                                  ? 'السؤال التالي'
-                                  : 'عرض النتيجة النهائية',
-                              style: textTheme.label.copyWith(
-                                color: palette.onPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.sm),
-                            const Icon(
-                              Icons.arrow_back_rounded,
-                              size: AppIcon.sm,
-                            ),
-                          ],
+                        icon: const Icon(Icons.arrow_back_rounded, size: AppIcon.sm),
+                        label: Text(
+                          _currentIndex + 1 < total ? 'السؤال التالي' : 'عرض النتيجة النهائية',
+                          style: textTheme.label.copyWith(color: palette.onPrimary),
                         ),
                       ),
                     ),
@@ -477,13 +548,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         final textTheme = ctx.text;
         return AlertDialog(
           backgroundColor: palette.surfaceRaised,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.xlRadius,
-          ),
-          title: Text(
-            'حفظ ومتابعة لاحقاً؟',
-            style: textTheme.titleSmall,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
+          title: Text('حفظ ومتابعة لاحقاً؟', style: textTheme.titleSmall),
           content: Text(
             'سيتم حفظ تقدمك تلقائياً لتستأنف الاختبار من نفس السؤال عند عودتك.',
             style: textTheme.bodySmall,
@@ -491,10 +557,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                'متابعة الاختبار',
-                style: textTheme.label.copyWith(color: palette.primary),
-              ),
+              child: Text('متابعة الاختبار', style: textTheme.label.copyWith(color: palette.primary)),
             ),
             TextButton(
               onPressed: () async {
@@ -504,10 +567,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                   Navigator.of(context).pop();
                 }
               },
-              child: Text(
-                'خروج وحفظ',
-                style: textTheme.label.copyWith(color: palette.error),
-              ),
+              child: Text('خروج وحفظ', style: textTheme.label.copyWith(color: palette.error)),
             ),
           ],
         );
