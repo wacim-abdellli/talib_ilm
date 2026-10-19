@@ -212,23 +212,14 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         onTap: widget.onTap,
         color: palette.surfaceRaised,
         border: Border.all(
-          color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.55 : 0.32),
-          width: eval.isInPrayerTime ? 2.0 : 1.5,
+          color: palette.border,
+          width: 1.2,
         ),
         padding: EdgeInsets.zero,
         child: Container(
           padding: const EdgeInsetsDirectional.all(AppSpace.lg),
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgRadius,
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.16 : 0.10),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.45],
-            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -244,27 +235,20 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       children: [
                         // Celestial Medallion with Luminous Tint & Border
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.36 : 0.28),
-                                prayerColor.withValues(alpha: 0.10),
-                              ],
-                            ),
+                            color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.22 : 0.14),
                             borderRadius: AppRadius.mdRadius,
                             border: Border.all(
-                              color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.75 : 0.5),
-                              width: eval.isInPrayerTime ? 1.5 : 1.2,
+                              color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.55 : 0.35),
+                              width: 1.2,
                             ),
                           ),
                           child: Icon(
                             iconForPrayer(eval.prayerName),
                             color: prayerColor,
-                            size: AppIcon.lg,
+                            size: AppIcon.md,
                           ),
                         ),
                         const SizedBox(width: AppSpace.md),
@@ -291,18 +275,13 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                   Container(
                     padding: const EdgeInsetsDirectional.symmetric(
                       horizontal: AppSpace.md,
-                      vertical: AppSpace.sm,
+                      vertical: AppSpace.xs + 2,
                     ),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.26 : 0.18),
-                          prayerColor.withValues(alpha: 0.08),
-                        ],
-                      ),
+                      color: palette.surfaceMuted,
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.65 : 0.45),
+                        color: prayerColor.withValues(alpha: 0.35),
                         width: 1.2,
                       ),
                     ),
@@ -311,7 +290,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       children: [
                         Icon(
                           Icons.access_time_rounded,
-                          size: AppIcon.sm,
+                          size: AppIcon.xs,
                           color: prayerColor,
                         ),
                         const SizedBox(width: AppSpace.xs),
@@ -338,16 +317,11 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                   vertical: AppSpace.sm,
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.22 : 0.12),
-                      prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.08 : 0.04),
-                    ],
-                  ),
+                  color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.16 : 0.10),
                   borderRadius: AppRadius.mdRadius,
                   border: Border.all(
-                    color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.55 : 0.25),
-                    width: eval.isInPrayerTime ? 1.5 : 1,
+                    color: prayerColor.withValues(alpha: eval.isInPrayerTime ? 0.35 : 0.22),
+                    width: 1,
                   ),
                 ),
                 child: FittedBox(

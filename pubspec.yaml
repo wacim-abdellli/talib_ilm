@@ -50,6 +50,7 @@ dependencies:
   qcf_quran_plus:
     path: packages/qcf_quran_plus
   sensors_plus: ^7.1.1
+  home_widget: ^0.10.0
 
 dev_dependencies:
   flutter_test:

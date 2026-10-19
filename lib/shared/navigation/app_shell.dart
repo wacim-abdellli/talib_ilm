@@ -6,6 +6,7 @@ import '../../app/theme/app_palette.dart';
 import '../../core/services/adhkar_reminder_service.dart';
 import '../../core/services/flip_to_stop_service.dart';
 import '../../core/services/foreground_prayer_service.dart';
+import '../../core/services/home_widget_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_schedule_service.dart';
 import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
@@ -67,6 +68,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       ForegroundPrayerService().start();
       unawaited(PrayerScheduleService().refreshSchedulesIfNeeded());
+      unawaited(HomeWidgetService.updatePrayerWidget());
     }
   }
 
@@ -76,6 +78,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       await notif.init();
       await notif.requestPermissions();
       await PrayerScheduleService().refreshSchedulesIfNeeded();
+      unawaited(HomeWidgetService.updatePrayerWidget());
       final adhkarService = AdhkarReminderService(notificationService: notif);
       final adhkarSettings = await adhkarService.getSettings();
       await adhkarService.applySchedules(adhkarSettings);

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
+import 'home_widget_service.dart';
 import 'notification_service.dart';
 import 'prayer_time_service.dart';
 
@@ -182,6 +183,8 @@ class ForegroundPrayerService {
               mode: mode,
               sound: effectiveSound,
             );
+
+            unawaited(HomeWidgetService.updatePrayerWidget(prayerDay: day));
           }
         }
       }

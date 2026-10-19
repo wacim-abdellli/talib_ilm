@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import 'adhan_settings_service.dart';
 import 'adhkar_reminder_service.dart';
+import 'home_widget_service.dart';
 import 'notification_service.dart';
 import 'prayer_time_service.dart';
 
@@ -110,6 +111,10 @@ class PrayerScheduleService {
     await prefs.setString(_keyLocation, locationKey);
     await prefs.setString(_keySettings, settingsKey);
     await prefs.setInt('prayer_schedule_timestamp', now.millisecondsSinceEpoch);
+
+    try {
+      await HomeWidgetService.updatePrayerWidget(prayerDay: today);
+    } catch (_) {}
   }
 
   Future<void> _scheduleDay(

@@ -38,15 +38,8 @@ class HomeHeroTimelineStation extends StatelessWidget {
         ),
         decoration: isCurrent
             ? BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    pColor.withValues(alpha: isInPrayerTime ? 0.30 : 0.22),
-                    pColor.withValues(alpha: 0.08),
-                  ],
-                ),
-                borderRadius: AppRadius.mdRadius,
+                color: palette.surfaceRaised,
+                borderRadius: AppRadius.smRadius,
                 border: Border.all(
                   color: pColor,
                   width: isInPrayerTime ? 1.8 : 1.5,
