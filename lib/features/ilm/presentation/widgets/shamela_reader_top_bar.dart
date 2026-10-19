@@ -116,7 +116,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
       isDark: isEffectiveDark,
     );
     final topPadding = MediaQuery.paddingOf(context).top;
-    final fullBarHeight = topPadding + AppSize.navH;
+    final fullBarHeight = topPadding + AppSize.navH + AppSpace.lg;
     final minimalBarHeight = topPadding + 42.0;
     return AnimatedContainer(
       duration: AppMotion.fast,
@@ -194,7 +194,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
               top: topPadding,
               left: 0,
               right: 0,
-              height: AppSize.navH,
+              height: AppSize.navH + AppSpace.lg,
               child: IgnorePointer(
                 ignoring: !widget.showControls,
                 child: AnimatedOpacity(
@@ -221,7 +221,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                                 color: surfaceTokens.text,
                                 fontWeight: FontWeight.bold,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(

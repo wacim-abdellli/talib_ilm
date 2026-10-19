@@ -178,7 +178,7 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                             color: palette.text,
                             fontWeight: FontWeight.bold,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSpace.xxs),

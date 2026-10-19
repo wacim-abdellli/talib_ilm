@@ -13,11 +13,10 @@ import '../../data/catalogs/tafsir_catalog.dart';
 import '../../data/catalogs/usul_catalog.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/models/shamela_models.dart';
-import 'discipline_quiz_shelf_card.dart';
+import 'ilm_book_preview_row.dart';
 import 'ilm_partition_header.dart';
 import 'mutun_rosette_icon.dart';
 import 'shamela_book_card.dart';
-import 'shamela_shelf_card.dart';
 
 class DisciplineItem {
   final String key;
@@ -302,33 +301,49 @@ class IlmDisciplineSection {
 
                 const SizedBox(height: AppSpace.sm),
 
-                // ── 2. Horizontal Bookshelf (featuring DisciplineQuizShelfCard) ──
-                SizedBox(
-                  height: 195,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.lg,
+                // ── 2. Compact Vertical Book Preview List ──
+                Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.lg,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: palette.border, width: 0.8),
+                      borderRadius: AppRadius.lgRadius,
+                      color: palette.surface,
                     ),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: (fan != null ? 1 : 0) + books.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: AppSpace.sm),
-                    itemBuilder: (context, index) {
-                      if (fan != null && index == 0) {
-                        return DisciplineQuizShelfCard(
-                          fan: fan,
-                          onOpenQuiz: () => onOpenQuiz(fan),
-                        );
-                      }
-                      final bookIndex = fan != null ? index - 1 : index;
-                      final book = books[bookIndex];
-                      return ShamelaShelfCard(
-                        book: book,
-                        onOpen: () => onOpenBook(book),
-                        onOpenShuruh: onOpenShuruh,
-                      );
-                    },
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < books.take(4).length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: palette.border,
+                              indent: AppSpace.lg,
+                              endIndent: 0,
+                            ),
+                          IlmBookPreviewRow(
+                            title: books[i].title,
+                            subtitle: _buildSubtitle(books[i]),
+                            accentColor: catColors.fg,
+                            onTap: () => onOpenBook(books[i]),
+                          ),
+                        ],
+                        if (books.length > 4) ...[
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: palette.border,
+                          ),
+                          IlmViewAllRow(
+                            label: 'عرض جميع الكتب (${books.length})',
+                            onTap: onViewAll,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -470,5 +485,14 @@ class IlmDisciplineSection {
         ),
       ),
     ];
+  }
+
+  static String _buildSubtitle(ShamelaBook book) {
+    final authorSubtitle = book.authorDeath != null
+        ? '${book.author} (ت: ${book.authorDeath})'
+        : book.author;
+    return book.totalPages > 0
+        ? '$authorSubtitle • ${book.totalPages} ص'
+        : authorSubtitle;
   }
 }

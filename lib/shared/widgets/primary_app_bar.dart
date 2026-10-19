@@ -43,9 +43,14 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       toolbarHeight: height,
       leading: _buildLeading(context),
-      title: Text(
-        title,
-        style: textTheme.titleSmall.copyWith(color: palette.text),
+      title: Tooltip(
+        message: title,
+        child: Text(
+          title,
+          style: textTheme.titleSmall.copyWith(color: palette.text),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       actions: actions.isEmpty ? [const SizedBox(width: AppSize.tap)] : actions,
       shape: Border(bottom: BorderSide(color: palette.border, width: 1)),

@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
+import 'ilm_book_preview_row.dart';
 import 'ilm_mutn_card.dart';
 import 'ilm_partition_header.dart';
 import 'mutun_rosette_icon.dart';
-import 'mutun_shelf_card.dart';
 
 /// Presentation slivers for Mutun Taleb Al-Ilm section in both overview and focused modes.
 class IlmMutunSectionView {
@@ -224,26 +224,57 @@ class IlmMutunSectionView {
 
                 const SizedBox(height: AppSpace.sm),
 
-                // ── 2. Horizontal Mutun Bookshelf ──
-                SizedBox(
-                  height: 195,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.lg,
+                // ── 2. Compact Vertical Mutun Preview List ──
+                Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.lg,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: palette.border, width: 0.8),
+                      borderRadius: AppRadius.lgRadius,
+                      color: palette.surface,
                     ),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: allBooks.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: AppSpace.sm),
-                    itemBuilder: (context, index) {
-                      final book = allBooks[index];
-                      return MutunShelfCard(
-                        book: book,
-                        progress: progressById[book.id],
-                        onOpenReader: () => onNavigateToBook(book),
-                      );
-                    },
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < allBooks.take(4).length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: palette.border,
+                              indent: AppSpace.lg,
+                              endIndent: 0,
+                            ),
+                          IlmBookPreviewRow(
+                            title: allBooks[i].title,
+                            subtitle: _buildMutnSubtitle(
+                              allBooks[i],
+                              progressById[allBooks[i].id],
+                            ),
+                            accentColor: palette
+                                .mutunLevel(allBooks[i].level)
+                                .fg,
+                            isCompleted:
+                                progressById[allBooks[i].id]?.isCompleted ??
+                                    false,
+                            onTap: () => onNavigateToBook(allBooks[i]),
+                          ),
+                        ],
+                        if (allBooks.length > 4) ...[
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: palette.border,
+                          ),
+                          IlmViewAllRow(
+                            label: 'عرض جميع المتون (${allBooks.length})',
+                            onTap: onViewAll,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -490,5 +521,21 @@ class IlmMutunSectionView {
         ),
       ),
     );
+  }
+
+  static String _buildMutnSubtitle(IlmBook book, BookProgress? progress) {
+    final isCompleted = progress?.isCompleted ?? false;
+    final currentPage = progress?.currentPage ?? 0;
+    final totalPages = book.totalPages > 0 ? book.totalPages : 1;
+
+    if (isCompleted) {
+      return '${book.author} • مكتمل';
+    } else if (currentPage > 0) {
+      return '${book.author} • صفحة $currentPage من $totalPages';
+    } else if (book.totalPages > 0) {
+      return '${book.author} • ${book.totalPages} ص';
+    } else {
+      return book.author;
+    }
   }
 }
