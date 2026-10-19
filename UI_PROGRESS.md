@@ -1137,33 +1137,29 @@ FAILED (54 violations)
 ---
 
 ## Islamic Quiz Expansion: Offline Dumps (Option B) & UI Overhaul
+### Islamic Quiz Refinement: 1,100+ Questions Active, Lifelines/XP Removed & Zero Overflow
 - **Status:** Complete
-- **Branch:** feat/quran-word-search
-- **Commit:** 8be7fd6
+- **Branch:** `feat/quran-word-search`
+- **Commit:** `f845ed6`
 - **Deliverables & Verification:**
-  1. **Offline JSON Question Dumps Architecture (Option B):**
-     - Extended QuizQuestion in lib/features/ilm/data/models/islamic_quiz_models.dart with fromJson and toJson, supporting optional levelId and fanId.
-     - Created QuizDumpService (lib/features/ilm/data/services/quiz_dump_service.dart) with loadDump(), loadFromString(), getQuestionsForLevel(), getAllDumpQuestions(), and level ID normalization (_lvl_ to _l).
-     - Bundled authentic questions dump in assets/data/quiz_questions_dump.json.
-     - Integrated dynamic merging in IslamicQuizCatalog for getLevel, totalQuestionsCount, and getDailyChallengeQuestions.
-     - Created unit test suite in test/quiz_dump_service_test.dart.
-  2. **Quiz Session Page UI Elevation (quiz_session_page.dart, quiz_option_tile.dart, quiz_lifelines_bar.dart):**
-     - Upgraded options with scholarly Arabic letter medallions (أ، ب، ج، د), subtle gold borders, high-contrast feedback, and smooth opacity reduction for eliminated options.
-     - Modernized lifelines bar with unified surfaces, filter & bulb icons, and count pill badges.
-     - Animated smooth linear progress bar and dual question / score badge row.
-     - Maintained strictly under 600 lines (581 lines).
-  3. **Islamic Quiz Hub UI Elevation (islamic_quiz_hub_page.dart, quiz_hero_stats_banner.dart):**
-     - Modular QuizHeroStatsBanner with student rank medallion, XP badge, rank progress bar, and 3-metric statistics card row.
-     - Elevated Daily Challenge card with warm golden surface, 2x multiplier badge, and directional indicator.
-     - Refined discipline cards with completion progress bars, question count badges, and star ratings.
-     - Maintained strictly under 600 lines (439 lines).
-  4. **Discipline Levels Page UI Elevation (fan_quiz_levels_page.dart):**
-     - Illuminated hero discipline card with mastery stars badge and overall discipline progress bar.
-     - Enhanced milestone level cards with status indicators (مكتمل، متاح، مقفل), 3-star rating, best score, and primary action buttons.
-     - Maintained strictly under 600 lines (427 lines).
-  5. **Verification Gate:**
-     - flutter analyze: 0 issues found (clean in 8.5s).
-     - python tool/ui_lint_v2.py: OK (0 FAILs, 9 allow markers / cap 10).
-     - flutter test: 100% pass (27/27 tests passed across quiz and ilm suites).
-     - flutter build apk --debug: Succeeded (build/app/outputs/flutter-apk/app-debug.apk built in 41.9s).
+  1. **Full 1,113-Question Bank Live Across All Fans & Levels:**
+     - Expanded `assets/data/quiz_questions_dump.json` to 783 verified questions across all 11 disciplines and 33 levels using `tool/generate_1000_questions.py`. Combined with the 330 base catalog questions, the total is **1,113 authentic questions**.
+     - Merged offline dump questions directly into `IslamicQuizCatalog.founoun` so all fan cards, level lists, and total counts now reflect ~101 questions per fan instead of the static 30.
+     - Updated `FanQuizLevelsPage` to dynamically read from `IslamicQuizCatalog.getFan(...)` and `IslamicQuizCatalog.getLevel(...)`.
+  2. **Non-Repeating Rolling Daily Challenge (~111 Days Window):**
+     - Redesigned `IslamicQuizCatalog.getDailyChallengeQuestions` with a deterministic rolling sliding window step across all 1,113 questions permuted by a fixed scholarly seed.
+     - Mathematically guarantees that questions never repeat within a rolling timeline of over 111 days.
+  3. **Removal of Lifelines (50:50 & Hint):**
+     - Completely removed `QuizLifelinesBar` ("تلميح" and "حذف إجابتين") from `QuizSessionPage` along with all lifeline states and handlers, delivering a focused, dignified assessment.
+  4. **Removal of Gamified "XP" & "*2" Multipliers:**
+     - Removed `XP` pill and progress bar from `QuizHeroStatsBanner` to preserve a serene scholarly environment.
+     - Removed `مضاعفة النقاط 2x ⚡` from `_buildDailyChallengeCard` in `IslamicQuizHubPage`, fixing the 13px right overflow bug permanently.
+     - Replaced `+XP` in `QuizResultPage` with clear scholarly mastery status (`متقن ✓` / `مستمر`).
+  5. **Clean, Calm Question Card UI & Ergonomics:**
+     - Elevated `QuizSessionPage` question card background, typography, and contrast. Kept line count at 521 lines (strictly < 600 lines).
+  6. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 11.6s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test`: **100% pass** (19/19 core quiz and ilm tests passed).
 - **Open Issues:** None.
+
