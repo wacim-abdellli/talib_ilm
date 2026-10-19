@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
+import '../../data/catalogs/islamic_quiz_catalog.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/services/quiz_dump_service.dart';
 import '../../data/services/quiz_progress_service.dart';
@@ -27,6 +28,9 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
   bool _isLoading = true;
   Map<String, QuizLevelProgress> _progressMap = {};
 
+  FanQuiz get _currentFan =>
+      IslamicQuizCatalog.getFan(widget.fan.id) ?? widget.fan;
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +45,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
 
     final map = <String, QuizLevelProgress>{};
     String? prevId;
-    for (final level in widget.fan.levels) {
+    for (final level in _currentFan.levels) {
       final p = _progressService!.getLevelProgress(
         level.id,
         level.levelNumber,
@@ -70,14 +74,16 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
       return;
     }
 
+    final freshLevel = IslamicQuizCatalog.getLevel(level.id) ?? level;
+
     HapticFeedback.selectionClick();
     await Navigator.of(context).push(
       buildFadeRoute(
         page: QuizSessionPage(
-          title: widget.fan.title,
-          subtitle: level.title,
-          levelId: level.id,
-          questions: level.questions,
+          title: _currentFan.title,
+          subtitle: freshLevel.title,
+          levelId: freshLevel.id,
+          questions: freshLevel.questions,
         ),
       ),
     );
@@ -95,7 +101,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
     for (final p in _progressMap.values) {
       totalEarnedStars += p.stars;
     }
-    final maxStars = widget.fan.levels.length * 3;
+    final maxStars = _currentFan.levels.length * 3;
     final disciplineProgress = maxStars > 0
         ? (totalEarnedStars / maxStars).clamp(0.0, 1.0)
         : 0.0;
@@ -217,13 +223,13 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
 
                   // Section Title
                   Text(
-                    'مستويات الاختبار والدروس (${widget.fan.levels.length})',
+                    'مستويات الاختبار والدروس (${_currentFan.levels.length})',
                     style: textTheme.titleSmall,
                   ),
                   const SizedBox(height: AppSpace.md),
 
                   // Levels List
-                  ...widget.fan.levels.map((level) {
+                  ..._currentFan.levels.map((level) {
                     final progress = _progressMap[level.id];
                     final isUnlocked = progress?.isUnlocked ?? false;
                     final isCompleted = progress?.isCompleted ?? false;

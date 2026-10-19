@@ -206,14 +206,13 @@ class _QuizResultPageState extends State<QuizResultPage> {
                       palette: palette,
                       textTheme: textTheme,
                     ),
-                    if (widget.recordResult != null)
-                      _buildStatColumn(
-                        label: 'نقاط العلم',
-                        value: '+${widget.recordResult!.earnedXp} XP',
-                        color: palette.gold,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
+                    _buildStatColumn(
+                      label: 'النتيجة',
+                      value: _hasPassed ? 'متقن ✓' : 'مستمر',
+                      color: _hasPassed ? palette.primary : palette.textSubtle,
+                      palette: palette,
+                      textTheme: textTheme,
+                    ),
                   ],
                 ),
               ),

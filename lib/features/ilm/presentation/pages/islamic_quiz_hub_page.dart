@@ -197,41 +197,18 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'التحدي اليومي السريع',
-                          style: textTheme.titleSmall.copyWith(
-                            color: palette.text,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surface,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: isDone
-                                  ? palette.primary.withAlpha(60)
-                                  : palette.gold.withAlpha(90),
-                            ),
-                          ),
-                          child: Text(
-                            isDone ? 'أُنجز اليوم ✓' : 'مضاعفة النقاط 2x ⚡',
-                            style: textTheme.caption.copyWith(
-                              color: isDone ? palette.primary : palette.gold,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'التحدي اليومي السريع',
+                      style: textTheme.titleSmall.copyWith(
+                        color: palette.text,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: AppSpace.xxs),
                     Text(
-                      '١٠ أسئلة عشوائية متجددة يومياً لتثبيت العلم ومضاعفة النقاط',
+                      isDone
+                          ? 'أُنجز تحدي اليوم بحمد الله ✓'
+                          : '١٠ أسئلة متجددة يومياً لتثبيت العلم ومدارسته',
                       style: textTheme.caption.copyWith(color: palette.textMuted),
                     ),
                   ],

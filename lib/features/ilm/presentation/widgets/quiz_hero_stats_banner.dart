@@ -18,13 +18,10 @@ class QuizHeroStatsBanner extends StatelessWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
-    final xp = stats?.totalXp ?? 0;
     final stars = stats?.totalStars ?? 0;
     final completed = stats?.completedLevelsCount ?? 0;
     final rank = stats?.rankTitle ?? 'مبتدئ في طلب العلم';
     final rankIcon = stats?.rankIcon ?? '🌱';
-
-    final rankProgress = ((xp % 250) / 250.0).clamp(0.08, 1.0);
 
     return Container(
       padding: const EdgeInsetsDirectional.all(AppSpace.xl),
@@ -64,52 +61,20 @@ class QuizHeroStatsBanner extends StatelessWidget {
                       'رتبة طالب العلم',
                       style: textTheme.caption.copyWith(color: palette.textSubtle),
                     ),
+                    const SizedBox(height: AppSpace.xxs),
                     Text(
                       rank,
-                      style: textTheme.titleSmall.copyWith(color: palette.text),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.goldSoft,
-                  borderRadius: AppRadius.pillRadius,
-                  border: Border.all(color: palette.gold.withAlpha(80)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.workspace_premium_rounded,
-                      color: palette.gold,
-                      size: AppIcon.sm,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      '$xp XP',
-                      style: textTheme.label.copyWith(color: palette.gold),
+                      style: textTheme.titleSmall.copyWith(
+                        color: palette.text,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpace.md),
-          ClipRRect(
-            borderRadius: AppRadius.pillRadius,
-            child: LinearProgressIndicator(
-              value: rankProgress,
-              backgroundColor: palette.surfaceMuted,
-              color: palette.gold,
-              minHeight: 4,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.lg),
           Container(
             padding: const EdgeInsetsDirectional.all(AppSpace.md),
             decoration: BoxDecoration(

@@ -8,7 +8,6 @@ import '../../data/models/islamic_quiz_models.dart';
 import '../../data/services/quiz_dump_service.dart';
 import '../../data/services/quiz_progress_service.dart';
 import '../widgets/quiz_lesson_explanation_card.dart';
-import '../widgets/quiz_lifelines_bar.dart';
 import '../widgets/quiz_option_tile.dart';
 import 'quiz_result_page.dart';
 
@@ -41,13 +40,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   int _correctAnswers = 0;
   int _currentStreak = 0;
   int _maxStreak = 0;
-
-  // Lifelines (وسائل المساعدة التعليمية)
-  int _fiftyFiftyRemaining = 2;
-  int _hintRemaining = 3;
-  final Set<int> _eliminatedIndices = <int>{};
-  bool _isFiftyFiftyUsedOnCurrent = false;
-  bool _isHintRevealed = false;
 
   final List<int?> _userAnswers = [];
   final ScrollController _scrollController = ScrollController();
@@ -82,9 +74,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
           ..addAll(session.userAnswers);
         _selectedOptionIndex = null;
         _isAnswered = false;
-        _eliminatedIndices.clear();
-        _isFiftyFiftyUsedOnCurrent = false;
-        _isHintRevealed = false;
       });
     }
   }
@@ -104,38 +93,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     );
   }
 
-  void _onUseFiftyFifty() {
-    if (_isAnswered || _isFiftyFiftyUsedOnCurrent || _fiftyFiftyRemaining <= 0) {
-      return;
-    }
-    final wrongIndices = <int>[];
-    for (int i = 0; i < _currentQuestion.options.length; i++) {
-      if (i != _currentQuestion.correctIndex) {
-        wrongIndices.add(i);
-      }
-    }
-    wrongIndices.shuffle();
-    final toEliminate = wrongIndices.take(2).toSet();
-
-    setState(() {
-      _eliminatedIndices.addAll(toEliminate);
-      _isFiftyFiftyUsedOnCurrent = true;
-      _fiftyFiftyRemaining--;
-    });
-  }
-
-  void _onUseHint() {
-    if (_isAnswered || _isHintRevealed || _hintRemaining <= 0) {
-      return;
-    }
-    setState(() {
-      _isHintRevealed = true;
-      _hintRemaining--;
-    });
-  }
-
   void _onOptionSelected(int index) {
-    if (_isAnswered || _eliminatedIndices.contains(index)) return;
+    if (_isAnswered) return;
 
     final isCorrect = _currentQuestion.isCorrect(index);
     HapticFeedback.selectionClick();
@@ -179,9 +138,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         _currentIndex++;
         _selectedOptionIndex = null;
         _isAnswered = false;
-        _eliminatedIndices.clear();
-        _isFiftyFiftyUsedOnCurrent = false;
-        _isHintRevealed = false;
       });
 
       _persistSession();
@@ -461,20 +417,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpace.md),
-
-              // Educational Lifelines Bar (50:50 & Scholarly Clue)
-              QuizLifelinesBar(
-                question: _currentQuestion,
-                isAnswered: _isAnswered,
-                fiftyFiftyRemaining: _fiftyFiftyRemaining,
-                isFiftyFiftyUsedOnCurrent: _isFiftyFiftyUsedOnCurrent,
-                onUseFiftyFifty: _onUseFiftyFifty,
-                hintRemaining: _hintRemaining,
-                isHintRevealed: _isHintRevealed,
-                onUseHint: _onUseHint,
-              ),
-              const SizedBox(height: AppSpace.md),
+              const SizedBox(height: AppSpace.lg),
 
               // Options list
               ...List.generate(_currentQuestion.options.length, (index) {
@@ -487,7 +430,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                     isAnswered: _isAnswered,
                     isSelected: _selectedOptionIndex == index,
                     isCorrect: _currentQuestion.correctIndex == index,
-                    isEliminated: _eliminatedIndices.contains(index),
+                    isEliminated: false,
                     onTap: () => _onOptionSelected(index),
                   ),
                 );
