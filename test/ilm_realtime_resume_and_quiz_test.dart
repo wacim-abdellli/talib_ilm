@@ -136,12 +136,12 @@ void main() {
       expect(arabic.fan!.id, equals('arabic'));
     });
 
-    test('IslamicQuizCatalog has 240 authentic questions across 8 disciplines', () {
+    test('IslamicQuizCatalog has 330 authentic questions across 11 disciplines', () {
       final founoun = IslamicQuizCatalog.founoun;
-      expect(founoun.length, equals(8));
+      expect(founoun.length, equals(11));
 
-      expect(IslamicQuizCatalog.totalQuestionsCount, equals(240));
-      expect(IslamicQuizCatalog.totalLevelsCount, equals(24));
+      expect(IslamicQuizCatalog.totalQuestionsCount, equals(330));
+      expect(IslamicQuizCatalog.totalLevelsCount, equals(33));
 
       for (final fan in founoun) {
         expect(fan.levels.length, equals(3), reason: '${fan.id} should have 3 levels');

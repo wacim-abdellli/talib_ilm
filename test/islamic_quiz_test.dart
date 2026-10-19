@@ -5,17 +5,20 @@ import 'package:talib_ilm/features/ilm/data/services/quiz_progress_service.dart'
 
 void main() {
   group('Islamic Quiz Catalog Tests', () {
-    test('Catalog contains all 8 core Islamic sciences', () {
+    test('Catalog contains all 11 core Islamic sciences', () {
       final founoun = IslamicQuizCatalog.founoun;
-      expect(founoun.length, 8);
+      expect(founoun.length, 11);
 
       final ids = founoun.map((f) => f.id).toList();
       expect(ids, containsAll([
         'aqidah',
         'fiqh',
+        'usul',
         'hadith',
         'quran',
+        'tajweed',
         'seerah',
+        'sahaba',
         'prophets_names',
         'adab',
         'arabic',

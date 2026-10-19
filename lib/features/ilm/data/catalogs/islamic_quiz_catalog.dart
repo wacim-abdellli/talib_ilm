@@ -8,7 +8,10 @@ import 'quiz_fiqh_catalog.dart';
 import 'quiz_hadith_catalog.dart';
 import 'quiz_prophets_catalog.dart';
 import 'quiz_quran_catalog.dart';
+import 'quiz_sahaba_catalog.dart';
 import 'quiz_seerah_catalog.dart';
+import 'quiz_tajweed_catalog.dart';
+import 'quiz_usul_catalog.dart';
 
 /// The master catalog aggregating all authentic Islamic disciplines, levels, and questions.
 class IslamicQuizCatalog {
@@ -17,9 +20,12 @@ class IslamicQuizCatalog {
   static List<FanQuiz> get founoun => [
         QuizAqidahCatalog.aqidahFan,
         QuizFiqhCatalog.fiqhFan,
+        QuizUsulCatalog.usulFan,
         QuizHadithCatalog.hadithFan,
         QuizQuranCatalog.quranFan,
+        QuizTajweedCatalog.tajweedFan,
         QuizSeerahCatalog.seerahFan,
+        QuizSahabaCatalog.sahabaFan,
         QuizProphetsCatalog.prophetsNamesFan,
         QuizAdabCatalog.adabFan,
         QuizArabicCatalog.arabicFan,
