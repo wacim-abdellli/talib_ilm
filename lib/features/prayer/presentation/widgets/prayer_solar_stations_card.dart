@@ -123,7 +123,7 @@ class _StationItem extends StatelessWidget {
           child: Center(
             child: Icon(
               icon,
-              size: AppIcon.xs,
+              size: AppIcon.md,
               color: iconColor,
             ),
           ),

@@ -157,7 +157,7 @@ class IlmQuizBannerCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.arrow_back_rounded,
+                    Icons.arrow_forward_rounded,
                     color: palette.primary,
                     size: AppIcon.sm,
                   ),

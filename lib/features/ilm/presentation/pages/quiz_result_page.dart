@@ -308,7 +308,7 @@ class _QuizResultPageState extends State<QuizResultPage> {
                 side: BorderSide(color: palette.primary),
                 shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
               ),
-              icon: const Icon(Icons.arrow_back_rounded, size: AppIcon.sm),
+              icon: const Icon(Icons.arrow_forward_rounded, size: AppIcon.sm),
               label: Text(
                 'بدء المستوى التالي',
                 style: textTheme.label.copyWith(color: palette.primary),

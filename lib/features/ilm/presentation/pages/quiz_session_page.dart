@@ -468,7 +468,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                           shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
                         ),
                         onPressed: _onNextQuestion,
-                        icon: const Icon(Icons.arrow_back_rounded, size: AppIcon.sm),
+                        icon: const Icon(Icons.arrow_forward_rounded, size: AppIcon.sm),
                         label: Text(
                           _currentIndex + 1 < total ? 'السؤال التالي' : 'عرض النتيجة النهائية',
                           style: textTheme.label.copyWith(color: palette.onPrimary),

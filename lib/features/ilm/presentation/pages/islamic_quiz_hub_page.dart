@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 import '../../data/catalogs/islamic_quiz_catalog.dart';
 import '../../data/models/islamic_quiz_models.dart';
 import '../../data/services/quiz_dump_service.dart';
@@ -155,11 +156,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
         appBar: AppBar(
           backgroundColor: palette.surface,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'رجوع',
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          leading: const AppBackButton(),
           centerTitle: true,
           title: Text(
             'المسابقات والمنهج العلمي',
@@ -266,7 +263,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.arrow_back_rounded,
+                  Icons.arrow_forward_rounded,
                   color: palette.textSubtle,
                   size: AppIcon.sm,
                 ),
@@ -438,7 +435,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                   ),
                   const SizedBox(width: AppSpace.sm),
                   Icon(
-                    Icons.arrow_back_rounded,
+                    Icons.arrow_forward_rounded,
                     color: fanTheme.primary.withValues(alpha: 0.7),
                     size: AppIcon.md,
                   ),

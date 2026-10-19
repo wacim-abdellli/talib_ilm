@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/navigation/fade_page_route.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 import '../../data/catalogs/islamic_quiz_catalog.dart';
 import '../../data/catalogs/quiz_manhaj_syllabus.dart';
 import '../../data/models/islamic_quiz_models.dart';
@@ -119,11 +120,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
         appBar: AppBar(
           backgroundColor: palette.surface,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'رجوع',
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          leading: const AppBackButton(),
           centerTitle: true,
           title: Text(_currentFan.title, style: textTheme.titleSmall),
         ),

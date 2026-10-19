@@ -287,7 +287,7 @@ class FanQuizLevelCard extends StatelessWidget {
                                 ? Icons.play_arrow_rounded
                                 : (isCompleted
                                     ? Icons.refresh_rounded
-                                    : Icons.arrow_back_rounded),
+                                    : Icons.arrow_forward_rounded),
                             color: hasActiveSession
                                 ? palette.onPrimary
                                 : (isCompleted
