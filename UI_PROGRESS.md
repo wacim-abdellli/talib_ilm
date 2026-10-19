@@ -1134,6 +1134,36 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
      - `flutter test`: **100% pass** across `mutun_curriculum_reader_test.dart`, `catalog_integrity_test.dart`, `quran_search_word_test.dart`.
 
+---
 
-
-
+## Islamic Quiz Expansion: Offline Dumps (Option B) & UI Overhaul
+- **Status:** Complete
+- **Branch:** feat/quran-word-search
+- **Commit:** 8be7fd6
+- **Deliverables & Verification:**
+  1. **Offline JSON Question Dumps Architecture (Option B):**
+     - Extended QuizQuestion in lib/features/ilm/data/models/islamic_quiz_models.dart with fromJson and toJson, supporting optional levelId and fanId.
+     - Created QuizDumpService (lib/features/ilm/data/services/quiz_dump_service.dart) with loadDump(), loadFromString(), getQuestionsForLevel(), getAllDumpQuestions(), and level ID normalization (_lvl_ to _l).
+     - Bundled authentic questions dump in assets/data/quiz_questions_dump.json.
+     - Integrated dynamic merging in IslamicQuizCatalog for getLevel, totalQuestionsCount, and getDailyChallengeQuestions.
+     - Created unit test suite in test/quiz_dump_service_test.dart.
+  2. **Quiz Session Page UI Elevation (quiz_session_page.dart, quiz_option_tile.dart, quiz_lifelines_bar.dart):**
+     - Upgraded options with scholarly Arabic letter medallions (أ، ب، ج، د), subtle gold borders, high-contrast feedback, and smooth opacity reduction for eliminated options.
+     - Modernized lifelines bar with unified surfaces, filter & bulb icons, and count pill badges.
+     - Animated smooth linear progress bar and dual question / score badge row.
+     - Maintained strictly under 600 lines (581 lines).
+  3. **Islamic Quiz Hub UI Elevation (islamic_quiz_hub_page.dart, quiz_hero_stats_banner.dart):**
+     - Modular QuizHeroStatsBanner with student rank medallion, XP badge, rank progress bar, and 3-metric statistics card row.
+     - Elevated Daily Challenge card with warm golden surface, 2x multiplier badge, and directional indicator.
+     - Refined discipline cards with completion progress bars, question count badges, and star ratings.
+     - Maintained strictly under 600 lines (439 lines).
+  4. **Discipline Levels Page UI Elevation (fan_quiz_levels_page.dart):**
+     - Illuminated hero discipline card with mastery stars badge and overall discipline progress bar.
+     - Enhanced milestone level cards with status indicators (مكتمل، متاح، مقفل), 3-star rating, best score, and primary action buttons.
+     - Maintained strictly under 600 lines (427 lines).
+  5. **Verification Gate:**
+     - flutter analyze: 0 issues found (clean in 8.5s).
+     - python tool/ui_lint_v2.py: OK (0 FAILs, 9 allow markers / cap 10).
+     - flutter test: 100% pass (27/27 tests passed across quiz and ilm suites).
+     - flutter build apk --debug: Succeeded (build/app/outputs/flutter-apk/app-debug.apk built in 41.9s).
+- **Open Issues:** None.
