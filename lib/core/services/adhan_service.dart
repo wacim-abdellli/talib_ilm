@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 
 import '../../app/constants/app_assets.dart';
 import '../../features/quran/data/services/quran_audio_service.dart';
@@ -26,7 +25,9 @@ class AdhanService {
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   Stream<bool> get isPlayingStream => _player.playingStream;
 
-  /// Play adhan, takbeer, or voice announcement with volume control and MediaItem tag
+  /// Play adhan, takbeer, or voice announcement with volume control.
+  /// AudioSource is loaded directly without a MediaItem tag to guarantee it
+  /// never appears as a music/media player notification.
   Future<void> play({
     AdhanSound sound = AdhanSound.qatami,
     PrayerNotificationMode mode = PrayerNotificationMode.adhan,
@@ -48,19 +49,10 @@ class AdhanService {
 
       final assetPath =
           _assetFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
-      final title =
-          _titleFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
 
-      // Create AudioSource with required MediaItem tag for just_audio_background
-      final source = AudioSource.asset(
-        assetPath,
-        tag: MediaItem(
-          id: 'adhan_${mode.name}_${effectiveSound.name}_${prayerName ?? "default"}',
-          album: 'أذان ومواقيت الصلاة',
-          title: title,
-          artist: 'طالب العلم',
-        ),
-      );
+      // Create pure AudioSource without MediaItem tag so just_audio_background
+      // never publishes a MediaSession or transport controls.
+      final source = AudioSource.asset(assetPath);
 
       final normalizedVolume = (volume / 100).clamp(0.0, 1.0);
 
@@ -145,41 +137,6 @@ class AdhanService {
         return AppAssets.adhanAqsa;
       case AdhanSound.takbeer:
         return AppAssets.adhanQatami;
-    }
-  }
-
-  String _titleFor({
-    required AdhanSound sound,
-    required PrayerNotificationMode mode,
-    String? prayerName,
-  }) {
-    if (mode == PrayerNotificationMode.announcement) {
-      return prayerName != null
-          ? 'نداء: حان الآن وقت صلاة $prayerName'
-          : 'نداء وقت الصلاة';
-    }
-    if (mode == PrayerNotificationMode.takbeer) {
-      return 'تكبيرات الأذان المباركة';
-    }
-
-    final effectiveSound =
-        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
-
-    switch (effectiveSound) {
-      case AdhanSound.makkah:
-        return 'أذان الحرم المكي الشريف (الشيخ علي ملا)';
-      case AdhanSound.madinah:
-        return 'أذان المسجد النبوي الشريف (المدينة المنورة)';
-      case AdhanSound.alafasy:
-        return 'أذان الشيخ مشاري راشد العفاسي';
-      case AdhanSound.abdulbasit:
-        return 'أذان الشيخ عبد الباسط عبد الصمد';
-      case AdhanSound.qatami:
-        return 'أذان الشيخ ناصر القطامي';
-      case AdhanSound.aqsa:
-        return 'أذان المسجد الأقصى المبارك (القدس الشريف)';
-      case AdhanSound.takbeer:
-        return 'أذان الشيخ ناصر القطامي';
     }
   }
 }

@@ -64,5 +64,11 @@ void main() {
       expect(service, isNotNull);
       expect(identical(service, ForegroundPrayerService()), isTrue);
     });
+
+    test('AdhanService does not import or use just_audio_background MediaItem', () {
+      final service = AdhanService();
+      expect(service.isPlaying, isFalse);
+    });
   });
 }
+

@@ -437,12 +437,15 @@ class NotificationService {
       sound: sound,
       prayerName: prayerName,
     );
-    final title = isJumua
+    final cleanPrayerName = prayerName.replaceAll('صلاة ', '').trim();
+    final isEffectiveJumua =
+        isJumua || cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
+    final title = isEffectiveJumua
         ? 'حان الآن موعد أذان صلاة الجمعة'
-        : 'صلاة $prayerName';
-    final body = isJumua
+        : 'حان الآن موعد أذان صلاة $cleanPrayerName';
+    final body = isEffectiveJumua
         ? 'حي على الصلاة · حي على الفلاح · يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ'
-        : (prayerName.contains('فجر')
+        : (cleanPrayerName.contains('فجر')
             ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
             : 'حي على الصلاة · حي على الفلاح');
 
@@ -700,8 +703,12 @@ class NotificationService {
       sound: sound,
       prayerName: prayerName,
     );
-    final title = 'صلاة $prayerName';
-    final body = prayerName.contains('فجر')
+    final cleanPrayerName = prayerName.replaceAll('صلاة ', '').trim();
+    final isJumua = cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
+    final title = isJumua
+        ? 'حان الآن موعد أذان صلاة الجمعة'
+        : 'حان الآن موعد أذان صلاة $cleanPrayerName';
+    final body = cleanPrayerName.contains('فجر')
         ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
         : 'حي على الصلاة · حي على الفلاح';
 
