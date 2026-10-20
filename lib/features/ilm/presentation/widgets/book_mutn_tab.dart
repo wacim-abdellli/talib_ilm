@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
@@ -48,11 +49,27 @@ class _BookMutnTabState extends State<BookMutnTab> {
   void initState() {
     super.initState();
     _audioService = MutunAudioService();
+    _loadSelectedEdition();
+  }
+
+  Future<void> _loadSelectedEdition() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getInt('mutn_selected_edition_${widget.book.id}');
+    if (saved != null && mounted) {
+      setState(() => _selectedEdition = saved);
+    }
+  }
+
+  void _onSelectEdition(int edition) {
+    if (_selectedEdition == edition) return;
+    setState(() => _selectedEdition = edition);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('mutn_selected_edition_${widget.book.id}', edition);
+    });
   }
 
   @override
   void dispose() {
-    _audioService.dispose();
     super.dispose();
   }
 
@@ -80,7 +97,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
           isBookmarked: widget.isBookmarked,
           onToggleBookmark: widget.onToggleBookmark,
           onShowBookmarks: widget.onShowBookmarks,
-          onSwitchToFullBook: () => setState(() => _selectedEdition = 1),
+          onSwitchToFullBook: () => _onSelectEdition(1),
           fullBookLabel: 'قراءة الكتاب كاملاً (${digitalEntry.totalPages} صفحة)',
           onPageChanged: widget.onPageChanged,
         );
@@ -103,7 +120,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: () => setState(() => _selectedEdition = 0),
+                      onTap: () => _onSelectEdition(0),
                       borderRadius: AppRadius.pillRadius,
                       child: AnimatedContainer(
                         duration: AppMotion.fast,
@@ -151,7 +168,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
                   const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: InkWell(
-                      onTap: () => setState(() => _selectedEdition = 1),
+                      onTap: () => _onSelectEdition(1),
                       borderRadius: AppRadius.pillRadius,
                       child: AnimatedContainer(
                         duration: AppMotion.fast,

@@ -20,7 +20,20 @@ class MutunAudioService {
     _initAudioListener();
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  AudioPlayer _player = AudioPlayer();
+  StreamSubscription? _playerStateSub;
+  StreamSubscription? _playbackEventSub;
+  StreamSubscription? _positionSub;
+  StreamSubscription? _durationSub;
+
+  void _ensurePlayerActive() {
+    try {
+      final _ = _player.processingState;
+    } catch (_) {
+      _player = AudioPlayer();
+      _initAudioListener();
+    }
+  }
 
   static const List<MutunReciter> defaultReciters = [
     MutunReciterDefaults.sini,
@@ -58,7 +71,12 @@ class MutunAudioService {
   }
 
   void _initAudioListener() {
-    _player.playerStateStream.listen((state) {
+    _playerStateSub?.cancel();
+    _playbackEventSub?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+
+    _playerStateSub = _player.playerStateStream.listen((state) {
       final isPlaying = state.playing &&
           state.processingState != ProcessingState.completed &&
           state.processingState != ProcessingState.idle;
@@ -83,7 +101,7 @@ class MutunAudioService {
       playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
     });
 
-    _player.playbackEventStream.listen(
+    _playbackEventSub = _player.playbackEventStream.listen(
       (event) {},
       onError: (Object err) {
         debugPrint('Audio playback error: $err');
@@ -92,12 +110,12 @@ class MutunAudioService {
       },
     );
 
-    _player.positionStream.listen((pos) {
+    _positionSub = _player.positionStream.listen((pos) {
       positionNotifier.value = pos;
       _updateActiveParagraph(pos);
     });
 
-    _player.durationStream.listen((dur) {
+    _durationSub = _player.durationStream.listen((dur) {
       if (dur != null) {
         durationNotifier.value = dur;
         _updateActiveParagraph(_player.position);
@@ -462,73 +480,104 @@ class MutunAudioService {
   }
 
   Future<void> togglePlayPause({String? bookId}) async {
-    final targetBookId = bookId ?? activeBookIdNotifier.value;
+    try {
+      _ensurePlayerActive();
+      final targetBookId = bookId ?? activeBookIdNotifier.value;
 
-    // Check if target reciter is available for this book, otherwise pick the first available
-    if (targetBookId != null) {
-      final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
-      final hasSelected =
-          availableReciters.any((r) => r.id == _selectedReciter.id);
-      if (!hasSelected && availableReciters.isNotEmpty) {
-        _selectedReciter = availableReciters.first;
-        selectedReciterNotifier.value = _selectedReciter;
+      // Check if target reciter is available for this book, otherwise pick the first available
+      if (targetBookId != null) {
+        final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
+        final hasSelected =
+            availableReciters.any((r) => r.id == _selectedReciter.id);
+        if (!hasSelected && availableReciters.isNotEmpty) {
+          _selectedReciter = availableReciters.first;
+          selectedReciterNotifier.value = _selectedReciter;
+        }
       }
-    }
 
-    final isStaleOrIdle = _player.processingState == ProcessingState.idle ||
-        _player.processingState == ProcessingState.completed ||
-        _player.audioSource == null;
+      final isStaleOrIdle = _player.processingState == ProcessingState.idle ||
+          _player.processingState == ProcessingState.completed ||
+          _player.audioSource == null;
 
-    // If starting a new book, first-time playback, or player in idle/completed state
-    if (targetBookId != null &&
-        (_currentAudioUrl == null ||
-            activeBookIdNotifier.value != targetBookId ||
-            isStaleOrIdle)) {
-      final audioUrl = MutunAudioCatalog.getAudioUrl(
-            targetBookId,
-            reciterId: _selectedReciter.id,
-          ) ??
-          MutunAudioCatalog.getAudioUrl(
-            targetBookId,
-            reciterId: 'sini',
-          ) ??
-          '';
-      final totalParas = MutunAudioCatalog.getTotalParagraphs(
-        targetBookId,
-        reciterId: _selectedReciter.id,
-      );
-      await playMatnAudio(
-        bookId: targetBookId,
-        audioUrl: audioUrl,
-        paragraphIndex: 1,
-        totalParagraphs: totalParas,
-      );
-      return;
-    }
+      // If starting a new book, first-time playback, or player in idle/completed state
+      if (targetBookId != null &&
+          (_currentAudioUrl == null ||
+              activeBookIdNotifier.value != targetBookId ||
+              isStaleOrIdle)) {
+        final audioUrl = MutunAudioCatalog.getAudioUrl(
+              targetBookId,
+              reciterId: _selectedReciter.id,
+            ) ??
+            MutunAudioCatalog.getAudioUrl(
+              targetBookId,
+              reciterId: 'sini',
+            ) ??
+            '';
+        final totalParas = MutunAudioCatalog.getTotalParagraphs(
+          targetBookId,
+          reciterId: _selectedReciter.id,
+        );
 
-    if (_player.playing) {
-      await _player.pause();
-    } else {
-      await _player.play();
+        final isSameBook = activeBookIdNotifier.value == targetBookId;
+        final resumePara = isSameBook ? (activeParagraphNotifier.value ?? 1) : 1;
+        final resumePos = isSameBook && positionNotifier.value > Duration.zero
+            ? positionNotifier.value
+            : null;
+
+        await playMatnAudio(
+          bookId: targetBookId,
+          audioUrl: audioUrl,
+          paragraphIndex: resumePara,
+          totalParagraphs: totalParas,
+          initialPosition: resumePos,
+        );
+        return;
+      }
+
+      if (_player.playing) {
+        await _player.pause();
+        isPlayingNotifier.value = false;
+      } else {
+        await _player.play();
+        isPlayingNotifier.value = true;
+      }
+    } catch (e) {
+      debugPrint('togglePlayPause error: $e');
+      isLoadingNotifier.value = false;
+      isPlayingNotifier.value = false;
     }
   }
 
   Future<void> pause() async {
-    await _player.pause();
+    try {
+      _ensurePlayerActive();
+      await _player.pause();
+    } catch (_) {}
+    isPlayingNotifier.value = false;
+    isLoadingNotifier.value = false;
   }
 
   Future<void> resume() async {
-    await _player.play();
+    try {
+      _ensurePlayerActive();
+      await _player.play();
+      isPlayingNotifier.value = true;
+    } catch (_) {}
   }
 
   Future<void> stop() async {
-    await _player.stop();
+    try {
+      _ensurePlayerActive();
+      await _player.stop();
+    } catch (_) {}
     activeBookIdNotifier.value = null;
     activeParagraphNotifier.value = null;
     positionNotifier.value = Duration.zero;
+    isPlayingNotifier.value = false;
+    isLoadingNotifier.value = false;
   }
 
   void dispose() {
-    _player.dispose();
+    pause();
   }
 }

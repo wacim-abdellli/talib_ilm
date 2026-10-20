@@ -75,6 +75,47 @@ void main() {
         expect(tester.takeException(), isNull);
       }
     });
+
+    testWidgets('renders author and distinct progressBadge pill', (tester) async {
+      await tester.pumpWidget(
+        buildTestableWidget(
+          IlmBookPreviewRow(
+            title: 'نواقض الإسلام',
+            subtitle: 'محمد بن عبد الوهاب • صفحة 2 من 2',
+            author: 'محمد بن عبد الوهاب',
+            progressBadge: 'صفحة 2 من 2',
+            accentColor: const Color(0xFF0D9488),
+            onTap: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('نواقض الإسلام'), findsOneWidget);
+      expect(find.text('محمد بن عبد الوهاب'), findsOneWidget);
+      expect(find.text('صفحة 2 من 2'), findsOneWidget);
+      expect(find.byIcon(Icons.auto_stories_rounded), findsOneWidget);
+    });
+
+    testWidgets('renders completed badge with checkmark inside badge', (tester) async {
+      await tester.pumpWidget(
+        buildTestableWidget(
+          IlmBookPreviewRow(
+            title: 'نواقض الإسلام',
+            subtitle: 'محمد بن عبد الوهاب • مكتمل',
+            author: 'محمد بن عبد الوهاب',
+            progressBadge: 'مكتمل',
+            accentColor: const Color(0xFF0D9488),
+            isCompleted: true,
+            onTap: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('نواقض الإسلام'), findsOneWidget);
+      expect(find.text('محمد بن عبد الوهاب'), findsOneWidget);
+      expect(find.text('مكتمل'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsNWidgets(2)); // in badge and trailing
+    });
   });
 
   group('IlmViewAllRow Tests', () {

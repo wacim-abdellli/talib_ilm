@@ -36,6 +36,15 @@ class LastActivityService {
     }
   }
 
+  Future<String?> getLastTab(String bookId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastBook = prefs.getString(_keyBookId);
+    if (lastBook == bookId) {
+      return prefs.getString(_keyTab);
+    }
+    return null;
+  }
+
   Future<void> setLastSharh(String bookId, String sharhFile) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyBookId, bookId);

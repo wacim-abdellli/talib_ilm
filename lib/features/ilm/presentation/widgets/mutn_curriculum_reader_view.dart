@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,6 +10,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/catalogs/mutun_curriculum_catalog.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 import 'mutn_memorization_view.dart';
@@ -175,9 +175,10 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
       prefs.setInt('mutn_last_para_${widget.book.id}', paraIndex);
     }));
     final totalParas = widget.curriculumBook.totalParagraphs;
-    final totalPages = widget.book.totalPages > 0
-        ? widget.book.totalPages
-        : (totalParas > 0 ? totalParas : 1);
+    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
+    final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
+        ? digitalEntry.totalPages
+        : (widget.book.totalPages > 0 ? widget.book.totalPages : (totalParas > 0 ? totalParas : 1));
     final calcPage = totalParas > 0
         ? ((paraIndex / totalParas) * totalPages).ceil().clamp(1, totalPages)
         : paraIndex;

@@ -146,9 +146,9 @@ class _BookViewPageState extends State<BookViewPage>
   void initState() {
     super.initState();
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
-    final fallbackTotal = widget.book.totalPages > 0
-        ? widget.book.totalPages
-        : (digitalEntry?.totalPages ?? 0);
+    final fallbackTotal = (digitalEntry != null && digitalEntry.totalPages > 0)
+        ? digitalEntry.totalPages
+        : (widget.book.totalPages > 0 ? widget.book.totalPages : 0);
     _totalPages = fallbackTotal;
 
     _mutunPdfKey = _lastActivityService.pdfKeyForMutn(widget.book.id);
@@ -196,9 +196,9 @@ class _BookViewPageState extends State<BookViewPage>
   Future<void> _ensureBookInitialized({int? totalPages}) async {
     final progressService = await _getProgressService();
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
-    final canonicalTotal = widget.book.totalPages > 0
-        ? widget.book.totalPages
-        : (digitalEntry?.totalPages ?? 0);
+    final canonicalTotal = (digitalEntry != null && digitalEntry.totalPages > 0)
+        ? digitalEntry.totalPages
+        : (widget.book.totalPages > 0 ? widget.book.totalPages : 0);
     final pages = totalPages ?? _totalPages;
     final safePages = pages > canonicalTotal
         ? pages
@@ -558,10 +558,10 @@ class _BookViewPageState extends State<BookViewPage>
     if (total <= 0) return;
 
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
-    final canonicalTotal = widget.book.totalPages > 0
-        ? widget.book.totalPages
-        : (digitalEntry?.totalPages ?? total);
-    final safeTotal = total > canonicalTotal ? total : canonicalTotal;
+    final canonicalTotal = (digitalEntry != null && digitalEntry.totalPages > 0)
+        ? digitalEntry.totalPages
+        : (widget.book.totalPages > 0 ? widget.book.totalPages : total);
+    final safeTotal = canonicalTotal > 0 ? canonicalTotal : total;
 
     setState(() {
       _currentPage = page;

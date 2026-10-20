@@ -6,6 +6,7 @@ import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
+import '../../../core/services/last_activity_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../data/catalogs/mutun_digital_catalog.dart';
@@ -181,8 +182,26 @@ class _IlmPageState extends State<IlmPage> {
         }
       }
 
-      final lastReadBook = await _progressService?.getLastReadBook();
-      _continueReadingBook = lastReadBook;
+      final lastActivity = await LastActivityService().getLastActivity();
+      if (lastActivity != null && _bookCatalog.containsKey(lastActivity.bookId)) {
+        final existingProgress = _progressById[lastActivity.bookId];
+        if (existingProgress != null) {
+          _continueReadingBook = existingProgress;
+        } else {
+          final book = _bookCatalog[lastActivity.bookId]!;
+          _continueReadingBook = BookProgress(
+            bookId: book.id,
+            bookTitle: book.title,
+            level: book.level,
+            totalPages: lastActivity.total ?? (book.totalPages > 0 ? book.totalPages : 1),
+            currentPage: lastActivity.page ?? 1,
+            lastReadDate: DateTime.now(),
+            startedDate: DateTime.now(),
+          );
+        }
+      } else {
+        _continueReadingBook = await _progressService?.getLastReadBook();
+      }
 
       if (_dailyReadingService != null) {
         _dailyGoal = _dailyReadingService!.getDailyGoal();
@@ -228,10 +247,22 @@ class _IlmPageState extends State<IlmPage> {
 
   void _navigateToBook(IlmBook book) async {
     final wasCompleted = _progressById[book.id]?.isCompleted ?? false;
+    final lastTab = await LastActivityService().getLastTab(book.id);
+    if (!mounted) return;
+    final initialTabIndex = switch (lastTab) {
+      LastActivityService.tabSharh => 1,
+      LastActivityService.tabLessons => 2,
+      _ => 0,
+    };
 
     await Navigator.push(
       context,
-      buildFadeRoute(page: BookViewPage(book: book)),
+      buildFadeRoute(
+        page: BookViewPage(
+          book: book,
+          initialTabIndex: initialTabIndex,
+        ),
+      ),
     );
 
     await _loadData();

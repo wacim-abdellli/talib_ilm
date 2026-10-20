@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 import 'ilm_book_preview_row.dart';
@@ -186,19 +187,36 @@ class IlmMutunSectionView {
                               indent: AppSpace.lg,
                               endIndent: 0,
                             ),
-                          IlmBookPreviewRow(
-                            title: allBooks[i].title,
-                            subtitle: _buildMutnSubtitle(
-                              allBooks[i],
-                              progressById[allBooks[i].id],
-                            ),
-                            accentColor: palette
-                                .mutunLevel(allBooks[i].level)
-                                .fg,
-                            isCompleted:
-                                progressById[allBooks[i].id]?.isCompleted ??
-                                    false,
-                            onTap: () => onNavigateToBook(allBooks[i]),
+                          Builder(
+                            builder: (context) {
+                              final book = allBooks[i];
+                              final progress = progressById[book.id];
+                              final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+                              final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
+                                  ? digitalEntry.totalPages
+                                  : (book.totalPages > 0 ? book.totalPages : 1);
+                              final currentPage = progress?.currentPage ?? 0;
+                              final isCompleted = progress?.isCompleted ?? false;
+
+                              String? badgeText;
+                              if (isCompleted) {
+                                badgeText = 'مكتمل';
+                              } else if (currentPage > 0) {
+                                badgeText = 'صفحة $currentPage من $totalPages';
+                              }
+
+                              return IlmBookPreviewRow(
+                                title: book.title,
+                                subtitle: _buildMutnSubtitle(book, progress),
+                                author: book.author,
+                                progressBadge: badgeText,
+                                accentColor: palette
+                                    .mutunLevel(book.level)
+                                    .fg,
+                                isCompleted: isCompleted,
+                                onTap: () => onNavigateToBook(book),
+                              );
+                            },
                           ),
                         ],
                         if (allBooks.length > 4) ...[
@@ -465,14 +483,17 @@ class IlmMutunSectionView {
   static String _buildMutnSubtitle(IlmBook book, BookProgress? progress) {
     final isCompleted = progress?.isCompleted ?? false;
     final currentPage = progress?.currentPage ?? 0;
-    final totalPages = book.totalPages > 0 ? book.totalPages : 1;
+    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+    final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
+        ? digitalEntry.totalPages
+        : (book.totalPages > 0 ? book.totalPages : 1);
 
     if (isCompleted) {
       return '${book.author} • مكتمل';
     } else if (currentPage > 0) {
       return '${book.author} • صفحة $currentPage من $totalPages';
     } else if (book.totalPages > 0) {
-      return '${book.author} • ${book.totalPages} ص';
+      return '${book.author} • $totalPages ص';
     } else {
       return book.author;
     }

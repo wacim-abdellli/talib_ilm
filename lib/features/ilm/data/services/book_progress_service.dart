@@ -128,10 +128,9 @@ class BookProgressService {
       return;
     }
 
-    final effectiveTotal =
-        (totalPages != null && totalPages > progress.totalPages)
-            ? totalPages
-            : progress.totalPages;
+    final effectiveTotal = (totalPages != null && totalPages > 0)
+        ? totalPages
+        : progress.totalPages;
 
     final isActuallyCompleted = effectiveTotal > 1 && page >= effectiveTotal;
 
@@ -543,16 +542,19 @@ class BookProgressService {
       final p = all[i];
       final canonicalTotal = catalogTotals[p.bookId];
       if (canonicalTotal != null && canonicalTotal > 0) {
-        final targetTotal =
-            canonicalTotal > p.totalPages ? canonicalTotal : p.totalPages;
-        final isCompleted = targetTotal > 1 && p.currentPage >= targetTotal;
+        final targetTotal = canonicalTotal;
+        final clampedPage = p.currentPage > targetTotal ? targetTotal : p.currentPage;
+        final isCompleted = targetTotal > 1 && clampedPage >= targetTotal;
         final shouldClearComplete = !isCompleted && p.completedDate != null;
-        final shouldUpdateTotal = targetTotal != p.totalPages;
+        final shouldSetComplete = isCompleted && p.completedDate == null;
+        final shouldUpdateTotal = targetTotal != p.totalPages || clampedPage != p.currentPage;
 
-        if (shouldClearComplete || shouldUpdateTotal) {
+        if (shouldClearComplete || shouldSetComplete || shouldUpdateTotal) {
           all[i] = p.copyWith(
             totalPages: targetTotal,
+            currentPage: clampedPage,
             clearCompletedDate: !isCompleted,
+            completedDate: isCompleted ? (p.completedDate ?? DateTime.now()) : null,
           );
           changed = true;
         }
