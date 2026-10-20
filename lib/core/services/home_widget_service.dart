@@ -25,6 +25,7 @@ Future<void> prayerWidgetBackgroundCallback(Uri? uri) async {
     if (w != null && h != null) {
       await HomeWidget.saveWidgetData<int>('widget_width', w);
       await HomeWidget.saveWidgetData<int>('widget_height', h);
+      HomeWidgetService.invalidateCache();
       await HomeWidgetService.updatePrayerWidget(force: true);
     }
   }
@@ -40,8 +41,13 @@ class HomeWidgetService {
   /// Standard 4x1 Home Screen Android widget dimensions (Salaat First style)
   static const Size widgetLogicalSize = Size(380, 95);
 
-  /// In-memory cache key to prevent redundant screenshot rasterizations within the same minute
+  /// In-memory cache key to prevent redundant screenshot rasterizations within the same minute and dimensions
   static String? _lastRenderKey;
+
+  /// Invalidates the render cache to force immediate redraw on resize or theme changes
+  static void invalidateCache() {
+    _lastRenderKey = null;
+  }
 
   /// Retrieves the user-selected widget theme mode (defaults to dark AMOLED card)
   static Future<WidgetThemeMode> getThemeMode() async {
@@ -75,7 +81,7 @@ class HomeWidgetService {
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
-  /// Throttled by minute and prayer phase to guarantee zero phone lag.
+  /// Throttled by minute, prayer phase, and dimensions to guarantee zero phone lag.
   static Future<void> updatePrayerWidget({
     PrayerTimesDay? prayerDay,
     DateTime? referenceTime,
@@ -93,15 +99,6 @@ class HomeWidgetService {
         WidgetThemeMode.auto => AppTheme.resolveTheme(ThemeMode.system),
       };
 
-      // Throttling key: Prevents redundant heavy screenshot rasterization within the exact same minute
-      final all = day.prayers;
-      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-      final renderKey = '${day.city}_${now.hour}:${now.minute}_${eval.activePrayerName}_${eval.phase}_${mode.name}';
-      if (!force && renderKey == _lastRenderKey) {
-        return;
-      }
-      _lastRenderKey = renderKey;
-
       // Dynamically adapt to user's launcher resize dimensions if available
       int targetW = 380;
       int targetH = 95;
@@ -110,18 +107,27 @@ class HomeWidgetService {
         final rawH = await HomeWidget.getWidgetData<dynamic>('widget_height');
         final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
         final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
-        if (savedW != null && savedW >= 160) targetW = savedW.clamp(160, 650);
-        if (savedH != null && savedH >= 60) targetH = savedH.clamp(60, 450);
+        if (savedW != null && savedW >= 140) targetW = savedW.clamp(140, 480);
+        if (savedH != null && savedH >= 55) targetH = savedH.clamp(55, 240);
       } catch (_) {}
+
+      // Throttling key: Prevents redundant heavy screenshot rasterization within the exact same minute and dimensions
+      final all = day.prayers;
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final renderKey = '${day.city}_${now.hour}:${now.minute}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
+      if (!force && renderKey == _lastRenderKey) {
+        return;
+      }
+      _lastRenderKey = renderKey;
 
       final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
 
-      // Render the widget to PNG in application storage with crisp 2.0 pixel ratio (fast, sharp, zero lag)
+      // Render the widget to PNG in application storage with optimal 1.5 pixel ratio (crisp, fast, safe for Android Binder)
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
           data: MediaQueryData(
             size: resolvedSize,
-            devicePixelRatio: 2.0,
+            devicePixelRatio: 1.5,
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
@@ -139,7 +145,7 @@ class HomeWidgetService {
         ),
         key: widgetImageKey,
         logicalSize: resolvedSize,
-        pixelRatio: 2.0,
+        pixelRatio: 1.5,
       );
 
       // Trigger the native Android AppWidget update

@@ -292,7 +292,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('صلاة الظهر'), findsOneWidget);
     expect(find.text('تونس العاصمة'), findsOneWidget);
-    expect(find.text('أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ'), findsOneWidget);
+    expect(find.text('بقي على الأذان'), findsWidgets);
 
     // C. Ribbon 4x1 Mode (width: 380, height: 90)
     await tester.pumpWidget(

@@ -51,19 +51,6 @@ class PrayerWidgetStandardView extends StatelessWidget {
                 spacing: AppSpace.xs,
                 runSpacing: AppSpace.xxs,
                 children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: prayerColor.withValues(alpha: 0.15),
-                      borderRadius: AppRadius.smRadius,
-                    ),
-                    child: Icon(
-                      eval.prayerIcon,
-                      size: AppIcon.xs,
-                      color: prayerColor,
-                    ),
-                  ),
                   Text(
                     eval.displayTitle,
                     style: textTheme.label.copyWith(

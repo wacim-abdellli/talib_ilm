@@ -76,9 +76,9 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     }
 
     // Size-adaptive layout modes
-    final isCompact = width < 275;
-    final isTall = width >= 275 && height >= 260;
-    final isRibbon = width >= 275 && height < 70;
+    final isCompact = width < 260;
+    final isTall = width >= 260 && height >= 140;
+    final isRibbon = width >= 260 && height < 70;
 
     Widget content;
     if (isTall) {
