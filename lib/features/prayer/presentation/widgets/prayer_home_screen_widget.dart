@@ -124,6 +124,8 @@ class PrayerHomeScreenWidget extends StatelessWidget {
       );
     }
 
+    final innerWidth = width - (AppSpace.sm * 2);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Material(
@@ -131,7 +133,12 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         child: Container(
           width: width,
           height: height,
-          padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpace.sm,
+            AppSpace.xs,
+            AppSpace.sm,
+            AppSpace.xs,
+          ),
           decoration: BoxDecoration(
             color: palette.surfaceRaised,
             borderRadius: AppRadius.lgRadius,
@@ -142,9 +149,9 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
+            alignment: isTall ? Alignment.center : Alignment.topCenter,
             child: SizedBox(
-              width: width - (AppSpace.sm * 2),
+              width: innerWidth,
               child: content,
             ),
           ),

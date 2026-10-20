@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
+import '../../../../core/services/home_widget_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 
@@ -85,7 +86,7 @@ class ThemeOption extends StatelessWidget {
   }
 }
 
-class ThemeSelectorSheet extends StatelessWidget {
+class ThemeSelectorSheet extends StatefulWidget {
   const ThemeSelectorSheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -96,48 +97,186 @@ class ThemeSelectorSheet extends StatelessWidget {
   }
 
   @override
+  State<ThemeSelectorSheet> createState() => _ThemeSelectorSheetState();
+}
+
+class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
+  WidgetThemeMode _widgetTheme = WidgetThemeMode.dark;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWidgetTheme();
+  }
+
+  Future<void> _loadWidgetTheme() async {
+    final mode = await HomeWidgetService.getThemeMode();
+    if (mounted) {
+      setState(() => _widgetTheme = mode);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
     return AppSheet(
-      titleText: 'اختر المظهر',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ThemeOption(
-            icon: Icons.brightness_auto_rounded,
-            title: 'تلقائي',
-            subtitle: 'حسب إعدادات النظام',
-            isSelected: themeService.isSystem,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              themeService.setThemeMode(ThemeMode.system);
-              Navigator.pop(context);
-            },
+      titleText: 'المظهر والسمة',
+      showCloseButton: true,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Section 1: App Theme ──
+            Text(
+              'مظهر التطبيق',
+              style: textTheme.label.copyWith(
+                fontWeight: FontWeight.w700,
+                color: palette.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            ThemeOption(
+              icon: Icons.brightness_auto_rounded,
+              title: 'تلقائي',
+              subtitle: 'حسب إعدادات النظام',
+              isSelected: themeService.isSystem,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                themeService.setThemeMode(ThemeMode.system);
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: AppSpace.xs),
+            ThemeOption(
+              icon: Icons.light_mode_rounded,
+              title: 'الوضع الفاتح',
+              subtitle: 'مظهر فاتح وناصع',
+              isSelected: themeService.isLight,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                themeService.setThemeMode(ThemeMode.light);
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: AppSpace.xs),
+            ThemeOption(
+              icon: Icons.dark_mode_rounded,
+              title: 'الوضع الداكن',
+              subtitle: 'مظهر ليلي مريح للعين',
+              isSelected: themeService.isDark,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                themeService.setThemeMode(ThemeMode.dark);
+                setState(() {});
+              },
+            ),
+
+            const SizedBox(height: AppSpace.lg),
+
+            // ── Section 2: Home Screen Widget Theme ──
+            Text(
+              'مظهر ودجت الشاشة الرئيسية',
+              style: textTheme.label.copyWith(
+                fontWeight: FontWeight.w700,
+                color: palette.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xxs),
+            Text(
+              'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
+              style: textTheme.caption.copyWith(
+                color: palette.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Row(
+              children: [
+                _buildWidgetThemeChip(
+                  context: context,
+                  label: 'داكن (أسود)',
+                  icon: Icons.dark_mode_rounded,
+                  mode: WidgetThemeMode.dark,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                _buildWidgetThemeChip(
+                  context: context,
+                  label: 'فاتح (أبيض)',
+                  icon: Icons.light_mode_rounded,
+                  mode: WidgetThemeMode.light,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                _buildWidgetThemeChip(
+                  context: context,
+                  label: 'تلقائي',
+                  icon: Icons.brightness_auto_rounded,
+                  mode: WidgetThemeMode.auto,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidgetThemeChip({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required WidgetThemeMode mode,
+  }) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    final isSelected = _widgetTheme == mode;
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            HapticFeedback.selectionClick();
+            setState(() => _widgetTheme = mode);
+            await HomeWidgetService.setThemeMode(mode);
+          },
+          borderRadius: AppRadius.mdRadius,
+          child: Ink(
+            padding: const EdgeInsetsDirectional.symmetric(
+              vertical: AppSpace.sm,
+              horizontal: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? palette.primarySoft : palette.surfaceMuted,
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(
+                color: isSelected ? palette.primary : palette.border,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: AppIcon.sm,
+                  color: isSelected ? palette.primary : palette.textMuted,
+                ),
+                const SizedBox(height: AppSpace.xxs),
+                Text(
+                  label,
+                  style: textTheme.caption.copyWith(
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected ? palette.primary : palette.text,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpace.sm),
-          ThemeOption(
-            icon: Icons.light_mode_rounded,
-            title: 'الوضع الفاتح',
-            subtitle: 'مظهر فاتح وناصع',
-            isSelected: themeService.isLight,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              themeService.setThemeMode(ThemeMode.light);
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: AppSpace.sm),
-          ThemeOption(
-            icon: Icons.dark_mode_rounded,
-            title: 'الوضع الداكن',
-            subtitle: 'مظهر ليلي مريح للعين',
-            isSelected: themeService.isDark,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              themeService.setThemeMode(ThemeMode.dark);
-              Navigator.pop(context);
-            },
-          ),
-        ],
+        ),
       ),
     );
   }

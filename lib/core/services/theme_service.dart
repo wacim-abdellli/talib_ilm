@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home_widget_service.dart';
+
 /// Service to manage theme mode preference
 class ThemeService extends ChangeNotifier {
   static const String _themeKey = 'theme_mode';
@@ -63,6 +65,10 @@ class ThemeService extends ChangeNotifier {
         break;
     }
     await prefs.setString(_themeKey, themeName);
+    try {
+      HomeWidgetService.invalidateCache();
+      HomeWidgetService.updatePrayerWidget(force: true);
+    } catch (_) {}
   }
 
   /// Toggle between light and dark (ignores system)

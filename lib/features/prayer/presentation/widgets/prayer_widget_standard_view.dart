@@ -190,10 +190,8 @@ class WidgetPrayerStation extends StatelessWidget {
             child: Text(
               prayerName,
               style: textTheme.caption.copyWith(
-                fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-                color: isCurrent
-                    ? palette.primary
-                    : (isPast ? palette.textSubtle : palette.textMuted),
+                fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w700,
+                color: isCurrent ? palette.primary : palette.textMuted,
               ),
               maxLines: 1,
             ),
@@ -229,8 +227,8 @@ class WidgetPrayerStation extends StatelessWidget {
               child: Text(
                 timeStr,
                 style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isPast ? palette.textSubtle : palette.text,
+                  fontWeight: FontWeight.w800,
+                  color: palette.text,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 maxLines: 1,

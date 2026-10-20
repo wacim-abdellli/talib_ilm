@@ -72,6 +72,16 @@ class HomeWidgetService {
     } catch (_) {}
   }
 
+  static Future<ThemeData> _resolveAutoTheme() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final appTheme = prefs.getString('theme_mode');
+      if (appTheme == 'light') return AppTheme.light();
+      if (appTheme == 'dark') return AppTheme.dark();
+    } catch (_) {}
+    return AppTheme.resolveTheme(ThemeMode.system);
+  }
+
   /// Registers background callback for interactive widget resizing
   static Future<void> initBackground() async {
     try {
@@ -96,7 +106,7 @@ class HomeWidgetService {
       final themeData = switch (mode) {
         WidgetThemeMode.light => AppTheme.light(),
         WidgetThemeMode.dark => AppTheme.dark(),
-        WidgetThemeMode.auto => AppTheme.resolveTheme(ThemeMode.system),
+        WidgetThemeMode.auto => await _resolveAutoTheme(),
       };
 
       // Dynamically adapt to user's launcher resize dimensions if available
