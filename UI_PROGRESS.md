@@ -1196,3 +1196,28 @@ FAILED (54 violations)
      - `flutter test`: **100% pass** (29/29 tests passed across reader, audio, and prayer widget test suites).
 - **Open Issues:** None.
 
+---
+
+## Notification Router, Discipline Multi-Level Filters & Hadith Sharing Cleanup
+- **Status:** Complete
+- **Branch:** `main` (merged from `feat/quran-word-search`)
+- **Commit:** `38d9b2c`
+- **Deliverables & Verification:**
+  1. **Notification Router & Deep Linking Engine (`NotificationRouter`):**
+     - Centralized routing for notification payloads across Morning, Evening, and Sleeping Athkar, After-Prayer Athkar, Tasbeeh, Istighfar, Duas, and Friday Surah Al-Kahf deep links.
+     - Handles cold-start launches seamlessly by caching `pendingPayload` until `AppShell` completes mounting.
+     - Dispatches through `rootNavigatorKey` with animated fade transitions.
+     - Verified with comprehensive test suite in `test/notification_router_test.dart` (100% pass across cold-start and runtime scenarios).
+  2. **Ilm Disciplines Multi-Level Filters (`IlmDisciplineSection`):**
+     - Added horizontal level selector filters (`جميع المستويات`, `تمهيدي (مبتدئ)`, `تأصيلي (متوسط)`, `مطولات (متقدم)`) inside focused discipline views.
+     - Dynamic book count indicators per level with tokenized pill styling and haptic feedback.
+     - Preserved text-scale resilience and zero UI lint violations.
+  3. **Hadith Data Sanitization & Unified Sharing:**
+     - Sanitized legacy HTML break tags (`<br>`, `</p>`) from `hadith_collection.json`.
+     - Built `GradedHadith.cleanText()` and `toShareText()` with structured attribution and scholarly citation.
+  4. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 98.4s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test test/notification_router_test.dart test/hadith_explorer_test.dart`: **100% pass** (23/23 tests).
+- **Open Issues:** None.
+
