@@ -75,13 +75,13 @@ class ReaderSurfaceColors {
     switch (surface) {
       case ShamelaReaderSurface.normal:
         return ReaderSurfaceTokens(
-          bg: isDark ? const Color(0xFF161817) : const Color(0xFFFAF9F5),
-          surfaceRaised: isDark ? const Color(0xFF1E2120) : const Color(0xFFF2EFE9),
-          text: isDark ? const Color(0xFFF1F5F3) : const Color(0xFF1E2120),
-          textMuted: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+          bg: isDark ? const Color(0xFF090807) : const Color(0xFFFAF9F5),
+          surfaceRaised: isDark ? const Color(0xFF141210) : const Color(0xFFF2EFE9),
+          text: isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E2120),
+          textMuted: isDark ? const Color(0xFFA8A096) : const Color(0xFF6B7280),
           hadithGreen: isDark ? const Color(0xFF4ADE80) : const Color(0xFF1B6B3F),
           citationBlue: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-          border: isDark ? const Color(0xFF2C302E) : const Color(0xFFE2DFD6),
+          border: isDark ? const Color(0xFF262018) : const Color(0xFFE2DFD6),
           label: 'الافتراضي',
         );
       case ShamelaReaderSurface.parchment:
@@ -97,13 +97,13 @@ class ReaderSurfaceColors {
         );
       case ShamelaReaderSurface.night:
         return const ReaderSurfaceTokens(
-          bg: Color(0xFF101114), // Deep soothing night surface
-          surfaceRaised: Color(0xFF181A1F),
-          text: Color(0xFFEAE5DC), // High-contrast soft cream night text
-          textMuted: Color(0xFF94A3B8),
+          bg: Color(0xFF090807), // Velvet obsidian pure dark surface (no blue tint)
+          surfaceRaised: Color(0xFF141210), // Warm charcoal raised surface (no blue tint)
+          text: Color(0xFFFAF8F5), // High-contrast warm cream night text
+          textMuted: Color(0xFFA8A096), // Warm stone muted text (no blue tint)
           hadithGreen: Color(0xFF4ADE80),
           citationBlue: Color(0xFF93C5FD),
-          border: Color(0xFF2C3038),
+          border: Color(0xFF262018), // Warm dark border (no blue tint)
           label: 'داكن هادئ',
         );
     }
@@ -241,10 +241,10 @@ class MutunThemeColors {
         activeParagraphBg: Color(0xFF28231C),
         activeParagraphBorder: Color(0xFF453C30),
         paragraphNumber: Color(0xFFB3A89B),
-        cardBg: Color(0xFF1E2124),
-        cardBorder: Color(0xFF2E3338),
-        audioBarBg: Color(0xFF191B1E),
-        audioBarBorder: Color(0xFF2E3338),
+        cardBg: Color(0xFF141210),
+        cardBorder: Color(0xFF262018),
+        audioBarBg: Color(0xFF100E0B),
+        audioBarBorder: Color(0xFF262018),
       );
     } else {
       return const MutunThemeTokens(

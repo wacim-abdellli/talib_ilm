@@ -111,7 +111,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
           Directionality(
             textDirection: TextDirection.rtl,
             child: Container(
-              color: palette.surface,
+              color: palette.bg,
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpace.md,
                 vertical: AppSpace.xs,
