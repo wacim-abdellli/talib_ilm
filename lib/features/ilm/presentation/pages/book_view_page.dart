@@ -35,6 +35,7 @@ import '../../../../core/models/favorite_item.dart';
 import '../../../../core/services/asset_service.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/services/book_progress_service.dart';
+import '../../data/services/mutun_audio_service.dart';
 
 class BookViewPage extends StatefulWidget {
   final IlmBook book;
@@ -261,6 +262,7 @@ class _BookViewPageState extends State<BookViewPage>
 
   @override
   void dispose() {
+    MutunAudioService().pause();
     _readingTimer.cancel();
     _persistLastPositionSync();
     _saveProgress();
@@ -391,6 +393,9 @@ class _BookViewPageState extends State<BookViewPage>
   void _handleTabChange() {
     if (!_showControls) {
       setState(() => _showControls = true);
+    }
+    if (_tabController.index != 0) {
+      MutunAudioService().pause();
     }
     if (_tabController.index == _lastTabIndex) return;
     _lastTabIndex = _tabController.index;

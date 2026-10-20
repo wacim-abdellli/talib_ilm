@@ -66,14 +66,11 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
 
   bool _showAudioBar = false;
   bool _memorizationMode = false;
-
-  // Typography & Surface settings
   double _fontSizeDelta = 2.0;
   String _fontFamily = 'Amiri';
   double _lineHeight = 1.95;
   ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
   ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
-
   int? _lastAutoScrolledParagraph;
 
   @override
@@ -81,6 +78,9 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     super.initState();
     _scrollController = ScrollController();
     themeService.addListener(_onThemeChanged);
+    _showAudioBar = widget.audioService.isPlayingNotifier.value ||
+        (widget.audioService.activeBookIdNotifier.value == widget.book.id &&
+            MutunAudioCatalog.hasAudio(widget.book.id));
     widget.audioService.activeParagraphNotifier
         .addListener(_onActiveParagraphChanged);
     _loadPreferences();

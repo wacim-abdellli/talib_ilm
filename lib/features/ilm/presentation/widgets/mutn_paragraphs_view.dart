@@ -156,42 +156,44 @@ class MutnParagraphsView extends StatelessWidget {
               textAlign: TextAlign.start,
             ),
 
-            const SizedBox(height: AppSpace.xs),
-
-            // ── Paragraph Number Badge (-1-, -2- ...) ────────────────
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.xs,
-                  vertical: AppSpace.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: showHighlight
-                      ? tokens.rosetteGold.withValues(alpha: 0.2)
-                      : palette.surfaceMuted,
-                  borderRadius: AppRadius.pillRadius,
-                  border: Border.all(
-                    color: showHighlight
-                        ? tokens.rosetteGold
-                        : palette.border.withValues(alpha: 0.6),
-                    width: 0.8,
+            // ── Paragraph Number Badge (-1-, -2- ...) (Only when audio syllabus is present) ──
+            if (service.hasAudio) ...[
+              const SizedBox(height: AppSpace.xs),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xxs,
                   ),
-                ),
-                child: Text(
-                  '- $index -',
-                  style: textTheme.caption.copyWith(
+                  decoration: BoxDecoration(
                     color: showHighlight
-                        ? tokens.rosetteGold
-                        : tokens.paragraphNumber,
-                    fontWeight: FontWeight.bold,
+                        ? tokens.rosetteGold.withValues(alpha: 0.2)
+                        : palette.surfaceMuted,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: showHighlight
+                          ? tokens.rosetteGold
+                          : palette.border.withValues(alpha: 0.6),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    '- $index -',
+                    style: textTheme.caption.copyWith(
+                      color: showHighlight
+                          ? tokens.rosetteGold
+                          : tokens.paragraphNumber,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
     );
+
   }
 }

@@ -84,7 +84,9 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   void initState() {
     super.initState();
     themeService.addListener(_onThemeChanged);
-    _showAudioBar = false;
+    _showAudioBar = _audioService.isPlayingNotifier.value ||
+        (_audioService.activeBookIdNotifier.value == widget.book.id &&
+            MutunAudioCatalog.hasAudio(widget.book.id));
     _audioService.activeParagraphNotifier.addListener(_onActiveParagraphChanged);
     _audioService.isPlayingNotifier.addListener(_onAudioPlayingChanged);
     final resolvedInitial = (widget.initialPage > 1 || widget.digitalEntry.startPage <= 1)

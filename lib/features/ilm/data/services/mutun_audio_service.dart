@@ -4,13 +4,9 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../catalogs/mutun_audio_catalog.dart';
-export '../catalogs/mutun_audio_catalog.dart' show MutunReciter, MutunReciterDefaults;
+export '../catalogs/mutun_audio_catalog.dart'
+    show MutunReciter, MutunReciterDefaults, MutunRepeatMode;
 
-enum MutunRepeatMode {
-  none,
-  singleParagraph,
-  entireMatn,
-}
 
 class MutunAudioService {
   static final MutunAudioService _instance = MutunAudioService._internal();
@@ -30,10 +26,22 @@ class MutunAudioService {
     try {
       final _ = _player.processingState;
     } catch (_) {
-      _player = AudioPlayer();
-      _initAudioListener();
+      _recreatePlayer();
     }
   }
+
+  Future<void> _recreatePlayer() async {
+    try {
+      _playerStateSub?.cancel();
+      _playbackEventSub?.cancel();
+      _positionSub?.cancel();
+      _durationSub?.cancel();
+      await _player.dispose();
+    } catch (_) {}
+    _player = AudioPlayer();
+    _initAudioListener();
+  }
+
 
   static const List<MutunReciter> defaultReciters = [
     MutunReciterDefaults.sini,
@@ -42,7 +50,6 @@ class MutunAudioService {
     MutunReciterDefaults.shaydzmi,
     MutunReciterDefaults.afasy,
   ];
-
   static const List<MutunReciter> availableReciters = defaultReciters;
 
   MutunReciter _selectedReciter = MutunReciterDefaults.sini;
@@ -70,6 +77,10 @@ class MutunAudioService {
     return MutunAudioCatalog.getRecitersForBook(bookId);
   }
 
+  bool get hasAudio =>
+      activeBookIdNotifier.value != null &&
+      MutunAudioCatalog.hasAudio(activeBookIdNotifier.value!);
+
   void _initAudioListener() {
     _playerStateSub?.cancel();
     _playbackEventSub?.cancel();
@@ -84,18 +95,12 @@ class MutunAudioService {
               state.processingState == ProcessingState.buffering) &&
           !state.playing;
 
-      if (isPlayingNotifier.value != isPlaying) {
-        isPlayingNotifier.value = isPlaying;
-      }
-      if (isLoadingNotifier.value != isLoading) {
-        isLoadingNotifier.value = isLoading;
-      }
-
-      if (state.processingState == ProcessingState.completed) {
-        _handleTrackCompletion();
-      }
+      if (isPlayingNotifier.value != isPlaying) isPlayingNotifier.value = isPlaying;
+      if (isLoadingNotifier.value != isLoading) isLoadingNotifier.value = isLoading;
+      if (state.processingState == ProcessingState.completed) _handleTrackCompletion();
     }, onError: (Object err) {
       debugPrint('Audio player state error: $err');
+      _recreatePlayer();
       isLoadingNotifier.value = false;
       isPlayingNotifier.value = false;
       playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
@@ -105,8 +110,29 @@ class MutunAudioService {
       (event) {},
       onError: (Object err) {
         debugPrint('Audio playback error: $err');
+        final wasPlaying = isPlayingNotifier.value;
+        final bookId = activeBookIdNotifier.value;
+        final pos = positionNotifier.value;
+        final para = activeParagraphNotifier.value ?? 1;
+        _recreatePlayer();
+        if (wasPlaying && bookId != null) {
+          final audioUrl = _currentAudioUrl ??
+              MutunAudioCatalog.getAudioUrl(bookId, reciterId: _selectedReciter.id) ?? '';
+          if (audioUrl.isNotEmpty) {
+            playMatnAudio(
+              bookId: bookId,
+              audioUrl: audioUrl,
+              paragraphIndex: para,
+              totalParagraphs: _totalParagraphs,
+              initialPosition: pos > Duration.zero ? pos : null,
+              isFallbackAttempt: true,
+            );
+            return;
+          }
+        }
         isLoadingNotifier.value = false;
         isPlayingNotifier.value = false;
+        playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
       },
     );
 
@@ -165,22 +191,18 @@ class MutunAudioService {
     if (mode == MutunRepeatMode.singleParagraph) {
       _player.seek(Duration.zero);
       _player.play();
-    } else if (mode == MutunRepeatMode.entireMatn) {
-      final currentPara = activeParagraphNotifier.value ?? 1;
-      if (currentPara < _totalParagraphs) {
-        nextParagraph();
-      } else {
-        seekToParagraph(1);
-      }
     } else {
       final currentPara = activeParagraphNotifier.value ?? 1;
       if (currentPara < _totalParagraphs) {
         nextParagraph();
+      } else if (mode == MutunRepeatMode.entireMatn) {
+        seekToParagraph(1);
       } else {
         stop();
       }
     }
   }
+
 
   void setSelectedReciter(MutunReciter reciter) {
     if (_selectedReciter.id != reciter.id) {
@@ -208,17 +230,13 @@ class MutunAudioService {
   }
 
   void toggleRepeatMode() {
-    switch (repeatModeNotifier.value) {
-      case MutunRepeatMode.none:
-        repeatModeNotifier.value = MutunRepeatMode.singleParagraph;
-        break;
-      case MutunRepeatMode.singleParagraph:
-        repeatModeNotifier.value = MutunRepeatMode.entireMatn;
-        break;
-      case MutunRepeatMode.entireMatn:
-        repeatModeNotifier.value = MutunRepeatMode.none;
-        break;
-    }
+    const modes = [
+      MutunRepeatMode.none,
+      MutunRepeatMode.singleParagraph,
+      MutunRepeatMode.entireMatn,
+    ];
+    final idx = modes.indexOf(repeatModeNotifier.value);
+    repeatModeNotifier.value = modes[(idx + 1) % modes.length];
   }
 
   Future<void> setSpeed(double speed) async {
@@ -227,21 +245,12 @@ class MutunAudioService {
   }
 
   void cycleSpeed() {
-    final current = speedNotifier.value;
-    double next = 1.0;
-    if (current == 0.75) {
-      next = 1.0;
-    } else if (current == 1.0) {
-      next = 1.25;
-    } else if (current == 1.25) {
-      next = 1.5;
-    } else if (current == 1.5) {
-      next = 2.0;
-    } else {
-      next = 0.75;
-    }
+    const speeds = [0.75, 1.0, 1.25, 1.5, 2.0];
+    final idx = speeds.indexOf(speedNotifier.value);
+    final next = speeds[(idx + 1) % speeds.length];
     setSpeed(next);
   }
+
 
   Future<void> playMatnAudio({
     required String bookId,
@@ -253,6 +262,8 @@ class MutunAudioService {
   }) async {
     if (audioUrl.isEmpty) {
       isLoadingNotifier.value = false;
+      isPlayingNotifier.value = false;
+      playbackErrorNotifier.value = 'لا يتوفر تسجيل صوتي لهذا المتن';
       return;
     }
 
@@ -269,15 +280,17 @@ class MutunAudioService {
     final entry = MutunAudioCatalog.getEntry(bookId);
     final mediaTitle = entry?.title ?? 'متن طالب العلم';
 
-    // Cleanly stop any existing stream to prevent player deadlock
+    // Stop and reset previous playback cleanly
     try {
       await _player.stop();
-    } catch (_) {}
+    } catch (_) {
+      await _recreatePlayer();
+    }
 
     bool loaded = false;
     Duration? loadedDuration;
 
-    // Primary Attempt: setAudioSource with background MediaItem
+    // Primary Attempt: setAudioSource with background MediaItem and 8s timeout
     try {
       final mediaItem = MediaItem(
         id: bookId,
@@ -288,24 +301,18 @@ class MutunAudioService {
         displaySubtitle: _selectedReciter.name,
         displayDescription: 'متون طالب العلم - تحقيق الشيخ د. عبدالمحسن القاسم',
       );
-      final audioSource = AudioSource.uri(
-        Uri.parse(audioUrl),
-        tag: mediaItem,
-      );
-      loadedDuration = await _player.setAudioSource(
-        audioSource,
-        initialPosition: initialPosition,
-      );
+      final audioSource = AudioSource.uri(Uri.parse(audioUrl), tag: mediaItem);
+      loadedDuration = await _player
+          .setAudioSource(audioSource, initialPosition: initialPosition)
+          .timeout(AppMotion.networkRetry);
       loaded = true;
     } catch (sourceErr) {
       debugPrint('AudioSource.uri failed ($audioUrl): $sourceErr, trying direct setUrl...');
-      // Direct setUrl fallback: Bypasses JustAudioBackground/MediaItem metadata serialization
       try {
         await _player.stop();
-        loadedDuration = await _player.setUrl(
-          audioUrl,
-          initialPosition: initialPosition,
-        );
+        loadedDuration = await _player
+            .setUrl(audioUrl, initialPosition: initialPosition)
+            .timeout(AppMotion.networkRetry);
         loaded = true;
       } catch (urlErr) {
         debugPrint('Direct setUrl failed ($audioUrl): $urlErr');
@@ -362,6 +369,7 @@ class MutunAudioService {
           MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
       if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != audioUrl) {
         debugPrint('Retrying with backup audio stream ($fallbackUrl)...');
+        await _recreatePlayer();
         await playMatnAudio(
           bookId: bookId,
           audioUrl: fallbackUrl,
@@ -430,9 +438,15 @@ class MutunAudioService {
       return;
     }
 
-    await _player.seek(_audioPosition(targetMs));
-    if (!_player.playing) {
-      await _player.play();
+    try {
+      await _player.seek(_audioPosition(targetMs));
+      if (!_player.playing) {
+        await _player.play();
+      }
+    } catch (_) {
+      if (targetBookId != null) {
+        await togglePlayPause(bookId: targetBookId);
+      }
     }
   }
 
@@ -445,82 +459,62 @@ class MutunAudioService {
   }
 
   Future<void> seekForward5s() async {
-    final current = _player.position;
     final dur = durationNotifier.value;
-    final target = current + AppMotion.seekStep;
+    final target = _player.position + AppMotion.seekStep;
     final clamped = dur > Duration.zero && target > dur ? dur : target;
     await _player.seek(clamped);
     _updateActiveParagraph(clamped);
   }
 
   Future<void> seekBackward5s() async {
-    final current = _player.position;
-    final target = current - AppMotion.seekStep;
+    final target = _player.position - AppMotion.seekStep;
     final clamped = target < Duration.zero ? Duration.zero : target;
     await _player.seek(clamped);
     _updateActiveParagraph(clamped);
   }
 
-  void clearActiveParagraph() {
-    activeParagraphNotifier.value = null;
-  }
+  void clearActiveParagraph() => activeParagraphNotifier.value = null;
 
   void nextParagraph() {
     final current = activeParagraphNotifier.value ?? 1;
-    if (current < _totalParagraphs) {
-      seekToParagraph(current + 1);
-    }
+    if (current < _totalParagraphs) seekToParagraph(current + 1);
   }
 
   void previousParagraph() {
     final current = activeParagraphNotifier.value ?? 1;
-    if (current > 1) {
-      seekToParagraph(current - 1);
-    }
+    if (current > 1) seekToParagraph(current - 1);
   }
+
 
   Future<void> togglePlayPause({String? bookId}) async {
     try {
       _ensurePlayerActive();
       final targetBookId = bookId ?? activeBookIdNotifier.value;
 
-      // Check if target reciter is available for this book, otherwise pick the first available
-      if (targetBookId != null) {
-        final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
-        final hasSelected =
-            availableReciters.any((r) => r.id == _selectedReciter.id);
-        if (!hasSelected && availableReciters.isNotEmpty) {
-          _selectedReciter = availableReciters.first;
-          selectedReciterNotifier.value = _selectedReciter;
-        }
+      if (targetBookId == null) {
+        isLoadingNotifier.value = false;
+        isPlayingNotifier.value = false;
+        return;
       }
 
+      final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
+      final hasSelected = availableReciters.any((r) => r.id == _selectedReciter.id);
+      if (!hasSelected && availableReciters.isNotEmpty) {
+        _selectedReciter = availableReciters.first;
+        selectedReciterNotifier.value = _selectedReciter;
+      }
+
+      final isDifferentBook = activeBookIdNotifier.value != targetBookId;
       final isStaleOrIdle = _player.processingState == ProcessingState.idle ||
           _player.processingState == ProcessingState.completed ||
           _player.audioSource == null;
 
-      // If starting a new book, first-time playback, or player in idle/completed state
-      if (targetBookId != null &&
-          (_currentAudioUrl == null ||
-              activeBookIdNotifier.value != targetBookId ||
-              isStaleOrIdle)) {
-        final audioUrl = MutunAudioCatalog.getAudioUrl(
-              targetBookId,
-              reciterId: _selectedReciter.id,
-            ) ??
-            MutunAudioCatalog.getAudioUrl(
-              targetBookId,
-              reciterId: 'sini',
-            ) ??
-            '';
-        final totalParas = MutunAudioCatalog.getTotalParagraphs(
-          targetBookId,
-          reciterId: _selectedReciter.id,
-        );
-
-        final isSameBook = activeBookIdNotifier.value == targetBookId;
-        final resumePara = isSameBook ? (activeParagraphNotifier.value ?? 1) : 1;
-        final resumePos = isSameBook && positionNotifier.value > Duration.zero
+      if (isDifferentBook || isStaleOrIdle || _currentAudioUrl == null) {
+        final audioUrl = MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ??
+            MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: 'sini') ?? '';
+        final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id);
+        final resumePara = !isDifferentBook ? (activeParagraphNotifier.value ?? 1) : 1;
+        final resumePos = !isDifferentBook && positionNotifier.value > Duration.zero
             ? positionNotifier.value
             : null;
 
@@ -537,9 +531,31 @@ class MutunAudioService {
       if (_player.playing) {
         await _player.pause();
         isPlayingNotifier.value = false;
-      } else {
+        isLoadingNotifier.value = false;
+        return;
+      }
+
+      if (_player.processingState == ProcessingState.completed) {
+        await _player.seek(Duration.zero);
+      }
+
+      try {
         await _player.play();
         isPlayingNotifier.value = true;
+        isLoadingNotifier.value = false;
+      } catch (resumeErr) {
+        debugPrint('Resume failed ($resumeErr), re-streaming...');
+        await _recreatePlayer();
+        final audioUrl = _currentAudioUrl ??
+            MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ?? '';
+        final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id);
+        await playMatnAudio(
+          bookId: targetBookId,
+          audioUrl: audioUrl,
+          paragraphIndex: activeParagraphNotifier.value ?? 1,
+          totalParagraphs: totalParas,
+          initialPosition: positionNotifier.value > Duration.zero ? positionNotifier.value : null,
+        );
       }
     } catch (e) {
       debugPrint('togglePlayPause error: $e');
@@ -577,7 +593,5 @@ class MutunAudioService {
     isLoadingNotifier.value = false;
   }
 
-  void dispose() {
-    pause();
-  }
+  void dispose() => pause();
 }

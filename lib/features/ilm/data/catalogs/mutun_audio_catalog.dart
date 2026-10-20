@@ -1,3 +1,9 @@
+enum MutunRepeatMode {
+  none,
+  singleParagraph,
+  entireMatn,
+}
+
 /// Scholarly audio recitations catalog linking syllabus and classical mutun
 /// to verified high-quality streaming audio sources across prominent reciters.
 class MutunReciter {
@@ -11,6 +17,7 @@ class MutunReciter {
     required this.description,
   });
 }
+
 
 class MutunReciterDefaults {
   static const sini = MutunReciter(

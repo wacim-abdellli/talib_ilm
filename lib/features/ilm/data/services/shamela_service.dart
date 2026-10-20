@@ -389,9 +389,11 @@ class ShamelaService {
         )
         .replaceAll(RegExp(r'\([ \t]*\)'), '')
         .replaceAll(RegExp(r'\[[ \t]*\]'), '')
+        .replaceAll(RegExp(r'(?:^|\n)\s*a\s*(?:\n|\b)', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
         .trim();
   }
+
 
   /// Fetch or load Table of Contents (الفهرس)
   static Future<List<ShamelaChapter>> fetchTableOfContents(

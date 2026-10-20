@@ -6,6 +6,7 @@ import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import 'mutn_memorization_view.dart';
 import 'mutn_paragraphs_view.dart';
+import 'shamela_text_highlighter.dart';
 
 /// Single page content viewer for Shamela scholarly reader.
 /// Each page owns its dedicated ScrollController to ensure isolated scrollbars
@@ -240,15 +241,20 @@ class _ShamelaPageContentState extends State<ShamelaPageContent> {
                               start: AppSpace.sm,
                               end: AppSpace.sm,
                             ),
-                            child: Text(
-                              cleanHamesh,
-                              style: textTheme.bodySmall.copyWith(
-                                color: palette.textMuted,
-                                height: 1.6,
+                            child: Text.rich(
+                              ShamelaTextHighlighter.buildSpans(
+                                text: cleanHamesh,
+                                palette: palette,
+                                textTheme: textTheme,
                                 fontFamily: widget.fontFamily,
+                                fontSizeDelta: widget.fontSizeDelta - 2.5,
+                                lineHeight: 1.65,
+                                accentColor: widget.accentColor,
+                                surface: widget.surface,
                               ),
                               textAlign: TextAlign.start,
                             ),
+
                           ),
                           crossFadeState: _isHameshExpanded
                               ? CrossFadeState.showSecond
