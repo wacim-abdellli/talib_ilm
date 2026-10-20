@@ -235,4 +235,83 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('PrayerHomeScreenWidget renders Compact 2x2, Tall 4x4, and Ribbon 4x1 layouts cleanly', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 11, 45); // 15 mins before Dhuhr
+    final prayerDay = PrayerTimesDay(
+      city: 'تونس العاصمة',
+      date: DateTime(2026, 10, 20),
+      prayers: {
+        AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+        AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+        AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+        AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+        AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+      },
+      nextPrayer: AppStrings.prayerDhuhr,
+      nextPrayerTime: DateTime(2026, 10, 20, 12, 3),
+    );
+
+    // A. Compact 2x2 Mode (width: 180, height: 180)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: PrayerHomeScreenWidget(
+              prayerDay: prayerDay,
+              referenceTime: fixedNow,
+              width: 180,
+              height: 180,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('صلاة الظهر'), findsOneWidget);
+    expect(find.text('بقي على الأذان'), findsOneWidget);
+    expect(find.textContaining('التالي:'), findsOneWidget);
+
+    // B. Tall 4x4 Mode (width: 380, height: 350)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: PrayerHomeScreenWidget(
+              prayerDay: prayerDay,
+              referenceTime: fixedNow,
+              width: 380,
+              height: 350,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('صلاة الظهر'), findsOneWidget);
+    expect(find.text('تونس العاصمة'), findsOneWidget);
+    expect(find.text('أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ'), findsOneWidget);
+
+    // C. Ribbon 4x1 Mode (width: 380, height: 90)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: PrayerHomeScreenWidget(
+              prayerDay: prayerDay,
+              referenceTime: fixedNow,
+              width: 380,
+              height: 90,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('صلاة الظهر'), findsOneWidget);
+    expect(find.text('بقي على الأذان'), findsOneWidget);
+  });
 }

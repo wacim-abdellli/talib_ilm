@@ -28,6 +28,9 @@ class EvaluatedPrayerWidgetState {
   final String countdownFormatted;
   final Set<String> completedPrayerNames;
 
+  final String? nextPrayerName;
+  final DateTime? nextPrayerTime;
+
   const EvaluatedPrayerWidgetState({
     required this.activePrayerName,
     required this.displayTitle,
@@ -41,6 +44,8 @@ class EvaluatedPrayerWidgetState {
     required this.prayerIcon,
     required this.countdownFormatted,
     required this.completedPrayerNames,
+    this.nextPrayerName,
+    this.nextPrayerTime,
   });
 
   bool get isInPrayerTime =>
@@ -64,6 +69,17 @@ class PrayerWidgetStateEvaluator {
 
     final isFriday = now.weekday == DateTime.friday;
 
+    final fajrToday = all[AppStrings.prayerFajr] ??
+        DateTime(now.year, now.month, now.day, 5, 0);
+    final fajrTomorrow = fajrToday.add(const Duration(days: 1));
+
+    (String, DateTime) resolveUpcoming(int currentIndex) {
+      if (currentIndex + 1 < entries.length) {
+        return (entries[currentIndex + 1].key, entries[currentIndex + 1].value);
+      }
+      return (AppStrings.prayerFajr, fajrTomorrow);
+    }
+
     // 1. Check if any prayer is currently within active Adhan, Iqama, or Salah window
     for (int i = entries.length - 1; i >= 0; i--) {
       final entry = entries[i];
@@ -85,6 +101,7 @@ class PrayerWidgetStateEvaluator {
         final completed = entries.take(i).map((e) => e.key).toSet();
         final displayTitle = isJumua ? 'صلاة الجمعة' : 'صلاة $pName';
         final prayerIcon = isJumua ? Icons.mosque_rounded : iconForPrayer(pName);
+        final upcoming = resolveUpcoming(i);
 
         // Phase A: Right at Adhan (first 2 minutes)
         if (elapsed < const Duration(minutes: 2)) {
@@ -101,6 +118,8 @@ class PrayerWidgetStateEvaluator {
             prayerIcon: prayerIcon,
             countdownFormatted: 'الأذان الآن',
             completedPrayerNames: completed,
+            nextPrayerName: upcoming.$1,
+            nextPrayerTime: upcoming.$2,
           );
         }
 
@@ -121,6 +140,8 @@ class PrayerWidgetStateEvaluator {
             prayerIcon: prayerIcon,
             countdownFormatted: formatDuration(remainingToIqama),
             completedPrayerNames: completed,
+            nextPrayerName: upcoming.$1,
+            nextPrayerTime: upcoming.$2,
           );
         }
 
@@ -139,6 +160,8 @@ class PrayerWidgetStateEvaluator {
             prayerIcon: prayerIcon,
             countdownFormatted: 'أداء الفريضة',
             completedPrayerNames: completed,
+            nextPrayerName: upcoming.$1,
+            nextPrayerTime: upcoming.$2,
           );
         }
 
@@ -149,6 +172,7 @@ class PrayerWidgetStateEvaluator {
             final nextEntry = entries[nextIndex];
             final diff = nextEntry.value.difference(now);
             final nextIsJumua = isFriday && nextEntry.key == AppStrings.prayerDhuhr;
+            final nextUpcoming = resolveUpcoming(nextIndex);
             return EvaluatedPrayerWidgetState(
               activePrayerName: nextEntry.key,
               displayTitle: nextIsJumua ? 'صلاة الجمعة' : 'صلاة ${nextEntry.key}',
@@ -162,6 +186,8 @@ class PrayerWidgetStateEvaluator {
               prayerIcon: nextIsJumua ? Icons.mosque_rounded : iconForPrayer(nextEntry.key),
               countdownFormatted: formatDuration(diff),
               completedPrayerNames: entries.take(i + 1).map((e) => e.key).toSet(),
+              nextPrayerName: nextUpcoming.$1,
+              nextPrayerTime: nextUpcoming.$2,
             );
           }
         }
@@ -175,6 +201,7 @@ class PrayerWidgetStateEvaluator {
         final diff = entry.value.difference(now);
         final completed = entries.take(i).map((e) => e.key).toSet();
         final isJumua = isFriday && entry.key == AppStrings.prayerDhuhr;
+        final upcoming = resolveUpcoming(i);
         return EvaluatedPrayerWidgetState(
           activePrayerName: entry.key,
           displayTitle: isJumua ? 'صلاة الجمعة' : 'صلاة ${entry.key}',
@@ -188,14 +215,13 @@ class PrayerWidgetStateEvaluator {
           prayerIcon: isJumua ? Icons.mosque_rounded : iconForPrayer(entry.key),
           countdownFormatted: formatDuration(diff),
           completedPrayerNames: completed,
+          nextPrayerName: upcoming.$1,
+          nextPrayerTime: upcoming.$2,
         );
       }
     }
 
     // 3. Tomorrow's Fajr (All today's prayers completed)
-    final fajrToday = all[AppStrings.prayerFajr] ??
-        DateTime(now.year, now.month, now.day, 5, 0);
-    final fajrTomorrow = fajrToday.add(const Duration(days: 1));
     final diff = fajrTomorrow.difference(now);
     final completed = entries.map((e) => e.key).toSet();
 
@@ -216,19 +242,21 @@ class PrayerWidgetStateEvaluator {
       prayerIcon: iconForPrayer(AppStrings.prayerFajr),
       countdownFormatted: formatDuration(diff),
       completedPrayerNames: completed,
+      nextPrayerName: entries.length > 1 ? entries[1].key : AppStrings.prayerDhuhr,
+      nextPrayerTime: entries.length > 1 ? entries[1].value.add(const Duration(days: 1)) : null,
     );
   }
 
   static String formatDuration(Duration d) {
-    if (d.isNegative) return '00 : 00';
+    if (d.isNegative) return '00:00';
     final hours = d.inHours;
     final minutes = d.inMinutes % 60;
     final seconds = d.inSeconds % 60;
 
     if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')} : ${minutes.toString().padLeft(2, '0')}';
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     } else {
-      return '${minutes.toString().padLeft(2, '0')} : ${seconds.toString().padLeft(2, '0')}';
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
   }
 }

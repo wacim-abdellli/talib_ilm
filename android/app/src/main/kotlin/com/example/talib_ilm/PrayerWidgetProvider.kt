@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 
 import android.os.Bundle
 
@@ -39,6 +40,12 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                     .putInt("widget_width", minWidth)
                     .putInt("widget_height", minHeight)
                     .apply()
+
+                val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
+                    context,
+                    android.net.Uri.parse("talibilm://resize?minWidth=$minWidth&minHeight=$minHeight")
+                )
+                context.sendBroadcast(backgroundIntent)
             } catch (_: Exception) {}
         }
         updateAppWidget(context, appWidgetManager, appWidgetId)

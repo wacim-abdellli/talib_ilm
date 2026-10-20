@@ -7,6 +7,22 @@ import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dar
 import 'prayer_time_service.dart';
 import 'theme_service.dart';
 
+/// Top-level background callback invoked when the Android widget is resized or interacted with.
+@pragma('vm:entry-point')
+Future<void> prayerWidgetBackgroundCallback(Uri? uri) async {
+  if (uri?.host == 'resize') {
+    final wStr = uri?.queryParameters['minWidth'];
+    final hStr = uri?.queryParameters['minHeight'];
+    final w = int.tryParse(wStr ?? '');
+    final h = int.tryParse(hStr ?? '');
+    if (w != null && h != null) {
+      await HomeWidget.saveWidgetData<int>('widget_width', w);
+      await HomeWidget.saveWidgetData<int>('widget_height', h);
+      await HomeWidgetService.updatePrayerWidget();
+    }
+  }
+}
+
 /// HomeWidgetService - Manages synchronization and off-screen rendering
 /// of the Android Phone Launcher Home Screen AppWidget.
 class HomeWidgetService {
@@ -15,6 +31,13 @@ class HomeWidgetService {
 
   /// Standard 4x2 Home Screen Android widget dimensions
   static const Size widgetLogicalSize = Size(380, 145);
+
+  /// Registers background callback for interactive widget resizing
+  static Future<void> initBackground() async {
+    try {
+      await HomeWidget.registerInteractivityCallback(prayerWidgetBackgroundCallback);
+    } catch (_) {}
+  }
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
@@ -35,10 +58,12 @@ class HomeWidgetService {
       int targetW = 380;
       int targetH = 145;
       try {
-        final savedW = await HomeWidget.getWidgetData<int>('widget_width');
-        final savedH = await HomeWidget.getWidgetData<int>('widget_height');
-        if (savedW != null && savedW >= 200) targetW = savedW.clamp(200, 600);
-        if (savedH != null && savedH >= 80) targetH = savedH.clamp(80, 400);
+        final rawW = await HomeWidget.getWidgetData<dynamic>('widget_width');
+        final rawH = await HomeWidget.getWidgetData<dynamic>('widget_height');
+        final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
+        final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
+        if (savedW != null && savedW >= 130) targetW = savedW.clamp(130, 650);
+        if (savedH != null && savedH >= 65) targetH = savedH.clamp(65, 550);
       } catch (_) {}
 
       final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
