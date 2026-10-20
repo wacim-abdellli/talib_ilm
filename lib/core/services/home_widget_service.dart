@@ -5,7 +5,6 @@ import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
 import 'prayer_time_service.dart';
-import 'theme_service.dart';
 
 /// Top-level background callback invoked when the Android widget is resized or interacted with.
 @pragma('vm:entry-point')
@@ -29,8 +28,8 @@ class HomeWidgetService {
   static const String androidWidgetName = 'PrayerWidgetProvider';
   static const String widgetImageKey = 'prayer_widget_image';
 
-  /// Standard 4x2 Home Screen Android widget dimensions
-  static const Size widgetLogicalSize = Size(380, 145);
+  /// Standard 4x1 Home Screen Android widget dimensions (Salaat First style)
+  static const Size widgetLogicalSize = Size(380, 95);
 
   /// Registers background callback for interactive widget resizing
   static Future<void> initBackground() async {
@@ -49,21 +48,19 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
 
-      // Resolve theme mode cleanly via AppTheme token provider
-      final themeService = ThemeService();
-      await themeService.loadTheme();
-      final themeData = AppTheme.resolveTheme(themeService.themeMode);
+      // Home screen widgets are placed on user phone wallpapers and require AMOLED-crisp dark styling
+      final themeData = AppTheme.dark();
 
       // Dynamically adapt to user's launcher resize dimensions if available
       int targetW = 380;
-      int targetH = 145;
+      int targetH = 95;
       try {
         final rawW = await HomeWidget.getWidgetData<dynamic>('widget_width');
         final rawH = await HomeWidget.getWidgetData<dynamic>('widget_height');
         final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
         final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
-        if (savedW != null && savedW >= 130) targetW = savedW.clamp(130, 650);
-        if (savedH != null && savedH >= 65) targetH = savedH.clamp(65, 550);
+        if (savedW != null && savedW >= 160) targetW = savedW.clamp(160, 650);
+        if (savedH != null && savedH >= 60) targetH = savedH.clamp(60, 450);
       } catch (_) {}
 
       final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());

@@ -10,7 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:scaleType="fitXY"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
         android:contentDescription="@string/prayer_widget_name" />
 
 </FrameLayout>

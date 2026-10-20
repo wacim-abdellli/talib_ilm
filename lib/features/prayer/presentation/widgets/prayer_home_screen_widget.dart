@@ -77,8 +77,8 @@ class PrayerHomeScreenWidget extends StatelessWidget {
 
     // Size-adaptive layout modes
     final isCompact = width < 275;
-    final isTall = width >= 275 && height >= 220;
-    final isRibbon = width >= 275 && height < 115;
+    final isTall = width >= 275 && height >= 260;
+    final isRibbon = width >= 275 && height < 70;
 
     Widget content;
     if (isTall) {
@@ -120,6 +120,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         bannerBgColor: bannerBgColor,
         bannerBorderColor: bannerBorderColor,
         bannerTextColor: bannerTextColor,
+        referenceTime: now,
       );
     }
 

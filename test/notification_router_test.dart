@@ -169,7 +169,6 @@ void main() {
 
       expect(find.byType(TasbeehIstighfarPage), findsOneWidget);
     });
-
     testWidgets('Tapping surah_18 notification opens MushafPageViewer for Kahf',
         (tester) async {
       await tester.pumpWidget(
