@@ -112,5 +112,68 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.textContaining('فصل في سنن الوضوء'), findsOneWidget);
     });
+
+    testWidgets('Preserves unbroken words containing sub-strings (عقلتا, عـقلـتـا, ثقيل, نقلت)', (tester) async {
+      const sampleVerse = 'أَبَا بكرٍ دعوتكَ لَو أجبتا ... إِلَىٰ مَا فِيهِ حظك إِن عقلتا';
+      const sampleVerseTatweel = 'إِن عـقلـتـا وثقيل ونقلت وعقلنا';
+
+      final palette = AppPalette.light;
+      final textTheme = AppTextTheme.fromPalette(palette);
+
+      final span1 = ShamelaTextHighlighter.buildSpans(
+        text: sampleVerse,
+        palette: palette,
+        textTheme: textTheme,
+        fontFamily: 'Amiri',
+        fontSizeDelta: 0.0,
+      );
+
+      final span2 = ShamelaTextHighlighter.buildSpans(
+        text: sampleVerseTatweel,
+        palette: palette,
+        textTheme: textTheme,
+        fontFamily: 'Amiri',
+        fontSizeDelta: 0.0,
+      );
+
+      // Verify no span erroneously isolated "قلت" from "عقلتا"
+      bool hasIsolatedQultu(InlineSpan s) {
+        if (s is TextSpan) {
+          if (s.text == 'قلت' || s.text == 'قُلْتُ') return true;
+          if (s.children != null) {
+            return s.children!.any(hasIsolatedQultu);
+          }
+        }
+        return false;
+      }
+
+      expect(hasIsolatedQultu(span1), isFalse);
+      expect(hasIsolatedQultu(span2), isFalse);
+
+      // Verify the entire word remains intact
+      expect(span1.toPlainText(), contains('عقلتا'));
+      expect(span2.toPlainText(), contains('عـقلـتـا'));
+      expect(span2.toPlainText(), contains('وثقيل'));
+      expect(span2.toPlainText(), contains('ونقلت'));
+      expect(span2.toPlainText(), contains('وعقلنا'));
+    });
+
+    testWidgets('Renders poetic breaks (... or …) with elegant Islamic star marker ✤', (tester) async {
+      const sampleVerse = 'أَبَا بكرٍ دعوتكَ لَو أجبتا ... إِلَىٰ مَا فِيهِ حظك إِن عقلتا';
+
+      final palette = AppPalette.light;
+      final textTheme = AppTextTheme.fromPalette(palette);
+
+      final span = ShamelaTextHighlighter.buildSpans(
+        text: sampleVerse,
+        palette: palette,
+        textTheme: textTheme,
+        fontFamily: 'Amiri',
+        fontSizeDelta: 0.0,
+      );
+
+      expect(span.toPlainText(), contains(' ✤ '));
+    });
   });
 }
+
