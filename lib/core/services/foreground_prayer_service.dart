@@ -188,6 +188,9 @@ class ForegroundPrayerService {
           }
         }
       }
+
+      // Periodically refresh the Home Screen Widget so time and prayer states stay active
+      unawaited(HomeWidgetService.updatePrayerWidget(prayerDay: day, referenceTime: now));
     } catch (e) {
       debugPrint('ForegroundPrayerService._check error: $e');
     }

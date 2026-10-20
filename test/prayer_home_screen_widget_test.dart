@@ -134,4 +134,105 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('PrayerHomeScreenWidget renders atAdhan, betweenAdhanAndIqama, inSalah, and Friday states', (tester) async {
+    final fridayDate = DateTime(2026, 10, 23); // Friday
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 23, 5, 0),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 23, 12, 15),
+      AppStrings.prayerAsr: DateTime(2026, 10, 23, 15, 30),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 23, 17, 45),
+      AppStrings.prayerIsha: DateTime(2026, 10, 23, 19, 15),
+    };
+
+    final fridayDay = PrayerTimesDay(
+      city: 'الجزائر العاصمة',
+      date: fridayDate,
+      prayers: prayers,
+      nextPrayer: AppStrings.prayerDhuhr,
+      nextPrayerTime: prayers[AppStrings.prayerDhuhr]!,
+    );
+
+    // 1. Test Friday Dhuhr title
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: PrayerHomeScreenWidget(
+            prayerDay: fridayDay,
+            referenceTime: DateTime(2026, 10, 23, 11, 30),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('صلاة الجمعة'), findsOneWidget);
+    expect(find.text('بقي على الأذان'), findsOneWidget);
+
+    // 2. Test atAdhan phase (12:15:30)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: PrayerHomeScreenWidget(
+            prayerDay: fridayDay,
+            referenceTime: DateTime(2026, 10, 23, 12, 15, 30),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('حان الآن وقت الأذان'), findsOneWidget);
+    expect(find.text('الأذان الآن'), findsOneWidget);
+
+    // 3. Test betweenAdhanAndIqama phase (12:25:00 - Friday iqama is 25 min -> 12:40)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: PrayerHomeScreenWidget(
+            prayerDay: fridayDay,
+            referenceTime: DateTime(2026, 10, 23, 12, 25),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('بقي على الإقامة'), findsOneWidget);
+    expect(find.text('الإقامة 12:40 م'), findsOneWidget);
+
+    // 4. Test inSalah phase (12:45:00 - during congregational salah)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: PrayerHomeScreenWidget(
+            prayerDay: fridayDay,
+            referenceTime: DateTime(2026, 10, 23, 12, 45),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('تقام الصلاة الآن'), findsOneWidget);
+    expect(find.text('أداء الفريضة'), findsOneWidget);
+
+    // 5. Test resized large dimensions (520x220)
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 520,
+              height: 220,
+              child: PrayerHomeScreenWidget(
+                prayerDay: fridayDay,
+                referenceTime: DateTime(2026, 10, 23, 12, 45),
+                width: 520,
+                height: 220,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -14,7 +14,7 @@ class HomeWidgetService {
   static const String widgetImageKey = 'prayer_widget_image';
 
   /// Standard 4x2 Home Screen Android widget dimensions
-  static const Size widgetLogicalSize = Size(380, 180);
+  static const Size widgetLogicalSize = Size(380, 145);
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
@@ -31,12 +31,23 @@ class HomeWidgetService {
       await themeService.loadTheme();
       final themeData = AppTheme.resolveTheme(themeService.themeMode);
 
+      // Dynamically adapt to user's launcher resize dimensions if available
+      int targetW = 380;
+      int targetH = 145;
+      try {
+        final savedW = await HomeWidget.getWidgetData<int>('widget_width');
+        final savedH = await HomeWidget.getWidgetData<int>('widget_height');
+        if (savedW != null && savedW >= 200) targetW = savedW.clamp(200, 600);
+        if (savedH != null && savedH >= 80) targetH = savedH.clamp(80, 400);
+      } catch (_) {}
+
+      final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
 
       // Render the widget to PNG in application storage with crisp pixel ratio
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
-            size: widgetLogicalSize,
+          data: MediaQueryData(
+            size: resolvedSize,
             devicePixelRatio: 3.0,
             textScaler: TextScaler.noScaling,
           ),
@@ -47,14 +58,14 @@ class HomeWidgetService {
               child: PrayerHomeScreenWidget(
                 prayerDay: day,
                 referenceTime: now,
-                width: widgetLogicalSize.width,
-                height: widgetLogicalSize.height,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
               ),
             ),
           ),
         ),
         key: widgetImageKey,
-        logicalSize: widgetLogicalSize,
+        logicalSize: resolvedSize,
         pixelRatio: 3.0,
       );
 

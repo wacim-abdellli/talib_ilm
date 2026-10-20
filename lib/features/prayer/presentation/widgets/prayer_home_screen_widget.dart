@@ -4,13 +4,12 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../home/presentation/widgets/home_hero_timeline_station.dart';
 import '../../data/models/prayer_models.dart';
+import 'prayer_widget_state_evaluator.dart';
 
-/// PrayerHomeScreenWidget - Exact High-Fidelity Representation of the
-/// Talib Ilm Prayer Card / Widget (matching Pic 2).
-///
-/// Designed to be rendered:
-/// 1) On the Android Phone Launcher Home Screen via `home_widget`
-/// 2) Or directly inside the application as a standalone hero card.
+export 'prayer_widget_state_evaluator.dart';
+
+/// PrayerHomeScreenWidget - High-Fidelity Representation of the
+/// Talib Ilm Prayer Card / Widget for Android Home Screen and Hero Card.
 class PrayerHomeScreenWidget extends StatelessWidget {
   final PrayerTimesDay? prayerDay;
   final DateTime? referenceTime;
@@ -27,7 +26,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     this.nextPrayerName,
     this.nextPrayerTime,
     this.width = 380,
-    this.height = 180,
+    this.height = 160,
   });
 
   @override
@@ -37,11 +36,42 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     final now = referenceTime ?? DateTime.now();
 
     final all = prayerDay?.prayers ?? _buildFallbackPrayers(now);
-    final eval = _evaluatePrayer(now, all);
+    final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
 
     final prayerColor = palette.prayer(eval.activePrayerName);
-    final nextTimeDisplay = formatPrayerTime12h(eval.nextPrayerTime);
-    final contentWidth = width - (AppSpace.md * 2);
+
+    // Dynamic banner styling adapting to the liturgical prayer phase
+    final Color bannerBgColor;
+    final Color bannerBorderColor;
+    final Color bannerTextColor;
+
+    switch (eval.phase) {
+      case PrayerWidgetPhase.atAdhan:
+        bannerBgColor = palette.goldSoft;
+        bannerBorderColor = palette.gold.withValues(alpha: 0.5);
+        bannerTextColor = palette.gold;
+        break;
+      case PrayerWidgetPhase.betweenAdhanAndIqama:
+        bannerBgColor = prayerColor.withValues(alpha: 0.16);
+        bannerBorderColor = prayerColor.withValues(alpha: 0.45);
+        bannerTextColor = prayerColor;
+        break;
+      case PrayerWidgetPhase.inSalah:
+        bannerBgColor = palette.success.withValues(alpha: 0.14);
+        bannerBorderColor = palette.success.withValues(alpha: 0.45);
+        bannerTextColor = palette.success;
+        break;
+      case PrayerWidgetPhase.postSalah:
+        bannerBgColor = palette.surfaceMuted;
+        bannerBorderColor = palette.border;
+        bannerTextColor = palette.textMuted;
+        break;
+      case PrayerWidgetPhase.beforeAdhan:
+        bannerBgColor = prayerColor.withValues(alpha: 0.10);
+        bannerBorderColor = prayerColor.withValues(alpha: 0.28);
+        bannerTextColor = prayerColor;
+        break;
+    }
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -52,7 +82,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           height: height,
           padding: const EdgeInsetsDirectional.symmetric(
             horizontal: AppSpace.md,
-            vertical: AppSpace.sm,
+            vertical: AppSpace.xs,
           ),
           decoration: BoxDecoration(
             color: palette.surfaceRaised,
@@ -66,211 +96,210 @@ class PrayerHomeScreenWidget extends StatelessWidget {
             fit: BoxFit.scaleDown,
             alignment: Alignment.center,
             child: SizedBox(
-              width: contentWidth,
+              width: width - (AppSpace.md * 2),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 1. Header Row: [Adhan Time Pill] on Start (Left), [Prayer Medallion + Name] on End (Right)
+                  // ── 1. Top Header Row: [Time Pill] Start, [Prayer Name + Medallion] End ──
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Next / Current Prayer Time Pill with Clock Icon
-                      Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.sm,
-                          vertical: AppSpace.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: palette.surfaceMuted,
-                          borderRadius: AppRadius.pillRadius,
-                          border: Border.all(
-                            color: prayerColor.withValues(alpha: 0.35),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.access_time_rounded,
-                              size: AppIcon.sm,
-                              color: prayerColor,
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            Text(
-                              nextTimeDisplay,
-                              style: textTheme.label.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: palette.text,
-                                fontFeatures: const [FontFeature.tabularFigures()],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: AppSpace.xs),
-
-                      // Prayer Title & Celestial Medallion (Right in RTL)
-                      Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'صلاة ${eval.activePrayerName}',
-                                style: textTheme.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: palette.text,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.sm),
-                            Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: prayerColor.withValues(alpha: 0.14),
-                                borderRadius: AppRadius.mdRadius,
-                                border: Border.all(
-                                  color: prayerColor.withValues(alpha: 0.35),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Icon(
-                                iconForPrayer(eval.activePrayerName),
-                                color: prayerColor,
-                                size: AppIcon.md,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: AppSpace.xs),
-
-                  // 2. Middle Row: Soft Sky Banner with Countdown Pill and Label
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Next / Current Prayer Time Pill with Contextual Icon
                   Container(
                     padding: const EdgeInsetsDirectional.symmetric(
                       horizontal: AppSpace.sm,
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: prayerColor.withValues(alpha: 0.10),
-                      borderRadius: AppRadius.smRadius,
-                      border: Border.all(
-                        color: prayerColor.withValues(alpha: 0.25),
-                        width: 1,
-                      ),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Digital Countdown Badge (White Pill Box)
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Container(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.sm,
-                                vertical: AppSpace.xxs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: palette.surfaceRaised,
-                                borderRadius: AppRadius.smRadius,
-                                border: Border.all(
-                                  color: prayerColor.withValues(alpha: 0.30),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                eval.countdownFormatted,
-                                style: textTheme.label.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: palette.text,
-                                  letterSpacing: 1.1,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: AppSpace.sm),
-
-                          // Label with Status Bullet
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: AppSpace.sm,
-                                height: AppSpace.sm,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: prayerColor,
-                                ),
-                              ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                eval.isInPrayerTime ? 'وقت الصلاة الآن' : 'بقي على الأذان',
-                                style: textTheme.caption.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: prayerColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpace.xs),
-
-                  // 3. Bottom Row: Warm Journey Strip of 5 Daily Prayers
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      vertical: AppSpace.xs,
-                      horizontal: AppSpace.xxs,
-                    ),
-                    decoration: BoxDecoration(
                       color: palette.surfaceMuted,
-                      borderRadius: AppRadius.mdRadius,
+                      borderRadius: AppRadius.pillRadius,
                       border: Border.all(
-                        color: palette.border,
-                        width: 1,
+                        color: prayerColor.withValues(alpha: 0.35),
+                        width: 1.2,
                       ),
                     ),
                     child: Row(
-                      children: AppStrings.prayerOrder.map((prayerName) {
-                        final isCurrent = eval.activePrayerName == prayerName;
-                        final prayerTime = all[prayerName];
-                        final isPast = eval.completedPrayerNames.contains(prayerName);
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          eval.timePillIcon,
+                          size: AppIcon.sm,
+                          color: prayerColor,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          eval.timePillLabel,
+                          style: textTheme.label.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: palette.text,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                        return _WidgetPrayerStation(
-                          prayerName: prayerName,
-                          prayerTime: prayerTime,
-                          isCurrent: isCurrent,
-                          isPast: isPast,
-                          isInPrayerTime: isCurrent && eval.isInPrayerTime,
-                        );
-                      }).toList(),
+                  const SizedBox(width: AppSpace.xs),
+
+                  // Prayer Title & Celestial Medallion (Right in RTL)
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            eval.displayTitle,
+                            style: textTheme.titleSmall.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: palette.text,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: prayerColor.withValues(alpha: 0.14),
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                              color: prayerColor.withValues(alpha: 0.35),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Icon(
+                            eval.prayerIcon,
+                            color: prayerColor,
+                            size: AppIcon.sm,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
+
+              const SizedBox(height: AppSpace.xs),
+
+              // ── 2. Middle Row: Status Banner with Countdown Pill and Label ──
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: AppSpace.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: bannerBgColor,
+                  borderRadius: AppRadius.smRadius,
+                  border: Border.all(
+                    color: bannerBorderColor,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Digital Countdown Badge (Pill Box) on Left
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xxs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: palette.surfaceRaised,
+                          borderRadius: AppRadius.smRadius,
+                          border: Border.all(
+                            color: bannerBorderColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          eval.countdownFormatted,
+                          style: textTheme.label.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: palette.text,
+                            letterSpacing: 1.1,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: AppSpace.sm),
+
+                    // Label with Status Icon on Right
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            eval.statusIcon,
+                            size: AppIcon.xs,
+                            color: bannerTextColor,
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Flexible(
+                            child: Text(
+                              eval.statusLabel,
+                              style: textTheme.caption.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: bannerTextColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpace.xs),
+
+              // ── 3. Bottom Row: Warm Journey Strip of 5 Daily Prayers ──
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  vertical: AppSpace.xs,
+                  horizontal: AppSpace.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.surfaceMuted,
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: palette.border,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: AppStrings.prayerOrder.map((prayerName) {
+                    final isCurrent = eval.activePrayerName == prayerName;
+                    final prayerTime = all[prayerName];
+                    final isPast = eval.completedPrayerNames.contains(prayerName);
+
+                    return _WidgetPrayerStation(
+                      prayerName: prayerName,
+                      prayerTime: prayerTime,
+                      isCurrent: isCurrent,
+                      isPast: isPast,
+                      isInPrayerTime: isCurrent && eval.isInPrayerTime,
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   static Map<String, DateTime> _buildFallbackPrayers(DateTime now) {
@@ -283,89 +312,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
       AppStrings.prayerIsha: base.add(const Duration(hours: 19, minutes: 2)),
     };
   }
-
-  _EvaluatedWidgetState _evaluatePrayer(
-    DateTime now,
-    Map<String, DateTime> all,
-  ) {
-    const iqamaWindow = Duration(minutes: 15);
-    final entries = AppStrings.prayerOrder
-        .where((p) => all.containsKey(p))
-        .map((p) => MapEntry(p, all[p]!))
-        .toList();
-
-    // Check if in prayer time
-    for (int i = entries.length - 1; i >= 0; i--) {
-      final entry = entries[i];
-      final pTime = entry.value;
-      if (!now.isBefore(pTime)) {
-        final elapsed = now.difference(pTime);
-        if (elapsed < iqamaWindow) {
-          final completed = entries.take(i).map((e) => e.key).toSet();
-          return _EvaluatedWidgetState(
-            activePrayerName: entry.key,
-            nextPrayerTime: pTime,
-            isInPrayerTime: true,
-            countdownFormatted: '00 : 00 : 00',
-            completedPrayerNames: completed,
-          );
-        }
-      }
-    }
-
-    // Upcoming prayer today
-    for (int i = 0; i < entries.length; i++) {
-      final entry = entries[i];
-      if (entry.value.isAfter(now)) {
-        final diff = entry.value.difference(now);
-        final completed = entries.take(i).map((e) => e.key).toSet();
-        return _EvaluatedWidgetState(
-          activePrayerName: entry.key,
-          nextPrayerTime: entry.value,
-          isInPrayerTime: false,
-          countdownFormatted: _formatDuration(diff),
-          completedPrayerNames: completed,
-        );
-      }
-    }
-
-    // Tomorrow's Fajr
-    final fajrToday = all[AppStrings.prayerFajr] ??
-        DateTime(now.year, now.month, now.day, 5, 0);
-    final fajrTomorrow = fajrToday.add(const Duration(days: 1));
-    final diff = fajrTomorrow.difference(now);
-    final completed = entries.map((e) => e.key).toSet();
-    return _EvaluatedWidgetState(
-      activePrayerName: AppStrings.prayerFajr,
-      nextPrayerTime: fajrTomorrow,
-      isInPrayerTime: false,
-      countdownFormatted: _formatDuration(diff),
-      completedPrayerNames: completed,
-    );
-  }
-
-  String _formatDuration(Duration d) {
-    final hours = d.inHours.toString().padLeft(2, '0');
-    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$hours : $minutes : $seconds';
-  }
-}
-
-class _EvaluatedWidgetState {
-  final String activePrayerName;
-  final DateTime nextPrayerTime;
-  final bool isInPrayerTime;
-  final String countdownFormatted;
-  final Set<String> completedPrayerNames;
-
-  const _EvaluatedWidgetState({
-    required this.activePrayerName,
-    required this.nextPrayerTime,
-    required this.isInPrayerTime,
-    required this.countdownFormatted,
-    required this.completedPrayerNames,
-  });
 }
 
 class _WidgetPrayerStation extends StatelessWidget {
@@ -403,14 +349,14 @@ class _WidgetPrayerStation extends StatelessWidget {
                 borderRadius: AppRadius.smRadius,
                 border: Border.all(
                   color: pColor,
-                  width: 1.5,
+                  width: isInPrayerTime ? 1.8 : 1.4,
                 ),
               )
             : null,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Status Pip: Gold dot if current, green check if past, subtle dot if upcoming
+            // Status Pip
             if (isCurrent)
               Container(
                 width: AppSpace.sm - 2,
@@ -418,7 +364,7 @@ class _WidgetPrayerStation extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: AppSpace.xxs),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: palette.gold,
+                  color: isInPrayerTime ? palette.success : palette.gold,
                 ),
               )
             else if (isPast)
