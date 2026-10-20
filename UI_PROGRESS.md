@@ -1168,22 +1168,31 @@ FAILED (54 violations)
 
 ## Android Home Screen Prayer Widget Overhaul («ودجت مواقيت الصلاة للشاشة الرئيسية»)
 - **Status:** Complete
-- **Branch:** eat/quran-word-search
-- **Commit:** 5f625e8
+- **Branch:** `feat/quran-word-search`
+- **Commit:** `39d320b`
 - **Root Cause Diagnosed & Fixed:**
-  1. **Permanent Resolution of 21px Bottom Overflow:**
-     - Column intrinsic height (~216dp) exceeded the tight headless canvas height (195dp - 32dp padding = 163dp), triggering the Flutter yellow/black debug hazard tape on the widget bitmap.
-     - Rebuilt PrayerHomeScreenWidget with compact, proportional spacing (AppSpace.xs/xxs) and wrapped the layout in FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center).
-     - Guaranteed zero overflow under any screen resolution, aspect ratio, or accessibility text scaling.
-  2. **Clean Android Widget Naming:**
-     - Changed prayer_widget_name in strings.xml from مواقيت الصلاة - طالب العلم to clean and concise مواقيت الصلاة.
-     - Prevents repetitive/truncated labels (مواقيت الصلاة - طالب العلم 1×4) on phone launchers; now displays cleanly as مواقيت الصلاة under app طالب العلم.
-  3. **Ultra High-DPI Clarity & Scaling (1080p / 1440p / AMOLED):**
-     - Upgraded HomeWidgetService to render at pixelRatio: 3.0 with TextScaler.noScaling and standard 4x2 Size(380, 180) dimensions (1140x540 physical pixels).
-     - Added AppTheme.resolveTheme(ThemeMode) to automatically adapt the widget between Light and Dark mode.
-     - Connected 	hemeService listener in AppShell to dynamically refresh the home screen widget whenever the theme changes.
-  4. **Verification Gate:**
-     - lutter analyze: **0 issues found** (clean in 20.8s).
-     - python tool/ui_lint_v2.py: **OK** (0 FAILs, 9 allow markers / cap 10).
-     - lutter test test/prayer_home_screen_widget_test.dart: **100% pass** (3/3 including tight box and 1.5x/2.0x scale test).
+  1. **Launcher Resize & True Responsive Filling (scaleType="fitXY"):**
+     - Diagnosed why resizing made the widget smaller: `prayer_widget_layout.xml` had `scaleType="fitCenter"` with `adjustViewBounds="true"` and fixed 380x180 bitmap ratio. On wider launcher cells (e.g. 4x1 or 5x1 with 110dp height), Android scaled the width down proportionally to 232dp, leaving huge blank margins.
+     - Changed to `scaleType="fitXY"` with `fill_parent` in XML, set `minResizeWidth="180dp"`, `minResizeHeight="80dp"`, `maxResizeWidth="600dp"`, `maxResizeHeight="400dp"`, and `widgetFeatures="reconfigurable"`.
+     - In `PrayerWidgetProvider.kt`, implemented `onAppWidgetOptionsChanged` to capture launcher resize events and persist user dimensions (`widget_width`, `widget_height`).
+     - In `HomeWidgetService`, dynamically reads launcher-allocated dimensions or defaults to responsive `380x145` aspect ratio with crisp `3.0` pixel ratio.
+  2. **Frozen Seconds Elimination & Real-time Background Updates:**
+     - Android Home Screen AppWidgets render static bitmaps; re-rendering 60 frames/sec causes OS throttling/battery kills. Displaying `: 53` seconds gave the illusion of being frozen.
+     - Formatted countdown as `HH : MM` for > 1 hour and `MM : SS` for < 1 hour, paired with a 30-second background refresh in `ForegroundPrayerService._check()`.
+  3. **Complete 5-Phase Liturgical State Machine (`PrayerWidgetStateEvaluator`):**
+     - Handled all prayer states:
+       - `beforeAdhan`: Countdown to upcoming prayer.
+       - `atAdhan` (First 2 min): Glowing adhan alert banner («حان الآن موعد أذان ...»).
+       - `betweenAdhanAndIqama`: Dynamic Iqama countdown («بقي على الإقامة: MM:SS») with exact Iqama time pill.
+       - `inSalah`: Active congregational prayer badge («تقام الآن صلاة ... مع الجماعة»).
+       - `postSalah`: Post-prayer dhikr & reminder («انقضت صلاة ... تقبل الله»).
+       - Friday Jumu'ah special handling: Displays «صلاة الجمعة» instead of Dhuhr with 25-minute Khutbah/Iqama interval.
+       - Qiyam al-Layl late-night phase after Isha.
+  4. **Dark Reader Velvet Obsidian Theme (`0419f6c`):**
+     - Removed bluish slate cast (`#101114`, `#181A1F`) in dark reader mode, replacing with deep velvet obsidian black (`#090807`), warm charcoal raised surfaces (`#141210`), and warm dark borders (`#262018`).
+  5. **Verification Gate:**
+     - `flutter analyze`: **0 issues found** (clean in 8.4s).
+     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - `flutter test`: **100% pass** (29/29 tests passed across reader, audio, and prayer widget test suites).
 - **Open Issues:** None.
+
