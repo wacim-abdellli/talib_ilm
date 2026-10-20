@@ -53,23 +53,12 @@ class _HadithCardState extends State<HadithCard> {
   }
 
   void _copyHadith() {
-    final text = '«${widget.hadith.matn}»\n\n'
-        '• الراوي: ${widget.hadith.narrator}\n'
-        '• التخريج: ${widget.hadith.source}\n'
-        '• الدرجة: ${widget.hadith.grade}\n\n'
-        'من تطبيق طالب العلم';
-    Clipboard.setData(ClipboardData(text: text));
+    Clipboard.setData(ClipboardData(text: widget.hadith.toShareText()));
     AppSnackbar.success(context, 'تم نسخ الحديث الشريف بنجاح');
   }
 
   void _shareHadith() {
-    final text = '«${widget.hadith.matn}»\n\n'
-        '• الراوي: ${widget.hadith.narrator}\n'
-        '• التخريج: ${widget.hadith.source}\n'
-        '• الدرجة: ${widget.hadith.grade}\n'
-        '• الفوائد: ${widget.hadith.benefits}\n\n'
-        'من تطبيق طالب العلم';
-    Share.share(text);
+    Share.share(widget.hadith.toShareText());
   }
 
   @override

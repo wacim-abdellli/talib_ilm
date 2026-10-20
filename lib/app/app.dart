@@ -11,6 +11,9 @@ import '../core/services/theme_service.dart';
 /// Global theme service instance
 final themeService = ThemeService();
 
+/// Global root navigator key for deep links, notification taps, and top-level navigation
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 class TalibIlmApp extends StatefulWidget {
   const TalibIlmApp({super.key});
 
@@ -32,6 +35,7 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
       listenable: themeService,
       builder: (context, _) {
         return MaterialApp(
+          navigatorKey: rootNavigatorKey,
           debugShowCheckedModeBanner: false,
           title: AppStrings.appName,
           theme: AppTheme.lightTheme,

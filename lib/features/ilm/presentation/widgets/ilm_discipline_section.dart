@@ -105,6 +105,8 @@ class IlmDisciplineSection {
     required VoidCallback onViewAll,
     required VoidCallback onBackToAll,
     required ValueChanged<FanQuiz> onOpenQuiz,
+    int? selectedLevel,
+    ValueChanged<int?>? onSelectLevel,
   }) {
     final catColors = palette.category(categoryKey);
 
@@ -290,7 +292,11 @@ class IlmDisciplineSection {
       ];
     }
 
-    // ── Focused View for Discipline (Full Vertical Listing) ───────
+    // ── Focused View for Discipline (Full Vertical Listing with Level Filters) ──
+    final filteredBooks = selectedLevel == null
+        ? books
+        : books.where((b) => b.level == selectedLevel).toList();
+
     return [
       SliverToBoxAdapter(
         child: Padding(
@@ -393,35 +399,162 @@ class IlmDisciplineSection {
         ),
       ),
       SliverToBoxAdapter(
-        child: IlmPartitionHeader(
-          title: title,
-          subtitle: subtitle,
-          countLabel: '${books.length} كتب',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            IlmPartitionHeader(
+              title: title,
+              subtitle: subtitle,
+              countLabel: '${filteredBooks.length} كتب',
+            ),
+            // Horizontal Level Selector Filter (تمهيدي / تأصيلي / مطولات)
+            SizedBox(
+              height: AppSize.tap,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.lg,
+                ),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildLevelChip(
+                    context: context,
+                    label: 'جميع المستويات (${books.length})',
+                    isSelected: selectedLevel == null,
+                    onTap: () => onSelectLevel?.call(null),
+                    palette: palette,
+                  ),
+                  _buildLevelChip(
+                    context: context,
+                    label: 'تمهيدي (مبتدئ) (${books.where((b) => b.level == 1).length})',
+                    isSelected: selectedLevel == 1,
+                    onTap: () => onSelectLevel?.call(1),
+                    palette: palette,
+                    dotColor: palette.primary,
+                  ),
+                  _buildLevelChip(
+                    context: context,
+                    label: 'تأصيلي (متوسط) (${books.where((b) => b.level == 2).length})',
+                    isSelected: selectedLevel == 2,
+                    onTap: () => onSelectLevel?.call(2),
+                    palette: palette,
+                    dotColor: palette.gold,
+                  ),
+                  _buildLevelChip(
+                    context: context,
+                    label: 'مطولات (متقدم) (${books.where((b) => b.level == 3).length})',
+                    isSelected: selectedLevel == 3,
+                    onTap: () => onSelectLevel?.call(3),
+                    palette: palette,
+                    dotColor: palette.error,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpace.sm),
+          ],
         ),
       ),
-      SliverPadding(
-        padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final book = books[index];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                child: ShamelaBookCard(
-                  book: book,
-                  isDownloaded: true,
-                  downloadProgress: null,
-                  onOpen: () => onOpenBook(book),
-                  onDownload: () {},
-                  onOpenShuruh: onOpenShuruh,
-                ),
-              );
-            },
-            childCount: books.length,
+      if (filteredBooks.isEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.all(AppSpace.xxl),
+            child: Center(
+              child: Text(
+                'لا توجد كتب متوفرة في هذا المستوى حالياً',
+                style: context.text.body.copyWith(color: palette.textMuted),
+              ),
+            ),
+          ),
+        )
+      else
+        SliverPadding(
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final book = filteredBooks[index];
+                return Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+                  child: ShamelaBookCard(
+                    book: book,
+                    isDownloaded: true,
+                    downloadProgress: null,
+                    onOpen: () => onOpenBook(book),
+                    onDownload: () {},
+                    onOpenShuruh: onOpenShuruh,
+                  ),
+                );
+              },
+              childCount: filteredBooks.length,
+            ),
+          ),
+        ),
+    ];
+  }
+
+  static Widget _buildLevelChip({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required AppPalette palette,
+    Color? dotColor,
+  }) {
+    final Color bgColor = isSelected ? palette.primarySoft : palette.surfaceRaised;
+    final Color fgColor = isSelected ? palette.primary : palette.textMuted;
+    final Color borderColor = isSelected ? palette.primary : palette.border;
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
+      child: Material(
+        color: bgColor,
+        borderRadius: AppRadius.pillRadius,
+        child: InkWell(
+          borderRadius: AppRadius.pillRadius,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.md,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(color: borderColor, width: 1.0),
+            ),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (dotColor != null && !isSelected) ...[
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
+                  Text(
+                    label,
+                    style: context.text.caption.copyWith(
+                      color: fgColor,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-    ];
+    );
   }
 
   static String _buildSubtitle(ShamelaBook book) {

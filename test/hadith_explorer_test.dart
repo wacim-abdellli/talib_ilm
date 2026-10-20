@@ -177,5 +177,24 @@ void main() {
       expect(h265.matn.contains('وسلمى'), isFalse);
       expect(h265.matn, contains('لا أرى طلحة'));
     });
+
+    test('Zero <br> HTML tags across all hadith texts and clean toShareText', () async {
+      final all = await service.getAllHadiths();
+      for (final h in all) {
+        expect(h.matn.contains('<br>'), isFalse, reason: 'Hadith ${h.id} contains <br>');
+        expect(h.matn.contains('<br/>'), isFalse, reason: 'Hadith ${h.id} contains <br/>');
+        expect(h.matn.contains('<br />'), isFalse, reason: 'Hadith ${h.id} contains <br />');
+        expect(h.toShareText().contains('<br>'), isFalse);
+      }
+
+      // Check specifically the Hadith mentioned by user (an-Nawawi 6)
+      final nawawi6 = all.firstWhere((h) => h.narrator.contains('النعمان بن بشير'));
+      final shareText = nawawi6.toShareText();
+      expect(shareText, isNot(contains('<br>')));
+      expect(shareText, contains('• الراوي:'));
+      expect(shareText, contains('• التخريج:'));
+      expect(shareText, contains('• الدرجة:'));
+      expect(shareText, contains('من تطبيق طالب العلم'));
+    });
   });
 }

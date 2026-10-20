@@ -8,6 +8,7 @@ import '../../core/services/adhkar_reminder_service.dart';
 import '../../core/services/flip_to_stop_service.dart';
 import '../../core/services/foreground_prayer_service.dart';
 import '../../core/services/home_widget_service.dart';
+import '../../core/services/notification_router.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_schedule_service.dart';
 import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
@@ -31,11 +32,23 @@ class AppShell extends StatefulWidget {
     this.initialIndex = 0,
   });
 
-  /// Allows any descendant page to cleanly switch bottom navigation tab
-  static bool switchToTab(BuildContext context, int index) {
-    final state = context.findAncestorStateOfType<_AppShellState>();
-    if (state != null) {
-      state.selectTab(index);
+  static _AppShellState? _activeState;
+
+  /// Checks if AppShell is mounted and ready to receive navigation actions
+  static bool get isAppShellReady =>
+      _activeState != null && _activeState!.mounted;
+
+  /// Allows any descendant page or external service to cleanly switch bottom navigation tab
+  static bool switchToTab(BuildContext? context, int index) {
+    if (context != null) {
+      final state = context.findAncestorStateOfType<_AppShellState>();
+      if (state != null) {
+        state.selectTab(index);
+        return true;
+      }
+    }
+    if (_activeState != null && _activeState!.mounted) {
+      _activeState!.selectTab(index);
       return true;
     }
     return false;
@@ -52,6 +65,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    AppShell._activeState = this;
     WidgetsBinding.instance.addObserver(this);
     themeService.addListener(_onThemeChanged);
     _currentIndex = widget.initialIndex.clamp(0, 4);
@@ -61,6 +75,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         NotificationOnboardingDialog.checkAndShow(context);
+        NotificationRouter.consumePendingPayload(context);
       }
     });
   }
@@ -82,6 +97,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     try {
       final notif = NotificationService();
       await notif.init();
+      if (mounted) {
+        NotificationRouter.consumePendingPayload(context);
+      }
       await notif.requestPermissions();
       await PrayerScheduleService().refreshSchedulesIfNeeded();
       unawaited(HomeWidgetService.updatePrayerWidget());
@@ -96,6 +114,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    if (AppShell._activeState == this) {
+      AppShell._activeState = null;
+    }
     themeService.removeListener(_onThemeChanged);
     WidgetsBinding.instance.removeObserver(this);
     ForegroundPrayerService().stop();

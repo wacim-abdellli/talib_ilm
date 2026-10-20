@@ -55,6 +55,7 @@ class _IlmPageState extends State<IlmPage> {
   bool _isLoading = true;
   String _selectedCategory = 'all';
   String? _selectedMutunLevel; // null means all levels in mutun section
+  int? _selectedDisciplineLevel; // null means all levels in discipline section
   String _searchQuery = '';
 
   List<IlmBook> _allBooks = [];
@@ -70,28 +71,19 @@ class _IlmPageState extends State<IlmPage> {
   late String _dailyMicrocopy;
 
   static const List<String> _scholarlyQuotes = [
-    'العلم يؤتى ولا يأتي',
-    'من أدمن الطرق ولج',
-    'قليل دائم خير من كثير منقطع',
-    'العلم صيد والكتابة قيد',
-    'زكاة العلم تعليمه',
-    'إنما العلم بالتعلم',
-    'بداية الغيث قطرة',
-    'العلماء ورثة الأنبياء',
+    'العلم يؤتى ولا يأتي', 'من أدمن الطرق ولج', 'قليل دائم خير من كثير منقطع',
+    'العلم صيد والكتابة قيد', 'زكاة العلم تعليمه', 'إنما العلم بالتعلم',
+    'بداية الغيث قطرة', 'العلماء ورثة الأنبياء',
   ];
 
-  int get _completedBooksCount {
-    return _progressById.values.where((p) => p.isCompleted).length;
-  }
+  int get _completedBooksCount =>
+      _progressById.values.where((p) => p.isCompleted).length;
 
-  int get _totalLibraryBooksCount {
-    return _allBooks.length + TurathCatalog.books.length;
-  }
+  int get _totalLibraryBooksCount =>
+      _allBooks.length + TurathCatalog.books.length;
 
-  IlmBook? get _recommendedFirstBook {
-    if (_allBooks.isEmpty) return null;
-    return _allBooks.first;
-  }
+  IlmBook? get _recommendedFirstBook =>
+      _allBooks.isEmpty ? null : _allBooks.first;
 
   @override
   void initState() {
@@ -476,9 +468,8 @@ class _IlmPageState extends State<IlmPage> {
               onCategorySelected: (catId) {
                 setState(() {
                   _selectedCategory = catId;
-                  if (catId != 'mutun') {
-                    _selectedMutunLevel = null;
-                  }
+                  if (catId != 'mutun') _selectedMutunLevel = null;
+                  _selectedDisciplineLevel = null;
                 });
               },
             ),
@@ -566,10 +557,19 @@ class _IlmPageState extends State<IlmPage> {
               categoryKey: d.key,
               isFocused: _selectedCategory == d.key,
               fan: d.fan,
+              selectedLevel: _selectedDisciplineLevel,
+              onSelectLevel: (lvl) =>
+                  setState(() => _selectedDisciplineLevel = lvl),
               onOpenBook: _openShamelaReader,
               onOpenShuruh: _openShuruhSheet,
-              onViewAll: () => setState(() => _selectedCategory = d.key),
-              onBackToAll: () => setState(() => _selectedCategory = 'all'),
+              onViewAll: () => setState(() {
+                _selectedCategory = d.key;
+                _selectedDisciplineLevel = null;
+              }),
+              onBackToAll: () => setState(() {
+                _selectedCategory = 'all';
+                _selectedDisciplineLevel = null;
+              }),
               onOpenQuiz: _openDisciplineQuiz,
             ),
 

@@ -45,7 +45,7 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                     context,
                     android.net.Uri.parse("talibilm://resize?minWidth=$minWidth&minHeight=$minHeight")
                 )
-                context.sendBroadcast(backgroundIntent)
+                backgroundIntent.send()
             } catch (_: Exception) {}
         }
         updateAppWidget(context, appWidgetManager, appWidgetId)

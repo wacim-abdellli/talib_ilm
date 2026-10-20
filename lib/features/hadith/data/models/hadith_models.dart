@@ -59,18 +59,29 @@ class GradedHadith {
     );
   }
 
+  static String cleanText(String text) {
+    if (text.isEmpty) return '';
+    return text
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'</?(?:p|div|span|b|i|u|strong|em)[^>]*>', caseSensitive: false), '')
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll('\r\n', '\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+  }
+
   factory GradedHadith.fromJson(Map<String, dynamic> json, {String? searchIndex}) {
     return GradedHadith(
       id: json['id'] as String? ?? '',
       number: (json['number'] as num?)?.toInt() ?? 0,
-      title: json['title'] as String? ?? '',
+      title: cleanText(json['title'] as String? ?? ''),
       collection: json['collection'] as String? ?? 'الأربعون النووية',
       category: json['category'] as String? ?? 'عام',
       grade: json['grade'] as String? ?? 'صحيح',
-      source: json['source'] as String? ?? '',
-      narrator: json['narrator'] as String? ?? '',
-      matn: json['matn'] as String? ?? '',
-      benefits: json['benefits'] as String? ?? '',
+      source: cleanText(json['source'] as String? ?? ''),
+      narrator: cleanText(json['narrator'] as String? ?? ''),
+      matn: cleanText(json['matn'] as String? ?? ''),
+      benefits: cleanText(json['benefits'] as String? ?? ''),
       searchIndex: searchIndex,
     );
   }
@@ -87,6 +98,31 @@ class GradedHadith {
     'matn': matn,
     'benefits': benefits,
   };
+
+  /// Generates clean, perfectly formatted share/copy text for this Hadith
+  String toShareText() {
+    final cMatn = cleanText(matn);
+    final cNarrator = cleanText(narrator);
+    final cSource = cleanText(source);
+    final cGrade = cleanText(grade);
+    final cBenefits = cleanText(benefits);
+
+    final buffer = StringBuffer('«$cMatn»\n\n');
+    if (cNarrator.isNotEmpty) {
+      buffer.writeln('• الراوي: $cNarrator');
+    }
+    if (cSource.isNotEmpty) {
+      buffer.writeln('• التخريج: $cSource');
+    }
+    if (cGrade.isNotEmpty) {
+      buffer.writeln('• الدرجة: $cGrade');
+    }
+    if (cBenefits.isNotEmpty) {
+      buffer.writeln('• الفوائد: $cBenefits');
+    }
+    buffer.write('\nمن تطبيق طالب العلم');
+    return buffer.toString();
+  }
 
   /// Compatibility bridge with existing HadithFavoritesService
   Hadith toLegacyHadith() {

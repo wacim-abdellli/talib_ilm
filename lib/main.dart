@@ -6,6 +6,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/services/home_widget_service.dart';
+import 'core/services/notification_service.dart';
 import 'utils/ssl_helper_web.dart'
     if (dart.library.io) 'utils/ssl_helper_mobile.dart';
 
@@ -24,6 +25,7 @@ Future<void> main() async {
 
   unawaited(SharedPreferences.getInstance());
   unawaited(HomeWidgetService.initBackground());
+  unawaited(NotificationService().init());
   if (kDebugMode) {
     enableBadCertificateCatcher();
   }

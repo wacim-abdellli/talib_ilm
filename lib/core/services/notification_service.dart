@@ -10,6 +10,7 @@ import '../../app/constants/app_strings.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'foreground_prayer_service.dart';
+import 'notification_router.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
@@ -50,9 +51,32 @@ class NotificationService {
           try {
             ForegroundPrayerService().dismissAlert();
           } catch (_) {}
+          return;
+        }
+        final p = response.payload;
+        if (p != null && p.isNotEmpty) {
+          try {
+            AdhanService().stop();
+          } catch (_) {}
+          try {
+            ForegroundPrayerService().dismissAlert();
+          } catch (_) {}
+          NotificationRouter.handlePayload(p);
         }
       },
     );
+
+    try {
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp == true) {
+        final p = launchDetails?.notificationResponse?.payload;
+        if (p != null && p.isNotEmpty) {
+          NotificationRouter.pendingPayload = p;
+        }
+      }
+    } catch (e) {
+      debugPrint('Notification launch details error: $e');
+    }
 
     // Register all required high-priority notification channels in Android
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
@@ -431,6 +455,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       scheduleMode: AndroidScheduleMode.alarmClock,
+      payload: 'prayer_${prayerName.trim()}',
     );
   }
 
@@ -491,6 +516,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       scheduleMode: AndroidScheduleMode.alarmClock,
+      payload: 'prayer_pre_${prayerName.trim()}',
     );
   }
 
@@ -545,6 +571,7 @@ class NotificationService {
       title,
       body,
       details,
+      payload: 'prayer_pre_${prayerName.trim()}',
     );
   }
 
@@ -602,6 +629,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: 'iqama_${prayerName.trim()}',
     );
   }
 
@@ -682,6 +710,7 @@ class NotificationService {
       title,
       body,
       details,
+      payload: 'prayer_${prayerName.trim()}',
     );
   }
 
@@ -712,6 +741,7 @@ class NotificationService {
       title,
       body,
       details,
+      payload: 'prayer_test_${prayerName.trim()}',
     );
   }
 
@@ -751,12 +781,19 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: 'prayer_test_${prayerName.trim()}',
       );
     } catch (e) {
       debugPrint('Error scheduling test notification with exact alarm: $e');
       // Direct timer fallback if exact alarms are restricted
       Future.delayed(Duration(seconds: seconds), () { // ui-lint: allow
-        _plugin.show(8888, title, body, details);
+        _plugin.show(
+          8888,
+          title,
+          body,
+          details,
+          payload: 'prayer_test_${prayerName.trim()}',
+        );
       });
     }
   }
