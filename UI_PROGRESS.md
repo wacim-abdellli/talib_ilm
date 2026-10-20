@@ -1163,3 +1163,27 @@ FAILED (54 violations)
      - `flutter test`: **100% pass** (19/19 core quiz and ilm tests passed).
 - **Open Issues:** None.
 
+
+---
+
+## Android Home Screen Prayer Widget Overhaul («ودجت مواقيت الصلاة للشاشة الرئيسية»)
+- **Status:** Complete
+- **Branch:** eat/quran-word-search
+- **Commit:** 5f625e8
+- **Root Cause Diagnosed & Fixed:**
+  1. **Permanent Resolution of 21px Bottom Overflow:**
+     - Column intrinsic height (~216dp) exceeded the tight headless canvas height (195dp - 32dp padding = 163dp), triggering the Flutter yellow/black debug hazard tape on the widget bitmap.
+     - Rebuilt PrayerHomeScreenWidget with compact, proportional spacing (AppSpace.xs/xxs) and wrapped the layout in FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.center).
+     - Guaranteed zero overflow under any screen resolution, aspect ratio, or accessibility text scaling.
+  2. **Clean Android Widget Naming:**
+     - Changed prayer_widget_name in strings.xml from مواقيت الصلاة - طالب العلم to clean and concise مواقيت الصلاة.
+     - Prevents repetitive/truncated labels (مواقيت الصلاة - طالب العلم 1×4) on phone launchers; now displays cleanly as مواقيت الصلاة under app طالب العلم.
+  3. **Ultra High-DPI Clarity & Scaling (1080p / 1440p / AMOLED):**
+     - Upgraded HomeWidgetService to render at pixelRatio: 3.0 with TextScaler.noScaling and standard 4x2 Size(380, 180) dimensions (1140x540 physical pixels).
+     - Added AppTheme.resolveTheme(ThemeMode) to automatically adapt the widget between Light and Dark mode.
+     - Connected 	hemeService listener in AppShell to dynamically refresh the home screen widget whenever the theme changes.
+  4. **Verification Gate:**
+     - lutter analyze: **0 issues found** (clean in 20.8s).
+     - python tool/ui_lint_v2.py: **OK** (0 FAILs, 9 allow markers / cap 10).
+     - lutter test test/prayer_home_screen_widget_test.dart: **100% pass** (3/3 including tight box and 1.5x/2.0x scale test).
+- **Open Issues:** None.
