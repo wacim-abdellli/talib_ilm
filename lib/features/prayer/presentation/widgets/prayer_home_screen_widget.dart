@@ -10,19 +10,18 @@ import 'prayer_widget_tall_view.dart';
 export 'prayer_widget_state_evaluator.dart';
 export 'prayer_widget_standard_view.dart' show WidgetPrayerStation;
 
-/// PrayerHomeScreenWidget - Multi-size responsive representation of the
-/// Talib Ilm Prayer Card / Widget for Android Home Screen and Hero Card.
+/// PrayerHomeScreenWidget — Multi-size Android Home Screen widget container.
 ///
-/// Size zones (matching Salaat First reference design):
-///   Ribbon  : height < 75dp   → 1-row  : [prayer name + time | countdown badge]
-///   Standard: height < 160dp  → 2-rows : [header] + [5-prayer strip]
-///   Tall    : height ≥ 160dp  → 3-rows : [hijri/city] + [hero card] + [5-prayer strip]
+/// Layout zones (based on rendered size):
+///  • Ribbon   height < 100dp → single row: [name + countdown | time pill]
+///  • Compact  width  < 230dp → focused card: title + time + badge + next prayer
+///  • Standard 100 ≤ h < 160 AND w ≥ 230 → 2-row: header + 5-prayer strip
+///  • Tall     height ≥ 160dp AND w ≥ 230 → 3-section: topbar + hero + strip
 class PrayerHomeScreenWidget extends StatelessWidget {
   final PrayerTimesDay? prayerDay;
   final DateTime? referenceTime;
   final String? nextPrayerName;
   final DateTime? nextPrayerTime;
-
   final double width;
   final double height;
 
@@ -42,48 +41,46 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     final textTheme = context.text;
     final now = referenceTime ?? DateTime.now();
 
-    final all = prayerDay?.prayers ?? _buildFallbackPrayers(now);
+    final all = prayerDay?.prayers ?? _fallbackPrayers(now);
     final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-
     final prayerColor = palette.prayer(eval.activePrayerName);
 
-    // Dynamic banner styling adapting to the liturgical prayer phase
-    final Color bannerBgColor;
-    final Color bannerBorderColor;
-    final Color bannerTextColor;
-
+    // Resolve banner styling from liturgical phase
+    final Color bannerBg;
+    final Color bannerBorder;
+    final Color bannerText;
     switch (eval.phase) {
       case PrayerWidgetPhase.atAdhan:
-        bannerBgColor = palette.goldSoft;
-        bannerBorderColor = palette.gold.withValues(alpha: 0.5);
-        bannerTextColor = palette.gold;
+        bannerBg = palette.goldSoft;
+        bannerBorder = palette.gold.withValues(alpha: 0.5);
+        bannerText = palette.gold;
         break;
       case PrayerWidgetPhase.betweenAdhanAndIqama:
-        bannerBgColor = prayerColor.withValues(alpha: 0.16);
-        bannerBorderColor = prayerColor.withValues(alpha: 0.45);
-        bannerTextColor = prayerColor;
+        bannerBg = prayerColor.withValues(alpha: 0.16);
+        bannerBorder = prayerColor.withValues(alpha: 0.45);
+        bannerText = prayerColor;
         break;
       case PrayerWidgetPhase.inSalah:
-        bannerBgColor = palette.success.withValues(alpha: 0.14);
-        bannerBorderColor = palette.success.withValues(alpha: 0.45);
-        bannerTextColor = palette.success;
+        bannerBg = palette.success.withValues(alpha: 0.14);
+        bannerBorder = palette.success.withValues(alpha: 0.45);
+        bannerText = palette.success;
         break;
       case PrayerWidgetPhase.postSalah:
-        bannerBgColor = palette.surfaceMuted;
-        bannerBorderColor = palette.border;
-        bannerTextColor = palette.textMuted;
+        bannerBg = palette.surfaceMuted;
+        bannerBorder = palette.border;
+        bannerText = palette.textMuted;
         break;
       case PrayerWidgetPhase.beforeAdhan:
-        bannerBgColor = prayerColor.withValues(alpha: 0.10);
-        bannerBorderColor = prayerColor.withValues(alpha: 0.28);
-        bannerTextColor = prayerColor;
+        bannerBg = prayerColor.withValues(alpha: 0.10);
+        bannerBorder = prayerColor.withValues(alpha: 0.28);
+        bannerText = prayerColor;
         break;
     }
 
-    // Size-adaptive layout: clear thresholds matching the reference app
-    final isRibbon = height < 75;
-    final isTall = height >= 160;
-    // Standard = everything else (75 ≤ height < 160)
+    // Pick layout zone
+    final isRibbon = height < 100;
+    final isCompact = !isRibbon && width < 230;
+    final isTall = !isRibbon && !isCompact && height >= 160;
 
     Widget content;
     if (isTall) {
@@ -92,29 +89,23 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         eval: eval,
         all: all,
         prayerColor: prayerColor,
-        bannerBgColor: bannerBgColor,
-        bannerBorderColor: bannerBorderColor,
-        bannerTextColor: bannerTextColor,
+        bannerBgColor: bannerBg,
+        bannerBorderColor: bannerBorder,
+        bannerTextColor: bannerText,
         now: now,
       );
+    } else if (isCompact) {
+      content = _buildCompact(palette, textTheme, eval, prayerColor, bannerBg, bannerBorder, bannerText);
     } else if (isRibbon) {
-      content = _buildRibbonLayout(
-        palette: palette,
-        textTheme: textTheme,
-        eval: eval,
-        prayerColor: prayerColor,
-        bannerBgColor: bannerBgColor,
-        bannerBorderColor: bannerBorderColor,
-        bannerTextColor: bannerTextColor,
-      );
+      content = _buildRibbon(palette, textTheme, eval, prayerColor, bannerBg, bannerBorder, bannerText);
     } else {
       content = PrayerWidgetStandardView(
         eval: eval,
         all: all,
         prayerColor: prayerColor,
-        bannerBgColor: bannerBgColor,
-        bannerBorderColor: bannerBorderColor,
-        bannerTextColor: bannerTextColor,
+        bannerBgColor: bannerBg,
+        bannerBorderColor: bannerBorder,
+        bannerTextColor: bannerText,
         referenceTime: now,
       );
     }
@@ -135,16 +126,11 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: palette.surfaceRaised,
             borderRadius: AppRadius.lgRadius,
-            border: Border.all(
-              color: palette.border,
-              width: 1.2,
-            ),
+            border: Border.all(color: palette.border, width: 1.2),
           ),
-          // Use ClipRect + OverflowBox to let content fill naturally
-          // without FittedBox shrinking text to invisible
           child: ClipRect(
             child: Align(
-              alignment: AlignmentDirectional.topCenter,
+              alignment: AlignmentDirectional.topStart,
               child: SizedBox(
                 width: width - (AppSpace.md * 2),
                 child: content,
@@ -156,40 +142,121 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     );
   }
 
-  /// ── Ribbon 4x1 Mode: Single-row strip ──
-  Widget _buildRibbonLayout({
-    required AppPalette palette,
-    required AppTextTheme textTheme,
-    required EvaluatedPrayerWidgetState eval,
-    required Color prayerColor,
-    required Color bannerBgColor,
-    required Color bannerBorderColor,
-    required Color bannerTextColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
+  /// ── Compact mode (narrow widget, ≈ 2×2) ───────────────────────────────
+  Widget _buildCompact(
+    AppPalette palette,
+    AppTextTheme textTheme,
+    EvaluatedPrayerWidgetState eval,
+    Color prayerColor,
+    Color bannerBg,
+    Color bannerBorder,
+    Color bannerText,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Right (Start in RTL): Prayer Title + Time
-        Expanded(
+        // Prayer name
+        Text(
+          eval.displayTitle,
+          style: textTheme.label.copyWith(fontWeight: FontWeight.w800, color: palette.text),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: AppSpace.xxs),
+        // Large time
+        Text(
+          eval.timePillLabel,
+          style: textTheme.titleSmall.copyWith(
+            fontWeight: FontWeight.w900,
+            color: prayerColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: AppSpace.xxs),
+        // Countdown badge
+        Container(
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs, vertical: AppSpace.xxs),
+          decoration: BoxDecoration(
+            color: bannerBg,
+            borderRadius: AppRadius.smRadius,
+            border: Border.all(color: bannerBorder, width: 1),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
                 child: Text(
-                  eval.displayTitle,
-                  style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: palette.text,
-                  ),
+                  eval.statusLabel,
+                  style: textTheme.caption.copyWith(fontWeight: FontWeight.w600, color: bannerText),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: AppSpace.xs),
+              const SizedBox(width: AppSpace.xxs),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  eval.countdownFormatted,
+                  style: textTheme.caption.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: palette.text,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Next prayer
+        if (eval.nextPrayerName != null && eval.nextPrayerTime != null) ...[
+          const SizedBox(height: AppSpace.xxs),
+          Text(
+            'التالي: ${eval.nextPrayerName} ${formatPrayerTime12h(eval.nextPrayerTime!)}',
+            style: textTheme.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: palette.textMuted,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// ── Ribbon mode (short widget, height < 100) ───────────────────────────
+  Widget _buildRibbon(
+    AppPalette palette,
+    AppTextTheme textTheme,
+    EvaluatedPrayerWidgetState eval,
+    Color prayerColor,
+    Color bannerBg,
+    Color bannerBorder,
+    Color bannerText,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Prayer name + time (right side in RTL)
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eval.displayTitle,
+                style: textTheme.label.copyWith(fontWeight: FontWeight.w800, color: palette.text),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               Text(
                 eval.timePillLabel,
-                style: textTheme.label.copyWith(
+                style: textTheme.caption.copyWith(
                   fontWeight: FontWeight.w700,
                   color: prayerColor,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -199,37 +266,43 @@ class PrayerHomeScreenWidget extends StatelessWidget {
             ],
           ),
         ),
-
-        const SizedBox(width: AppSpace.xs),
-
-        // Left (End in RTL): Countdown Badge
+        const SizedBox(width: AppSpace.sm),
+        // Countdown badge (left side in RTL)
         Container(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xs,
-          ),
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
           decoration: BoxDecoration(
-            color: bannerBgColor,
+            color: bannerBg,
             borderRadius: AppRadius.smRadius,
-            border: Border.all(color: bannerBorderColor, width: 1),
+            border: Border.all(color: bannerBorder, width: 1),
           ),
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              eval.countdownFormatted,
-              style: textTheme.label.copyWith(
-                fontWeight: FontWeight.w900,
-                color: palette.text,
-                fontFeatures: const [FontFeature.tabularFigures()],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                eval.statusLabel,
+                style: textTheme.caption.copyWith(fontWeight: FontWeight.w600, color: bannerText),
+                maxLines: 1,
               ),
-            ),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  eval.countdownFormatted,
+                  style: textTheme.label.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: palette.text,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  static Map<String, DateTime> _buildFallbackPrayers(DateTime now) {
+  static Map<String, DateTime> _fallbackPrayers(DateTime now) {
     final base = DateTime(now.year, now.month, now.day);
     return {
       AppStrings.prayerFajr: base.add(const Duration(hours: 5, minutes: 2)),
