@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
+import 'features/ilm/data/services/quiz_dump_service.dart';
 import 'utils/ssl_helper_web.dart'
     if (dart.library.io) 'utils/ssl_helper_mobile.dart';
 
@@ -26,6 +27,7 @@ Future<void> main() async {
   unawaited(SharedPreferences.getInstance());
   unawaited(HomeWidgetService.initBackground());
   unawaited(NotificationService().init());
+  unawaited(QuizDumpService.instance.loadDump());
   if (kDebugMode) {
     enableBadCertificateCatcher();
   }

@@ -18,6 +18,7 @@ import '../data/models/shamela_models.dart';
 import '../data/services/book_progress_service.dart';
 import '../data/services/daily_reading_service.dart';
 import '../data/services/motivation_service.dart';
+import '../data/services/quiz_dump_service.dart';
 import 'pages/book_view_page.dart';
 import 'pages/fan_quiz_levels_page.dart';
 import 'pages/islamic_quiz_hub_page.dart';
@@ -113,6 +114,7 @@ class _IlmPageState extends State<IlmPage> {
     setState(() => _isLoading = true);
 
     try {
+      await QuizDumpService.instance.loadDump();
       final program = await AssetService.loadMutunProgram();
       final levels = program.levels..sort((a, b) => a.order.compareTo(b.order));
       final visibleLevels = levels.where((level) => !level.hidden).toList();
@@ -505,11 +507,8 @@ class _IlmPageState extends State<IlmPage> {
         if (_continueReadingBook != null && _selectedCategory == 'all')
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: AppSpace.lg,
-                end: AppSpace.lg,
-                bottom: AppSpace.md,
-              ),
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
               child: StudyResumePill(
                 continueReadingBook: _continueReadingBook,
                 recommendedFirstBook: _recommendedFirstBook,

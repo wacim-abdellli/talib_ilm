@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import '../models/islamic_quiz_models.dart';
@@ -38,6 +39,7 @@ class IslamicQuizCatalog {
   static List<FanQuiz> get founoun {
     final dumpService = QuizDumpService.instance;
     if (!dumpService.isLoaded) {
+      unawaited(dumpService.loadDump());
       return _baseFounoun;
     }
 

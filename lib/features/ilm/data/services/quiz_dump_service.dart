@@ -15,6 +15,7 @@ class QuizDumpService {
   final Map<String, List<QuizQuestion>> _dumpQuestionsByLevel = {};
   final Map<String, List<QuizQuestion>> _dumpQuestionsByFan = {};
   bool _isLoaded = false;
+  Future<void>? _loadingFuture;
 
   bool get isLoaded => _isLoaded;
 
@@ -36,6 +37,9 @@ class QuizDumpService {
 
   /// Loads questions directly from a JSON string. Returns count of loaded questions.
   int loadFromString(String jsonString) {
+    if (_isLoaded) {
+      return totalDumpQuestionsCount;
+    }
     try {
       final dynamic decoded = json.decode(jsonString);
       int loadedCount = 0;
@@ -43,6 +47,8 @@ class QuizDumpService {
       if (decoded is Map<String, dynamic>) {
         final questionsList = decoded['questions'] as List<dynamic>?;
         if (questionsList != null) {
+          _dumpQuestionsByLevel.clear();
+          _dumpQuestionsByFan.clear();
           for (final qJson in questionsList) {
             if (qJson is Map<String, dynamic>) {
               final question = QuizQuestion.fromJson(qJson);
@@ -73,13 +79,21 @@ class QuizDumpService {
   /// Loads the offline questions dump from assets/data/quiz_questions_dump.json
   Future<void> loadDump() async {
     if (_isLoaded) return;
+    if (_loadingFuture != null) return _loadingFuture!;
 
+    _loadingFuture = _doLoadDump();
+    return _loadingFuture!;
+  }
+
+  Future<void> _doLoadDump() async {
     try {
       final jsonString = await rootBundle.loadString(dumpAssetPath);
       loadFromString(jsonString);
     } catch (e) {
       debugPrint('QuizDumpService: dump asset load note: $e');
       _isLoaded = true;
+    } finally {
+      _loadingFuture = null;
     }
   }
 

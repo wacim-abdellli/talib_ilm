@@ -5,6 +5,7 @@ import 'package:talib_ilm/features/ilm/data/models/islamic_quiz_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/quiz_dump_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Quiz Question Serialization & Model Tests', () {
     test('QuizQuestion fromJson and toJson preserves all scholarly fields', () {
       final jsonMap = {
