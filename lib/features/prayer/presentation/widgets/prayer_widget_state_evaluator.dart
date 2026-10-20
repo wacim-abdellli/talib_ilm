@@ -251,12 +251,12 @@ class PrayerWidgetStateEvaluator {
     if (d.isNegative) return '00:00';
     final hours = d.inHours;
     final minutes = d.inMinutes % 60;
-    final seconds = d.inSeconds % 60;
 
     if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
     } else {
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      final safeMinutes = minutes == 0 ? 1 : minutes;
+      return '00:${safeMinutes.toString().padLeft(2, '0')}';
     }
   }
 }

@@ -51,6 +51,19 @@ class PrayerWidgetStandardView extends StatelessWidget {
                 spacing: AppSpace.xs,
                 runSpacing: AppSpace.xxs,
                 children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: prayerColor.withValues(alpha: 0.15),
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    child: Icon(
+                      eval.prayerIcon,
+                      size: AppIcon.xs,
+                      color: prayerColor,
+                    ),
+                  ),
                   Text(
                     eval.displayTitle,
                     style: textTheme.label.copyWith(
@@ -191,7 +204,9 @@ class WidgetPrayerStation extends StatelessWidget {
               prayerName,
               style: textTheme.caption.copyWith(
                 fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-                color: isCurrent ? palette.primary : palette.textMuted,
+                color: isCurrent
+                    ? palette.primary
+                    : (isPast ? palette.textSubtle : palette.textMuted),
               ),
               maxLines: 1,
             ),
@@ -228,7 +243,7 @@ class WidgetPrayerStation extends StatelessWidget {
                 timeStr,
                 style: textTheme.caption.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: palette.text,
+                  color: isPast ? palette.textSubtle : palette.text,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 maxLines: 1,

@@ -6,6 +6,7 @@ import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 import '../../../core/services/flip_to_stop_service.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -43,6 +44,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   final AdhanService _adhanService = AdhanService();
 
   AdhanSettings? _settings;
+  WidgetThemeMode _widgetThemeMode = WidgetThemeMode.dark;
   bool _loading = true;
   bool _saving = false;
 
@@ -61,9 +63,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
 
   Future<void> _load() async {
     final settings = await _settingsService.getSettings();
+    final mode = await HomeWidgetService.getThemeMode();
     if (!mounted) return;
     setState(() {
       _settings = settings;
+      _widgetThemeMode = mode;
       _loading = false;
     });
   }
@@ -190,6 +194,8 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                     isDark: isDark,
                     onSettingsChanged: _updateSettings,
                   ),
+                  const SizedBox(height: AppSpace.lg),
+                  _buildWidgetThemeSection(),
                 ],
               ),
             ),
@@ -375,6 +381,126 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetThemeSection() {
+    final palette = context.palette;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: 'مظهر ودجت الشاشة الرئيسية',
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
+            style: context.text.caption.copyWith(
+              color: palette.textMuted,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          _buildWidgetThemeOption(
+            title: 'داكن (أسود)',
+            subtitle: 'بطاقة سوداء أنيقة وموفرة للبطارية',
+            icon: Icons.dark_mode_rounded,
+            mode: WidgetThemeMode.dark,
+          ),
+          const SizedBox(height: AppSpace.sm),
+          _buildWidgetThemeOption(
+            title: 'فاتح (أبيض)',
+            subtitle: 'بطاقة بيضاء ناصعة بتصميم عصري وأنيق',
+            icon: Icons.light_mode_rounded,
+            mode: WidgetThemeMode.light,
+          ),
+          const SizedBox(height: AppSpace.sm),
+          _buildWidgetThemeOption(
+            title: 'تلقائي',
+            subtitle: 'يتبع مظهر الهاتف ووضع التطبيق تلقائياً',
+            icon: Icons.brightness_auto_rounded,
+            mode: WidgetThemeMode.auto,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetThemeOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required WidgetThemeMode mode,
+  }) {
+    final palette = context.palette;
+    final isSelected = _widgetThemeMode == mode;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          HapticFeedback.selectionClick();
+          setState(() => _widgetThemeMode = mode);
+          await HomeWidgetService.setThemeMode(mode);
+        },
+        borderRadius: AppRadius.mdRadius,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: isSelected ? palette.primarySoft : palette.surfaceMuted,
+            borderRadius: AppRadius.mdRadius,
+            border: Border.all(
+              color: isSelected ? palette.primary : palette.border,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.md,
+            vertical: AppSpace.sm,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? palette.primary : palette.textMuted,
+                  size: AppIcon.md,
+                ),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: context.text.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? palette.primary : palette.text,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: context.text.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: palette.primary,
+                    size: AppIcon.sm,
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

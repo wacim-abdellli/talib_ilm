@@ -74,7 +74,7 @@ class ForegroundPrayerService {
     _timer?.cancel();
     _initialTimer = Timer(const Duration(seconds: 1), _check); // ui-lint: allow service interval
     _timer = Timer.periodic(
-      const Duration(seconds: 30), // ui-lint: allow service interval
+      const Duration(seconds: 60), // ui-lint: allow service interval
       (_) => _check(),
     );
   }
