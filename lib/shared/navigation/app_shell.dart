@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
 import '../../core/services/adhkar_reminder_service.dart';
@@ -52,6 +53,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    themeService.addListener(_onThemeChanged);
     _currentIndex = widget.initialIndex.clamp(0, 4);
     _loadedTabs.add(_currentIndex);
     ForegroundPrayerService().start();
@@ -61,6 +63,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         NotificationOnboardingDialog.checkAndShow(context);
       }
     });
+  }
+
+  void _onThemeChanged() {
+    unawaited(HomeWidgetService.updatePrayerWidget());
   }
 
   @override
@@ -90,6 +96,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    themeService.removeListener(_onThemeChanged);
     WidgetsBinding.instance.removeObserver(this);
     ForegroundPrayerService().stop();
     FlipToStopService().dispose();

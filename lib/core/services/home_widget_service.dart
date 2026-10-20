@@ -5,12 +5,16 @@ import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
 import 'prayer_time_service.dart';
+import 'theme_service.dart';
 
 /// HomeWidgetService - Manages synchronization and off-screen rendering
 /// of the Android Phone Launcher Home Screen AppWidget.
 class HomeWidgetService {
   static const String androidWidgetName = 'PrayerWidgetProvider';
   static const String widgetImageKey = 'prayer_widget_image';
+
+  /// Standard 4x2 Home Screen Android widget dimensions
+  static const Size widgetLogicalSize = Size(380, 180);
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
@@ -22,20 +26,36 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
 
-      // Render the widget matching Pic 2 to PNG in application storage
+      // Resolve theme mode cleanly via AppTheme token provider
+      final themeService = ThemeService();
+      await themeService.loadTheme();
+      final themeData = AppTheme.resolveTheme(themeService.themeMode);
+
+
+      // Render the widget to PNG in application storage with crisp pixel ratio
       await HomeWidget.renderFlutterWidget(
-        Theme(
-          data: AppTheme.light(),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: PrayerHomeScreenWidget(
-              prayerDay: day,
-              referenceTime: now,
+        MediaQuery(
+          data: const MediaQueryData(
+            size: widgetLogicalSize,
+            devicePixelRatio: 3.0,
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Theme(
+            data: themeData,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: PrayerHomeScreenWidget(
+                prayerDay: day,
+                referenceTime: now,
+                width: widgetLogicalSize.width,
+                height: widgetLogicalSize.height,
+              ),
             ),
           ),
         ),
         key: widgetImageKey,
-        logicalSize: const Size(360, 195),
+        logicalSize: widgetLogicalSize,
+        pixelRatio: 3.0,
       );
 
       // Trigger the native Android AppWidget update

@@ -65,4 +65,73 @@ void main() {
       completes,
     );
   });
+
+  testWidgets('PrayerHomeScreenWidget has zero overflow under tight constraints and large text scaling', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 14, 0); // 2:00 PM, before Asr at 3:11 PM
+    final prayerDay = PrayerTimesDay(
+      city: 'الجزائر العاصمة',
+      date: DateTime(2026, 10, 20),
+      prayers: {
+        AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+        AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+        AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+        AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+        AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+      },
+      nextPrayer: AppStrings.prayerAsr,
+      nextPrayerTime: DateTime(2026, 10, 20, 15, 11),
+    );
+
+    // Test in tight 380x180 box
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 380,
+              height: 180,
+              child: PrayerHomeScreenWidget(
+                prayerDay: prayerDay,
+                referenceTime: fixedNow,
+                width: 380,
+                height: 180,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('صلاة العصر'), findsOneWidget);
+
+    // Test in even tighter 320x150 box with 1.5x text scale
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            textScaler: TextScaler.linear(1.5),
+          ),
+          child: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 320,
+                height: 150,
+                child: PrayerHomeScreenWidget(
+                  prayerDay: prayerDay,
+                  referenceTime: fixedNow,
+                  width: 320,
+                  height: 150,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -10,6 +10,13 @@ class AppTheme {
 
   static ThemeData dark() => darkTheme;
 
+  static ThemeData resolveTheme(ThemeMode mode) {
+    if (mode == ThemeMode.dark) return darkTheme;
+    if (mode == ThemeMode.light) return lightTheme;
+    final sys = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    return sys == Brightness.dark ? darkTheme : lightTheme;
+  }
+
   static ThemeData _buildTheme(AppPalette palette) {
     final text = AppTextTheme.fromPalette(palette);
     final brightness = palette.isDark ? Brightness.dark : Brightness.light;
