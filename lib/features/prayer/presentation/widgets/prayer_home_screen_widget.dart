@@ -12,6 +12,11 @@ export 'prayer_widget_standard_view.dart' show WidgetPrayerStation;
 
 /// PrayerHomeScreenWidget - Multi-size responsive representation of the
 /// Talib Ilm Prayer Card / Widget for Android Home Screen and Hero Card.
+///
+/// Size zones (matching Salaat First reference design):
+///   Ribbon  : height < 75dp   → 1-row  : [prayer name + time | countdown badge]
+///   Standard: height < 160dp  → 2-rows : [header] + [5-prayer strip]
+///   Tall    : height ≥ 160dp  → 3-rows : [hijri/city] + [hero card] + [5-prayer strip]
 class PrayerHomeScreenWidget extends StatelessWidget {
   final PrayerTimesDay? prayerDay;
   final DateTime? referenceTime;
@@ -28,7 +33,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     this.nextPrayerName,
     this.nextPrayerTime,
     this.width = 380,
-    this.height = 145,
+    this.height = 120,
   });
 
   @override
@@ -75,10 +80,10 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         break;
     }
 
-    // Size-adaptive layout modes
-    final isCompact = width < 260;
-    final isTall = width >= 260 && height >= 140;
-    final isRibbon = width >= 260 && height < 70;
+    // Size-adaptive layout: clear thresholds matching the reference app
+    final isRibbon = height < 75;
+    final isTall = height >= 160;
+    // Standard = everything else (75 ≤ height < 160)
 
     Widget content;
     if (isTall) {
@@ -91,16 +96,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         bannerBorderColor: bannerBorderColor,
         bannerTextColor: bannerTextColor,
         now: now,
-      );
-    } else if (isCompact) {
-      content = _buildCompactLayout(
-        palette: palette,
-        textTheme: textTheme,
-        eval: eval,
-        prayerColor: prayerColor,
-        bannerBgColor: bannerBgColor,
-        bannerBorderColor: bannerBorderColor,
-        bannerTextColor: bannerTextColor,
       );
     } else if (isRibbon) {
       content = _buildRibbonLayout(
@@ -124,8 +119,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
       );
     }
 
-    final innerWidth = width - (AppSpace.sm * 2);
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Material(
@@ -134,10 +127,10 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           width: width,
           height: height,
           padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpace.md,
             AppSpace.sm,
-            AppSpace.xs,
+            AppSpace.md,
             AppSpace.sm,
-            AppSpace.xs,
           ),
           decoration: BoxDecoration(
             color: palette.surfaceRaised,
@@ -147,12 +140,15 @@ class PrayerHomeScreenWidget extends StatelessWidget {
               width: 1.2,
             ),
           ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: isTall ? Alignment.center : Alignment.topCenter,
-            child: SizedBox(
-              width: innerWidth,
-              child: content,
+          // Use ClipRect + OverflowBox to let content fill naturally
+          // without FittedBox shrinking text to invisible
+          child: ClipRect(
+            child: Align(
+              alignment: AlignmentDirectional.topCenter,
+              child: SizedBox(
+                width: width - (AppSpace.md * 2),
+                child: content,
+              ),
             ),
           ),
         ),
@@ -160,144 +156,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     );
   }
 
-  /// ── Compact 2x2 Mode: Focused Single-Prayer Card ──
-  Widget _buildCompactLayout({
-    required AppPalette palette,
-    required AppTextTheme textTheme,
-    required EvaluatedPrayerWidgetState eval,
-    required Color prayerColor,
-    required Color bannerBgColor,
-    required Color bannerBorderColor,
-    required Color bannerTextColor,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 1. Header: [Medallion + Title] Centered
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: prayerColor.withValues(alpha: 0.14),
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(
-                  color: prayerColor.withValues(alpha: 0.35),
-                  width: 1.2,
-                ),
-              ),
-              child: Icon(
-                eval.prayerIcon,
-                color: prayerColor,
-                size: AppIcon.sm,
-              ),
-            ),
-            const SizedBox(width: AppSpace.xs),
-            Flexible(
-              child: Text(
-                eval.displayTitle,
-                style: textTheme.titleSmall.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: palette.text,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: AppSpace.xxs),
-
-        // 2. Large Centered Prayer Time
-        Center(
-          child: Text(
-            eval.timePillLabel,
-            style: textTheme.title.copyWith(
-              fontWeight: FontWeight.w900,
-              color: prayerColor,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: AppSpace.xxs),
-
-        // 3. Status & Countdown Badge
-        Container(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xxs + 1,
-          ),
-          decoration: BoxDecoration(
-            color: bannerBgColor,
-            borderRadius: AppRadius.smRadius,
-            border: Border.all(
-              color: bannerBorderColor,
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                eval.statusIcon,
-                size: AppIcon.xs,
-                color: bannerTextColor,
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Flexible(
-                child: Text(
-                  eval.statusLabel,
-                  style: textTheme.caption.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: bannerTextColor,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  eval.countdownFormatted,
-                  style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: palette.text,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // 4. Bottom: Next Prayer Preview
-        if (eval.nextPrayerName != null && eval.nextPrayerTime != null) ...[
-          const SizedBox(height: AppSpace.xxs),
-          Center(
-            child: Text(
-              'التالي: ${eval.nextPrayerName} ${formatPrayerTime12h(eval.nextPrayerTime!)}',
-              style: textTheme.caption.copyWith(
-                fontWeight: FontWeight.w700,
-                color: palette.textMuted,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// ── Ribbon 4x1 Mode: Streamlined Single Row ──
+  /// ── Ribbon 4x1 Mode: Single-row strip ──
   Widget _buildRibbonLayout({
     required AppPalette palette,
     required AppTextTheme textTheme,
@@ -311,55 +170,31 @@ class PrayerHomeScreenWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Right (Start in RTL): Medallion + Title + Time
-        Flexible(
+        // Right (Start in RTL): Prayer Title + Time
+        Expanded(
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: prayerColor.withValues(alpha: 0.14),
-                  borderRadius: AppRadius.mdRadius,
-                  border: Border.all(
-                    color: prayerColor.withValues(alpha: 0.35),
-                    width: 1.2,
+              Flexible(
+                child: Text(
+                  eval.displayTitle,
+                  style: textTheme.label.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: palette.text,
                   ),
-                ),
-                child: Icon(
-                  eval.prayerIcon,
-                  color: prayerColor,
-                  size: AppIcon.sm,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: AppSpace.xs),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      eval.displayTitle,
-                      style: textTheme.titleSmall.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: palette.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      eval.timePillLabel,
-                      style: textTheme.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: prayerColor,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+              Text(
+                eval.timePillLabel,
+                style: textTheme.label.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: prayerColor,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
+                maxLines: 1,
               ),
             ],
           ),
@@ -367,7 +202,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
 
         const SizedBox(width: AppSpace.xs),
 
-        // Left (End in RTL): Status Banner with Countdown
+        // Left (End in RTL): Countdown Badge
         Container(
           padding: const EdgeInsetsDirectional.symmetric(
             horizontal: AppSpace.sm,
@@ -376,40 +211,18 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: bannerBgColor,
             borderRadius: AppRadius.smRadius,
-            border: Border.all(
-              color: bannerBorderColor,
-              width: 1,
-            ),
+            border: Border.all(color: bannerBorderColor, width: 1),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                eval.statusIcon,
-                size: AppIcon.xs,
-                color: bannerTextColor,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              eval.countdownFormatted,
+              style: textTheme.label.copyWith(
+                fontWeight: FontWeight.w900,
+                color: palette.text,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              const SizedBox(width: AppSpace.xs),
-              Text(
-                eval.statusLabel,
-                style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: bannerTextColor,
-                ),
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  eval.countdownFormatted,
-                  style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: palette.text,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],

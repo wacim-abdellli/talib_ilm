@@ -247,16 +247,21 @@ class PrayerWidgetStateEvaluator {
     );
   }
 
+  /// Formats a Duration as MM:SS (or HH:MM:SS when hours > 0).
+  /// Always shows seconds so the widget ticks live every second.
   static String formatDuration(Duration d) {
     if (d.isNegative) return '00:00';
     final hours = d.inHours;
     final minutes = d.inMinutes % 60;
+    final seconds = d.inSeconds % 60;
+
+    final mm = minutes.toString().padLeft(2, '0');
+    final ss = seconds.toString().padLeft(2, '0');
 
     if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
-    } else {
-      final safeMinutes = minutes == 0 ? 1 : minutes;
-      return '00:${safeMinutes.toString().padLeft(2, '0')}';
+      final hh = hours.toString().padLeft(2, '0');
+      return '$hh:$mm:$ss';
     }
+    return '$mm:$ss';
   }
 }

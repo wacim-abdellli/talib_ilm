@@ -7,8 +7,11 @@ import '../../data/models/prayer_models.dart';
 import 'prayer_widget_standard_view.dart';
 import 'prayer_widget_state_evaluator.dart';
 
-/// PrayerWidgetTallView - Minimalist, sleek representation of the Prayer Card
-/// for expanded Android Home Screen AppWidget sizes (e.g. 4x2, 4x3, 4x4).
+/// PrayerWidgetTallView - Expanded 3-section layout for large widget sizes (height ≥ 160dp).
+///
+/// Section 1: Hijri date (right) + City (left)
+/// Section 2: Hero prayer card — icon + name + countdown badge, with large prayer time
+/// Section 3: 5-prayer horizontal strip
 class PrayerWidgetTallView extends StatelessWidget {
   final PrayerTimesDay? prayerDay;
   final EvaluatedPrayerWidgetState eval;
@@ -53,7 +56,7 @@ class PrayerWidgetTallView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── 1. Top Bar: Hijri Date on Right, Verified City on Left ──
+        // ── Section 1: Hijri date + City ───────────────────────────────────
         Row(
           children: [
             Icon(
@@ -79,24 +82,29 @@ class PrayerWidgetTallView extends StatelessWidget {
               size: AppIcon.xs,
               color: prayerColor,
             ),
-            const SizedBox(width: AppSpace.xs),
-            Text(
-              cityName,
-              style: textTheme.caption.copyWith(
-                fontWeight: FontWeight.w700,
-                color: palette.textMuted,
+            const SizedBox(width: 3),
+            Flexible(
+              child: Text(
+                cityName,
+                style: textTheme.caption.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: palette.textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
 
-        const SizedBox(height: AppSpace.md),
+        const SizedBox(height: AppSpace.sm),
 
-        // ── 2. Hero Centerpiece: Prominent Prayer Card ──
+        // ── Section 2: Hero Prayer Card ────────────────────────────────────
         Container(
-          padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.xs,
+          ),
           decoration: BoxDecoration(
             color: prayerColor.withValues(alpha: 0.08),
             borderRadius: AppRadius.mdRadius,
@@ -105,136 +113,107 @@ class PrayerWidgetTallView extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Row 1: Medallion + Title on Right, Countdown Badge on Left
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: prayerColor.withValues(alpha: 0.16),
-                      borderRadius: AppRadius.mdRadius,
-                      border: Border.all(
-                        color: prayerColor.withValues(alpha: 0.40),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Icon(
-                      eval.prayerIcon,
-                      color: prayerColor,
-                      size: AppIcon.sm,
-                    ),
+              // Prayer icon medallion
+              Container(
+                width: AppSize.tap * 0.75,
+                height: AppSize.tap * 0.75,
+                decoration: BoxDecoration(
+                  color: prayerColor.withValues(alpha: 0.16),
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: prayerColor.withValues(alpha: 0.40),
+                    width: 1.2,
                   ),
-                  const SizedBox(width: AppSpace.xs),
-                  Expanded(
-                    child: Text(
+                ),
+                child: Icon(
+                  eval.prayerIcon,
+                  color: prayerColor,
+                  size: AppIcon.sm,
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+
+              // Prayer name + large time
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
                       eval.displayTitle,
-                      style: textTheme.titleSmall.copyWith(
+                      style: textTheme.label.copyWith(
                         fontWeight: FontWeight.w900,
                         color: palette.text,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.xs,
-                        vertical: AppSpace.xxs,
+                    const SizedBox(height: 2),
+                    Text(
+                      eval.timePillLabel,
+                      style: textTheme.titleSmall.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: prayerColor,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
-                      decoration: BoxDecoration(
-                        color: bannerBgColor,
-                        borderRadius: AppRadius.smRadius,
-                        border: Border.all(
-                          color: bannerBorderColor,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            eval.statusIcon,
-                            size: AppIcon.xs,
-                            color: bannerTextColor,
-                          ),
-                          const SizedBox(width: AppSpace.xxs),
-                          Flexible(
-                            child: Text(
-                              eval.statusLabel,
-                              style: textTheme.caption.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: bannerTextColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.xxs),
-                          Flexible(
-                            child: Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Text(
-                                eval.countdownFormatted,
-                                style: textTheme.caption.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: palette.text,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      maxLines: 1,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
-              const SizedBox(height: AppSpace.xs),
+              const SizedBox(width: AppSpace.xs),
 
-              // Row 2: Prominent Prayer Time Display & Next Prayer
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    eval.timePillLabel,
-                    style: textTheme.title.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: prayerColor,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              // Countdown badge
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: AppSpace.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: bannerBgColor,
+                  borderRadius: AppRadius.smRadius,
+                  border: Border.all(
+                    color: bannerBorderColor,
+                    width: 1,
                   ),
-                  if (eval.nextPrayerName != null)
-                    Flexible(
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      eval.statusLabel,
+                      style: textTheme.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: bannerTextColor,
+                      ),
+                      maxLines: 1,
+                    ),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
                       child: Text(
-                        'التالي: ${eval.nextPrayerName}',
-                        style: textTheme.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: palette.textMuted,
+                        eval.countdownFormatted,
+                        style: textTheme.label.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: palette.text,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: AppSpace.md),
+        const SizedBox(height: AppSpace.sm),
 
-        // ── 3. Bottom Row: 5 Daily Prayer Stations Strip ──
+        // ── Section 3: 5 Prayer Stations Strip ────────────────────────────
         Row(
           children: AppStrings.prayerOrder.map((prayerName) {
             final isCurrent = eval.activePrayerName == prayerName;

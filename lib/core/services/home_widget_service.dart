@@ -39,7 +39,7 @@ class HomeWidgetService {
   static const String themeModeKey = 'prayer_widget_theme_mode';
 
   /// Standard 4x1 Home Screen Android widget dimensions (Salaat First style)
-  static const Size widgetLogicalSize = Size(380, 95);
+  static const Size widgetLogicalSize = Size(380, 120);
 
   /// In-memory cache key to prevent redundant screenshot rasterizations within the same minute and dimensions
   static String? _lastRenderKey;
@@ -111,20 +111,26 @@ class HomeWidgetService {
 
       // Dynamically adapt to user's launcher resize dimensions if available
       int targetW = 380;
-      int targetH = 95;
+      int targetH = 120;
       try {
         final rawW = await HomeWidget.getWidgetData<dynamic>('widget_width');
         final rawH = await HomeWidget.getWidgetData<dynamic>('widget_height');
         final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
         final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
         if (savedW != null && savedW >= 140) targetW = savedW.clamp(140, 480);
-        if (savedH != null && savedH >= 55) targetH = savedH.clamp(55, 240);
+        if (savedH != null && savedH >= 70) targetH = savedH.clamp(70, 280);
       } catch (_) {}
 
-      // Throttling key: Prevents redundant heavy screenshot rasterization within the exact same minute and dimensions
+      // Throttling key: Updates per-second for short countdowns, per-minute otherwise.
+      // This guarantees live second-by-second ticking on the home screen widget.
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-      final renderKey = '${day.city}_${now.hour}:${now.minute}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
+      final remaining = eval.targetPrayerTime.difference(now);
+      // Use second-resolution when < 1 hour remains so widget ticks live every second
+      final timeKey = remaining.inHours < 1
+          ? '${now.hour}:${now.minute}:${now.second}'
+          : '${now.hour}:${now.minute}';
+      final renderKey = '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
       if (!force && renderKey == _lastRenderKey) {
         return;
       }
