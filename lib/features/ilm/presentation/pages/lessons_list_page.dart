@@ -145,6 +145,7 @@ class _LessonsListPageState extends State<LessonsListPage> {
                   page: VideoPlayerPage(
                     title: lesson.title,
                     videoId: lesson.videoId,
+                    scholar: lesson.scholar,
                   ),
                 ),
               );

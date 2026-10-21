@@ -274,6 +274,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                 child: InAppWebView(
                   initialUrlRequest: URLRequest(
                     url: WebUri(embedUrl),
+                    headers: {
+                      'Referer': 'https://www.youtube.com/',
+                    },
                   ),
                   initialSettings: InAppWebViewSettings(
                     allowsInlineMediaPlayback: true,
@@ -281,6 +284,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     javaScriptEnabled: true,
                     transparentBackground: true,
                     supportZoom: false,
+                    userAgent:
+                        'Mozilla/5.0 (Linux; Android 11; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
                   ),
                 ),
               ),
