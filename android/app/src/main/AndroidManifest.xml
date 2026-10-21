@@ -73,20 +73,6 @@
         </receiver>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
 
-        <!-- Prayer Home Screen AppWidget Provider -->
-        <receiver
-            android:name=".PrayerWidgetProvider"
-            android:exported="true"
-            android:label="@string/prayer_widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.appwidget.action.APPWIDGET_OPTIONS_CHANGED" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/prayer_widget_info" />
-        </receiver>
-
         <!-- Ribbon 4x1 Widget Provider -->
         <receiver
             android:name=".RibbonWidgetProvider"
@@ -100,17 +86,17 @@
                 android:resource="@xml/widget_ribbon" />
         </receiver>
 
-        <!-- Standard 4x2 Widget Provider -->
+        <!-- Compact 2x2 Widget Provider -->
         <receiver
-            android:name=".StandardWidgetProvider"
+            android:name=".CompactWidgetProvider"
             android:exported="true"
-            android:label="@string/standard_widget_name">
+            android:label="@string/compact_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_standard" />
+                android:resource="@xml/widget_compact" />
         </receiver>
 
         <!-- Large 4x3 Widget Provider -->
@@ -124,19 +110,6 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_large" />
-        </receiver>
-
-        <!-- Compact 2x2 Widget Provider -->
-        <receiver
-            android:name=".CompactWidgetProvider"
-            android:exported="true"
-            android:label="@string/compact_widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_compact" />
         </receiver>
 
         <!-- HomeWidget background receiver and service for widget resizing and actions -->

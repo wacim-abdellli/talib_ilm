@@ -318,3 +318,28 @@ class WidgetCard extends StatelessWidget {
     );
   }
 }
+
+/// Helper returning the canonical celestial icon for an Arabic prayer name.
+IconData iconForPrayer(String name) {
+  final p = name.trim();
+  if (p.contains('الجمعة')) {
+    return Icons.mosque_rounded;
+  }
+  if (p.contains(AppStrings.prayerFajr) || p == 'الفجر') {
+    return Icons.wb_twilight_rounded;
+  }
+  if (p.contains(AppStrings.prayerDhuhr) || p == 'الظهر') {
+    return Icons.wb_sunny_rounded;
+  }
+  if (p.contains(AppStrings.prayerAsr) || p == 'العصر') {
+    return Icons.sunny_snowing;
+  }
+  if (p.contains(AppStrings.prayerMaghrib) || p == 'المغرب') {
+    return Icons.nights_stay_rounded;
+  }
+  if (p.contains(AppStrings.prayerIsha) || p == 'العشاء') {
+    return Icons.nightlight_round;
+  }
+  return Icons.access_time_rounded;
+}
+

@@ -52,7 +52,6 @@ class HomeWidgetService {
   static String? _lastStandardRenderKey;
   static String? _lastLargeRenderKey;
   static String? _lastCompactRenderKey;
-  static bool? _cachedIsDark;
   static PrayerTimesDay? _cachedPrayerDay;
 
   /// Invalidates the render cache to force immediate redraw on resize or theme changes
@@ -62,7 +61,6 @@ class HomeWidgetService {
     _lastStandardRenderKey = null;
     _lastLargeRenderKey = null;
     _lastCompactRenderKey = null;
-    _cachedIsDark = null;
     _cachedPrayerDay = null;
   }
 
@@ -271,29 +269,19 @@ class HomeWidgetService {
   }
 
   static Future<bool> _resolveWidgetIsDark() async {
-    if (_cachedIsDark != null) return _cachedIsDark!;
     try {
       final prefs = await SharedPreferences.getInstance();
       final modeStr = prefs.getString(themeModeKey);
-      if (modeStr == 'light') {
-        _cachedIsDark = false;
-        return false;
-      }
-      if (modeStr == 'dark') {
-        _cachedIsDark = true;
-        return true;
-      }
+      if (modeStr == 'light') return false;
+      if (modeStr == 'dark') return true;
+
       final appTheme = prefs.getString('theme_mode');
-      if (appTheme == 'light') {
-        _cachedIsDark = false;
-        return false;
-      }
-      if (appTheme == 'dark') {
-        _cachedIsDark = true;
-        return true;
+      if (appTheme == 'light') return false;
+      if (appTheme == 'dark') return true;
+      if (appTheme == 'system') {
+        return AppTheme.isSystemDark();
       }
     } catch (_) {}
-    _cachedIsDark = true;
     return true;
   }
 
@@ -468,7 +456,7 @@ class HomeWidgetService {
     }
   }
 
-  /// Updates all 4 fixed-size Android widgets simultaneously.
+  /// Updates all 3 fixed-size Android widgets simultaneously.
   static Future<void> updateAllWidgets({
     PrayerTimesDay? prayerDay,
     DateTime? referenceTime,
@@ -477,11 +465,9 @@ class HomeWidgetService {
     final day = await _resolvePrayerDay(prayerDay);
     final now = referenceTime ?? DateTime.now();
     await Future.wait([
-      updatePrayerWidget(prayerDay: day, referenceTime: now, force: force),
       updateRibbon(prayerDay: day, referenceTime: now, force: force),
-      updateStandard(prayerDay: day, referenceTime: now, force: force),
-      updateLarge(prayerDay: day, referenceTime: now, force: force),
       updateCompact(prayerDay: day, referenceTime: now, force: force),
+      updateLarge(prayerDay: day, referenceTime: now, force: force),
     ]);
   }
 }
