@@ -238,7 +238,7 @@ class HomeWidgetService {
         MediaQuery(
           data: const MediaQueryData(
             size: resolvedSize,
-            devicePixelRatio: 2.0,
+            devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
@@ -256,7 +256,7 @@ class HomeWidgetService {
         ),
         key: 'prayer_ribbon_widget',
         logicalSize: resolvedSize,
-        pixelRatio: 2.0,
+        pixelRatio: 2.5,
       );
 
       await HomeWidget.updateWidget(
@@ -370,7 +370,7 @@ class HomeWidgetService {
         MediaQuery(
           data: const MediaQueryData(
             size: resolvedSize,
-            devicePixelRatio: 2.0,
+            devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
@@ -389,7 +389,7 @@ class HomeWidgetService {
         ),
         key: 'prayer_large_widget',
         logicalSize: resolvedSize,
-        pixelRatio: 2.0,
+        pixelRatio: 2.5,
       );
 
       await HomeWidget.updateWidget(
@@ -428,7 +428,7 @@ class HomeWidgetService {
         MediaQuery(
           data: const MediaQueryData(
             size: resolvedSize,
-            devicePixelRatio: 2.0,
+            devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
@@ -444,7 +444,7 @@ class HomeWidgetService {
         ),
         key: 'prayer_compact_widget',
         logicalSize: resolvedSize,
-        pixelRatio: 2.0,
+        pixelRatio: 2.5,
       );
 
       await HomeWidget.updateWidget(

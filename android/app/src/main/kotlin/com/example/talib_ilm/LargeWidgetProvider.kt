@@ -60,7 +60,7 @@ class LargeWidgetProvider : AppWidgetProvider() {
                     BitmapFactory.decodeFile(imagePath, boundsOptions)
 
                     var sampleSize = 1
-                    while ((boundsOptions.outWidth / sampleSize) * (boundsOptions.outHeight / sampleSize) * 4 > 750_000) {
+                    while ((boundsOptions.outWidth / sampleSize) * (boundsOptions.outHeight / sampleSize) * 4 > 2_000_000) {
                         sampleSize *= 2
                     }
 

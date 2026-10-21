@@ -7,12 +7,12 @@ import 'prayer_widget_state_evaluator.dart';
 import 'widget_shared_components.dart';
 
 const double kLargeW = 360.0;
-const double kLargeH = 240.0;
-const double kLargePadH = AppSpace.md; // 12dp
-const double kLargePadV = AppSpace.md; // 12dp
+const double kLargeH = 175.0;
+const double kLargePadH = AppSpace.sm; // 8dp
+const double kLargePadV = AppSpace.xs; // 4dp
 const double kLargeBorder = 1.0;
 const double kLargeContent =
-    kLargeW - (kLargePadH * 2) - (kLargeBorder * 2); // 334dp
+    kLargeW - (kLargePadH * 2) - (kLargeBorder * 2); // 342dp
 
 /// Large widget (4×3) — 360×240dp fixed canvas.
 /// Designed to match the app's flagship HomeHeroCard (Pic 2):
@@ -46,7 +46,7 @@ class WidgetLarge extends StatelessWidget {
         isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kLargePadH,
-          vertical: AppSpace.sm,
+          vertical: kLargePadV,
         ),
         child: Builder(
           builder: (ctx) {
