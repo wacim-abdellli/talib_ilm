@@ -6,6 +6,8 @@ class Lesson {
   final String videoId;
   final int durationMinutes;
   final String? scholar;
+  final String? playlistId;
+  final String? url;
 
   const Lesson({
     required this.index,
@@ -13,6 +15,8 @@ class Lesson {
     required this.videoId,
     required this.durationMinutes,
     this.scholar,
+    this.playlistId,
+    this.url,
   });
 
   /// TEMP generator until API / real data

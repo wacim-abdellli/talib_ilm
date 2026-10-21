@@ -13,6 +13,7 @@ import '../../../../shared/widgets/app_popup.dart';
 import '../../../../shared/widgets/app_states.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 import '../../../../shared/widgets/video_player_page.dart';
+import '../../data/catalogs/mutun_lessons_catalog.dart';
 import '../../data/models/lesson_model.dart';
 import '../../data/models/progress_models.dart';
 
@@ -39,6 +40,7 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
   final LastActivityService _lastActivityService = LastActivityService();
   final ScrollController _scrollController = ScrollController();
   int _completedLessons = 0;
+  String? _selectedScholar;
 
   @override
   void initState() {
@@ -111,6 +113,7 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
           title: lesson.title,
           videoId: lesson.videoId,
           scholar: lesson.scholar,
+          playlistId: lesson.playlistId,
         ),
       ),
     );
@@ -118,6 +121,20 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
     if (watched == true && lesson.index >= _completedLessons) {
       await _toggleLessonStatus(lesson.index);
     }
+  }
+
+  void _openFullPlaylist(String playlistId, String scholar) {
+    Navigator.push(
+      context,
+      buildFadeRoute(
+        page: VideoPlayerPage(
+          title: 'قائمة تشغيل: $scholar',
+          videoId: playlistId,
+          scholar: scholar,
+          playlistId: playlistId,
+        ),
+      ),
+    );
   }
 
   @override
@@ -141,11 +158,19 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
       );
     }
 
+    final scholars = MutunLessonsCatalog.getScholarsForBook(widget.bookId);
+    final displayLessons = _selectedScholar == null
+        ? widget.lessons
+        : widget.lessons.where((l) => l.scholar == _selectedScholar).toList();
+
     final totalLessons = widget.lessons.length;
     final progressFraction = totalLessons > 0
         ? (_completedLessons / totalLessons).clamp(0.0, 1.0)
         : 0.0;
-    final scholarName = widget.lessons.first.scholar;
+    final headerScholar = _selectedScholar ?? (scholars.isNotEmpty ? scholars.first : widget.lessons.first.scholar);
+    final activePlaylistId = _selectedScholar != null
+        ? MutunLessonsCatalog.getPlaylistForScholar(widget.bookId, _selectedScholar!)
+        : (widget.lessons.first.playlistId);
 
     return Column(
       children: [
@@ -175,8 +200,8 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            scholarName != null && scholarName.isNotEmpty
-                                ? 'شرح $scholarName'
+                            headerScholar != null && headerScholar.isNotEmpty
+                                ? 'شرح $headerScholar'
                                 : 'الدروس العلمية المصورة',
                             style: context.text.titleSmall,
                             maxLines: 1,
@@ -236,6 +261,132 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
           ),
         ),
 
+        // ── Scholars Selector Chips (When Multiple Scholars Available) ──
+        if (scholars.length > 1) ...[
+          const SizedBox(height: AppSpace.sm),
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.xl,
+            ),
+            child: SizedBox(
+              height: 38,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  ChoiceChip(
+                    label: const Text('جميع الشروح'),
+                    selected: _selectedScholar == null,
+                    onSelected: (selected) {
+                      if (selected) setState(() => _selectedScholar = null);
+                    },
+                    selectedColor: palette.primarySoft,
+                    labelStyle: context.text.caption.copyWith(
+                      color: _selectedScholar == null
+                          ? palette.primary
+                          : palette.textMuted,
+                      fontWeight: _selectedScholar == null
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    backgroundColor: palette.surfaceRaised,
+                    side: BorderSide(
+                      color: _selectedScholar == null
+                          ? palette.primary
+                          : palette.border,
+                      width: 1,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  ...scholars.map((scholar) {
+                    final isSelected = _selectedScholar == scholar;
+                    return Padding(
+                      padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
+                      child: ChoiceChip(
+                        label: Text(scholar),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() => _selectedScholar = selected ? scholar : null);
+                        },
+                        selectedColor: palette.primarySoft,
+                        labelStyle: context.text.caption.copyWith(
+                          color: isSelected ? palette.primary : palette.textMuted,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        backgroundColor: palette.surfaceRaised,
+                        side: BorderSide(
+                          color: isSelected ? palette.primary : palette.border,
+                          width: 1,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ],
+
+        // ── Playlist Shortcut Button ──
+        if (activePlaylistId != null && activePlaylistId.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.xs),
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.xl,
+            ),
+            child: Semantics(
+              button: true,
+              label: 'مشاهدة قائمة التشغيل الكاملة',
+              child: InkWell(
+                onTap: () => _openFullPlaylist(
+                  activePlaylistId,
+                  headerScholar ?? widget.bookTitle,
+                ),
+                borderRadius: AppRadius.mdRadius,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(
+                      color: palette.gold.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.playlist_play_rounded,
+                        color: palette.gold,
+                        size: AppIcon.md,
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: Text(
+                          'تشغيل قائمة السلسلة كاملة على يوتيوب (${headerScholar ?? 'الشرح'})',
+                          style: context.text.caption.copyWith(
+                            color: palette.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: palette.gold,
+                        size: AppIcon.xs,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+
         const SizedBox(height: AppSpace.sm),
 
         // ── Lessons List ──
@@ -243,11 +394,11 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-            itemCount: widget.lessons.length,
+            itemCount: displayLessons.length,
             separatorBuilder: (context, index) =>
                 const SizedBox(height: AppSpace.md),
             itemBuilder: (context, index) {
-              final lesson = widget.lessons[index];
+              final lesson = displayLessons[index];
               final isDone = index < _completedLessons;
               final isCurrent = !isDone && index == _completedLessons;
 

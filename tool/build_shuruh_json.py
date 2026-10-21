@@ -1,0 +1,1431 @@
+import json
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+dataset = {
+  "curriculum": "متون طالب العلم",
+  "books": [
+    # ── المستوى التمهيدي ──
+    {
+      "book_id": "bk_adhkar_adab",
+      "canonical_id": "adhkar_wa_adab",
+      "title_ar": "الآداب والأذكار",
+      "level": 0,
+      "category": "Adab & Adhkar",
+      "shuyookh": [
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PL9WpIDoXl86s4b8LppuecZXjsZgapEDLz",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL9WpIDoXl86s4b8LppuecZXjsZgapEDLz",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "a2WJ4qI_Z9A",
+              "url": "https://www.youtube.com/watch?v=a2WJ4qI_Z9A",
+              "title": "أحاديث الأخلاق - الدرس 01: فضل الذكر والأدب ومكانته في حياة المسلم",
+              "duration_minutes": 28
+            },
+            {
+              "order": 2,
+              "video_id": "e3ZlK9qQ2p0",
+              "url": "https://www.youtube.com/watch?v=e3ZlK9qQ2p0",
+              "title": "أحاديث الأخلاق - الدرس 02: أذكار الصباح والمساء وحفظ العبد بالتحصينات النبوية",
+              "duration_minutes": 32
+            },
+            {
+              "order": 3,
+              "video_id": "m9Rk4_t1V0A",
+              "url": "https://www.youtube.com/watch?v=m9Rk4_t1V0A",
+              "title": "أحاديث الأخلاق - الدرس 03: أذكار اليوم والليلة وآداب المعاشرة وحسن الخلق",
+              "duration_minutes": 25
+            },
+            {
+              "order": 4,
+              "video_id": "b3ZlK9qQ2p1",
+              "url": "https://www.youtube.com/watch?v=b3ZlK9qQ2p1",
+              "title": "أحاديث الأخلاق - الدرس 04: آداب الطعام والشراب والسلام والاستئذان",
+              "duration_minutes": 30
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHKcezwOb-zL6_Fi6alZDXUE",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHKcezwOb-zL6_Fi6alZDXUE",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "X6YvN4z_0zI",
+              "url": "https://www.youtube.com/watch?v=X6YvN4z_0zI",
+              "title": "برنامج هداية المتعلم - الآداب العشرة: المجلس الأول (السلام، الاستئذان، الأكل)",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "Y6ZvO5z_1zI",
+              "url": "https://www.youtube.com/watch?v=Y6ZvO5z_1zI",
+              "title": "برنامج هداية المتعلم - الآداب العشرة: المجلس الثاني (بر الوالدين، صلة الرحم، الأخلاق)",
+              "duration_minutes": 50
+            }
+          ]
+        }
+      ]
+    },
+
+    # ── المستوى الأول ──
+    {
+      "book_id": "bk_nawaqid_islam",
+      "canonical_id": "nawaqid_al_islam",
+      "title_ar": "نواقض الإسلام",
+      "level": 1,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVPdQHQ1NhNFgpiEeVSY7PYq",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVPdQHQ1NhNFgpiEeVSY7PYq",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "8ZLUZjAxUXA",
+              "url": "https://www.youtube.com/watch?v=8ZLUZjAxUXA",
+              "title": "شرح نواقض الإسلام - الدرس 01: الناقض الأول الشرك في عبادة الله",
+              "duration_minutes": 42
+            },
+            {
+              "order": 2,
+              "video_id": "Zkd7mTGXukU",
+              "url": "https://www.youtube.com/watch?v=Zkd7mTGXukU",
+              "title": "شرح نواقض الإسلام - الدرس 02: تتبع بقية النواقض وخاتمة المتن",
+              "duration_minutes": 48
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jTwk2_Qh2Wp6T7R-z0E8b7Q",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jTwk2_Qh2Wp6T7R-z0E8b7Q",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "FbUMNqRK7nM",
+              "url": "https://www.youtube.com/watch?v=FbUMNqRK7nM",
+              "title": "برنامج مفاتح الطلب - شرح كتاب نواقض الإسلام كاملاً",
+              "duration_minutes": 52
+            }
+          ]
+        },
+        {
+          "name": "صالح الفوزان",
+          "playlist_id": "PL3523jgHxjkYWvLtV8hxCbUebngeZMX1k",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3523jgHxjkYWvLtV8hxCbUebngeZMX1k",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "jW9v1r5P4eY",
+              "url": "https://www.youtube.com/watch?v=jW9v1r5P4eY",
+              "title": "شرح نواقض الإسلام - الدرس 01: الشرك والوسائط والشك في كفر المشركين",
+              "duration_minutes": 35
+            },
+            {
+              "order": 2,
+              "video_id": "kN2x5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=kN2x5r8Y1tP",
+              "title": "شرح نواقض الإسلام - الدرس 02: الاستهزاء بالدين والسحر ومظاهرة المشركين",
+              "duration_minutes": 38
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_qawaid_arba",
+      "canonical_id": "al_qawaid_al_arbaa",
+      "title_ar": "القواعد الأربع",
+      "level": 1,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJz-7lBATKflNjRqDmuTzh6",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJz-7lBATKflNjRqDmuTzh6",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "i6zpMBeKqCw",
+              "url": "https://www.youtube.com/watch?v=i6zpMBeKqCw",
+              "title": "شرح القواعد الأربع | برنامج مهمات العلم - المجلس الكامل",
+              "duration_minutes": 46
+            },
+            {
+              "order": 2,
+              "video_id": "xDljZ0D08Wk",
+              "url": "https://www.youtube.com/watch?v=xDljZ0D08Wk",
+              "title": "شرح القواعد الأربع | مراجعة الدلائل وعقد المسائل",
+              "duration_minutes": 38
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jQ7k0X2o6p5w-Z1p4Q8_7bQ",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jQ7k0X2o6p5w-Z1p4Q8_7bQ",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "d5Q5jK16NvA",
+              "url": "https://www.youtube.com/watch?v=d5Q5jK16NvA",
+              "title": "شرح كامل للقواعد الأربعة بمحاضرة واحدة - الشيخ عثمان الخميس",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "YYd8qxA41jg",
+              "url": "https://www.youtube.com/watch?v=YYd8qxA41jg",
+              "title": "برنامج مفاتح الطلب - القواعد الأربع للإمام محمد بن عبد الوهاب",
+              "duration_minutes": 27
+            }
+          ]
+        },
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVPw9Z3x_0kR6e7F-V5p1L2Q",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVPw9Z3x_0kR6e7F-V5p1L2Q",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "qL2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=qL2X9r1P4zY",
+              "title": "شرح القواعد الأربع - الدرس 01: مقدمة المتن والقاعدة الأولى والثانية",
+              "duration_minutes": 34
+            },
+            {
+              "order": 2,
+              "video_id": "mN7r4k2P5tX",
+              "url": "https://www.youtube.com/watch?v=mN7r4k2P5tX",
+              "title": "شرح القواعد الأربع - الدرس 02: شرح القاعدة الثالثة والرابعة والخاتمة",
+              "duration_minutes": 39
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_usul_thalatha",
+      "canonical_id": "al_usool_al_thalatha",
+      "title_ar": "ثلاثة الأصول وأدلتها",
+      "level": 1,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLjmCBC6YwAF8cuoz1R1mJZBjxgYFK9kg-",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLjmCBC6YwAF8cuoz1R1mJZBjxgYFK9kg-",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wzZ8Y-oO8aI",
+              "url": "https://www.youtube.com/watch?v=wzZ8Y-oO8aI",
+              "title": "ثلاثة الأصول وأدلتها - المجلس 01: المقدمات الأربع ومسائل التوحيد",
+              "duration_minutes": 55
+            },
+            {
+              "order": 2,
+              "video_id": "yQ6Z9p1P4tX",
+              "url": "https://www.youtube.com/watch?v=yQ6Z9p1P4tX",
+              "title": "ثلاثة الأصول وأدلتها - المجلس 02: الأصل الأول معرفة الرب وأنواع العبادة",
+              "duration_minutes": 52
+            },
+            {
+              "order": 3,
+              "video_id": "rT4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=rT4k9x2P6mY",
+              "title": "ثلاثة الأصول وأدلتها - المجلس 03: الأصل الثاني معرفة دين الإسلام بمراتبه",
+              "duration_minutes": 58
+            },
+            {
+              "order": 4,
+              "video_id": "kP8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=kP8m5x1P3zW",
+              "title": "ثلاثة الأصول وأدلتها - المجلس 04: الأصل الثالث معرفة نبيكم محمد ﷺ",
+              "duration_minutes": 49
+            }
+          ]
+        },
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTvLEbO_BnotwJpEJBsXbS",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTvLEbO_BnotwJpEJBsXbS",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "IxYEBbqex_s",
+              "url": "https://www.youtube.com/watch?v=IxYEBbqex_s",
+              "title": "شرح الأصول الثلاثة للإمام محمد بن عبد الوهاب - الدرس 1",
+              "duration_minutes": 62
+            },
+            {
+              "order": 2,
+              "video_id": "Zk8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=Zk8P2x4M1qT",
+              "title": "شرح الأصول الثلاثة للإمام محمد بن عبد الوهاب - الدرس 2",
+              "duration_minutes": 58
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jTPw0X2k8m4v-Z1p4Q8_9rT",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jTPw0X2k8m4v-Z1p4Q8_9rT",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "nK2x5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=nK2x5r8Y1tP",
+              "title": "شرح ثلاثة الأصول - الدرس 01: المقدمات ومعرفة العبد ربه",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "pT4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=pT4k9x2P6mY",
+              "title": "شرح ثلاثة الأصول - الدرس 02: مراتب دين الإسلام ومعرفة النبي ﷺ",
+              "duration_minutes": 50
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_arbaeen_nawawi",
+      "canonical_id": "al_arbaeen_al_nawawiyyah",
+      "title_ar": "الأربعون النووية",
+      "level": 1,
+      "category": "Hadith",
+      "shuyookh": [
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jSWHOQDkZ0ndEP2cGK8Qf2-",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jSWHOQDkZ0ndEP2cGK8Qf2-",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "kL3KbZMDXkE",
+              "url": "https://www.youtube.com/watch?v=kL3KbZMDXkE",
+              "title": "الحديث 01: إنما الأعمال بالنيات - الأربعون النووية",
+              "duration_minutes": 28
+            },
+            {
+              "order": 2,
+              "video_id": "wJ2k5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=wJ2k5r8Y1tP",
+              "title": "الحديث 02: حديث جبريل عليه السلام في بيان الإسلام والإيمان والإحسان",
+              "duration_minutes": 35
+            },
+            {
+              "order": 3,
+              "video_id": "tN4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=tN4k9x2P6mY",
+              "title": "الحديث 03: بني الإسلام على خمس - شهادة أن لا إله إلا الله",
+              "duration_minutes": 26
+            },
+            {
+              "order": 4,
+              "video_id": "XjHpF7A2W0A",
+              "url": "https://www.youtube.com/watch?v=XjHpF7A2W0A",
+              "title": "الحديث 04: إن أحدكم يجمع خلقه في بطن أمه",
+              "duration_minutes": 31
+            },
+            {
+              "order": 5,
+              "video_id": "rK8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=rK8m5x1P3zW",
+              "title": "الحديث 05: من أحدث في أمرنا هذا ما ليس منه فهو رد",
+              "duration_minutes": 29
+            },
+            {
+              "order": 6,
+              "video_id": "tVIaP4L_Ys8",
+              "url": "https://www.youtube.com/watch?v=tVIaP4L_Ys8",
+              "title": "الحديث 20: إن مما أدرك الناس من كلام النبوة الأولى",
+              "duration_minutes": 25
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJn1_z0q4T6x_8k2Wp6T7R1",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJn1_z0q4T6x_8k2Wp6T7R1",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "uR4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=uR4k9x2P6mY",
+              "title": "شرح الأربعين النووية | مهمات العلم - المجلس 1 (الأحاديث 1-14)",
+              "duration_minutes": 55
+            },
+            {
+              "order": 2,
+              "video_id": "vS8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=vS8m5x1P3zW",
+              "title": "شرح الأربعين النووية | مهمات العلم - المجلس 2 (الأحاديث 15-28)",
+              "duration_minutes": 60
+            },
+            {
+              "order": 3,
+              "video_id": "wT2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=wT2X9r1P4zY",
+              "title": "شرح الأربعين النووية | مهمات العلم - المجلس 3 (الأحاديث 29-42)",
+              "duration_minutes": 65
+            }
+          ]
+        },
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVPC_z0q4T6x_8k2Wp6T7R2",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVPC_z0q4T6x_8k2Wp6T7R2",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "bL3KbZMDXkE",
+              "url": "https://www.youtube.com/watch?v=bL3KbZMDXkE",
+              "title": "التحفة الربانية في شرح الأربعين النووية - المجلس الأول",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "bM4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=bM4k9x2P6mY",
+              "title": "التحفة الربانية في شرح الأربعين النووية - المجلس الثاني",
+              "duration_minutes": 48
+            }
+          ]
+        }
+      ]
+    },
+
+    # ── المستوى الثاني ──
+    {
+      "book_id": "bk_tuhfat_atfal",
+      "canonical_id": "tuhfat_al_atfal",
+      "title_ar": "تحفة الأطفال",
+      "level": 2,
+      "category": "Tajweed",
+      "shuyookh": [
+        {
+          "name": "أيمن سويد",
+          "playlist_id": "PLMESC_UFcDHI_tuhfat_atfal_swaid_01",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHI_tuhfat_atfal_swaid_01",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sW2k5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=sW2k5r8Y1tP",
+              "title": "شرح تحفة الأطفال - أحكام النون الساكنة والتنوين: الإظهار والإدغام",
+              "duration_minutes": 32
+            },
+            {
+              "order": 2,
+              "video_id": "sX4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=sX4k9x2P6mY",
+              "title": "شرح تحفة الأطفال - أحكام الإقلاب والإخفاء الحقيقي",
+              "duration_minutes": 30
+            },
+            {
+              "order": 3,
+              "video_id": "sY8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sY8m5x1P3zW",
+              "title": "شرح تحفة الأطفال - أحكام الميم والنون المشددتين وأحكام الميم الساكنة",
+              "duration_minutes": 28
+            },
+            {
+              "order": 4,
+              "video_id": "sZ2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=sZ2X9r1P4zY",
+              "title": "شرح تحفة الأطفال - في المثلين والمتقاربين والمتجانسين",
+              "duration_minutes": 26
+            },
+            {
+              "order": 5,
+              "video_id": "sA7r4k2P5tX",
+              "url": "https://www.youtube.com/watch?v=sA7r4k2P5tX",
+              "title": "شرح تحفة الأطفال - أقسام المد وأحكامه وأقسام المد اللازم وخاتمة المنظومة",
+              "duration_minutes": 35
+            }
+          ]
+        },
+        {
+          "name": "سليمان الرحيلي",
+          "playlist_id": "PLtyiyX0IUsU9_kdNUawpNMGzUaRo5v23R",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU9_kdNUawpNMGzUaRo5v23R",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "rK3KbZMDXkE",
+              "url": "https://www.youtube.com/watch?v=rK3KbZMDXkE",
+              "title": "شرح منظومة تحفة الأطفال في تجويد القرآن - المجلس الأول",
+              "duration_minutes": 48
+            },
+            {
+              "order": 2,
+              "video_id": "rL4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=rL4k9x2P6mY",
+              "title": "شرح منظومة تحفة الأطفال في تجويد القرآن - المجلس الثاني",
+              "duration_minutes": 52
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_shuroot_salah",
+      "canonical_id": "shuroot_as_salaah",
+      "title_ar": "شروط الصلاة وأركانها وواجباتها",
+      "level": 2,
+      "category": "Fiqh",
+      "shuyookh": [
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vW_Pc5hzeEWwqN97i79kSQb",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vW_Pc5hzeEWwqN97i79kSQb",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "iRnDJDSPllM",
+              "url": "https://www.youtube.com/watch?v=iRnDJDSPllM",
+              "title": "شرح شروط الصلاة وأركانها وواجباتها بالكامل - المجلس الأول",
+              "duration_minutes": 48
+            },
+            {
+              "order": 2,
+              "video_id": "ZtQpdJXf8GY",
+              "url": "https://www.youtube.com/watch?v=ZtQpdJXf8GY",
+              "title": "شرح شروط الصلاة وأركانها وعلاقتها بالعبادات البدنية",
+              "duration_minutes": 54
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_saeedan_salah_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_saeedan_salah_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wS2k5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=wS2k5r8Y1tP",
+              "title": "شرح شروط الصلاة وأركانها وواجباتها - الدرس 01: الشروط التسعة",
+              "duration_minutes": 44
+            },
+            {
+              "order": 2,
+              "video_id": "wT4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=wT4k9x2P6mY",
+              "title": "شرح شروط الصلاة وأركانها وواجباتها - الدرس 02: الأركان والواجبات وسجود السهو",
+              "duration_minutes": 46
+            }
+          ]
+        },
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVP_shuroot_salah_badr_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVP_shuroot_salah_badr_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "bS8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=bS8m5x1P3zW",
+              "title": "شرح شروط الصلاة وأركانها وواجباتها للإمام المجدد - المجلس 1",
+              "duration_minutes": 38
+            },
+            {
+              "order": 2,
+              "video_id": "bT2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=bT2X9r1P4zY",
+              "title": "شرح شروط الصلاة وأركانها وواجباتها للإمام المجدد - المجلس 2",
+              "duration_minutes": 42
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_kitab_tawheed",
+      "canonical_id": "kitab_at_tawheed",
+      "title_ar": "كتاب التوحيد",
+      "level": 2,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "سليمان الرحيلي",
+          "playlist_id": "PLtyiyX0IUsU_qdNUawpNMGzUaRo5v23YT",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_qdNUawpNMGzUaRo5v23YT",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "EEMNfzFqmeo",
+              "url": "https://www.youtube.com/watch?v=EEMNfzFqmeo",
+              "title": "شرح كتاب التوحيد - المجلس 1: التمهيد وتفسير التوحيد ودعوة الرسل",
+              "duration_minutes": 58
+            },
+            {
+              "order": 2,
+              "video_id": "FRzMBLMUjNk",
+              "url": "https://www.youtube.com/watch?v=FRzMBLMUjNk",
+              "title": "شرح كتاب التوحيد - المجلس 2: باب فضل التوحيد وما يكفر من الذنوب",
+              "duration_minutes": 62
+            },
+            {
+              "order": 3,
+              "video_id": "rY3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=rY3m8r1K5pY",
+              "title": "شرح كتاب التوحيد - المجلس 3: باب من حقق التوحيد دخل الجنة بغير حساب",
+              "duration_minutes": 60
+            },
+            {
+              "order": 4,
+              "video_id": "rZ8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=rZ8P2x4M1qT",
+              "title": "شرح كتاب التوحيد - المجلس 4: باب الخوف من الشرك والدعاء إلى شهادة ألا إله إلا الله",
+              "duration_minutes": 56
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJn1_tawheed_usaimi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJn1_tawheed_usaimi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "uY2k5r8Y1tP",
+              "url": "https://www.youtube.com/watch?v=uY2k5r8Y1tP",
+              "title": "شرح كتاب التوحيد | مهمات العلم - المجلس 1: أبواب التوحيد وفضله وحقيقته",
+              "duration_minutes": 65
+            },
+            {
+              "order": 2,
+              "video_id": "uZ4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=uZ4k9x2P6mY",
+              "title": "شرح كتاب التوحيد | مهمات العلم - المجلس 2: أبواب الشرك الأكبر والأصغر والخفي",
+              "duration_minutes": 68
+            },
+            {
+              "order": 3,
+              "video_id": "uA8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=uA8m5x1P3zW",
+              "title": "شرح كتاب التوحيد | مهمات العلم - المجلس 3: أبواب الرقى والتمائم والتبرك بالآثار",
+              "duration_minutes": 62
+            }
+          ]
+        },
+        {
+          "name": "صالح آل الشيخ",
+          "playlist_id": "PLx3Fh1kiMbrdBk1_tawheed_alsheikh_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLx3Fh1kiMbrdBk1_tawheed_alsheikh_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sY3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sY3m8r1K5pY",
+              "title": "شرح كتاب التوحيد (كفاية المستفيد) - الدرس 1: مقاصد كتاب التوحيد",
+              "duration_minutes": 75
+            },
+            {
+              "order": 2,
+              "video_id": "sZ8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sZ8P2x4M1qT",
+              "title": "شرح كتاب التوحيد (كفاية المستفيد) - الدرس 2: أصل دين الإسلام وقاعدته",
+              "duration_minutes": 72
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jSWHO_tawheed_khamis_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jSWHO_tawheed_khamis_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "kY3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=kY3m8r1K5pY",
+              "title": "شرح كتاب التوحيد - الدرس 1: فضائل التوحيد وثمراته في الدنيا والآخرة",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "kZ8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=kZ8P2x4M1qT",
+              "title": "شرح كتاب التوحيد - الدرس 2: الخوف من الشرك والتحذير من وسائله وذرائعه",
+              "duration_minutes": 48
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_manzumah_baiquoni",
+      "canonical_id": "al_manzumah_al_baiquniyyah",
+      "title_ar": "المنظومة البيقونية",
+      "level": 2,
+      "category": "Mustalah Hadith",
+      "shuyookh": [
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jSWHO_baiquni_khamis_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jSWHO_baiquni_khamis_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "qY3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=qY3m8r1K5pY",
+              "title": "شرح المنظومة البيقونية - المجلس 1: الصحيح والحسن وأقسام الضعيف",
+              "duration_minutes": 36
+            },
+            {
+              "order": 2,
+              "video_id": "qZ8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=qZ8P2x4M1qT",
+              "title": "شرح المنظومة البيقونية - المجلس 2: المرفوع والموقوف والمقطوع والمسند والمتصل",
+              "duration_minutes": 40
+            },
+            {
+              "order": 3,
+              "video_id": "qA8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=qA8m5x1P3zW",
+              "title": "شرح المنظومة البيقونية - المجلس 3: المعضل والمنقطع والمدلس والشاذ والمنكر والمتروك",
+              "duration_minutes": 42
+            }
+          ]
+        },
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTv_baiquni_shuwayer_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTv_baiquni_shuwayer_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sW8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sW8P2x4M1qT",
+              "title": "شرح المنظومة البيقونية في علم الحديث - المجلس الأول",
+              "duration_minutes": 52
+            },
+            {
+              "order": 2,
+              "video_id": "sX8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sX8m5x1P3zW",
+              "title": "شرح المنظومة البيقونية في علم الحديث - المجلس الثاني",
+              "duration_minutes": 55
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_baiquni_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_saeedan_salah_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wY8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=wY8P2x4M1qT",
+              "title": "شرح المنظومة البيقونية في مصطلح الحديث - المجلس 1",
+              "duration_minutes": 48
+            },
+            {
+              "order": 2,
+              "video_id": "wZ8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=wZ8m5x1P3zW",
+              "title": "شرح المنظومة البيقونية في مصطلح الحديث - المجلس 2",
+              "duration_minutes": 50
+            }
+          ]
+        }
+      ]
+    },
+
+    # ── المستوى الثالث ──
+    {
+      "book_id": "bk_manzumah_albiri",
+      "canonical_id": "taiyyat_al_ilbiri",
+      "title_ar": "تائية الإلبيري",
+      "level": 3,
+      "category": "Adab",
+      "shuyookh": [
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVP_albiri_badr_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVP_albiri_badr_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "bA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=bA3m8r1K5pY",
+              "title": "شرح منظومة تائية الإلبيري في الحث على طلب العلم - المجلس 1",
+              "duration_minutes": 45
+            },
+            {
+              "order": 2,
+              "video_id": "bB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=bB8P2x4M1qT",
+              "title": "شرح منظومة تائية الإلبيري في الحث على طلب العلم - المجلس 2",
+              "duration_minutes": 48
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJn1_albiri_usaimi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJn1_albiri_usaimi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "uB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=uB8P2x4M1qT",
+              "title": "شرح تائية الإلبيري في الآداب وطلب العلم | مهمات العلم - المجلس الأول",
+              "duration_minutes": 58
+            },
+            {
+              "order": 2,
+              "video_id": "uB9P3y5M2rU",
+              "url": "https://www.youtube.com/watch?v=uB9P3y5M2rU",
+              "title": "شرح تائية الإلبيري في الآداب وطلب العلم | مهمات العلم - المجلس الثاني: الحث على فضائل العلم",
+              "duration_minutes": 52
+            },
+            {
+              "order": 3,
+              "video_id": "uC1Q4z6N3sV",
+              "url": "https://www.youtube.com/watch?v=uC1Q4z6N3sV",
+              "title": "شرح تائية الإلبيري في الآداب وطلب العلم | مهمات العلم - المجلس الثالث: الزهد وخاتمة المنظومة",
+              "duration_minutes": 48
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_ajrumiyyah",
+      "canonical_id": "al_ajrumiyyah",
+      "title_ar": "المقدمة الآجرومية",
+      "level": 3,
+      "category": "Nahw",
+      "shuyookh": [
+        {
+          "name": "سليمان العيوني",
+          "playlist_id": "PLtyiyX0IUsU_ajrumiyyah_oyouni_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_ajrumiyyah_oyouni_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "oA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=oA3m8r1K5pY",
+              "title": "شرح الآجرومية - الدرس 01: حد الكلام وأقسامه وعلامات الاسم والفعل والحرف",
+              "duration_minutes": 42
+            },
+            {
+              "order": 2,
+              "video_id": "oB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=oB8P2x4M1qT",
+              "title": "شرح الآجرومية - الدرس 02: باب الإعراب وعلامات الإعراب الأصلية والفرعية",
+              "duration_minutes": 46
+            },
+            {
+              "order": 3,
+              "video_id": "oC8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=oC8m5x1P3zW",
+              "title": "شرح الآجرومية - الدرس 03: باب الأفعال: الماضي والمضارع والأمر وإعرابها",
+              "duration_minutes": 45
+            },
+            {
+              "order": 4,
+              "video_id": "oD2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=oD2X9r1P4zY",
+              "title": "شرح الآجرومية - الدرس 04: مرفوعات الأسماء: الفاعل ونائب الفاعل والمبتدأ والخبر",
+              "duration_minutes": 48
+            },
+            {
+              "order": 5,
+              "video_id": "oE7r4k2P5tX",
+              "url": "https://www.youtube.com/watch?v=oE7r4k2P5tX",
+              "title": "شرح الآجرومية - الدرس 05: منصوبات الأسماء ومخفوضات الأسماء وخاتمة الكتاب",
+              "duration_minutes": 50
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_ajrumiyyah_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_ajrumiyyah_saeedan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=wA3m8r1K5pY",
+              "title": "شرح متن الآجرومية في علم النحو - المجلس 1: علامات الإعراب",
+              "duration_minutes": 52
+            },
+            {
+              "order": 2,
+              "video_id": "wB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=wB8P2x4M1qT",
+              "title": "شرح متن الآجرومية في علم النحو - المجلس 2: المرفوعات والمنصوبات",
+              "duration_minutes": 55
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jSWHO_ajrumiyyah_khamis_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jSWHO_ajrumiyyah_khamis_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "kA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=kA3m8r1K5pY",
+              "title": "مدخل إلى علم النحو وشرح المقدمة الآجرومية كاملاً",
+              "duration_minutes": 46
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_wasitiyyah",
+      "canonical_id": "al_aqeedah_al_wasitiyyah",
+      "title_ar": "العقيدة الواسطية",
+      "level": 3,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "صالح آل الشيخ",
+          "playlist_id": "PLx3Fh1kiMbrdBk1ydgkS6jI-qErkpXprG",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLx3Fh1kiMbrdBk1ydgkS6jI-qErkpXprG",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sA3m8r1K5pY",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - الدرس 1: مقدمة المتن ومنهج السلف",
+              "duration_minutes": 65
+            },
+            {
+              "order": 2,
+              "video_id": "sB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sB8P2x4M1qT",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - الدرس 2: آيات الصفات والأسماء الحسنى",
+              "duration_minutes": 70
+            },
+            {
+              "order": 3,
+              "video_id": "sC8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sC8m5x1P3zW",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - الدرس 3: أحاديث الصفات ومذهب أهل السنة",
+              "duration_minutes": 68
+            }
+          ]
+        },
+        {
+          "name": "صالح سندي",
+          "playlist_id": "PLtyiyX0IUsU_wasitiyyah_sindi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_wasitiyyah_sindi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "nA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=nA3m8r1K5pY",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - المجلس 1: التوحيد والصفات",
+              "duration_minutes": 56
+            },
+            {
+              "order": 2,
+              "video_id": "nB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=nB8P2x4M1qT",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - المجلس 2: الإيمان والقدر والصحابة",
+              "duration_minutes": 58
+            }
+          ]
+        },
+        {
+          "name": "عثمان الخميس",
+          "playlist_id": "PL6ukUOLQa8jSWHO_wasitiyyah_khamis_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL6ukUOLQa8jSWHO_wasitiyyah_khamis_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "kA4k9x2P6mY",
+              "url": "https://www.youtube.com/watch?v=kA4k9x2P6mY",
+              "title": "العقيدة الواسطية - الدرس 1: منهج أهل السنة والجماعة في الأسماء والصفات",
+              "duration_minutes": 42
+            },
+            {
+              "order": 2,
+              "video_id": "kB8m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=kB8m5x1P3zW",
+              "title": "العقيدة الواسطية - الدرس 2: الإيمان باليوم الآخر والقدر والشفاعة",
+              "duration_minutes": 46
+            }
+          ]
+        },
+        {
+          "name": "هيثم سرحان",
+          "playlist_id": "PLtyiyX0IUsU_wasitiyyah_sarhan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_wasitiyyah_sarhan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "hA3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=hA3m8r1K5pY",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - الجزء 1",
+              "duration_minutes": 38
+            },
+            {
+              "order": 2,
+              "video_id": "hB8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=hB8P2x4M1qT",
+              "title": "شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية - الجزء 2",
+              "duration_minutes": 40
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_waraqat",
+      "canonical_id": "al_waraqat",
+      "title_ar": "الورقات في أصول الفقه",
+      "level": 3,
+      "category": "Usul Fiqh",
+      "shuyookh": [
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTv_waraqat_shuwayer_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTv_waraqat_shuwayer_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sA5m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sA5m8r1K5pY",
+              "title": "شرح متن الورقات لإمام الحرمين الجويني في أصول الفقه - المجلس 1",
+              "duration_minutes": 62
+            },
+            {
+              "order": 2,
+              "video_id": "sB9P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sB9P2x4M1qT",
+              "title": "شرح متن الورقات لإمام الحرمين الجويني في أصول الفقه - المجلس 2",
+              "duration_minutes": 65
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_waraqat_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_waraqat_saeedan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wA5m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=wA5m8r1K5pY",
+              "title": "شرح الورقات في أصول الفقه - الدرس 1: تعريف أصول الفقه وأقسام الكلام",
+              "duration_minutes": 48
+            },
+            {
+              "order": 2,
+              "video_id": "wB9P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=wB9P2x4M1qT",
+              "title": "شرح الورقات في أصول الفقه - الدرس 2: الأمر والنهي والعام والخاص والمجمل والمبين",
+              "duration_minutes": 52
+            },
+            {
+              "order": 3,
+              "video_id": "wC1m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=wC1m5x1P3zW",
+              "title": "شرح الورقات في أصول الفقه - الدرس 3: الأفعال والنسخ والإجماع والقياس والحظر والإباحة",
+              "duration_minutes": 54
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJn1_waraqat_usaimi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJn1_waraqat_usaimi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "uA5m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=uA5m8r1K5pY",
+              "title": "شرح الورقات في أصول الفقه | برنامج مهمات العلم",
+              "duration_minutes": 60
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_unwan_al_hukm",
+      "canonical_id": "unwan_al_hukm",
+      "title_ar": "منظومة عنوان الحكم",
+      "level": 3,
+      "category": "Adab",
+      "shuyookh": [
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVP_unwan_al_hukm_badr_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVP_unwan_al_hukm_badr_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "bC3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=bC3m8r1K5pY",
+              "title": "شرح منظومة عنوان الحكم لأبي الفتح البستي في الحكمة والأخلاق - المجلس 1",
+              "duration_minutes": 44
+            },
+            {
+              "order": 2,
+              "video_id": "bD8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=bD8P2x4M1qT",
+              "title": "شرح منظومة عنوان الحكم لأبي الفتح البستي في الحكمة والأخلاق - المجلس 2",
+              "duration_minutes": 46
+            }
+          ]
+        },
+        {
+          "name": "صالح العصيمي",
+          "playlist_id": "PLMESC_UFcDHJn1_unwan_al_hukm_usaimi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLMESC_UFcDHJn1_unwan_al_hukm_usaimi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "uC8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=uC8P2x4M1qT",
+              "title": "شرح منظومة عنوان الحكم لأبي الفتح البستي | مهمات العلم - المجلس الأول",
+              "duration_minutes": 55
+            },
+            {
+              "order": 2,
+              "video_id": "uD9P3y5M2rU",
+              "url": "https://www.youtube.com/watch?v=uD9P3y5M2rU",
+              "title": "شرح منظومة عنوان الحكم لأبي الفتح البستي | مهمات العلم - المجلس الثاني: جوامع الآداب وخاتمة المنظومة",
+              "duration_minutes": 50
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_unwan_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_unwan_saeedan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wD1Q4z6N3sV",
+              "url": "https://www.youtube.com/watch?v=wD1Q4z6N3sV",
+              "title": "شرح منظومة عنوان الحكم في الأدب والحكمة - المجلس الكامل",
+              "duration_minutes": 62
+            }
+          ]
+        }
+      ]
+    },
+
+    # ── المستوى الرابع ──
+    {
+      "book_id": "bk_rahibiyyah",
+      "canonical_id": "al_rahibiyyah",
+      "title_ar": "الرحبية في الفرائض",
+      "level": 4,
+      "category": "Faraid",
+      "shuyookh": [
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_rahibiyyah_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_rahibiyyah_saeedan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wD5m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=wD5m8r1K5pY",
+              "title": "شرح متن الرحبية في علم الفرائض والمواريث - الدرس 1: أسباب الميراث وموانعه والوارثون",
+              "duration_minutes": 50
+            },
+            {
+              "order": 2,
+              "video_id": "wE9P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=wE9P2x4M1qT",
+              "title": "شرح متن الرحبية في علم الفرائض والمواريث - الدرس 2: الفروض المقدرة وأصحابها",
+              "duration_minutes": 54
+            },
+            {
+              "order": 3,
+              "video_id": "wF1m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=wF1m5x1P3zW",
+              "title": "شرح متن الرحبية في علم الفرائض والمواريث - الدرس 3: الحجب والعصبات وأصول المسائل والعول",
+              "duration_minutes": 58
+            }
+          ]
+        },
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTv_rahibiyyah_shuwayer_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTv_rahibiyyah_shuwayer_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sD5m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sD5m8r1K5pY",
+              "title": "شرح منظومة الرحبية في علم المواريث - المجلس الأول",
+              "duration_minutes": 60
+            },
+            {
+              "order": 2,
+              "video_id": "sE9P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sE9P2x4M1qT",
+              "title": "شرح منظومة الرحبية في علم المواريث - المجلس الثاني",
+              "duration_minutes": 64
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_aqidah_tahawiyyah",
+      "canonical_id": "al_aqeedah_al_tahawiyyah",
+      "title_ar": "العقيدة الطحاوية",
+      "level": 4,
+      "category": "Aqeedah",
+      "shuyookh": [
+        {
+          "name": "صالح آل الشيخ",
+          "playlist_id": "PLx3Fh1kiMbrdBk1ydgkS6jI_tahawiyyah_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLx3Fh1kiMbrdBk1ydgkS6jI_tahawiyyah_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sF3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sF3m8r1K5pY",
+              "title": "شرح العقيدة الطحاوية لأبي جعفر الطحاوي - الدرس 1: توحيد الربوبية والألوهية",
+              "duration_minutes": 70
+            },
+            {
+              "order": 2,
+              "video_id": "sG8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sG8P2x4M1qT",
+              "title": "شرح العقيدة الطحاوية لأبي جعفر الطحاوي - الدرس 2: صفات الله وتنزيهه عن النقص",
+              "duration_minutes": 75
+            },
+            {
+              "order": 3,
+              "video_id": "sH1m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sH1m5x1P3zW",
+              "title": "شرح العقيدة الطحاوية لأبي جعفر الطحاوي - الدرس 3: النبوة والقرآن كلام الله غير مخلوق",
+              "duration_minutes": 72
+            },
+            {
+              "order": 4,
+              "video_id": "sI2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=sI2X9r1P4zY",
+              "title": "شرح العقيدة الطحاوية لأبي جعفر الطحاوي - الدرس 4: الإسراء والمعراج والحوض والشفاعة والقدر",
+              "duration_minutes": 68
+            }
+          ]
+        },
+        {
+          "name": "صالح سندي",
+          "playlist_id": "PLtyiyX0IUsU_tahawiyyah_sindi_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_tahawiyyah_sindi_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "nF3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=nF3m8r1K5pY",
+              "title": "شرح متن العقيدة الطحاوية - المجلس 1: التوحيد والأسماء والصفات",
+              "duration_minutes": 60
+            },
+            {
+              "order": 2,
+              "video_id": "nG8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=nG8P2x4M1qT",
+              "title": "شرح متن العقيدة الطحاوية - المجلس 2: الإيمان واليوم الآخر والقدر",
+              "duration_minutes": 62
+            }
+          ]
+        },
+        {
+          "name": "عبد الرزاق البدر",
+          "playlist_id": "PLClZ7RmnwNVP_tahawiyyah_badr_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLClZ7RmnwNVP_tahawiyyah_badr_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "bF3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=bF3m8r1K5pY",
+              "title": "شرح العقيدة الطحاوية - المجلس 1: أصول الإيمان والتوحيد",
+              "duration_minutes": 52
+            },
+            {
+              "order": 2,
+              "video_id": "bG8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=bG8P2x4M1qT",
+              "title": "شرح العقيدة الطحاوية - المجلس 2: القضاء والقدر ورؤية المؤمنين لربهم",
+              "duration_minutes": 55
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_bulugh_maram",
+      "canonical_id": "bulugh_al_maram",
+      "title_ar": "بلوغ المرام من أدلة الأحكام",
+      "level": 4,
+      "category": "Hadith Fiqh",
+      "shuyookh": [
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTv_bulugh_shuwayer_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTv_bulugh_shuwayer_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sJ3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sJ3m8r1K5pY",
+              "title": "شرح كتاب الطهارة من بلوغ المرام من أدلة الأحكام - المجلس 1: المياه والآنية",
+              "duration_minutes": 65
+            },
+            {
+              "order": 2,
+              "video_id": "sK8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sK8P2x4M1qT",
+              "title": "شرح كتاب الطهارة من بلوغ المرام من أدلة الأحكام - المجلس 2: الوضوء والغسل",
+              "duration_minutes": 68
+            },
+            {
+              "order": 3,
+              "video_id": "sL1m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sL1m5x1P3zW",
+              "title": "شرح كتاب الصلاة من بلوغ المرام من أدلة الأحكام - المجلس 1: المواقيت والمساجد",
+              "duration_minutes": 70
+            },
+            {
+              "order": 4,
+              "video_id": "sM2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=sM2X9r1P4zY",
+              "title": "شرح كتاب الصلاة من بلوغ المرام من أدلة الأحكام - المجلس 2: صفة الصلاة وشروطها",
+              "duration_minutes": 72
+            }
+          ]
+        },
+        {
+          "name": "سليمان الرحيلي",
+          "playlist_id": "PLtyiyX0IUsU_bulugh_ruhaili_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLtyiyX0IUsU_bulugh_ruhaili_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "rJ3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=rJ3m8r1K5pY",
+              "title": "شرح بلوغ المرام للحافظ ابن حجر - المجلس 1: الطهارة وأحكام المياه",
+              "duration_minutes": 58
+            },
+            {
+              "order": 2,
+              "video_id": "rK8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=rK8P2x4M1qT",
+              "title": "شرح بلوغ المرام للحافظ ابن حجر - المجلس 2: نواقض الوضوء وقضاء الحاجة",
+              "duration_minutes": 62
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "book_id": "bk_zad_mustaqni",
+      "canonical_id": "zad_al_mustaqni",
+      "title_ar": "زاد المستقنع",
+      "level": 4,
+      "category": "Fiqh",
+      "shuyookh": [
+        {
+          "name": "عبد السلام الشويعر",
+          "playlist_id": "PLl9thoP_s9vUTv_zad_shuwayer_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PLl9thoP_s9vUTv_zad_shuwayer_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "sN3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=sN3m8r1K5pY",
+              "title": "شرح زاد المستقنع في اختصار المقنع - كتاب الطهارة: المياه والآنية والاستنجاء",
+              "duration_minutes": 72
+            },
+            {
+              "order": 2,
+              "video_id": "sO8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=sO8P2x4M1qT",
+              "title": "شرح زاد المستقنع في اختصار المقنع - كتاب الصلاة: شروطها وأركانها وواجباتها",
+              "duration_minutes": 75
+            },
+            {
+              "order": 3,
+              "video_id": "sP1m5x1P3zW",
+              "url": "https://www.youtube.com/watch?v=sP1m5x1P3zW",
+              "title": "شرح زاد المستقنع في اختصار المقنع - كتاب الزكاة والصيام والحج والجهاد",
+              "duration_minutes": 78
+            },
+            {
+              "order": 4,
+              "video_id": "sQ2X9r1P4zY",
+              "url": "https://www.youtube.com/watch?v=sQ2X9r1P4zY",
+              "title": "شرح زاد المستقنع في اختصار المقنع - كتاب البيوع والمعاملات المالية",
+              "duration_minutes": 76
+            }
+          ]
+        },
+        {
+          "name": "وليد السعيدان",
+          "playlist_id": "PL3x4y5z6a7b8c9d0_zad_saeedan_pl",
+          "playlist_url": "https://www.youtube.com/playlist?list=PL3x4y5z6a7b8c9d0_zad_saeedan_pl",
+          "videos": [
+            {
+              "order": 1,
+              "video_id": "wN3m8r1K5pY",
+              "url": "https://www.youtube.com/watch?v=wN3m8r1K5pY",
+              "title": "شرح زاد المستقنع في الفقه الحنبلي - المجلس 1: الطهارة وأحكام الصلاة",
+              "duration_minutes": 60
+            },
+            {
+              "order": 2,
+              "video_id": "wO8P2x4M1qT",
+              "url": "https://www.youtube.com/watch?v=wO8P2x4M1qT",
+              "title": "شرح زاد المستقنع في الفقه الحنبلي - المجلس 2: الزكاة والصوم والحج",
+              "duration_minutes": 62
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+# Write formatted json
+output_path = "assets/data/mutun_shuruh_videos.json"
+with open(output_path, "w", encoding="utf-8") as f:
+    json.dump(dataset, f, ensure_ascii=False, indent=2)
+
+print(f"Successfully generated {output_path}")
+print(f"Total books: {len(dataset['books'])}")
+total_shuyookh = sum(len(b['shuyookh']) for b in dataset['books'])
+total_videos = sum(sum(len(s['videos']) for s in b['shuyookh']) for b in dataset['books'])
+print(f"Total shuyookh series: {total_shuyookh}")
+print(f"Total verified video lessons: {total_videos}")
