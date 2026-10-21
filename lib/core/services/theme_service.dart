@@ -67,7 +67,7 @@ class ThemeService extends ChangeNotifier {
     await prefs.setString(_themeKey, themeName);
     try {
       HomeWidgetService.invalidateCache();
-      HomeWidgetService.updatePrayerWidget(force: true);
+      HomeWidgetService.updateAllWidgets(force: true);
     } catch (_) {}
   }
 

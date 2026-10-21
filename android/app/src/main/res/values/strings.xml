@@ -2,5 +2,12 @@
 <resources>
     <string name="prayer_widget_name">مواقيت الصلاة</string>
     <string name="prayer_widget_description">مواقيت الصلاة اليومية والعد التنازلي للأذان</string>
+    <string name="ribbon_widget_name">مواقيت الصلاة - شريط</string>
+    <string name="ribbon_widget_description">شريط مواقيت الصلاة والعد التنازلي (4×1)</string>
+    <string name="standard_widget_name">مواقيت الصلاة - قياسي</string>
+    <string name="standard_widget_description">مواقيت الصلاة مع بطاقة الصلاة الحالية (4×2)</string>
+    <string name="large_widget_name">مواقيت الصلاة - موسع</string>
+    <string name="large_widget_description">مواقيت الصلاة مع التاريخ الهجري والمدينة (4×3)</string>
+    <string name="compact_widget_name">مواقيت الصلاة - مصغر</string>
+    <string name="compact_widget_description">بطاقة الصلاة القادمة والوقت المتبقي (2×2)</string>
 </resources>
-

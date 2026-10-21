@@ -87,6 +87,58 @@
                 android:resource="@xml/prayer_widget_info" />
         </receiver>
 
+        <!-- Ribbon 4x1 Widget Provider -->
+        <receiver
+            android:name=".RibbonWidgetProvider"
+            android:exported="true"
+            android:label="@string/ribbon_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_ribbon" />
+        </receiver>
+
+        <!-- Standard 4x2 Widget Provider -->
+        <receiver
+            android:name=".StandardWidgetProvider"
+            android:exported="true"
+            android:label="@string/standard_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_standard" />
+        </receiver>
+
+        <!-- Large 4x3 Widget Provider -->
+        <receiver
+            android:name=".LargeWidgetProvider"
+            android:exported="true"
+            android:label="@string/large_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_large" />
+        </receiver>
+
+        <!-- Compact 2x2 Widget Provider -->
+        <receiver
+            android:name=".CompactWidgetProvider"
+            android:exported="true"
+            android:label="@string/compact_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_compact" />
+        </receiver>
+
         <!-- HomeWidget background receiver and service for widget resizing and actions -->
         <receiver android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver" android:exported="true">
             <intent-filter>

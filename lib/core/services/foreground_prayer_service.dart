@@ -184,13 +184,13 @@ class ForegroundPrayerService {
               sound: effectiveSound,
             );
 
-            unawaited(HomeWidgetService.updatePrayerWidget(prayerDay: day));
+            unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day));
           }
         }
       }
 
       // Periodically refresh the Home Screen Widget so time and prayer states stay active
-      unawaited(HomeWidgetService.updatePrayerWidget(prayerDay: day, referenceTime: now));
+      unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day, referenceTime: now));
     } catch (e) {
       debugPrint('ForegroundPrayerService._check error: $e');
     }

@@ -81,7 +81,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   void _onThemeChanged() {
-    unawaited(HomeWidgetService.updatePrayerWidget());
+    unawaited(HomeWidgetService.updateAllWidgets());
   }
 
   @override
@@ -89,7 +89,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       ForegroundPrayerService().start();
       unawaited(PrayerScheduleService().refreshSchedulesIfNeeded());
-      unawaited(HomeWidgetService.updatePrayerWidget());
+      unawaited(HomeWidgetService.updateAllWidgets());
     }
   }
 
@@ -102,7 +102,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       }
       await notif.requestPermissions();
       await PrayerScheduleService().refreshSchedulesIfNeeded();
-      unawaited(HomeWidgetService.updatePrayerWidget());
+      unawaited(HomeWidgetService.updateAllWidgets());
       final adhkarService = AdhkarReminderService(notificationService: notif);
       final adhkarSettings = await adhkarService.getSettings();
       await adhkarService.applySchedules(adhkarSettings);

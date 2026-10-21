@@ -5,6 +5,10 @@ import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/core/services/home_widget_service.dart';
 import 'package:talib_ilm/features/prayer/data/models/prayer_models.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/widget_compact.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/widget_large.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/widget_ribbon.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/widget_standard.dart';
 
 void main() {
   testWidgets('PrayerHomeScreenWidget renders 5 prayers and countdown correctly', (tester) async {
@@ -313,5 +317,173 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('صلاة الظهر'), findsOneWidget);
     expect(find.text('بقي على الأذان'), findsOneWidget);
+  });
+
+  testWidgets('WidgetRibbon (4x1, 360x80) renders without overflow under text scale 1.0, 1.5, and 2.0', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 4, 30);
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+      AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+    };
+    final eval = PrayerWidgetStateEvaluator.evaluate(now: fixedNow, all: prayers);
+
+    for (final scale in [1.0, 1.5, 2.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: Center(
+                child: WidgetRibbon(
+                  eval: eval,
+                  all: prayers,
+                  hijriDate: '10 جمادى الأولى 1448 هـ',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('10 جمادى الأولى 1448 هـ'), findsOneWidget);
+      expect(find.text('الفجر'), findsOneWidget);
+      expect(find.text('الظهر'), findsOneWidget);
+    }
+  });
+
+  testWidgets('WidgetStandard (4x2, 360x160) renders without overflow under light and dark themes', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 11, 45);
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+      AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+    };
+    final eval = PrayerWidgetStateEvaluator.evaluate(now: fixedNow, all: prayers);
+
+    for (final dark in [false, true]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: dark ? AppTheme.dark() : AppTheme.light(),
+          home: Scaffold(
+            body: Center(
+              child: WidgetStandard(
+                eval: eval,
+                all: prayers,
+                isDark: dark,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('صلاة الظهر'), findsOneWidget);
+      expect(find.text('بقي على الأذان'), findsOneWidget);
+    }
+  });
+
+  testWidgets('WidgetLarge (4x3, 360x240) renders top bar, hero, and strip without overflow', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 11, 45);
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+      AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+    };
+    final eval = PrayerWidgetStateEvaluator.evaluate(now: fixedNow, all: prayers);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: WidgetLarge(
+              eval: eval,
+              all: prayers,
+              hijriDate: '10 جمادى الأولى 1448 هـ',
+              cityName: 'الجزائر العاصمة',
+              isDark: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('10 جمادى الأولى 1448 هـ'), findsOneWidget);
+    expect(find.text('الجزائر العاصمة'), findsOneWidget);
+    expect(find.text('صلاة الظهر'), findsOneWidget);
+  });
+
+  testWidgets('WidgetCompact (2x2, 160x160) renders compact prayer card without overflow', (tester) async {
+    final fixedNow = DateTime(2026, 10, 20, 11, 45);
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+      AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+    };
+    final eval = PrayerWidgetStateEvaluator.evaluate(now: fixedNow, all: prayers);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: WidgetCompact(
+              eval: eval,
+              isDark: false,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('صلاة الظهر'), findsOneWidget);
+    expect(find.text('بقي على الأذان'), findsOneWidget);
+  });
+
+  test('HomeWidgetService fixed widget update methods execute cleanly', () async {
+    final fixedNow = DateTime(2026, 10, 20, 11, 45);
+    final prayerDay = PrayerTimesDay(
+      city: 'الجزائر العاصمة',
+      date: DateTime(2026, 10, 20),
+      prayers: {
+        AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 2),
+        AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+        AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 11),
+        AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 38),
+        AppStrings.prayerIsha: DateTime(2026, 10, 20, 19, 2),
+      },
+      nextPrayer: AppStrings.prayerDhuhr,
+      nextPrayerTime: DateTime(2026, 10, 20, 12, 3),
+    );
+
+    await expectLater(
+      HomeWidgetService.updateRibbon(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
+      completes,
+    );
+    await expectLater(
+      HomeWidgetService.updateStandard(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
+      completes,
+    );
+    await expectLater(
+      HomeWidgetService.updateLarge(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
+      completes,
+    );
+    await expectLater(
+      HomeWidgetService.updateCompact(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
+      completes,
+    );
+    await expectLater(
+      HomeWidgetService.updateAllWidgets(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
+      completes,
+    );
   });
 }

@@ -113,7 +113,7 @@ class PrayerScheduleService {
     await prefs.setInt('prayer_schedule_timestamp', now.millisecondsSinceEpoch);
 
     try {
-      await HomeWidgetService.updatePrayerWidget(prayerDay: today);
+      await HomeWidgetService.updateAllWidgets(prayerDay: today);
     } catch (_) {}
   }
 

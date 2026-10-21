@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
+import '../../features/prayer/presentation/widgets/widget_compact.dart';
+import '../../features/prayer/presentation/widgets/widget_large.dart';
+import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
+import '../../features/prayer/presentation/widgets/widget_standard.dart';
 import 'prayer_time_service.dart';
 
 /// Supported visual themes for the Android Home Screen AppWidget.
@@ -43,10 +48,18 @@ class HomeWidgetService {
 
   /// In-memory cache key to prevent redundant screenshot rasterizations within the same minute and dimensions
   static String? _lastRenderKey;
+  static String? _lastRibbonRenderKey;
+  static String? _lastStandardRenderKey;
+  static String? _lastLargeRenderKey;
+  static String? _lastCompactRenderKey;
 
   /// Invalidates the render cache to force immediate redraw on resize or theme changes
   static void invalidateCache() {
     _lastRenderKey = null;
+    _lastRibbonRenderKey = null;
+    _lastStandardRenderKey = null;
+    _lastLargeRenderKey = null;
+    _lastCompactRenderKey = null;
   }
 
   /// Retrieves the user-selected widget theme mode (defaults to dark AMOLED card)
@@ -172,5 +185,284 @@ class HomeWidgetService {
     } catch (_) {
       // Graceful fallback when platform channels are unavailable (e.g. unit tests)
     }
+  }
+
+  static String _formatHijri(DateTime date) {
+    try {
+      HijriCalendar.setLocal('ar');
+      final h = HijriCalendar.fromDate(date);
+      return '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Updates the Ribbon (4x1, 360x80) Android Home Screen Widget.
+  static Future<void> updateRibbon({
+    PrayerTimesDay? prayerDay,
+    DateTime? referenceTime,
+    bool force = false,
+  }) async {
+    try {
+      final now = referenceTime ?? DateTime.now();
+      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final all = day.prayers;
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final hijri = _formatHijri(now);
+
+      final remaining = eval.targetPrayerTime.difference(now);
+      final timeKey = remaining.inHours < 1
+          ? '${now.hour}:${now.minute}:${now.second}'
+          : '${now.hour}:${now.minute}';
+      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}';
+      if (!force && renderKey == _lastRibbonRenderKey) {
+        return;
+      }
+      _lastRibbonRenderKey = renderKey;
+
+      const resolvedSize = Size(kRibbonW, kRibbonH);
+
+      await HomeWidget.renderFlutterWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: resolvedSize,
+            devicePixelRatio: 2.0,
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Theme(
+            data: AppTheme.dark(),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: WidgetRibbon(
+                eval: eval,
+                all: all,
+                hijriDate: hijri,
+                isDark: true,
+              ),
+            ),
+          ),
+        ),
+        key: 'prayer_ribbon_widget',
+        logicalSize: resolvedSize,
+        pixelRatio: 2.0,
+      );
+
+      await HomeWidget.updateWidget(
+        name: 'RibbonWidgetProvider',
+        androidName: 'RibbonWidgetProvider',
+      );
+    } catch (_) {
+      // Graceful fallback when platform channels are unavailable
+    }
+  }
+
+  static Future<bool> _resolveWidgetIsDark() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final modeStr = prefs.getString(themeModeKey);
+      if (modeStr == 'light') return false;
+      if (modeStr == 'dark') return true;
+      final appTheme = prefs.getString('theme_mode');
+      if (appTheme == 'light') return false;
+      if (appTheme == 'dark') return true;
+    } catch (_) {}
+    return true;
+  }
+
+  /// Updates the Standard (4x2, 360x160) Android Home Screen Widget.
+  static Future<void> updateStandard({
+    PrayerTimesDay? prayerDay,
+    DateTime? referenceTime,
+    bool force = false,
+  }) async {
+    try {
+      final now = referenceTime ?? DateTime.now();
+      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final all = day.prayers;
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final useDark = await _resolveWidgetIsDark();
+
+      final remaining = eval.targetPrayerTime.difference(now);
+      final timeKey = remaining.inHours < 1
+          ? '${now.hour}:${now.minute}:${now.second}'
+          : '${now.hour}:${now.minute}';
+      final renderKey =
+          'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+      if (!force && renderKey == _lastStandardRenderKey) {
+        return;
+      }
+      _lastStandardRenderKey = renderKey;
+
+      const resolvedSize = Size(kStandardW, kStandardH);
+
+      await HomeWidget.renderFlutterWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: resolvedSize,
+            devicePixelRatio: 2.0,
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Theme(
+            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: WidgetStandard(
+                eval: eval,
+                all: all,
+                isDark: useDark,
+              ),
+            ),
+          ),
+        ),
+        key: 'prayer_standard_widget',
+        logicalSize: resolvedSize,
+        pixelRatio: 2.0,
+      );
+
+      await HomeWidget.updateWidget(
+        name: 'StandardWidgetProvider',
+        androidName: 'StandardWidgetProvider',
+      );
+    } catch (_) {
+      // Graceful fallback when platform channels are unavailable
+    }
+  }
+
+  /// Updates the Large (4x3, 360x240) Android Home Screen Widget.
+  static Future<void> updateLarge({
+    PrayerTimesDay? prayerDay,
+    DateTime? referenceTime,
+    bool force = false,
+  }) async {
+    try {
+      final now = referenceTime ?? DateTime.now();
+      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final all = day.prayers;
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final hijri = _formatHijri(now);
+      final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
+      final useDark = await _resolveWidgetIsDark();
+
+      final remaining = eval.targetPrayerTime.difference(now);
+      final timeKey = remaining.inHours < 1
+          ? '${now.hour}:${now.minute}:${now.second}'
+          : '${now.hour}:${now.minute}';
+      final renderKey =
+          'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+      if (!force && renderKey == _lastLargeRenderKey) {
+        return;
+      }
+      _lastLargeRenderKey = renderKey;
+
+      const resolvedSize = Size(kLargeW, kLargeH);
+
+      await HomeWidget.renderFlutterWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: resolvedSize,
+            devicePixelRatio: 2.0,
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Theme(
+            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: WidgetLarge(
+                eval: eval,
+                all: all,
+                hijriDate: hijri,
+                cityName: city,
+                isDark: useDark,
+              ),
+            ),
+          ),
+        ),
+        key: 'prayer_large_widget',
+        logicalSize: resolvedSize,
+        pixelRatio: 2.0,
+      );
+
+      await HomeWidget.updateWidget(
+        name: 'LargeWidgetProvider',
+        androidName: 'LargeWidgetProvider',
+      );
+    } catch (_) {
+      // Graceful fallback when platform channels are unavailable
+    }
+  }
+
+  /// Updates the Compact (2x2, 160x160) Android Home Screen Widget.
+  static Future<void> updateCompact({
+    PrayerTimesDay? prayerDay,
+    DateTime? referenceTime,
+    bool force = false,
+  }) async {
+    try {
+      final now = referenceTime ?? DateTime.now();
+      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final all = day.prayers;
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final useDark = await _resolveWidgetIsDark();
+
+      final remaining = eval.targetPrayerTime.difference(now);
+      final timeKey = remaining.inHours < 1
+          ? '${now.hour}:${now.minute}:${now.second}'
+          : '${now.hour}:${now.minute}';
+      final renderKey =
+          'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+      if (!force && renderKey == _lastCompactRenderKey) {
+        return;
+      }
+      _lastCompactRenderKey = renderKey;
+
+      const resolvedSize = Size(kCompactW, kCompactH);
+
+      await HomeWidget.renderFlutterWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: resolvedSize,
+            devicePixelRatio: 2.0,
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Theme(
+            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: WidgetCompact(
+                eval: eval,
+                isDark: useDark,
+              ),
+            ),
+          ),
+        ),
+        key: 'prayer_compact_widget',
+        logicalSize: resolvedSize,
+        pixelRatio: 2.0,
+      );
+
+      await HomeWidget.updateWidget(
+        name: 'CompactWidgetProvider',
+        androidName: 'CompactWidgetProvider',
+      );
+    } catch (_) {
+      // Graceful fallback when platform channels are unavailable
+    }
+  }
+
+  /// Updates all 4 fixed-size Android widgets simultaneously.
+  static Future<void> updateAllWidgets({
+    PrayerTimesDay? prayerDay,
+    DateTime? referenceTime,
+    bool force = false,
+  }) async {
+    final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+    final now = referenceTime ?? DateTime.now();
+    await Future.wait([
+      updatePrayerWidget(prayerDay: day, referenceTime: now, force: force),
+      updateRibbon(prayerDay: day, referenceTime: now, force: force),
+      updateStandard(prayerDay: day, referenceTime: now, force: force),
+      updateLarge(prayerDay: day, referenceTime: now, force: force),
+      updateCompact(prayerDay: day, referenceTime: now, force: force),
+    ]);
   }
 }
