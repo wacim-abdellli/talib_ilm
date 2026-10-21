@@ -99,7 +99,7 @@
                 android:resource="@xml/widget_compact" />
         </receiver>
 
-        <!-- Large 4x3 Widget Provider -->
+        <!-- Large 4x2 Widget Provider -->
         <receiver
             android:name=".LargeWidgetProvider"
             android:exported="true"

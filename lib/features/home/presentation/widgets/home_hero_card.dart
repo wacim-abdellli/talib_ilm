@@ -6,6 +6,7 @@ import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../prayer/data/models/prayer_models.dart';
+import '../../../prayer/presentation/widgets/prayer_widget_state_evaluator.dart';
 import 'home_hero_timeline_station.dart';
 
 /// HomeHeroCard - Calm Scholar Prayer Time Centerpiece
@@ -33,8 +34,10 @@ class _PrayerEvaluation {
   final String prayerName;
   final DateTime prayerTime;
   final bool isInPrayerTime;
+  final bool isInIqamaCountdown;
   final Duration elapsedSinceAdhan;
   final Duration remainingUntilAdhan;
+  final Duration remainingUntilIqama;
   final String activeHighlightPrayerName;
   final Set<String> completedPrayerNames;
 
@@ -42,15 +45,16 @@ class _PrayerEvaluation {
     required this.prayerName,
     required this.prayerTime,
     required this.isInPrayerTime,
+    this.isInIqamaCountdown = false,
     required this.elapsedSinceAdhan,
     required this.remainingUntilAdhan,
+    this.remainingUntilIqama = Duration.zero,
     required this.activeHighlightPrayerName,
     required this.completedPrayerNames,
   });
 }
 
 class _HomeHeroCardState extends State<HomeHeroCard> {
-  static const Duration _iqamaWindow = Duration(minutes: 15);
   late Timer _timer;
   late _PrayerEvaluation _eval;
 
@@ -93,24 +97,36 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
           .map((p) => MapEntry(p, all[p]!))
           .toList();
 
-      // 1. Check if any prayer is currently within its 15-minute Iqama/Prayer window
+      // 1. Check if the most recent prayer is currently within active Iqama or Salah window
       for (int i = entries.length - 1; i >= 0; i--) {
         final entry = entries[i];
+        final pName = entry.key;
         final pTime = entry.value;
         if (!now.isBefore(pTime)) {
           final elapsed = now.difference(pTime);
-          if (elapsed < _iqamaWindow) {
+          final isJumua = now.weekday == DateTime.friday && pName == AppStrings.prayerDhuhr;
+          final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(pName, isJumua: isJumua);
+          final salahMinutes = PrayerWidgetStateEvaluator.getSalahDurationMinutes(pName, isJumua: isJumua);
+          final iqamaDuration = Duration(minutes: iqamaMinutes);
+          final salahDuration = Duration(minutes: iqamaMinutes + salahMinutes);
+
+          if (elapsed < salahDuration) {
             final completed = entries.take(i).map((e) => e.key).toSet();
+            final isIqama = elapsed < iqamaDuration;
+            final remainingIqama = isIqama ? pTime.add(iqamaDuration).difference(now) : Duration.zero;
             return _PrayerEvaluation(
-              prayerName: entry.key,
+              prayerName: pName,
               prayerTime: pTime,
               isInPrayerTime: true,
+              isInIqamaCountdown: isIqama,
               elapsedSinceAdhan: elapsed,
               remainingUntilAdhan: Duration.zero,
-              activeHighlightPrayerName: entry.key,
+              remainingUntilIqama: remainingIqama,
+              activeHighlightPrayerName: pName,
               completedPrayerNames: completed,
             );
           }
+          break;
         }
       }
 
@@ -153,13 +169,24 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     }
 
     final diff = widget.nextPrayerTime.difference(now);
-    if (diff.isNegative && (-diff) < _iqamaWindow) {
+    final isJumua = now.weekday == DateTime.friday && widget.nextPrayerName == AppStrings.prayerDhuhr;
+    final fallbackIqamaMin = PrayerWidgetStateEvaluator.getIqamaMinutes(widget.nextPrayerName, isJumua: isJumua);
+    final fallbackSalahMin = PrayerWidgetStateEvaluator.getSalahDurationMinutes(widget.nextPrayerName, isJumua: isJumua);
+    final fallbackIqamaDur = Duration(minutes: fallbackIqamaMin);
+    final fallbackSalahDur = Duration(minutes: fallbackIqamaMin + fallbackSalahMin);
+
+    if (diff.isNegative && (-diff) < fallbackSalahDur) {
+      final elapsed = -diff;
+      final isIqama = elapsed < fallbackIqamaDur;
+      final remainingIqama = isIqama ? fallbackIqamaDur - elapsed : Duration.zero;
       return _PrayerEvaluation(
         prayerName: widget.nextPrayerName,
         prayerTime: widget.nextPrayerTime,
         isInPrayerTime: true,
-        elapsedSinceAdhan: -diff,
+        isInIqamaCountdown: isIqama,
+        elapsedSinceAdhan: elapsed,
         remainingUntilAdhan: Duration.zero,
+        remainingUntilIqama: remainingIqama,
         activeHighlightPrayerName: widget.nextPrayerName,
         completedPrayerNames: const {},
       );
@@ -193,18 +220,20 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     final minutes = (eval.remainingUntilAdhan.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (eval.remainingUntilAdhan.inSeconds % 60).toString().padLeft(2, '0');
 
-    final elapsedMinutes = eval.elapsedSinceAdhan.inMinutes.toString().padLeft(2, '0');
-    final elapsedSeconds = (eval.elapsedSinceAdhan.inSeconds % 60).toString().padLeft(2, '0');
+    final iqamaMinutesStr = (eval.remainingUntilIqama.inMinutes % 60).toString().padLeft(2, '0');
+    final iqamaSecondsStr = (eval.remainingUntilIqama.inSeconds % 60).toString().padLeft(2, '0');
 
     final prayerTimeDisplay = formatPrayerTime12h(eval.prayerTime);
     final nearnessLabel = _getNearnessLabel(eval);
 
     return Semantics(
       label: eval.isInPrayerTime
-          ? 'صلاة ${eval.prayerName} - وقت الصلاة الآن'
+          ? 'صلاة ${eval.prayerName} - ${eval.isInIqamaCountdown ? 'بقي على الإقامة' : 'تقام الصلاة الآن'}'
           : 'صلاة ${eval.prayerName}',
       hint: eval.isInPrayerTime
-          ? 'رُفِع الأذان منذ ${eval.elapsedSinceAdhan.inMinutes} دقيقة'
+          ? (eval.isInIqamaCountdown
+              ? 'بقي على الإقامة ${_getReadableDuration(eval.remainingUntilIqama)}'
+              : 'تقام الصلاة الآن في المسجد')
           : 'المتبقي ${_getReadableDuration(eval.remainingUntilAdhan)}',
       button: true,
       onTapHint: 'اضغط لعرض تفاصيل الصلاة',
@@ -255,11 +284,24 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
                         // Large Prayer Title (Uncluttered, Single Line)
                         Expanded(
-                          child: Text(
-                            'صلاة ${eval.prayerName}',
-                            style: textTheme.title.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.w800,
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'صلاة ',
+                                  style: textTheme.title.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: eval.prayerName,
+                                  style: textTheme.title.copyWith(
+                                    color: prayerColor,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -353,7 +395,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                       ),
                       const SizedBox(width: AppSpace.lg),
 
-                      // End: Digital Precision Clock or Elapsed Adhan Time Box
+                      // End: Digital Precision Clock or Iqama / Salah Box
                       if (eval.isInPrayerTime)
                         Container(
                           padding: const EdgeInsetsDirectional.symmetric(
@@ -369,57 +411,61 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                             ),
                             boxShadow: palette.shadow,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: AppIcon.xs,
-                                color: prayerColor,
-                              ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                'منذ ',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Directionality(
-                                textDirection: TextDirection.ltr,
-                                child: Row(
+                          child: eval.isInIqamaCountdown
+                              ? Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
-                                      elapsedMinutes,
-                                      style: textTheme.titleSmall.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: prayerColor,
-                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                    Icon(
+                                      Icons.mosque_rounded,
+                                      size: AppIcon.xs,
+                                      color: prayerColor,
+                                    ),
+                                    const SizedBox(width: AppSpace.xs),
+                                    Directionality(
+                                      textDirection: TextDirection.ltr,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            iqamaMinutesStr,
+                                            style: textTheme.titleSmall.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color: prayerColor,
+                                              fontFeatures: const [FontFeature.tabularFigures()],
+                                            ),
+                                          ),
+                                          CountdownColon(color: prayerColor),
+                                          Text(
+                                            iqamaSecondsStr,
+                                            style: textTheme.titleSmall.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color: prayerColor,
+                                              fontFeatures: const [FontFeature.tabularFigures()],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    CountdownColon(color: prayerColor),
+                                  ],
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.people_alt_rounded,
+                                      size: AppIcon.xs,
+                                      color: prayerColor,
+                                    ),
+                                    const SizedBox(width: AppSpace.xs),
                                     Text(
-                                      elapsedSeconds,
-                                      style: textTheme.titleSmall.copyWith(
-                                        fontWeight: FontWeight.w800,
+                                      'أداء الفريضة',
+                                      style: textTheme.caption.copyWith(
                                         color: prayerColor,
-                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                'د',
-                                style: textTheme.caption.copyWith(
-                                  color: prayerColor,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
                         )
                       else
                         Directionality(
@@ -516,7 +562,10 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
   String _getNearnessLabel(_PrayerEvaluation eval) {
     if (eval.isInPrayerTime) {
-      return 'وقت الصلاة الآن (الإقامة)';
+      if (eval.isInIqamaCountdown) {
+        return 'بقي على الإقامة';
+      }
+      return 'تقام الصلاة الآن';
     }
     final minutes = eval.remainingUntilAdhan.inMinutes;
     if (minutes <= 5) {

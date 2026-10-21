@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 import '../../app/constants/app_assets.dart';
 import '../../features/quran/data/services/quran_audio_service.dart';
@@ -50,9 +51,17 @@ class AdhanService {
       final assetPath =
           _assetFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
 
-      // Create pure AudioSource without MediaItem tag so just_audio_background
-      // never publishes a MediaSession or transport controls.
-      final source = AudioSource.asset(assetPath);
+      final source = AudioSource.asset(
+        assetPath,
+        tag: MediaItem(
+          id: assetPath,
+          album: 'أذان الصلاة',
+          title: prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة',
+          artist: 'طالب العلم',
+          artUri: Uri.parse(
+              'android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+        ),
+      );
 
       final normalizedVolume = (volume / 100).clamp(0.0, 1.0);
 

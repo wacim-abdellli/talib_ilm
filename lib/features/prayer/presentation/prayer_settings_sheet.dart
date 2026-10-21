@@ -5,9 +5,9 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
-import '../../../core/services/flip_to_stop_service.dart';
 import '../../../core/services/home_widget_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
+import '../../../core/services/prayer_time_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -17,6 +17,8 @@ import '../../../shared/widgets/icon_badge.dart';
 import '../../../shared/widgets/section_header.dart';
 import 'widgets/prayer_adhan_section.dart';
 import 'widgets/prayer_adjustments_section.dart';
+import 'widgets/prayer_calc_section.dart';
+import 'widgets/prayer_muezzin_selector.dart';
 
 class PrayerSettingsSheet extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
@@ -30,7 +32,7 @@ class PrayerSettingsSheet extends StatefulWidget {
     AppSnackbar.dismiss();
     return AppSheet.show<void>(
       context: context,
-      maxHeightFactor: 0.90,
+      maxHeightFactor: 0.92,
       builder: (_) => PrayerSettingsSheet(onSettingsChanged: onSettingsChanged),
     );
   }
@@ -39,10 +41,12 @@ class PrayerSettingsSheet extends StatefulWidget {
   State<PrayerSettingsSheet> createState() => _PrayerSettingsSheetState();
 }
 
-class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
+class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
+    with SingleTickerProviderStateMixin {
   final AdhanSettingsService _settingsService = AdhanSettingsService();
   final AdhanService _adhanService = AdhanService();
 
+  late final TabController _tabController;
   AdhanSettings? _settings;
   WidgetThemeMode _widgetThemeMode = WidgetThemeMode.dark;
   bool _loading = true;
@@ -51,12 +55,14 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 4, vsync: this);
     _load();
-    _adhanService.preload(); // Preload audio
+    _adhanService.preload();
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _adhanService.dispose();
     super.dispose();
   }
@@ -78,6 +84,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     setState(() => _saving = true);
 
     await _settingsService.saveSettings(_settings!);
+    PrayerTimeService.clearCache();
     await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
     widget.onSettingsChanged?.call();
 
@@ -86,7 +93,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     Navigator.pop(context);
     AppSnackbar.success(
       context,
-      'تم حفظ إعدادات الصلاة بنجاح',
+      'تم حفظ إعدادات الصلاة والأذان بنجاح',
       duration: AppMotion.toastShort,
       hasNavBar: true,
     );
@@ -99,17 +106,18 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
 
     if (_loading || _settings == null) {
       return Container(
-        height: 300,
+        height: 320,
         decoration: BoxDecoration(
           color: palette.surfaceRaised,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
-        padding: const EdgeInsets.all(AppSpace.xl),
+        padding: const EdgeInsetsDirectional.all(AppSpace.xl),
         child: Column(
           children: [
             Center(
@@ -131,7 +139,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
             const SizedBox(height: AppSpace.md),
             AppSkeleton(
               width: double.infinity,
-              height: 120,
+              height: 140,
               borderRadius: AppRadius.lgRadius,
             ),
           ],
@@ -146,19 +154,17 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
         borderRadius: AppRadius.sheetTopRadius,
-        border: Border.all(
-          color: palette.border,
-        ),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
+          // Drag handle
           Center(
             child: Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(top: AppSpace.sm),
+              margin: const EdgeInsetsDirectional.only(top: AppSpace.sm),
               decoration: BoxDecoration(
                 color: palette.border,
                 borderRadius: AppRadius.pillRadius,
@@ -170,38 +176,153 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
           _buildHeader(context),
           Divider(height: 1, color: palette.border),
 
-          // Scrollable content
-          Flexible(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+          // Segmented Tab Navigation (Solves the "too long & charged" issue)
+          Container(
+            margin: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(color: palette.border),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              dividerHeight: 0.0,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                color: palette.primarySoft,
+                borderRadius: AppRadius.smRadius,
+                border: Border.all(
+                  color: palette.primary.withValues(alpha: 0.35),
+                  width: 0.8,
+                ),
               ),
-              padding: const EdgeInsets.all(AppSpace.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  PrayerAdhanSection(
+              labelColor: palette.onPrimarySoft,
+              unselectedLabelColor: palette.textMuted,
+              labelStyle: textTheme.label.copyWith(fontWeight: FontWeight.bold),
+              unselectedLabelStyle: textTheme.label,
+              padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.record_voice_over_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.xs),
+                      Text('المؤذن والأصوات'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.notifications_active_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.xs),
+                      Text('التنبيهات والأذان'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.xs),
+                      Text('الحساب والضبط'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.widgets_rounded, size: AppIcon.sm),
+                      SizedBox(width: AppSpace.xs),
+                      Text('أداة الشاشة'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Content Views per Tab
+          Flexible(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                // Tab 0: Muezzin & Voices (Directly answers user request)
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                  child: PrayerMuezzinSelector(
+                    settings: settings,
+                    adhanService: _adhanService,
+                    onSettingsChanged: _updateSettings,
+                  ),
+                ),
+
+                // Tab 1: Notifications & Modes
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                  child: PrayerAdhanSection(
                     settings: settings,
                     isDark: isDark,
                     adhanService: _adhanService,
                     onSettingsChanged: _updateSettings,
+                    onOpenVoicesTab: () => _tabController.animateTo(0),
                   ),
-                  const SizedBox(height: AppSpace.lg),
-                  _buildNotificationsSection(settings),
-                  const SizedBox(height: AppSpace.lg),
-                  PrayerAdjustmentsSection(
-                    settings: settings,
-                    isDark: isDark,
-                    onSettingsChanged: _updateSettings,
+                ),
+
+                // Tab 2: Calculation & Fine-tuning
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
-                  const SizedBox(height: AppSpace.lg),
-                  _buildWidgetThemeSection(),
-                ],
-              ),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PrayerCalcSection(
+                        settings: settings,
+                        isDark: isDark,
+                        onSettingsChanged: _updateSettings,
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      PrayerAdjustmentsSection(
+                        settings: settings,
+                        isDark: isDark,
+                        onSettingsChanged: _updateSettings,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Tab 3: Home Screen Widget Theme
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                  child: _buildWidgetThemeSection(),
+                ),
+              ],
             ),
           ),
 
-          // Save button
+          // Sticky Save Button
           _buildSaveButton(),
         ],
       ),
@@ -229,10 +350,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
                   'إعدادات الصلاة والأذان',
                   style: context.text.titleSmall.copyWith(
                     color: palette.text,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'تخصيص أصوات المؤذنين ونمط التنبيهات',
+                  'أصوات المؤذنين، نمط التنبيهات، وضبط المواقيت',
                   style: context.text.caption.copyWith(
                     color: palette.textMuted,
                   ),
@@ -251,140 +373,6 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
     );
   }
 
-  Widget _buildNotificationsSection(AdhanSettings settings) {
-    final palette = context.palette;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionHeader(
-            title: 'التنبيهات',
-            padding: EdgeInsets.zero,
-          ),
-          const SizedBox(height: AppSpace.md),
-
-          // Notify before slider
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'التنبيه قبل دخول الوقت',
-                    style: context.text.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: palette.text,
-                    ),
-                  ),
-                  Text(
-                    '${settings.notifyBeforeMinutes.toInt()} دقيقة',
-                    style: context.text.label.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: palette.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpace.sm),
-              SliderTheme(
-                data: SliderThemeData(
-                  activeTrackColor: palette.primary,
-                  inactiveTrackColor: palette.border,
-                  thumbColor: palette.primary,
-                  overlayColor: palette.primarySoft,
-                ),
-                child: Slider(
-                  value: settings.notifyBeforeMinutes,
-                  min: 5,
-                  max: 30,
-                  divisions: 5,
-                  onChanged: (val) {
-                    _updateSettings(
-                      settings.copyWith(notifyBeforeMinutes: val),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpace.md),
-
-          // Iqama toggle
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppSize.tap),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'تذكير الإقامة',
-                    style: context.text.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: palette.text,
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: settings.iqamaReminders,
-                  onChanged: (val) {
-                    HapticFeedback.selectionClick();
-                    _updateSettings(settings.copyWith(iqamaReminders: val));
-                  },
-                  activeThumbColor: palette.primary,
-                  activeTrackColor: palette.primarySoft,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: AppSpace.md),
-
-          // Flip to silence toggle
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppSize.tap),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'قلب الهاتف لكتم الصوت والأذان',
-                        style: context.text.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: palette.text,
-                        ),
-                      ),
-                      Text(
-                        'عند وضع الهاتف مقلوباً (الشاشة لأسفل) يتم إيقاف الأذان والتلاوة فوراً',
-                        style: context.text.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: FlipToStopService().isEnabled,
-                  onChanged: (val) {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      FlipToStopService().setEnabled(val);
-                    });
-                  },
-                  activeThumbColor: palette.primary,
-                  activeTrackColor: palette.primarySoft,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildWidgetThemeSection() {
     final palette = context.palette;
 
@@ -393,34 +381,34 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionHeader(
-            title: 'مظهر ودجت الشاشة الرئيسية',
+            title: 'مظهر أداة الشاشة الرئيسية',
             padding: EdgeInsets.zero,
           ),
           const SizedBox(height: AppSpace.xs),
           Text(
-            'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
+            'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن موفر للبطارية أو ناصع البياض)',
             style: context.text.caption.copyWith(
               color: palette.textMuted,
             ),
           ),
           const SizedBox(height: AppSpace.md),
           _buildWidgetThemeOption(
-            title: 'داكن (أسود)',
-            subtitle: 'بطاقة سوداء أنيقة وموفرة للبطارية',
+            title: 'داكن (أسود فاخر)',
+            subtitle: 'بطاقة سوداء أنيقة وموفرة لاستهلاك شاشات AMOLED',
             icon: Icons.dark_mode_rounded,
             mode: WidgetThemeMode.dark,
           ),
           const SizedBox(height: AppSpace.sm),
           _buildWidgetThemeOption(
-            title: 'فاتح (أبيض)',
+            title: 'فاتح (أبيض ناصع)',
             subtitle: 'بطاقة بيضاء ناصعة بتصميم عصري وأنيق',
             icon: Icons.light_mode_rounded,
             mode: WidgetThemeMode.light,
           ),
           const SizedBox(height: AppSpace.sm),
           _buildWidgetThemeOption(
-            title: 'تلقائي',
-            subtitle: 'يتبع مظهر الهاتف ووضع التطبيق تلقائياً',
+            title: 'تلقائي (حسب النظام)',
+            subtitle: 'يتغير المظهر تلقائياً وفق وضع الهاتف النهاري والليلي',
             icon: Icons.brightness_auto_rounded,
             mode: WidgetThemeMode.auto,
           ),
@@ -508,13 +496,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet> {
   Widget _buildSaveButton() {
     final palette = context.palette;
     return Container(
-      padding: const EdgeInsets.all(AppSpace.xl),
+      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
         border: Border(
-          top: BorderSide(
-            color: palette.border,
-          ),
+          top: BorderSide(color: palette.border),
         ),
       ),
       child: SafeArea(

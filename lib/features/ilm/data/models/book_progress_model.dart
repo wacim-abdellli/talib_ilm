@@ -51,6 +51,8 @@ class BookProgress {
   }
 
   BookProgress copyWith({
+    String? bookTitle,
+    String? level,
     int? totalPages,
     int? currentPage,
     DateTime? lastReadDate,
@@ -63,8 +65,8 @@ class BookProgress {
   }) {
     return BookProgress(
       bookId: bookId,
-      bookTitle: bookTitle,
-      level: level,
+      bookTitle: bookTitle ?? this.bookTitle,
+      level: level ?? this.level,
       totalPages: totalPages ?? this.totalPages,
       currentPage: currentPage ?? this.currentPage,
       lastReadDate: lastReadDate ?? this.lastReadDate,

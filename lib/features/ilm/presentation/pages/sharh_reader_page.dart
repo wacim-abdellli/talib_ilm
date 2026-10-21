@@ -158,9 +158,12 @@ class _SharhReaderPageState extends State<SharhReaderPage> {
     final entries = pages
         .map(
           (p) => BookmarkEntry(
+            bookId: widget.bookId,
             title: widget.sharh.title,
-            subtitle: 'صفحة $p',
+            subtitle: '',
+            page: p,
             note: _notes[p],
+            sharhFile: widget.sharh.file,
           ),
         )
         .toList();

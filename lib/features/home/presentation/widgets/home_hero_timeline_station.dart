@@ -58,7 +58,7 @@ class HomeHeroTimelineStation extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: AppSpace.xs),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: palette.gold,
+                  color: pColor,
                 ),
               )
             else if (isPast)

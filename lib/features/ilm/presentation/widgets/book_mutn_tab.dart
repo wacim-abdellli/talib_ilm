@@ -23,6 +23,8 @@ class BookMutnTab extends StatefulWidget {
   final VoidCallback onToggleBookmark;
   final VoidCallback onAddNote;
   final VoidCallback onShowBookmarks;
+  final int? targetParagraph;
+  final Object? targetScrollKey;
 
   const BookMutnTab({
     super.key,
@@ -35,6 +37,8 @@ class BookMutnTab extends StatefulWidget {
     required this.onToggleBookmark,
     required this.onAddNote,
     required this.onShowBookmarks,
+    this.targetParagraph,
+    this.targetScrollKey,
   });
 
   @override
@@ -100,6 +104,7 @@ class _BookMutnTabState extends State<BookMutnTab> {
           onSwitchToFullBook: () => _onSelectEdition(1),
           fullBookLabel: 'قراءة الكتاب كاملاً (${digitalEntry.totalPages} صفحة)',
           onPageChanged: widget.onPageChanged,
+          targetParagraph: widget.targetParagraph,
         );
       } else {
         readerContent = _buildDigitalReader(palette, digitalEntry);
@@ -237,6 +242,8 @@ class _BookMutnTabState extends State<BookMutnTab> {
         onToggleBookmark: widget.onToggleBookmark,
         onShowBookmarks: widget.onShowBookmarks,
         onPageChanged: widget.onPageChanged,
+        targetParagraph: widget.targetParagraph,
+        targetScrollKey: widget.targetScrollKey,
       );
     }
 

@@ -6,25 +6,26 @@ import '../../../../app/theme/app_theme.dart';
 import '../../data/models/prayer_models.dart';
 import 'prayer_widget_state_evaluator.dart';
 
-/// PrayerStrip — 5 fixed-width prayer columns.
-/// [totalWidth] = canvas width minus horizontal padding (e.g. 360 - 32 = 328)
+/// PrayerStrip — 5 fixed-width prayer columns with celestial icons.
+/// [totalWidth] = canvas width minus horizontal padding (e.g. 380 - 16 = 364)
 class PrayerStrip extends StatelessWidget {
   final double totalWidth;
   final EvaluatedPrayerWidgetState eval;
   final Map<String, DateTime> all;
+  final bool showIcons;
 
   const PrayerStrip({
     super.key,
     required this.totalWidth,
     required this.eval,
     required this.all,
+    this.showIcons = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final colWidth = totalWidth / 5.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -34,65 +35,89 @@ class PrayerStrip extends StatelessWidget {
         children: AppStrings.prayerOrder.map((name) {
           final isCurrent = eval.activePrayerName == name;
           final isPast = eval.completedPrayerNames.contains(name);
-          final prayerColor = palette.prayer(name);
           final time = all[name];
           final timeStr = time != null ? formatPrayerTime12h(time) : '--:--';
+          final pColor = palette.prayer(name);
 
           final nameColor = isCurrent
-              ? prayerColor
+              ? pColor
               : (isPast ? palette.textMuted : palette.text);
 
-          return SizedBox(
-            width: colWidth,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  name,
-                  style: textTheme.caption.copyWith(
-                    color: nameColor,
-                  ),
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpace.xxs),
-                if (isCurrent)
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.xs,
-                      vertical: AppSpace.xxs,
+          return Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 1. Celestial Icon (Suns & Moons)
+                  if (showIcons) ...[
+                    Icon(
+                      iconForPrayer(name),
+                      size: isCurrent ? AppIcon.md : AppIcon.sm,
+                      color: isCurrent
+                          ? pColor
+                          : (isPast
+                              ? palette.textMuted.withValues(alpha: 0.50)
+                              : pColor.withValues(alpha: 0.85)),
                     ),
-                    decoration: BoxDecoration(
-                      color: prayerColor,
-                      borderRadius: AppRadius.smRadius,
-                    ),
-                    child: Text(
-                      timeStr,
-                      style: textTheme.caption.copyWith(
-                        color: palette.onPrimary,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                else
+                    const SizedBox(height: AppSpace.xxs),
+                  ],
+
+                  // 2. Prayer Name
                   Text(
-                    timeStr,
+                    name,
                     style: textTheme.caption.copyWith(
-                      color: isPast
-                          ? palette.textMuted.withValues(alpha: 0.75)
-                          : palette.text,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: nameColor,
+                      fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
                     ),
                     maxLines: 1,
                     textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                  const SizedBox(height: AppSpace.xxs),
+
+                  // 3. Prayer Time Pill
+                  if (isCurrent)
+                    Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xs,
+                        vertical: AppSpace.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: pColor,
+                        borderRadius: AppRadius.smRadius,
+                      ),
+                      child: Text(
+                        timeStr,
+                        style: textTheme.caption.copyWith(
+                          color: palette.surface,
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        vertical: AppSpace.xxs,
+                      ),
+                      child: Text(
+                        timeStr,
+                        style: textTheme.caption.copyWith(
+                          color: isPast
+                              ? palette.textMuted.withValues(alpha: 0.75)
+                              : palette.text,
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -299,9 +324,12 @@ class WidgetCard extends StatelessWidget {
               width: width,
               height: height,
               decoration: BoxDecoration(
-                color: palette.surfaceRaised,
+                color: palette.bg,
                 borderRadius: AppRadius.lgRadius,
-                border: Border.all(color: palette.border, width: 1),
+                border: Border.all(
+                  color: palette.border,
+                  width: 1,
+                ),
               ),
               padding: padding ??
                   const EdgeInsetsDirectional.symmetric(
@@ -332,7 +360,7 @@ IconData iconForPrayer(String name) {
     return Icons.wb_sunny_rounded;
   }
   if (p.contains(AppStrings.prayerAsr) || p == 'العصر') {
-    return Icons.sunny_snowing;
+    return Icons.wb_sunny_outlined;
   }
   if (p.contains(AppStrings.prayerMaghrib) || p == 'المغرب') {
     return Icons.nights_stay_rounded;

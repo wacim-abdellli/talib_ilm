@@ -152,7 +152,10 @@ class FakePrayerTimeService extends PrayerTimeService {
   FakePrayerTimeService(this._mockNow) : super(now: _mockNow);
 
   @override
-  Future<PrayerTimesDay> getPrayerTimesDay({DateTime? date}) async {
+  Future<PrayerTimesDay> getPrayerTimesDay({
+    DateTime? date,
+    bool forceRefresh = false,
+  }) async {
     final d = date ?? _mockNow();
     final prayers = <String, DateTime>{
       AppStrings.prayerFajr: DateTime(d.year, d.month, d.day, 5, 10),

@@ -22,18 +22,20 @@ class SectionHeader extends StatelessWidget {
 
     return Padding(
       padding: padding ??
-          const EdgeInsets.only(
+          const EdgeInsetsDirectional.only(
             top: AppSpace.xxl,
             bottom: AppSpace.md,
-            left: AppSpace.xl,
-            right: AppSpace.xl,
+            start: AppSpace.xl,
+            end: AppSpace.xl,
           ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: textTheme.titleSmall.copyWith(color: palette.text),
+          Expanded(
+            child: Text(
+              title,
+              style: textTheme.titleSmall.copyWith(color: palette.text),
+            ),
           ),
           if (actionLabel != null && onAction != null)
             TextButton(

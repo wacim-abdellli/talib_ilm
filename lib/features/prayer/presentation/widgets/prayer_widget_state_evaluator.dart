@@ -52,11 +52,57 @@ class EvaluatedPrayerWidgetState {
       phase == PrayerWidgetPhase.atAdhan ||
       phase == PrayerWidgetPhase.betweenAdhanAndIqama ||
       phase == PrayerWidgetPhase.inSalah;
+
+  /// Formatted single-line header countdown label for widgets:
+  /// - beforeAdhan: 'بعد MM:SS' or 'بعد HH:MM:SS'
+  /// - atAdhan: 'الأذان الآن'
+  /// - betweenAdhanAndIqama: 'الإقامة بعد MM:SS'
+  /// - inSalah: 'تقام الصلاة الآن'
+  /// - postSalah: 'بعد MM:SS'
+  String get headerCountdownLabel {
+    switch (phase) {
+      case PrayerWidgetPhase.beforeAdhan:
+      case PrayerWidgetPhase.postSalah:
+        return 'بعد $countdownFormatted';
+      case PrayerWidgetPhase.atAdhan:
+        return 'الأذان الآن';
+      case PrayerWidgetPhase.betweenAdhanAndIqama:
+        return 'الإقامة بعد $countdownFormatted';
+      case PrayerWidgetPhase.inSalah:
+        return 'تقام الصلاة الآن';
+    }
+  }
 }
 
 /// Evaluates prayer times and determines active liturgical phase, countdown, and titles.
 class PrayerWidgetStateEvaluator {
   PrayerWidgetStateEvaluator._();
+
+  /// Canonical authentic Iqama durations in minutes for each prayer:
+  /// - Fajr (الفجر): 25 minutes
+  /// - Dhuhr (الظهر): 20 minutes (Jumua صلاة الجمعة: 25 minutes)
+  /// - Asr (العصر): 20 minutes
+  /// - Maghrib (المغرب): 10 minutes
+  /// - Isha (العشاء): 15 minutes
+  static int getIqamaMinutes(String prayerName, {bool isJumua = false}) {
+    if (isJumua) return 25;
+    final p = prayerName.toLowerCase().trim();
+    if (p.contains('فجر') || p.contains('fajr')) return 25;
+    if (p.contains('ظهر') || p.contains('dhuhr')) return 20;
+    if (p.contains('عصر') || p.contains('asr')) return 20;
+    if (p.contains('مغرب') || p.contains('maghrib')) return 10;
+    if (p.contains('عشاء') || p.contains('isha')) return 15;
+    return 15;
+  }
+
+  /// Estimated duration of congregational prayer in minutes.
+  static int getSalahDurationMinutes(String prayerName, {bool isJumua = false}) {
+    if (isJumua) return 15;
+    final p = prayerName.toLowerCase().trim();
+    if (p.contains('فجر') || p.contains('fajr')) return 15;
+    if (p.contains('مغرب') || p.contains('maghrib')) return 10;
+    return 12;
+  }
 
   static EvaluatedPrayerWidgetState evaluate({
     required DateTime now,
@@ -80,7 +126,7 @@ class PrayerWidgetStateEvaluator {
       return (AppStrings.prayerFajr, fajrTomorrow);
     }
 
-    // 1. Check if any prayer is currently within active Adhan, Iqama, or Salah window
+    // 1. Check if the most recent prayer is currently within active Adhan, Iqama, or Salah window
     for (int i = entries.length - 1; i >= 0; i--) {
       final entry = entries[i];
       final pName = entry.key;
@@ -89,22 +135,18 @@ class PrayerWidgetStateEvaluator {
       if (!now.isBefore(pTime)) {
         final elapsed = now.difference(pTime);
         final isJumua = isFriday && pName == AppStrings.prayerDhuhr;
-        final int iqamaMinutes = isJumua
-            ? 25
-            : (pName == AppStrings.prayerFajr
-                ? 20
-                : (pName == AppStrings.prayerMaghrib ? 10 : 15));
+        final int iqamaMinutes = getIqamaMinutes(pName, isJumua: isJumua);
+        final int salahMinutes = getSalahDurationMinutes(pName, isJumua: isJumua);
         final iqamaDuration = Duration(minutes: iqamaMinutes);
-        final salahDuration = Duration(minutes: iqamaMinutes + 15);
-        final postSalahDuration = Duration(minutes: iqamaMinutes + 25);
+        final salahDuration = Duration(minutes: iqamaMinutes + salahMinutes);
 
         final completed = entries.take(i).map((e) => e.key).toSet();
         final displayTitle = isJumua ? 'صلاة الجمعة' : 'صلاة $pName';
         final prayerIcon = isJumua ? Icons.mosque_rounded : iconForPrayer(pName);
         final upcoming = resolveUpcoming(i);
 
-        // Phase A: Right at Adhan (first 2 minutes)
-        if (elapsed < const Duration(minutes: 2)) {
+        // Phase A: Right at Adhan (first 1 minute)
+        if (elapsed < const Duration(minutes: 1)) {
           return EvaluatedPrayerWidgetState(
             activePrayerName: pName,
             displayTitle: isJumua ? 'أذان صلاة الجمعة' : 'أذان صلاة $pName',
@@ -123,7 +165,7 @@ class PrayerWidgetStateEvaluator {
           );
         }
 
-        // Phase B: Between Adhan and Iqama
+        // Phase B: Between Adhan and Iqama (Active Iqama Countdown)
         if (elapsed < iqamaDuration) {
           final iqamaTime = pTime.add(iqamaDuration);
           final remainingToIqama = iqamaTime.difference(now);
@@ -165,32 +207,8 @@ class PrayerWidgetStateEvaluator {
           );
         }
 
-        // Phase D: Post-salah dhikr window (before transition)
-        if (elapsed < postSalahDuration) {
-          final nextIndex = i + 1;
-          if (nextIndex < entries.length) {
-            final nextEntry = entries[nextIndex];
-            final diff = nextEntry.value.difference(now);
-            final nextIsJumua = isFriday && nextEntry.key == AppStrings.prayerDhuhr;
-            final nextUpcoming = resolveUpcoming(nextIndex);
-            return EvaluatedPrayerWidgetState(
-              activePrayerName: nextEntry.key,
-              displayTitle: nextIsJumua ? 'صلاة الجمعة' : 'صلاة ${nextEntry.key}',
-              targetPrayerTime: nextEntry.value,
-              phase: PrayerWidgetPhase.postSalah,
-              statusLabel: 'أذكار ما بعد الصلاة',
-              subStatusText: 'استغفار وتسبيح بعد الفريضة',
-              timePillLabel: formatPrayerTime12h(nextEntry.value),
-              timePillIcon: Icons.access_time_rounded,
-              statusIcon: Icons.menu_book_rounded,
-              prayerIcon: nextIsJumua ? Icons.mosque_rounded : iconForPrayer(nextEntry.key),
-              countdownFormatted: formatDuration(diff),
-              completedPrayerNames: entries.take(i + 1).map((e) => e.key).toSet(),
-              nextPrayerName: nextUpcoming.$1,
-              nextPrayerTime: nextUpcoming.$2,
-            );
-          }
-        }
+        // Congregational prayer has concluded: break so it transitions immediately to upcoming prayer!
+        break;
       }
     }
 

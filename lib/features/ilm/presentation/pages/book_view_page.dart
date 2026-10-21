@@ -18,6 +18,7 @@ import '../../data/models/sharh_model.dart';
 import '../../../../shared/widgets/pdf_viewer_page.dart';
 import '../../../../core/services/progress_service.dart';
 import '../../../ilm/data/models/progress_models.dart';
+import '../../data/catalogs/mutun_curriculum_catalog.dart';
 import '../../data/catalogs/mutun_lessons_catalog.dart';
 import '../../data/catalogs/turath_catalog.dart';
 import '../../data/models/shamela_models.dart';
@@ -42,6 +43,7 @@ class BookViewPage extends StatefulWidget {
   final int initialTabIndex;
   final String? autoOpenSharhFile;
   final bool openLessonsOnStart;
+  final int? initialPage;
 
   const BookViewPage({
     super.key,
@@ -49,6 +51,7 @@ class BookViewPage extends StatefulWidget {
     this.initialTabIndex = 0,
     this.autoOpenSharhFile,
     this.openLessonsOnStart = false,
+    this.initialPage,
   });
 
   @override
@@ -73,6 +76,8 @@ class _BookViewPageState extends State<BookViewPage>
   bool _isBookmarked = false;
   int _currentPage = 1;
   int _totalPages = 0;
+  int? _targetParagraph;
+  Object? _targetParagraphKey;
   String _bookLevelLabel = 'غير محدد';
   String? _lastSharhFile;
   Sharh? _lastSharh;
@@ -107,31 +112,33 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<int> _resolveInitialMutunPage(MutunDigitalEntry? digitalEntry) async {
-    int resolvedPage = 1;
+    int resolvedPage = widget.initialPage ?? 1;
 
-    try {
-      final info = await _lastActivityService.getPdfPage(_mutunPdfKey);
-      if (info != null && info.page > resolvedPage) {
-        resolvedPage = info.page;
-      }
-    } catch (_) {}
-
-    try {
-      final progressService = await _getProgressService();
-      final progress = await progressService.getBookProgress(widget.book.id);
-      if (progress != null && progress.currentPage > resolvedPage) {
-        resolvedPage = progress.currentPage;
-      }
-    } catch (_) {}
-
-    if (digitalEntry != null) {
+    if (widget.initialPage == null) {
       try {
-        final shamelaPage =
-            await ShamelaService.getLastReadPage(digitalEntry.shamelaId);
-        if (shamelaPage > resolvedPage) {
-          resolvedPage = shamelaPage;
+        final info = await _lastActivityService.getPdfPage(_mutunPdfKey);
+        if (info != null && info.page > resolvedPage) {
+          resolvedPage = info.page;
         }
       } catch (_) {}
+
+      try {
+        final progressService = await _getProgressService();
+        final progress = await progressService.getBookProgress(widget.book.id);
+        if (progress != null && progress.currentPage > resolvedPage) {
+          resolvedPage = progress.currentPage;
+        }
+      } catch (_) {}
+
+      if (digitalEntry != null) {
+        try {
+          final shamelaPage =
+              await ShamelaService.getLastReadPage(digitalEntry.shamelaId);
+          if (shamelaPage > resolvedPage) {
+            resolvedPage = shamelaPage;
+          }
+        } catch (_) {}
+      }
     }
 
     final maxPage = _totalPages > 0
@@ -146,6 +153,7 @@ class _BookViewPageState extends State<BookViewPage>
   @override
   void initState() {
     super.initState();
+    _targetParagraph = widget.initialPage;
     final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
     final fallbackTotal = (digitalEntry != null && digitalEntry.totalPages > 0)
         ? digitalEntry.totalPages
@@ -520,43 +528,143 @@ class _BookViewPageState extends State<BookViewPage>
     final progress = await progressService.getBookProgress(widget.book.id);
     if (progress == null) return;
 
-    if (progress.bookmarkedPages.contains(_currentPage)) {
-      await progressService.removeBookmark(widget.book.id, _currentPage);
+    final targetPage = _currentPage > 0 ? _currentPage : 1;
+    if (progress.bookmarkedPages.contains(targetPage)) {
+      await progressService.removeBookmark(widget.book.id, targetPage);
+      if (mounted) {
+        AppSnackbar.info(context, 'تمت إزالة الإشارة المرجعية (صفحة $targetPage)');
+      }
     } else {
-      await progressService.addBookmark(widget.book.id, _currentPage);
+      await progressService.addBookmark(widget.book.id, targetPage);
+      if (mounted) {
+        AppSnackbar.success(context, 'تم حفظ الإشارة المرجعية (صفحة $targetPage)');
+      }
     }
 
     if (!mounted) return;
     await _refreshBookmarkState();
   }
 
-  void _showNoteDialog() {
+  void _showNoteDialog() async {
+    final progressService = await _getProgressService();
+    final progress = await progressService.getBookProgress(widget.book.id);
+    final targetPage = _currentPage > 0 ? _currentPage : 1;
+    final existingNote = progress?.notes[targetPage] ?? '';
+    _noteController.text = existingNote;
+
+    if (!mounted) return;
     BookNoteDialog.show(
       context,
       controller: _noteController,
+      hasExistingNote: existingNote.isNotEmpty,
+      onDelete: existingNote.isNotEmpty
+          ? () async {
+              await progressService.deleteNote(widget.book.id, targetPage);
+              _noteController.clear();
+              if (!mounted) return;
+              Navigator.of(context).pop();
+              AppSnackbar.info(context, 'تم حذف الملاحظة (صفحة $targetPage)');
+            }
+          : null,
+      onShowAllNotes: () {
+        Navigator.of(context).pop();
+        _showBookmarksAndNotes(initialTab: 1);
+      },
       onSave: () async {
+        final text = _noteController.text.trim();
         final progressService = await _getProgressService();
         await _ensureBookInitialized(totalPages: _totalPages);
-        await progressService.saveNote(
-          widget.book.id,
-          _currentPage,
-          _noteController.text,
-        );
+        if (text.isEmpty) {
+          await progressService.deleteNote(widget.book.id, targetPage);
+        } else {
+          await progressService.saveNote(
+            widget.book.id,
+            targetPage,
+            text,
+          );
+        }
         _noteController.clear();
         if (!mounted) return;
         Navigator.of(context).pop();
-        AppSnackbar.success(context, 'تم حفظ الملاحظة');
+        AppSnackbar.success(
+          context,
+          text.isEmpty
+              ? 'تم حذف الملاحظة'
+              : 'تم حفظ الملاحظة على صفحة $targetPage',
+        );
       },
     );
   }
 
-  void _showGlobalBookmarksList() async {
+  void _showBookmarksAndNotes({int initialTab = 0}) async {
     final progressService = await _getProgressService();
     if (!mounted) return;
     await BookViewBookmarksSheet.loadAndShow(
       context: context,
       progressService: progressService,
+      currentBookId: widget.book.id,
+      initialTab: initialTab,
+      onSelectEntry: _navigateToEntry,
     );
+  }
+
+  void _navigateToEntry(BookmarkEntry entry) async {
+    if (entry.bookId == widget.book.id) {
+      if (entry.sharhFile != null) {
+        _tabController.animateTo(1);
+        final sharh = widget.book.shuruh.firstWhere(
+          (s) => s.file == entry.sharhFile,
+          orElse: () => widget.book.shuruh.first,
+        );
+        _openSharhPdf(sharh);
+      } else {
+        _tabController.animateTo(0);
+
+        final curriculum = MutunCurriculumCatalog.getBook(widget.book.id);
+        final digital = MutunDigitalCatalog.getEntry(widget.book.id);
+        final totalParas = curriculum?.totalParagraphs ?? 0;
+        final totalPages = digital?.totalPages ??
+            (widget.book.totalPages > 0 ? widget.book.totalPages : 1);
+
+        // Map canonical page to first paragraph of that page for curriculum view
+        final targetPara = (totalPages > 0 && totalParas > 0)
+            ? (((entry.page - 1) * totalParas) ~/ totalPages) + 1
+            : entry.page;
+
+        setState(() {
+          _targetParagraph = targetPara;
+          _targetParagraphKey = Object();
+          _currentPage = entry.page;
+          _totalPages = totalPages;
+          _isBookmarked = _bookmarkedPages.contains(entry.page);
+        });
+
+        _mutnPdfKey.currentState?.jumpToPage(entry.page);
+        AppSnackbar.info(context, 'انتقال إلى صفحة ${entry.page}');
+      }
+    } else {
+      final program = await AssetService.loadMutunProgram();
+      IlmBook? targetBook;
+      for (final lvl in program.levels) {
+        for (final b in lvl.books) {
+          if (b.id == entry.bookId) {
+            targetBook = b;
+            break;
+          }
+        }
+      }
+      if (targetBook != null && mounted) {
+        Navigator.of(context).push(
+          buildFadeRoute(
+            page: BookViewPage(
+              book: targetBook,
+              initialPage: entry.page,
+              autoOpenSharhFile: entry.sharhFile,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _onMutnPageChanged(int page, int total) async {
@@ -727,6 +835,7 @@ class _BookViewPageState extends State<BookViewPage>
                           isFavorite: _isFavorite,
                           onToggleFavorite: _toggleFavorite,
                           onResetProgress: _resetProgress,
+                          onShowBookmarksAndNotes: () => _showBookmarksAndNotes(),
                           tabController: _tabController,
                         ),
                       ),
@@ -750,7 +859,9 @@ class _BookViewPageState extends State<BookViewPage>
               isBookmarked: _isBookmarked,
               onToggleBookmark: _toggleBookmark,
               onAddNote: _showNoteDialog,
-              onShowBookmarks: _showGlobalBookmarksList,
+              onShowBookmarks: () => _showBookmarksAndNotes(),
+              targetParagraph: _targetParagraph,
+              targetScrollKey: _targetParagraphKey,
             ),
 
             BookSharhTab(

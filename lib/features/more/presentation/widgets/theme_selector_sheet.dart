@@ -178,7 +178,7 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
 
             // ── Section 2: Home Screen Widget Theme ──
             Text(
-              'مظهر ودجت الشاشة الرئيسية',
+              'مظهر أداة الشاشة الرئيسية',
               style: textTheme.label.copyWith(
                 fontWeight: FontWeight.w700,
                 color: palette.textMuted,

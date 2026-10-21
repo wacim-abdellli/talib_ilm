@@ -12,6 +12,7 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
   final VoidCallback onResetProgress;
+  final VoidCallback? onShowBookmarksAndNotes;
   final TabController tabController;
 
   const BookViewAppBar({
@@ -20,6 +21,7 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.isFavorite,
     required this.onToggleFavorite,
     required this.onResetProgress,
+    this.onShowBookmarksAndNotes,
     required this.tabController,
   });
 
@@ -35,6 +37,15 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: title,
       showBack: true,
       actions: [
+        if (onShowBookmarksAndNotes != null)
+          IconButton(
+            tooltip: 'المحفوظات والملاحظات',
+            onPressed: onShowBookmarksAndNotes,
+            icon: Icon(
+              Icons.collections_bookmark_rounded,
+              color: palette.gold,
+            ),
+          ),
         ListenableBuilder(
           listenable: themeService,
           builder: (context, _) {

@@ -4,17 +4,17 @@ import '../../../../app/theme/app_palette.dart';
 import 'prayer_widget_state_evaluator.dart';
 import 'widget_shared_components.dart';
 
-const double kRibbonW = 360.0;
-const double kRibbonH = 80.0;
-const double kRibbonPadH = AppSpace.lg; // 16dp
-const double kRibbonPadV = AppSpace.xs; // 4dp
+const double kRibbonW = 380.0;
+const double kRibbonH = 104.0;
+const double kRibbonPadH = AppSpace.sm; // 8dp
+const double kRibbonPadV = AppSpace.sm; // 8dp
 const double kRibbonBorder = 1.0;
 const double kRibbonContent =
-    kRibbonW - (kRibbonPadH * 2) - (kRibbonBorder * 2); // 326dp
+    kRibbonW - (kRibbonPadH * 2) - (kRibbonBorder * 2); // 362dp
 
-/// Ribbon widget (4×1) — 360×80dp fixed canvas.
+/// Ribbon widget (4×1) — 380×104dp fixed canvas.
 /// Row 1: Active prayer countdown + Hijri date
-/// Row 2: 5-prayer strip
+/// Row 2: 5-prayer strip with celestial sun and moon icons
 class WidgetRibbon extends StatelessWidget {
   final EvaluatedPrayerWidgetState eval;
   final Map<String, DateTime> all;
@@ -31,11 +31,6 @@ class WidgetRibbon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double row1TitleW = kRibbonContent * 0.58;
-    const double row1DateW = kRibbonContent * 0.42;
-    const double titleTextW = row1TitleW - AppIcon.xs - AppSpace.xs;
-    const double dateTextW = row1DateW - AppIcon.xs - AppSpace.xs;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
@@ -50,7 +45,7 @@ class WidgetRibbon extends StatelessWidget {
           builder: (ctx) {
             final palette = ctx.palette;
             final textTheme = ctx.text;
-            final prayerColor = palette.prayer(eval.activePrayerName);
+            final activeColor = palette.prayer(eval.activePrayerName);
 
             return Column(
               mainAxisSize: MainAxisSize.max,
@@ -62,54 +57,79 @@ class WidgetRibbon extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: row1TitleW,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Icon(eval.prayerIcon, size: AppIcon.xs, color: prayerColor),
-                          const SizedBox(width: AppSpace.xs),
-                          SizedBox(
-                            width: titleTextW,
-                            child: Text(
-                              '${eval.displayTitle} • ${eval.countdownFormatted}',
-                              style: textTheme.caption.copyWith(color: palette.text),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    // Start (Right): Active prayer icon + title + countdown
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          eval.prayerIcon,
+                          size: AppIcon.xs,
+                          color: activeColor,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          eval.displayTitle,
+                          style: textTheme.label.copyWith(
+                            color: activeColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Text(
+                            eval.headerCountdownLabel,
+                            style: textTheme.label.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.w700,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures()
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    SizedBox(
-                      width: row1DateW,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Icon(Icons.calendar_today_rounded, size: AppIcon.xs, color: palette.gold),
-                          const SizedBox(width: AppSpace.xs),
-                          SizedBox(
-                            width: dateTextW,
-                            child: Text(
-                              hijriDate,
-                              style: textTheme.caption.copyWith(color: palette.textMuted),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.end,
+                    const SizedBox(width: AppSpace.xs),
+
+                    // End (Left): Hijri Date with Calendar Icon (never truncates)
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: AppIcon.xs,
+                              color: palette.textMuted,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              hijriDate,
+                              style: textTheme.caption.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
 
-                // ── Row 2: 5-Prayer Station Strip ──
+                const SizedBox(height: AppSpace.xs),
+
+                // ── Row 2: 5-Prayer Station Strip with Celestial Icons ──
                 PrayerStrip(
                   totalWidth: kRibbonContent,
                   eval: eval,
                   all: all,
+                  showIcons: true,
                 ),
               ],
             );

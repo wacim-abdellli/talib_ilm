@@ -143,6 +143,106 @@ class PrayerCalcSection extends StatelessWidget {
               ),
             );
           }),
+
+          const SizedBox(height: AppSpace.lg),
+          Divider(height: 1, color: palette.border),
+          const SizedBox(height: AppSpace.lg),
+
+          const SectionHeader(
+            title: 'المذهب الفقهي (حساب صلاة العصر)',
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            'يحدد وقت دخول صلاة العصر فلكياً استناداً إلى طول ظل الشاخص:',
+            style: context.text.caption.copyWith(color: palette.textMuted),
+          ),
+          const SizedBox(height: AppSpace.md),
+
+          ...AdhanSettingsService.madhabs.entries.map((entry) {
+            final isSelected = (settings.madhab == entry.key);
+            final title = entry.key == 'shafi'
+                ? 'جمهور الفقهاء (شافعي، مالكي، حنبلي)'
+                : 'المذهب الحنفي';
+            final desc = entry.key == 'shafi'
+                ? 'يبدأ العصر إذا صار ظل الشيء مثله (المعتمد في أكثر العالم الإسلامي)'
+                : 'يبدأ العصر إذا صار ظل الشيء مثليه (تأخير وقت العصر)';
+
+            return Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onSettingsChanged(
+                      settings.copyWith(madhab: entry.key),
+                    );
+                  },
+                  borderRadius: AppRadius.mdRadius,
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                    constraints: const BoxConstraints(
+                      minHeight: AppSize.tap,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? palette.primarySoft
+                          : palette.surfaceMuted,
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(
+                        color: isSelected ? palette.primary : palette.border,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(top: AppSpace.xxs),
+                          child: Icon(
+                            isSelected
+                                ? Icons.radio_button_checked_rounded
+                                : Icons.radio_button_off_rounded,
+                            color: isSelected
+                                ? palette.primary
+                                : palette.textSubtle,
+                            size: AppIcon.md,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: context.text.body.copyWith(
+                                  fontWeight:
+                                      isSelected ? FontWeight.w700 : FontWeight.w600,
+                                  color: isSelected
+                                      ? palette.onPrimarySoft
+                                      : palette.text,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.xxs),
+                              Text(
+                                desc,
+                                style: context.text.caption.copyWith(
+                                  color: isSelected
+                                      ? palette.onPrimarySoft.withValues(alpha: 0.85)
+                                      : palette.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../catalogs/mutun_curriculum_catalog.dart';
+import '../catalogs/mutun_digital_catalog.dart';
 import '../models/book_progress_model.dart';
 
 class BookProgressService {
@@ -67,12 +70,55 @@ class BookProgressService {
     await saveBookProgress(reset);
   }
 
+  static String canonicalTitleFor(String bookId, [String? preferredTitle]) {
+    if (preferredTitle != null &&
+        preferredTitle.isNotEmpty &&
+        !preferredTitle.startsWith('bk_') &&
+        !preferredTitle.contains('_') &&
+        preferredTitle != bookId) {
+      return preferredTitle;
+    }
+    final curriculum = MutunCurriculumCatalog.getBook(bookId);
+    if (curriculum != null && curriculum.title.isNotEmpty) {
+      return curriculum.title;
+    }
+    final digital = MutunDigitalCatalog.getEntry(bookId);
+    if (digital != null && digital.title.isNotEmpty) {
+      return digital.title;
+    }
+    return (preferredTitle != null && preferredTitle.isNotEmpty)
+        ? preferredTitle
+        : bookId;
+  }
+
   Future<List<BookProgress>> getAllProgress() async {
     final jsonString = _prefs.getString(_progressKey);
     if (jsonString == null) return [];
 
     final List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((jsonItem) => BookProgress.fromJson(jsonItem)).toList();
+    bool changed = false;
+    final list = jsonList.map((jsonItem) {
+      final p = BookProgress.fromJson(jsonItem);
+      final isRaw = p.bookTitle.isEmpty ||
+          p.bookTitle == p.bookId ||
+          p.bookTitle.startsWith('bk_') ||
+          p.bookTitle.contains('_');
+      if (isRaw) {
+        final canonical = canonicalTitleFor(p.bookId, p.bookTitle);
+        if (canonical != p.bookTitle && canonical != p.bookId) {
+          changed = true;
+          return p.copyWith(bookTitle: canonical);
+        }
+      }
+      return p;
+    }).toList();
+
+    if (changed) {
+      final encoded = json.encode(list.map((p) => p.toJson()).toList());
+      unawaited(_prefs.setString(_progressKey, encoded));
+    }
+
+    return list;
   }
 
   Future<BookProgress?> getBookProgress(String bookId) async {
@@ -109,6 +155,7 @@ class BookProgressService {
     String? title,
     String? level,
   }) async {
+    final resolvedTitle = canonicalTitleFor(bookId, title);
     final progress = await getBookProgress(bookId);
     if (progress == null) {
       final now = DateTime.now();
@@ -116,7 +163,7 @@ class BookProgressService {
       final isActuallyCompleted = effectiveTotal > 1 && page >= effectiveTotal;
       final newProgress = BookProgress(
         bookId: bookId,
-        bookTitle: title ?? bookId,
+        bookTitle: resolvedTitle,
         level: level ?? 'المكتبة الإسلامية',
         totalPages: effectiveTotal > 0 ? effectiveTotal : 1,
         currentPage: page,
@@ -134,7 +181,13 @@ class BookProgressService {
 
     final isActuallyCompleted = effectiveTotal > 1 && page >= effectiveTotal;
 
+    final isExistingRaw = progress.bookTitle.isEmpty ||
+        progress.bookTitle == progress.bookId ||
+        progress.bookTitle.startsWith('bk_') ||
+        progress.bookTitle.contains('_');
+
     final updatedProgress = progress.copyWith(
+      bookTitle: isExistingRaw ? resolvedTitle : progress.bookTitle,
       totalPages: effectiveTotal > 0 ? effectiveTotal : null,
       currentPage: page,
       lastReadDate: DateTime.now(),
@@ -161,7 +214,7 @@ class BookProgressService {
     }
   }
 
-  Future<void> addBookmark(String bookId, int page) async {
+  Future<void> addBookmark(String bookId, int page, {String? title}) async {
     final progress = await getBookProgress(bookId);
     if (progress == null) return;
 
@@ -171,7 +224,16 @@ class BookProgressService {
       bookmarks.sort();
     }
 
-    final updatedProgress = progress.copyWith(bookmarkedPages: bookmarks);
+    final resolvedTitle = canonicalTitleFor(bookId, title ?? progress.bookTitle);
+    final isExistingRaw = progress.bookTitle.isEmpty ||
+        progress.bookTitle == progress.bookId ||
+        progress.bookTitle.startsWith('bk_') ||
+        progress.bookTitle.contains('_');
+
+    final updatedProgress = progress.copyWith(
+      bookTitle: isExistingRaw ? resolvedTitle : progress.bookTitle,
+      bookmarkedPages: bookmarks,
+    );
     await saveBookProgress(updatedProgress);
   }
 
@@ -186,14 +248,23 @@ class BookProgressService {
     await saveBookProgress(updatedProgress);
   }
 
-  Future<void> saveNote(String bookId, int page, String note) async {
+  Future<void> saveNote(String bookId, int page, String note, {String? title}) async {
     final progress = await getBookProgress(bookId);
     if (progress == null) return;
 
     final notes = Map<int, String>.from(progress.notes);
     notes[page] = note;
 
-    final updatedProgress = progress.copyWith(notes: notes);
+    final resolvedTitle = canonicalTitleFor(bookId, title ?? progress.bookTitle);
+    final isExistingRaw = progress.bookTitle.isEmpty ||
+        progress.bookTitle == progress.bookId ||
+        progress.bookTitle.startsWith('bk_') ||
+        progress.bookTitle.contains('_');
+
+    final updatedProgress = progress.copyWith(
+      bookTitle: isExistingRaw ? resolvedTitle : progress.bookTitle,
+      notes: notes,
+    );
     await saveBookProgress(updatedProgress);
   }
 
@@ -506,12 +577,22 @@ class BookProgressService {
     required String level,
     required int totalPages,
   }) async {
+    final resolvedTitle = canonicalTitleFor(bookId, bookTitle);
     final existing = await getBookProgress(bookId);
     if (existing != null) {
-      if (totalPages > existing.totalPages) {
-        final isCompleted = totalPages > 1 && existing.currentPage >= totalPages;
+      final isExistingRaw = existing.bookTitle.isEmpty ||
+          existing.bookTitle == bookId ||
+          existing.bookTitle.startsWith('bk_') ||
+          existing.bookTitle.contains('_');
+      final targetTitle = isExistingRaw ? resolvedTitle : existing.bookTitle;
+      final shouldUpdateTotal = totalPages > existing.totalPages;
+
+      if (isExistingRaw || shouldUpdateTotal) {
+        final targetTotal = shouldUpdateTotal ? totalPages : existing.totalPages;
+        final isCompleted = targetTotal > 1 && existing.currentPage >= targetTotal;
         await saveBookProgress(existing.copyWith(
-          totalPages: totalPages,
+          bookTitle: targetTitle,
+          totalPages: targetTotal,
           clearCompletedDate: !isCompleted,
         ));
       }
@@ -521,7 +602,7 @@ class BookProgressService {
     final now = DateTime.now();
     final newProgress = BookProgress(
       bookId: bookId,
-      bookTitle: bookTitle,
+      bookTitle: resolvedTitle,
       level: level,
       totalPages: totalPages > 0 ? totalPages : 1,
       currentPage: 1,

@@ -38,6 +38,8 @@ class MutnCurriculumReaderView extends StatefulWidget {
   final VoidCallback? onSwitchToFullBook;
   final String? fullBookLabel;
   final Future<void> Function(int page, int total)? onPageChanged;
+  final int? targetParagraph;
+  final Object? targetScrollKey;
 
   const MutnCurriculumReaderView({
     super.key,
@@ -53,6 +55,8 @@ class MutnCurriculumReaderView extends StatefulWidget {
     this.onSwitchToFullBook,
     this.fullBookLabel,
     this.onPageChanged,
+    this.targetParagraph,
+    this.targetScrollKey,
   });
 
   @override
@@ -72,11 +76,15 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
   ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
   int? _lastAutoScrolledParagraph;
+  int _currentCalculatedPage = 1;
+  int _totalCalculatedPages = 1;
+  int? _lastVisibleParagraph;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     themeService.addListener(_onThemeChanged);
     _showAudioBar = widget.audioService.isPlayingNotifier.value ||
         (widget.audioService.activeBookIdNotifier.value == widget.book.id &&
@@ -137,8 +145,25 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     themeService.removeListener(_onThemeChanged);
     widget.audioService.activeParagraphNotifier
         .removeListener(_onActiveParagraphChanged);
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+    final offset = _scrollController.offset.clamp(0.0, maxScroll);
+    final totalParas = widget.curriculumBook.totalParagraphs;
+    if (totalParas <= 0) return;
+
+    final fraction = offset / maxScroll;
+    final estimatedPara = ((fraction * (totalParas - 1)).round() + 1).clamp(1, totalParas);
+    if (estimatedPara != _lastVisibleParagraph) {
+      _lastVisibleParagraph = estimatedPara;
+      _recordParagraphProgress(estimatedPara);
+    }
   }
 
   Future<void> _loadPreferences() async {
@@ -162,11 +187,21 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
           .values[accIndex.clamp(0, ShamelaAccentColor.values.length - 1)];
     });
 
-    final savedPara = prefs.getInt('mutn_last_para_${widget.book.id}');
-    if (savedPara != null && savedPara > 1) {
+    final target = widget.targetParagraph ?? prefs.getInt('mutn_last_para_${widget.book.id}');
+    if (target != null && target > 1) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToParagraph(savedPara);
+        _scrollToParagraph(target);
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MutnCurriculumReaderView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.targetParagraph != null &&
+        (widget.targetParagraph != oldWidget.targetParagraph ||
+            widget.targetScrollKey != oldWidget.targetScrollKey)) {
+      _scrollToParagraph(widget.targetParagraph!);
     }
   }
 
@@ -179,10 +214,18 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
         ? digitalEntry.totalPages
         : (widget.book.totalPages > 0 ? widget.book.totalPages : (totalParas > 0 ? totalParas : 1));
-    final calcPage = totalParas > 0
-        ? ((paraIndex / totalParas) * totalPages).ceil().clamp(1, totalPages)
-        : paraIndex;
-    widget.onPageChanged?.call(calcPage, totalPages);
+    final calcPage = (totalParas > 0 && totalPages > 0)
+        ? (((paraIndex - 1) * totalPages) ~/ totalParas) + 1
+        : 1;
+    final safePage = calcPage.clamp(1, totalPages);
+
+    if (safePage != _currentCalculatedPage || totalPages != _totalCalculatedPages) {
+      setState(() {
+        _currentCalculatedPage = safePage;
+        _totalCalculatedPages = totalPages;
+      });
+    }
+    widget.onPageChanged?.call(safePage, totalPages);
   }
 
   Future<void> _savePreferences() async {
@@ -392,8 +435,8 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
 
           // ── Consolidated Bottom Scholarly Toolstrip ───────────────
           ScholarlyReaderHud(
-            currentPage: 1,
-            totalPages: 1,
+            currentPage: _currentCalculatedPage,
+            totalPages: _totalCalculatedPages,
             showPageNavigation: false,
             isBookmarked: widget.isBookmarked,
             memorizationMode: _memorizationMode,

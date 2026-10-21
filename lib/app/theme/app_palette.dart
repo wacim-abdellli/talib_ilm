@@ -160,13 +160,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
     splashCardBorder: Color(0xFFE9D8B4),
   );
 
-  /// Dark theme palette — Velvet Obsidian & Imperial Radiant Gold
+  /// Dark theme palette — Pure AMOLED Obsidian & Imperial Radiant Gold
   static const dark = AppPalette(
-    bg: Color(0xFF090807),
-    surface: Color(0xFF100E0B),
-    surfaceRaised: Color(0xFF161310),
-    surfaceMuted: Color(0xFF0B0907),
-    border: Color(0xFF262018),
+    bg: Color(0xFF000000),
+    surface: Color(0xFF070707),
+    surfaceRaised: Color(0xFF0F0F0F),
+    surfaceMuted: Color(0xFF090909),
+    border: Color(0xFF1C1A17),
     text: Color(0xFFFAF8F5),
     textMuted: Color(0xFFA8A096),
     textSubtle: Color(0xFF7A7268),
@@ -181,14 +181,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     success: Color(0xFF34D399),
     error: Color(0xFFF87171),
     errorSoft: Color(0xFF3B1414),
-    brandDark: Color(0xFF090807),
+    brandDark: Color(0xFF000000),
     shadow: [],
     isDark: true,
     logoSymbol: 'assets/branding/symbol_on_dark.png',
     logoLockup: 'assets/branding/lockup_on_dark.png',
-    splashBg: Color(0xFF090807),
-    splashCardBg: Color(0xFF161310),
-    splashCardBorder: Color(0xFF2E2416),
+    splashBg: Color(0xFF000000),
+    splashCardBg: Color(0xFF0F0F0F),
+    splashCardBorder: Color(0xFF221A12),
   );
 
   /// Default Mushaf theme mode aligning with palette brightness
@@ -663,28 +663,40 @@ class AppPalette extends ThemeExtension<AppPalette> {
   Color prayer(String? name) {
     final p = (name ?? '').toLowerCase().trim();
     if (p.contains('fajr') || p.contains('فجر')) {
-      // Tranquil Dawn Sky Blue (peaceful morning twilight, not purple)
-      return isDark ? const Color(0xFF60A5FA) : const Color(0xFF0369A1);
+      // Celestial Dawn Twilight Azure (first light before sunrise)
+      return isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1);
     }
     if (p.contains('sunrise') || p.contains('شروق')) {
-      // Radiant Sunrise Coral-Amber (first rays)
-      return isDark ? const Color(0xFFFB923C) : const Color(0xFFC2410C);
+      // Radiant Sunrise Horizon Peach-Amber (sun disk cresting horizon)
+      return isDark ? const Color(0xFFFDBA74) : const Color(0xFFC2410C);
     }
     if (p.contains('dhuhr') || p.contains('ظهر')) {
-      // Zenith Midday Sun (blazing solar gold, perfectly harmonious with dark & gold)
-      return isDark ? const Color(0xFFFBBF24) : const Color(0xFF9E640B);
+      // Zenith High-Noon Solar Gold (sun at highest point in the sky)
+      return isDark ? const Color(0xFFFACC15) : const Color(0xFF9E640B);
     }
     if (p.contains('asr') || p.contains('عصر')) {
-      // Afternoon Golden Hour Copper-Amber
-      return isDark ? const Color(0xFFF97316) : const Color(0xFFB45309);
+      // Afternoon Golden-Hour Amber-Bronze (lengthening shadows, warm amber rays)
+      return isDark ? const Color(0xFFFB923C) : const Color(0xFFB45309);
     }
     if (p.contains('maghrib') || p.contains('مغرب')) {
-      // Sunset Ruby Crimson-Rose (dusk twilight)
-      return isDark ? const Color(0xFFF43F5E) : const Color(0xFFBE123C);
+      // Sunset Crimson-Rose Horizon Glow (sun setting, red dusk afterglow / shafaq ahmar)
+      return isDark ? const Color(0xFFFB7185) : const Color(0xFFBE123C);
     }
     if (p.contains('isha') || p.contains('عشاء')) {
-      // Velvet Nocturnal Celestial Purple (deep starlit night sky)
-      return isDark ? const Color(0xFFC084FC) : const Color(0xFF6D28D9);
+      // Deep Nocturnal Celestial Violet-Indigo (absence of sunlight, starlit night sky)
+      return isDark ? const Color(0xFFA78BFA) : const Color(0xFF6D28D9);
+    }
+    if (p.contains('dhuha') || p.contains('ضحى')) {
+      // Radiant Forenoon Gold (Dhuha / Awabeen)
+      return isDark ? const Color(0xFFFDE047) : const Color(0xFFB45309);
+    }
+    if (p.contains('midnight') || p.contains('منتصف')) {
+      // Celestial Midnight Deep Indigo (end of Isha window)
+      return isDark ? const Color(0xFF818CF8) : const Color(0xFF4338CA);
+    }
+    if (p.contains('qiyam') || p.contains('ثلث') || p.contains('تهجد')) {
+      // Serene Pre-Dawn Qiyam Teal-Cyan (Sahoor & Tahajjud)
+      return isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E);
     }
     return gold;
   }
@@ -820,7 +832,6 @@ class AppTextTheme {
   factory AppTextTheme.fromPalette(AppPalette palette) {
     const cairo = 'Cairo';
     const scheherazadeNew = 'ScheherazadeNew';
-    const amiri = 'Amiri';
 
     return AppTextTheme(
       display: TextStyle(
@@ -894,10 +905,10 @@ class AppTextTheme {
         color: palette.text,
       ),
       surahHeaderTitle: TextStyle(
-        fontFamily: amiri,
+        fontFamily: scheherazadeNew,
         fontSize: 22,
         fontWeight: FontWeight.w700,
-        height: 1.15,
+        height: 1.25,
         color: palette.text,
       ),
       surahCalligraphy: const TextStyle(

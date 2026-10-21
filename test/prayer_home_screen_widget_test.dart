@@ -415,9 +415,9 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
-    expect(find.text('10 جمادى الأولى 1448 هـ'), findsOneWidget);
+    expect(find.text('10 جمادى الأولى'), findsOneWidget);
     expect(find.text('الجزائر العاصمة'), findsOneWidget);
-    expect(find.text('صلاة الظهر'), findsOneWidget);
+    expect(find.text('الظهر'), findsWidgets);
   });
 
   testWidgets('WidgetCompact (2x2, 160x160) renders compact prayer card without overflow', (tester) async {
@@ -485,5 +485,54 @@ void main() {
       HomeWidgetService.updateAllWidgets(prayerDay: prayerDay, referenceTime: fixedNow, force: true),
       completes,
     );
+  });
+
+  test('PrayerWidgetStateEvaluator validates canonical per-prayer Iqama durations and header labels', () {
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerFajr), 25);
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerDhuhr), 20);
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerDhuhr, isJumua: true), 25);
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerAsr), 20);
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerMaghrib), 10);
+    expect(PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerIsha), 15);
+
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 20, 5, 3),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 20, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 20, 15, 9),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 20, 17, 35),
+      AppStrings.prayerIsha: DateTime(2026, 10, 20, 18, 59),
+    };
+
+    // 1. Between Adhan and Iqama (Maghrib 17:35, now 17:39 -> 6 minutes remaining to Iqama 17:45)
+    final evalIqama = PrayerWidgetStateEvaluator.evaluate(
+      now: DateTime(2026, 10, 20, 17, 39),
+      all: prayers,
+    );
+    expect(evalIqama.phase, PrayerWidgetPhase.betweenAdhanAndIqama);
+    expect(evalIqama.statusLabel, 'بقي على الإقامة');
+    expect(evalIqama.countdownFormatted, '06:00');
+    expect(evalIqama.headerCountdownLabel, 'الإقامة بعد 06:00');
+    expect(evalIqama.headerCountdownLabel.contains('أداء الفريضة'), isFalse);
+
+    // 2. In Salah (Maghrib 17:35, now 17:48 -> 3 minutes after Iqama 17:45)
+    final evalSalah = PrayerWidgetStateEvaluator.evaluate(
+      now: DateTime(2026, 10, 20, 17, 48),
+      all: prayers,
+    );
+    expect(evalSalah.phase, PrayerWidgetPhase.inSalah);
+    expect(evalSalah.statusLabel, 'تقام الصلاة الآن');
+    expect(evalSalah.countdownFormatted, 'أداء الفريضة');
+    expect(evalSalah.headerCountdownLabel, 'تقام الصلاة الآن');
+    expect(evalSalah.headerCountdownLabel.contains('بعد أداء الفريضة'), isFalse);
+
+    // 3. Post Salah (Maghrib 17:35, now 18:00 -> 25 minutes after Adhan, beyond 20 min salah duration)
+    // Should transition seamlessly to Isha upcoming countdown
+    final evalPostSalah = PrayerWidgetStateEvaluator.evaluate(
+      now: DateTime(2026, 10, 20, 18, 0),
+      all: prayers,
+    );
+    expect(evalPostSalah.phase, PrayerWidgetPhase.beforeAdhan);
+    expect(evalPostSalah.activePrayerName, AppStrings.prayerIsha);
+    expect(evalPostSalah.headerCountdownLabel, 'بعد 59:00');
   });
 }

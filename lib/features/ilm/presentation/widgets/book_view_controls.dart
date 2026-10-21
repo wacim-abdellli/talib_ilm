@@ -72,23 +72,35 @@ class BookViewControls extends StatelessWidget {
 class BookNoteDialog extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSave;
+  final bool hasExistingNote;
+  final VoidCallback? onDelete;
+  final VoidCallback? onShowAllNotes;
 
   const BookNoteDialog({
     super.key,
     required this.controller,
     required this.onSave,
+    this.hasExistingNote = false,
+    this.onDelete,
+    this.onShowAllNotes,
   });
 
   static Future<void> show(
     BuildContext context, {
     required TextEditingController controller,
     required VoidCallback onSave,
+    bool hasExistingNote = false,
+    VoidCallback? onDelete,
+    VoidCallback? onShowAllNotes,
   }) {
     return AppDialog.show(
       context: context,
       builder: (context) => BookNoteDialog(
         controller: controller,
         onSave: onSave,
+        hasExistingNote: hasExistingNote,
+        onDelete: onDelete,
+        onShowAllNotes: onShowAllNotes,
       ),
     );
   }
@@ -96,21 +108,68 @@ class BookNoteDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
 
     return AppDialog(
-      title: 'إضافة ملاحظة',
+      title: hasExistingNote ? 'تعديل الملاحظة' : 'إضافة ملاحظة',
       icon: Icons.edit_note_rounded,
-      content: TextField(
-        controller: controller,
-        style: context.text.body,
-        decoration: InputDecoration(
-          hintText: 'اكتب ملاحظتك هنا...',
-          hintStyle: context.text.bodySmall.copyWith(color: palette.textMuted),
-        ),
-        minLines: 3,
-        maxLines: 5,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: controller,
+            style: textTheme.body,
+            decoration: InputDecoration(
+              hintText: 'اكتب ملاحظتك هنا...',
+              hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
+            ),
+            minLines: 3,
+            maxLines: 5,
+          ),
+          if (onShowAllNotes != null) ...[
+            const SizedBox(height: AppSpace.sm),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: InkWell(
+                borderRadius: AppRadius.smRadius,
+                onTap: onShowAllNotes,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    vertical: AppSpace.xxs,
+                    horizontal: AppSpace.xxs,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.collections_bookmark_outlined,
+                        size: AppIcon.xs,
+                        color: palette.gold,
+                      ),
+                      const SizedBox(width: AppSpace.xxs),
+                      Text(
+                        'عرض جميع الملاحظات والإشارات',
+                        style: textTheme.caption.copyWith(
+                          color: palette.gold,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       actions: [
+        if (hasExistingNote && onDelete != null)
+          AppButton.text(
+            label: 'حذف',
+            onPressed: onDelete,
+            size: AppButtonSize.sm,
+          ),
         AppButton.text(
           label: 'إلغاء',
           onPressed: () => Navigator.pop(context),

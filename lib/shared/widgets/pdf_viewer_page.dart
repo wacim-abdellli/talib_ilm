@@ -114,7 +114,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     }
   }
 
-  Future<void> _jumpToPage(int page) async {
+  void jumpToPage(int page) {
     if (_totalPages == 0) return;
     final safePage = page < 1 ? 1 : (page > _totalPages ? _totalPages : page);
     _controller.jumpToPage(safePage);
@@ -589,7 +589,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
     );
 
     if (requested != null) {
-      await _jumpToPage(requested);
+      jumpToPage(requested);
     }
   }
 }

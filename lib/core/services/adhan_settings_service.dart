@@ -27,6 +27,7 @@ class AdhanSettings {
   final bool silentNotifications;
   final Map<String, bool> prayerToggles;
   final String calculationMethod;
+  final String madhab;
   final double volume;
   final double notifyBeforeMinutes;
   final bool iqamaReminders;
@@ -40,6 +41,7 @@ class AdhanSettings {
     required this.silentNotifications,
     required this.prayerToggles,
     required this.calculationMethod,
+    this.madhab = 'shafi',
     required this.volume,
     required this.notifyBeforeMinutes,
     required this.iqamaReminders,
@@ -54,6 +56,7 @@ class AdhanSettings {
     bool? silentNotifications,
     Map<String, bool>? prayerToggles,
     String? calculationMethod,
+    String? madhab,
     double? volume,
     double? notifyBeforeMinutes,
     bool? iqamaReminders,
@@ -67,6 +70,7 @@ class AdhanSettings {
       silentNotifications: silentNotifications ?? this.silentNotifications,
       prayerToggles: prayerToggles ?? this.prayerToggles,
       calculationMethod: calculationMethod ?? this.calculationMethod,
+      madhab: madhab ?? this.madhab,
       volume: volume ?? this.volume,
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       iqamaReminders: iqamaReminders ?? this.iqamaReminders,
@@ -125,6 +129,7 @@ class AdhanSettingsService {
   static const _keyDefaultMode = 'adhan_default_mode';
   static const _keyPrayerModePrefix = 'adhan_prayer_mode_';
   static const _keyCalcMethod = 'adhan_calc_method';
+  static const _keyMadhab = 'adhan_madhab';
   static const _keyVolume = 'adhan_volume';
   static const _keyNotifyBefore = 'adhan_notify_before';
   static const _keyIqama = 'adhan_iqama';
@@ -137,6 +142,11 @@ class AdhanSettingsService {
     'mwl': 'رابطة العالم الإسلامي (دولي - 18°/17°)',
     'umm_al_qura': 'جامعة أم القرى (مكة المكرمة)',
     'egyptian': 'الهيئة المصرية العامة للمساحة',
+  };
+
+  static const Map<String, String> madhabs = {
+    'shafi': 'جمهور الفقهاء (المالكي، الشافعي، الحنبلي) • مثل الظل',
+    'hanafi': 'المذهب الحنفي • مثلا الظل',
   };
 
   Future<AdhanSettings> getSettings() async {
@@ -152,6 +162,7 @@ class AdhanSettingsService {
 
     final silent = prefs.getBool(_keySilent) ?? false;
     final calcMethod = prefs.getString(_keyCalcMethod) ?? 'auto';
+    final madhab = prefs.getString(_keyMadhab) ?? 'shafi';
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
     final iqama = prefs.getBool(_keyIqama) ?? true;
@@ -187,6 +198,7 @@ class AdhanSettingsService {
       silentNotifications: silent,
       prayerToggles: toggles,
       calculationMethod: calcMethod,
+      madhab: madhab,
       volume: volume,
       notifyBeforeMinutes: notifyBefore,
       iqamaReminders: iqama,
@@ -202,6 +214,7 @@ class AdhanSettingsService {
     await prefs.setInt(_keySound, settings.sound.index);
     await prefs.setBool(_keySilent, settings.silentNotifications);
     await prefs.setString(_keyCalcMethod, settings.calculationMethod);
+    await prefs.setString(_keyMadhab, settings.madhab);
     await prefs.setDouble(_keyVolume, settings.volume);
     await prefs.setDouble(_keyNotifyBefore, settings.notifyBeforeMinutes);
     await prefs.setBool(_keyIqama, settings.iqamaReminders);

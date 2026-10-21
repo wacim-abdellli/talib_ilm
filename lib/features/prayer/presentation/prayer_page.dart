@@ -194,6 +194,11 @@ class _PrayerPageState extends State<PrayerPage> {
                               PrayerSolarStationsCard(
                                 sunrise: data.sunrise,
                                 sunset: data.sunset,
+                                dhuha: data.dhuha,
+                                middleOfTheNight: data.middleOfTheNight,
+                                lastThirdOfTheNight: data.lastThirdOfTheNight,
+                                qiblaDirection: data.qiblaDirection,
+                                onOpenQibla: () => _openQibla(context),
                               ),
                               const SizedBox(height: AppSpace.lg),
                               Text(
@@ -522,8 +527,8 @@ class _PrayerPageState extends State<PrayerPage> {
     )..start();
   }
 
-  void _loadPrayer() {
-    _prayerFuture = _prayerTimeService.getPrayerTimesDay();
+  void _loadPrayer({bool forceRefresh = false}) {
+    _prayerFuture = _prayerTimeService.getPrayerTimesDay(forceRefresh: forceRefresh);
     _prayerFuture.then((day) {
       if (!mounted) return;
       _ensureCountdown(day);
@@ -532,8 +537,9 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _reloadPrayer() {
+    PrayerTimeService.clearCache();
     setState(() {
-      _loadPrayer();
+      _loadPrayer(forceRefresh: true);
       _locationFuture = _loadLocation();
       _loadSettings();
     });

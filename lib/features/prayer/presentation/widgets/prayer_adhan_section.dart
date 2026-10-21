@@ -5,15 +5,16 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_service.dart';
 import '../../../../core/services/adhan_settings_service.dart';
+import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
-import 'prayer_muezzin_selector.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
   final AdhanSettings settings;
   final bool isDark;
   final AdhanService adhanService;
   final ValueChanged<AdhanSettings> onSettingsChanged;
+  final VoidCallback? onOpenVoicesTab;
 
   const PrayerAdhanSection({
     super.key,
@@ -21,6 +22,7 @@ class PrayerAdhanSection extends StatefulWidget {
     required this.isDark,
     required this.adhanService,
     required this.onSettingsChanged,
+    this.onOpenVoicesTab,
   });
 
   @override
@@ -29,6 +31,25 @@ class PrayerAdhanSection extends StatefulWidget {
 
 class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
   PrayerNotificationMode? _previewingMode;
+
+  String _muezzinNameFor(AdhanSound sound) {
+    switch (sound) {
+      case AdhanSound.qatami:
+        return 'الشيخ ناصر القطامي';
+      case AdhanSound.makkah:
+        return 'الحرم المكي الشريف (علي ملا)';
+      case AdhanSound.madinah:
+        return 'المسجد النبوي (عصام بخاري)';
+      case AdhanSound.alafasy:
+        return 'الشيخ مشاري العفاسي';
+      case AdhanSound.abdulbasit:
+        return 'الشيخ عبد الباسط عبد الصمد';
+      case AdhanSound.aqsa:
+        return 'المسجد الأقصى (ناجي قزاز)';
+      case AdhanSound.takbeer:
+        return 'تكبيرات الأذان فقط';
+    }
+  }
 
   Future<void> _togglePreviewMode(PrayerNotificationMode mode) async {
     HapticFeedback.lightImpact();
@@ -49,339 +70,465 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
   @override
   Widget build(BuildContext context) {
     final settings = widget.settings;
-    final adhanService = widget.adhanService;
     final onSettingsChanged = widget.onSettingsChanged;
     final palette = context.palette;
     final textTheme = context.text;
 
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionHeader(
-            title: 'الأذان وتنبيهات الصلاة',
-            padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── 1. Master Enable Card ─────────────────────────────────────
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: AppSize.tap),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: settings.enabled
+                            ? palette.primarySoft
+                            : palette.surfaceMuted,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        settings.enabled
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_off_rounded,
+                        color: settings.enabled
+                            ? palette.primary
+                            : palette.textMuted,
+                        size: AppIcon.sm,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تفعيل تنبيهات الصلاة',
+                            style: textTheme.body.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: palette.text,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'إطلاق الأذان والتنبيهات عند دخول وقت كل صلاة',
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: settings.enabled,
+                      onChanged: (val) {
+                        HapticFeedback.selectionClick();
+                        onSettingsChanged(settings.copyWith(enabled: val));
+                      },
+                      activeThumbColor: palette.primary,
+                      activeTrackColor: palette.primarySoft,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+        ),
+
+        if (settings.enabled) ...[
           const SizedBox(height: AppSpace.md),
 
-          // ── Master Enable Toggle ──────────────────────────────────────
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppSize.tap),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'تفعيل تنبيهات الصلاة',
-                        style: textTheme.body.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: palette.text,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.xxs),
-                      Text(
-                        'تنبيهات دخول الوقت على شاشة القفل والأذان',
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                      ),
-                    ],
+          // ── 2. Current Voice Summary Card ──────────────────────────
+          if (settings.defaultMode == PrayerNotificationMode.adhan)
+            AppCard(
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.record_voice_over_rounded,
+                      color: palette.primary,
+                      size: AppIcon.sm,
+                    ),
                   ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'المؤذن المختار للأذان',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                        ),
+                        Text(
+                          _muezzinNameFor(settings.effectiveMuezzinSound),
+                          style: textTheme.bodySmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: palette.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.onOpenVoicesTab != null)
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: palette.primarySoft,
+                        foregroundColor: palette.primary,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xs,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.pillRadius,
+                        ),
+                      ),
+                      icon: const Icon(Icons.tune_rounded, size: AppIcon.xs),
+                      label: const Text('تغيير المؤذن'),
+                      onPressed: widget.onOpenVoicesTab,
+                    ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: AppSpace.md),
+
+          // ── 3. Default Notification Mode Selection ──────────────────
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionHeader(
+                  title: 'نمط التنبيه الافتراضي',
+                  padding: EdgeInsets.zero,
                 ),
-                Switch(
-                  value: settings.enabled,
-                  onChanged: (val) {
-                    HapticFeedback.selectionClick();
-                    onSettingsChanged(settings.copyWith(enabled: val));
-                  },
-                  activeThumbColor: palette.primary,
-                  activeTrackColor: palette.primarySoft,
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  'اختر النمط الأساسي لتنبيهات الصلاة:',
+                  style: textTheme.caption.copyWith(color: palette.textMuted),
+                ),
+                const SizedBox(height: AppSpace.md),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
+                  mode: PrayerNotificationMode.adhan,
+                  title: 'أذان كامل',
+                  subtitle: 'سماع صوت الأذان كاملاً عند دخول وقت الصلاة',
+                  icon: Icons.mosque_rounded,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
+                  mode: PrayerNotificationMode.takbeer,
+                  title: 'تكبيرات فقط',
+                  subtitle: 'تكبيرات الأذان فقط (الله أكبر، الله أكبر)',
+                  icon: Icons.campaign_rounded,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
+                  mode: PrayerNotificationMode.announcement,
+                  title: 'نداء وقت الصلاة',
+                  subtitle: 'نداء صوتي وقور: "حان الآن وقت صلاة..."',
+                  icon: Icons.record_voice_over_rounded,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
+                  mode: PrayerNotificationMode.tone,
+                  title: 'نغمة تنبيه هادئة',
+                  subtitle: 'نغمة الهاتف القياسية القصيرة دون أذان',
+                  icon: Icons.notifications_active_rounded,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
+                  mode: PrayerNotificationMode.silent,
+                  title: 'إشعار صامت مرئي',
+                  subtitle: 'ظهور إشعار الصلاة على الشاشة بدون صوت',
+                  icon: Icons.notifications_none_rounded,
                 ),
               ],
             ),
           ),
 
-          if (settings.enabled) ...[
-            const SizedBox(height: AppSpace.lg),
-            Divider(color: palette.border, height: 1),
-            const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.md),
 
-            // ── Default Notification Mode Selector ──────────────────────
-            Text(
-              'نمط التنبيه الافتراضي',
-              style: textTheme.label.copyWith(
-                color: palette.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
+          // ── 4. Per-Prayer Customization ─────────────────────────────
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionHeader(
+                  title: 'تخصيص التنبيه لكل صلاة',
+                  padding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  'يمكنك اختيار نمط مستقل لكل صلاة (مثل أذان للفجر وتنبيه صامت للظهر)',
+                  style: textTheme.caption.copyWith(color: palette.textMuted),
+                ),
+                const SizedBox(height: AppSpace.md),
+                ...AdhanSettingsService.prayerNames.map((name) {
+                  if (name.contains('الشروق')) return const SizedBox.shrink();
+                  final currentMode = settings.modeForPrayer(name);
 
-            _buildModePill(
-              context: context,
-              palette: palette,
-              textTheme: textTheme,
-              mode: PrayerNotificationMode.adhan,
-              title: 'أذان كامل',
-              subtitle: 'سماع صوت الأذان كاملاً عند دخول وقت الصلاة',
-              icon: Icons.mosque_rounded,
-            ),
-            const SizedBox(height: AppSpace.xs),
-            _buildModePill(
-              context: context,
-              palette: palette,
-              textTheme: textTheme,
-              mode: PrayerNotificationMode.takbeer,
-              title: 'تكبيرات فقط',
-              subtitle: 'تكبيرات الأذان فقط (الله أكبر، الله أكبر) دون الأذان كاملاً',
-              icon: Icons.campaign_rounded,
-            ),
-            const SizedBox(height: AppSpace.xs),
-            _buildModePill(
-              context: context,
-              palette: palette,
-              textTheme: textTheme,
-              mode: PrayerNotificationMode.announcement,
-              title: 'نداء وقت الصلاة',
-              subtitle: 'نداء صوتي وقور: "حان الآن وقت صلاة الفجر / الظهر / ..."',
-              icon: Icons.record_voice_over_rounded,
-            ),
-            const SizedBox(height: AppSpace.xs),
-            _buildModePill(
-              context: context,
-              palette: palette,
-              textTheme: textTheme,
-              mode: PrayerNotificationMode.tone,
-              title: 'نغمة تنبيه هادئة',
-              subtitle: 'نغمة الهاتف القياسية القصيرة دون أذان',
-              icon: Icons.notifications_active_rounded,
-            ),
-            const SizedBox(height: AppSpace.xs),
-            _buildModePill(
-              context: context,
-              palette: palette,
-              textTheme: textTheme,
-              mode: PrayerNotificationMode.silent,
-              title: 'إشعار صامت مرئي',
-              subtitle: 'ظهور إشعار الصلاة على الشاشة بدون أي صوت',
-              icon: Icons.notifications_none_rounded,
-            ),
-
-            const SizedBox(height: AppSpace.lg),
-
-            // ── Muezzin Selector (When Adhan active) ─────────────────────
-            if (settings.defaultMode == PrayerNotificationMode.adhan) ...[
-              PrayerMuezzinSelector(
-                settings: settings,
-                adhanService: adhanService,
-                onSettingsChanged: onSettingsChanged,
-              ),
-              const SizedBox(height: AppSpace.md),
-            ],
-
-            // ── Volume Slider ───────────────────────────────────────────
-            if (settings.defaultMode != PrayerNotificationMode.silent) ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'مستوى صوت الأذان والتنبيه',
-                        style: textTheme.bodySmall.copyWith(
-                          color: palette.textMuted,
-                        ),
+                  return Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      bottom: AppSpace.xs,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xs,
                       ),
-                      Text(
-                        '${settings.volume.toInt()}%',
-                        style: textTheme.label.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: palette.primary,
-                        ),
+                      decoration: BoxDecoration(
+                        color: palette.surfaceMuted,
+                        borderRadius: AppRadius.mdRadius,
+                        border: Border.all(color: palette.border),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.xs),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.volume_mute_rounded,
-                        size: AppIcon.md,
-                        color: palette.textMuted,
-                      ),
-                      Expanded(
-                        child: SliderTheme(
-                          data: SliderThemeData(
-                            activeTrackColor: palette.primary,
-                            inactiveTrackColor: palette.border,
-                            thumbColor: palette.primary,
-                            overlayColor: palette.primarySoft,
+                      child: Row(
+                        children: [
+                          Text(
+                            name,
+                            style: textTheme.body.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: palette.text,
+                            ),
                           ),
-                          child: Slider(
-                            value: settings.volume,
-                            min: 0,
-                            max: 100,
-                            onChanged: (val) {
-                              adhanService.setVolume(val);
-                              onSettingsChanged(settings.copyWith(volume: val));
+                          const Spacer(),
+                          DropdownButton<PrayerNotificationMode>(
+                            value: currentMode,
+                            underline: const SizedBox.shrink(),
+                            icon: Icon(
+                              Icons.arrow_drop_down_rounded,
+                              color: palette.primary,
+                            ),
+                            dropdownColor: palette.surfaceRaised,
+                            style: textTheme.caption.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            onChanged: (newMode) {
+                              if (newMode == null) return;
+                              HapticFeedback.selectionClick();
+                              final updatedModes =
+                                  Map<String, PrayerNotificationMode>.from(
+                                settings.prayerModes,
+                              );
+                              updatedModes[name] = newMode;
+                              onSettingsChanged(
+                                settings.copyWith(prayerModes: updatedModes),
+                              );
                             },
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.volume_up_rounded,
-                        size: AppIcon.md,
-                        color: palette.primary,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpace.md),
-            ],
-
-
-            const SizedBox(height: AppSpace.lg),
-            Divider(color: palette.border, height: 1),
-            const SizedBox(height: AppSpace.md),
-
-            // ── Per-Prayer Customization Section ────────────────────────
-            Text(
-              'تخصيص التنبيه لكل صلاة',
-              style: textTheme.label.copyWith(
-                color: palette.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              'يمكنك اختيار نمط مختلف لكل فريضة (مثل أذان للفجر وتنبيه صامت للظهر)',
-              style: textTheme.caption.copyWith(color: palette.textMuted),
-            ),
-            const SizedBox(height: AppSpace.md),
-
-            ...AdhanSettingsService.prayerNames.map((name) {
-              if (name.contains('الشروق')) return const SizedBox.shrink();
-              final currentPrayerMode = settings.modeForPrayer(name);
-
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-                child: Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.md,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceMuted,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: palette.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        name,
-                        style: textTheme.body.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: palette.text,
-                        ),
-                      ),
-                      const Spacer(),
-                      DropdownButton<PrayerNotificationMode>(
-                        value: currentPrayerMode,
-                        underline: const SizedBox.shrink(),
-                        icon: Icon(
-                          Icons.arrow_drop_down_rounded,
-                          color: palette.primary,
-                        ),
-                        dropdownColor: palette.surfaceRaised,
-                        style: textTheme.caption.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        onChanged: (newMode) {
-                          if (newMode == null) return;
-                          HapticFeedback.selectionClick();
-                          final updatedModes =
-                              Map<String, PrayerNotificationMode>.from(
-                            settings.prayerModes,
-                          );
-                          updatedModes[name] = newMode;
-                          onSettingsChanged(
-                            settings.copyWith(prayerModes: updatedModes),
-                          );
-                        },
-                        items: const [
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.adhan,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('أذان كامل'),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.takbeer,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('تكبيرات فقط'),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.announcement,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('نداء الصلاة'),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.tone,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('نغمة هادئة'),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.silent,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('إشعار صامت'),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: PrayerNotificationMode.off,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('إيقاف التنبيه'),
-                              ],
-                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.adhan,
+                                child: Text('أذان كامل'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.takbeer,
+                                child: Text('تكبيرات فقط'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.announcement,
+                                child: Text('نداء الصلاة'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.tone,
+                                child: Text('نغمة هادئة'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.silent,
+                                child: Text('إشعار صامت'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.off,
+                                child: Text('إيقاف التنبيه'),
+                              ),
+                            ],
                           ),
                         ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpace.md),
+
+          // ── 5. Advanced Notification Reminders ──────────────────────
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionHeader(
+                  title: 'خيارات التنبيه المتقدمة',
+                  padding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: AppSpace.md),
+
+                // Notify before slider
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'التنبيه قبل دخول الوقت',
+                        style: textTheme.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: palette.text,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Text(
+                      '${settings.notifyBeforeMinutes.toInt()} دقيقة',
+                      style: textTheme.label.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: palette.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.xs),
+                SliderTheme(
+                  data: SliderThemeData(
+                    activeTrackColor: palette.primary,
+                    inactiveTrackColor: palette.border,
+                    thumbColor: palette.primary,
+                    overlayColor: palette.primarySoft,
+                  ),
+                  child: Slider(
+                    value: settings.notifyBeforeMinutes,
+                    min: 5,
+                    max: 30,
+                    divisions: 5,
+                    onChanged: (val) {
+                      onSettingsChanged(
+                        settings.copyWith(notifyBeforeMinutes: val),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: AppSpace.md),
+                Divider(color: palette.border, height: 1),
+                const SizedBox(height: AppSpace.md),
+
+                // Iqama toggle
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppSize.tap),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'تذكير الإقامة',
+                              style: textTheme.body.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: palette.text,
+                              ),
+                            ),
+                            Text(
+                              'إشعار تذكيري بعد الأذان بـ 15 دقيقة للاستعداد للصلاة',
+                              style: textTheme.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: settings.iqamaReminders,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          onSettingsChanged(
+                            settings.copyWith(iqamaReminders: val),
+                          );
+                        },
+                        activeThumbColor: palette.primary,
+                        activeTrackColor: palette.primarySoft,
                       ),
                     ],
                   ),
                 ),
-              );
-            }),
-          ],
+
+                const SizedBox(height: AppSpace.md),
+                Divider(color: palette.border, height: 1),
+                const SizedBox(height: AppSpace.md),
+
+                // Flip to stop toggle
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppSize.tap),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'قلب الهاتف لكتم الصوت والأذان',
+                              style: textTheme.body.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: palette.text,
+                              ),
+                            ),
+                            Text(
+                              'عند وضع الهاتف مقلوباً (الشاشة لأسفل) يتم إيقاف الأذان فوراً',
+                              style: textTheme.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: FlipToStopService().isEnabled,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            FlipToStopService().setEnabled(val);
+                          });
+                        },
+                        activeThumbColor: palette.primary,
+                        activeTrackColor: palette.primarySoft,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildModePill({
-    required BuildContext context,
     required AppPalette palette,
     required AppTextTheme textTheme,
     required PrayerNotificationMode mode,
@@ -411,7 +558,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
             vertical: AppSpace.sm,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+            color: isSelected ? palette.primarySoft : palette.surfaceMuted,
             borderRadius: AppRadius.mdRadius,
             border: Border.all(
               color: isSelected ? palette.primary : palette.border,
@@ -424,7 +571,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: isSelected ? palette.primary : palette.surfaceMuted,
+                  color: isSelected ? palette.primary : palette.surfaceRaised,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -445,7 +592,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                         color: isSelected ? palette.primary : palette.text,
                       ),
                     ),
-                    const SizedBox(height: AppSpace.xxs),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: textTheme.caption.copyWith(

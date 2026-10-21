@@ -9,6 +9,7 @@ class PrayerTimeService {
   final DateTime Function() now;
 
   static const _keyCalcMethod = 'adhan_calc_method';
+  static const _keyMadhab = 'adhan_madhab';
   static const _keyAdjPrefix = 'adhan_adj_';
 
   static PrayerTimesDay? _cachedToday;
@@ -23,6 +24,7 @@ class PrayerTimeService {
   static String? _lastCountryCode;
   static CalculationMethod? _lastMethod;
   static String? _lastSavedMethodStr;
+  static String? _lastMadhab;
   static Map<String, int> _lastAdjustments = const {};
 
   static void clearCache() {
@@ -35,6 +37,7 @@ class PrayerTimeService {
     _lastCountryCode = null;
     _lastMethod = null;
     _lastSavedMethodStr = null;
+    _lastMadhab = null;
     _lastAdjustments = const {};
   }
 
@@ -68,11 +71,18 @@ class PrayerTimeService {
     );
   }
 
-  Future<PrayerTimesDay> getPrayerTimesDay({DateTime? date}) async {
+  Future<PrayerTimesDay> getPrayerTimesDay({
+    DateTime? date,
+    bool forceRefresh = false,
+  }) async {
     final current = (date ?? now()).toLocal();
     final isToday = date == null;
 
-    if (isToday && _cachedToday != null && _cacheTimestamp != null && !_cachedIsFallback) {
+    if (!forceRefresh &&
+        isToday &&
+        _cachedToday != null &&
+        _cacheTimestamp != null &&
+        !_cachedIsFallback) {
       if (DateTime.now().difference(_cacheTimestamp!) < _cacheDuration &&
           _cachedToday!.date.day == current.day &&
           _cachedToday!.date.month == current.month &&
@@ -92,6 +102,7 @@ class PrayerTimeService {
         longitude: _lastLongitude!,
         countryCode: _lastCountryCode,
         savedMethod: _lastSavedMethodStr,
+        savedMadhab: _lastMadhab,
         date: date,
         method: _lastMethod ?? CalculationMethod.muslim_world_league,
         adjustments: _lastAdjustments,
@@ -106,8 +117,9 @@ class PrayerTimeService {
       adjustments[name] = prefs.getInt('$_keyAdjPrefix$name') ?? 0;
     }
 
-    // Load method (auto-detected by country or location if not manually set)
+    // Load method and madhab
     final savedMethodStr = prefs.getString(_keyCalcMethod);
+    final savedMadhab = prefs.getString(_keyMadhab) ?? 'shafi';
 
     try {
       final location = await _locationService.getLocation();
@@ -123,6 +135,7 @@ class PrayerTimeService {
       _lastCountryCode = location.countryCode;
       _lastMethod = method;
       _lastSavedMethodStr = savedMethodStr;
+      _lastMadhab = savedMadhab;
       _lastAdjustments = adjustments;
 
       final result = _buildDay(
@@ -132,6 +145,7 @@ class PrayerTimeService {
         longitude: location.longitude,
         countryCode: location.countryCode,
         savedMethod: savedMethodStr,
+        savedMadhab: savedMadhab,
         date: date,
         method: method,
         adjustments: adjustments,
@@ -152,6 +166,7 @@ class PrayerTimeService {
         longitude: 39.8579,
         countryCode: null,
         savedMethod: savedMethodStr,
+        savedMadhab: savedMadhab,
         date: date,
         method: method,
         adjustments: adjustments,
@@ -254,6 +269,7 @@ class PrayerTimeService {
     required double longitude,
     String? countryCode,
     String? savedMethod,
+    String? savedMadhab,
     DateTime? date,
     CalculationMethod method = CalculationMethod.muslim_world_league,
     Map<String, int> adjustments = const {},
@@ -261,7 +277,11 @@ class PrayerTimeService {
     final safeLat = latitude.clamp(-90.0, 90.0);
     final safeLon = longitude.clamp(-180.0, 180.0);
     final coordinates = Coordinates(safeLat, safeLon);
-    final params = method.getParameters()..madhab = Madhab.shafi;
+    final params = method.getParameters();
+    params.madhab = (savedMadhab == 'hanafi') ? Madhab.hanafi : Madhab.shafi;
+    if (safeLat.abs() > 48.0) {
+      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
+    }
 
     // Calibrate official Ministry of Religious Affairs standard for Algeria & North Africa:
     // Official ministry timetables (Algeria, Morocco, Tunisia) calculate Isha at complete 18.0° twilight.
@@ -272,12 +292,7 @@ class PrayerTimeService {
       params.ishaAngle = 18.0;
     }
 
-    // Apply Adjustments to params?
-    // Adhan package allows adjusting params.adjustments
-    // adjustments using PrayerAdjustments
-    // But adhan dart params.adjustments is PrayerAdjustments object
-    // with fajr, sunrise, dhuhr, asr, maghrib, isha (int minutes)
-
+    // Apply Adjustments to params
     final adjFajr = adjustments[AppStrings.prayerFajr] ?? 0;
     final adjDhuhr = adjustments[AppStrings.prayerDhuhr] ?? 0;
     final adjAsr = adjustments[AppStrings.prayerAsr] ?? 0;
@@ -292,6 +307,13 @@ class PrayerTimeService {
 
     final dateComponents = DateComponents.from(current);
     final times = PrayerTimes(coordinates, dateComponents, params);
+
+    // Native offline astronomical calculations via adhan
+    final sunnahTimes = SunnahTimes(times);
+    final middleOfTheNight = sunnahTimes.middleOfTheNight;
+    final lastThirdOfTheNight = sunnahTimes.lastThirdOfTheNight;
+    final dhuha = times.sunrise.add(const Duration(minutes: 15));
+    final qiblaDirection = Qibla(coordinates).direction;
 
     final prayers = <String, DateTime>{
       AppStrings.prayerFajr: times.fajr,
@@ -332,6 +354,10 @@ class PrayerTimeService {
       nextPrayerTime: nextPrayerTime,
       sunrise: times.sunrise,
       sunset: times.maghrib,
+      middleOfTheNight: middleOfTheNight,
+      lastThirdOfTheNight: lastThirdOfTheNight,
+      dhuha: dhuha,
+      qiblaDirection: qiblaDirection,
     );
   }
 }

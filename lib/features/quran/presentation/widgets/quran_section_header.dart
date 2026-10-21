@@ -84,20 +84,17 @@ class MushafSurahBanner extends StatelessWidget {
             // 2. Dead-Center Authentic Classical Surah Calligraphic Title
             Center(
               child: SizedBox(
-                width: 196,
-                height: 36,
+                width: 184,
+                height: 26,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xxs),
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: textTheme.surahHeaderTitle.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: textTheme.surahHeaderTitle.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),

@@ -25,13 +25,26 @@ Future<void> prayerWidgetBackgroundCallback(Uri? uri) async {
   if (uri?.host == 'resize') {
     final wStr = uri?.queryParameters['minWidth'];
     final hStr = uri?.queryParameters['minHeight'];
+    final provider = uri?.queryParameters['provider'];
     final w = int.tryParse(wStr ?? '');
     final h = int.tryParse(hStr ?? '');
     if (w != null && h != null) {
-      await HomeWidget.saveWidgetData<int>('widget_width', w);
-      await HomeWidget.saveWidgetData<int>('widget_height', h);
-      HomeWidgetService.invalidateCache();
-      await HomeWidgetService.updatePrayerWidget(force: true);
+      if (provider == 'large') {
+        await HomeWidget.saveWidgetData<int>('widget_large_width', w);
+        await HomeWidget.saveWidgetData<int>('widget_large_height', h);
+        HomeWidgetService.invalidateCache();
+        await HomeWidgetService.updateLarge(force: true);
+      } else if (provider == 'ribbon') {
+        await HomeWidget.saveWidgetData<int>('widget_ribbon_width', w);
+        await HomeWidget.saveWidgetData<int>('widget_ribbon_height', h);
+        HomeWidgetService.invalidateCache();
+        await HomeWidgetService.updateRibbon(force: true);
+      } else {
+        await HomeWidget.saveWidgetData<int>('widget_width', w);
+        await HomeWidget.saveWidgetData<int>('widget_height', h);
+        HomeWidgetService.invalidateCache();
+        await HomeWidgetService.updatePrayerWidget(force: true);
+      }
     }
   }
 }
@@ -370,7 +383,7 @@ class HomeWidgetService {
         MediaQuery(
           data: const MediaQueryData(
             size: resolvedSize,
-            devicePixelRatio: 2.5,
+            devicePixelRatio: 2.0,
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
@@ -389,7 +402,7 @@ class HomeWidgetService {
         ),
         key: 'prayer_large_widget',
         logicalSize: resolvedSize,
-        pixelRatio: 2.5,
+        pixelRatio: 2.0,
       );
 
       await HomeWidget.updateWidget(

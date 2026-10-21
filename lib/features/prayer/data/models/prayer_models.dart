@@ -45,6 +45,10 @@ class PrayerTimesDay {
   final DateTime? nextPrayerTime;
   final DateTime? sunrise;
   final DateTime? sunset;
+  final DateTime? middleOfTheNight;
+  final DateTime? lastThirdOfTheNight;
+  final DateTime? dhuha;
+  final double? qiblaDirection;
 
   const PrayerTimesDay({
     required this.city,
@@ -54,6 +58,10 @@ class PrayerTimesDay {
     this.nextPrayerTime,
     this.sunrise,
     this.sunset,
+    this.middleOfTheNight,
+    this.lastThirdOfTheNight,
+    this.dhuha,
+    this.qiblaDirection,
   });
 }
 

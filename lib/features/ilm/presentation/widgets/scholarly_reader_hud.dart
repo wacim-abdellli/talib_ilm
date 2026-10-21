@@ -250,6 +250,7 @@ class ScholarlyReaderHud extends StatelessWidget {
                         iconColor: surfaceTokens.text,
                         textColor: surfaceTokens.text,
                         onTap: onAddNote,
+                        onLongPress: onShowBookmarks,
                         palette: palette,
                         textTheme: textTheme,
                       ),
