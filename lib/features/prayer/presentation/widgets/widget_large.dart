@@ -37,11 +37,9 @@ class WidgetLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double dateBoxW = kLargeContent * 0.55;
-    const double cityBoxW = kLargeContent * 0.38;
-    const double heroTextW = kLargeContent * 0.45;
-    const double countdownW =
-        kLargeContent - kLargeMedallionSize - (AppSpace.sm * 2) - heroTextW;
+    const double dateBoxW = kLargeContent * 0.56; // ~182dp
+    const double cityBoxW = kLargeContent * 0.42; // ~137dp
+    const double cardW = (kLargeContent - AppSpace.sm) / 2.0; // 159dp each
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -58,12 +56,15 @@ class WidgetLarge extends StatelessWidget {
             final palette = ctx.palette;
             final textTheme = ctx.text;
             final prayerColor = palette.prayer(eval.activePrayerName);
+            final nextLabel = eval.nextPrayerName != null
+                ? 'التالي: ${eval.nextPrayerName}'
+                : 'طالب العلم';
 
             return Column(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Top Bar: Hijri date • City ──
+                // ── Top Bar: Hijri date (Right) and City (Left) ──
                 Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -85,18 +86,13 @@ class WidgetLarge extends StatelessWidget {
                               hijriDate,
                               style: textTheme.caption.copyWith(
                                 color: palette.text,
+                                fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    Text(
-                      '•',
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
                       ),
                     ),
                     SizedBox(
@@ -116,6 +112,7 @@ class WidgetLarge extends StatelessWidget {
                               cityName,
                               style: textTheme.caption.copyWith(
                                 color: palette.textMuted,
+                                fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -134,49 +131,65 @@ class WidgetLarge extends StatelessWidget {
                   color: palette.border,
                 ),
 
-                // ── Hero Section ──
+                // ── Hero Section: Two Balanced 159dp Cards ──
                 Row(
                   mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Right Card (RTL Start): Active Prayer Info
                     Container(
-                      width: kLargeMedallionSize,
-                      height: kLargeMedallionSize,
+                      width: cardW,
+                      padding: const EdgeInsetsDirectional.all(AppSpace.sm),
                       decoration: BoxDecoration(
-                        color: prayerColor.withValues(alpha: 0.14),
+                        color: prayerColor.withValues(alpha: 0.08),
                         borderRadius: AppRadius.mdRadius,
                         border: Border.all(
-                          color: prayerColor.withValues(alpha: 0.35),
+                          color: prayerColor.withValues(alpha: 0.25),
                           width: 1,
                         ),
                       ),
-                      child: Icon(
-                        eval.prayerIcon,
-                        size: AppIcon.md,
-                        color: prayerColor,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    SizedBox(
-                      width: heroTextW,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            eval.displayTitle,
-                            style: textTheme.label.copyWith(
-                              color: palette.text,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Icon(
+                                eval.prayerIcon,
+                                size: AppIcon.xs,
+                                color: prayerColor,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Expanded(
+                                child: Text(
+                                  eval.displayTitle,
+                                  style: textTheme.label.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: AppSpace.xxs),
                           Text(
                             eval.timePillLabel,
                             style: textTheme.titleSmall.copyWith(
                               color: prayerColor,
-                              fontFeatures: const [FontFeature.tabularFigures()],
+                              fontFeatures: const [
+                                FontFeature.tabularFigures()
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: AppSpace.xxs),
+                          Text(
+                            nextLabel,
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -184,16 +197,70 @@ class WidgetLarge extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpace.sm),
-                    FixedCountdownBadge(
-                      maxWidth: countdownW,
-                      statusLabel: eval.statusLabel,
-                      countdown: eval.countdownFormatted,
-                      bgColor: palette.surfaceMuted,
-                      borderColor: palette.border,
-                      labelColor: palette.gold,
-                      countdownColor: palette.text,
-                      isVertical: true,
+
+                    // Left Card (RTL End): Live Countdown Badge
+                    Container(
+                      width: cardW,
+                      padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+                      decoration: BoxDecoration(
+                        color: palette.surfaceMuted,
+                        borderRadius: AppRadius.mdRadius,
+                        border: Border.all(
+                          color: palette.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.hourglass_top_rounded,
+                                size: AppIcon.xs,
+                                color: palette.gold,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Expanded(
+                                child: Text(
+                                  eval.statusLabel,
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.gold,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpace.xxs),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              eval.countdownFormatted,
+                              style: textTheme.titleSmall.copyWith(
+                                color: palette.text,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpace.xxs),
+                          Text(
+                            'الصلوات الخمس',
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

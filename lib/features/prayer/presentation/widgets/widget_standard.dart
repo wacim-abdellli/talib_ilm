@@ -31,9 +31,7 @@ class WidgetStandard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double heroTextW = kStandardContent * 0.45;
-    const double countdownW =
-        kStandardContent - kMedallionSize - (AppSpace.sm * 2) - heroTextW;
+    const double cardW = (kStandardContent - AppSpace.sm) / 2.0; // 159dp each
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -55,71 +53,132 @@ class WidgetStandard extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Hero Section ──
+                // ── Hero Section: Two Balanced 159dp Cards ──
                 Row(
                   mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Icon medallion
+                    // Right Card (RTL Start): Active Prayer Info
                     Container(
-                      width: kMedallionSize,
-                      height: kMedallionSize,
+                      width: cardW,
+                      padding: const EdgeInsetsDirectional.all(AppSpace.xs),
                       decoration: BoxDecoration(
-                        color: prayerColor.withValues(alpha: 0.14),
+                        color: prayerColor.withValues(alpha: 0.08),
                         borderRadius: AppRadius.mdRadius,
                         border: Border.all(
-                          color: prayerColor.withValues(alpha: 0.35),
+                          color: prayerColor.withValues(alpha: 0.25),
                           width: 1,
                         ),
                       ),
-                      child: Icon(
-                        eval.prayerIcon,
-                        size: AppIcon.md,
-                        color: prayerColor,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-
-                    // Prayer title + time
-                    SizedBox(
-                      width: heroTextW,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            eval.displayTitle,
-                            style: textTheme.label.copyWith(
-                              color: palette.text,
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: prayerColor.withValues(alpha: 0.16),
+                              borderRadius: AppRadius.smRadius,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: AppSpace.xxs),
-                          Text(
-                            eval.timePillLabel,
-                            style: textTheme.titleSmall.copyWith(
+                            child: Icon(
+                              eval.prayerIcon,
+                              size: AppIcon.xs,
                               color: prayerColor,
-                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  eval.displayTitle,
+                                  style: textTheme.label.copyWith(
+                                    color: palette.text,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  eval.timePillLabel,
+                                  style: textTheme.titleSmall.copyWith(
+                                    color: prayerColor,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures()
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpace.sm),
 
-                    // Countdown badge
-                    FixedCountdownBadge(
-                      maxWidth: countdownW,
-                      statusLabel: eval.statusLabel,
-                      countdown: eval.countdownFormatted,
-                      bgColor: palette.surfaceMuted,
-                      borderColor: palette.border,
-                      labelColor: palette.gold,
-                      countdownColor: palette.text,
-                      isVertical: true,
+                    // Left Card (RTL End): Live Countdown Badge
+                    Container(
+                      width: cardW,
+                      padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                      decoration: BoxDecoration(
+                        color: palette.surfaceMuted,
+                        borderRadius: AppRadius.mdRadius,
+                        border: Border.all(
+                          color: palette.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: palette.gold.withValues(alpha: 0.14),
+                              borderRadius: AppRadius.smRadius,
+                            ),
+                            child: Icon(
+                              Icons.hourglass_top_rounded,
+                              size: AppIcon.xs,
+                              color: palette.gold,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  eval.statusLabel,
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.gold,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    eval.countdownFormatted,
+                                    style: textTheme.titleSmall.copyWith(
+                                      color: palette.text,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures()
+                                      ],
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

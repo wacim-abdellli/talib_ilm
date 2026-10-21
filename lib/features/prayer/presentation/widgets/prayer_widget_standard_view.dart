@@ -45,24 +45,38 @@ class PrayerWidgetStandardView extends StatelessWidget {
         // RIGHT (RTL start): Prayer title + countdown badge
         // LEFT  (RTL end)  : Time pill
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            // Prayer title — right side, fills available space
+            // Prayer title + time pill — right side
             Expanded(
-              child: Text(
-                eval.displayTitle,
-                style: textTheme.label.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: palette.text,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      eval.displayTitle,
+                      style: textTheme.label.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: palette.text,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Flexible(
+                    child: _TimePill(
+                      label: eval.timePillLabel,
+                      color: prayerColor,
+                    ),
+                  ),
+                ],
               ),
             ),
 
             const SizedBox(width: AppSpace.xs),
 
-            // Countdown badge — fixed layout, no flex
+            // Countdown badge — left side
             _CountdownBadge(
               statusLabel: eval.statusLabel,
               countdown: eval.countdownFormatted,
@@ -70,14 +84,6 @@ class PrayerWidgetStandardView extends StatelessWidget {
               borderColor: bannerBorderColor,
               textColor: bannerTextColor,
               countdownColor: palette.text,
-            ),
-
-            const SizedBox(width: AppSpace.xs),
-
-            // Time pill — always last, shrink if needed
-            _TimePill(
-              label: eval.timePillLabel,
-              color: prayerColor,
             ),
           ],
         ),
@@ -105,7 +111,7 @@ class PrayerWidgetStandardView extends StatelessWidget {
 }
 
 /// Countdown badge: [بقي على الأذان  04:25:56]
-/// Fixed width by using tight text constraints — never overflows its parent.
+/// Clean horizontal badge with comfortable sizing — zero text truncation dots.
 class _CountdownBadge extends StatelessWidget {
   final String statusLabel;
   final String countdown;
@@ -128,7 +134,7 @@ class _CountdownBadge extends StatelessWidget {
     final textTheme = context.text;
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.sm,
+        horizontal: AppSpace.xs,
         vertical: AppSpace.xxs,
       ),
       decoration: BoxDecoration(
@@ -139,9 +145,8 @@ class _CountdownBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Status label — hard capped width to prevent overflow at any text scale
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 72),
+            constraints: const BoxConstraints(maxWidth: 96),
             child: Text(
               statusLabel,
               style: textTheme.caption.copyWith(
@@ -153,9 +158,8 @@ class _CountdownBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpace.xs),
-          // Countdown — LTR, capped so it never overflows at large text scales
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 56),
+            constraints: const BoxConstraints(maxWidth: 70),
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Text(
@@ -196,7 +200,7 @@ class _TimePill extends StatelessWidget {
         borderRadius: AppRadius.pillRadius,
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 80),
+        constraints: const BoxConstraints(maxWidth: 64),
         child: Text(
           label,
           style: textTheme.caption.copyWith(

@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/constants/app_strings.dart';
+import '../../app/theme/app_palette.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'home_widget_service.dart';
@@ -38,6 +39,7 @@ class ForegroundPrayerService {
 
   Timer? _initialTimer;
   Timer? _timer;
+  Timer? _widgetTimer;
   StreamSubscription<PlayerState>? _playerSub;
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
   final AdhanSettingsService _adhanSettingsService = AdhanSettingsService();
@@ -72,17 +74,28 @@ class ForegroundPrayerService {
     unawaited(init());
     _initialTimer?.cancel();
     _timer?.cancel();
-    _initialTimer = Timer(const Duration(seconds: 1), _check); // ui-lint: allow service interval
+    _widgetTimer?.cancel();
+    _initialTimer = Timer(AppMotion.oneSecond, _check);
     _timer = Timer.periodic(
-      const Duration(seconds: 60), // ui-lint: allow service interval
+      AppMotion.ambient,
       (_) => _check(),
+    );
+    _widgetTimer = Timer.periodic(
+      AppMotion.oneSecond,
+      (_) => _tickWidgets(),
     );
   }
 
   void stop() {
     _initialTimer?.cancel();
     _timer?.cancel();
+    _widgetTimer?.cancel();
     _playerSub?.cancel();
+  }
+
+  void _tickWidgets() {
+    final now = DateTime.now();
+    unawaited(HomeWidgetService.updateAllWidgets(referenceTime: now));
   }
 
   Future<void> dismissAlert() async {

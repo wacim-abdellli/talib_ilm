@@ -46,12 +46,14 @@ class HomeWidgetService {
   /// Standard 4x1 Home Screen Android widget dimensions (Salaat First style)
   static const Size widgetLogicalSize = Size(380, 120);
 
-  /// In-memory cache key to prevent redundant screenshot rasterizations within the same minute and dimensions
+  /// In-memory cache key to prevent redundant screenshot rasterizations within the same second and dimensions
   static String? _lastRenderKey;
   static String? _lastRibbonRenderKey;
   static String? _lastStandardRenderKey;
   static String? _lastLargeRenderKey;
   static String? _lastCompactRenderKey;
+  static bool? _cachedIsDark;
+  static PrayerTimesDay? _cachedPrayerDay;
 
   /// Invalidates the render cache to force immediate redraw on resize or theme changes
   static void invalidateCache() {
@@ -60,6 +62,25 @@ class HomeWidgetService {
     _lastStandardRenderKey = null;
     _lastLargeRenderKey = null;
     _lastCompactRenderKey = null;
+    _cachedIsDark = null;
+    _cachedPrayerDay = null;
+  }
+
+  static Future<PrayerTimesDay> _resolvePrayerDay(PrayerTimesDay? explicit) async {
+    if (explicit != null) {
+      _cachedPrayerDay = explicit;
+      return explicit;
+    }
+    final now = DateTime.now();
+    if (_cachedPrayerDay != null &&
+        _cachedPrayerDay!.date.year == now.year &&
+        _cachedPrayerDay!.date.month == now.month &&
+        _cachedPrayerDay!.date.day == now.day) {
+      return _cachedPrayerDay!;
+    }
+    final fetched = await PrayerTimeService().getPrayerTimesDay();
+    _cachedPrayerDay = fetched;
+    return fetched;
   }
 
   /// Retrieves the user-selected widget theme mode (defaults to dark AMOLED card)
@@ -80,7 +101,7 @@ class HomeWidgetService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(themeModeKey, mode.name);
-      _lastRenderKey = null; // Invalidate cache to force immediate redraw
+      invalidateCache();
       await updatePrayerWidget(force: true);
     } catch (_) {}
   }
@@ -104,7 +125,7 @@ class HomeWidgetService {
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
-  /// Throttled by minute, prayer phase, and dimensions to guarantee zero phone lag.
+  /// Throttled by second, prayer phase, and dimensions to guarantee zero phone lag.
   static Future<void> updatePrayerWidget({
     PrayerTimesDay? prayerDay,
     DateTime? referenceTime,
@@ -112,7 +133,7 @@ class HomeWidgetService {
   }) async {
     try {
       final now = referenceTime ?? DateTime.now();
-      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final day = await _resolvePrayerDay(prayerDay);
       final mode = await getThemeMode();
 
       // Resolve theme according to user choice: Dark (AMOLED black), Light (crisp white), or Auto
@@ -134,15 +155,10 @@ class HomeWidgetService {
         if (savedH != null && savedH >= 70) targetH = savedH.clamp(70, 280);
       } catch (_) {}
 
-      // Throttling key: Updates per-second for short countdowns, per-minute otherwise.
-      // This guarantees live second-by-second ticking on the home screen widget.
+      // Throttling key: Updates per-second for live ticking countdown.
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-      final remaining = eval.targetPrayerTime.difference(now);
-      // Use second-resolution when < 1 hour remains so widget ticks live every second
-      final timeKey = remaining.inHours < 1
-          ? '${now.hour}:${now.minute}:${now.second}'
-          : '${now.hour}:${now.minute}';
+      final timeKey = '${now.hour}:${now.minute}:${now.second}';
       final renderKey = '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
       if (!force && renderKey == _lastRenderKey) {
         return;
@@ -205,16 +221,14 @@ class HomeWidgetService {
   }) async {
     try {
       final now = referenceTime ?? DateTime.now();
-      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final hijri = _formatHijri(now);
+      final useDark = await _resolveWidgetIsDark();
 
-      final remaining = eval.targetPrayerTime.difference(now);
-      final timeKey = remaining.inHours < 1
-          ? '${now.hour}:${now.minute}:${now.second}'
-          : '${now.hour}:${now.minute}';
-      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}';
+      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
       }
@@ -230,14 +244,14 @@ class HomeWidgetService {
             textScaler: TextScaler.noScaling,
           ),
           child: Theme(
-            data: AppTheme.dark(),
+            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: WidgetRibbon(
                 eval: eval,
                 all: all,
                 hijriDate: hijri,
-                isDark: true,
+                isDark: useDark,
               ),
             ),
           ),
@@ -257,15 +271,29 @@ class HomeWidgetService {
   }
 
   static Future<bool> _resolveWidgetIsDark() async {
+    if (_cachedIsDark != null) return _cachedIsDark!;
     try {
       final prefs = await SharedPreferences.getInstance();
       final modeStr = prefs.getString(themeModeKey);
-      if (modeStr == 'light') return false;
-      if (modeStr == 'dark') return true;
+      if (modeStr == 'light') {
+        _cachedIsDark = false;
+        return false;
+      }
+      if (modeStr == 'dark') {
+        _cachedIsDark = true;
+        return true;
+      }
       final appTheme = prefs.getString('theme_mode');
-      if (appTheme == 'light') return false;
-      if (appTheme == 'dark') return true;
+      if (appTheme == 'light') {
+        _cachedIsDark = false;
+        return false;
+      }
+      if (appTheme == 'dark') {
+        _cachedIsDark = true;
+        return true;
+      }
     } catch (_) {}
+    _cachedIsDark = true;
     return true;
   }
 
@@ -277,15 +305,12 @@ class HomeWidgetService {
   }) async {
     try {
       final now = referenceTime ?? DateTime.now();
-      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = await _resolveWidgetIsDark();
 
-      final remaining = eval.targetPrayerTime.difference(now);
-      final timeKey = remaining.inHours < 1
-          ? '${now.hour}:${now.minute}:${now.second}'
-          : '${now.hour}:${now.minute}';
+      final timeKey = '${now.hour}:${now.minute}:${now.second}';
       final renderKey =
           'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastStandardRenderKey) {
@@ -336,17 +361,14 @@ class HomeWidgetService {
   }) async {
     try {
       final now = referenceTime ?? DateTime.now();
-      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final hijri = _formatHijri(now);
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
       final useDark = await _resolveWidgetIsDark();
 
-      final remaining = eval.targetPrayerTime.difference(now);
-      final timeKey = remaining.inHours < 1
-          ? '${now.hour}:${now.minute}:${now.second}'
-          : '${now.hour}:${now.minute}';
+      final timeKey = '${now.hour}:${now.minute}:${now.second}';
       final renderKey =
           'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastLargeRenderKey) {
@@ -399,15 +421,12 @@ class HomeWidgetService {
   }) async {
     try {
       final now = referenceTime ?? DateTime.now();
-      final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+      final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = await _resolveWidgetIsDark();
 
-      final remaining = eval.targetPrayerTime.difference(now);
-      final timeKey = remaining.inHours < 1
-          ? '${now.hour}:${now.minute}:${now.second}'
-          : '${now.hour}:${now.minute}';
+      final timeKey = '${now.hour}:${now.minute}:${now.second}';
       final renderKey =
           'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastCompactRenderKey) {
@@ -455,7 +474,7 @@ class HomeWidgetService {
     DateTime? referenceTime,
     bool force = false,
   }) async {
-    final day = prayerDay ?? await PrayerTimeService().getPrayerTimesDay();
+    final day = await _resolvePrayerDay(prayerDay);
     final now = referenceTime ?? DateTime.now();
     await Future.wait([
       updatePrayerWidget(prayerDay: day, referenceTime: now, force: force),

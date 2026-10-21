@@ -26,7 +26,7 @@ class WidgetRibbon extends StatelessWidget {
     required this.eval,
     required this.all,
     required this.hijriDate,
-    this.isDark = true,
+    this.isDark = false,
   });
 
   @override
@@ -41,7 +41,7 @@ class WidgetRibbon extends StatelessWidget {
       child: WidgetCard(
         width: kRibbonW,
         height: kRibbonH,
-        isDark: true, // Ribbon is always dark card
+        isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kRibbonPadH,
           vertical: kRibbonPadV,
