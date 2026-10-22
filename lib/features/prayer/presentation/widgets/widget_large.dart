@@ -22,6 +22,7 @@ class WidgetLarge extends StatelessWidget {
   final bool isDark;
   final double? width;
   final double? height;
+  final bool forNativeWidget;
 
   const WidgetLarge({
     super.key,
@@ -32,6 +33,7 @@ class WidgetLarge extends StatelessWidget {
     this.isDark = false,
     this.width,
     this.height,
+    this.forNativeWidget = false,
   });
 
   static String _formatTime12h(DateTime time) {
@@ -84,27 +86,29 @@ class WidgetLarge extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          displayTitle,
-                          style: textTheme.caption.copyWith(
-                            color: activePrayerColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Text(
-                            eval.headerCountdownLabel,
+                        if (!forNativeWidget) ...[
+                          Text(
+                            displayTitle,
                             style: textTheme.caption.copyWith(
-                              color: palette.text,
+                              color: activePrayerColor,
                               fontWeight: FontWeight.w700,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures()
-                              ],
                             ),
                           ),
-                        ),
+                          const SizedBox(width: AppSpace.xs),
+                          Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text(
+                              eval.headerCountdownLabel,
+                              style: textTheme.caption.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(width: AppSpace.xs),

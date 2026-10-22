@@ -20,6 +20,7 @@ class WidgetRibbon extends StatelessWidget {
   final Map<String, DateTime> all;
   final String hijriDate;
   final bool isDark;
+  final bool forNativeWidget;
 
   const WidgetRibbon({
     super.key,
@@ -27,6 +28,7 @@ class WidgetRibbon extends StatelessWidget {
     required this.all,
     required this.hijriDate,
     this.isDark = false,
+    this.forNativeWidget = false,
   });
 
   @override
@@ -66,28 +68,30 @@ class WidgetRibbon extends StatelessWidget {
                           size: AppIcon.xs,
                           color: activeColor,
                         ),
-                        const SizedBox(width: AppSpace.xs),
-                        Text(
-                          eval.displayTitle,
-                          style: textTheme.label.copyWith(
-                            color: activeColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Text(
-                            eval.headerCountdownLabel,
+                        if (!forNativeWidget) ...[
+                          const SizedBox(width: AppSpace.xs),
+                          Text(
+                            eval.displayTitle,
                             style: textTheme.label.copyWith(
-                              color: palette.text,
+                              color: activeColor,
                               fontWeight: FontWeight.w700,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures()
-                              ],
                             ),
                           ),
-                        ),
+                          const SizedBox(width: AppSpace.xs),
+                          Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text(
+                              eval.headerCountdownLabel,
+                              style: textTheme.label.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(width: AppSpace.xs),

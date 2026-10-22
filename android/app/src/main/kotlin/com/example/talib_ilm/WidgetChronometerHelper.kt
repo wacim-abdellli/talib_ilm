@@ -58,25 +58,63 @@ object WidgetChronometerHelper {
             }
 
             val textColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF141210.toInt()
-            val bgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
 
-            if (isPrayerActive || epochMs == 0L || epochMs <= now) {
-                views.setViewVisibility(R.id.widget_countdown, View.GONE)
+            val rawPrayerTitle = widgetData.getString(
+                "prayer_display_title",
+                widgetData.getString("flutter.prayer_display_title", "صلاة الفجر")
+            ) ?: "صلاة الفجر"
+
+            val isLarge = providerClass.simpleName.contains("Large")
+            val effectiveTitle = if (isLarge && rawPrayerTitle.startsWith("صلاة ")) {
+                rawPrayerTitle.substring(5)
             } else {
-                val remainingMs = epochMs - now
-                val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
+                rawPrayerTitle
+            }
 
-                views.setChronometer(R.id.widget_countdown, chronometerBase, null, true)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    views.setChronometerCountDown(R.id.widget_countdown, true)
+            val prayerColor = try {
+                if (widgetData.contains("prayer_color_value")) {
+                    widgetData.getInt("prayer_color_value", 0xFF38BDF8.toInt())
+                } else {
+                    widgetData.getInt("flutter.prayer_color_value", 0xFF38BDF8.toInt())
                 }
-                views.setTextColor(R.id.widget_countdown, textColor)
-                try {
-                    views.setInt(R.id.widget_countdown, "setBackgroundResource", bgRes)
-                } catch (_: Exception) {}
-                views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
+            } catch (_: Exception) {
+                0xFF38BDF8.toInt()
+            }
 
-                // Schedule exact alarm to update the widget right when countdown hits zero
+            val countdownPrefix = widgetData.getString(
+                "countdown_prefix",
+                widgetData.getString("flutter.countdown_prefix", "بعد ")
+            ) ?: "بعد "
+
+            val isRibbonOrLarge = providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Large")
+
+            if (isRibbonOrLarge) {
+                try {
+                    views.setTextViewText(R.id.widget_prayer_title, effectiveTitle)
+                    views.setTextColor(R.id.widget_prayer_title, prayerColor)
+                } catch (_: Exception) {}
+
+                if (isPrayerActive || epochMs == 0L || epochMs <= now) {
+                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                } else {
+                    val remainingMs = epochMs - now
+                    val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
+
+                    views.setChronometer(R.id.widget_countdown, chronometerBase, "$countdownPrefix%s", true)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        views.setChronometerCountDown(R.id.widget_countdown, true)
+                    }
+                    views.setTextColor(R.id.widget_countdown, textColor)
+                    views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
+                }
+            } else {
+                try {
+                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                } catch (_: Exception) {}
+            }
+
+            // Schedule exact alarm to update the widget right when countdown hits zero
+            if (epochMs > now) {
                 schedulePrayerAlarm(context, epochMs, providerClass)
             }
         } catch (_: Throwable) {

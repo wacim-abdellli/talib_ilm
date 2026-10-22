@@ -3,6 +3,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../app/theme/app_palette.dart';
 import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
@@ -145,7 +146,7 @@ class HomeWidgetService {
         case PrayerWidgetPhase.beforeAdhan:
         case PrayerWidgetPhase.postSalah:
           epochMs = eval.targetPrayerTime.millisecondsSinceEpoch;
-          countdownPrefix = 'بقي ';
+          countdownPrefix = 'بعد ';
           break;
         case PrayerWidgetPhase.betweenAdhanAndIqama:
           final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(
@@ -153,7 +154,7 @@ class HomeWidgetService {
           );
           final iqamaTime = eval.targetPrayerTime.add(Duration(minutes: iqamaMinutes));
           epochMs = iqamaTime.millisecondsSinceEpoch;
-          countdownPrefix = 'الإقامة ';
+          countdownPrefix = 'الإقامة بعد ';
           break;
         case PrayerWidgetPhase.atAdhan:
         case PrayerWidgetPhase.inSalah:
@@ -165,14 +166,23 @@ class HomeWidgetService {
       final isPrayerActive = eval.phase == PrayerWidgetPhase.atAdhan ||
           eval.phase == PrayerWidgetPhase.inSalah;
 
+      final useDark = await _resolveWidgetIsDark();
+      final palette = useDark ? AppPalette.dark : AppPalette.light;
+      final prayerColor = palette.prayer(eval.activePrayerName);
+      final prayerColorInt = prayerColor.toARGB32();
+
       await HomeWidget.saveWidgetData<int>('next_prayer_epoch_ms', epochMs);
       await HomeWidget.saveWidgetData<String>('next_prayer_name', eval.activePrayerName);
+      await HomeWidget.saveWidgetData<String>('prayer_display_title', eval.displayTitle);
+      await HomeWidget.saveWidgetData<int>('prayer_color_value', prayerColorInt);
       await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
       await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('next_prayer_epoch_ms', epochMs);
       await prefs.setString('next_prayer_name', eval.activePrayerName);
+      await prefs.setString('prayer_display_title', eval.displayTitle);
+      await prefs.setInt('prayer_color_value', prayerColorInt);
       await prefs.setString('countdown_prefix', countdownPrefix);
       await prefs.setBool('is_prayer_active', isPrayerActive);
     } catch (_) {}
@@ -309,6 +319,7 @@ class HomeWidgetService {
                 all: all,
                 hijriDate: hijri,
                 isDark: useDark,
+                forNativeWidget: true,
               ),
             ),
           ),
@@ -444,6 +455,7 @@ class HomeWidgetService {
                 hijriDate: hijri,
                 cityName: city,
                 isDark: useDark,
+                forNativeWidget: true,
               ),
             ),
           ),

@@ -14,23 +14,44 @@
         android:adjustViewBounds="true"
         android:contentDescription="@string/large_widget_name" />
 
-    <Chronometer
-        android:id="@+id/widget_countdown"
+    <!-- Top Right Inline Row: [الفجر] [بعد 08:29:43] -->
+    <LinearLayout
+        android:id="@+id/widget_hero_row"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="10dp"
-        android:countDown="true"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFFFF"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp"
-        android:visibility="gone" />
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_prayer_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#38BDF8"
+            android:includeFontPadding="false"
+            android:singleLine="true" />
+
+        <Chronometer
+            android:id="@+id/widget_countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dp"
+            android:layout_marginEnd="4dp"
+            android:countDown="true"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:background="@android:color/transparent"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </FrameLayout>
