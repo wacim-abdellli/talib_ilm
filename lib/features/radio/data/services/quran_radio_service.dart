@@ -32,6 +32,32 @@ class QuranRadioService extends ChangeNotifier {
   double get volume => _volume;
   List<QuranRadioStation> get stations => _stations;
 
+  ConcatenatingAudioSource? _playlist;
+
+  ConcatenatingAudioSource _buildPlaylist(List<QuranRadioStation> list) {
+    return ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      children: list.map((s) => _createAudioSource(s)).toList(),
+    );
+  }
+
+  AudioSource _createAudioSource(QuranRadioStation station) {
+    return AudioSource.uri(
+      Uri.parse(station.url),
+      tag: MediaItem(
+        id: 'quran_radio_${station.id}',
+        title: station.name,
+        artist: 'إذاعة القرآن الكريم - بث مباشر',
+        album: station.category,
+        duration: Duration(hours: 24, seconds: station.id),
+        artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+        displayTitle: station.name,
+        displaySubtitle: 'إذاعة القرآن الكريم - بث مباشر',
+        displayDescription: station.category,
+      ),
+    );
+  }
+
   void _init() {
     _player.playerStateStream.listen((state) {
       final wasPlaying = _isPlaying;
@@ -43,6 +69,16 @@ class QuranRadioService extends ChangeNotifier {
 
       if (wasPlaying != _isPlaying || wasConnecting != _isConnecting) {
         notifyListeners();
+      }
+    });
+
+    _player.currentIndexStream.listen((index) {
+      if (index != null && index >= 0 && index < _stations.length) {
+        final station = _stations[index];
+        if (_currentStation?.id != station.id) {
+          _currentStation = station;
+          notifyListeners();
+        }
       }
     });
 
@@ -67,6 +103,7 @@ class QuranRadioService extends ChangeNotifier {
       _stations = list
           .map((item) => QuranRadioStation.fromJson(item as Map<String, dynamic>))
           .toList();
+      _playlist = _buildPlaylist(_stations);
       notifyListeners();
     } catch (_) {}
 
@@ -101,6 +138,7 @@ class QuranRadioService extends ChangeNotifier {
 
           if (updated.length != _stations.length) {
             _stations = updated;
+            _playlist = _buildPlaylist(_stations);
             notifyListeners();
           }
         }
@@ -117,27 +155,23 @@ class QuranRadioService extends ChangeNotifier {
       QuranAudioService().pause();
     } catch (_) {}
 
+    final stationIndex = _stations.indexWhere((s) => s.id == station.id);
+    if (stationIndex == -1) return;
+
     _currentStation = station;
     _errorMessage = null;
     _isConnecting = true;
     notifyListeners();
 
     try {
-      final audioSource = AudioSource.uri(
-        Uri.parse(station.url),
-        tag: MediaItem(
-          id: 'quran_radio_${station.id}',
-          title: station.name,
-          artist: 'إذاعة القرآن الكريم - بث مباشر',
-          album: station.category,
-          artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
-          displayTitle: station.name,
-          displaySubtitle: 'إذاعة القرآن الكريم - بث مباشر',
-          displayDescription: station.category,
-        ),
-      );
-
-      await _player.setAudioSource(audioSource);
+      if (_playlist == null || _playlist!.length != _stations.length) {
+        _playlist = _buildPlaylist(_stations);
+        await _player.setAudioSource(_playlist!, initialIndex: stationIndex);
+      } else if (_player.audioSource != _playlist) {
+        await _player.setAudioSource(_playlist!, initialIndex: stationIndex);
+      } else {
+        await _player.seek(Duration.zero, index: stationIndex);
+      }
       await _player.play();
     } catch (e) {
       _errorMessage = 'تعذر تشغيل هذه الإذاعة حالياً.';
@@ -161,20 +195,22 @@ class QuranRadioService extends ChangeNotifier {
 
   /// Switch to next radio station in the list
   Future<void> nextStation() async {
-    if (_stations.isEmpty || _currentStation == null) return;
-    final currentIndex = _stations.indexWhere((s) => s.id == _currentStation!.id);
-    if (currentIndex == -1) return;
-    final nextIndex = (currentIndex + 1) % _stations.length;
-    await playStation(_stations[nextIndex]);
+    if (_player.hasNext) {
+      await _player.seekToNext();
+      await _player.play();
+    } else if (_stations.isNotEmpty) {
+      await playStation(_stations.first);
+    }
   }
 
   /// Switch to previous radio station in the list
   Future<void> previousStation() async {
-    if (_stations.isEmpty || _currentStation == null) return;
-    final currentIndex = _stations.indexWhere((s) => s.id == _currentStation!.id);
-    if (currentIndex == -1) return;
-    final prevIndex = (currentIndex - 1 + _stations.length) % _stations.length;
-    await playStation(_stations[prevIndex]);
+    if (_player.hasPrevious) {
+      await _player.seekToPrevious();
+      await _player.play();
+    } else if (_stations.isNotEmpty) {
+      await playStation(_stations.last);
+    }
   }
 
   Future<void> pause() async {

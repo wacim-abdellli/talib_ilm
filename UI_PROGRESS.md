@@ -1320,7 +1320,26 @@ FAILED (54 violations)
   - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
   - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
   - `flutter build apk --debug`: Clean build.
+## Round 20 — Lock Screen & Background Media Control Real-Time Synchronization
+- **Status:** Complete
+- **Branch:** `ui/r20-lock-media-controls-sync`
+- **Core Problem Solved:**
+  - When switching radio stations/reciters in 24/7 Quran Radio (e.g., from Mishary Alafasy to Ahmed Al-Ajmi), the Android notification shade and lock screen media controls remained frozen on the previous station's title.
+  - Root cause: `just_audio_background` filters track events with `.distinct()` on `TrackInfo(index, duration)`. For live audio streams without duration and loaded as single `AudioSource.uri` (always index 0, duration null), `TrackInfo(0, null) == TrackInfo(0, null)` was true, causing `just_audio_background` to drop the track event and never call `mediaItem.add(...)`.
+  - Resolution:
+    1. Re-engineered `QuranRadioService` to manage radio stations inside a `ConcatenatingAudioSource` with `useLazyPreparation: true`. Station switching calls `_player.seek(Duration.zero, index: stationIndex)`, cleanly incrementing index and triggering `TrackInfo` changes in `just_audio_background`.
+    2. Attached unique `duration: Duration(hours: 24, seconds: station.id)` to each `MediaItem` tag, ensuring that `TrackInfo` can never collide even if stream durations are null.
+    3. Added bidirectional sync: listened to `_player.currentIndexStream` so that pressing Next/Previous on the Android lock screen controls or bluetooth headphones updates the in-app active station and player dock seamlessly.
+    4. Properly awaited `JustAudioBackground.init(...)` before `runApp(...)` in `lib/main.dart`.
+    5. Enhanced `QuranAudioService` and `MutunAudioService` by embedding `${r.id}_` in `MediaItem.id` to prevent Android media notification caching when changing reciters for the same verse or book.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/quran_audio_service_test.dart`: 100% pass (7/7 tests).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
+  - `flutter build apk --debug`: Clean build.
 - **Open Issues:** None.
+
 
 
 

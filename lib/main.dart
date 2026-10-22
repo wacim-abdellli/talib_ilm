@@ -31,17 +31,17 @@ Future<void> main() async {
   if (kDebugMode) {
     enableBadCertificateCatcher();
   }
-  unawaited(
-    JustAudioBackground.init(
+  try {
+    await JustAudioBackground.init(
       androidNotificationChannelId: 'com.example.talib_ilm.channel.audio',
       androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
       androidNotificationOngoing: false,
       androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
       preloadArtwork: true,
-    ).catchError((e) {
-      debugPrint('JustAudioBackground init warning: $e');
-    }),
-  );
+    );
+  } catch (e) {
+    debugPrint('JustAudioBackground init warning: $e');
+  }
   runApp(const TalibIlmApp());
 }

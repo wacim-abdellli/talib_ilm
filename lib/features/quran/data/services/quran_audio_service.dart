@@ -239,7 +239,7 @@ class QuranAudioService {
     final r = reciter ?? _selectedReciter;
     final surahName = quran.getSurahNameArabic(surah);
     final tag = MediaItem(
-      id: '${surah}_$ayah',
+      id: '${r.id}_${surah}_$ayah',
       album: 'سورة $surahName',
       title: 'الآية $ayah - سورة $surahName',
       artist: r.name,

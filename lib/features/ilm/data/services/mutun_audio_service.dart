@@ -293,7 +293,7 @@ class MutunAudioService {
     // Primary Attempt: setAudioSource with background MediaItem and 8s timeout
     try {
       final mediaItem = MediaItem(
-        id: bookId,
+        id: '${_selectedReciter.id}_$bookId',
         title: mediaTitle,
         artist: _selectedReciter.name,
         album: 'متون طالب العلم',
