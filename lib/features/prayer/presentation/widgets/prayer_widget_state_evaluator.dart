@@ -265,19 +265,21 @@ class PrayerWidgetStateEvaluator {
     );
   }
 
-  /// Formats a Duration as HH:MM for clean, stable widget display.
-  /// Eliminates frozen seconds so widgets never appear stopped or incorrect when the app is closed.
+  /// Formats a Duration as MM:SS (or HH:MM:SS when hours > 0).
+  /// Always includes seconds for live ticking countdown.
   static String formatDuration(Duration d) {
-    if (d.isNegative) return '00:00';
+    if (d.isNegative) return '00:00:00';
     final hours = d.inHours;
     final minutes = d.inMinutes % 60;
+    final seconds = d.inSeconds % 60;
 
     final mm = minutes.toString().padLeft(2, '0');
-    final hh = hours.toString().padLeft(2, '0');
+    final ss = seconds.toString().padLeft(2, '0');
 
     if (hours > 0) {
-      return '$hh:$mm';
+      final hh = hours.toString().padLeft(2, '0');
+      return '$hh:$mm:$ss';
     }
-    return '00:$mm';
+    return '$mm:$ss';
   }
 }

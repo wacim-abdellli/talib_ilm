@@ -9,7 +9,7 @@
     android:maxResizeWidth="400dp"
     android:maxResizeHeight="160dp"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/prayer_widget_layout"
     android:previewLayout="@layout/prayer_widget_layout"
     android:widgetCategory="home_screen"
