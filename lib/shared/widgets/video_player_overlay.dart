@@ -8,6 +8,7 @@ import '../../app/theme/app_spacing.dart';
 import '../../features/ilm/data/models/lesson_model.dart';
 
 /// Full YouTube-grade interactive video overlay controller.
+/// Strictly LTR layout (standard universal media player design).
 class VideoPlayerOverlay extends StatefulWidget {
   final YoutubePlayerController controller;
   final String title;
@@ -148,78 +149,130 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
     final durStr = _formatTime(widget.duration);
     final activeChapter = _getCurrentChapterTitle();
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // ── Full Video Tap Shutter ──
-        Semantics(
-          label: _isVisible ? 'إخفاء عناصر التحكم' : 'إظهار عناصر التحكم',
-          child: InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: _toggleVisibility,
-            child: const SizedBox.expand(),
+    // Force universal Left-to-Right media layout (matches real YouTube worldwide)
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ── Full Video Tap Shutter ──
+          Semantics(
+            label: _isVisible ? 'إخفاء عناصر التحكم' : 'إظهار عناصر التحكم',
+            child: InkWell(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              onTap: _toggleVisibility,
+              child: const SizedBox.expand(),
+            ),
           ),
-        ),
 
-        // ── YouTube Controls Overlay ──
-        IgnorePointer(
-          ignoring: !_isVisible,
-          child: AnimatedOpacity(
-            opacity: _isVisible ? 1.0 : 0.0,
-            duration: AppMotion.fast,
-            child: Container(
-              color: AppPalette.videoScrim,
-              child: Stack(
-                children: [
-                  // ── Top Bar ──
-                  PositionedDirectional(
-                    top: 0,
-                    start: 0,
-                    end: 0,
-                    child: SafeArea(
-                      bottom: false,
-                      child: Container(
-                        height: 56,
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.sm,
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              tooltip: widget.isFullScreen ? 'تصغير الشاشة' : 'رجوع',
-                              icon: Icon(
-                                widget.isFullScreen
-                                    ? Icons.keyboard_arrow_down_rounded
-                                    : Icons.arrow_back_rounded,
-                                color: AppPalette.videoControlFg,
-                                size: AppIcon.md,
-                              ),
-                              onPressed: () {
-                                _onUserInteracted();
-                                widget.onBack();
-                              },
-                            ),
-                            Expanded(
-                              child: Text(
-                                widget.title,
-                                style: context.text.titleSmall.copyWith(
+          // ── YouTube Controls Overlay ──
+          IgnorePointer(
+            ignoring: !_isVisible,
+            child: AnimatedOpacity(
+              opacity: _isVisible ? 1.0 : 0.0,
+              duration: AppMotion.fast,
+              child: Container(
+                color: AppPalette.videoScrim,
+                child: Stack(
+                  children: [
+                    // ── Top Bar: Back (Left) | Title (Center) | Chapters & Speed (Right) ──
+                    PositionedDirectional(
+                      top: 0,
+                      start: 0,
+                      end: 0,
+                      child: SafeArea(
+                        bottom: false,
+                        child: Container(
+                          height: 56,
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.sm,
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                tooltip: widget.isFullScreen ? 'تصغير الشاشة' : 'رجوع',
+                                icon: Icon(
+                                  widget.isFullScreen
+                                      ? Icons.keyboard_arrow_down_rounded
+                                      : Icons.arrow_back_rounded,
                                   color: AppPalette.videoControlFg,
-                                  fontWeight: FontWeight.bold,
+                                  size: AppIcon.md,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                onPressed: () {
+                                  _onUserInteracted();
+                                  widget.onBack();
+                                },
                               ),
-                            ),
-                            if (widget.chapters != null && widget.chapters!.isNotEmpty) ...[
+                              Expanded(
+                                child: Directionality(
+                                  textDirection: TextDirection.rtl,
+                                  child: Text(
+                                    widget.title,
+                                    style: context.text.titleSmall.copyWith(
+                                      color: AppPalette.videoControlFg,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              if (widget.chapters != null && widget.chapters!.isNotEmpty) ...[
+                                Semantics(
+                                  button: true,
+                                  label: 'محاور المقطع',
+                                  child: InkWell(
+                                    borderRadius: AppRadius.pillRadius,
+                                    onTap: () {
+                                      _onUserInteracted();
+                                      widget.onOpenChaptersSheet();
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsetsDirectional.symmetric(
+                                        horizontal: AppSpace.sm,
+                                        vertical: AppSpace.xxs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppPalette.videoControlBg,
+                                        borderRadius: AppRadius.pillRadius,
+                                        border: Border.all(
+                                          color: AppPalette.videoScrubberTrack,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.format_list_bulleted_rounded,
+                                            color: AppPalette.videoScrubberActive,
+                                            size: AppIcon.xs,
+                                          ),
+                                          const SizedBox(width: AppSpace.xxs),
+                                          Text(
+                                            'المحاور',
+                                            style: context.text.caption.copyWith(
+                                              color: AppPalette.videoControlFg,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                              ],
                               Semantics(
                                 button: true,
-                                label: 'محاور المقطع',
+                                label: 'سرعة التشغيل',
                                 child: InkWell(
                                   borderRadius: AppRadius.pillRadius,
                                   onTap: () {
                                     _onUserInteracted();
-                                    widget.onOpenChaptersSheet();
+                                    widget.onOpenSpeedSheet();
                                   },
                                   child: Container(
                                     padding: const EdgeInsetsDirectional.symmetric(
@@ -234,277 +287,232 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                         width: 1,
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.format_list_bulleted_rounded,
-                                          color: AppPalette.videoScrubberActive,
-                                          size: AppIcon.xs,
-                                        ),
-                                        const SizedBox(width: AppSpace.xxs),
-                                        Text(
-                                          'المحاور',
-                                          style: context.text.caption.copyWith(
-                                            color: AppPalette.videoControlFg,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                    child: Text(
+                                      '${widget.playbackSpeed}x',
+                                      style: context.text.caption.copyWith(
+                                        color: AppPalette.videoControlFg,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: AppSpace.xs),
                             ],
-                            Semantics(
-                              button: true,
-                              label: 'سرعة التشغيل',
-                              child: InkWell(
-                                borderRadius: AppRadius.pillRadius,
-                                onTap: () {
-                                  _onUserInteracted();
-                                  widget.onOpenSpeedSheet();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.sm,
-                                    vertical: AppSpace.xxs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppPalette.videoControlBg,
-                                    borderRadius: AppRadius.pillRadius,
-                                    border: Border.all(
-                                      color: AppPalette.videoScrubberTrack,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    '${widget.playbackSpeed}x',
-                                    style: context.text.caption.copyWith(
-                                      color: AppPalette.videoControlFg,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  // ── Center 3 Buttons: Rewind -10s | Play/Pause | Forward +10s ──
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Rewind -10s
-                        Semantics(
-                          button: true,
-                          label: 'تأخير 10 ثوانٍ',
-                          child: InkWell(
-                            borderRadius: AppRadius.pillRadius,
-                            onTap: () {
-                              _onUserInteracted();
-                              widget.onSeekRelative(-10);
-                            },
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppPalette.videoControlBg,
-                                borderRadius: AppRadius.pillRadius,
-                              ),
-                              child: Icon(
-                                Icons.replay_10_rounded,
-                                color: AppPalette.videoControlFg,
-                                size: AppIcon.lg,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xl),
-
-                        // Large Play / Pause / Buffer
-                        Semantics(
-                          button: true,
-                          label: isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
-                          child: InkWell(
-                            borderRadius: AppRadius.pillRadius,
-                            onTap: () {
-                              _onUserInteracted();
-                              if (isPlaying) {
-                                widget.controller.pause();
-                              } else {
-                                widget.controller.play();
-                              }
-                            },
-                            child: Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                color: AppPalette.videoControlBg,
-                                borderRadius: AppRadius.pillRadius,
-                              ),
-                              child: Center(
-                                child: isBuffering
-                                    ? SizedBox(
-                                        width: 32,
-                                        height: 32,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 3,
-                                          valueColor: AlwaysStoppedAnimation(
-                                            AppPalette.videoScrubberActive,
-                                          ),
-                                        ),
-                                      )
-                                    : Icon(
-                                        isPlaying
-                                            ? Icons.pause_rounded
-                                            : Icons.play_arrow_rounded,
-                                        color: AppPalette.videoControlFg,
-                                        size: AppIcon.hero,
-                                      ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xl),
-
-                        // Forward +10s
-                        Semantics(
-                          button: true,
-                          label: 'تقديم 10 ثوانٍ',
-                          child: InkWell(
-                            borderRadius: AppRadius.pillRadius,
-                            onTap: () {
-                              _onUserInteracted();
-                              widget.onSeekRelative(10);
-                            },
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppPalette.videoControlBg,
-                                borderRadius: AppRadius.pillRadius,
-                              ),
-                              child: Icon(
-                                Icons.forward_10_rounded,
-                                color: AppPalette.videoControlFg,
-                                size: AppIcon.lg,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ── Bottom Bar: Scrubber & Time & FullScreen ──
-                  PositionedDirectional(
-                    bottom: 0,
-                    start: 0,
-                    end: 0,
-                    child: SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.md,
-                          vertical: AppSpace.xs,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // YouTube Scrubber Slider
-                            SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                trackHeight: 3.5,
-                                activeTrackColor: AppPalette.videoScrubberActive,
-                                inactiveTrackColor: AppPalette.videoScrubberTrack,
-                                thumbColor: AppPalette.videoScrubberActive,
-                                overlayColor: AppPalette.videoScrubberTrack,
-                                thumbShape: const RoundSliderThumbShape(
-                                  enabledThumbRadius: 6.0,
+                    // ── Center 3 Buttons: [Rewind -10s on Left] | [Play/Pause] | [Forward +10s on Right] ──
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Rewind -10s (Left)
+                          Semantics(
+                            button: true,
+                            label: 'تأخير 10 ثوانٍ',
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                _onUserInteracted();
+                                widget.onSeekRelative(-10);
+                              },
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppPalette.videoControlBg,
+                                  borderRadius: AppRadius.pillRadius,
+                                ),
+                                child: Icon(
+                                  Icons.replay_10_rounded,
+                                  color: AppPalette.videoControlFg,
+                                  size: AppIcon.lg,
                                 ),
                               ),
-                              child: Slider(
-                                value: progressFraction,
-                                onChanged: (newVal) {
-                                  _cancelHideTimer();
-                                  setState(() => _dragFraction = newVal);
-                                },
-                                onChangeEnd: (newVal) {
-                                  final seekMs = (newVal * totalMs).round();
-                                  final baseStartSec = widget.startSeconds ?? 0;
-                                  final absTargetSec = baseStartSec + (seekMs ~/ 1000);
-                                  widget.onSeekTo(AppMotion.fromSeconds(absTargetSec));
-                                  setState(() => _dragFraction = null);
-                                  _startHideTimer();
-                                },
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xl),
+
+                          // Large Play / Pause / Buffer (Center)
+                          Semantics(
+                            button: true,
+                            label: isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                _onUserInteracted();
+                                if (isPlaying) {
+                                  widget.controller.pause();
+                                } else {
+                                  widget.controller.play();
+                                }
+                              },
+                              child: Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: AppPalette.videoControlBg,
+                                  borderRadius: AppRadius.pillRadius,
+                                ),
+                                child: Center(
+                                  child: isBuffering
+                                      ? SizedBox(
+                                          width: 32,
+                                          height: 32,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 3,
+                                            valueColor: AlwaysStoppedAnimation(
+                                              AppPalette.videoScrubberActive,
+                                            ),
+                                          ),
+                                        )
+                                      : Icon(
+                                          isPlaying
+                                              ? Icons.pause_rounded
+                                              : Icons.play_arrow_rounded,
+                                          color: AppPalette.videoControlFg,
+                                          size: AppIcon.hero,
+                                        ),
+                                ),
                               ),
                             ),
+                          ),
+                          const SizedBox(width: AppSpace.xl),
 
-                            // Meta Row: LTR Time | Chapter | Fullscreen Toggle
-                            Row(
-                              children: [
-                                // Strictly LTR to prevent Arabic BiDi reversal
-                                Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Text(
+                          // Forward +10s (Right)
+                          Semantics(
+                            button: true,
+                            label: 'تقديم 10 ثوانٍ',
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                _onUserInteracted();
+                                widget.onSeekRelative(10);
+                              },
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppPalette.videoControlBg,
+                                  borderRadius: AppRadius.pillRadius,
+                                ),
+                                child: Icon(
+                                  Icons.forward_10_rounded,
+                                  color: AppPalette.videoControlFg,
+                                  size: AppIcon.lg,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Bottom Bar: LTR Scrubber & [Time (Left) | Chapter | Fullscreen (Right)] ──
+                    PositionedDirectional(
+                      bottom: 0,
+                      start: 0,
+                      end: 0,
+                      child: SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.xs,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // YouTube Scrubber Slider (Progresses Left-to-Right)
+                              SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  trackHeight: 3.5,
+                                  activeTrackColor: AppPalette.videoScrubberActive,
+                                  inactiveTrackColor: AppPalette.videoScrubberTrack,
+                                  thumbColor: AppPalette.videoScrubberActive,
+                                  overlayColor: AppPalette.videoScrubberTrack,
+                                  thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 6.0,
+                                  ),
+                                ),
+                                child: Slider(
+                                  value: progressFraction,
+                                  onChanged: (newVal) {
+                                    _cancelHideTimer();
+                                    setState(() => _dragFraction = newVal);
+                                  },
+                                  onChangeEnd: (newVal) {
+                                    final seekMs = (newVal * totalMs).round();
+                                    final baseStartSec = widget.startSeconds ?? 0;
+                                    final absTargetSec = baseStartSec + (seekMs ~/ 1000);
+                                    widget.onSeekTo(AppMotion.fromSeconds(absTargetSec));
+                                    setState(() => _dragFraction = null);
+                                    _startHideTimer();
+                                  },
+                                ),
+                              ),
+
+                              // Meta Row: Time on Left | Active Chapter in Center | FullScreen on Right
+                              Row(
+                                children: [
+                                  Text(
                                     '$posStr / $durStr',
                                     style: context.text.caption.copyWith(
                                       color: AppPalette.videoControlFg,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ),
-                                if (activeChapter != null) ...[
-                                  const SizedBox(width: AppSpace.sm),
-                                  Expanded(
-                                    child: Text(
-                                      '• $activeChapter',
-                                      style: context.text.caption.copyWith(
-                                        color: AppPalette.videoScrubberActive,
-                                        fontWeight: FontWeight.w600,
+                                  if (activeChapter != null) ...[
+                                    const SizedBox(width: AppSpace.sm),
+                                    Expanded(
+                                      child: Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child: Text(
+                                          '• $activeChapter',
+                                          style: context.text.caption.copyWith(
+                                            color: AppPalette.videoScrubberActive,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
+                                  ] else ...[
+                                    const Spacer(),
+                                  ],
+                                  IconButton(
+                                    tooltip: widget.isFullScreen
+                                        ? 'تصغير الشاشة'
+                                        : 'ملء الشاشة',
+                                    icon: Icon(
+                                      widget.isFullScreen
+                                          ? Icons.fullscreen_exit_rounded
+                                          : Icons.fullscreen_rounded,
+                                      color: AppPalette.videoControlFg,
+                                      size: AppIcon.lg,
+                                    ),
+                                    onPressed: () {
+                                      _onUserInteracted();
+                                      widget.onToggleFullScreen();
+                                    },
                                   ),
-                                ] else ...[
-                                  const Spacer(),
                                 ],
-                                IconButton(
-                                  tooltip: widget.isFullScreen
-                                      ? 'تصغير الشاشة'
-                                      : 'ملء الشاشة',
-                                  icon: Icon(
-                                    widget.isFullScreen
-                                        ? Icons.fullscreen_exit_rounded
-                                        : Icons.fullscreen_rounded,
-                                    color: AppPalette.videoControlFg,
-                                    size: AppIcon.lg,
-                                  ),
-                                  onPressed: () {
-                                    _onUserInteracted();
-                                    widget.onToggleFullScreen();
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
