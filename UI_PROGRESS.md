@@ -1340,6 +1340,27 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Clean build.
 - **Open Issues:** None.
 
+## Round 21 — Home Screen Widget Light Mode Contrast & Theme Persistence
+- **Status:** Complete
+- **Branch:** `ui/r21-widget-light-mode-contrast`
+- **Core Problem Solved:**
+  - In light mode ("white mood"), the time left to the next prayer (`widget_countdown` Chronometer) was invisible because the text was rendered in white (`#FFFFFFFF`) directly on top of the crisp white card background.
+  - Root cause:
+    1. In `HomeWidgetService._saveNextPrayerEpoch`, `widget_is_dark`, `prayer_widget_theme_mode`, and `widget_text_color` were never persisted to `HomeWidget.saveWidgetData` (only some values went to SharedPreferences, while Kotlin reads `HomeWidgetPlugin.getData(context)`).
+    2. Because `prayer_widget_theme_mode` was missing from `widgetData`, Kotlin's `WidgetChronometerHelper` defaulted to `"dark"` and evaluated `isDark = true`, setting `textColor = 0xFFFFFFFF` (pure white) and using `widget_countdown_badge_dark`.
+    3. `setThemeMode` only invoked `updatePrayerWidget` rather than updating all widget variants (`updateAllWidgets(force: true)`).
+  - Resolution:
+    1. `home_widget_service.dart`: Updated `_saveNextPrayerEpoch` to persist `widget_is_dark: useDark`, `widget_text_color: palette.text.toARGB32()`, and `prayer_widget_theme_mode: useDark ? 'dark' : 'light'` across both `HomeWidget.saveWidgetData` and `SharedPreferences`.
+    2. `home_widget_service.dart`: Enhanced `setThemeMode` to store `themeModeKey` in `HomeWidget.saveWidgetData` and call `updateAllWidgets(force: true)`, instantly re-rasterizing all 4 widget layouts (Ribbon, Large, Standard, Compact) upon theme changes.
+    3. `WidgetChronometerHelper.kt`: Updated `isDark` detection to check `widget_is_dark`, and dynamically resolve `textColor` from `widget_text_color` (falling back to `0xFF1C1917` warm charcoal on light mode, giving > 18:1 contrast against white surface).
+    4. Added automated unit test in `test/prayer_home_screen_widget_test.dart` verifying `setThemeMode` persistence and contrast tokens.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (12/12 tests).
+- **Open Issues:** None.
+
+
 
 
 

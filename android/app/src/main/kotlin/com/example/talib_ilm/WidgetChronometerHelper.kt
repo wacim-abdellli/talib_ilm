@@ -43,21 +43,39 @@ object WidgetChronometerHelper {
             val now = System.currentTimeMillis()
 
             // Resolve theme mode
-            val themeMode = widgetData.getString(
-                "prayer_widget_theme_mode",
-                widgetData.getString("flutter.prayer_widget_theme_mode", "dark")
-            ) ?: "dark"
-            val appTheme = widgetData.getString(
-                "theme_mode",
-                widgetData.getString("flutter.theme_mode", "dark")
-            ) ?: "dark"
-            val isDark = when (themeMode) {
-                "light" -> false
-                "dark" -> true
-                else -> appTheme != "light"
+            val isDark = if (widgetData.contains("widget_is_dark")) {
+                widgetData.getBoolean("widget_is_dark", true)
+            } else if (widgetData.contains("flutter.widget_is_dark")) {
+                widgetData.getBoolean("flutter.widget_is_dark", true)
+            } else {
+                val themeMode = widgetData.getString(
+                    "prayer_widget_theme_mode",
+                    widgetData.getString("flutter.prayer_widget_theme_mode", "dark")
+                ) ?: "dark"
+                val appTheme = widgetData.getString(
+                    "theme_mode",
+                    widgetData.getString("flutter.theme_mode", "dark")
+                ) ?: "dark"
+                when (themeMode) {
+                    "light" -> false
+                    "dark" -> true
+                    else -> appTheme != "light"
+                }
             }
 
-            val textColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF141210.toInt()
+            val defaultTextColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF1C1917.toInt()
+            val textColor = try {
+                if (widgetData.contains("widget_text_color")) {
+                    widgetData.getInt("widget_text_color", defaultTextColor)
+                } else if (widgetData.contains("flutter.widget_text_color")) {
+                    widgetData.getInt("flutter.widget_text_color", defaultTextColor)
+                } else {
+                    defaultTextColor
+                }
+            } catch (_: Exception) {
+                defaultTextColor
+            }
+
             val bgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
 
             val rawPrayerTitle = widgetData.getString(

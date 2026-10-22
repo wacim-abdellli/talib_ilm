@@ -113,8 +113,9 @@ class HomeWidgetService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(themeModeKey, mode.name);
+      await HomeWidget.saveWidgetData<String>(themeModeKey, mode.name);
       invalidateCache();
-      await updatePrayerWidget(force: true);
+      await updateAllWidgets(force: true);
     } catch (_) {}
   }
 
@@ -170,11 +171,15 @@ class HomeWidgetService {
       final palette = useDark ? AppPalette.dark : AppPalette.light;
       final prayerColor = palette.prayer(eval.activePrayerName);
       final prayerColorInt = prayerColor.toARGB32();
+      final textColorInt = palette.text.toARGB32();
 
       await HomeWidget.saveWidgetData<int>('next_prayer_epoch_ms', epochMs);
       await HomeWidget.saveWidgetData<String>('next_prayer_name', eval.activePrayerName);
       await HomeWidget.saveWidgetData<String>('prayer_display_title', eval.displayTitle);
       await HomeWidget.saveWidgetData<int>('prayer_color_value', prayerColorInt);
+      await HomeWidget.saveWidgetData<int>('widget_text_color', textColorInt);
+      await HomeWidget.saveWidgetData<bool>('widget_is_dark', useDark);
+      await HomeWidget.saveWidgetData<String>('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
       await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
       await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
 
@@ -183,6 +188,9 @@ class HomeWidgetService {
       await prefs.setString('next_prayer_name', eval.activePrayerName);
       await prefs.setString('prayer_display_title', eval.displayTitle);
       await prefs.setInt('prayer_color_value', prayerColorInt);
+      await prefs.setInt('widget_text_color', textColorInt);
+      await prefs.setBool('widget_is_dark', useDark);
+      await prefs.setString('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
       await prefs.setString('countdown_prefix', countdownPrefix);
       await prefs.setBool('is_prayer_active', isPrayerActive);
     } catch (_) {}

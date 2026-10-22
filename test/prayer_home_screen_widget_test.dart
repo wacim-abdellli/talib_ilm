@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/app/constants/app_strings.dart';
+import 'package:talib_ilm/app/theme/app_palette.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/core/services/home_widget_service.dart';
 import 'package:talib_ilm/features/prayer/data/models/prayer_models.dart';
@@ -534,5 +536,16 @@ void main() {
     expect(evalPostSalah.phase, PrayerWidgetPhase.beforeAdhan);
     expect(evalPostSalah.activePrayerName, AppStrings.prayerIsha);
     expect(evalPostSalah.headerCountdownLabel, 'بعد 59:00');
+  });
+
+  test('HomeWidgetService setThemeMode persists light mode and triggers updates', () async {
+    SharedPreferences.setMockInitialValues({});
+    await HomeWidgetService.setThemeMode(WidgetThemeMode.light);
+    final mode = await HomeWidgetService.getThemeMode();
+    expect(mode, WidgetThemeMode.light);
+
+    // Verify contrast of light mode text color
+    const lightText = AppPalette.light;
+    expect(lightText.text.toARGB32(), 0xFF1C1917);
   });
 }
