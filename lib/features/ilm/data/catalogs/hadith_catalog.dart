@@ -259,6 +259,17 @@ class HadithCatalog {
       sharhType: 'شرح ميسر للمنظومة',
     ),
     ShamelaBook(
+      id: 8195,
+      title: 'الموقظة في علم مصطلح الحديث',
+      author: 'شمس الدين محمد بن أحمد الذهبي',
+      authorDeath: 'ت 748 هـ',
+      category: 'علوم الحديث والمصطلح',
+      categoryId: 10,
+      totalPages: 72,
+      description: 'رسالة موجزة بليغة لخص فيها الإمام الذهبي قواعد فن الحديث وألقابه بلغة نقدية محكمة ومحررة.',
+      level: 1,
+    ),
+    ShamelaBook(
       id: 616,
       title: 'نخبة الفكر في مصطلح أهل الأثر',
       author: 'ابن حجر العسقلاني',
