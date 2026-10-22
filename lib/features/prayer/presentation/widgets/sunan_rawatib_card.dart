@@ -164,11 +164,14 @@ class _SunanRawatibCardState extends State<SunanRawatibCard> {
                         : palette.border,
                   ),
                 ),
-                child: Text(
-                  '$total / 12',
-                  style: context.text.caption.copyWith(
-                    color: isAllDone ? palette.gold : palette.text,
-                    fontWeight: FontWeight.w700,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '$total / 12',
+                    style: context.text.caption.copyWith(
+                      color: isAllDone ? palette.gold : palette.text,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

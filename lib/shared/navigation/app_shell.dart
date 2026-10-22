@@ -90,7 +90,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       ForegroundPrayerService().start();
       unawaited(PrayerScheduleService().refreshSchedulesIfNeeded());
-      unawaited(HomeWidgetService.updateAllWidgets());
+      unawaited(HomeWidgetService.updateAllWidgets(force: true));
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
+      unawaited(HomeWidgetService.updateAllWidgets(force: true));
     }
   }
 

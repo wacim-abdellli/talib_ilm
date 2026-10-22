@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -101,10 +101,32 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
     return count;
   }
 
+  static const _easternToWesternDigits = {
+    '٠': '0',
+    '١': '1',
+    '٢': '2',
+    '٣': '3',
+    '٤': '4',
+    '٥': '5',
+    '٦': '6',
+    '٧': '7',
+    '٨': '8',
+    '٩': '9',
+  };
+
+  static String _toArabicNumerals(String input) {
+    var result = input;
+    _easternToWesternDigits.forEach((eastern, western) {
+      result = result.replaceAll(eastern, western);
+    });
+    return result;
+  }
+
   String _formatGregorian(DateTime date) {
     try {
-      final df = DateFormat('EEEE d MMMM', 'ar');
-      return df.format(date);
+      final dayName = DateFormat('EEEE', 'ar').format(date);
+      final monthName = DateFormat('MMMM', 'ar').format(date);
+      return _toArabicNumerals('$dayName ${date.day} $monthName');
     } catch (_) {
       return '${date.day}/${date.month}';
     }
@@ -194,11 +216,14 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
                         : palette.border,
                   ),
                 ),
-                child: Text(
-                  '$total / 3',
-                  style: context.text.caption.copyWith(
-                    color: isAllDone ? palette.gold : palette.text,
-                    fontWeight: FontWeight.w700,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '$total / 3',
+                    style: context.text.caption.copyWith(
+                      color: isAllDone ? palette.gold : palette.text,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

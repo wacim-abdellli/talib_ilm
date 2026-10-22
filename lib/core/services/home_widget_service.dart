@@ -169,7 +169,7 @@ class HomeWidgetService {
       // Throttling key: Updates per-second for live ticking countdown.
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey = '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
       if (!force && renderKey == _lastRenderKey) {
         return;
@@ -238,7 +238,7 @@ class HomeWidgetService {
       final hijri = _formatHijri(now);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
@@ -311,7 +311,7 @@ class HomeWidgetService {
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastStandardRenderKey) {
@@ -369,7 +369,7 @@ class HomeWidgetService {
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastLargeRenderKey) {
@@ -427,7 +427,7 @@ class HomeWidgetService {
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastCompactRenderKey) {
