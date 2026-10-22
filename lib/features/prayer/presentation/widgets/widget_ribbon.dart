@@ -54,76 +54,81 @@ class WidgetRibbon extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // ── Row 1: Hero title/countdown + Hijri date ──
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Start (Right): Active prayer icon + title + countdown
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          eval.prayerIcon,
-                          size: AppIcon.xs,
-                          color: activeColor,
-                        ),
-                        if (!forNativeWidget) ...[
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            eval.displayTitle,
-                            style: textTheme.label.copyWith(
-                              color: activeColor,
-                              fontWeight: FontWeight.w700,
-                            ),
+                SizedBox(
+                  height: AppSpace.xxl,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Start (Right): Active prayer icon + title + countdown
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            eval.prayerIcon,
+                            size: AppIcon.sm,
+                            color: activeColor,
                           ),
-                          const SizedBox(width: AppSpace.xs),
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Text(
-                              eval.headerCountdownLabel,
-                              style: textTheme.label.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.w700,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures()
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-
-                    // End (Left): Hijri Date with Calendar Icon (never truncates)
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: AppIcon.xs,
-                              color: palette.textMuted,
-                            ),
+                          if (!forNativeWidget) ...[
                             const SizedBox(width: AppSpace.xs),
                             Text(
-                              hijriDate,
-                              style: textTheme.caption.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.w600,
+                              eval.displayTitle,
+                              style: textTheme.label.copyWith(
+                                color: activeColor,
+                                fontWeight: FontWeight.w700,
                               ),
-                              maxLines: 1,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                eval.headerCountdownLabel,
+                                style: textTheme.label.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.w700,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures()
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
+                        ],
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+
+                      // End (Left): Hijri Date with Calendar Icon (never truncates)
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: AppIcon.sm,
+                                color: palette.textMuted,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Text(
+                                hijriDate,
+                                style: textTheme.caption.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: AppSpace.xs),

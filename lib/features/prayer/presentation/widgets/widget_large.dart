@@ -77,83 +77,88 @@ class WidgetLarge extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── 1. Top Bar: [Prayer • Countdown] (Start) ←→ [Hijri Date • City] (End) ──
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Start (Right): Active/Upcoming Prayer title + Countdown (shrink-wrap)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!forNativeWidget) ...[
-                          Text(
-                            displayTitle,
-                            style: textTheme.caption.copyWith(
-                              color: activePrayerColor,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Text(
-                              eval.headerCountdownLabel,
-                              style: textTheme.caption.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.w700,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures()
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-
-                    // End (Left): Hijri Date • City Name (scales down smoothly if tight, NO truncation dots)
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
+                SizedBox(
+                  height: AppSpace.xxl,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Start (Right): Active/Upcoming Prayer title + Countdown (shrink-wrap)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (!forNativeWidget) ...[
                             Text(
-                              displayDate,
+                              displayTitle,
                               style: textTheme.caption.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.w600,
+                                color: activePrayerColor,
+                                fontWeight: FontWeight.w700,
                               ),
-                              maxLines: 1,
                             ),
-                            if (cityName.isNotEmpty &&
-                                cityName != 'طالب العلم') ...[
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                '•',
+                            const SizedBox(width: AppSpace.xs),
+                            Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                eval.headerCountdownLabel,
                                 style: textTheme.caption.copyWith(
-                                  color: palette.border,
+                                  color: palette.text,
+                                  fontWeight: FontWeight.w700,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures()
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: AppSpace.xs),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+
+                      // End (Left): Hijri Date • City Name (scales down smoothly if tight, NO truncation dots)
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
                               Text(
-                                cityName,
+                                displayDate,
                                 style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
+                                  color: palette.text,
                                   fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 1,
                               ),
+                              if (cityName.isNotEmpty &&
+                                  cityName != 'طالب العلم') ...[
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  '•',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.border,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  cityName,
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: AppSpace.sm),
