@@ -101,11 +101,12 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                     val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
                     if (bitmap != null) {
                         views.setImageViewBitmap(R.id.widget_image, bitmap)
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                        return
                     }
                 }
             }
+
+            WidgetChronometerHelper.setupChronometer(context, views, widgetData, this::class.java)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (_: Throwable) {}
     }
 }

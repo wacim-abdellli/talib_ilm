@@ -134,9 +134,53 @@ class HomeWidgetService {
     } catch (_) {}
   }
 
+  /// Saves the target prayer epoch timestamp for the native Android Chronometer.
+  /// Called every time prayer data updates. The Kotlin widget provider reads this
+  /// to set the Chronometer base, which ticks continuously in the launcher process.
+  static Future<void> _saveNextPrayerEpoch(EvaluatedPrayerWidgetState eval) async {
+    try {
+      final int epochMs;
+      final String countdownPrefix;
+      switch (eval.phase) {
+        case PrayerWidgetPhase.beforeAdhan:
+        case PrayerWidgetPhase.postSalah:
+          epochMs = eval.targetPrayerTime.millisecondsSinceEpoch;
+          countdownPrefix = 'بقي ';
+          break;
+        case PrayerWidgetPhase.betweenAdhanAndIqama:
+          final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(
+            eval.activePrayerName,
+          );
+          final iqamaTime = eval.targetPrayerTime.add(Duration(minutes: iqamaMinutes));
+          epochMs = iqamaTime.millisecondsSinceEpoch;
+          countdownPrefix = 'الإقامة ';
+          break;
+        case PrayerWidgetPhase.atAdhan:
+        case PrayerWidgetPhase.inSalah:
+          epochMs = 0; // Chronometer hidden during active adhan or congregational prayer
+          countdownPrefix = '';
+          break;
+      }
+
+      final isPrayerActive = eval.phase == PrayerWidgetPhase.atAdhan ||
+          eval.phase == PrayerWidgetPhase.inSalah;
+
+      await HomeWidget.saveWidgetData<int>('next_prayer_epoch_ms', epochMs);
+      await HomeWidget.saveWidgetData<String>('next_prayer_name', eval.activePrayerName);
+      await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
+      await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('next_prayer_epoch_ms', epochMs);
+      await prefs.setString('next_prayer_name', eval.activePrayerName);
+      await prefs.setString('countdown_prefix', countdownPrefix);
+      await prefs.setBool('is_prayer_active', isPrayerActive);
+    } catch (_) {}
+  }
+
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
-  /// Throttled by second, prayer phase, and dimensions to guarantee zero phone lag.
+  /// Throttled by minute, prayer phase, and dimensions; native Chronometer handles per-second live ticking.
   static Future<void> updatePrayerWidget({
     PrayerTimesDay? prayerDay,
     DateTime? referenceTime,
@@ -166,10 +210,11 @@ class HomeWidgetService {
         if (savedH != null && savedH >= 70) targetH = savedH.clamp(70, 280);
       } catch (_) {}
 
-      // Throttling key: Updates per-second for live ticking countdown.
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      await _saveNextPrayerEpoch(eval);
+
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey = '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
       if (!force && renderKey == _lastRenderKey) {
         return;
@@ -235,10 +280,11 @@ class HomeWidgetService {
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      await _saveNextPrayerEpoch(eval);
       final hijri = _formatHijri(now);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
@@ -309,9 +355,10 @@ class HomeWidgetService {
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      await _saveNextPrayerEpoch(eval);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastStandardRenderKey) {
@@ -365,11 +412,12 @@ class HomeWidgetService {
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      await _saveNextPrayerEpoch(eval);
       final hijri = _formatHijri(now);
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastLargeRenderKey) {
@@ -425,9 +473,10 @@ class HomeWidgetService {
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
       final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      await _saveNextPrayerEpoch(eval);
       final useDark = await _resolveWidgetIsDark();
 
-      final timeKey = '${now.hour}:${now.minute}:${now.second}';
+      final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
           'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastCompactRenderKey) {
@@ -471,7 +520,7 @@ class HomeWidgetService {
 
   static bool _isUpdatingAll = false;
 
-  /// Updates all 3 fixed-size Android widgets simultaneously.
+  /// Updates all Android widgets simultaneously.
   static Future<void> updateAllWidgets({
     PrayerTimesDay? prayerDay,
     DateTime? referenceTime,
@@ -482,10 +531,15 @@ class HomeWidgetService {
     try {
       final day = await _resolvePrayerDay(prayerDay);
       final now = referenceTime ?? DateTime.now();
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: day.prayers);
+      await _saveNextPrayerEpoch(eval);
+
       await Future.wait([
         updateRibbon(prayerDay: day, referenceTime: now, force: force),
         updateCompact(prayerDay: day, referenceTime: now, force: force),
         updateLarge(prayerDay: day, referenceTime: now, force: force),
+        updateStandard(prayerDay: day, referenceTime: now, force: force),
+        updatePrayerWidget(prayerDay: day, referenceTime: now, force: force),
       ]);
     } finally {
       _isUpdatingAll = false;

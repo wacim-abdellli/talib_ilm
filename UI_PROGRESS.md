@@ -1221,3 +1221,32 @@ FAILED (54 violations)
      - `flutter test test/notification_router_test.dart test/hadith_explorer_test.dart`: **100% pass** (23/23 tests).
 - **Open Issues:** None.
 
+
+---
+
+## Round 13 — Android Home Screen Widget Persistent Live Chronometer Countdown
+- **Status:** Complete
+- **Branch:** ui/r13-chronometer-widget
+- **Core Problem Solved:**
+  - Android home screen widgets previously relied on Flutter rendering static PNG screenshots every second via a foreground service. When the app was closed or killed, Android OS killed the Flutter process and throttled WorkManager to a 15-minute minimum period, causing the countdown timer to freeze completely.
+  - Investigated and adopted the native architecture used by Salaat First and Muslim Pro: offloaded the per-second ticking countdown to native Android android.widget.Chronometer.
+- **Architectural Implementation:**
+  1. **Native OS-Driven Live Countdown (android.widget.Chronometer):**
+     - Integrated android.widget.Chronometer into prayer_widget_layout.xml, widget_ribbon_layout.xml, widget_compact_layout.xml, widget_large_layout.xml, and widget_standard_layout.xml.
+     - countDown='true' runs natively inside the launcher process using SystemClock.elapsedRealtime(), ticking smoothly every single second even when the app is completely terminated or killed.
+     - Automatically adapts typography and badge backgrounds (widget_countdown_badge_dark.xml and widget_countdown_badge_light.xml) across dark and light widget theme modes.
+  2. **Centralized Provider Chronometer Helper (WidgetChronometerHelper.kt):**
+     - Created WidgetChronometerHelper.kt shared across PrayerWidgetProvider, RibbonWidgetProvider, StandardWidgetProvider, LargeWidgetProvider, and CompactWidgetProvider.
+     - Reads next_prayer_epoch_ms and is_prayer_active safely from SharedPreferences with robust Long/Int type handling.
+     - Hides Chronometer during congregational prayer (inSalah) and active adhan alert (atAdhan), showing only the active liturgical banner.
+     - Schedules exact Android AlarmManager.setExactAndAllowWhileIdle alarm for AppWidgetManager.ACTION_APPWIDGET_UPDATE at the precise second prayer time arrives, rolling over to the next prayer even in deep doze mode.
+  3. **Flutter Per-Second Overhead Elimination:**
+     - In HomeWidgetService, added _saveNextPrayerEpoch computing upcoming prayer or Iqama epoch timestamp.
+     - Changed backdrop rasterization cache key from per-second to per-minute, stopping 60 unnecessary PNG renderings per minute and eliminating CPU/battery drain.
+     - In ForegroundPrayerService, replaced 1-second _tickWidgets() timer with 5-second _checkAndUpdateWidgetsIfNeeded() using AppMotion.seekStep, updating Flutter PNG only when liturgical prayer phase or minute changes.
+- **Verification Gate:**
+  - flutter analyze: 0 issues found (clean in 14.5s).
+  - python tool/ui_lint_v2.py: OK (0 FAILs, 7 allow markers / cap 10).
+  - flutter test test/prayer_home_screen_widget_test.dart test/prayer_settings_sheet_test.dart: 100% pass (14/14 tests).
+  - flutter build apk --debug: Built successfully (app-debug.apk in 64.5s).
+- **Open Issues:** None.

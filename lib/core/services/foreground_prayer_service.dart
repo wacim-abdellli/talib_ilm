@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
+import '../../features/prayer/presentation/widgets/prayer_widget_state_evaluator.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'home_widget_service.dart';
@@ -81,9 +82,10 @@ class ForegroundPrayerService {
       (_) => _check(),
     );
     _widgetTimer = Timer.periodic(
-      AppMotion.oneSecond,
-      (_) => _tickWidgets(),
+      AppMotion.seekStep,
+      (_) => _checkAndUpdateWidgetsIfNeeded(),
     );
+    _checkAndUpdateWidgetsIfNeeded();
   }
 
   void stop() {
@@ -91,11 +93,21 @@ class ForegroundPrayerService {
     _timer?.cancel();
     _widgetTimer?.cancel();
     _playerSub?.cancel();
+    _lastWidgetPhaseKey = null;
   }
 
-  void _tickWidgets() {
+  String? _lastWidgetPhaseKey;
+
+  void _checkAndUpdateWidgetsIfNeeded() {
     final now = DateTime.now();
-    unawaited(HomeWidgetService.updateAllWidgets(referenceTime: now));
+    _prayerTimeService.getPrayerTimesDay().then((day) {
+      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: day.prayers);
+      final key = '${eval.activePrayerName}_${eval.phase.name}_${now.hour}:${now.minute}';
+      if (key != _lastWidgetPhaseKey) {
+        _lastWidgetPhaseKey = key;
+        unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day, referenceTime: now));
+      }
+    }).catchError((_) {});
   }
 
   Future<void> dismissAlert() async {

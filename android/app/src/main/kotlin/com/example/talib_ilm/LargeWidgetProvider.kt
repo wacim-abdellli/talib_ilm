@@ -29,7 +29,7 @@ class LargeWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int
     ) {
         try {
-            val views = RemoteViews(context.packageName, R.layout.prayer_widget_layout)
+            val views = RemoteViews(context.packageName, R.layout.widget_large_layout)
 
             val pendingIntent = try {
                 HomeWidgetLaunchIntent.getActivity(
@@ -71,11 +71,12 @@ class LargeWidgetProvider : AppWidgetProvider() {
                     val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
                     if (bitmap != null) {
                         views.setImageViewBitmap(R.id.widget_image, bitmap)
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                        return
                     }
                 }
             }
+
+            WidgetChronometerHelper.setupChronometer(context, views, widgetData, this::class.java)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (_: Throwable) {}
     }
 }

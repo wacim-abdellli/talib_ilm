@@ -10,7 +10,7 @@
     android:maxResizeHeight="120dp"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/prayer_widget_layout"
-    android:previewLayout="@layout/prayer_widget_layout"
+    android:initialLayout="@layout/widget_ribbon_layout"
+    android:previewLayout="@layout/widget_ribbon_layout"
     android:widgetCategory="home_screen"
     android:description="@string/ribbon_widget_description" />
