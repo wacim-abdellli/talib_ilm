@@ -1250,3 +1250,20 @@ FAILED (54 violations)
   - flutter test test/prayer_home_screen_widget_test.dart test/prayer_settings_sheet_test.dart: 100% pass (14/14 tests).
   - flutter build apk --debug: Built successfully (app-debug.apk in 64.5s).
 - **Open Issues:** None.
+
+---
+
+## Round 16 — Fix 4px Ribbon Overflow & Perfect Inline Layout
+- **Status:** Complete
+- **Branch:** `ui/r16-fix-ribbon-overflow`
+- **Core Problem Solved:**
+  - Resolved `BOTTOM OVERFLOWED BY 4.0 PIXELS` on the Ribbon widget.
+  - Adjusted Row 1 height from `AppSpace.xxl` (24dp) to `AppSpace.xl` (20dp), removed redundant `AppSpace.xs` spacing, and wrapped Row 2 in `Expanded(child: Align(alignment: Alignment.bottomCenter, child: PrayerStrip(...)))`, ensuring zero overflow under all text scale factors (1.0, 1.5, 2.0) while preserving inline layout, font size, and celestial icons.
+  - Synchronized Android native layouts (`widget_ribbon_layout.xml` and `widget_large_layout.xml`) to 20dp height with center vertical alignment.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
+  - `flutter build apk --debug`: Built cleanly (app-debug.apk).
+- **Open Issues:** None.
+

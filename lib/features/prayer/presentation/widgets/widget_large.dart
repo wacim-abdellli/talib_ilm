@@ -78,7 +78,7 @@ class WidgetLarge extends StatelessWidget {
               children: [
                 // ── 1. Top Bar: [Prayer • Countdown] (Start) ←→ [Hijri Date • City] (End) ──
                 SizedBox(
-                  height: AppSpace.xxl,
+                  height: AppSpace.xl,
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
