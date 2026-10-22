@@ -61,17 +61,17 @@ class WidgetRibbon extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Start (Right): Active prayer icon + title + countdown
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            eval.prayerIcon,
-                            size: AppIcon.sm,
-                            color: activeColor,
-                          ),
-                          if (!forNativeWidget) ...[
+                      // Start (Right): Active prayer icon + title + countdown (rendered natively in widget_hero_row on Android home screen)
+                      if (!forNativeWidget)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              eval.prayerIcon,
+                              size: AppIcon.sm,
+                              color: activeColor,
+                            ),
                             const SizedBox(width: AppSpace.xs),
                             Text(
                               eval.displayTitle,
@@ -95,8 +95,9 @@ class WidgetRibbon extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ],
-                      ),
+                        )
+                      else
+                        const SizedBox.shrink(),
                       const SizedBox(width: AppSpace.xs),
 
                       // End (Left): Hijri Date with Calendar Icon (never truncates)

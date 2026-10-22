@@ -1267,3 +1267,22 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly (app-debug.apk).
 - **Open Issues:** None.
 
+---
+
+## Round 17 — Native Prayer Icon & Chronometer Exact Baseline Inline Alignment
+- **Status:** Complete
+- **Branch:** `ui/r17-align-ribbon-icon-countdown`
+- **Core Problem Solved:**
+  - In Android launcher widgets, the prayer icon previously resided on the Flutter background bitmap while the countdown and title resided in the native Android `widget_hero_row` overlay. Due to launcher aspect-ratio letterboxing, the background icon sat noticeably lower than the overlay text.
+  - Added dedicated Android vector drawables for all prayers (`ic_prayer_fajr`, `ic_prayer_dhuhr`, `ic_prayer_asr`, `ic_prayer_maghrib`, `ic_prayer_isha`, `ic_prayer_jumua`).
+  - Integrated `ImageView` (`widget_prayer_icon`) directly inside `widget_hero_row` alongside `widget_prayer_title` and `widget_countdown`, guaranteeing 100% exact same baseline and center vertical alignment across all devices.
+  - Dynamically tinted the vector icon with `setColorFilter` matching the active liturgical prayer color.
+  - Updated Flutter's `WidgetRibbon` to skip rendering the redundant icon when `forNativeWidget == true`.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
+  - `flutter build apk --debug`: Built cleanly (app-debug.apk in 53.9s).
+- **Open Issues:** None.
+
+

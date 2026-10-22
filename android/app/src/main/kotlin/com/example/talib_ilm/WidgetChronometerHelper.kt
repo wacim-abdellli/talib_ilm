@@ -86,12 +86,26 @@ object WidgetChronometerHelper {
                 widgetData.getString("flutter.countdown_prefix", "بعد ")
             ) ?: "بعد "
 
+            val prayerName = widgetData.getString(
+                "next_prayer_name",
+                widgetData.getString("flutter.next_prayer_name", "")
+            ) ?: ""
+
             val isRibbonOrLarge = providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Large")
 
             if (isRibbonOrLarge) {
                 try {
                     views.setTextViewText(R.id.widget_prayer_title, effectiveTitle)
                     views.setTextColor(R.id.widget_prayer_title, prayerColor)
+                } catch (_: Exception) {}
+
+                try {
+                    val iconRes = resolvePrayerIconRes(prayerName, effectiveTitle)
+                    views.setImageViewResource(R.id.widget_prayer_icon, iconRes)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        views.setInt(R.id.widget_prayer_icon, "setColorFilter", prayerColor)
+                    }
+                    views.setViewVisibility(R.id.widget_prayer_icon, View.VISIBLE)
                 } catch (_: Exception) {}
 
                 if (isPrayerActive || epochMs == 0L || epochMs <= now) {
@@ -151,4 +165,18 @@ object WidgetChronometerHelper {
             }
         } catch (_: Exception) {}
     }
+
+    private fun resolvePrayerIconRes(prayerName: String, title: String): Int {
+        val text = "$prayerName $title"
+        return when {
+            text.contains("جمعة") -> R.drawable.ic_prayer_jumua
+            text.contains("فجر") -> R.drawable.ic_prayer_fajr
+            text.contains("ظهر") -> R.drawable.ic_prayer_dhuhr
+            text.contains("عصر") -> R.drawable.ic_prayer_asr
+            text.contains("مغرب") -> R.drawable.ic_prayer_maghrib
+            text.contains("عشاء") -> R.drawable.ic_prayer_isha
+            else -> R.drawable.ic_prayer_fajr
+        }
+    }
 }
+
