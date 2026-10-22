@@ -20,11 +20,30 @@ class AdhanService {
   AdhanService._internal() : _player = AudioPlayer();
   AdhanService._withPlayer(this._player);
 
-  final AudioPlayer _player;
+  AudioPlayer _player;
 
-  bool get isPlaying => _player.playing;
-  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
-  Stream<bool> get isPlayingStream => _player.playingStream;
+  void _ensurePlayerActive() {
+    try {
+      final _ = _player.processingState;
+    } catch (_) {
+      _player = AudioPlayer();
+    }
+  }
+
+  bool get isPlaying {
+    _ensurePlayerActive();
+    return _player.playing;
+  }
+
+  Stream<PlayerState> get playerStateStream {
+    _ensurePlayerActive();
+    return _player.playerStateStream;
+  }
+
+  Stream<bool> get isPlayingStream {
+    _ensurePlayerActive();
+    return _player.playingStream;
+  }
 
   /// Play adhan, takbeer, or voice announcement with volume control.
   /// AudioSource is loaded directly without a MediaItem tag to guarantee it
@@ -36,6 +55,8 @@ class AdhanService {
     String? prayerName,
   }) async {
     try {
+      _ensurePlayerActive();
+
       // Pause Quran recitation and radio to prevent audio collision
       try {
         QuranAudioService().pause();
@@ -65,7 +86,10 @@ class AdhanService {
 
       final normalizedVolume = (volume / 100).clamp(0.0, 1.0);
 
-      await _player.stop();
+      try {
+        await _player.stop();
+      } catch (_) {}
+
       await _player.setAudioSource(source);
       await _player.setVolume(normalizedVolume);
       await _player.play();
@@ -76,6 +100,7 @@ class AdhanService {
 
   /// Sets audio player volume dynamically in real time
   Future<void> setVolume(double volume) async {
+    _ensurePlayerActive();
     final normalized = (volume / 100).clamp(0.0, 1.0);
     try {
       await _player.setVolume(normalized);
@@ -83,6 +108,7 @@ class AdhanService {
   }
 
   Future<void> stop() async {
+    _ensurePlayerActive();
     try {
       await _player.stop();
     } catch (e) {
@@ -106,13 +132,17 @@ class AdhanService {
   }
 
   Future<void> preload() async {
+    _ensurePlayerActive();
     // Media sources are prepared on demand with MediaItem tags
   }
 
   Future<void> dispose() async {
     try {
+      await _player.stop();
       await _player.dispose();
     } catch (_) {}
+    // Re-initialize so singleton is never left in a broken disposed state
+    _player = AudioPlayer();
   }
 
   String _assetFor({

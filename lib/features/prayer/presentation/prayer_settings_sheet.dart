@@ -63,7 +63,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
   @override
   void dispose() {
     _tabController.dispose();
-    _adhanService.dispose();
+    _adhanService.stop();
     super.dispose();
   }
 

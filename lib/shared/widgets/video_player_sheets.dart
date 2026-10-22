@@ -6,21 +6,24 @@ import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../features/ilm/data/models/lesson_model.dart';
 
-/// Bottom sheets for playback speed and chapter selection in the video player.
+/// Minimalistic, YouTube-grade bottom sheets for playback speed and chapter selection.
 class VideoPlayerSheets {
   VideoPlayerSheets._();
 
-  /// Show playback speed selection sheet
+  /// Show playback speed selection sheet (adaptive to portrait & landscape)
   static void showSpeedSheet(
     BuildContext context, {
     required double currentSpeed,
     required ValueChanged<double> onSpeedChanged,
   }) {
     final palette = context.palette;
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     final speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadiusDirectional.vertical(
@@ -28,9 +31,135 @@ class VideoPlayerSheets {
         ),
       ),
       builder: (ctx) {
+        if (isLandscape) {
+          // Minimalist horizontal bar in landscape (zero vertical overflow, leaves video visible)
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpace.lg,
+                AppSpace.sm,
+                AppSpace.lg,
+                AppSpace.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: AppSpace.xl,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: palette.border,
+                        borderRadius: AppRadius.pillRadius,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.speed_rounded,
+                        color: palette.gold,
+                        size: AppIcon.sm,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Text(
+                        'سرعة التشغيل',
+                        style: ctx.text.bodySmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'إغلاق',
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: AppIcon.sm,
+                          color: palette.textMuted,
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  SizedBox(
+                    height: 48,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: speeds.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpace.sm),
+                      itemBuilder: (itemCtx, idx) {
+                        final speed = speeds[idx];
+                        final isSelected = (speed - currentSpeed).abs() < 0.05;
+                        final label =
+                            speed == 1.0 ? 'عادية (1.0x)' : '${speed}x';
+
+                        return Semantics(
+                          button: true,
+                          label: label,
+                          child: InkWell(
+                            borderRadius: AppRadius.pillRadius,
+                            onTap: () {
+                              onSpeedChanged(speed);
+                              Navigator.pop(ctx);
+                              HapticFeedback.selectionClick();
+                            },
+                            child: Container(
+                              constraints:
+                                  const BoxConstraints(minWidth: 72),
+                              padding:
+                                  const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? palette.primary
+                                    : palette.surfaceRaised,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? palette.primary
+                                      : palette.border,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  label,
+                                  style: ctx.text.caption.copyWith(
+                                    color: isSelected
+                                        ? palette.onPrimary
+                                        : palette.text,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Clean, minimalist list in portrait
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+          child: SingleChildScrollView(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppSpace.xl,
+              AppSpace.md,
+              AppSpace.xl,
+              AppSpace.xl,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -62,62 +191,59 @@ class VideoPlayerSheets {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpace.lg),
-                Wrap(
-                  spacing: AppSpace.sm,
-                  runSpacing: AppSpace.sm,
-                  alignment: WrapAlignment.center,
-                  children: speeds.map((speed) {
-                    final isSelected = (speed - currentSpeed).abs() < 0.05;
-                    return Semantics(
-                      button: true,
-                      label: '$speed ضعف السرعة',
-                      child: InkWell(
-                        borderRadius: AppRadius.pillRadius,
-                        onTap: () {
-                          onSpeedChanged(speed);
-                          Navigator.pop(ctx);
-                          HapticFeedback.selectionClick();
-                        },
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minWidth: 48,
-                            minHeight: 48,
-                          ),
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.lg,
-                            vertical: AppSpace.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? palette.primary
-                                : palette.surfaceRaised,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: isSelected
-                                  ? palette.primary
-                                  : palette.border,
-                              width: 1,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              speed == 1.0 ? 'عادية (1.0x)' : '${speed}x',
-                              style: ctx.text.bodySmall.copyWith(
+                const SizedBox(height: AppSpace.md),
+                ...speeds.map((speed) {
+                  final isSelected = (speed - currentSpeed).abs() < 0.05;
+                  final label = speed == 1.0 ? 'عادية (1.0x)' : '${speed}x';
+
+                  return Semantics(
+                    button: true,
+                    label: label,
+                    child: InkWell(
+                      borderRadius: AppRadius.mdRadius,
+                      onTap: () {
+                        onSpeedChanged(speed);
+                        Navigator.pop(ctx);
+                        HapticFeedback.selectionClick();
+                      },
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? palette.primarySoft
+                              : Colors.transparent,
+                          borderRadius: AppRadius.mdRadius,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              label,
+                              style: ctx.text.body.copyWith(
                                 color: isSelected
-                                    ? palette.onPrimary
+                                    ? palette.primary
                                     : palette.text,
                                 fontWeight: isSelected
                                     ? FontWeight.bold
                                     : FontWeight.normal,
                               ),
                             ),
-                          ),
+                            const Spacer(),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: palette.primary,
+                                size: AppIcon.sm,
+                              ),
+                          ],
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -134,6 +260,8 @@ class VideoPlayerSheets {
     required ValueChanged<int> onChapterSelected,
   }) {
     final palette = context.palette;
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     showModalBottomSheet<void>(
       context: context,
@@ -146,16 +274,16 @@ class VideoPlayerSheets {
       ),
       builder: (ctx) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.55,
+          initialChildSize: isLandscape ? 0.85 : 0.55,
           minChildSize: 0.35,
-          maxChildSize: 0.85,
+          maxChildSize: 0.95,
           expand: false,
           builder: (sheetContext, scrollController) {
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.xl,
-                  vertical: AppSpace.md,
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.sm,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -170,7 +298,7 @@ class VideoPlayerSheets {
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpace.md),
+                    const SizedBox(height: AppSpace.sm),
                     Row(
                       children: [
                         Icon(
@@ -194,7 +322,7 @@ class VideoPlayerSheets {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpace.md),
+                    const SizedBox(height: AppSpace.sm),
                     Expanded(
                       child: ListView.separated(
                         controller: scrollController,

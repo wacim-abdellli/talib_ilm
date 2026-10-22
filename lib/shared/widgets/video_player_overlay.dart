@@ -179,7 +179,19 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
               opacity: _isVisible ? 1.0 : 0.0,
               duration: AppMotion.fast,
               child: Container(
-                color: AppPalette.videoScrim,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppPalette.videoControlBg,
+                      Colors.transparent,
+                      Colors.transparent,
+                      AppPalette.videoControlBg,
+                    ],
+                    stops: [0.0, 0.25, 0.70, 1.0],
+                  ),
+                ),
                 child: Stack(
                   children: [
                     // ── Top Bar: Back (Left) | Title (Center) | Chapters & Speed (Right) ──
@@ -190,7 +202,7 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                       child: SafeArea(
                         bottom: false,
                         child: Container(
-                          height: 56,
+                          height: widget.isFullScreen ? 48 : 52,
                           padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: AppSpace.sm,
                           ),
