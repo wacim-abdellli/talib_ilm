@@ -4,7 +4,7 @@
 
 > **MANDATORY FIRST STEP**: Read `DESIGN_SYSTEM.md`, `ROUND2.md`, and `UI_PROGRESS.md` before doing any work. Execute ONE stage per session only, commit, report, and stop.
 
-## Core Rules (13)
+## Core Rules (14)
 1. **Visual layer only** (unless explicitly lifted by R5/R6b). Never change models, services, routes, or Arabic strings.
 2. **Forbidden outside `lib/app/theme/`**: `Color(...)`, `Colors.*` (except `transparent`), raw `TextStyle(`, `fontSize`/`fontFamily`, `Radius.circular`, `BorderRadius.circular`, numeric `EdgeInsets`, `Duration(...)`, `size:` in Icon, brightness/isDark branching, `BoxShadow`, bare `GestureDetector`, `.withOpacity`. Max 10 `// ui-lint: allow` repo-wide.
 3. Propose tokens before use (name, value, contrast proof).
@@ -18,6 +18,7 @@
 11. Max ~25 files changed per stage; stop and write `CONTINUE FROM R<n> step <k>` if exceeded.
 12. Never run `git clean` or delete unlisted files.
 13. Radical honesty: record any failures or skips under "Open issues" in `UI_PROGRESS.md`.
+14. **Push to GitHub**: Always push branches, commits, and tags to GitHub (`git push -u origin <branch> --tags` and `git push origin main`) immediately upon completing each coded part. Never skip or forget this.
 
 ## Verification Commands
 ```bash
