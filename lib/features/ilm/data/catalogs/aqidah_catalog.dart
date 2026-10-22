@@ -4,6 +4,17 @@ import '../models/shamela_models.dart';
 class AqidahCatalog {
   static const List<ShamelaBook> books = [
     ShamelaBook(
+      id: 30847,
+      title: 'أصول الإيمان في ضوء الكتاب والسنة',
+      author: 'نخبة من العلماء (إشراف: صالح بن عبد العزيز آل الشيخ)',
+      authorDeath: 'علماء معاصرون',
+      category: 'العقيدة والتوحيد',
+      categoryId: 1,
+      totalPages: 272,
+      description: 'بيان شامل وميسر لأركان الإيمان الستة ومسائل التوحيد والعقيدة الإسلامية الصافية بالأدلة من الكتاب والسنة النبوية.',
+      level: 1,
+    ),
+    ShamelaBook(
       id: 11126,
       title: 'ثلاثة الأصول وأدلتها',
       author: 'محمد بن عبد الوهاب',

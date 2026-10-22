@@ -5,6 +5,17 @@ class FiqhHanbaliShafiiCatalog {
   /// الفقه الحنبلي (Category ID: 17)
   static const List<ShamelaBook> hanbaliBooks = [
     ShamelaBook(
+      id: 22726,
+      title: 'الفقه الميسر في ضوء الكتاب والسنة',
+      author: 'نخبة من العلماء (إشراف: صالح بن عبد العزيز آل الشيخ)',
+      authorDeath: 'علماء معاصرون',
+      category: 'الفقه الحنبلي',
+      categoryId: 17,
+      totalPages: 439,
+      description: 'بيان ميسر وشامل لأحكام الفقه الإسلامي في العبادات والمعاملات مدعماً بالأدلة الصريحة من الكتاب والسنة بأسلوب سهل وموجز.',
+      level: 1,
+    ),
+    ShamelaBook(
       id: 11230,
       title: 'زاد المستقنع في اختصار المقنع',
       author: 'شرف الدين موسى الحجاوي',

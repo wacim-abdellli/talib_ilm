@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,8 +18,29 @@ class ShamelaService {
   static const String _bookmarksKey = 'shamela_bookmarks';
   static const String _totalPagesPrefix = 'shamela_total_pages_';
 
+  static const Map<int, String> _bundledBookAssets = {
+    50001: 'assets/data/minhaj_al_muslim.json',
+  };
+  static final Map<int, Map<String, dynamic>> _loadedBundledBooks = {};
+
   static final Map<int, int> _knownTotalPages = {};
   static final http.Client _httpClient = http.Client();
+
+  static Future<Map<String, dynamic>?> _getBundledBookData(int bookId) async {
+    if (_loadedBundledBooks.containsKey(bookId)) {
+      return _loadedBundledBooks[bookId];
+    }
+    final assetPath = _bundledBookAssets[bookId];
+    if (assetPath == null) return null;
+    try {
+      final jsonStr = await rootBundle.loadString(assetPath);
+      final data = json.decode(jsonStr) as Map<String, dynamic>;
+      _loadedBundledBooks[bookId] = data;
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Curated Top Disciplines in the Heritage Library
   static List<ShamelaCategory> get categories => TurathCatalog.disciplines;
@@ -166,7 +188,53 @@ class ShamelaService {
       );
     }
 
-    // 2. Fetch over network
+    // 2. Check bundled assets for offline/local books
+    if (_bundledBookAssets.containsKey(bookId)) {
+      final bundled = await _getBundledBookData(bookId);
+      if (bundled != null) {
+        final pagesList = bundled['pages'] as List<dynamic>? ?? [];
+        final totalP = bundled['totalPages'] as int? ?? pagesList.length;
+        _knownTotalPages[bookId] = totalP;
+
+        final pageMap = pagesList.cast<Map<String, dynamic>?>().firstWhere(
+          (p) => p?['pageNumber'] == pageNumber,
+          orElse: () => null,
+        );
+
+        if (pageMap != null) {
+          final parsed = ShamelaPage(
+            bookId: bookId,
+            pageNumber: pageNumber,
+            partNumber: null,
+            chapterTitle: pageMap['chapterTitle'] as String?,
+            content: sanitizeBookText(pageMap['content'] as String? ?? ''),
+            hamesh: pageMap['hamesh'] != null
+                ? sanitizeBookText(pageMap['hamesh'] as String)
+                : null,
+            detectedTotalPages: totalP,
+          );
+
+          await db.insert(
+            _tableNamePages,
+            {
+              'book_id': bookId,
+              'page_num': pageNumber,
+              'part_num': parsed.partNumber,
+              'chapter_title': parsed.chapterTitle,
+              'content': parsed.content,
+              'hamesh': parsed.hamesh,
+              'cached_at': DateTime.now().millisecondsSinceEpoch,
+              'detected_total_pages': totalP,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          return parsed;
+        }
+      }
+      throw Exception('صفحة غير متوفرة في الكتاب');
+    }
+
+    // 3. Fetch over network
     final url = Uri.parse('https://shamela.ws/book/$bookId/$pageNumber');
     final response = await _httpClient.get(
       url,
@@ -421,7 +489,51 @@ class ShamelaService {
       }
     }
 
-    // 2. Fetch from shamela.ws
+    // 2. Check bundled asset
+    if (_bundledBookAssets.containsKey(bookId)) {
+      final bundled = await _getBundledBookData(bookId);
+      if (bundled != null) {
+        final rawChapters = bundled['chapters'] as List<dynamic>? ?? [];
+        final chapters = rawChapters.map((c) {
+          final map = c as Map<String, dynamic>;
+          return ShamelaChapter(
+            title: map['title'] as String? ?? '',
+            pageNumber: map['pageNumber'] as int? ?? 1,
+          );
+        }).toList();
+
+        final totalP = bundled['totalPages'] as int? ??
+            (chapters.isNotEmpty ? chapters.last.pageNumber : 0);
+        if (totalP > 0) {
+          _knownTotalPages[bookId] = totalP;
+          unawaited(saveDiscoveredTotalPages(bookId, totalP));
+        }
+
+        if (chapters.isNotEmpty) {
+          await db.delete(
+            _tableNameFihris,
+            where: 'book_id = ?',
+            whereArgs: [bookId],
+          );
+          final batch = db.batch();
+          for (final c in chapters) {
+            batch.insert(
+              _tableNameFihris,
+              {
+                'book_id': bookId,
+                'page_num': c.pageNumber,
+                'title': c.title,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+          await batch.commit(noResult: true);
+        }
+        return chapters;
+      }
+    }
+
+    // 3. Fetch from shamela.ws
     try {
       final url = Uri.parse('https://shamela.ws/book/$bookId');
       final response = await _httpClient.get(url, headers: {
@@ -535,6 +647,13 @@ class ShamelaService {
     ShamelaBook book, {
     Function(int current, int total)? onProgress,
   }) async {
+    if (_bundledBookAssets.containsKey(book.id)) {
+      onProgress?.call(book.totalPages, book.totalPages);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('shamela_downloaded_${book.id}', true);
+      return;
+    }
+
     // Try to use dynamically discovered total first
     int total = await getDiscoveredTotalPages(book.id) ?? 0;
     // If not known, fetch page 1 to discover it
@@ -564,6 +683,7 @@ class ShamelaService {
 
   /// Check if book is fully downloaded
   static Future<bool> isBookDownloaded(int bookId) async {
+    if (_bundledBookAssets.containsKey(bookId)) return true;
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('shamela_downloaded_$bookId') ?? false;
   }

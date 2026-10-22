@@ -4,6 +4,29 @@ import '../models/shamela_models.dart';
 class SeerahTarikhCatalog {
   static const List<ShamelaBook> books = [
     ShamelaBook(
+      id: 14132,
+      title: 'مائة من عظماء أمة الإسلام غيروا مجرى التاريخ (100 من عظماء الإسلام)',
+      author: 'جهاد الترباني',
+      authorDeath: 'معاصر',
+      category: 'السيرة النبوية والتاريخ',
+      categoryId: 24,
+      totalPages: 458,
+      description: 'كتاب يستعرض مائة من عظماء الإسلام الذين غيروا مجرى التاريخ بدءاً من عهد النبوة والصحابة والتابعين وحتى العصر الحديث بنمط سردي مشوق.',
+      level: 1,
+    ),
+    ShamelaBook(
+      id: 13136,
+      title: 'فضائل الصحابة للإمام أحمد بن حنبل',
+      author: 'أحمد بن محمد بن حنبل الشيباني',
+      authorDeath: 'ت 241 هـ',
+      category: 'السيرة النبوية والتاريخ',
+      categoryId: 24,
+      volumes: 2,
+      totalPages: 1947,
+      description: 'المصنف المسند الأكبر للإمام أحمد بن حنبل في مناقب وفضائل أصحاب رسول الله ﷺ من المهاجرين والأنصار وأهل البيت رضوان الله عليهم.',
+      level: 2,
+    ),
+    ShamelaBook(
       id: 9820,
       title: 'الرحيق المختوم',
       author: 'صفي الرحمن المباركفوري',

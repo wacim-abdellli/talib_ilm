@@ -4,6 +4,17 @@ import '../models/shamela_models.dart';
 class RaqaeqAdabCatalog {
   static const List<ShamelaBook> books = [
     ShamelaBook(
+      id: 50001,
+      title: 'منهاج المسلم (كتاب عقائد وآداب وأخلاق وعبادات ومعاملات)',
+      author: 'أبو بكر جابر الجزائري',
+      authorDeath: 'ت 1439 هـ',
+      category: 'الرقائق والآداب والأذكار',
+      categoryId: 23,
+      totalPages: 455,
+      description: 'منهاج جامع وشامل لحياة المسلم في العقيدة والآداب والأخلاق والعبادات والمعاملات مستمد من الكتاب والسنة.',
+      level: 1,
+    ),
+    ShamelaBook(
       id: 158,
       title: 'الداء والدواء (الجواب الكافي لمن سأل عن الدواء الشافي)',
       author: 'محمد بن أبي بكر ابن قيم الجوزية',
