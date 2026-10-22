@@ -1285,4 +1285,22 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly (app-debug.apk in 53.9s).
 - **Open Issues:** None.
 
+---
+
+## Round 18 — Top Widget Anchor & Inline Countdown Pill Box
+- **Status:** Complete
+- **Branch:** `ui/r18-top-widget-countdown-box`
+- **Core Problem Solved:**
+  - In `LargeWidgetProvider` (the top widget in the launcher), `widget_hero_row` (`الفجر بعد 07:16:57`) was floating outside the card in the wallpaper sky because `targetCellHeight="2"` caused vertical letterboxing while the overlay row was pinned to the outer container.
+  - Re-architected `widget_large_layout.xml` and `widget_ribbon_layout.xml` to `RelativeLayout` with `layout_alignTop="@id/widget_image"` and `layout_alignRight="@id/widget_image"`, mathematically locking the hero row directly to the top-right corner of the rendered card bitmap regardless of launcher cell height or screen DPI.
+  - Styled the live countdown inside a translucent glassmorphic pill badge (`widget_countdown_badge_dark`/`light`) with 1dp border and padding, placed inline right after the prayer title in the top right corner.
+  - Aligned `widget_large.xml` to `targetCellHeight="1"`, `minHeight="80dp"`, `maxResizeHeight="120dp"` matching the 104dp canvas height.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
+  - `flutter build apk --debug`: Built cleanly (app-debug.apk in 40.3s).
+- **Open Issues:** None.
+
+
 

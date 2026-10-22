@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,20 +8,23 @@
     <ImageView
         android:id="@+id/widget_image"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:scaleType="fitCenter"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
         android:contentDescription="@string/large_widget_name" />
 
-    <!-- Top Right Inline Row: [الفجر] [بعد 08:29:43] -->
+    <!-- Top Right Inline Row: [الفجر] [Box: بعد 08:29:43] -->
     <LinearLayout
         android:id="@+id/widget_hero_row"
         android:layout_width="wrap_content"
-        android:layout_height="20dp"
-        android:layout_gravity="top|right"
-        android:layout_marginTop="8dp"
-        android:layout_marginRight="9dp"
+        android:layout_height="22dp"
+        android:layout_alignTop="@id/widget_image"
+        android:layout_alignRight="@id/widget_image"
+        android:layout_alignEnd="@id/widget_image"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
         android:layoutDirection="rtl"
         android:textDirection="rtl"
         android:orientation="horizontal"
@@ -31,7 +34,10 @@
             android:id="@+id/widget_prayer_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="13.5sp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="4dp"
+            android:layout_marginStart="4dp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:textColor="#38BDF8"
             android:includeFontPadding="false"
@@ -41,17 +47,23 @@
             android:id="@+id/widget_countdown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="6dp"
+            android:layout_marginStart="6dp"
             android:countDown="true"
-            android:textSize="13.5sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:textColor="#FFFFFFFF"
             android:fontFamily="sans-serif-medium"
             android:includeFontPadding="false"
-            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:paddingStart="7dp"
+            android:paddingEnd="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:background="@drawable/widget_countdown_badge_dark"
             android:visibility="gone" />
 
     </LinearLayout>
 
-</FrameLayout>
+</RelativeLayout>

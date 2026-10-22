@@ -58,6 +58,7 @@ object WidgetChronometerHelper {
             }
 
             val textColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF141210.toInt()
+            val bgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
 
             val rawPrayerTitle = widgetData.getString(
                 "prayer_display_title",
@@ -119,6 +120,9 @@ object WidgetChronometerHelper {
                         views.setChronometerCountDown(R.id.widget_countdown, true)
                     }
                     views.setTextColor(R.id.widget_countdown, textColor)
+                    try {
+                        views.setInt(R.id.widget_countdown, "setBackgroundResource", bgRes)
+                    } catch (_: Exception) {}
                     views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
                 }
             } else {
