@@ -93,7 +93,6 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
       );
     }
   }
-
   int get _completedCount {
     var count = 0;
     if (_day13Done) count++;
