@@ -49,6 +49,12 @@ class WidgetRibbon extends StatelessWidget {
             final textTheme = ctx.text;
             final activeColor = palette.prayer(eval.activePrayerName);
 
+            final cleanDate =
+                hijriDate.replaceAll(RegExp(r'\s*\d{4}\s*هـ?'), '').trim();
+            final displayDate = (forNativeWidget && cleanDate.isNotEmpty)
+                ? cleanDate
+                : hijriDate;
+
             return Column(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -117,7 +123,7 @@ class WidgetRibbon extends StatelessWidget {
                               ),
                               const SizedBox(width: AppSpace.xs),
                               Text(
-                                hijriDate,
+                                displayDate,
                                 style: textTheme.caption.copyWith(
                                   color: palette.text,
                                   fontWeight: FontWeight.w600,

@@ -1302,5 +1302,26 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly (app-debug.apk in 40.3s).
 - **Open Issues:** None.
 
+## Round 19 — Compact Sizing & Collision Prevention for Small/Narrow Widgets
+- **Status:** Complete
+- **Branch:** `ui/r19-small-widget-sizes`
+- **Core Problem Solved:**
+  - When Android launcher widgets (`LargeWidgetProvider` and `RibbonWidgetProvider`) are resized to narrow widths (2.5–3 columns wide on launcher grid), Row 1 experienced severe collision between the left-side Hijri date and right-side prayer countdown row.
+  - In `WidgetRibbon`, `11 جمادى الأول 1448 هـ` overlapped underneath `[بعد 7:00:52] صلاة الفجر`.
+  - In `WidgetLarge`, `11 جمادى الأول • صفاقس` collided with `[بعد 7:00:52] الفجر`.
+  - Resolved collision across both native XML overlay and Flutter canvas:
+    1. Cleaned prayer title: stripped `"صلاة "` for both Ribbon and Large widgets in `WidgetChronometerHelper.kt`, shortening title to just `"الفجر"`.
+    2. Cleaned countdown badge: changed chronometer format to `"%s"`, displaying clean digital timer (e.g. `07:00:52`) inside the translucent pill badge without the 30dp-wide `"بعد "` prefix.
+    3. Streamlined typography and spacing in `widget_ribbon_layout.xml` and `widget_large_layout.xml`: icon 14dp, prayer title 12.5sp, countdown 11.5sp with 6dp horizontal padding.
+    4. Cleaned Hijri date on native widgets (`forNativeWidget == true`) in `widget_ribbon.dart` and `widget_large.dart`: stripped `1448 هـ` and omitted city name, saving ~80dp of horizontal width.
+    5. Enhanced Row 2 resilience: wrapped prayer columns in `FittedBox(fit: BoxFit.scaleDown)` ensuring daily prayer stations scale smoothly without truncation dots on narrow widths.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (11/11 tests).
+  - `flutter build apk --debug`: Clean build.
+- **Open Issues:** None.
+
+
 
 

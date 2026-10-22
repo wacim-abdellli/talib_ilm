@@ -65,8 +65,7 @@ object WidgetChronometerHelper {
                 widgetData.getString("flutter.prayer_display_title", "صلاة الفجر")
             ) ?: "صلاة الفجر"
 
-            val isLarge = providerClass.simpleName.contains("Large")
-            val effectiveTitle = if (isLarge && rawPrayerTitle.startsWith("صلاة ")) {
+            val effectiveTitle = if (rawPrayerTitle.startsWith("صلاة ")) {
                 rawPrayerTitle.substring(5)
             } else {
                 rawPrayerTitle
@@ -115,7 +114,7 @@ object WidgetChronometerHelper {
                     val remainingMs = epochMs - now
                     val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
 
-                    views.setChronometer(R.id.widget_countdown, chronometerBase, "$countdownPrefix%s", true)
+                    views.setChronometer(R.id.widget_countdown, chronometerBase, "%s", true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.widget_countdown, true)
                     }

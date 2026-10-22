@@ -134,7 +134,8 @@ class WidgetLarge extends StatelessWidget {
                                 ),
                                 maxLines: 1,
                               ),
-                              if (cityName.isNotEmpty &&
+                              if (!forNativeWidget &&
+                                  cityName.isNotEmpty &&
                                   cityName != 'طالب العلم') ...[
                                 const SizedBox(width: AppSpace.xs),
                                 Text(
@@ -181,9 +182,11 @@ class WidgetLarge extends StatelessWidget {
                         : (isPast ? palette.textMuted : palette.text);
 
                     return Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           // Prayer Name
                           Text(
@@ -248,8 +251,9 @@ class WidgetLarge extends StatelessWidget {
                             ),
                         ],
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  );
+                }).toList(),
                 ),
               ],
             );
