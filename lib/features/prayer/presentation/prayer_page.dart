@@ -29,6 +29,7 @@ import 'widgets/prayer_header.dart';
 import 'widgets/prayer_solar_stations_card.dart';
 import 'widgets/prayer_time_card.dart';
 import 'widgets/sunan_rawatib_card.dart';
+import 'widgets/sunnah_fasting_card.dart';
 
 class PrayerPage extends StatefulWidget {
   const PrayerPage({super.key});
@@ -257,6 +258,8 @@ class _PrayerPageState extends State<PrayerPage> {
                                 ],
                               const SizedBox(height: AppSpace.lg),
                               const SunanRawatibCard(),
+                              const SizedBox(height: AppSpace.lg),
+                              const SunnahFastingCard(),
                               const SizedBox(height: AppSpace.lg),
                               const PrayerDuaCard(),
                               const SizedBox(height: AppSpace.lg),

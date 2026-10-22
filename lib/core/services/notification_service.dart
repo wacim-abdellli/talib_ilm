@@ -323,6 +323,20 @@ class NotificationService {
           audioAttributesUsage: AudioAttributesUsage.notification,
         ),
       );
+
+      // ── Sunnah Fasting Reminders Channel ──────────────────────────────────
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'talib_fasting_reminders',
+          'تنبيهات صيام السنن والأيام البيض',
+          description: 'تذكير مسنون بصيام الأيام البيض والإثنين والخميس في موعدها',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          enableLights: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+        ),
+      );
     }
 
     _initialized = true;
@@ -1311,6 +1325,62 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
+      scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
+    );
+  }
+
+  /// Schedules a notification for Sunnah Fasting (White Days / Monday / Thursday).
+  Future<void> scheduleFastingReminder({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    if (scheduledDate.isBefore(DateTime.now())) return;
+    await init();
+    await requestPermissions();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_fasting_reminders',
+      'تنبيهات صيام السنن والأيام البيض',
+      channelDescription: 'تذكير مسنون بصيام الأيام البيض والإثنين والخميس في موعدها',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'صيام السنن',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    await _safeZonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: tzDate,
+      notificationDetails: details,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );

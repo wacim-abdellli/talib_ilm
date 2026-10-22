@@ -74,12 +74,6 @@ class PrayerSolarStationsCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.auto_awesome_rounded,
-                    size: AppIcon.sm,
-                    color: palette.gold,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
                   Text(
                     'السنن والمحطات الفلكية',
                     style: textTheme.caption.copyWith(

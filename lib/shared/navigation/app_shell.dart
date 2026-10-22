@@ -5,6 +5,7 @@ import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
 import '../../core/services/adhkar_reminder_service.dart';
+import '../../core/services/fasting_reminder_service.dart';
 import '../../core/services/flip_to_stop_service.dart';
 import '../../core/services/foreground_prayer_service.dart';
 import '../../core/services/home_widget_service.dart';
@@ -106,6 +107,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       final adhkarService = AdhkarReminderService(notificationService: notif);
       final adhkarSettings = await adhkarService.getSettings();
       await adhkarService.applySchedules(adhkarSettings);
+      unawaited(FastingReminderService(notificationService: notif).syncSchedules());
       await FlipToStopService().init();
     } catch (e) {
       debugPrint('AppShell prayer notifications init error: $e');
