@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -5,13 +6,11 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
-import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../features/ilm/data/models/lesson_model.dart';
-import 'app_button.dart';
-import 'app_card.dart';
+import '../../features/ilm/data/services/mutun_audio_service.dart';
 import 'app_popup.dart';
-import 'icon_badge.dart';
+import 'video_player_details.dart';
 import 'video_player_overlay.dart';
 import 'video_player_sheets.dart';
 
@@ -56,14 +55,29 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   double _playbackSpeed = 1.0;
   bool _isLessonCompleted = false;
 
+  // Autoplay reliability & user pause tracking
+  bool _userPaused = false;
+  int _autoResumeAttempts = 0;
+  Timer? _autoResumeTimer;
+  final GlobalKey _playerGlobalKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
-    _resolvedPlaylistId = _extractPlaylistId(widget.videoId) ?? widget.playlistId;
+
+    // Pause any ongoing recitation audio to avoid audio focus collision
+    try {
+      MutunAudioService().pause();
+    } catch (_) {}
+
+    _resolvedPlaylistId =
+        _extractPlaylistId(widget.videoId) ?? widget.playlistId;
 
     // Resolve clean playable video ID
     String? rawId = widget.videoId;
-    if (rawId.startsWith('PL') && widget.playlistLessons != null && widget.playlistLessons!.isNotEmpty) {
+    if (rawId.startsWith('PL') &&
+        widget.playlistLessons != null &&
+        widget.playlistLessons!.isNotEmpty) {
       rawId = widget.playlistLessons!.first.videoId;
     }
     _cleanVideoId = _extractCleanVideoId(rawId);
@@ -77,6 +91,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           enableCaption: false,
           startAt: widget.startSeconds ?? 0,
           endAt: widget.endSeconds,
+          useHybridComposition: true,
         ),
       )..addListener(_onPlayerStateChanged);
     }
@@ -88,11 +103,38 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       setState(() => _hasPlayerError = true);
     }
 
-    // Ensure initial seek for segmented lessons
+    final state = _controller?.value.playerState;
+    final isPlaying = _controller?.value.isPlaying == true;
+
+    // Reset auto-resume counter once video is playing normally
+    if (isPlaying) {
+      _autoResumeAttempts = 0;
+      _autoResumeTimer?.cancel();
+    }
+
+    // Auto-recovery watchdog:
+    // If the video stops/pauses unexpectedly during initial startup (e.g. mobile WebView
+    // autoplay policy interception or initial buffering glitch) without the user pressing pause,
+    // automatically resume playback seamlessly.
+    if (state == PlayerState.paused &&
+        !_userPaused &&
+        _autoResumeAttempts < 3 &&
+        mounted) {
+      _autoResumeAttempts++;
+      _autoResumeTimer?.cancel();
+      _autoResumeTimer = Timer(AppMotion.searchDebounce, () {
+        if (mounted && !_userPaused && _controller?.value.isPlaying == false) {
+          _controller?.play();
+        }
+      });
+    }
+
+    // Fallback sync: if startSeconds is configured but iframe played from 0, align once
     if (!_initialSeekDone &&
         widget.startSeconds != null &&
         widget.startSeconds! > 0 &&
-        _controller?.value.isReady == true) {
+        isPlaying &&
+        _position.inSeconds < widget.startSeconds! - 3) {
       _initialSeekDone = true;
       _controller?.seekTo(AppMotion.fromSeconds(widget.startSeconds!));
     }
@@ -130,6 +172,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   @override
   void dispose() {
+    _autoResumeTimer?.cancel();
     // Restore orientations and system bars
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -216,11 +259,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     final urlsToTry = <String>[];
     if (_cleanVideoId != null) {
-      urlsToTry.add('https://www.youtube.com/watch?v=$_cleanVideoId$startParam');
+      urlsToTry
+          .add('https://www.youtube.com/watch?v=$_cleanVideoId$startParam');
       urlsToTry.add('vnd.youtube:$_cleanVideoId');
     }
     if (_resolvedPlaylistId != null) {
-      urlsToTry.add('https://www.youtube.com/playlist?list=$_resolvedPlaylistId');
+      urlsToTry
+          .add('https://www.youtube.com/playlist?list=$_resolvedPlaylistId');
     }
 
     for (final urlStr in urlsToTry) {
@@ -276,15 +321,24 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         _cleanVideoId != null && _controller != null && !_hasPlayerError;
 
     if (!canUseNativePlayer) {
-      return _buildFallbackView(context);
+      return VideoPlayerFallbackView(
+        title: widget.title,
+        scholar: widget.scholar,
+        onOpenInYouTube: _openInYouTube,
+        onComplete: () => _finish(true),
+      );
     }
 
     final playerWithOverlay = Stack(
       fit: StackFit.expand,
       children: [
-        YoutubePlayer(
-          controller: _controller!,
-          aspectRatio: isLandscape ? MediaQuery.sizeOf(context).aspectRatio : 16 / 9,
+        KeyedSubtree(
+          key: _playerGlobalKey,
+          child: YoutubePlayer(
+            controller: _controller!,
+            aspectRatio:
+                isLandscape ? MediaQuery.sizeOf(context).aspectRatio : 16 / 9,
+          ),
         ),
         VideoPlayerOverlay(
           controller: _controller!,
@@ -302,6 +356,18 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           onOpenChaptersSheet: _showChaptersSheet,
           onSeekRelative: _seekRelative,
           onSeekTo: (target) => _controller?.seekTo(target),
+          onUserPlay: () {
+            setState(() {
+              _userPaused = false;
+              _autoResumeAttempts = 0;
+            });
+          },
+          onUserPause: () {
+            _autoResumeTimer?.cancel();
+            setState(() {
+              _userPaused = true;
+            });
+          },
         ),
       ],
     );
@@ -324,426 +390,44 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                       child: playerWithOverlay,
                     ),
                     Expanded(
-                      child: _buildLessonDetails(context),
-                    ),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildLessonDetails(BuildContext context) {
-    final palette = context.palette;
-    final textTheme = context.text;
-    final isSegmented = widget.startSeconds != null;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Title ──
-          Text(
-            widget.title,
-            style: textTheme.titleSmall.copyWith(
-              color: palette.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-
-          // ── Scholar & Meta Row ──
-          Row(
-            children: [
-              IconBadge(
-                icon: Icons.school_rounded,
-                bg: palette.primarySoft,
-                fg: palette.primary,
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            widget.scholar ?? 'شرح المتن العلمي',
-                            style: textTheme.body.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: palette.text,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Icon(
-                          Icons.verified_rounded,
-                          size: AppIcon.xs,
-                          color: palette.gold,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.xxs),
-                    Text(
-                      isSegmented
-                          ? 'مقطع دراسي مركّز (${_formatTime(_sectionDuration)})'
-                          : 'المدة الإجمالية: ${_formatTime(_sectionDuration)}',
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpace.lg),
-
-          // ── Action Buttons Row ──
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  label: _isLessonCompleted
-                      ? 'تم إنجاز الدرس ✓'
-                      : 'تحديد الدرس كمكتمل',
-                  icon: _isLessonCompleted
-                      ? Icons.check_circle_rounded
-                      : Icons.check_circle_outline_rounded,
-                  size: AppButtonSize.md,
-                  variant: _isLessonCompleted
-                      ? AppButtonVariant.tonal
-                      : AppButtonVariant.primary,
-                  onPressed: () {
-                    setState(
-                      () => _isLessonCompleted = !_isLessonCompleted,
-                    );
-                    HapticFeedback.selectionClick();
-                    if (_isLessonCompleted) {
-                      AppPopup.show(
-                        context: context,
-                        title: 'تم تحديد الدرس',
-                        message: AppStrings.lessonProgressSaved,
-                        icon: Icons.check_circle_rounded,
-                      );
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              IconButton.filledTonal(
-                tooltip: 'فتح في تطبيق يوتيوب',
-                icon: Icon(
-                  Icons.open_in_new_rounded,
-                  size: AppIcon.md,
-                  color: palette.text,
-                ),
-                onPressed: _openInYouTube,
-              ),
-            ],
-          ),
-
-          // ── Interactive Chapters Card ──
-          if (widget.chapters != null && widget.chapters!.isNotEmpty) ...[
-            const SizedBox(height: AppSpace.lg),
-            AppCard(
-              padding: const EdgeInsetsDirectional.all(AppSpace.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.segment_rounded,
-                        color: palette.gold,
-                        size: AppIcon.sm,
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Text(
-                        'محاور وموضوعات المقطع',
-                        style: textTheme.titleSmall.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _showChaptersSheet,
-                        child: Text(
-                          'عرض الكل',
-                          style: textTheme.caption.copyWith(
-                            color: palette.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.xs),
-                  ...widget.chapters!.take(4).map((ch) {
-                    final isCurrentChapter = _position.inSeconds >=
-                            ch.startSeconds &&
-                        (ch.endSeconds == null ||
-                            _position.inSeconds < ch.endSeconds!);
-
-                    return Semantics(
-                      button: true,
-                      label: '${ch.title} عند ${ch.timestampFormatted}',
-                      child: InkWell(
-                        borderRadius: AppRadius.smRadius,
-                        onTap: () {
-                          _controller?.seekTo(
-                            AppMotion.fromSeconds(ch.startSeconds),
+                      child: LessonDetailsSection(
+                        title: widget.title,
+                        scholar: widget.scholar,
+                        startSeconds: widget.startSeconds,
+                        sectionDuration: _sectionDuration,
+                        position: _position,
+                        chapters: widget.chapters,
+                        playlistLessons: widget.playlistLessons,
+                        currentLessonIndex: widget.currentLessonIndex,
+                        isLessonCompleted: _isLessonCompleted,
+                        onToggleCompleted: () {
+                          setState(
+                            () => _isLessonCompleted = !_isLessonCompleted,
                           );
+                          HapticFeedback.selectionClick();
+                          if (_isLessonCompleted) {
+                            AppPopup.show(
+                              context: context,
+                              title: 'تم تحديد الدرس',
+                              message: AppStrings.lessonProgressSaved,
+                              icon: Icons.check_circle_rounded,
+                            );
+                          }
+                        },
+                        onOpenInYouTube: _openInYouTube,
+                        onShowChaptersSheet: _showChaptersSheet,
+                        onChapterSelected: (startSec) {
+                          _controller?.seekTo(AppMotion.fromSeconds(startSec));
                           _controller?.play();
                           HapticFeedback.lightImpact();
                         },
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            vertical: AppSpace.xs,
-                            horizontal: AppSpace.xs,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.xs,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isCurrentChapter
-                                      ? palette.goldSoft
-                                      : palette.surfaceRaised,
-                                  borderRadius: AppRadius.smRadius,
-                                ),
-                                child: Text(
-                                  ch.timestampFormatted,
-                                  style: textTheme.caption.copyWith(
-                                    color: isCurrentChapter
-                                        ? palette.gold
-                                        : palette.textMuted,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(
-                                child: Text(
-                                  ch.title,
-                                  style: textTheme.bodySmall.copyWith(
-                                    color: isCurrentChapter
-                                        ? palette.primary
-                                        : palette.text,
-                                    fontWeight: isCurrentChapter
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (isCurrentChapter)
-                                Icon(
-                                  Icons.play_arrow_rounded,
-                                  size: AppIcon.xs,
-                                  color: palette.primary,
-                                ),
-                            ],
-                          ),
-                        ),
+                        onLessonSelected: widget.onLessonSelected,
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ],
-
-          // ── Next Lessons in Playlist ──
-          if (widget.playlistLessons != null &&
-              widget.playlistLessons!.length > 1) ...[
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'الدروس التالية في هذا المتن',
-              style: textTheme.titleSmall.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            ...widget.playlistLessons!
-                .where((l) => l.index != widget.currentLessonIndex)
-                .take(3)
-                .map((nextLesson) {
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-                child: AppCard(
-                  onTap: () {
-                    if (widget.onLessonSelected != null) {
-                      widget.onLessonSelected!(nextLesson.index);
-                    }
-                  },
-                  padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: palette.surfaceRaised,
-                          borderRadius: AppRadius.smRadius,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${nextLesson.index + 1}',
-                            style: textTheme.caption.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: palette.textMuted,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              nextLesson.title,
-                              style: textTheme.bodySmall.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              '${nextLesson.durationMinutes} دقيقة',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.play_circle_outline_rounded,
-                        color: palette.primary,
-                        size: AppIcon.md,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFallbackView(BuildContext context) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return Scaffold(
-      backgroundColor: palette.bg,
-      appBar: AppBar(
-        title: Text(widget.title),
-        leading: IconButton(
-          tooltip: 'رجوع',
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-          child: Container(
-            padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-            decoration: BoxDecoration(
-              color: palette.surfaceRaised,
-              borderRadius: AppRadius.lgRadius,
-              border: Border.all(color: palette.border, width: 1),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: palette.goldSoft,
-                    borderRadius: AppRadius.pillRadius,
-                  ),
-                  child: Icon(
-                    Icons.play_circle_filled_rounded,
-                    color: palette.gold,
-                    size: AppIcon.xl,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.lg),
-                Text(
-                  widget.title,
-                  textAlign: TextAlign.center,
-                  style: textTheme.titleSmall.copyWith(
-                    color: palette.text,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (widget.scholar != null && widget.scholar!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    widget.scholar!,
-                    textAlign: TextAlign.center,
-                    style: textTheme.caption.copyWith(
-                      color: palette.gold,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
-                const SizedBox(height: AppSpace.md),
-                Text(
-                  'هذا الدرس متاح للمشاهدة المباشرة عبر تطبيق يوتيوب ضمن السلسلة العلمية المعتمدة.',
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodySmall.copyWith(
-                    color: palette.textMuted,
-                    height: 1.6,
-                  ),
+                  ],
                 ),
-                const SizedBox(height: AppSpace.xl),
-                AppButton(
-                  label: 'فتح ومشاهدة الدرس في يوتيوب',
-                  icon: Icons.open_in_new_rounded,
-                  size: AppButtonSize.md,
-                  onPressed: _openInYouTube,
-                ),
-                const SizedBox(height: AppSpace.sm),
-                AppButton(
-                  label: 'تحديد الدرس كمكتمل',
-                  variant: AppButtonVariant.tonal,
-                  icon: Icons.check_circle_outline_rounded,
-                  size: AppButtonSize.md,
-                  onPressed: () => _finish(true),
-                ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
-  }
-
-  static String _formatTime(Duration d) {
-    final m = d.inMinutes;
-    final s = d.inSeconds % 60;
-    if (m >= 60) {
-      final h = m ~/ 60;
-      final remM = m % 60;
-      return '${h.toString().padLeft(2, '0')}:${remM.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 }

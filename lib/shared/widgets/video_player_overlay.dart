@@ -25,6 +25,8 @@ class VideoPlayerOverlay extends StatefulWidget {
   final VoidCallback onOpenChaptersSheet;
   final ValueChanged<int> onSeekRelative;
   final ValueChanged<Duration> onSeekTo;
+  final VoidCallback? onUserPlay;
+  final VoidCallback? onUserPause;
 
   const VideoPlayerOverlay({
     super.key,
@@ -43,6 +45,8 @@ class VideoPlayerOverlay extends StatefulWidget {
     required this.onOpenChaptersSheet,
     required this.onSeekRelative,
     required this.onSeekTo,
+    this.onUserPlay,
+    this.onUserPause,
   });
 
   @override
@@ -63,10 +67,12 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
   @override
   void didUpdateWidget(covariant VideoPlayerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.controller.value.isPlaying && !_isVisible) {
-      // Keep hidden if playing
-    } else if (!widget.controller.value.isPlaying && !_isVisible) {
-      // When paused, auto show controls
+    final isNowPlaying = widget.controller.value.isPlaying;
+    final wasPlaying = oldWidget.controller.value.isPlaying;
+
+    if (isNowPlaying && !wasPlaying) {
+      _startHideTimer();
+    } else if (!isNowPlaying && wasPlaying) {
       setState(() => _isVisible = true);
       _cancelHideTimer();
     }
@@ -344,9 +350,12 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                               onTap: () {
                                 _onUserInteracted();
                                 if (isPlaying) {
+                                  widget.onUserPause?.call();
                                   widget.controller.pause();
                                 } else {
+                                  widget.onUserPlay?.call();
                                   widget.controller.play();
+                                  _startHideTimer();
                                 }
                               },
                               child: Container(
