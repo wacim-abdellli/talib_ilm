@@ -1,22 +1,21 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
-import '../../app/theme/app_ui.dart';
+import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_spacing.dart';
 import '../../features/ilm/data/models/lesson_model.dart';
 import 'app_button.dart';
 import 'app_card.dart';
 import 'app_popup.dart';
 import 'icon_badge.dart';
-import 'primary_app_bar.dart';
+import 'video_player_overlay.dart';
+import 'video_player_sheets.dart';
 
-/// Modern, YouTube-grade scholarly video player with interactive chapters,
-/// section-focused playback, quick-seek controls, and playlist switcher.
+/// Fullscreen YouTube-grade video player with chapters, speed control, and sectioning.
 class VideoPlayerPage extends StatefulWidget {
   final String title;
   final String videoId;
@@ -53,22 +52,29 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   String? _resolvedPlaylistId;
   bool _hasPlayerError = false;
   bool _initialSeekDone = false;
+  bool _isFullScreen = false;
   double _playbackSpeed = 1.0;
   bool _isLessonCompleted = false;
 
   @override
   void initState() {
     super.initState();
-    _cleanVideoId = _extractCleanVideoId(widget.videoId);
-    _resolvedPlaylistId =
-        _extractPlaylistId(widget.videoId) ?? widget.playlistId;
+    _resolvedPlaylistId = _extractPlaylistId(widget.videoId) ?? widget.playlistId;
+
+    // Resolve clean playable video ID
+    String? rawId = widget.videoId;
+    if (rawId.startsWith('PL') && widget.playlistLessons != null && widget.playlistLessons!.isNotEmpty) {
+      rawId = widget.playlistLessons!.first.videoId;
+    }
+    _cleanVideoId = _extractCleanVideoId(rawId);
 
     if (_cleanVideoId != null) {
       _controller = YoutubePlayerController(
         initialVideoId: _cleanVideoId!,
         flags: YoutubePlayerFlags(
           autoPlay: true,
-          enableCaption: true,
+          hideControls: true, // We provide authentic YouTube overlay
+          enableCaption: false,
           startAt: widget.startSeconds ?? 0,
           endAt: widget.endSeconds,
         ),
@@ -122,24 +128,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     return null;
   }
 
-  String? _getEmbedUrl() {
-    final startParam =
-        widget.startSeconds != null ? '&start=${widget.startSeconds}' : '';
-    final endParam =
-        widget.endSeconds != null ? '&end=${widget.endSeconds}' : '';
-
-    if (_cleanVideoId != null) {
-      return 'https://www.youtube-nocookie.com/embed/$_cleanVideoId?autoplay=1&playsinline=1&rel=0$startParam$endParam';
-    }
-    final pid = _resolvedPlaylistId;
-    if (pid != null && pid.isNotEmpty) {
-      return 'https://www.youtube-nocookie.com/embed/videoseries?list=$pid&autoplay=1&playsinline=1&rel=0';
-    }
-    return null;
-  }
-
   @override
   void dispose() {
+    // Restore orientations and system bars
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     _controller?.removeListener(_onPlayerStateChanged);
     _controller?.dispose();
     super.dispose();
@@ -176,6 +170,28 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     Navigator.of(context).pop(watchedEnough);
   }
 
+  void _onBackPressed() {
+    if (_isFullScreen) {
+      _toggleFullScreen();
+    } else {
+      _finish();
+    }
+  }
+
+  void _toggleFullScreen() {
+    setState(() => _isFullScreen = !_isFullScreen);
+    if (_isFullScreen) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
   void _seekRelative(int seconds) {
     final current = _position;
     final minTime = widget.startSeconds != null
@@ -194,606 +210,125 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     HapticFeedback.selectionClick();
   }
 
-  void _togglePlayPause() {
-    if (_controller == null) return;
-    if (_controller!.value.isPlaying) {
-      _controller!.pause();
-    } else {
-      _controller!.play();
-    }
-    HapticFeedback.selectionClick();
-  }
-
   Future<void> _openInYouTube() async {
-    final Uri targetUrl;
-    final positionParam = _position.inSeconds > 0 ? '&t=${_position.inSeconds}s' : '';
+    final currentPosSec = _position.inSeconds;
+    final startParam = currentPosSec > 0 ? '&t=${currentPosSec}s' : '';
 
+    final urlsToTry = <String>[];
     if (_cleanVideoId != null) {
-      targetUrl = Uri.parse(
-        'https://www.youtube.com/watch?v=$_cleanVideoId$positionParam',
-      );
-    } else if (_resolvedPlaylistId != null && _resolvedPlaylistId!.startsWith('PL')) {
-      targetUrl = Uri.parse(
-        'https://www.youtube.com/playlist?list=$_resolvedPlaylistId',
-      );
-    } else {
-      final terms = [widget.scholar, widget.title]
-          .whereType<String>()
-          .where((s) => s.isNotEmpty)
-          .join(' ');
-      targetUrl = Uri.parse(
-        'https://www.youtube.com/results?search_query=${Uri.encodeComponent(terms)}',
-      );
+      urlsToTry.add('https://www.youtube.com/watch?v=$_cleanVideoId$startParam');
+      urlsToTry.add('vnd.youtube:$_cleanVideoId');
+    }
+    if (_resolvedPlaylistId != null) {
+      urlsToTry.add('https://www.youtube.com/playlist?list=$_resolvedPlaylistId');
     }
 
-    try {
-      final launched = await launchUrl(
-        targetUrl,
-        mode: LaunchMode.externalApplication,
+    for (final urlStr in urlsToTry) {
+      final uri = Uri.parse(urlStr);
+      try {
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      AppPopup.show(
+        context: context,
+        title: 'تنبيه',
+        message: 'تعذر فتح الرابط في تطبيق يوتيوب',
       );
-      if (!launched) {
-        await launchUrl(targetUrl, mode: LaunchMode.platformDefault);
-      }
-    } catch (_) {
-      await launchUrl(targetUrl, mode: LaunchMode.platformDefault);
     }
   }
 
   void _showSpeedSheet() {
-    final palette = context.palette;
-    final speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: palette.surfaceRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadiusDirectional.vertical(
-          top: Radius.circular(AppRadius.lg),
-        ),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.speed_rounded,
-                      color: palette.gold,
-                      size: AppIcon.md,
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      'سرعة التشغيل',
-                      style: context.text.titleSmall.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.md),
-                Wrap(
-                  spacing: AppSpace.sm,
-                  runSpacing: AppSpace.sm,
-                  children: speeds.map((s) {
-                    final isSelected = _playbackSpeed == s;
-                    return InkWell(
-                      borderRadius: AppRadius.pillRadius,
-                      onTap: () {
-                        setState(() => _playbackSpeed = s);
-                        _controller?.setPlaybackRate(s);
-                        Navigator.pop(ctx);
-                        HapticFeedback.lightImpact();
-                      },
-                      child: Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.lg,
-                          vertical: AppSpace.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? palette.primarySoft
-                              : palette.surfaceRaised,
-                          borderRadius: AppRadius.pillRadius,
-                          border: Border.all(
-                            color: isSelected
-                                ? palette.primary
-                                : palette.border,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          '${s}x',
-                          style: context.text.body.copyWith(
-                            color: isSelected
-                                ? palette.primary
-                                : palette.text,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-        );
+    VideoPlayerSheets.showSpeedSheet(
+      context,
+      currentSpeed: _playbackSpeed,
+      onSpeedChanged: (speed) {
+        setState(() => _playbackSpeed = speed);
+        _controller?.setPlaybackRate(speed);
       },
     );
   }
 
   void _showChaptersSheet() {
-    final palette = context.palette;
-    final chapters = widget.chapters ?? const [];
-    if (chapters.isEmpty) return;
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: palette.surfaceRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadiusDirectional.vertical(
-          top: Radius.circular(AppRadius.lg),
-        ),
-      ),
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.5,
-          minChildSize: 0.3,
-          maxChildSize: 0.85,
-          builder: (_, scrollController) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: palette.border,
-                          borderRadius: AppRadius.pillRadius,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.format_list_bulleted_rounded,
-                          color: palette.gold,
-                          size: AppIcon.md,
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          'فهرس محاور وأقسام الدرس',
-                          style: context.text.titleSmall.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${chapters.length} محاور',
-                          style: context.text.caption.copyWith(
-                            color: palette.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                    Expanded(
-                      child: ListView.separated(
-                        controller: scrollController,
-                        itemCount: chapters.length,
-                        separatorBuilder: (_, index) =>
-                            const SizedBox(height: AppSpace.xs),
-                        itemBuilder: (context, idx) {
-                          final ch = chapters[idx];
-                          final isActive = _position.inSeconds >=
-                                  ch.startSeconds &&
-                              (idx == chapters.length - 1 ||
-                                  _position.inSeconds <
-                                      chapters[idx + 1].startSeconds);
-
-                          return InkWell(
-                            borderRadius: AppRadius.mdRadius,
-                            onTap: () {
-                              _controller?.seekTo(
-                                AppMotion.fromSeconds(ch.startSeconds),
-                              );
-                              _controller?.play();
-                              Navigator.pop(ctx);
-                              HapticFeedback.lightImpact();
-                            },
-                            child: Container(
-                              padding: const EdgeInsetsDirectional.all(
-                                AppSpace.sm,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? palette.primarySoft
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.mdRadius,
-                                border: Border.all(
-                                  color: isActive
-                                      ? palette.primary.withValues(alpha: 0.5)
-                                      : Colors.transparent,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding:
-                                        const EdgeInsetsDirectional.symmetric(
-                                      horizontal: AppSpace.sm,
-                                      vertical: AppSpace.xxs,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isActive
-                                          ? palette.primary
-                                          : palette.surface,
-                                      borderRadius: AppRadius.smRadius,
-                                    ),
-                                    child: Text(
-                                      ch.timestampFormatted,
-                                      style: context.text.caption.copyWith(
-                                        color: isActive
-                                            ? palette.onPrimary
-                                            : palette.gold,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpace.md),
-                                  Expanded(
-                                    child: Text(
-                                      ch.title,
-                                      style: context.text.bodySmall.copyWith(
-                                        color: isActive
-                                            ? palette.primary
-                                            : palette.text,
-                                        fontWeight: isActive
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isActive)
-                                    Icon(
-                                      Icons.volume_up_rounded,
-                                      color: palette.primary,
-                                      size: AppIcon.sm,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
+    if (widget.chapters == null || widget.chapters!.isEmpty) return;
+    VideoPlayerSheets.showChaptersSheet(
+      context,
+      chapters: widget.chapters!,
+      currentSeconds: _position.inSeconds,
+      onChapterSelected: (startSec) {
+        _controller?.seekTo(AppMotion.fromSeconds(startSec));
+        _controller?.play();
       },
     );
-  }
-
-  static String _formatTime(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60);
-    if (h > 0) {
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final supported = Platform.isAndroid || Platform.isIOS;
-
-    if (!supported) {
-      return Scaffold(
-        backgroundColor: palette.bg,
-        appBar: UnifiedAppBar(
-          title: widget.title,
-          showBack: true,
-          onLeadingTap: _finish,
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-            child: Text(
-              AppStrings.videoUnsupported,
-              textAlign: TextAlign.center,
-              style: context.text.body.copyWith(color: palette.textMuted),
-            ),
-          ),
-        ),
-      );
-    }
+    final orientation = MediaQuery.orientationOf(context);
+    final isLandscape = orientation == Orientation.landscape || _isFullScreen;
 
     final canUseNativePlayer =
         _cleanVideoId != null && _controller != null && !_hasPlayerError;
 
-    if (canUseNativePlayer) {
-      return YoutubePlayerBuilder(
-        player: YoutubePlayer(
-          controller: _controller!,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: palette.gold,
-          bottomActions: const [
-            CurrentPosition(),
-            ProgressBar(isExpanded: true),
-            RemainingDuration(),
-            PlaybackSpeedButton(),
-            FullScreenButton(),
-          ],
-        ),
-        builder: (context, player) {
-          return PopScope(
-            canPop: false,
-            onPopInvokedWithResult: (didPop, result) {
-              if (didPop) return;
-              _finish();
-            },
-            child: Scaffold(
-              backgroundColor: palette.bg,
-              appBar: UnifiedAppBar(
-                title: widget.title,
-                showBack: true,
-                onLeadingTap: _finish,
-                actions: [
-                  IconButton(
-                    tooltip: 'سرعة التشغيل',
-                    icon: Icon(
-                      Icons.speed_rounded,
-                      color: palette.text,
-                      size: AppIcon.md,
-                    ),
-                    onPressed: _showSpeedSheet,
-                  ),
-                  IconButton(
-                    tooltip: 'فتح في تطبيق يوتيوب',
-                    icon: Icon(
-                      Icons.open_in_new_rounded,
-                      color: palette.text,
-                      size: AppIcon.md,
-                    ),
-                    onPressed: _openInYouTube,
-                  ),
-                ],
-              ),
-              body: Column(
-                children: [
-                  player,
-                  _buildModernPlayerStrip(context),
-                  Expanded(
-                    child: _buildLessonDetails(context),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
+    if (!canUseNativePlayer) {
+      return _buildFallbackView(context);
     }
 
-    final embedUrl = _getEmbedUrl();
-    if (embedUrl != null) {
-      return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          _finish();
-        },
-        child: Scaffold(
-          backgroundColor: palette.bg,
-          appBar: UnifiedAppBar(
-            title: widget.title,
-            showBack: true,
-            onLeadingTap: _finish,
-            actions: [
-              IconButton(
-                tooltip: 'فتح في تطبيق يوتيوب',
-                icon: Icon(
-                  Icons.open_in_new_rounded,
-                  color: palette.text,
-                  size: AppIcon.md,
-                ),
-                onPressed: _openInYouTube,
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: InAppWebView(
-                  initialUrlRequest: URLRequest(
-                    url: WebUri(embedUrl),
-                    headers: {
-                      'Referer': 'https://www.youtube.com/',
-                    },
-                  ),
-                  initialSettings: InAppWebViewSettings(
-                    allowsInlineMediaPlayback: true,
-                    mediaPlaybackRequiresUserGesture: false,
-                    javaScriptEnabled: true,
-                    transparentBackground: true,
-                    supportZoom: false,
-                    userAgent:
-                        'Mozilla/5.0 (Linux; Android 11; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-                  ),
-                ),
-              ),
-              Expanded(
-                child: _buildLessonDetails(context),
-              ),
-            ],
-          ),
+    final playerWithOverlay = Stack(
+      fit: StackFit.expand,
+      children: [
+        YoutubePlayer(
+          controller: _controller!,
+          aspectRatio: isLandscape ? MediaQuery.sizeOf(context).aspectRatio : 16 / 9,
         ),
-      );
-    }
+        VideoPlayerOverlay(
+          controller: _controller!,
+          title: widget.title,
+          position: _sectionPosition,
+          duration: _sectionDuration,
+          startSeconds: widget.startSeconds,
+          endSeconds: widget.endSeconds,
+          chapters: widget.chapters,
+          isFullScreen: isLandscape,
+          playbackSpeed: _playbackSpeed,
+          onToggleFullScreen: _toggleFullScreen,
+          onBack: _onBackPressed,
+          onOpenSpeedSheet: _showSpeedSheet,
+          onOpenChaptersSheet: _showChaptersSheet,
+          onSeekRelative: _seekRelative,
+          onSeekTo: (target) => _controller?.seekTo(target),
+        ),
+      ],
+    );
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      canPop: !isLandscape,
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        _finish();
+        _onBackPressed();
       },
       child: Scaffold(
-        backgroundColor: palette.bg,
-        appBar: UnifiedAppBar(
-          title: widget.title,
-          showBack: true,
-          onLeadingTap: _finish,
-        ),
-        body: _buildFallbackView(context),
-      ),
-    );
-  }
-
-  /// Modern player toolbar strip below the video container
-  Widget _buildModernPlayerStrip(BuildContext context) {
-    final palette = context.palette;
-    final isPlaying = _controller?.value.isPlaying ?? false;
-    final posStr = _formatTime(_sectionPosition);
-    final durStr = _formatTime(_sectionDuration);
-
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        border: Border(
-          bottom: BorderSide(color: palette.border, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Rewind 10s
-          IconButton(
-            tooltip: 'تأخير 10 ثوانٍ',
-            icon: Icon(
-              Icons.replay_10_rounded,
-              color: palette.text,
-              size: AppIcon.md,
-            ),
-            onPressed: () => _seekRelative(-10),
-          ),
-          // Play / Pause
-          IconButton(
-            tooltip: isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
-            icon: Icon(
-              isPlaying
-                  ? Icons.pause_circle_filled_rounded
-                  : Icons.play_circle_filled_rounded,
-              color: palette.primary,
-              size: AppIcon.lg,
-            ),
-            onPressed: _togglePlayPause,
-          ),
-          // Forward 10s
-          IconButton(
-            tooltip: 'تقديم 10 ثوانٍ',
-            icon: Icon(
-              Icons.forward_10_rounded,
-              color: palette.text,
-              size: AppIcon.md,
-            ),
-            onPressed: () => _seekRelative(10),
-          ),
-          const SizedBox(width: AppSpace.xs),
-          // Time Position / Section Duration
-          Expanded(
-            child: Text(
-              '$posStr / $durStr',
-              style: context.text.caption.copyWith(
-                color: palette.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          // Chapters Trigger
-          if (widget.chapters != null && widget.chapters!.isNotEmpty) ...[
-            InkWell(
-              borderRadius: AppRadius.pillRadius,
-              onTap: _showChaptersSheet,
-              child: Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: AppSpace.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.goldSoft,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+        backgroundColor: isLandscape ? AppPalette.light.bg : palette.bg,
+        body: isLandscape
+            ? SizedBox.expand(child: playerWithOverlay)
+            : SafeArea(
+                child: Column(
                   children: [
-                    Icon(
-                      Icons.format_list_bulleted_rounded,
-                      color: palette.gold,
-                      size: AppIcon.xs,
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: playerWithOverlay,
                     ),
-                    const SizedBox(width: AppSpace.xxs),
-                    Text(
-                      'المحاور',
-                      style: context.text.caption.copyWith(
-                        color: palette.gold,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Expanded(
+                      child: _buildLessonDetails(context),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpace.xs),
-          ],
-          // Speed Pill
-          InkWell(
-            borderRadius: AppRadius.pillRadius,
-            onTap: _showSpeedSheet,
-            child: Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xxs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border, width: 1),
-              ),
-              child: Text(
-                '${_playbackSpeed}x',
-                style: context.text.caption.copyWith(
-                  color: palette.textMuted,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -808,7 +343,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Title & Segment Badge ──
+          // ── Title ──
           Text(
             widget.title,
             style: textTheme.titleSmall.copyWith(
@@ -955,66 +490,70 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                         (ch.endSeconds == null ||
                             _position.inSeconds < ch.endSeconds!);
 
-                    return InkWell(
-                      borderRadius: AppRadius.smRadius,
-                      onTap: () {
-                        _controller?.seekTo(
-                          AppMotion.fromSeconds(ch.startSeconds),
-                        );
-                        _controller?.play();
-                        HapticFeedback.lightImpact();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          vertical: AppSpace.xs,
-                          horizontal: AppSpace.xs,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs,
-                                vertical: AppSpace.xxs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isCurrentChapter
-                                    ? palette.goldSoft
-                                    : palette.surfaceRaised,
-                                borderRadius: AppRadius.smRadius,
-                              ),
-                              child: Text(
-                                ch.timestampFormatted,
-                                style: textTheme.caption.copyWith(
+                    return Semantics(
+                      button: true,
+                      label: '${ch.title} عند ${ch.timestampFormatted}',
+                      child: InkWell(
+                        borderRadius: AppRadius.smRadius,
+                        onTap: () {
+                          _controller?.seekTo(
+                            AppMotion.fromSeconds(ch.startSeconds),
+                          );
+                          _controller?.play();
+                          HapticFeedback.lightImpact();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            vertical: AppSpace.xs,
+                            horizontal: AppSpace.xs,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.xs,
+                                  vertical: AppSpace.xxs,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isCurrentChapter
-                                      ? palette.gold
-                                      : palette.textMuted,
-                                  fontWeight: FontWeight.bold,
+                                      ? palette.goldSoft
+                                      : palette.surfaceRaised,
+                                  borderRadius: AppRadius.smRadius,
+                                ),
+                                child: Text(
+                                  ch.timestampFormatted,
+                                  style: textTheme.caption.copyWith(
+                                    color: isCurrentChapter
+                                        ? palette.gold
+                                        : palette.textMuted,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: AppSpace.sm),
-                            Expanded(
-                              child: Text(
-                                ch.title,
-                                style: textTheme.bodySmall.copyWith(
-                                  color: isCurrentChapter
-                                      ? palette.primary
-                                      : palette.text,
-                                  fontWeight: isCurrentChapter
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: Text(
+                                  ch.title,
+                                  style: textTheme.bodySmall.copyWith(
+                                    color: isCurrentChapter
+                                        ? palette.primary
+                                        : palette.text,
+                                    fontWeight: isCurrentChapter
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            if (isCurrentChapter)
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                size: AppIcon.xs,
-                                color: palette.primary,
-                              ),
-                          ],
+                              if (isCurrentChapter)
+                                Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: AppIcon.xs,
+                                  color: palette.primary,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -1109,80 +648,102 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     final palette = context.palette;
     final textTheme = context.text;
 
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-        child: Container(
+    return Scaffold(
+      backgroundColor: palette.bg,
+      appBar: AppBar(
+        title: Text(widget.title),
+        leading: IconButton(
+          tooltip: 'رجوع',
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
           padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-          decoration: BoxDecoration(
-            color: palette.surfaceRaised,
-            borderRadius: AppRadius.lgRadius,
-            border: Border.all(color: palette.border, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: palette.goldSoft,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-                child: Icon(
-                  Icons.play_circle_filled_rounded,
-                  color: palette.gold,
-                  size: AppIcon.xl,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              Text(
-                widget.title,
-                textAlign: TextAlign.center,
-                style: textTheme.title.copyWith(
-                  color: palette.text,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (widget.scholar != null && widget.scholar!.isNotEmpty) ...[
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  widget.scholar!,
-                  textAlign: TextAlign.center,
-                  style: textTheme.caption.copyWith(
+          child: Container(
+            padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+            decoration: BoxDecoration(
+              color: palette.surfaceRaised,
+              borderRadius: AppRadius.lgRadius,
+              border: Border.all(color: palette.border, width: 1),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.pillRadius,
+                  ),
+                  child: Icon(
+                    Icons.play_circle_filled_rounded,
                     color: palette.gold,
-                    fontWeight: FontWeight.w600,
+                    size: AppIcon.xl,
                   ),
                 ),
-              ],
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'هذا الدرس متاح للمشاهدة المباشرة عبر تطبيق يوتيوب ضمن السلسلة العلمية المعتمدة.',
-                textAlign: TextAlign.center,
-                style: textTheme.bodySmall.copyWith(
-                  color: palette.textMuted,
-                  height: 1.6,
+                const SizedBox(height: AppSpace.lg),
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  style: textTheme.titleSmall.copyWith(
+                    color: palette.text,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpace.xl),
-              AppButton(
-                label: 'فتح ومشاهدة الدرس في يوتيوب',
-                icon: Icons.open_in_new_rounded,
-                size: AppButtonSize.md,
-                onPressed: _openInYouTube,
-              ),
-              const SizedBox(height: AppSpace.sm),
-              AppButton(
-                label: 'تحديد الدرس كمكتمل',
-                variant: AppButtonVariant.tonal,
-                icon: Icons.check_circle_outline_rounded,
-                size: AppButtonSize.md,
-                onPressed: () => _finish(true),
-              ),
-            ],
+                if (widget.scholar != null && widget.scholar!.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    widget.scholar!,
+                    textAlign: TextAlign.center,
+                    style: textTheme.caption.copyWith(
+                      color: palette.gold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpace.md),
+                Text(
+                  'هذا الدرس متاح للمشاهدة المباشرة عبر تطبيق يوتيوب ضمن السلسلة العلمية المعتمدة.',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodySmall.copyWith(
+                    color: palette.textMuted,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: 'فتح ومشاهدة الدرس في يوتيوب',
+                  icon: Icons.open_in_new_rounded,
+                  size: AppButtonSize.md,
+                  onPressed: _openInYouTube,
+                ),
+                const SizedBox(height: AppSpace.sm),
+                AppButton(
+                  label: 'تحديد الدرس كمكتمل',
+                  variant: AppButtonVariant.tonal,
+                  icon: Icons.check_circle_outline_rounded,
+                  size: AppButtonSize.md,
+                  onPressed: () => _finish(true),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  static String _formatTime(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    if (m >= 60) {
+      final h = m ~/ 60;
+      final remM = m % 60;
+      return '${h.toString().padLeft(2, '0')}:${remM.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 }

@@ -123,6 +123,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
   static const Color splashGold = Color(0xFF92400E);
   static const Color splashGoldSoft = Color(0xFFFEF3C7);
 
+  /// Dedicated video & media player overlay tokens
+  static const Color videoScrim = Color(0xB3000000);
+  static const Color videoControlBg = Color(0x66000000);
+  static const Color videoControlFg = Color(0xFFFFFFFF);
+  static const Color videoScrubberTrack = Color(0x4DFFFFFF);
+  static const Color videoScrubberActive = Color(0xFFF59E0B);
+
   /// Light theme palette — Warm Ivory Parchment & Imperial Burnished Gold
   static const light = AppPalette(
     bg: Color(0xFFFAF8F5),

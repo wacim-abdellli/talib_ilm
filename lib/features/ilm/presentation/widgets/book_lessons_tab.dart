@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
@@ -140,18 +141,24 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
     }
   }
 
-  void _openFullPlaylist(String playlistId, String scholar) {
-    Navigator.push(
-      context,
-      buildFadeRoute(
-        page: VideoPlayerPage(
-          title: 'قائمة تشغيل: $scholar',
-          videoId: playlistId,
-          scholar: scholar,
-          playlistId: playlistId,
-        ),
-      ),
-    );
+  Future<void> _openFullPlaylist(String playlistId, String scholar) async {
+    final uri = Uri.parse('https://www.youtube.com/playlist?list=$playlistId');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback: open the first lesson of this scholar's playlist in the in-app player
+    final playlistLessons = widget.lessons
+        .where((l) => l.playlistId == playlistId || l.scholar == scholar)
+        .toList();
+    if (playlistLessons.isNotEmpty) {
+      _openLesson(playlistLessons.first);
+    } else if (widget.lessons.isNotEmpty) {
+      _openLesson(widget.lessons.first);
+    }
   }
 
   @override
