@@ -106,6 +106,10 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
 
     if (!mounted) return;
 
+    final displayLessons = _selectedScholar == null
+        ? widget.lessons
+        : widget.lessons.where((l) => l.scholar == _selectedScholar).toList();
+
     final watched = await Navigator.push<bool>(
       context,
       buildFadeRoute(
@@ -114,6 +118,19 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
           videoId: lesson.videoId,
           scholar: lesson.scholar,
           playlistId: lesson.playlistId,
+          startSeconds: lesson.startSeconds,
+          endSeconds: lesson.endSeconds,
+          chapters: lesson.chapters,
+          playlistLessons: displayLessons,
+          currentLessonIndex: lesson.index,
+          onLessonSelected: (newIdx) {
+            final nextLesson = displayLessons.firstWhere(
+              (l) => l.index == newIdx,
+              orElse: () => lesson,
+            );
+            Navigator.pop(context);
+            _openLesson(nextLesson);
+          },
         ),
       ),
     );
@@ -480,6 +497,27 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
                                   color: palette.textSubtle,
                                 ),
                               ),
+                              if (lesson.isSegment &&
+                                  lesson.formattedTimeRange != null) ...[
+                                const SizedBox(width: AppSpace.xs),
+                                Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xs,
+                                    vertical: AppSpace.xxs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: palette.goldSoft,
+                                    borderRadius: AppRadius.smRadius,
+                                  ),
+                                  child: Text(
+                                    lesson.formattedTimeRange!,
+                                    style: context.text.caption.copyWith(
+                                      color: palette.gold,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                               if (lesson.scholar != null &&
                                   lesson.scholar!.isNotEmpty) ...[
                                 const SizedBox(width: AppSpace.sm),

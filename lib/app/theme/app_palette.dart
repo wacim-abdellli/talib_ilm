@@ -1041,6 +1041,12 @@ class AppMotion {
   /// 60 seconds (ambient visual cycles, deep network timeouts)
   static const Duration ambient = Duration(seconds: 60);
 
+  /// Construct a dynamic Duration from seconds
+  static Duration fromSeconds(int seconds) => Duration(seconds: seconds);
+
+  /// Construct a dynamic Duration from milliseconds
+  static Duration fromMilliseconds(int ms) => Duration(milliseconds: ms);
+
   static const Curve easeIn = Curves.easeInCubic;
   static const Curve easeOut = Curves.easeOutCubic;
 }

@@ -40,6 +40,17 @@ for book in data["books"]:
             lines.append(f"        scholar: '{scholar_display}',")
             lines.append(f"        playlistId: '{p_id}',")
             lines.append(f"        url: 'https://www.youtube.com/watch?v={v_id}',")
+            if "start_seconds" in vid:
+                lines.append(f"        startSeconds: {vid['start_seconds']},")
+            if "end_seconds" in vid:
+                lines.append(f"        endSeconds: {vid['end_seconds']},")
+            if "chapters" in vid and vid["chapters"]:
+                lines.append("        chapters: [")
+                for ch in vid["chapters"]:
+                    ch_title = ch["title"].replace("'", "\\'")
+                    ch_start = ch["start_seconds"]
+                    lines.append(f"          LessonChapter(title: '{ch_title}', startSeconds: {ch_start}),")
+                lines.append("        ],")
             lines.append("      ),")
             idx += 1
             

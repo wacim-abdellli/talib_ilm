@@ -65,29 +65,57 @@ dataset = {
               "order": 1,
               "video_id": "rlelM_79-FM",
               "url": "https://www.youtube.com/watch?v=rlelM_79-FM",
-              "title": "الآداب العشرة - المجلس 1: أدب السلام والاستئذان",
-              "duration_minutes": 35
+              "title": "الآداب العشرة - القسم 1: مقدمة المتن، أدب السلام وأدب الاستئذان",
+              "duration_minutes": 19,
+              "start_seconds": 0,
+              "end_seconds": 1134,
+              "chapters": [
+                {"title": "مقدمة المتن ومنزلة الآداب", "start_seconds": 0},
+                {"title": "أدب السلام وأحكامه", "start_seconds": 378},
+                {"title": "أدب الاستئذان وآدابه", "start_seconds": 758}
+              ]
             },
             {
               "order": 2,
-              "video_id": "kW0Hv55sWP8",
-              "url": "https://www.youtube.com/watch?v=kW0Hv55sWP8",
-              "title": "الآداب العشرة - المجلس 2: أدب الأكل والشرب والمجالسة",
-              "duration_minutes": 40
+              "video_id": "rlelM_79-FM",
+              "url": "https://www.youtube.com/watch?v=rlelM_79-FM",
+              "title": "الآداب العشرة - القسم 2: أدب الأكل والشرب وأدب الكلام",
+              "duration_minutes": 19,
+              "start_seconds": 1134,
+              "end_seconds": 2260,
+              "chapters": [
+                {"title": "أدب الطعام والشراب", "start_seconds": 1134},
+                {"title": "أدب الكلام وحفظ اللسان", "start_seconds": 1809}
+              ]
             },
             {
               "order": 3,
-              "video_id": "7m5I3qnKR3I",
-              "url": "https://www.youtube.com/watch?v=7m5I3qnKR3I",
-              "title": "الآداب العشرة - المجلس 3: أدب الكلام والنوم وعيادة المريض",
-              "duration_minutes": 38
+              "video_id": "rlelM_79-FM",
+              "url": "https://www.youtube.com/watch?v=rlelM_79-FM",
+              "title": "الآداب العشرة - القسم 3: أدب النوم وعيادة المريض وأدب العطاس والتثاؤب",
+              "duration_minutes": 19,
+              "start_seconds": 2260,
+              "end_seconds": 3406,
+              "chapters": [
+                {"title": "أدب النوم وأذكاره", "start_seconds": 2260},
+                {"title": "أدب العطاس وحمد الله", "start_seconds": 2743},
+                {"title": "أدب التثاؤب وكظمه", "start_seconds": 3129}
+              ]
             },
             {
               "order": 4,
-              "video_id": "DErycL8RF1k",
-              "url": "https://www.youtube.com/watch?v=DErycL8RF1k",
-              "title": "الآداب العشرة - المجلس 4: أدب الطريق واللباس والخاتمة",
-              "duration_minutes": 42
+              "video_id": "rlelM_79-FM",
+              "url": "https://www.youtube.com/watch?v=rlelM_79-FM",
+              "title": "الآداب العشرة - القسم 4: أدب المجلس وأدب الطريق واللباس والخاتمة",
+              "duration_minutes": 32,
+              "start_seconds": 3406,
+              "end_seconds": 5317,
+              "chapters": [
+                {"title": "أدب المجلس وإفساحه", "start_seconds": 3406},
+                {"title": "أدب الطريق وحقوقه", "start_seconds": 3885},
+                {"title": "أدب اللباس والزينة", "start_seconds": 4368},
+                {"title": "خاتمة المنظومة ووصايا نافعة", "start_seconds": 4700}
+              ]
             }
           ]
         }

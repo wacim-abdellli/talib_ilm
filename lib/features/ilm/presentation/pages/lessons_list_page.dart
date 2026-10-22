@@ -146,6 +146,12 @@ class _LessonsListPageState extends State<LessonsListPage> {
                     title: lesson.title,
                     videoId: lesson.videoId,
                     scholar: lesson.scholar,
+                    playlistId: lesson.playlistId,
+                    startSeconds: lesson.startSeconds,
+                    endSeconds: lesson.endSeconds,
+                    chapters: lesson.chapters,
+                    playlistLessons: widget.lessons,
+                    currentLessonIndex: lesson.index,
                   ),
                 ),
               );
