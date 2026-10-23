@@ -102,10 +102,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     try {
       final notif = NotificationService();
       await notif.init();
-      if (mounted) {
-        NotificationRouter.consumePendingPayload(context);
-      }
-      await notif.requestPermissions();
       await PrayerScheduleService().refreshSchedulesIfNeeded();
       unawaited(HomeWidgetService.updateAllWidgets());
       final adhkarService = AdhkarReminderService(notificationService: notif);

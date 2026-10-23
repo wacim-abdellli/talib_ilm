@@ -1,5 +1,15 @@
 # UI Progress Log
 
+## R34 / T04 — Initialization deduplication and user-owned permissions
+- **Scope:** Findings C09 (Multiple unprompted permission request entry points breaking user onboarding choice) and C10 (Instance-local initialization state and lack of in-flight deduplication across multiple notification service instances).
+- **Implemented:**
+  - `lib/core/services/notification_service.dart`: Added shared static in-flight initialization deduplication (`_sharedInFlightInit`, `_sharedInitialized`) ensuring concurrent `init()` calls await the exact same single operation without parallel plugin channel registrations. Added non-prompting status query `arePermissionsGranted()` and retry capability on failure.
+  - `lib/shared/navigation/app_shell.dart`: Removed unprompted `requestPermissions()` call and duplicate pending launch payload consumption from cold-boot `_initPrayerNotifications()`, ensuring user choice in `NotificationOnboardingDialog` ("لاحقاً" / "تفعيل الآن") is strictly respected.
+  - `lib/core/services/prayer_schedule_service.dart`: Removed `requestPermissions()` from background weekly prayer scheduling (`_scheduleWeek`), keeping background scheduling completely non-interactive.
+  - `test/notification_initialization_test.dart`: Added 5 regression tests covering concurrent `init()` deduplication across separate instances, clean state resetting for testing isolation, non-prompting status check with `arePermissionsGranted()`, lack of interactive prompts in `PrayerScheduleService`, and onboarding preference persistence.
+- **Verified:** 55/55 targeted tests pass across notification, persistence, audio, and bookmark suites (`test/notification_initialization_test.dart`, `test/persistence_consistency_test.dart`, `test/bookmark_backup_test.dart`, `test/bookmark_separation_test.dart`, `test/bookmark_entry_loader_test.dart`, `test/book_progress_audit_test.dart`, `test/quran_audio_lifecycle_test.dart`). `flutter analyze` completed with 0 issues (8.7s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (71.8s), SHA-256 `7903533EB105E2793F7F45AB0ABDD78328599E67FC1EA15A974A8F912FA06EC2`.
+- **Open issues:** T04 complete. Proceed to T05 (Prayer Calculation and Scheduling Boundary Matrix).
+
 ## R33 / T03 — Persistence consistency, write serialization, and corruption recovery
 - **Scope:** Findings C06 (Concurrent bookmark write collisions & data loss), C07 (Corrupted progress JSON throwing FormatException and wiping collections), and C08 (Unbounded session growth and corrupted session crashes in reading statistics).
 - **Implemented:**

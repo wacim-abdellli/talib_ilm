@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,9 @@ import 'foreground_prayer_service.dart';
 import 'notification_router.dart';
 
 class NotificationService {
+  static Future<void>? _sharedInFlightInit;
+  static bool _sharedInitialized = false;
+
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
   bool _tzInitialized = false;
@@ -20,8 +24,45 @@ class NotificationService {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
+  bool get isInitialized => _initialized || _sharedInitialized;
+
+  @visibleForTesting
+  static void resetSharedStateForTesting() {
+    _sharedInFlightInit = null;
+    _sharedInitialized = false;
+  }
+
   Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized || _sharedInitialized) {
+      _initialized = true;
+      return;
+    }
+
+    if (_sharedInFlightInit != null) {
+      await _sharedInFlightInit;
+      _initialized = _sharedInitialized;
+      return;
+    }
+
+    final completer = Completer<void>();
+    _sharedInFlightInit = completer.future;
+
+    try {
+      await _performInit();
+      _sharedInitialized = true;
+      _initialized = true;
+      completer.complete();
+    } catch (e) {
+      _sharedInitialized = false;
+      _initialized = false;
+      completer.completeError(e);
+      rethrow;
+    } finally {
+      _sharedInFlightInit = null;
+    }
+  }
+
+  Future<void> _performInit() async {
     await _initTimeZones();
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -338,29 +379,46 @@ class NotificationService {
         ),
       );
     }
-
-    _initialized = true;
   }
 
+  /// Queries whether notifications permission is currently granted without prompting the user.
+  Future<bool> arePermissionsGranted() async {
+    try {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        return await android.areNotificationsEnabled() ?? false;
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Requests notification and alarm permissions explicitly with user intent.
   Future<void> requestPermissions() async {
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    try {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      await android?.requestNotificationsPermission();
+      await android?.requestExactAlarmsPermission();
 
-    final ios = _plugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >();
-    await ios?.requestPermissions(alert: true, badge: true, sound: true);
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      await ios?.requestPermissions(alert: true, badge: true, sound: true);
 
-    final mac = _plugin
-        .resolvePlatformSpecificImplementation<
-          MacOSFlutterLocalNotificationsPlugin
-        >();
-    await mac?.requestPermissions(alert: true, badge: true, sound: true);
+      final mac = _plugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      await mac?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (_) {}
   }
 
   Future<void> _safeZonedSchedule({

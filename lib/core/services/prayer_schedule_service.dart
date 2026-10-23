@@ -78,7 +78,6 @@ class PrayerScheduleService {
     }
 
     await _notificationService.init();
-    await _notificationService.requestPermissions();
     await _notificationService.cancelPrayerNotificationsOnly(
       preserveIds: preserveIds,
     );
