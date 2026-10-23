@@ -489,33 +489,44 @@ class QuranAudioService {
   }
 
   Future<void> nextAyah() async {
-    _ayahRepeatCount = 0;
-    _isSingleVerseOnly = false;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
 
     final total = quran.getVerseCount(s);
     if (a < total) {
-      await _startPlay(s, a + 1);
+      await _navigateTo(s, a + 1);
     } else if (s < 114) {
-      await _startPlay(s + 1, 1);
+      await _navigateTo(s + 1, 1);
+    } else {
+      await stop();
     }
   }
 
   Future<void> previousAyah() async {
-    _ayahRepeatCount = 0;
-    _isSingleVerseOnly = false;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
 
     if (a > 1) {
-      await _startPlay(s, a - 1);
+      await _navigateTo(s, a - 1);
     } else if (s > 1) {
       final prevTotal = quran.getVerseCount(s - 1);
-      await _startPlay(s - 1, prevTotal);
+      await _navigateTo(s - 1, prevTotal);
     }
+  }
+
+  Future<void> _navigateTo(int surah, int ayah) async {
+    _ayahRepeatCount = 0;
+    _isSingleVerseOnly = false;
+    if (_isContinuous &&
+        (surah != activeSurahNotifier.value || ayah > _endAyah)) {
+      // Manual navigation outside the current range starts an unrestricted
+      // continuation at the chosen verse, using that surah's own boundaries.
+      _hasExplicitEnd = false;
+      _endAyah = quran.getVerseCount(surah);
+    }
+    await _startPlay(surah, ayah);
   }
 
   Future<void> stop() async {

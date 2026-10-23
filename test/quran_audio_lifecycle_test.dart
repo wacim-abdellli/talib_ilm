@@ -314,4 +314,63 @@ void main() {
     await service.playVerse(1, 3);
     expect(resolved.last, 'husary');
   });
+
+  test('manual next across surahs uses the new surah length', () async {
+    await service.playContinuous(surah: 1, startAyah: 7);
+    await service.nextAyah();
+    for (var i = 0; i < 7; i++) {
+      player.complete();
+      await flushOperations();
+    }
+    expect(service.activeSurahNotifier.value, 2);
+    expect(service.activeAyahNotifier.value, 8);
+  });
+
+  test(
+    'manual previous across surahs does not overrun the shorter surah',
+    () async {
+      await service.playContinuous(surah: 2, startAyah: 1);
+      await service.previousAyah();
+      expect(service.activeSurahNotifier.value, 1);
+      expect(service.activeAyahNotifier.value, 7);
+      player.complete();
+      await flushOperations();
+      expect(player.played, ['/2/1', '/1/7', '/2/1']);
+    },
+  );
+
+  test('manual navigation beyond an explicit end leaves that range', () async {
+    await service.playContinuous(surah: 1, startAyah: 2, endAyah: 2);
+    await service.nextAyah();
+    player.complete();
+    await flushOperations();
+    expect(service.activeAyahNotifier.value, 4);
+  });
+
+  test('manual navigation within an explicit range retains its end', () async {
+    await service.playContinuous(surah: 1, startAyah: 1, endAyah: 3);
+    await service.nextAyah();
+    player.complete();
+    await flushOperations();
+    player.complete();
+    await flushOperations();
+    expect(player.played, ['/1/1', '/1/2', '/1/3']);
+    expect(service.activeAyahNotifier.value, isNull);
+  });
+
+  test('previous at the first verse preserves single-verse mode', () async {
+    await service.playVerse(1, 1, singleVerse: true);
+    await service.previousAyah();
+    player.complete();
+    await flushOperations();
+    expect(player.played, ['/1/1']);
+    expect(service.activeAyahNotifier.value, isNull);
+  });
+
+  test('next at the final Quran verse stops playback', () async {
+    await service.playContinuous(surah: 114, startAyah: 6);
+    await service.nextAyah();
+    expect(service.activeAyahNotifier.value, isNull);
+    expect(player.running, isFalse);
+  });
 }
