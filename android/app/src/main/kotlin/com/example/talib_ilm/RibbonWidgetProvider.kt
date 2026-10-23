@@ -7,9 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Bundle
 import android.widget.RemoteViews
-import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.io.File
@@ -23,33 +21,6 @@ class RibbonWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
-    }
-
-    override fun onAppWidgetOptionsChanged(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetId: Int,
-        newOptions: Bundle
-    ) {
-        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-        val minWidth = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
-        val minHeight = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-        if (minWidth > 0 && minHeight > 0) {
-            try {
-                val widgetData = HomeWidgetPlugin.getData(context)
-                widgetData.edit()
-                    .putInt("widget_ribbon_width", minWidth)
-                    .putInt("widget_ribbon_height", minHeight)
-                    .apply()
-
-                val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
-                    context,
-                    android.net.Uri.parse("talibilm://resize?minWidth=$minWidth&minHeight=$minHeight&provider=ribbon")
-                )
-                backgroundIntent.send()
-            } catch (_: Exception) {}
-        }
-        updateAppWidget(context, appWidgetManager, appWidgetId)
     }
 
     private fun updateAppWidget(

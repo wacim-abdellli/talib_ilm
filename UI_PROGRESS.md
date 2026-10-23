@@ -1401,3 +1401,24 @@ FAILED (54 violations)
   - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass.
 - **Open Issues:** None.
 
+## Round 24 — Revert Dynamic Widget Stretch & Lock Horizontal Sizing to Mid/Max (Eliminate Squished Min Size)
+- **Status:** Complete
+- **Branch:** `ui/r24-widget-lock-mid-max-revert-stretch`
+- **Core Problem Solved:**
+  1. **Reverted Dynamic Height Stretch:**
+     - The dynamic launcher options resize added in Round 23 caused MIUI/Android launchers to pass tall cell bounds (~140–160dp) to Flutter, which broke the fixed 380:104 aspect ratio and stretched both Ribbon and Large widgets into bloated, square boxes with empty vertical space in both minimized and maximized states.
+     - Reverted all dynamic `width`/`height` parameters in `WidgetRibbon`, `WidgetLarge`, and `HomeWidgetService`, restoring canonical fixed rendering dimensions (380×104dp) with crisp proportionality.
+     - Reverted `onAppWidgetOptionsChanged` in `RibbonWidgetProvider.kt` and `LargeWidgetProvider.kt`, and cleaned up legacy resize keys from SharedPreferences.
+  2. **Locked Resize Mode to Horizontal Only:**
+     - In `widget_ribbon.xml` and `widget_large.xml`, set `android:resizeMode="horizontal"` with `android:minHeight="80dp"` and `android:maxResizeHeight="80dp"`. This disables vertical resizing entirely, preventing launchers from stretching widgets into multi-row squares.
+  3. **Enforced Mid (3-col) & Max (4-col) Sizing, Removed Min (2-col):**
+     - Set `android:minResizeWidth="220dp"` in both widget definitions. This locks out the narrow 2-column "min size" where 5-prayer stations could get cramped, while seamlessly permitting 3-column ("mid size") and 4-column ("max size") snapping.
+  4. **Preserved Clean Format & Live Countdown:**
+     - Preserved the clean digital tabular figures (`05:05`, `12:02`), signature prayer pill, and live Arabic countdown prefix (`الفجر بعد 03:36:12` / `الفجر الإقامة بعد 06:12`) from Rounds 22/23.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass (100%).
+- **Open Issues:** None.
+
+

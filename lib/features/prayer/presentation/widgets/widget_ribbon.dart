@@ -20,8 +20,6 @@ class WidgetRibbon extends StatelessWidget {
   final Map<String, DateTime> all;
   final String hijriDate;
   final bool isDark;
-  final double? width;
-  final double? height;
   final bool forNativeWidget;
 
   const WidgetRibbon({
@@ -30,22 +28,16 @@ class WidgetRibbon extends StatelessWidget {
     required this.all,
     required this.hijriDate,
     this.isDark = false,
-    this.width,
-    this.height,
     this.forNativeWidget = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final resolvedW = width ?? kRibbonW;
-    final resolvedH = height ?? kRibbonH;
-    final contentW = resolvedW - (kRibbonPadH * 2) - (kRibbonBorder * 2);
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
-        width: resolvedW,
-        height: resolvedH,
+        width: kRibbonW,
+        height: kRibbonH,
         isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kRibbonPadH,
@@ -151,10 +143,10 @@ class WidgetRibbon extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: PrayerStrip(
-                      totalWidth: contentW,
+                      totalWidth: kRibbonContent,
                       eval: eval,
                       all: all,
-                      showIcons: resolvedH >= 75,
+                      showIcons: true,
                     ),
                   ),
                 ),

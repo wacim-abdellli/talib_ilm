@@ -20,8 +20,6 @@ class WidgetLarge extends StatelessWidget {
   final String hijriDate;
   final String cityName;
   final bool isDark;
-  final double? width;
-  final double? height;
   final bool forNativeWidget;
 
   const WidgetLarge({
@@ -31,8 +29,6 @@ class WidgetLarge extends StatelessWidget {
     required this.hijriDate,
     required this.cityName,
     this.isDark = false,
-    this.width,
-    this.height,
     this.forNativeWidget = false,
   });
 
@@ -45,14 +41,11 @@ class WidgetLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedW = width ?? kLargeW;
-    final resolvedH = height ?? kLargeH;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
-        width: resolvedW,
-        height: resolvedH,
+        width: kLargeW,
+        height: kLargeH,
         isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kLargePadH,
@@ -162,9 +155,7 @@ class WidgetLarge extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(
-                  height: resolvedH < 90 ? AppSpace.xs : AppSpace.sm,
-                ),
+                const SizedBox(height: AppSpace.sm),
 
                 // ── 2. Bottom Row: 5 Daily Prayers (Salaat First style) ──
                 Row(
@@ -203,17 +194,13 @@ class WidgetLarge extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
-                          SizedBox(
-                            height: resolvedH < 90
-                                ? AppSpace.xxs
-                                : AppSpace.xs,
-                          ),
+                          const SizedBox(height: AppSpace.xs),
 
                           // Prayer Time
                           if (isCurrent)
                             Container(
                               padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs,
+                                horizontal: AppSpace.sm,
                                 vertical: AppSpace.xxs,
                               ),
                               decoration: BoxDecoration(
@@ -224,7 +211,7 @@ class WidgetLarge extends StatelessWidget {
                                 timeStr,
                                 style: textTheme.caption.copyWith(
                                   color: palette.surface,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
@@ -245,7 +232,7 @@ class WidgetLarge extends StatelessWidget {
                                   color: isPast
                                       ? palette.textMuted
                                       : palette.text,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
