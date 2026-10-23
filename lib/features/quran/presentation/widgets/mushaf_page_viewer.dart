@@ -54,6 +54,10 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   int? _selectedSurah;
   int? _selectedAyah;
+  int? _lastReadSurah;
+  int? _lastReadAyah;
+  int? _lastReadPage;
+  Set<String> _bookmarkedAyahs = {};
 
   late final ValueNotifier<QuranPosition> _positionNotifier;
   Timer? _saveLastReadDebounceTimer;
@@ -79,8 +83,8 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       startPage = widget.initialPage!.clamp(1, 604);
       final pageData = quran.getPageData(startPage);
       if (pageData.isNotEmpty) {
-        _currentSurah = pageData.first['surah'] as int;
-        _currentAyah = pageData.first['start'] as int;
+        _currentSurah = widget.initialSurah ?? (pageData.first['surah'] as int);
+        _currentAyah = widget.initialAyah ?? (pageData.first['start'] as int);
       }
     } else if (widget.initialSurah != null) {
       _currentSurah = widget.initialSurah!.clamp(1, 114);
@@ -100,9 +104,22 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     );
 
     _loadSavedSettings();
+    _reloadLastReadAndBookmarks();
     _applyWakelock(_keepScreenAwake);
     QcfFontLoader.preloadPages(_currentPage, radius: 3);
     _audioService.errorNotifier.addListener(_onAudioError);
+    _audioService.activeAyahNotifier.addListener(_onAudioAyahChanged);
+  }
+
+  void _onAudioAyahChanged() {
+    final surah = _audioService.activeSurahNotifier.value;
+    final ayah = _audioService.activeAyahNotifier.value;
+    if (surah == null || ayah == null || !mounted) return;
+
+    final targetPage = quran.getPageNumber(surah, ayah);
+    if (targetPage != _currentPage) {
+      _jumpToPage(targetPage);
+    }
   }
 
   void _onAudioError() {
@@ -128,12 +145,21 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   @override
   void dispose() {
+    _audioService.activeAyahNotifier.removeListener(_onAudioAyahChanged);
     _audioService.errorNotifier.removeListener(_onAudioError);
     _saveLastReadDebounceTimer?.cancel();
     _preloadDebounceTimer?.cancel();
+
+    final surahToSave = (_lastReadPage == _currentPage && _lastReadSurah != null)
+        ? _lastReadSurah!
+        : _currentSurah;
+    final ayahToSave = (_lastReadPage == _currentPage && _lastReadAyah != null)
+        ? _lastReadAyah!
+        : _currentAyah;
+
     BookmarkService.saveLastRead(
-      surah: _currentSurah,
-      ayah: _currentAyah,
+      surah: surahToSave,
+      ayah: ayahToSave,
       page: _currentPage,
     );
     _positionNotifier.dispose();
@@ -179,6 +205,19 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
     _audioService.setSelectedReciter(snapshot.reciter);
     _applyWakelock(snapshot.keepScreenAwake);
+  }
+
+  Future<void> _reloadLastReadAndBookmarks() async {
+    final hasSaved = await BookmarkService.hasSavedLastRead();
+    final lastRead = hasSaved ? await BookmarkService.getLastRead() : null;
+    final bookmarks = await BookmarkService.getBookmarks();
+    if (!mounted) return;
+    setState(() {
+      _lastReadSurah = lastRead?.surah;
+      _lastReadAyah = lastRead?.ayah;
+      _lastReadPage = lastRead?.page;
+      _bookmarkedAyahs = bookmarks.map((b) => '${b.surah}:${b.ayah}').toSet();
+    });
   }
 
   Future<void> _applyWakelock(bool enable) async {
@@ -312,6 +351,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       ayahNumber: ayah,
       audioService: _audioService,
       defaultTafsir: _defaultTafsir,
+      onBookmarkChanged: _reloadLastReadAndBookmarks,
     );
 
     if (mounted) {
@@ -413,6 +453,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   isTajweedEnabled: _isTajweedEnabled,
                   activeSurah: effectiveSurah,
                   activeAyah: effectiveAyah,
+                  lastReadSurah: _lastReadSurah,
+                  lastReadAyah: _lastReadAyah,
+                  bookmarkedAyahs: _bookmarkedAyahs,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
                   onAyahLongPress: _handleAyahLongPress,
                   onToggleOverlays: _toggleOverlays,

@@ -278,6 +278,12 @@ class BookmarkService {
     await prefs.setInt(_legacyLastPageKey, p);
   }
 
+  /// Check whether an explicit last read position has been recorded
+  static Future<bool> hasSavedLastRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_lastReadKey) || prefs.containsKey(_legacyLastSurahKey);
+  }
+
   /// Get last read position with automatic legacy fallback
   static Future<LastRead> getLastRead() async {
     final prefs = await SharedPreferences.getInstance();

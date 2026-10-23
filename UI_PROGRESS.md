@@ -1433,5 +1433,28 @@ FAILED (54 violations)
   - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass (100%).
 - **Open Issues:** None.
 
-
-
+## Round 26 — Fix Quran Audio Autoplay Skipping Ayat & Sync Last-Read Bookmark Visually
+- **Status:** Complete
+- **Branch:** `ui/r26-quran-audio-skip-and-last-read-sync`
+- **Core Problems Solved:**
+  1. **Audio Autoplay Verse Skipping (Bug 1):**
+     - When continuous audio playback completed a verse, `just_audio` emitted `ProcessingState.completed`.
+     - `_handleTrackCompleted()` immediately updated `activeAyahNotifier.value = ayah + 1` before asynchronous audio loading finished. While the player was awaiting I/O to buffer the next track, the stream remained in `completed` state and emitted an additional completion event.
+     - The un-guarded handler processed this duplicate event, incrementing `ayah + 1` to `ayah + 2`, causing verses to be skipped without ever playing.
+     - In addition, playback across page boundaries failed to automatically turn pages in `MushafPageViewer`, leaving the user on the previous page under the impression that audio skipped.
+     - Added `_isTransitioning` asynchronous lock and `_lastCompletedAyahKey` deduplication key in `QuranAudioService`, guaranteeing track transitions fire exactly once per ayah.
+     - Added `_onAudioAyahChanged` listener in `MushafPageViewer` to automatically turn pages when playback crosses page thresholds.
+  2. **Last-Read Bookmark Action Visual Sync (Bug 2):**
+     - In `AyahActionMenuSheet`, clicking "تعيين كموضع قراءة" (Set as reading bookmark) saved the position to `BookmarkService` but failed to trigger `widget.onBookmarkChanged`, leaving the UI and reader unaware of the change.
+     - The button had no active state representation (`_isLastRead`), displaying the same static text regardless of status.
+     - `MushafSinglePage` had zero rendering of bookmarks or reading positions.
+     - `MushafPageViewer.dispose()` was clobbering the user's saved reading position with the page's first ayah on exit.
+     - Added `hasSavedLastRead()` to `BookmarkService` to distinguish explicit saves from fallback defaults.
+     - Wired `widget.onBookmarkChanged` and dynamic state (`Icons.bookmark_added_rounded`, "موضع القراءة الحالي", and primary color highlight) in `AyahActionMenuSheet`.
+     - Added prominent top-header reading badge `[🔖 فاصل القراءة • آية X]` and soft verse tinting in `MushafSinglePage`.
+     - Wired bookmark change callbacks to `MushafPageViewer` and preserved user-set bookmarks on reader exit.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (ran in 149.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/ayah_action_menu_test.dart test/quran_audio_service_test.dart test/quran_page_test.dart`: 11/11 tests pass (100%).
+- **Open Issues:** None.

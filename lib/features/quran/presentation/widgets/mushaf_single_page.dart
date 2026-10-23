@@ -46,6 +46,9 @@ class MushafSinglePage extends StatefulWidget {
   final double fontSize;
   final int? activeSurah;
   final int? activeAyah;
+  final int? lastReadSurah;
+  final int? lastReadAyah;
+  final Set<String>? bookmarkedAyahs;
   final void Function(int surah, int ayah)? onAyahTap;
   final void Function(int surah, int ayah)? onAyahLongPress;
   final VoidCallback? onToggleOverlays;
@@ -58,6 +61,9 @@ class MushafSinglePage extends StatefulWidget {
     this.fontSize = 24.0,
     this.activeSurah,
     this.activeAyah,
+    this.lastReadSurah,
+    this.lastReadAyah,
+    this.bookmarkedAyahs,
     this.onAyahTap,
     this.onAyahLongPress,
     this.onToggleOverlays,
@@ -140,13 +146,52 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                     ),
                   ),
                   Center(
-                    child: Text(
-                      '۞',
-                      style: textTheme.caption.copyWith(
-                        color: palette.gold,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: (widget.lastReadSurah != null &&
+                            widget.lastReadAyah != null &&
+                            quran.getPageNumber(
+                                  widget.lastReadSurah!,
+                                  widget.lastReadAyah!,
+                                ) ==
+                                pageNumber)
+                        ? Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.primary.withValues(alpha: 0.12),
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: palette.primary.withValues(alpha: 0.35),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.bookmark_rounded,
+                                  size: AppIcon.xs,
+                                  color: palette.primary,
+                                ),
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  'فاصل القراءة • آية ${widget.lastReadAyah}',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Text(
+                            '۞',
+                            style: textTheme.caption.copyWith(
+                              color: palette.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                   PositionedDirectional(
                     end: 0,
@@ -267,17 +312,60 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final page = pages[pageIndex];
     final wordOffsets = QuranRepository.instance.wordOffsets[pageIndex] ?? const {};
 
-    BookmarkIndex bookmarkIndex = BookmarkIndex.empty;
+    final List<HighlightVerse> highlights = [];
     if (widget.activeSurah != null && widget.activeAyah != null) {
-      bookmarkIndex = BookmarkIndex.build([
+      highlights.add(
         HighlightVerse(
           surah: widget.activeSurah!,
           verseNumber: widget.activeAyah!,
           page: pageNumber,
           color: palette.gold.withValues(alpha: 0.28),
         ),
-      ]);
+      );
     }
+
+    if (widget.lastReadSurah != null && widget.lastReadAyah != null) {
+      final lastPage = quran.getPageNumber(widget.lastReadSurah!, widget.lastReadAyah!);
+      if (lastPage == pageNumber &&
+          (widget.activeSurah != widget.lastReadSurah || widget.activeAyah != widget.lastReadAyah)) {
+        highlights.add(
+          HighlightVerse(
+            surah: widget.lastReadSurah!,
+            verseNumber: widget.lastReadAyah!,
+            page: pageNumber,
+            color: palette.primary.withValues(alpha: 0.20),
+          ),
+        );
+      }
+    }
+
+    if (widget.bookmarkedAyahs != null && widget.bookmarkedAyahs!.isNotEmpty) {
+      final pageData = quran.getPageData(pageNumber);
+      for (final range in pageData) {
+        final surah = range['surah'] as int;
+        final start = range['start'] as int;
+        final end = range['end'] as int;
+        for (int a = start; a <= end; a++) {
+          if (widget.bookmarkedAyahs!.contains('$surah:$a')) {
+            if ((widget.activeSurah != surah || widget.activeAyah != a) &&
+                (widget.lastReadSurah != surah || widget.lastReadAyah != a)) {
+              highlights.add(
+                HighlightVerse(
+                  surah: surah,
+                  verseNumber: a,
+                  page: pageNumber,
+                  color: palette.gold.withValues(alpha: 0.16),
+                ),
+              );
+            }
+          }
+        }
+      }
+    }
+
+    BookmarkIndex bookmarkIndex = highlights.isNotEmpty
+        ? BookmarkIndex.build(highlights)
+        : BookmarkIndex.empty;
 
     return RepaintBoundary(
       child: QuranSinglePageWidget(

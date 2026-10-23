@@ -70,6 +70,7 @@ class AyahActionMenuSheet extends StatefulWidget {
 
 class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
   bool _isBookmarked = false;
+  bool _isLastRead = false;
 
   @override
   void initState() {
@@ -79,11 +80,19 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
 
   Future<void> _checkBookmark() async {
     final bookmarks = await BookmarkService.getBookmarks();
+    final hasSavedLastRead = await BookmarkService.hasSavedLastRead();
+    final lastRead = await BookmarkService.getLastRead();
     if (!mounted) return;
     final exists = bookmarks.any(
       (b) => b.surah == widget.surahNumber && b.ayah == widget.ayahNumber,
     );
-    setState(() => _isBookmarked = exists);
+    final isLastRead = hasSavedLastRead &&
+        lastRead.surah == widget.surahNumber &&
+        lastRead.ayah == widget.ayahNumber;
+    setState(() {
+      _isBookmarked = exists;
+      _isLastRead = isLastRead;
+    });
   }
 
   Future<void> _toggleBookmark() async {
@@ -111,6 +120,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
       page: page,
     );
     if (!mounted) return;
+    setState(() => _isLastRead = true);
+    widget.onBookmarkChanged?.call();
     Navigator.of(context).pop();
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.success(
@@ -369,10 +380,14 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: _ActionTile(
-                          icon: Icons.bookmark_border_rounded,
-                          title: 'تعيين كموضع قراءة',
-                          subtitle: 'حفظ كآخر موضع توقفت عنده',
-                          color: palette.primary,
+                          icon: _isLastRead
+                              ? Icons.bookmark_added_rounded
+                              : Icons.bookmark_border_rounded,
+                          title: _isLastRead ? 'موضع القراءة الحالي' : 'تعيين كموضع قراءة',
+                          subtitle: _isLastRead
+                              ? 'مثبت كآخر موضع توقفت عنده'
+                              : 'حفظ كآخر موضع توقفت عنده',
+                          color: _isLastRead ? palette.primary : palette.text,
                           onTap: _saveAsLastRead,
                         ),
                       ),

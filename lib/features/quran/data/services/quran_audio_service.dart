@@ -146,6 +146,8 @@ class QuranAudioService {
 
   bool _isContinuous = false;
   int _endAyah = 0;
+  bool _isTransitioning = false;
+  String? _lastCompletedAyahKey;
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   bool get isPlaying => _player.playing;
@@ -218,6 +220,7 @@ class QuranAudioService {
 
   /// Play a single verse
   Future<void> playVerse(int surah, int ayah, {QuranReciter? reciter}) async {
+    _lastCompletedAyahKey = null;
     _isContinuous = false;
     await _startPlay(surah, ayah, reciter: reciter);
   }
@@ -229,6 +232,7 @@ class QuranAudioService {
     int? endAyah,
     QuranReciter? reciter,
   }) async {
+    _lastCompletedAyahKey = null;
     _isContinuous = true;
     _endAyah = endAyah ?? quran.getVerseCount(surah);
     await _startPlay(surah, startAyah, reciter: reciter);
@@ -269,6 +273,7 @@ class QuranAudioService {
   }) async {
     clearError();
     final r = reciter ?? _selectedReciter;
+    _isTransitioning = true;
     activeSurahNotifier.value = surah;
     activeAyahNotifier.value = ayah;
 
@@ -314,6 +319,8 @@ class QuranAudioService {
     } catch (e) {
       debugPrint('QuranAudioService play error: $e');
       await _handlePlaybackError(e);
+    } finally {
+      _isTransitioning = false;
     }
   }
 
@@ -322,6 +329,14 @@ class QuranAudioService {
     final ayah = activeAyahNotifier.value;
 
     if (surah == null || ayah == null) return;
+
+    final key = '$surah:$ayah';
+    if (_isTransitioning || _lastCompletedAyahKey == key) {
+      debugPrint('QuranAudioService: Ignoring duplicate completion for $key');
+      return;
+    }
+    _isTransitioning = true;
+    _lastCompletedAyahKey = key;
 
     // 1. Single Ayah Repeat Mode (repeats the exact same verse infinitely)
     if (repeatModeNotifier.value == AudioRepeatMode.singleAyah) {
@@ -397,6 +412,7 @@ class QuranAudioService {
   }
 
   Future<void> nextAyah() async {
+    _lastCompletedAyahKey = null;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -410,6 +426,7 @@ class QuranAudioService {
   }
 
   Future<void> previousAyah() async {
+    _lastCompletedAyahKey = null;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -423,6 +440,8 @@ class QuranAudioService {
   }
 
   Future<void> stop() async {
+    _lastCompletedAyahKey = null;
+    _isTransitioning = false;
     activeSurahNotifier.value = null;
     activeAyahNotifier.value = null;
     isPlayingNotifier.value = false;
