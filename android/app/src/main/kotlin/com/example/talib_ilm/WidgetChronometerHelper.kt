@@ -128,11 +128,11 @@ object WidgetChronometerHelper {
 
                 if (isPrayerActive || epochMs == 0L || epochMs <= now) {
                     views.setViewVisibility(R.id.widget_countdown, View.GONE)
-                } else {
                     val remainingMs = epochMs - now
                     val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
+                    val formatString = if (!countdownPrefix.isNullOrEmpty()) "$countdownPrefix%s" else "%s"
 
-                    views.setChronometer(R.id.widget_countdown, chronometerBase, "%s", true)
+                    views.setChronometer(R.id.widget_countdown, chronometerBase, formatString, true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.widget_countdown, true)
                     }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -83,20 +85,31 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
     HapticFeedback.mediumImpact();
     setState(() => _saving = true);
 
-    await _settingsService.saveSettings(_settings!);
-    PrayerTimeService.clearCache();
-    await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
-    widget.onSettingsChanged?.call();
+    try {
+      await _settingsService.saveSettings(_settings!);
+      PrayerTimeService.clearCache();
+      widget.onSettingsChanged?.call();
 
-    if (!mounted) return;
-
-    Navigator.pop(context);
-    AppSnackbar.success(
-      context,
-      'تم حفظ إعدادات الصلاة والأذان بنجاح',
-      duration: AppMotion.toastShort,
-      hasNavBar: true,
-    );
+      // Refresh schedule in background without blocking sheet dismissal
+      unawaited(
+        PrayerScheduleService()
+            .refreshSchedulesIfNeeded(force: true)
+            .catchError((_) {}),
+      );
+    } catch (_) {
+      // Graceful fallback
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+        Navigator.pop(context);
+        AppSnackbar.success(
+          context,
+          'تم حفظ إعدادات الصلاة والأذان بنجاح',
+          duration: AppMotion.toastShort,
+          hasNavBar: true,
+        );
+      }
+    }
   }
 
   void _updateSettings(AdhanSettings newSettings) {

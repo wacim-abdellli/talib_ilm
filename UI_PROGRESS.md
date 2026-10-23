@@ -1360,6 +1360,25 @@ FAILED (54 violations)
   - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (12/12 tests).
 - **Open Issues:** None.
 
+## Round 22 — Widget Countdown Prefix Formatting & Settings Sheet Loading Fix
+- **Status:** Complete
+- **Branch:** `ui/r22-widget-prefix-and-settings-fix`
+- **Core Problem Solved:**
+  1. **Widget Countdown Prefix (`بعد ` and `الإقامة بعد `):**
+     - Native Chronometer on Android home screen widgets (`Ribbon` and `Large`) displayed raw timer without the contextual prefix, disconnecting prayer name and remaining time.
+     - Updated `WidgetChronometerHelper.kt` to format Chronometer using `countdownPrefix` (e.g. `"بعد %s"` before Adhan, and `"الإقامة بعد %s"` during the Iqama countdown window).
+     - The top row now reads authentically in Arabic: `[الفجر] [بعد 08:29:43]` and `[الفجر] [الإقامة بعد 06:12]`, cleanly hiding during active prayer (`View.GONE`).
+  2. **Prayer Settings Sheet Loading Lockup:**
+     - Tapping the "حفظ الإعدادات" (Save Settings) button got stuck in a loading state because `refreshSchedulesIfNeeded(force: true)` ran synchronously across 7 days of platform notification scheduling without a `try/finally` block.
+     - Wrapped `_save()` in `prayer_settings_sheet.dart` with robust `try/finally`, dispatched 7-day notification rescheduling in background via `unawaited(...)`, and ensured immediate dialog dismissal and success notification with zero lockup.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_settings_sheet_test.dart`: 100% pass (2/2 tests).
+  - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (12/12 tests).
+- **Open Issues:** None.
+
+
 
 
 
