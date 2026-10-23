@@ -174,6 +174,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
   void _playVerse() {
     HapticFeedback.mediumImpact();
     Navigator.of(context).pop();
+    widget.audioService.setRepeatMode(AudioRepeatMode.none);
     widget.audioService.playVerse(widget.surahNumber, widget.ayahNumber);
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.info(
@@ -185,7 +186,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
   void _repeatVerseInfinite() {
     HapticFeedback.mediumImpact();
     Navigator.of(context).pop();
-    widget.audioService.setRepeatMode(AudioRepeatMode.singleAyah);
+    widget.audioService.setRepeatMode(AudioRepeatMode.infinite);
     widget.audioService.playVerse(widget.surahNumber, widget.ayahNumber);
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.info(
@@ -387,7 +388,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           subtitle: _isLastRead
                               ? 'مثبت كآخر موضع توقفت عنده'
                               : 'حفظ كآخر موضع توقفت عنده',
-                          color: _isLastRead ? palette.primary : palette.text,
+                          color: _isLastRead ? palette.success : palette.text,
                           onTap: _saveAsLastRead,
                         ),
                       ),

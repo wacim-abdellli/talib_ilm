@@ -10,8 +10,8 @@ import 'quran_audio_downloader.dart';
 
 enum AudioRepeatMode {
   none,
-  singleAyah,
-  surah,
+  repeatOnce,
+  infinite,
 }
 
 enum AudioPlaybackErrorType {
@@ -148,6 +148,7 @@ class QuranAudioService {
   int _endAyah = 0;
   bool _isTransitioning = false;
   String? _lastCompletedAyahKey;
+  int _ayahRepeatCount = 0;
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   bool get isPlaying => _player.playing;
@@ -221,6 +222,7 @@ class QuranAudioService {
   /// Play a single verse
   Future<void> playVerse(int surah, int ayah, {QuranReciter? reciter}) async {
     _lastCompletedAyahKey = null;
+    _ayahRepeatCount = 0;
     _isContinuous = false;
     await _startPlay(surah, ayah, reciter: reciter);
   }
@@ -233,6 +235,7 @@ class QuranAudioService {
     QuranReciter? reciter,
   }) async {
     _lastCompletedAyahKey = null;
+    _ayahRepeatCount = 0;
     _isContinuous = true;
     _endAyah = endAyah ?? quran.getVerseCount(surah);
     await _startPlay(surah, startAyah, reciter: reciter);
@@ -338,28 +341,26 @@ class QuranAudioService {
     _isTransitioning = true;
     _lastCompletedAyahKey = key;
 
-    // 1. Single Ayah Repeat Mode (repeats the exact same verse infinitely)
-    if (repeatModeNotifier.value == AudioRepeatMode.singleAyah) {
+    // 1. Infinite Repeat Mode (stays repeating the exact same ayah indefinitely)
+    if (repeatModeNotifier.value == AudioRepeatMode.infinite) {
       _startPlay(surah, ayah);
       return;
     }
 
-    final totalVerses = quran.getVerseCount(surah);
-
-    // 2. Surah Repeat Mode (Infinite repeat: plays sequentially, loops back to ayah 1)
-    if (repeatModeNotifier.value == AudioRepeatMode.surah) {
-      if (ayah < totalVerses) {
-        _startPlay(surah, ayah + 1);
-      } else {
-        // Loop back to verse 1 infinitely!
-        _startPlay(surah, 1);
+    // 2. Repeat Once Mode (repeats the ayah once, then advances to next)
+    if (repeatModeNotifier.value == AudioRepeatMode.repeatOnce) {
+      if (_ayahRepeatCount < 1) {
+        _ayahRepeatCount++;
+        _startPlay(surah, ayah);
+        return;
       }
-      return;
+      _ayahRepeatCount = 0;
     }
 
+    final totalVerses = quran.getVerseCount(surah);
     final limit = (_isContinuous && _endAyah > 0) ? _endAyah : totalVerses;
 
-    // 3. Continuous / Standard Playback
+    // 3. Continuous / Standard Playback (sequential verse by verse)
     if (_isContinuous) {
       if (ayah < limit) {
         _startPlay(surah, ayah + 1);
@@ -369,7 +370,7 @@ class QuranAudioService {
         stop();
       }
     } else {
-      // By default in modern Quran apps, playing verse N advances to N+1
+      // By default, reading verse N advances to N+1
       if (ayah < totalVerses) {
         _startPlay(surah, ayah + 1);
       } else {
@@ -413,6 +414,7 @@ class QuranAudioService {
 
   Future<void> nextAyah() async {
     _lastCompletedAyahKey = null;
+    _ayahRepeatCount = 0;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -427,6 +429,7 @@ class QuranAudioService {
 
   Future<void> previousAyah() async {
     _lastCompletedAyahKey = null;
+    _ayahRepeatCount = 0;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -441,6 +444,7 @@ class QuranAudioService {
 
   Future<void> stop() async {
     _lastCompletedAyahKey = null;
+    _ayahRepeatCount = 0;
     _isTransitioning = false;
     activeSurahNotifier.value = null;
     activeAyahNotifier.value = null;

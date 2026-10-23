@@ -40,11 +40,11 @@ void main() {
     });
 
     test('repeat mode updates correctly', () {
-      service.setRepeatMode(AudioRepeatMode.singleAyah);
-      expect(service.repeatModeNotifier.value, AudioRepeatMode.singleAyah);
+      service.setRepeatMode(AudioRepeatMode.repeatOnce);
+      expect(service.repeatModeNotifier.value, AudioRepeatMode.repeatOnce);
 
-      service.setRepeatMode(AudioRepeatMode.surah);
-      expect(service.repeatModeNotifier.value, AudioRepeatMode.surah);
+      service.setRepeatMode(AudioRepeatMode.infinite);
+      expect(service.repeatModeNotifier.value, AudioRepeatMode.infinite);
 
       service.setRepeatMode(AudioRepeatMode.none);
       expect(service.repeatModeNotifier.value, AudioRepeatMode.none);
@@ -81,5 +81,14 @@ void main() {
       expect(service.activeAyahNotifier.value, isNull);
       expect(service.isPlayingNotifier.value, isFalse);
     });
+
+    test('repeat modes enum has none, repeatOnce, and infinite', () {
+      expect(AudioRepeatMode.values, [
+        AudioRepeatMode.none,
+        AudioRepeatMode.repeatOnce,
+        AudioRepeatMode.infinite,
+      ]);
+    });
   });
 }
+

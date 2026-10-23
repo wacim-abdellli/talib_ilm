@@ -159,10 +159,10 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: palette.primary.withValues(alpha: 0.12),
+                              color: palette.success.withValues(alpha: 0.12),
                               borderRadius: AppRadius.pillRadius,
                               border: Border.all(
-                                color: palette.primary.withValues(alpha: 0.35),
+                                color: palette.success.withValues(alpha: 0.35),
                                 width: 0.8,
                               ),
                             ),
@@ -172,13 +172,13 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                                 Icon(
                                   Icons.bookmark_rounded,
                                   size: AppIcon.xs,
-                                  color: palette.primary,
+                                  color: palette.success,
                                 ),
                                 const SizedBox(width: AppSpace.xxs),
                                 Text(
                                   'فاصل القراءة • آية ${widget.lastReadAyah}',
                                   style: textTheme.caption.copyWith(
-                                    color: palette.primary,
+                                    color: palette.success,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -333,7 +333,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
             surah: widget.lastReadSurah!,
             verseNumber: widget.lastReadAyah!,
             page: pageNumber,
-            color: palette.primary.withValues(alpha: 0.20),
+            color: palette.success.withValues(alpha: 0.15),
           ),
         );
       }
@@ -354,7 +354,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                   surah: surah,
                   verseNumber: a,
                   page: pageNumber,
-                  color: palette.gold.withValues(alpha: 0.16),
+                  color: palette.success.withValues(alpha: 0.10),
                 ),
               );
             }

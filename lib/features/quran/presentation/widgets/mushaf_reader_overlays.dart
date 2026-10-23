@@ -321,13 +321,13 @@ class MushafReaderBottomBar extends StatelessWidget {
           builder: (context, repeatMode, _) {
             final IconData icon = switch (repeatMode) {
               AudioRepeatMode.none => Icons.repeat_rounded,
-              AudioRepeatMode.singleAyah => Icons.repeat_one_rounded,
-              AudioRepeatMode.surah => Icons.all_inclusive_rounded,
+              AudioRepeatMode.repeatOnce => Icons.repeat_one_rounded,
+              AudioRepeatMode.infinite => Icons.all_inclusive_rounded,
             };
             final String tooltip = switch (repeatMode) {
-              AudioRepeatMode.none => 'بدون تكرار',
-              AudioRepeatMode.singleAyah => 'تكرار الآية الحالية',
-              AudioRepeatMode.surah => 'تكرار السورة مستمر (∞)',
+              AudioRepeatMode.none => 'بدون تكرار (آية تلو آية)',
+              AudioRepeatMode.repeatOnce => 'تكرار الآية مرة واحدة ثم المتابعة',
+              AudioRepeatMode.infinite => 'تكرار الآية مستمر (∞)',
             };
             final bool active = repeatMode != AudioRepeatMode.none;
 
@@ -338,9 +338,9 @@ class MushafReaderBottomBar extends StatelessWidget {
               onPressed: () {
                 HapticFeedback.selectionClick();
                 final next = switch (repeatMode) {
-                  AudioRepeatMode.none => AudioRepeatMode.singleAyah,
-                  AudioRepeatMode.singleAyah => AudioRepeatMode.surah,
-                  AudioRepeatMode.surah => AudioRepeatMode.none,
+                  AudioRepeatMode.none => AudioRepeatMode.repeatOnce,
+                  AudioRepeatMode.repeatOnce => AudioRepeatMode.infinite,
+                  AudioRepeatMode.infinite => AudioRepeatMode.none,
                 };
                 audioService.setRepeatMode(next);
               },

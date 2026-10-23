@@ -1458,3 +1458,28 @@ FAILED (54 violations)
   - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
   - `flutter test test/ayah_action_menu_test.dart test/quran_audio_service_test.dart test/quran_page_test.dart`: 11/11 tests pass (100%).
 - **Open Issues:** None.
+
+## Round 27 — Quran Ayah Player Repeat Modes & Softer Bookmark Highlight Tint
+- **Status:** Complete
+- **Branch:** `ui/r27-quran-audio-repeat-modes-and-softer-bookmark-color`
+- **Core Problems Solved:**
+  1. **Ayah Player Playback & Repeat Modes Alignment:**
+     - Aligned `AudioRepeatMode` enum and playback mechanics with authentic user expectations:
+       - `none` (Default): Sequential ayah-by-ayah playback. Upon completion of each ayah, playback moves to the next ayah.
+       - `repeatOnce` (`Icons.repeat_one_rounded`): Plays the ayah, repeats it once (`_ayahRepeatCount < 1`), then automatically advances to the next ayah (ideal for Quran memorization/muraja'ah).
+       - `infinite` (`Icons.all_inclusive_rounded`): Repeats the current ayah indefinitely (`∞`), staying on that single verse until changed.
+     - Wired `_ayahRepeatCount` resetting across manual playback actions (`playVerse`, `playContinuous`, `nextAyah`, `previousAyah`, and `stop`).
+     - In `mushaf_reader_overlays.dart`, updated the 3-state repeat toggle button cycling (`none` -> `repeatOnce` -> `infinite` -> `none`) with informative Arabic tooltips.
+     - In `ayah_action_menu_sheet.dart`, wired "استماع للآية" to default sequential playback (`AudioRepeatMode.none`) and "تكرار الآية" to infinite repetition (`AudioRepeatMode.infinite`).
+  2. **Differentiated Softer Bookmark Highlight Color:**
+     - Previously, both audio playback and saved bookmarks used Amber/Gold (`palette.gold` or `palette.primary` in dark mode where primary is amber), causing visual confusion between the currently playing verse and the saved reading bookmark.
+     - Separated the color palettes:
+       - **Audio Recitation (Player):** Radiant Amber Gold (`palette.gold.withValues(alpha: 0.28)`).
+       - **Reading Bookmark / Last Read:** Gentle, serene Emerald Green (`palette.success.withValues(alpha: 0.15)`), matching the authentic Medina Quran reading ribbon.
+       - **Saved Bookmarks (Fawasel):** Delicate soft Emerald tint (`palette.success.withValues(alpha: 0.10)`).
+       - **Top Header Badge & Action Tile:** Updated reading position badges and icons to `palette.success`.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (ran in 24.0s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/quran_audio_service_test.dart test/ayah_action_menu_test.dart`: 10/10 tests pass (100%).
+- **Open Issues:** None.
