@@ -14,6 +14,22 @@ import '../../features/quran/presentation/widgets/mushaf_page_viewer.dart';
 import '../../shared/navigation/app_shell.dart';
 import '../../shared/navigation/fade_page_route.dart';
 
+/// Semantic classification of notification / deep-link destinations.
+enum NotificationDestination {
+  morningAthkar,
+  eveningAthkar,
+  sleepingAthkar,
+  afterPrayerAthkar,
+  tasbeeh,
+  istighfar,
+  duasMisc,
+  dynamicAthkar,
+  surahKahf,
+  quranDeepLink,
+  prayer,
+  unknown,
+}
+
 /// NotificationRouter - Centralized, reliable handler for notification clicks & deep link payloads.
 /// Dispatches to the exact corresponding view (Morning Athkar, Evening Athkar, Sleeping Athkar,
 /// Surah Al-Kahf, Prayer times, etc.) seamlessly in both running and cold-start app lifecycles.
@@ -23,13 +39,116 @@ class NotificationRouter {
   /// Payload captured from cold-start getNotificationAppLaunchDetails
   static String? pendingPayload;
 
-  /// Handles an incoming notification payload.
+  static String? _lastDispatchedPayload;
+  static int _lastDispatchTimestampMs = 0;
+
+  /// Authoritative destination parser mapping raw payload strings to typed [NotificationDestination].
+  static NotificationDestination parseDestination(String? rawPayload) {
+    if (rawPayload == null || rawPayload.trim().isEmpty) {
+      return NotificationDestination.unknown;
+    }
+    final payload = rawPayload.trim().toLowerCase();
+
+    // ── 1. Adhkar Destinations ───────────────────────────────────────────
+    if (payload == 'morning' ||
+        payload == 'adhkar_morning' ||
+        payload == 'adhkar:morning' ||
+        payload == 'morning_athkar' ||
+        payload.contains('morning') ||
+        payload.contains('صباح')) {
+      return NotificationDestination.morningAthkar;
+    }
+
+    if (payload == 'evening' ||
+        payload == 'adhkar_evening' ||
+        payload == 'adhkar:evening' ||
+        payload == 'evening_athkar' ||
+        payload.contains('evening') ||
+        payload.contains('مساء')) {
+      return NotificationDestination.eveningAthkar;
+    }
+
+    if (payload == 'sleep' ||
+        payload == 'sleeping' ||
+        payload == 'adhkar_sleep' ||
+        payload == 'adhkar_sleeping' ||
+        payload == 'adhkar:sleep' ||
+        payload == 'sleeping_athkar' ||
+        payload.contains('sleep') ||
+        payload.contains('نوم')) {
+      return NotificationDestination.sleepingAthkar;
+    }
+
+    if (payload == 'after_prayer' ||
+        payload == 'afterprayer' ||
+        payload == 'adhkar_after_prayer' ||
+        payload == 'adhkar:after_prayer' ||
+        payload.contains('بعد الصلاة') ||
+        payload.contains('بعد_الصلاة')) {
+      return NotificationDestination.afterPrayerAthkar;
+    }
+
+    if (payload == 'tasbeeh' ||
+        payload == 'tasbih' ||
+        payload.contains('تسبيح')) {
+      return NotificationDestination.tasbeeh;
+    }
+
+    if (payload == 'istighfar' || payload.contains('استغفار')) {
+      return NotificationDestination.istighfar;
+    }
+
+    if (payload == 'duas' ||
+        payload == 'misc' ||
+        payload.contains('أدعية') ||
+        payload.contains('ادعية')) {
+      return NotificationDestination.duasMisc;
+    }
+
+    // ── 2. Quran Notifications ───────────────────────────────────────────
+    if (payload == 'surah_18' ||
+        payload == 'surah_alkahf' ||
+        payload == 'quran:kahf' ||
+        payload.contains('kahf') ||
+        payload.contains('كهف')) {
+      return NotificationDestination.surahKahf;
+    }
+
+    if (payload.startsWith('talibilm://quran/')) {
+      return NotificationDestination.quranDeepLink;
+    }
+
+    // ── 3. Prayer Notifications ───────────────────────────────────────────
+    if (payload.startsWith('prayer') ||
+        payload.startsWith('adhan') ||
+        payload.startsWith('iqama') ||
+        payload.contains('صلاة') ||
+        payload.contains('أذان') ||
+        payload.contains('اذان') ||
+        payload.contains('إقامة') ||
+        payload.contains('اقامة')) {
+      return NotificationDestination.prayer;
+    }
+
+    // ── 4. Dynamic Adhkar Category Fallback ───────────────────────────────
+    final stripped =
+        payload.startsWith('adhkar_') ? payload.substring(7) : payload;
+    final parsedCategory =
+        adhkarCategoryFromId(payload) ?? adhkarCategoryFromId(stripped);
+    if (parsedCategory != null) {
+      return NotificationDestination.dynamicAthkar;
+    }
+
+    return NotificationDestination.unknown;
+  }
+
+  /// Handles an incoming notification payload with shell tab synchronization and duplicate suppression.
   static void handlePayload(String? rawPayload, {BuildContext? context}) {
     if (rawPayload == null || rawPayload.isEmpty) return;
     final payload = rawPayload.trim().toLowerCase();
 
-    // If AppShell is not ready yet (e.g. splash is still animating or cold booting),
-    // save the payload so AppShell can consume it once fully mounted.
+    // If AppShell is not ready yet (e.g. cold booting or splash animating),
+    // save the payload so AppShell can consume it once mounted.
     if (!AppShell.isAppShellReady) {
       pendingPayload = payload;
       return;
@@ -43,123 +162,93 @@ class NotificationRouter {
       return;
     }
 
+    // Duplicate tap suppression: ignore identical payload within 500ms
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (_lastDispatchedPayload == payload &&
+        (nowMs - _lastDispatchTimestampMs) < 500) {
+      return;
+    }
+    _lastDispatchedPayload = payload;
+    _lastDispatchTimestampMs = nowMs;
+
     pendingPayload = null;
 
-    // ── 1. Adhkar Notifications ───────────────────────────────────────────
-    // Morning Athkar: English keys, IDs, or Arabic strings
-    if (payload == 'morning' ||
-        payload == 'adhkar_morning' ||
-        payload.contains('morning') ||
-        payload.contains('صباح')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const MorningAthkarPage());
-      return;
-    }
+    final destination = parseDestination(payload);
 
-    // Evening Athkar: English keys, IDs, or Arabic strings
-    if (payload == 'evening' ||
-        payload == 'adhkar_evening' ||
-        payload.contains('evening') ||
-        payload.contains('مساء')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const EveningAthkarPage());
-      return;
-    }
+    switch (destination) {
+      case NotificationDestination.morningAthkar:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const MorningAthkarPage());
+        break;
 
-    // Sleeping Athkar: English keys, IDs, or Arabic strings
-    if (payload == 'sleep' ||
-        payload == 'sleeping' ||
-        payload == 'adhkar_sleep' ||
-        payload == 'adhkar_sleeping' ||
-        payload.contains('sleep') ||
-        payload.contains('نوم')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const SleepingAthkarPage());
-      return;
-    }
+      case NotificationDestination.eveningAthkar:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const EveningAthkarPage());
+        break;
 
-    // After-Prayer Athkar
-    if (payload == 'after_prayer' ||
-        payload == 'afterprayer' ||
-        payload == 'adhkar_after_prayer' ||
-        payload.contains('بعد الصلاة')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const AfterPrayerAthkarPage());
-      return;
-    }
+      case NotificationDestination.sleepingAthkar:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const SleepingAthkarPage());
+        break;
 
-    // Tasbeeh
-    if (payload == 'tasbeeh' ||
-        payload == 'tasbih' ||
-        payload.contains('تسبيح')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const TasbeehIstighfarPage(initialTabIndex: 0));
-      return;
-    }
+      case NotificationDestination.afterPrayerAthkar:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const AfterPrayerAthkarPage());
+        break;
 
-    // Istighfar
-    if (payload == 'istighfar' || payload.contains('استغفار')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const TasbeehIstighfarPage(initialTabIndex: 1));
-      return;
-    }
+      case NotificationDestination.tasbeeh:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const TasbeehIstighfarPage(initialTabIndex: 0));
+        break;
 
-    // Duas & Misc
-    if (payload == 'duas' ||
-        payload == 'misc' ||
-        payload.contains('أدعية') ||
-        payload.contains('ادعية')) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(const DuasMiscPage());
-      return;
-    }
+      case NotificationDestination.istighfar:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const TasbeehIstighfarPage(initialTabIndex: 1));
+        break;
 
-    // ── 2. Quran Notifications (e.g. Surah Al-Kahf Friday) ────────────────
-    if (payload == 'surah_18' ||
-        payload == 'surah_alkahf' ||
-        payload.contains('kahf') ||
-        payload.contains('كهف')) {
-      // Surah Al-Kahf starts on page 293 in the Madani Mushaf
-      _pushPage(const MushafPageViewer(initialPage: 293, initialSurah: 18));
-      return;
-    }
+      case NotificationDestination.duasMisc:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
+        _pushPage(const DuasMiscPage());
+        break;
 
-    // Quran deep links: talibilm://quran/...
-    if (payload.startsWith('talibilm://quran/')) {
-      final uri = Uri.tryParse(payload);
-      if (uri != null) {
-        final target = QuranDeepLinkService.parse(uri);
-        if (target.isValid && target.page != null) {
-          _pushPage(MushafPageViewer(
-            initialPage: target.page!,
-            initialSurah: target.surah,
-            initialAyah: target.ayah,
-          ));
-          return;
+      case NotificationDestination.dynamicAthkar:
+        final stripped =
+            payload.startsWith('adhkar_') ? payload.substring(7) : payload;
+        final cat =
+            adhkarCategoryFromId(payload) ?? adhkarCategoryFromId(stripped);
+        if (cat != null) {
+          AppShell.switchTo(targetContext, AppShellTab.adhkar);
+          _pushPage(AdhkarSessionPage(category: cat));
         }
-      }
-    }
+        break;
 
-    // ── 3. Prayer Notifications ───────────────────────────────────────────
-    if (payload.startsWith('prayer') ||
-        payload == 'adhan' ||
-        payload == 'iqama' ||
-        payload.contains('صلاة') ||
-        payload.contains('أذان') ||
-        payload.contains('اذان') ||
-        payload.contains('إقامة') ||
-        payload.contains('اقامة')) {
-      AppShell.switchToTab(targetContext, 1);
-      _popToRoot();
-      return;
-    }
+      case NotificationDestination.surahKahf:
+        // Surah Al-Kahf starts on page 293 in the Madani Mushaf
+        _pushPage(const MushafPageViewer(initialPage: 293, initialSurah: 18));
+        break;
 
-    // ── 4. Fallback: Parse as dynamic Adhkar category ─────────────────────
-    final parsedCategory = adhkarCategoryFromId(payload);
-    if (parsedCategory != null) {
-      AppShell.switchToTab(targetContext, 2);
-      _pushPage(AdhkarSessionPage(category: parsedCategory));
-      return;
+      case NotificationDestination.quranDeepLink:
+        final uri = Uri.tryParse(payload);
+        if (uri != null) {
+          final target = QuranDeepLinkService.parse(uri);
+          if (target.isValid && target.page != null) {
+            _pushPage(MushafPageViewer(
+              initialPage: target.page!,
+              initialSurah: target.surah,
+              initialAyah: target.ayah,
+            ));
+          }
+        }
+        break;
+
+      case NotificationDestination.prayer:
+        AppShell.switchTo(targetContext, AppShellTab.prayer);
+        _popToRoot();
+        break;
+
+      case NotificationDestination.unknown:
+        // Graceful fallback for unknown or malformed payloads
+        break;
     }
   }
 
@@ -185,5 +274,13 @@ class NotificationRouter {
       pendingPayload = null;
       handlePayload(p, context: context);
     }
+  }
+
+  /// Resets internal dispatch rate-limiting state for test isolation.
+  @visibleForTesting
+  static void resetStateForTesting() {
+    pendingPayload = null;
+    _lastDispatchedPayload = null;
+    _lastDispatchTimestampMs = 0;
   }
 }

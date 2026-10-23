@@ -25,6 +25,14 @@ import '../../features/ilm/presentation/ilm_page.dart';
 import '../../features/more/presentation/more_page.dart';
 import 'fade_page_route.dart';
 
+enum AppShellTab {
+  home,
+  prayer,
+  ilm,
+  adhkar,
+  more,
+}
+
 class AppShell extends StatefulWidget {
   final int initialIndex;
 
@@ -38,6 +46,13 @@ class AppShell extends StatefulWidget {
   /// Checks if AppShell is mounted and ready to receive navigation actions
   static bool get isAppShellReady =>
       _activeState != null && _activeState!.mounted;
+
+  /// Returns the currently active tab index, or null if AppShell is not mounted.
+  static int? get currentTabIndex => _activeState?._currentIndex;
+
+  /// Allows switching tab using strongly-typed [AppShellTab] destination
+  static bool switchTo(BuildContext? context, AppShellTab tab) =>
+      switchToTab(context, tab.index);
 
   /// Allows any descendant page or external service to cleanly switch bottom navigation tab
   static bool switchToTab(BuildContext? context, int index) {

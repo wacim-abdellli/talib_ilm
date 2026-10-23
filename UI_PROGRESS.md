@@ -1,5 +1,14 @@
 # UI Progress Log
 
+## R36 / T06 — Notification routing and navigation invariants (C13)
+- **Scope:** Finding C13 (Adhkar notifications selected tab 2 / Ilm instead of tab 3 / Adhkar in `NotificationRouter`, causing Back navigation to land on the wrong section; missing authoritative destination mapping and unverified post-pop tab invariants).
+- **Implemented:**
+  - `lib/shared/navigation/app_shell.dart`: Added typed `AppShellTab` enum (`home`, `prayer`, `ilm`, `adhkar`, `more`), `AppShell.switchTo(BuildContext? context, AppShellTab tab)` helper, and `AppShell.currentTabIndex` state inspector.
+  - `lib/core/services/notification_router.dart`: Introduced `NotificationDestination` enum and authoritative `parseDestination(String?)` parser. Replaced scattered magic tab indices with `AppShellTab.adhkar` across all Adhkar routes (Morning, Evening, Sleep, After-Prayer, Tasbeeh, Istighfar, Duas, and dynamic categories). Replaced magic index with `AppShellTab.prayer` for adhan/iqama/prayer alerts. Added 500ms duplicate rapid tap suppression (`_lastDispatchedPayload`, `_lastDispatchTimestampMs`) and safe graceful fallback for unknown/malformed payloads without throwing unhandled exceptions.
+  - `test/notification_router_test.dart`: Rewrote and expanded test suite to 17 tests. Verified authoritative payload parsing across all supported variants, cold-start single consumption and pending payload cleanup, explicit post-pop underlying tab assertion (`AppShell.currentTabIndex == AppShellTab.adhkar.index`, proving C13 acceptance), prayer route popping, rapid duplicate tap suppression, and malformed payload resilience.
+- **Verified:** 17/17 tests passing in `test/notification_router_test.dart`. `flutter analyze` completed with 0 issues (8.7s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (77.6s), SHA-256 `BB36198F0304239A09D1F93553DF2241709C198EA060875CD54431F5E0D226F4`.
+- **Open issues:** T06 complete. Proceed to T07 (Quran Downloader Ownership, Time Bounds & Integrity: C14–C16).
+
 ## R35 / T05 — Prayer calculation and scheduling boundary matrix (C11, C12)
 - **Scope:** Findings C11 (Data safety: scheduling failures were silently swallowed while success timestamps were saved, permanently suppressing retries) and C12 (Incomplete cache invalidation: changing calculation method, madhab, or minute adjustments never invalidated the schedule cache; and DST calendar shifts caused date drift).
 - **Implemented:**
