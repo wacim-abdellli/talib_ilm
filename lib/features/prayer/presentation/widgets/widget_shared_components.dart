@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_theme.dart';
-import '../../data/models/prayer_models.dart';
 import 'prayer_widget_state_evaluator.dart';
 
 /// PrayerStrip — 5 fixed-width prayer columns with celestial icons.
@@ -22,6 +21,13 @@ class PrayerStrip extends StatelessWidget {
     this.showIcons = true,
   });
 
+  static String formatDigitalTime(DateTime time) {
+    final hour12 = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final hStr = hour12.toString().padLeft(2, '0');
+    final mStr = time.minute.toString().padLeft(2, '0');
+    return '$hStr:$mStr';
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -36,7 +42,7 @@ class PrayerStrip extends StatelessWidget {
           final isCurrent = eval.activePrayerName == name;
           final isPast = eval.completedPrayerNames.contains(name);
           final time = all[name];
-          final timeStr = time != null ? formatPrayerTime12h(time) : '--:--';
+          final timeStr = time != null ? formatDigitalTime(time) : '--:--';
           final pColor = palette.prayer(name);
 
           final nameColor = isCurrent

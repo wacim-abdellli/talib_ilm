@@ -162,7 +162,9 @@ class WidgetLarge extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: AppSpace.sm),
+                SizedBox(
+                  height: resolvedH < 90 ? AppSpace.xs : AppSpace.sm,
+                ),
 
                 // ── 2. Bottom Row: 5 Daily Prayers (Salaat First style) ──
                 Row(
@@ -201,13 +203,17 @@ class WidgetLarge extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: AppSpace.xs),
+                          SizedBox(
+                            height: resolvedH < 90
+                                ? AppSpace.xxs
+                                : AppSpace.xs,
+                          ),
 
                           // Prayer Time
                           if (isCurrent)
                             Container(
                               padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.sm,
+                                horizontal: AppSpace.xs,
                                 vertical: AppSpace.xxs,
                               ),
                               decoration: BoxDecoration(
@@ -218,7 +224,7 @@ class WidgetLarge extends StatelessWidget {
                                 timeStr,
                                 style: textTheme.caption.copyWith(
                                   color: palette.surface,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
@@ -239,7 +245,7 @@ class WidgetLarge extends StatelessWidget {
                                   color: isPast
                                       ? palette.textMuted
                                       : palette.text,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],

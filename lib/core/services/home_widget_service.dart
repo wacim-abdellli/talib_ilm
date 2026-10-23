@@ -181,6 +181,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData<bool>('widget_is_dark', useDark);
       await HomeWidget.saveWidgetData<String>('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
       await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
+      await HomeWidget.saveWidgetData<String>('prayer_status_label', eval.statusLabel);
       await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
 
       final prefs = await SharedPreferences.getInstance();
@@ -192,6 +193,7 @@ class HomeWidgetService {
       await prefs.setBool('widget_is_dark', useDark);
       await prefs.setString('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
       await prefs.setString('countdown_prefix', countdownPrefix);
+      await prefs.setString('prayer_status_label', eval.statusLabel);
       await prefs.setBool('is_prayer_active', isPrayerActive);
     } catch (_) {}
   }
@@ -302,18 +304,29 @@ class HomeWidgetService {
       final hijri = _formatHijri(now);
       final useDark = await _resolveWidgetIsDark();
 
+      int targetW = kRibbonW.toInt();
+      int targetH = kRibbonH.toInt();
+      try {
+        final rawW = await HomeWidget.getWidgetData<dynamic>('widget_ribbon_width');
+        final rawH = await HomeWidget.getWidgetData<dynamic>('widget_ribbon_height');
+        final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
+        final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
+        if (savedW != null && savedW >= 180) targetW = savedW.clamp(180, 480);
+        if (savedH != null && savedH >= 60) targetH = savedH.clamp(60, 200);
+      } catch (_) {}
+
       final timeKey = '${now.hour}:${now.minute}';
-      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${targetW}x$targetH';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
       }
       _lastRibbonRenderKey = renderKey;
 
-      const resolvedSize = Size(kRibbonW, kRibbonH);
+      final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
 
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
@@ -327,6 +340,8 @@ class HomeWidgetService {
                 all: all,
                 hijriDate: hijri,
                 isDark: useDark,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
                 forNativeWidget: true,
               ),
             ),
@@ -436,19 +451,30 @@ class HomeWidgetService {
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
       final useDark = await _resolveWidgetIsDark();
 
+      int targetW = kLargeW.toInt();
+      int targetH = kLargeH.toInt();
+      try {
+        final rawW = await HomeWidget.getWidgetData<dynamic>('widget_large_width');
+        final rawH = await HomeWidget.getWidgetData<dynamic>('widget_large_height');
+        final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
+        final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
+        if (savedW != null && savedW >= 180) targetW = savedW.clamp(180, 480);
+        if (savedH != null && savedH >= 60) targetH = savedH.clamp(60, 240);
+      } catch (_) {}
+
       final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
-          'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+          'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${targetW}x$targetH';
       if (!force && renderKey == _lastLargeRenderKey) {
         return;
       }
       _lastLargeRenderKey = renderKey;
 
-      const resolvedSize = Size(kLargeW, kLargeH);
+      final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
 
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.0,
             textScaler: TextScaler.noScaling,
@@ -463,6 +489,8 @@ class HomeWidgetService {
                 hijriDate: hijri,
                 cityName: city,
                 isDark: useDark,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
                 forNativeWidget: true,
               ),
             ),

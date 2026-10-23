@@ -1378,9 +1378,26 @@ FAILED (54 violations)
   - `flutter test test/prayer_home_screen_widget_test.dart`: 100% pass (12/12 tests).
 - **Open Issues:** None.
 
-
-
-
-
-
+## Round 23 — Widget Compact Time Scaling & Adaptive Resizing
+- **Status:** Complete
+- **Branch:** `ui/r23-widget-compact-time-scaling`
+- **Core Problem Solved:**
+  1. **Bottom Row Prayer Times Scaling & Clutter:**
+     - In `WidgetRibbon` and `PrayerStrip`, prayer times used `formatPrayerTime12h(time)` which appended `" ص"` and `" م"` to every station (`12:02 م`, `5:05 ص`). This added 2 wide Arabic glyphs per column, crowding the bottom strip and causing awkward aspect ratios and oversized pills.
+     - Replaced `formatPrayerTime12h` in `PrayerStrip` with clean digital `_formatDigitalTime(time)` (`05:05`, `12:02`), eliminating morning/evening suffixes in compact widget stations.
+     - Reduced active prayer pill horizontal padding in `WidgetLarge` from `AppSpace.sm` (8dp) to `AppSpace.xs` (4dp) to match `PrayerStrip`, producing an elegant, compact pill.
+     - Tuned inactive prayer time font weight from `w700` to `w600` so the prayer name maintains primary visual focus and times scale down smoothly.
+  2. **Android Home Screen Widget Resizing & Options Changed:**
+     - `LargeWidgetProvider.kt` and `RibbonWidgetProvider.kt` did not implement `onAppWidgetOptionsChanged`. When users resized/minimized the widget on their launcher grid, Android did not notify Flutter, preventing the widget from re-rendering at the smaller canvas size.
+     - Added `onAppWidgetOptionsChanged` to both providers, persisting `widget_ribbon_width`, `widget_ribbon_height`, `widget_large_width`, and `widget_large_height`, and broadcasting `talibilm://resize` intents.
+     - Updated `HomeWidgetService.updateRibbon` and `updateLarge` to read dynamic launcher dimensions and pass `width` and `height` to `WidgetRibbon` and `WidgetLarge`.
+     - In `WidgetRibbon`, dynamically hides celestial icons when height < 75dp so that prayer names and times have ample vertical space without getting squished.
+  3. **Chronometer Prefix & Active Liturgical State Display:**
+     - Restored the `else` block in `WidgetChronometerHelper.kt` ensuring live chronometers countdown with `formatString = "$countdownPrefix%s"` (`الفجر بعد 03:56:18` and `الفجر الإقامة بعد 06:12`).
+     - Added `prayer_status_label` persistence and rendering in `WidgetChronometerHelper.kt` so active states (`الأذان الآن` or `تقام الصلاة الآن`) display cleanly in the top badge.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (ran in 115.3s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass.
+- **Open Issues:** None.
 

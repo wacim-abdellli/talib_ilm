@@ -127,7 +127,24 @@ object WidgetChronometerHelper {
                 } catch (_: Exception) {}
 
                 if (isPrayerActive || epochMs == 0L || epochMs <= now) {
-                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                    val statusText = if (isPrayerActive) {
+                        widgetData.getString(
+                            "prayer_status_label",
+                            widgetData.getString("flutter.prayer_status_label", "")
+                        ) ?: ""
+                    } else ""
+
+                    if (statusText.isNotEmpty()) {
+                        views.setTextViewText(R.id.widget_countdown, statusText)
+                        views.setTextColor(R.id.widget_countdown, textColor)
+                        try {
+                            views.setInt(R.id.widget_countdown, "setBackgroundResource", bgRes)
+                        } catch (_: Exception) {}
+                        views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
+                    } else {
+                        views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                    }
+                } else {
                     val remainingMs = epochMs - now
                     val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
                     val formatString = if (!countdownPrefix.isNullOrEmpty()) "$countdownPrefix%s" else "%s"
