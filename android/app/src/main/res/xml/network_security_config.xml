@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default: Enforce TLS (HTTPS) across all network traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Scoped exemption: Only inventoried media/audio streaming hosts that may serve legacy cleartext streams -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">mp3quran.net</domain>
+        <domain includeSubdomains="true">qurango.net</domain>
+        <domain includeSubdomains="true">everyayah.com</domain>
+        <domain includeSubdomains="true">archive.org</domain>
+    </domain-config>
+</network-security-config>

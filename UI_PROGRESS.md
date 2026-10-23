@@ -1,5 +1,30 @@
 # UI Progress Log
 
+## R44 / T14 — Network boundaries and local security hardening (C24)
+- **Scope:** Finding C24 (`location_service.dart:481–516` had unclosed `HttpClient` outside `finally`, unbounded payload collection, missing overarching operation timeouts, and un-gated remote coordinate transmission; AndroidManifest enabled global cleartext HTTP traffic across all domains).
+- **Implemented:**
+  - `lib/core/services/reverse_geocode_client.dart`:
+    - Created dedicated, bounded `ReverseGeocodeClient` encapsulating HTTP reverse geocoding, French/English/Arabic prefix normalization (`cleanAdministrativeName`), and locality picking (`pickCleanCity`).
+    - Enforced strict resource lifecycle: owned `HttpClient` is closed with `force: true` inside `finally` block to prevent lingering sockets.
+    - Bound complete network operation: connection timeout (`AppPolicy.networkFast`), request getUrl timeout (`AppPolicy.networkFast`), response close timeout (`AppPolicy.networkFast`), and streaming body timeout (`AppPolicy.networkFast`).
+    - Enforced 64KB response size limit, aborting on oversized or runaway streaming payloads.
+    - Added coordinate input sanity validation (rejects invalid latitude outside `[-90, 90]` or longitude outside `[-180, 180]`).
+    - Made client injectable (`clientOverride` / `clientFactory`) for deterministic unit and error testing.
+  - `lib/core/models/location_result.dart`:
+    - Extracted `LocationSource` and `LocationResult` models, keeping `location_service.dart` strictly modular and under the 600 line limit (543 lines, Rule 8 compliant).
+  - `lib/core/services/location_service.dart`:
+    - Added user-intent gating for remote coordinate transmission (`isRemoteGeocodingAllowed()` / `setRemoteGeocodingAllowed(bool)` via `_keyAllowRemoteGeocoding`).
+    - When remote geocoding is declined or offline, avoids network coordinate transmission and falls back to offline `VerifiedCitiesCatalog.findNearest` (maxDistanceKm: 250km).
+    - Replaced raw duration literal wrappers with `AppPolicy` duration tokens (`locationQuick`, `locationBackground`, `networkRetry`).
+  - `android/app/src/main/res/xml/network_security_config.xml` & `android/app/src/main/AndroidManifest.xml`:
+    - Inventoried all static project URLs (all 12 live API/content hosts use HTTPS; zero HTTP endpoints in source).
+    - Removed global `android:usesCleartextTraffic="true"` from AndroidManifest.
+    - Introduced `network_security_config.xml` enforcing system-trust TLS across all application traffic, while strictly scoping cleartext exemptions only to inventoried audio/radio streaming hosts (`mp3quran.net`, `qurango.net`, `everyayah.com`, `archive.org`).
+  - `test/network_boundaries_and_security_test.dart`:
+    - Added 10 regression unit tests covering 200 JSON parsing, non-200 HTTP statuses, malformed JSON bodies, oversized payload (>64KB) aborts, client cleanup, coordinate bounds rejections, prefix stripping, user intent toggling, offline catalog lookup, and service delegation.
+- **Verified:** 20/20 tests passing across `test/network_boundaries_and_security_test.dart`, `test/verified_location_and_prayer_test.dart`, and `test/foreground_prayer_and_algeria_calc_test.dart`. `flutter analyze` completed with 0 issues (8.7s). `python tool/ui_lint_v2.py` passed with 0 errors (6 allow markers, cap 10). Fresh debug APK build PASSED (63.9s), SHA-256 `0905EA674043A561F50C02973182586223B5722790FF12340DBC33C7B9E18321`.
+- **Open issues:** T14 complete. Proceed to T15 (Maintainability and dependency hygiene: C25).
+
 ## R43 / T13 — Measured performance, caches, and bundle costs (C08, C25)
 - **Scope:** Finding C08 & C25 (Domain/data/network services depended on Flutter UI animation tokens `AppMotion` for timeouts/clock intervals, e.g. `AppMotion.ambient` = 30s was used as an HTTP timeout; `ReadingStatsService` storage had unbounded historic session growth; oversized files neared or exceeded Rule 8 limits; non-UI classes mixed animation durations with network deadlines).
 - **Implemented:**

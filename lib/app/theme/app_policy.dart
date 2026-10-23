@@ -21,6 +21,8 @@ class AppPolicy {
   static const Duration pollingStandard = Duration(seconds: 30);
   static const Duration compassFallback = Duration(milliseconds: 600);
   static const Duration sensorCheck = Duration(milliseconds: 2500);
+  static const Duration locationQuick = Duration(seconds: 6);
+  static const Duration locationBackground = Duration(seconds: 5);
 
   // Storage & Cache Retention Budgets
   static const int maxStoredReadingSessions = 500;

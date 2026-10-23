@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -7,81 +6,18 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
+import '../constants/app_policy.dart';
 import '../constants/verified_cities.dart';
-
-enum LocationSource {
-  gps,
-  manual,
-  savedGps,
-  defaultCity,
-}
-
-class LocationResult {
-  final double latitude;
-  final double longitude;
-  final String city;
-  final String? country;
-  final String? countryCode;
-  final String? province;
-  final LocationSource source;
-  final String? calculationMethod;
-
-  const LocationResult({
-    required this.latitude,
-    required this.longitude,
-    required this.city,
-    this.country,
-    this.countryCode,
-    this.province,
-    this.source = LocationSource.defaultCity,
-    this.calculationMethod,
-  });
-
-  bool get isAccurate =>
-      source == LocationSource.gps ||
-      source == LocationSource.manual ||
-      source == LocationSource.savedGps;
-
-  String get sourceLabel {
-    switch (source) {
-      case LocationSource.gps:
-        return 'موقع GPS دقيق وتلقائي';
-      case LocationSource.manual:
-        return 'مدينة محددة يدوياً';
-      case LocationSource.savedGps:
-        return 'موقع GPS محفوظ';
-      case LocationSource.defaultCity:
-        return 'الموقع الافتراضي';
-    }
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LocationResult &&
-          runtimeType == other.runtimeType &&
-          city == other.city &&
-          (latitude - other.latitude).abs() < 0.005 &&
-          (longitude - other.longitude).abs() < 0.005 &&
-          source == other.source &&
-          calculationMethod == other.calculationMethod;
-
-  @override
-  int get hashCode => Object.hash(
-        city,
-        (latitude * 100).round(),
-        (longitude * 100).round(),
-        source,
-        calculationMethod,
-      );
-}
+import '../models/location_result.dart';
+import 'reverse_geocode_client.dart';
+export '../models/location_result.dart';
 
 class LocationService {
   static const _defaultCity = AppStrings.locationDefaultCity;
   static const _defaultLat = 21.3891;
   static const _defaultLon = 39.8579;
 
-  static Duration _sec(int s) => Duration(seconds: s); // ui-lint: allow service network timeout
+  static const _keyAllowRemoteGeocoding = 'allow_remote_geocoding';
 
   static const _keyCity = 'last_city';
   static const _keyProvince = 'last_province';
@@ -198,7 +134,7 @@ class LocationService {
             final position = await Geolocator.getCurrentPosition(
               locationSettings: LocationSettings(
                 accuracy: LocationAccuracy.high,
-                timeLimit: _sec(6),
+                timeLimit: AppPolicy.locationQuick,
               ),
             );
 
@@ -251,7 +187,7 @@ class LocationService {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(
           accuracy: LocationAccuracy.medium,
-          timeLimit: _sec(5),
+          timeLimit: AppPolicy.locationBackground,
         ),
       );
       final resolved = await _resolvePosition(
@@ -310,7 +246,7 @@ class LocationService {
     final position = await Geolocator.getCurrentPosition(
       locationSettings: LocationSettings(
         accuracy: LocationAccuracy.high,
-        timeLimit: _sec(10),
+        timeLimit: AppPolicy.networkRetry,
       ),
     );
 
@@ -478,44 +414,32 @@ class LocationService {
     _localeReady = true;
   }
 
-  Future<Map<String, String>?> _reverseGeocodeHttp(double latitude, double longitude) async {
-    try {
-      final client = HttpClient();
-      final uri = Uri.parse(
-        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$latitude&longitude=$longitude&localityLanguage=ar',
-      );
-      final request = await client.getUrl(uri);
-      final response = await request.close().timeout(_sec(4));
-      if (response.statusCode == HttpStatus.ok) {
-        final payload = await response.transform(utf8.decoder).join();
-        client.close();
-        final data = jsonDecode(payload);
-        if (data is Map<String, dynamic>) {
-          final res = <String, String>{};
-          final subdivision = data['principalSubdivision'];
-          final locality = data['city'] ?? data['locality'];
-
-          // Prefer clean province or major subdivision over obscure cadastral hamlets
-          if (subdivision is String && subdivision.trim().isNotEmpty) {
-            res['province'] = _cleanAdministrativeName(subdivision.trim());
-          }
-          if (locality is String && locality.trim().isNotEmpty) {
-            res['city'] = _cleanAdministrativeName(locality.trim());
-          }
-          if (data['countryName'] is String && (data['countryName'] as String).trim().isNotEmpty) {
-            res['country'] = (data['countryName'] as String).trim();
-          }
-          if (data['countryCode'] is String && (data['countryCode'] as String).trim().isNotEmpty) {
-            res['countryCode'] = (data['countryCode'] as String).trim().toUpperCase();
-          }
-          return res;
-        }
-      } else {
-        client.close();
-      }
-    } catch (_) {}
-    return null;
+  /// Controls whether remote coordinate reverse-geocoding (api.bigdatacloud.net) is permitted.
+  static Future<bool> isRemoteGeocodingAllowed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyAllowRemoteGeocoding) ?? true;
   }
+
+  /// Sets user intent for remote coordinate reverse-geocoding.
+  static Future<void> setRemoteGeocodingAllowed(bool allowed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAllowRemoteGeocoding, allowed);
+  }
+
+  static final ReverseGeocodeClient _reverseGeocodeClient = ReverseGeocodeClient();
+
+  /// Reverse geocodes coordinates via BigDataCloud API with strict resource, timeout, and payload bounds.
+  @visibleForTesting
+  Future<Map<String, String>?> reverseGeocodeHttp(
+    double latitude,
+    double longitude, {
+    HttpClient? clientOverride,
+  }) =>
+      _reverseGeocodeClient.reverseGeocode(
+        latitude,
+        longitude,
+        clientOverride: clientOverride,
+      );
 
   Future<LocationResult> _resolvePosition(
     Position position,
@@ -556,7 +480,7 @@ class LocationService {
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-      ).timeout(_sec(3));
+      ).timeout(AppPolicy.networkFast);
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         country = p.country?.trim() ?? country;
@@ -569,13 +493,29 @@ class LocationService {
         if (picked != null) city = picked;
       }
     } catch (_) {
-      // 3. Fallback: HTTP reverse geocoding
-      final arabicGeo = await _reverseGeocodeHttp(position.latitude, position.longitude);
-      if (arabicGeo != null) {
-        if (arabicGeo['city'] != null) city = arabicGeo['city']!;
-        if (arabicGeo['province'] != null) province = arabicGeo['province'];
-        if (arabicGeo['country'] != null) country = arabicGeo['country'];
-        if (arabicGeo['countryCode'] != null) countryCode = arabicGeo['countryCode'];
+      // 3. Fallback: HTTP reverse geocoding (gated by user intent / preference)
+      final allowRemote = await isRemoteGeocodingAllowed();
+      if (allowRemote) {
+        final arabicGeo = await reverseGeocodeHttp(position.latitude, position.longitude);
+        if (arabicGeo != null) {
+          if (arabicGeo['city'] != null) city = arabicGeo['city']!;
+          if (arabicGeo['province'] != null) province = arabicGeo['province'];
+          if (arabicGeo['country'] != null) country = arabicGeo['country'];
+          if (arabicGeo['countryCode'] != null) countryCode = arabicGeo['countryCode'];
+        }
+      } else {
+        // Offline broader catalog fallback without remote coordinate transmission
+        final nearestBroad = VerifiedCitiesCatalog.findNearest(
+          position.latitude,
+          position.longitude,
+          maxDistanceKm: 250.0,
+        );
+        if (nearestBroad != null) {
+          city = nearestBroad.name;
+          province = nearestBroad.province;
+          country = nearestBroad.country;
+          countryCode = nearestBroad.countryCode;
+        }
       }
     }
 
@@ -594,36 +534,9 @@ class LocationService {
     );
   }
 
-  String? _pickCleanCity(List<Placemark> placemarks) {
-    for (final place in placemarks) {
-      final admin = place.administrativeArea?.trim();
-      final locality = place.locality?.trim();
-      final sub = place.subAdministrativeArea?.trim();
+  String? _pickCleanCity(List<Placemark> placemarks) =>
+      _reverseGeocodeClient.pickCleanCity(placemarks);
 
-      if (locality != null && locality.isNotEmpty) {
-        final cleanLocality = _cleanAdministrativeName(locality);
-        if (admin != null && admin.isNotEmpty) {
-          final cleanAdmin = _cleanAdministrativeName(admin);
-          if (cleanAdmin != cleanLocality) {
-            return cleanAdmin;
-          }
-        }
-        return cleanLocality;
-      }
-
-      if (sub != null && sub.isNotEmpty) return _cleanAdministrativeName(sub);
-      if (admin != null && admin.isNotEmpty) return _cleanAdministrativeName(admin);
-    }
-    return null;
-  }
-
-  static String _cleanAdministrativeName(String raw) {
-    var s = raw.trim();
-    // Remove French / English prefixes
-    s = s.replaceAll(RegExp(r'^(Commune de|Gouvernorat de|Province de|Wilaya de|State of|Province of)\s+', caseSensitive: false), '');
-    // Clean Arabic prefixes if redundant
-    if (s.startsWith('ولاية ')) s = s.substring(6).trim();
-    if (s.startsWith('محافظة ')) s = s.substring(7).trim();
-    return s.trim();
-  }
+  static String _cleanAdministrativeName(String raw) =>
+      ReverseGeocodeClient.cleanAdministrativeName(raw);
 }
