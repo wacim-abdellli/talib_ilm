@@ -1,0 +1,49 @@
+name: Verify Release Readiness
+
+on:
+  push:
+    branches:
+      - main
+      - 'ui/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Gate 1 - Static Analysis
+        run: flutter analyze
+
+      - name: Gate 2 - UI Lint V2
+        run: python tool/ui_lint_v2.py
+
+      - name: Gate 3 - Automated Test Suite
+        run: flutter test
+
+      - name: Gate 4 - Debug APK Compilation
+        run: flutter build apk --debug
