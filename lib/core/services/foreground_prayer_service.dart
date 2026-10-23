@@ -5,7 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/constants/app_strings.dart';
-import '../../app/theme/app_palette.dart';
+import '../constants/app_policy.dart';
 import '../../features/prayer/presentation/widgets/prayer_widget_state_evaluator.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
@@ -83,13 +83,13 @@ class ForegroundPrayerService {
     _initialTimer?.cancel();
     _timer?.cancel();
     _widgetTimer?.cancel();
-    _initialTimer = Timer(AppMotion.oneSecond, _check);
+    _initialTimer = Timer(AppPolicy.oneSecond, _check);
     _timer = Timer.periodic(
-      AppMotion.ambient,
+      AppPolicy.pollingStandard,
       (_) => _check(),
     );
     _widgetTimer = Timer.periodic(
-      AppMotion.seekStep,
+      AppPolicy.pollingActive,
       (_) => _checkAndUpdateWidgetsIfNeeded(),
     );
     _checkAndUpdateWidgetsIfNeeded();

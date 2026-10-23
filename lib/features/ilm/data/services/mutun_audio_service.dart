@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import '../../../../app/theme/app_ui.dart';
+import '../../../../core/constants/app_policy.dart';
 import '../../../../core/services/audio_coordinator.dart';
 import '../catalogs/mutun_audio_catalog.dart';
 export '../catalogs/mutun_audio_catalog.dart'
@@ -297,7 +297,7 @@ class MutunAudioService {
       final audioSource = AudioSource.uri(Uri.parse(audioUrl), tag: mediaItem);
       loadedDuration = await _player
           .setAudioSource(audioSource, initialPosition: initialPosition)
-          .timeout(AppMotion.networkRetry);
+          .timeout(AppPolicy.networkRetry);
       loaded = true;
     } catch (sourceErr) {
       debugPrint('AudioSource.uri failed ($audioUrl): $sourceErr, trying direct setUrl...');
@@ -305,7 +305,7 @@ class MutunAudioService {
         await _player.stop();
         loadedDuration = await _player
             .setUrl(audioUrl, initialPosition: initialPosition)
-            .timeout(AppMotion.networkRetry);
+            .timeout(AppPolicy.networkRetry);
         loaded = true;
       } catch (urlErr) {
         debugPrint('Direct setUrl failed ($audioUrl): $urlErr');
@@ -453,14 +453,14 @@ class MutunAudioService {
 
   Future<void> seekForward5s() async {
     final dur = durationNotifier.value;
-    final target = _player.position + AppMotion.seekStep;
+    final target = _player.position + AppPolicy.seekStep;
     final clamped = dur > Duration.zero && target > dur ? dur : target;
     await _player.seek(clamped);
     _updateActiveParagraph(clamped);
   }
 
   Future<void> seekBackward5s() async {
-    final target = _player.position - AppMotion.seekStep;
+    final target = _player.position - AppPolicy.seekStep;
     final clamped = target < Duration.zero ? Duration.zero : target;
     await _player.seek(clamped);
     _updateActiveParagraph(clamped);

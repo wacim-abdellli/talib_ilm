@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../../../app/theme/app_palette.dart';
+import '../../../../core/constants/app_policy.dart';
 import '../models/shamela_models.dart';
 import 'shamela_service.dart';
 
@@ -269,7 +269,7 @@ class ShamelaDownloadManager {
             completedCount++;
             onProgress?.call(completedCount, total);
           }
-          await Future.delayed(AppMotion.microPause);
+          await Future.delayed(AppPolicy.microPause);
         } catch (_) {
           failedPages.add(p);
         }

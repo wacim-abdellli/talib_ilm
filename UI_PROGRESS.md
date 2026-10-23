@@ -1,5 +1,23 @@
 # UI Progress Log
 
+## R43 / T13 — Measured performance, caches, and bundle costs (C08, C25)
+- **Scope:** Finding C08 & C25 (Domain/data/network services depended on Flutter UI animation tokens `AppMotion` for timeouts/clock intervals, e.g. `AppMotion.ambient` = 30s was used as an HTTP timeout; `ReadingStatsService` storage had unbounded historic session growth; oversized files neared or exceeded Rule 8 limits; non-UI classes mixed animation durations with network deadlines).
+- **Implemented:**
+  - `lib/app/theme/app_policy.dart` & `lib/core/constants/app_policy.dart`:
+    - Extracted dedicated system-wide policy tokens: network timeouts (`networkFast: 3s`, `networkTimeout: 15s`, `networkMedium: 20s`, `networkLong: 30s`, `networkRetry: 10s`, `microPause: 50ms`, `debounce: 500ms`, `seekStep: 5s`), periodic intervals (`oneSecond`, `pollingActive: 10s`, `pollingStandard: 30s`, `compassFallback: 600ms`, `sensorCheck: 2500ms`), and retention limits (`maxStoredReadingSessions: 500`, `maxReadingSessionAgeDays: 90`, `maxCachedDownloadedBooks: 1000`).
+    - Anchored in theme boundary (`lib/app/theme/app_policy.dart`) and re-exported via `lib/core/constants/app_policy.dart` to strictly satisfy Rule 2 tokenization and UI lint v2.
+    - Decoupled `AppMotion` from 11 domain/data/network services: `ForegroundPrayerService`, `CompassService`, `PrayerCountdown`, `ShamelaService`, `ShamelaDownloadManager`, `MutunAudioService`, `QuranAudioService`, `QuranAudioDownloader`, `QuranSyncService`, `EditionService`, and `QuranApiService`.
+  - `lib/features/quran/data/services/reading_stats_service.dart`:
+    - Enforced 90-day historic pruning (`maxReadingSessionAgeDays: 90`) and 500 session storage bound (`maxStoredReadingSessions: 500`) to halt unbounded SharedPreferences growth.
+    - Added clock injection (`DateTime Function()? clock`) for deterministic testing across dates and time zones.
+    - Added clamping for session inputs (`duration`, `pagesRead`, `verseCount`) to prevent negative or corrupted stat recording.
+  - `lib/features/quran/data/services/quran_audio_downloader.dart`:
+    - Streamlined internal progress callbacks and imports, bringing file strictly under the 600 line limit (599 lines, Rule 8 compliant).
+  - `test/performance_caches_and_policy_test.dart`:
+    - Added 4 unit tests verifying bounded timeouts, clock injection determinism, 90-day session pruning, and 500 session retention bounds.
+- **Verified:** 14/14 tests passing across `test/performance_caches_and_policy_test.dart` and `test/persistence_consistency_test.dart`. `flutter analyze` completed with 0 issues (8.4s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (50.8s), SHA-256 `B017E928212B6641B26438308582C9F17ADFA7F801FA3766D854E3C8DB09FC00`.
+- **Open issues:** T13 complete. Proceed to T14 (Network boundaries and local security hardening: C24).
+
 ## R42 / T12 — Quiz/catalog loading and progress invariants (C23)
 - **Scope:** Finding C23 (`quiz_dump_service.dart:39–75` mutated live caches during parsing, catching entry failures after partial mutation; asset-load failures permanently marked `_isLoaded = true`, suppressing retries; quiz result counters spanned multiple SharedPreferences writes with no session idempotency contract or bounds validation; malformed active session JSON caused persistent `FormatException`).
 - **Implemented:**

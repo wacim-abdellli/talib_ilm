@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../app/theme/app_palette.dart';
+import '../../../../core/constants/app_policy.dart';
 import '../database/quran_database.dart';
 import 'quran_page_service.dart';
 
@@ -71,7 +71,7 @@ class QuranSyncService {
         _progressController.add((i + 1) / totalPages);
 
         // Gentle throttle
-        await Future.delayed(AppMotion.microPause);
+        await Future.delayed(AppPolicy.microPause);
       }
 
       // Mark as done
@@ -104,7 +104,7 @@ class QuranSyncService {
                 'Accept': 'application/json',
               },
             )
-            .timeout(AppMotion.networkRetry);
+            .timeout(AppPolicy.networkRetry);
 
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body);
@@ -117,7 +117,7 @@ class QuranSyncService {
       } catch (e) {
         attempts++;
         if (attempts >= 3) rethrow;
-        await Future.delayed(AppMotion.oneSecond);
+        await Future.delayed(AppPolicy.oneSecond);
       }
     }
   }

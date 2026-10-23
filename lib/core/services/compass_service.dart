@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
-import '../../app/theme/app_palette.dart';
+import '../constants/app_policy.dart';
 
 /// Represents a validated compass heading reading.
 class CompassReading {
@@ -92,7 +92,7 @@ class CompassService {
 
     // 2. If no event received from FlutterCompass within 600ms, start sensors_plus
     _fallbackTimer?.cancel();
-    _fallbackTimer = Timer(AppMotion.deliberate, () {
+    _fallbackTimer = Timer(AppPolicy.compassFallback, () {
       if (!_hasEmitted) {
         _switchToSensorsPlus();
       }
@@ -100,7 +100,7 @@ class CompassService {
 
     // 3. Sensor availability check: after 2.5s, if no sensor has responded, mark unavailable
     _sensorCheckTimer?.cancel();
-    _sensorCheckTimer = Timer(AppMotion.toast, () {
+    _sensorCheckTimer = Timer(AppPolicy.sensorCheck, () {
       if (!_hasEmitted && (_controller?.hasListener ?? false)) {
         _controller?.add(
           const CompassReading(

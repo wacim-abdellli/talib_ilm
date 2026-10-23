@@ -5,7 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:quran/quran.dart' as quran;
 
-import '../../../../app/theme/app_palette.dart';
+import '../../../../core/constants/app_policy.dart';
 import '../../../../core/services/audio_coordinator.dart';
 import 'quran_audio_downloader.dart';
 
@@ -64,7 +64,7 @@ class QuranAudioService {
   AudioPlayer _player = AudioPlayer();
   AudioPlayer Function() _playerFactory = () => AudioPlayer();
   Future<void> Function() _retryDelay = () =>
-      Future<void>.delayed(AppMotion.searchDebounce);
+      Future<void>.delayed(AppPolicy.debounce);
   Future<AudioSource> Function(int, int, QuranReciter)? _sourceResolver;
   StreamSubscription? _playerStateSub;
 
@@ -338,7 +338,7 @@ class QuranAudioService {
           if (!_ownsOperation(operation)) return;
           await player
               .setAudioSource(audioSource)
-              .timeout(AppMotion.networkTimeout);
+              .timeout(AppPolicy.networkTimeout);
           loaded = true;
         } catch (sourceErr) {
           if (!_ownsOperation(operation)) return;
@@ -348,7 +348,7 @@ class QuranAudioService {
           try {
             await player.stop();
             if (!_ownsOperation(operation)) return;
-            await player.setUrl(url).timeout(AppMotion.networkTimeout);
+            await player.setUrl(url).timeout(AppPolicy.networkTimeout);
             loaded = true;
           } catch (urlErr) {
             debugPrint('Direct setUrl failed ($url): $urlErr');

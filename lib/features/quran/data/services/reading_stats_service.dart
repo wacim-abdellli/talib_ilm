@@ -1,15 +1,22 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:collection';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/constants/app_policy.dart';
 import '../../../../core/utils/async_lock.dart';
 
+/// Service managing persistent Quran reading session logs and streak calculations.
+/// Bound by strict retention budgets and isolated clock injection for determinism.
 class ReadingStatsService {
   static const String _sessionsKey = 'quran_reading_sessions';
   static final AsyncLock _lock = AsyncLock();
-  static const int _maxStoredSessions = 500;
 
-  // Save a reading session
+  final DateTime Function() _clock;
+
+  ReadingStatsService({DateTime Function()? clock})
+      : _clock = clock ?? DateTime.now;
+
+  /// Save a reading session while enforcing retention budgets and input bounds.
   Future<void> recordSession({
     required int durationSeconds,
     required int versesRead,
@@ -21,24 +28,46 @@ class ReadingStatsService {
 
     return _lock.synchronized(() async {
       final prefs = await SharedPreferences.getInstance();
-      final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
+      final List<String> rawSessions = prefs.getStringList(_sessionsKey) ?? [];
 
+      final now = _clock();
       final sessionMap = {
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'timestamp': now.millisecondsSinceEpoch,
         'duration': durationSeconds > 0 ? durationSeconds : 0,
         'verses': versesRead > 0 ? versesRead : 0,
         'surah': surahNumber,
       };
 
-      sessions.add(jsonEncode(sessionMap));
-      if (sessions.length > _maxStoredSessions) {
-        sessions.removeRange(0, sessions.length - _maxStoredSessions);
+      final validSessions = <String>[];
+      final cutoffMs = now
+          .subtract(const Duration(days: AppPolicy.maxReadingSessionAgeDays))
+          .millisecondsSinceEpoch;
+
+      for (final s in rawSessions) {
+        try {
+          final decoded = jsonDecode(s);
+          if (decoded is! Map) continue;
+          final ts = decoded['timestamp'];
+          if (ts is int && ts >= cutoffMs) {
+            validSessions.add(s);
+          }
+        } catch (_) {
+          // Discard corrupt session entry
+        }
       }
-      await prefs.setStringList(_sessionsKey, sessions);
+
+      validSessions.add(jsonEncode(sessionMap));
+      if (validSessions.length > AppPolicy.maxStoredReadingSessions) {
+        validSessions.removeRange(
+          0,
+          validSessions.length - AppPolicy.maxStoredReadingSessions,
+        );
+      }
+      await prefs.setStringList(_sessionsKey, validSessions);
     });
   }
 
-  // Get stats for today
+  /// Get stats for today (minutes and verses read).
   Future<Map<String, int>> getDailyStats() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
@@ -46,7 +75,7 @@ class ReadingStatsService {
     int totalSeconds = 0;
     int totalVerses = 0;
 
-    final now = DateTime.now();
+    final now = _clock();
     final startOfDay = DateTime(now.year, now.month, now.day);
 
     for (final s in sessions) {
@@ -76,11 +105,10 @@ class ReadingStatsService {
     return {'minutes': totalMinutes, 'verses': totalVerses};
   }
 
-  // Calculate Actual Streak
+  /// Calculate consecutive day reading streak.
   Future<int> _calculateStreak(List<String> sessions) async {
     if (sessions.isEmpty) return 0;
 
-    // Use a Set to store unique dates (yyyy-mm-dd) that have activity
     final SplayTreeSet<String> activeDays = SplayTreeSet<String>();
 
     for (final s in sessions) {
@@ -99,48 +127,31 @@ class ReadingStatsService {
 
     if (activeDays.isEmpty) return 0;
 
-    // Convert to sorted list (descending - newest first)
     final sortedDays = activeDays.toList().reversed.toList();
-    final today = _formatDate(DateTime.now());
+    final today = _formatDate(_clock());
     final yesterday = _formatDate(
-      DateTime.now().subtract(const Duration(days: 1)),
+      _clock().subtract(const Duration(days: 1)),
     );
 
-    // Check if the streak is alive (active today or yesterday)
-    // If last active day was before yesterday, streak is broken -> 0
+    // If last active day was before yesterday, streak is broken
     if (sortedDays.first != today && sortedDays.first != yesterday) {
       return 0;
     }
 
-    int streak = 0;
-    DateTime currentCheck = DateTime.now();
-
-    // If today is not active, start checking from yesterday for the streak
-    if (sortedDays.first != today) {
-      currentCheck = currentCheck.subtract(const Duration(days: 1));
-    }
-
-    // Iterate backwards day by day to count streak
-    // Note: This matches strict consecutive days.
-    // Optimization: We iterate through our sorted active days.
-
-    // Robust Logic:
-    streak = 0;
     // Check if today is active
     bool streakAlive = activeDays.contains(today);
-    DateTime checkDate = DateTime.now();
+    DateTime checkDate = _clock();
 
-    // If today is NOT active, but yesterday IS, streak is still alive (just hasn't incremented for today yet)
     if (!streakAlive) {
       if (activeDays.contains(yesterday)) {
         streakAlive = true;
         checkDate = checkDate.subtract(const Duration(days: 1));
       } else {
-        return 0; // Streak broken
+        return 0;
       }
     }
 
-    // Count backwards while days are consecutive
+    int streak = 0;
     while (activeDays.contains(_formatDate(checkDate))) {
       streak++;
       checkDate = checkDate.subtract(const Duration(days: 1));
@@ -159,9 +170,7 @@ class ReadingStatsService {
     return _calculateStreak(sessions);
   }
 
-  // Get Reading Goal
   Future<Map<String, int>> getReadingGoal() async {
-    // Default: 20 mins or 50 verses
     return {'minutes': 20, 'verses': 50};
   }
 }

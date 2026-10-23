@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:quran/quran.dart' as quran;
 
-import '../../../../app/theme/app_palette.dart';
+import '../../../../core/constants/app_policy.dart';
 import 'quran_audio_service.dart';
 
 export '../models/surah_download_progress.dart';
@@ -314,7 +314,7 @@ class QuranAudioDownloader {
           // C15: Connection deadline
           final http.StreamedResponse response = await httpClient
               .send(request)
-              .timeout(AppMotion.networkTimeout);
+              .timeout(AppPolicy.networkTimeout);
 
           if (response.statusCode != 200) {
             throw HttpException('Server returned ${response.statusCode}');
@@ -337,7 +337,7 @@ class QuranAudioDownloader {
           try {
             // C15: Body chunk idle timeout
             await for (final chunk
-                in response.stream.timeout(AppMotion.networkMedium)) {
+                in response.stream.timeout(AppPolicy.networkMedium)) {
               if (_cancelFlags[key] == true ||
                   _pauseFlags[key] == true ||
                   _operationGenerations[key] != gen) {
@@ -590,14 +590,10 @@ class QuranAudioDownloader {
   }
 
   void _updateProgress(String key, SurahDownloadProgress progress) {
-    final current = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
-    current[key] = progress;
-    downloadProgressNotifier.value = current;
+    downloadProgressNotifier.value = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value)..[key] = progress;
   }
 
   void _removeProgress(String key) {
-    final current = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
-    current.remove(key);
-    downloadProgressNotifier.value = current;
+    downloadProgressNotifier.value = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value)..remove(key);
   }
 }

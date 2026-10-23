@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../../../app/theme/app_palette.dart';
+import '../../../../core/constants/app_policy.dart';
 import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
 import 'shamela_download_manager.dart';
@@ -258,7 +258,7 @@ class ShamelaService {
         'Accept': 'text/html,application/xhtml+xml',
         'Accept-Language': 'ar,en;q=0.9',
       },
-    ).timeout(AppMotion.networkTimeout);
+    ).timeout(AppPolicy.networkTimeout);
 
     if (response.statusCode == 404) {
       throw Exception('صفحة غير متوفرة في الكتاب (404)');
@@ -381,7 +381,7 @@ class ShamelaService {
       final response = await _httpClient.get(url, headers: {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      }).timeout(AppMotion.networkTimeout);
+      }).timeout(AppPolicy.networkTimeout);
 
       if (response.statusCode == 200) {
         final html = utf8.decode(response.bodyBytes, allowMalformed: true);
@@ -421,7 +421,7 @@ class ShamelaService {
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'X-Requested-With': 'XMLHttpRequest',
-              }).timeout(AppMotion.networkTimeout);
+              }).timeout(AppPolicy.networkTimeout);
 
               if (childResp.statusCode == 200) {
                 final childHtml =
