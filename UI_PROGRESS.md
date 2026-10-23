@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## R42 / T12 — Quiz/catalog loading and progress invariants (C23)
+- **Scope:** Finding C23 (`quiz_dump_service.dart:39–75` mutated live caches during parsing, catching entry failures after partial mutation; asset-load failures permanently marked `_isLoaded = true`, suppressing retries; quiz result counters spanned multiple SharedPreferences writes with no session idempotency contract or bounds validation; malformed active session JSON caused persistent `FormatException`).
+- **Implemented:**
+  - `lib/features/ilm/data/services/quiz_dump_service.dart`:
+    - Introduced typed loading states (`QuizDumpLoadStatus { unloaded, loading, success, failed, empty }`) and explicit `hasFailed` flag.
+    - Implemented atomic parsing into temporary collections with strict question schema validation and question ID deduplication. Active caches are replaced only after complete list validation, eliminating partial publication.
+    - Fixed asset-load error handling to mark status as `QuizDumpLoadStatus.failed` without setting fake `_isLoaded = true`, ensuring clean retryability.
+    - Supported optional configurable `assetPath` in `loadDump()` for custom bundles and offline test isolation (Rule 8 compliant at 194 lines).
+  - `lib/features/ilm/data/services/quiz_progress_service.dart`:
+    - Enforced rigorous input bounds in `recordLevelResult`: rejects `totalQuestions <= 0`, clamps `correctCount` and `maxStreak` to `[0, totalQuestions]`.
+    - Implemented session completion idempotency contract (`sessionCompletionId` / `quiz_completion_token_*`): repeated completion invocations (e.g. rapid taps or network retries) return safe cached results without duplicating global XP, total quizzes taken, or answered question counts.
+    - Added `AsyncLock` FIFO serialization across `recordLevelResult` and `markDailyChallengeCompleted` to prevent concurrent read-modify-write clobbering.
+    - Added same-day duplicate completion guard to `markDailyChallengeCompleted`.
+    - Hardened `QuizActiveSession` and `getActiveSession` against corrupt JSON with automatic key purging, safe defaults, and schema versioning (`catalogVersion: 1`). (Rule 8 compliant at 359 lines).
+  - `lib/features/ilm/presentation/pages/quiz_session_page.dart`: Generated `_sessionInstanceId` and forwarded it to `recordLevelResult`, `markDailyChallengeCompleted`, and `QuizActiveSession` (525 lines, Rule 8 compliant).
+  - `test/quiz_catalog_and_progress_invariants_test.dart`: Added 11 focused invariant tests covering atomic aborts on malformed entries, schema rejections, duplicate ID deduplication, missing asset retryability, negative/impossible bounds clamping, session idempotency, daily challenge duplicate suppression, `AsyncLock` concurrent serialization, corrupt session recovery, and versioned resume.
+  - `test/islamic_quiz_test.dart`: Initialized test binding for clean execution.
+- **Verified:** 44/44 tests passing across `test/quiz_catalog_and_progress_invariants_test.dart` (11/11) and all existing quiz suites (33/33). `flutter analyze` completed with 0 issues (11.7s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (64.3s), SHA-256 `0A13B6D65506D0F435EB98E944A47AA7394E7E268FD801F509FE009BF6FE385C`.
+- **Open issues:** T12 complete. Proceed to T13 (Measured performance, caches, and bundle costs: C08, C25).
+
 ## R41 / T11 — Native widget snapshot and refresh consistency (C22)
 - **Scope:** Finding C22 (In `home_widget_service.dart`, `updateAllWidgets` fired uncoordinated, concurrent executions across the 5 widget providers; older bitmap/preference writes could complete after newer ones and overwrite fresh state; 10 SharedPreferences keys were redundantly written 5 times in parallel per update; missing snapshot versioning allowed mixed widget snapshots).
 - **Implemented:**

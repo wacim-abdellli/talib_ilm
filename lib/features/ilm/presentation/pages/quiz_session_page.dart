@@ -48,6 +48,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
   String get _sessionKey =>
       widget.levelId ?? (widget.isDailyChallenge ? 'daily' : widget.title);
+  late final String _sessionInstanceId =
+      '${_sessionKey}_${DateTime.now().millisecondsSinceEpoch}';
 
   @override
   void initState() {
@@ -89,6 +91,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         currentStreak: _currentStreak,
         maxStreak: _maxStreak,
         userAnswers: _userAnswers,
+        sessionId: _sessionInstanceId,
       ),
     );
   }
@@ -164,11 +167,13 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         correctCount: _correctAnswers,
         totalQuestions: widget.questions.length,
         maxStreak: _maxStreak,
+        sessionCompletionId: _sessionInstanceId,
       );
     } else if (widget.isDailyChallenge) {
       await progressService.markDailyChallengeCompleted(
         _correctAnswers,
         widget.questions.length,
+        sessionCompletionId: _sessionInstanceId,
       );
     }
 

@@ -4,6 +4,7 @@ import 'package:talib_ilm/features/ilm/data/catalogs/islamic_quiz_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/services/quiz_progress_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Islamic Quiz Catalog Tests', () {
     test('Catalog contains all 11 core Islamic sciences', () {
       final founoun = IslamicQuizCatalog.founoun;
