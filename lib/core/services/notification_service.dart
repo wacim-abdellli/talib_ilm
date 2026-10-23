@@ -12,6 +12,8 @@ import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'foreground_prayer_service.dart';
 import 'notification_router.dart';
+import 'schedule_outcome.dart';
+export 'schedule_outcome.dart';
 
 class NotificationService {
   static Future<void>? _sharedInFlightInit;
@@ -421,7 +423,7 @@ class NotificationService {
     } catch (_) {}
   }
 
-  Future<void> _safeZonedSchedule({
+  Future<ScheduleOutcome> _safeZonedSchedule({
     required int id,
     required String title,
     required String body,
@@ -446,6 +448,10 @@ class NotificationService {
         matchDateTimeComponents: matchDateTimeComponents,
         payload: payload,
       );
+      return ScheduleOutcome(
+        status: ScheduleOutcomeStatus.exact,
+        notificationId: id,
+      );
     } catch (e) {
       debugPrint(
         'Warning: Schedule mode $scheduleMode restricted ($e) for $id. Retrying with exactAllowWhileIdle.',
@@ -462,6 +468,10 @@ class NotificationService {
               uiLocalNotificationDateInterpretation,
           matchDateTimeComponents: matchDateTimeComponents,
           payload: payload,
+        );
+        return ScheduleOutcome(
+          status: ScheduleOutcomeStatus.exact,
+          notificationId: id,
         );
       } catch (fallbackError) {
         debugPrint(
@@ -480,8 +490,17 @@ class NotificationService {
             matchDateTimeComponents: matchDateTimeComponents,
             payload: payload,
           );
+          return ScheduleOutcome(
+            status: ScheduleOutcomeStatus.inexactFallback,
+            notificationId: id,
+          );
         } catch (inexactError) {
           debugPrint('Final fallback inexact scheduling error ($id): $inexactError');
+          return ScheduleOutcome(
+            status: ScheduleOutcomeStatus.failed,
+            errorMessage: inexactError.toString(),
+            notificationId: id,
+          );
         }
       }
     }
@@ -489,7 +508,7 @@ class NotificationService {
 
   /// Schedules a prayer notification according to the chosen mode (Adhan, Takbeer, Tone, Silent)
   /// using Android AlarmClock mode for guaranteed execution even during deep Doze.
-  Future<void> schedulePrayerNotification({
+  Future<ScheduleOutcome> schedulePrayerNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
@@ -497,11 +516,11 @@ class NotificationService {
     AdhanSound sound = AdhanSound.qatami,
     bool isJumua = false,
   }) async {
-    if (mode == PrayerNotificationMode.off) return;
+    if (mode == PrayerNotificationMode.off) return ScheduleOutcome.skippedPast;
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return;
+    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await init();
 
     final details = _buildPrayerDetails(
@@ -521,7 +540,7 @@ class NotificationService {
             ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
             : 'حي على الصلاة · حي على الفلاح');
 
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -535,7 +554,7 @@ class NotificationService {
   }
 
   /// Schedules an advance reminder (e.g. 15 minutes before) so the user can make wudhu and prepare.
-  Future<void> schedulePrePrayerNotification({
+  Future<ScheduleOutcome> schedulePrePrayerNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
@@ -543,9 +562,9 @@ class NotificationService {
     bool isJumua = false,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return;
+    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await init();
 
     const androidDetails = AndroidNotificationDetails(
@@ -582,7 +601,7 @@ class NotificationService {
         ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
         : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName.. تهيأ للصلاة وتوضأ';
 
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -651,16 +670,16 @@ class NotificationService {
   }
 
   /// Schedules an Iqama notification after prayer time
-  Future<void> scheduleIqamaNotification({
+  Future<ScheduleOutcome> scheduleIqamaNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
     bool isJumua = false,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return;
+    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await init();
 
     const androidDetails = AndroidNotificationDetails(
@@ -695,7 +714,7 @@ class NotificationService {
         ? 'حان الآن موعد خطبة وصلاة الجمعة المباركة.. استمع وأنصت للخطبة بخشوع'
         : 'حان الآن موعد إقامة صلاة $prayerName.. أقيمت الصلاة';
 
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -709,14 +728,14 @@ class NotificationService {
   }
 
   /// Schedules a dedicated reminder to recite Surat Al-Kahf on Friday
-  Future<void> scheduleSurahAlKahfNotification({
+  Future<ScheduleOutcome> scheduleSurahAlKahfNotification({
     required int id,
     required DateTime scheduledTime,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return;
+    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await init();
 
     const androidDetails = AndroidNotificationDetails(
@@ -746,7 +765,7 @@ class NotificationService {
     const body =
         'قال ﷺ: «من قرأ سورة الكهف في يوم الجمعة أضاء له من النور ما بين الجمعتين» · لا تنسَ قراءتها والصلاة على النبي ﷺ';
 
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -1014,12 +1033,12 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(tzName));
     } catch (_) {
       try {
-        final offset = DateTime.now().timeZoneOffset;
-        final matching = tz.timeZoneDatabase.locations.values.firstWhere(
-          (loc) => loc.currentTimeZone.offset == offset.inMilliseconds,
-          orElse: () => tz.getLocation('UTC'),
-        );
-        tz.setLocalLocation(matching);
+        final currentTzName = DateTime.now().timeZoneName;
+        if (tz.timeZoneDatabase.locations.containsKey(currentTzName)) {
+          tz.setLocalLocation(tz.getLocation(currentTzName));
+        } else {
+          tz.setLocalLocation(tz.getLocation('UTC'));
+        }
       } catch (_) {
         tz.setLocalLocation(tz.getLocation('UTC'));
       }
@@ -1320,7 +1339,7 @@ class NotificationService {
   }
 
   /// Schedules a repeating daily notification for Morning, Evening, or Sleep Adhkar.
-  Future<void> scheduleDailyAdhkarNotification({
+  Future<ScheduleOutcome> scheduleDailyAdhkarNotification({
     required int id,
     required String title,
     required String body,
@@ -1329,10 +1348,9 @@ class NotificationService {
     String? payload,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
     await init();
-    await requestPermissions();
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
@@ -1374,7 +1392,7 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -1389,7 +1407,7 @@ class NotificationService {
   }
 
   /// Schedules a notification for Sunnah Fasting (White Days / Monday / Thursday).
-  Future<void> scheduleFastingReminder({
+  Future<ScheduleOutcome> scheduleFastingReminder({
     required int id,
     required String title,
     required String body,
@@ -1397,11 +1415,10 @@ class NotificationService {
     String? payload,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
-    if (scheduledDate.isBefore(DateTime.now())) return;
+    if (scheduledDate.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await init();
-    await requestPermissions();
 
     const androidDetails = AndroidNotificationDetails(
       'talib_fasting_reminders',
@@ -1431,7 +1448,7 @@ class NotificationService {
     );
 
     final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-    await _safeZonedSchedule(
+    return await _safeZonedSchedule(
       id: id,
       title: title,
       body: body,

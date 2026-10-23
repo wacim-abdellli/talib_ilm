@@ -1,5 +1,16 @@
 # UI Progress Log
 
+## R35 / T05 — Prayer calculation and scheduling boundary matrix (C11, C12)
+- **Scope:** Findings C11 (Data safety: scheduling failures were silently swallowed while success timestamps were saved, permanently suppressing retries) and C12 (Incomplete cache invalidation: changing calculation method, madhab, or minute adjustments never invalidated the schedule cache; and DST calendar shifts caused date drift).
+- **Implemented:**
+  - `lib/core/services/schedule_outcome.dart`: Introduced typed execution status structures `ScheduleOutcomeStatus`, `ScheduleOutcome`, and aggregate `ScheduleBatchResult` (`totalAttempted`, `exactScheduled`, `inexactFallbackScheduled`, `skippedPast`, `failed`, `errors`).
+  - `lib/core/services/notification_service.dart`: Updated `_safeZonedSchedule` and all scheduling methods (`schedulePrayerNotification`, `schedulePrePrayerNotification`, `scheduleIqamaNotification`, `scheduleSurahAlKahfNotification`, `scheduleDailyAdhkarNotification`, `scheduleFastingReminder`) to return typed `ScheduleOutcome`. Hardened timezone lookup fallback against arbitrary offsets. Removed non-interactive permission requests from adhkar and fasting helpers.
+  - `lib/core/services/prayer_schedule_service.dart`: Replaced loose partial cache keys with multi-factor fingerprinting (`_buildFingerprint`) tracking date, coordinates/times, timezone/DST offset, calculationMethod, madhab, minute adjustments, and notification settings. Serialized execution through `AsyncLock`. Fixed DST calendar day arithmetic to use civil dates (`DateTime(year, month, day + dayOffset)`). Enforced that success fingerprint is ONLY persisted when `batchResult.isSuccess` (`failed == 0`), guaranteeing automatic retries on scheduling errors.
+  - `lib/features/prayer/presentation/prayer_settings_sheet.dart`: Handled typed `ScheduleBatchResult` in background refresh callback without unhandled errors.
+  - `test/prayer_scheduling_boundary_matrix_test.dart`: Added 5 regression tests covering failure quarantine and retry recovery without fingerprint persistence, multi-factor fingerprint invalidation on adjustments/methods/coordinates, civil DST calendar arithmetic, and concurrent serialization via `AsyncLock`.
+- **Verified:** 21/21 targeted tests pass across scheduling and boundary matrix suites (`test/prayer_scheduling_boundary_matrix_test.dart`, `test/prayer_notification_resilience_test.dart`, `test/notification_initialization_test.dart`). `flutter analyze` completed with 0 issues (8.6s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (68.2s), SHA-256 `E932D011B2C49CECCF980C5A6E446E75DE8C97045D2AE136521747E98A436F48`.
+- **Open issues:** T05 complete. Proceed to T06 (Home Widget Update Lifecycle & Missing Foreground Synchronization).
+
 ## R34 / T04 — Initialization deduplication and user-owned permissions
 - **Scope:** Findings C09 (Multiple unprompted permission request entry points breaking user onboarding choice) and C10 (Instance-local initialization state and lack of in-flight deduplication across multiple notification service instances).
 - **Implemented:**

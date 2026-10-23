@@ -94,7 +94,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
       unawaited(
         PrayerScheduleService()
             .refreshSchedulesIfNeeded(force: true)
-            .catchError((_) {}),
+            .catchError((_) => const ScheduleBatchResult()),
       );
     } catch (_) {
       // Graceful fallback

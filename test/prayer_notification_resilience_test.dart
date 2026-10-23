@@ -21,7 +21,7 @@ class FakeNotificationService extends NotificationService {
   Future<void> requestPermissions() async {}
 
   @override
-  Future<void> schedulePrayerNotification({
+  Future<ScheduleOutcome> schedulePrayerNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
@@ -36,10 +36,11 @@ class FakeNotificationService extends NotificationService {
       'time': scheduledTime,
       'mode': mode,
     });
+    return const ScheduleOutcome(status: ScheduleOutcomeStatus.exact);
   }
 
   @override
-  Future<void> schedulePrePrayerNotification({
+  Future<ScheduleOutcome> schedulePrePrayerNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
@@ -53,10 +54,11 @@ class FakeNotificationService extends NotificationService {
       'time': scheduledTime,
       'minutesBefore': minutesBefore,
     });
+    return const ScheduleOutcome(status: ScheduleOutcomeStatus.exact);
   }
 
   @override
-  Future<void> scheduleIqamaNotification({
+  Future<ScheduleOutcome> scheduleIqamaNotification({
     required int id,
     required String prayerName,
     required DateTime scheduledTime,
@@ -68,10 +70,11 @@ class FakeNotificationService extends NotificationService {
       'prayerName': prayerName,
       'time': scheduledTime,
     });
+    return const ScheduleOutcome(status: ScheduleOutcomeStatus.exact);
   }
 
   @override
-  Future<void> scheduleSurahAlKahfNotification({
+  Future<ScheduleOutcome> scheduleSurahAlKahfNotification({
     required int id,
     required DateTime scheduledTime,
   }) async {
@@ -80,6 +83,7 @@ class FakeNotificationService extends NotificationService {
       'id': id,
       'time': scheduledTime,
     });
+    return const ScheduleOutcome(status: ScheduleOutcomeStatus.exact);
   }
 
   @override
