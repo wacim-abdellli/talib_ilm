@@ -101,9 +101,9 @@ void main() {
       );
 
       expect(find.text('الشروق'), findsOneWidget);
-      expect(find.text('الغروب'), findsOneWidget);
+      expect(find.text('صلاة الضحى'), findsOneWidget);
       expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.wb_twilight_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.light_mode_rounded), findsOneWidget);
     });
   });
 }

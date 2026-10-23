@@ -289,7 +289,17 @@ class _AdhkarPageState extends State<AdhkarPage> {
       return all.where((i) => ['after_prayer', 'prayer_sunan'].contains(i.id)).toList();
     }
     if (_selectedCategory == 'prayer_sunan') {
-      return all.where((i) => ['prayer_sunan', 'after_prayer'].contains(i.id)).toList();
+      return all
+          .where((i) => [
+                'prayer_sunan',
+                'prayer_opening',
+                'prayer_rukuh_sujud',
+                'tashahhud_salat',
+                'prayer_before_salam',
+                'witr_istikharah',
+                'after_prayer',
+              ].contains(i.id))
+          .toList();
     }
     if (_selectedCategory == 'daily') {
       return all
@@ -298,6 +308,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
                 'sleeping',
                 'home',
                 'mosque_adhan',
+                'adhan_iqamah',
+                'mosque_etiquette',
                 'wudu_taharah',
                 'food_drink',
                 'travel',
@@ -307,13 +319,31 @@ class _AdhkarPageState extends State<AdhkarPage> {
           .toList();
     }
     if (_selectedCategory == 'distress') {
-      return all.where((i) => ['distress', 'sickness_funerals'].contains(i.id)).toList();
+      return all
+          .where((i) => [
+                'distress',
+                'distress_relief',
+                'protection_ruqyah',
+                'sickness_ruqyah',
+                'funerals_graves',
+                'sickness_funerals',
+              ].contains(i.id))
+          .toList();
     }
     if (_selectedCategory == 'tasbeeh') {
       return all.where((i) => ['tasbeeh', 'istighfar'].contains(i.id)).toList();
     }
     if (_selectedCategory == 'duas') {
-      return all.where((i) => ['duas', 'fasting_hajj'].contains(i.id)).toList();
+      return all
+          .where((i) => [
+                'duas',
+                'quranic_duas',
+                'prophetic_duas',
+                'fasting_adhkar',
+                'hajj_umrah',
+                'fasting_hajj',
+              ].contains(i.id))
+          .toList();
     }
     return all.where((i) => i.id == _selectedCategory).toList();
   }
@@ -350,12 +380,26 @@ class _AdhkarPageState extends State<AdhkarPage> {
         return 'الاستغفار والتسبيح دبر الصلوات المكتوبة';
       case 'prayer_sunan':
         return 'أدعية الاستفتاح والركوع والسجود وقنوت الوتر';
+      case 'prayer_opening':
+        return 'استفتاح الفريضة وقيام الليل الثابت عن النبي ﷺ';
+      case 'prayer_rukuh_sujud':
+        return 'تسبيحات الركوع والرفع منه والسجود وسجود التلاوة';
+      case 'tashahhud_salat':
+        return 'صيغ التشهد المأثورة والصلاة على النبي ﷺ بعد التشهد';
+      case 'prayer_before_salam':
+        return 'الاستعاذة من الأربع وجوامع الدعاء في دبر الصلاة';
+      case 'witr_istikharah':
+        return 'دعاء الاستخارة وقنوت الوتر وقيام الليل والذكر بعده';
       case 'waking':
         return 'حمد الله والثناء عليه بعد بعث الروح';
       case 'sleeping':
         return 'الحفظ والسكينة وأدعية النوم والاستيقاظ';
       case 'mosque_adhan':
         return 'المشي إلى المسجد ودخوله وإجابة المؤذن';
+      case 'adhan_iqamah':
+        return 'إجابة المؤذن والصلاة على النبي ﷺ ودعاء الوسيلة';
+      case 'mosque_etiquette':
+        return 'المشي إلى المسجد ودخوله باليمين والخروج منه باليسار';
       case 'home':
         return 'أذكار الدخول والخروج والسلام على الأهل';
       case 'wudu_taharah':
@@ -366,19 +410,34 @@ class _AdhkarPageState extends State<AdhkarPage> {
       case 'travel':
         return 'الحفظ والمعونة والبركة في السفر والترحال';
       case 'distress':
-        return 'الفرار إلى الله عند الشدائد وطلب الفرج';
+      case 'distress_relief':
+        return 'دعاء ذي النون وتفريج الهموم والغموم وقضاء الدين';
+      case 'protection_ruqyah':
+        return 'التحصين من نزغات الشيطان والرؤيا المكروهة ودفع العين';
       case 'sickness_funerals':
         return 'عيادة المريض والرقية والمصائب والصبر';
+      case 'sickness_ruqyah':
+        return 'عيادة المريض، الرقية النبوية، والتعوذ عند الألم';
+      case 'funerals_graves':
+        return 'تلقين المحتضر، صلاة الجنازة، التعزية، وزيارة القبور';
       case 'nature_weather':
         return 'أدعية الرياح ونزول المطر ورؤية الهلال';
       case 'social_manners':
-        return 'كفارة المجلس وإفشاء السلام والعطاس';
+        return 'كفارة المجلس وإفشاء السلام والعطاس وسجود الشكر';
       case 'fasting_hajj':
         return 'أدعية الصائم والإفطار ومناسك الحج';
+      case 'fasting_adhkar':
+        return 'رؤية الهلال، سنن الإفطار والسحور، ودعاء ليلة القدر';
+      case 'hajj_umrah':
+        return 'التلبية، الطواف، السعي، عرفة، ومناسك الحج والعمرة';
       case 'tasbeeh':
         return 'فضائل التسبيح والتحميد والأجور المضاعفة';
       case 'istighfar':
         return 'صيغ الاستغفار الثابتة وأبواب الرحمة';
+      case 'quranic_duas':
+        return 'أدعية الأنبياء والرسل والراسخين في العلم من القرآن';
+      case 'prophetic_duas':
+        return 'أكمل وأجمع الأدعية المأثورة عن رسول الله ﷺ';
       case 'duas':
       default:
         return 'جوامع الدعاء من القرآن وصحيح السنة';
@@ -395,12 +454,25 @@ class _AdhkarPageState extends State<AdhkarPage> {
         return Icons.mosque_rounded;
       case 'prayer_sunan':
         return Icons.access_time_filled_rounded;
+      case 'prayer_opening':
+        return Icons.auto_awesome_rounded;
+      case 'prayer_rukuh_sujud':
+        return Icons.accessibility_new_rounded;
+      case 'tashahhud_salat':
+        return Icons.favorite_border_rounded;
+      case 'prayer_before_salam':
+        return Icons.mark_chat_read_rounded;
+      case 'witr_istikharah':
+        return Icons.nights_stay_outlined;
       case 'waking':
         return Icons.wb_twilight_rounded;
       case 'sleeping':
         return Icons.bedtime_rounded;
       case 'mosque_adhan':
+      case 'adhan_iqamah':
         return Icons.notifications_active_rounded;
+      case 'mosque_etiquette':
+        return Icons.mosque_rounded;
       case 'home':
         return Icons.cottage_rounded;
       case 'wudu_taharah':
@@ -411,19 +483,32 @@ class _AdhkarPageState extends State<AdhkarPage> {
       case 'travel':
         return Icons.explore_rounded;
       case 'distress':
+      case 'distress_relief':
         return Icons.shield_rounded;
+      case 'protection_ruqyah':
+        return Icons.verified_user_rounded;
       case 'sickness_funerals':
+      case 'sickness_ruqyah':
         return Icons.healing_rounded;
+      case 'funerals_graves':
+        return Icons.hourglass_bottom_rounded;
       case 'nature_weather':
         return Icons.cloud_queue_rounded;
       case 'social_manners':
         return Icons.diversity_3_rounded;
       case 'fasting_hajj':
+      case 'fasting_adhkar':
         return Icons.brightness_medium_rounded;
+      case 'hajj_umrah':
+        return Icons.explore_rounded;
       case 'tasbeeh':
         return Icons.fingerprint_rounded;
       case 'istighfar':
         return Icons.restart_alt_rounded;
+      case 'quranic_duas':
+        return Icons.menu_book_rounded;
+      case 'prophetic_duas':
+        return Icons.format_quote_rounded;
       case 'duas':
       default:
         return Icons.menu_book_rounded;

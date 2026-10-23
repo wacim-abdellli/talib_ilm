@@ -1483,3 +1483,48 @@ FAILED (54 violations)
   - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
   - `flutter test test/quran_audio_service_test.dart test/ayah_action_menu_test.dart`: 10/10 tests pass (100%).
 - **Open Issues:** None.
+
+## Round 28 — Athkar Scholarly Restructuring (28 Categories) & Authentic Sunan Enrichment (384 Items)
+- **Status:** Complete
+- **Branch:** `ui/r28-athkar-scholarly-restructuring-and-sunan-enrichment`
+- **Core Problems Solved & Transformations:**
+  1. **Scholarly Restructuring from 19 to 28 Focused Categories:**
+     - Overhauled previously congested and mixed categories into scholarly, well-titled, thematic sections:
+       - **Prayer Sunan Stages (5 Dedicated Categories):**
+         - `prayer_opening`: أدعية الاستفتاح في الصلاة (7 authentic Istiftah supplications for Fard and Qiyam al-Layl).
+         - `prayer_rukuh_sujud`: أذكار الركوع والسجود والاعتدال (16 items: glorifications, between sujuds, tilawah prostration).
+         - `tashahhud_salat`: التشهد والصلاة الإبراهيمية (5 items: Ibn Mas'ud, Ibn Abbas, and two Salat Ibrahimiyyah variants).
+         - `prayer_before_salam`: أدعية قبل السلام وبعد التشهد (11 items: Isti'adhah from four, Jawami' al-Du'a before Salam).
+         - `witr_istikharah`: قنوت الوتر وصلاة الاستخارة (4 items: Al-Hasan qunoot, Subhan al-Malik al-Quddus, Istikharah).
+       - **Mosque & Adhan Separated:**
+         - `adhan_iqamah`: أذكار الأذان والإقامة (9 items: responding to Muadhin, Wasilah, between Adhan and Iqamah).
+         - `mosque_etiquette`: أذكار المسجد وآدابه (4 items: walking to mosque, right foot entry, left foot exit).
+       - **Sickness & Funerals Separated:**
+         - `sickness_ruqyah`: أدعية المرض والرقية الشرعية (7 items: visiting sick, pain ruqyah, Jibril's ruqyah).
+         - `funerals_graves`: الجنائز والتعزية وزيارة القبور (16 items: talqeen, janazah prayers, burial, visiting graves).
+       - **Fasting & Hajj Separated & Enriched:**
+         - `fasting_adhkar`: أذكار الصيام والإفطار ورمضان (8 items: Hilal, Iftar, host du'a, Suhoor virtue, Laylat al-Qadr).
+         - `hajj_umrah`: أذكار الحج والعمرة والمناسك (9 items: Talbiyah, Tawaf, Sa'i, Arafah, Mash'ar, Jamarat, Zamzam).
+       - **Distress & Protection Separated:**
+         - `distress_relief`: أدعية الكرب وتفريج الهم وقضاء الدين (21 items: Dhu al-Nun, debt relief, grief supplications).
+         - `protection_ruqyah`: الاستعاذة والحفظ من العين والشيطان (15 items: protection from shaytan, evil eye, nightmares).
+       - **Quranic & Prophetic Duas Separated:**
+         - `quranic_duas`: أدعية القرآن الكريم (12 verified Quranic supplications with Surah & verse attributions).
+         - `prophetic_duas`: جوامع الدعاء النبوي الشريف (21 comprehensive prophetic supplications).
+       - **Dhikr Virtues & Social Manners Repositioned:**
+         - Distributed Hisn al-Muslim chapters misfiled in legacy `duas` into `tasbeeh` (30 items) and `social_manners` (32 items).
+  2. **Substantial Enrichment of Authentic Sunan (384 Verified Items):**
+     - Total items grew from 377 (with misfiled duplicates) to 384 unique, verified prophetic supplications with complete Arabic text, vocalization, and scholarly takhrij (Bukhari, Muslim, Abu Dawood, Tirmidhi, etc.).
+  3. **100% Backward Compatibility in `AthkarCatalog.byId`:**
+     - Implemented dynamic synthesis for legacy composite IDs (`prayer_sunan`, `mosque_adhan`, `sickness_funerals`, `fasting_hajj`, `distress`, `duas`, `wudu_food`), ensuring existing routes, notifications, and legacy test assertions pass flawlessly.
+  4. **Design System & Theme Integration:**
+     - Updated `adhkarCategory` in `AppPalette` to map all 28 categories to validated WCAG AA compliant colors (all contrast ratios ≥ 4.86:1 text, exceeding the 4.5:1 minimum).
+     - Provided tailored fallback subtitles and icons for all 28 categories in `adhkar_page.dart`.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (No issues found, ran in 82.7s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `python tool/contrast.py`: All category pairs ≥ 4.86:1 (AA text compliant).
+  - `flutter test`: 22/22 adhkar test suites passed (`test/adhkar_catalog_test.dart`, `test/adhkar_session_page_test.dart`, `test/adhkar_fahras_test.dart`, `test/adhkar_notification_and_solar_test.dart`, `test/adhkar_font_resize_test.dart`).
+  - `flutter build apk --debug`: Built cleanly in 65.1s (`build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open Issues:** None.
+

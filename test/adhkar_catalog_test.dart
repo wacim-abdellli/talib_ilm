@@ -97,5 +97,51 @@ void main() {
       expect(sleepingIds.contains('sleeping_bismika_rabbi'), isTrue);
       expect(sleepingIds.contains('sleeping_dua_al_fitrah'), isTrue);
     });
+
+    test('verifies all 28 scholarly categories and enriched Sunan structure', () async {
+      final catalog = await service.loadCatalog();
+
+      expect(catalog.categories.length, equals(28));
+
+      // Granular Prayer stages
+      final prayerOpening = catalog.byId('prayer_opening');
+      final prayerRukuhSujud = catalog.byId('prayer_rukuh_sujud');
+      final tashahhudSalat = catalog.byId('tashahhud_salat');
+      final prayerBeforeSalam = catalog.byId('prayer_before_salam');
+      final witrIstikharah = catalog.byId('witr_istikharah');
+
+      expect(prayerOpening, isNotNull);
+      expect(prayerRukuhSujud, isNotNull);
+      expect(tashahhudSalat, isNotNull);
+      expect(prayerBeforeSalam, isNotNull);
+      expect(witrIstikharah, isNotNull);
+
+      // Adhan and Mosque
+      expect(catalog.byId('adhan_iqamah'), isNotNull);
+      expect(catalog.byId('mosque_etiquette'), isNotNull);
+
+      // Sickness and Funerals
+      expect(catalog.byId('sickness_ruqyah'), isNotNull);
+      expect(catalog.byId('funerals_graves'), isNotNull);
+
+      // Fasting and Hajj
+      expect(catalog.byId('fasting_adhkar'), isNotNull);
+      expect(catalog.byId('hajj_umrah'), isNotNull);
+
+      // Distress and Protection
+      expect(catalog.byId('distress_relief'), isNotNull);
+      expect(catalog.byId('protection_ruqyah'), isNotNull);
+
+      // Quranic and Prophetic Duas
+      expect(catalog.byId('quranic_duas'), isNotNull);
+      expect(catalog.byId('prophetic_duas'), isNotNull);
+
+      // Backward compatible synthesis works
+      final compositePrayer = catalog.byId('prayer_sunan')!;
+      expect(compositePrayer.items.length, greaterThanOrEqualTo(40));
+
+      final compositeDuas = catalog.byId('duas')!;
+      expect(compositeDuas.items.length, greaterThanOrEqualTo(30));
+    });
   });
 }

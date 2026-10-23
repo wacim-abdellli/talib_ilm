@@ -264,7 +264,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ? const CategoryColors(fg: Color(0xFFA78BFA), bg: Color(0xFF1E1538))
           : const CategoryColors(fg: Color(0xFF6D28D9), bg: Color(0xFFEDE9FE));
     }
-    if (id == 'after_prayer') {
+    if (id == 'after_prayer' ||
+        id == 'prayer_sunan' ||
+        id == 'prayer_opening' ||
+        id == 'prayer_rukuh_sujud' ||
+        id == 'tashahhud_salat' ||
+        id == 'prayer_before_salam' ||
+        id == 'witr_istikharah') {
       // Serene Mosque Emerald
       return isDark
           ? const CategoryColors(fg: Color(0xFF34D399), bg: Color(0xFF052E20))
@@ -282,25 +288,25 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ? const CategoryColors(fg: Color(0xFF818CF8), bg: Color(0xFF171B36))
           : const CategoryColors(fg: Color(0xFF3730A3), bg: Color(0xFFE0E7FF));
     }
-    if (id == 'distress') {
+    if (id == 'distress' || id == 'distress_relief' || id == 'protection_ruqyah') {
       // Healing Teal Solace
       return isDark
           ? const CategoryColors(fg: Color(0xFF2DD4BF), bg: Color(0xFF052B28))
           : const CategoryColors(fg: Color(0xFF0F766E), bg: Color(0xFFCCFBF1));
     }
-    if (id == 'mosque_adhan') {
+    if (id == 'mosque_adhan' || id == 'adhan_iqamah' || id == 'mosque_etiquette') {
       // Radiant Minaret Mint
       return isDark
           ? const CategoryColors(fg: Color(0xFF10B981), bg: Color(0xFF06291E))
           : const CategoryColors(fg: Color(0xFF065F46), bg: Color(0xFFD1FAE5));
     }
-    if (id == 'home') {
+    if (id == 'home' || id == 'food_drink') {
       // Warm Hearth Coral-Rose
       return isDark
           ? const CategoryColors(fg: Color(0xFFFB7185), bg: Color(0xFF331215))
           : const CategoryColors(fg: Color(0xFF991B1B), bg: Color(0xFFFEE2E2));
     }
-    if (id == 'wudu_food') {
+    if (id == 'wudu_food' || id == 'wudu_taharah' || id == 'hajj_umrah') {
       // Pure Water & Barakah Sky Blue
       return isDark
           ? const CategoryColors(fg: Color(0xFF38BDF8), bg: Color(0xFF07273B))
@@ -312,7 +318,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ? const CategoryColors(fg: Color(0xFF94A3B8), bg: Color(0xFF1A2230))
           : const CategoryColors(fg: Color(0xFF334155), bg: Color(0xFFF1F5F9));
     }
-    if (id == 'duas') {
+    if (id == 'duas' || id == 'quranic_duas' || id == 'prophetic_duas') {
       // Sacred Parchment Gold
       return isDark
           ? const CategoryColors(fg: Color(0xFFF59E0B), bg: Color(0xFF2B1B06))
@@ -324,11 +330,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ? const CategoryColors(fg: Color(0xFF34D399), bg: Color(0xFF063321))
           : const CategoryColors(fg: Color(0xFF047857), bg: Color(0xFFDCFCE7));
     }
-    if (id == 'istighfar') {
+    if (id == 'istighfar' ||
+        id == 'sickness_funerals' ||
+        id == 'sickness_ruqyah' ||
+        id == 'funerals_graves') {
       // Pure Repentance Rose-Lavender
       return isDark
           ? const CategoryColors(fg: Color(0xFFF472B6), bg: Color(0xFF330E22))
           : const CategoryColors(fg: Color(0xFF9D174D), bg: Color(0xFFFCE7F3));
+    }
+    if (id == 'fasting_hajj' || id == 'fasting_adhkar') {
+      // Fasting & Dawn Warm Amber
+      return isDark
+          ? const CategoryColors(fg: Color(0xFFFBBF24), bg: Color(0xFF2E1C05))
+          : const CategoryColors(fg: Color(0xFFB45309), bg: Color(0xFFFEF3C7));
     }
 
     // Default Fallback

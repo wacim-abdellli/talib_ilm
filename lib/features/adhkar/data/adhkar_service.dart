@@ -26,15 +26,10 @@ AthkarCatalog _parseAthkarJson(String raw) {
     categories = const [];
   }
 
-  final merged = List<AthkarCategoryData>.from(categories);
-  final fallback = AthkarService.getFallbackCatalog().categories;
-  final existingIds = merged.map((c) => c.id).toSet();
-  for (final category in fallback) {
-    if (!existingIds.contains(category.id)) {
-      merged.add(category);
-    }
+  if (categories.isNotEmpty) {
+    return AthkarCatalog(categories: categories);
   }
-  return AthkarCatalog(categories: merged);
+  return AthkarService.getFallbackCatalog();
 }
 
 class AthkarService {
@@ -335,7 +330,7 @@ class AthkarService {
       target: target,
       countDescription: '',
       fadl: '',
-      source: '',
+      source: 'صحيح مسلم',
       audio: '',
       hadithText: '',
       hadithExplanation: '',

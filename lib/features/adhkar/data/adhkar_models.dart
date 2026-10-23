@@ -6,6 +6,11 @@ enum AdhkarCategory {
   evening,
   afterPrayer,
   prayerSunan,
+  prayerOpening,
+  prayerRukuhSujud,
+  tashahhudSalat,
+  prayerBeforeSalam,
+  witrIstikharah,
   beforePrayer,
   general,
   tasbeeh,
@@ -15,15 +20,25 @@ enum AdhkarCategory {
   waking,
   home,
   mosqueAdhan,
+  adhanIqamah,
+  mosqueEtiquette,
   wuduFood,
   wuduTaharah,
   foodDrink,
   distress,
+  distressRelief,
+  protectionRuqyah,
   travel,
   sicknessFunerals,
+  sicknessRuqyah,
+  funeralsGraves,
   natureWeather,
   socialManners,
   fastingHajj,
+  fastingAdhkar,
+  hajjUmrah,
+  quranicDuas,
+  propheticDuas,
 }
 
 extension AdhkarCategoryLabel on AdhkarCategory {
@@ -37,6 +52,16 @@ extension AdhkarCategoryLabel on AdhkarCategory {
         return AppStrings.adhkarAfterPrayer;
       case AdhkarCategory.prayerSunan:
         return 'سنن وأدعية الصلاة';
+      case AdhkarCategory.prayerOpening:
+        return 'أدعية الاستفتاح في الصلاة';
+      case AdhkarCategory.prayerRukuhSujud:
+        return 'أذكار الركوع والسجود والاعتدال';
+      case AdhkarCategory.tashahhudSalat:
+        return 'التشهد والصلاة الإبراهيمية';
+      case AdhkarCategory.prayerBeforeSalam:
+        return 'أدعية قبل السلام وبعد التشهد';
+      case AdhkarCategory.witrIstikharah:
+        return 'قنوت الوتر وصلاة الاستخارة';
       case AdhkarCategory.beforePrayer:
         return AppStrings.adhkarBeforePrayer;
       case AdhkarCategory.general:
@@ -55,23 +80,42 @@ extension AdhkarCategoryLabel on AdhkarCategory {
         return 'أذكار المنزل';
       case AdhkarCategory.mosqueAdhan:
         return 'أذكار المسجد والأذان';
+      case AdhkarCategory.adhanIqamah:
+        return 'أذكار الأذان والإقامة';
+      case AdhkarCategory.mosqueEtiquette:
+        return 'أذكار المسجد وآدابه';
       case AdhkarCategory.wuduFood:
       case AdhkarCategory.wuduTaharah:
         return 'أذكار الطهارة والوضوء';
       case AdhkarCategory.foodDrink:
         return 'أذكار الطعام والشراب';
       case AdhkarCategory.distress:
-        return 'أذكار الكرب والهم';
+      case AdhkarCategory.distressRelief:
+        return 'أدعية الكرب وتفريج الهم';
+      case AdhkarCategory.protectionRuqyah:
+        return 'الاستعاذة والحفظ من العين';
       case AdhkarCategory.travel:
         return 'أذكار السفر';
       case AdhkarCategory.sicknessFunerals:
         return 'أدعية المرض والجنائز';
+      case AdhkarCategory.sicknessRuqyah:
+        return 'أدعية المرض والرقية الشرعية';
+      case AdhkarCategory.funeralsGraves:
+        return 'الجنائز والتعزية وزيارة القبور';
       case AdhkarCategory.natureWeather:
         return 'أذكار المطر والظواهر';
       case AdhkarCategory.socialManners:
         return 'أذكار المجالس والآداب';
       case AdhkarCategory.fastingHajj:
         return 'أذكار الصيام والحج';
+      case AdhkarCategory.fastingAdhkar:
+        return 'أذكار الصيام والإفطار ورمضان';
+      case AdhkarCategory.hajjUmrah:
+        return 'أذكار الحج والعمرة والمناسك';
+      case AdhkarCategory.quranicDuas:
+        return 'أدعية القرآن الكريم';
+      case AdhkarCategory.propheticDuas:
+        return 'جوامع الدعاء النبوي الشريف';
     }
   }
 
@@ -90,6 +134,21 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
     case 'prayer_sunan':
     case 'prayerSunan':
       return AdhkarCategory.prayerSunan;
+    case 'prayer_opening':
+    case 'prayerOpening':
+      return AdhkarCategory.prayerOpening;
+    case 'prayer_rukuh_sujud':
+    case 'prayerRukuhSujud':
+      return AdhkarCategory.prayerRukuhSujud;
+    case 'tashahhud_salat':
+    case 'tashahhudSalat':
+      return AdhkarCategory.tashahhudSalat;
+    case 'prayer_before_salam':
+    case 'prayerBeforeSalam':
+      return AdhkarCategory.prayerBeforeSalam;
+    case 'witr_istikharah':
+    case 'witrIstikharah':
+      return AdhkarCategory.witrIstikharah;
     case 'before_prayer':
     case 'beforePrayer':
       return AdhkarCategory.beforePrayer;
@@ -112,6 +171,12 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
     case 'mosque_adhan':
     case 'mosqueAdhan':
       return AdhkarCategory.mosqueAdhan;
+    case 'adhan_iqamah':
+    case 'adhanIqamah':
+      return AdhkarCategory.adhanIqamah;
+    case 'mosque_etiquette':
+    case 'mosqueEtiquette':
+      return AdhkarCategory.mosqueEtiquette;
     case 'wudu_food':
     case 'wuduFood':
       return AdhkarCategory.wuduFood;
@@ -123,11 +188,23 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
       return AdhkarCategory.foodDrink;
     case 'distress':
       return AdhkarCategory.distress;
+    case 'distress_relief':
+    case 'distressRelief':
+      return AdhkarCategory.distressRelief;
+    case 'protection_ruqyah':
+    case 'protectionRuqyah':
+      return AdhkarCategory.protectionRuqyah;
     case 'travel':
       return AdhkarCategory.travel;
     case 'sickness_funerals':
     case 'sicknessFunerals':
       return AdhkarCategory.sicknessFunerals;
+    case 'sickness_ruqyah':
+    case 'sicknessRuqyah':
+      return AdhkarCategory.sicknessRuqyah;
+    case 'funerals_graves':
+    case 'funeralsGraves':
+      return AdhkarCategory.funeralsGraves;
     case 'nature_weather':
     case 'natureWeather':
       return AdhkarCategory.natureWeather;
@@ -137,6 +214,18 @@ AdhkarCategory? adhkarCategoryFromId(String id) {
     case 'fasting_hajj':
     case 'fastingHajj':
       return AdhkarCategory.fastingHajj;
+    case 'fasting_adhkar':
+    case 'fastingAdhkar':
+      return AdhkarCategory.fastingAdhkar;
+    case 'hajj_umrah':
+    case 'hajjUmrah':
+      return AdhkarCategory.hajjUmrah;
+    case 'quranic_duas':
+    case 'quranicDuas':
+      return AdhkarCategory.quranicDuas;
+    case 'prophetic_duas':
+    case 'propheticDuas':
+      return AdhkarCategory.propheticDuas;
   }
   return null;
 }
@@ -251,6 +340,116 @@ class AthkarCatalog {
     if (id == 'wudu_food') {
       return byId('wudu_taharah');
     }
+
+    // Backward compatibility aggregation for composite categories:
+    if (id == 'prayer_sunan' || id == 'prayerSunan') {
+      const subCatIds = [
+        'prayer_opening',
+        'prayer_rukuh_sujud',
+        'tashahhud_salat',
+        'prayer_before_salam',
+        'witr_istikharah',
+      ];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'prayer_sunan',
+          title: 'سنن وأدعية الصلاة',
+          subtitle: 'أدعية الاستفتاح والركوع والسجود والتشهد وقنوت الوتر',
+          items: items,
+        );
+      }
+    }
+
+    if (id == 'mosque_adhan' || id == 'mosqueAdhan') {
+      const subCatIds = ['adhan_iqamah', 'mosque_etiquette'];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'mosque_adhan',
+          title: 'أذكار المسجد والأذان',
+          subtitle: 'إجابة المؤذن والدعاء والمشي إلى المسجد ودخوله',
+          items: items,
+        );
+      }
+    }
+
+    if (id == 'sickness_funerals' || id == 'sicknessFunerals') {
+      const subCatIds = ['sickness_ruqyah', 'funerals_graves'];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'sickness_funerals',
+          title: 'أدعية المرض والجنائز',
+          subtitle: 'عيادة المريض، الرقية النبوية، وصلاة الجنائز والقبور',
+          items: items,
+        );
+      }
+    }
+
+    if (id == 'fasting_hajj' || id == 'fastingHajj') {
+      const subCatIds = ['fasting_adhkar', 'hajj_umrah'];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'fasting_hajj',
+          title: 'أذكار الصيام والحج',
+          subtitle: 'سنن الصيام والإفطار وليلة القدر ومناسك الحج والعمرة',
+          items: items,
+        );
+      }
+    }
+
+    if (id == 'distress') {
+      const subCatIds = ['distress_relief', 'protection_ruqyah'];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'distress',
+          title: 'أذكار الكرب والهم والحفظ',
+          subtitle: 'تفريج الهموم والغموم والاستعاذة من الشرور والعين',
+          items: items,
+        );
+      }
+    }
+
+    if (id == 'duas') {
+      const subCatIds = ['quranic_duas', 'prophetic_duas'];
+      final items = <AthkarItem>[];
+      for (final subId in subCatIds) {
+        final sub = byId(subId);
+        if (sub != null) items.addAll(sub.items);
+      }
+      if (items.isNotEmpty) {
+        return AthkarCategoryData(
+          id: 'duas',
+          title: 'الأدعية المأثورة',
+          subtitle: 'أدعية القرآن الكريم وجوامع الدعاء النبوي الشريف',
+          items: items,
+        );
+      }
+    }
+
     return null;
   }
 }
