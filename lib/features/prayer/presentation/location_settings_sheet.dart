@@ -13,6 +13,7 @@ import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
+import 'widgets/location_search_results_list.dart';
 
 class LocationSettingsSheet extends StatefulWidget {
   final VoidCallback? onSaved;
@@ -566,98 +567,10 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   }
 
   Widget _buildSearchResults(AppPalette palette, List<VerifiedCity> cities) {
-    if (cities.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpace.xl),
-        alignment: Alignment.center,
-        child: Text(
-          'لم يتم العثور على مدينة مطابقة. تأكد من صحة الاسم أو استخدم زر GPS أعلاه.',
-          textAlign: TextAlign.center,
-          style: context.text.caption.copyWith(
-            color: palette.textMuted,
-          ),
-        ),
-      );
-    }
-
-    final displayList = cities.take(15).toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.surfaceMuted,
-        borderRadius: AppRadius.lgRadius,
-        border: Border.all(color: palette.border),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: displayList.length,
-        separatorBuilder: (_, index) => Divider(
-          height: 1,
-          thickness: 1,
-          color: palette.border.withValues(alpha: 0.5),
-        ),
-        itemBuilder: (context, index) {
-          final city = displayList[index];
-          final isCurrent = _currentLocation?.city == city.name;
-
-          return Material(
-            color: isCurrent
-                ? palette.primarySoft.withValues(alpha: 0.3)
-                : Colors.transparent,
-            child: InkWell(
-              onTap: () => _selectVerifiedCity(city),
-              child: Container(
-                constraints: const BoxConstraints(minHeight: AppSize.tap),
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.sm,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isCurrent
-                          ? Icons.check_circle_rounded
-                          : Icons.location_city_rounded,
-                      size: AppIcon.md,
-                      color: isCurrent ? palette.primary : palette.textMuted,
-                    ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            city.name,
-                            style: context.text.body.copyWith(
-                              fontWeight: isCurrent
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              color: isCurrent ? palette.primary : palette.text,
-                            ),
-                          ),
-                          if (city.province != null)
-                            Text(
-                              '${city.province} • ${city.country}',
-                              style: context.text.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: AppIcon.md,
-                      color: palette.textSubtle,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+    return LocationSearchResultsList(
+      cities: cities,
+      currentLocation: _currentLocation,
+      onSelectCity: _selectVerifiedCity,
     );
   }
 }

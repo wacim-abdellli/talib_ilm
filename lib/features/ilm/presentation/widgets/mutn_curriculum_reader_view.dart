@@ -13,13 +13,13 @@ import '../../data/catalogs/mutun_curriculum_catalog.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
-import 'mutn_memorization_view.dart';
+import 'mutn_curriculum_section_header.dart';
+import 'mutn_paragraph_block.dart';
 import 'mutn_paragraph_options_sheet.dart';
 import 'mutn_quick_jump_sheet.dart';
 import 'mutun_audio_player_hud.dart';
 import 'mutun_rosette_icon.dart';
 import 'scholarly_reader_hud.dart' show BookPageTapDetector, ScholarlyReaderHud;
-import 'shamela_text_highlighter.dart';
 import 'shamela_typography_sheet.dart';
 
 /// Authentic Continuous Scholarly Reader for curriculum mutun matching Hafed Mutun.
@@ -338,22 +338,40 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
                   children: [
                     for (final section in widget.curriculumBook.sections) ...[
                       // Section Divider Header Pill
-                      _buildSectionHeader(
+                      MutnCurriculumSectionHeader(
                         section: section,
+                        isFirstSection: section == widget.curriculumBook.sections.first,
                         surfaceTokens: surfaceTokens,
                         textTheme: textTheme,
                         tokens: tokens,
+                        fontFamily: _fontFamily,
+                        onToggleControls: widget.onToggleControls,
                       ),
 
                       const SizedBox(height: AppSpace.md),
                       // Paragraphs in this section
                       for (final para in section.paragraphs) ...[
-                        _buildParagraphBlock(
+                        MutnParagraphBlock(
+                          key: _paragraphKeys[para.index],
                           para: para,
                           surfaceTokens: surfaceTokens,
                           tokens: tokens,
                           palette: palette,
                           textTheme: textTheme,
+                          memorizationMode: _memorizationMode,
+                          fontFamily: _fontFamily,
+                          fontSizeDelta: _fontSizeDelta,
+                          lineHeight: _lineHeight,
+                          accentColor: _accentColor,
+                          surface: _surface,
+                          onTap: () {
+                            _recordParagraphProgress(para.index);
+                            widget.onToggleControls?.call();
+                          },
+                          onLongPress: () {
+                            _recordParagraphProgress(para.index);
+                            _showParagraphOptions(para);
+                          },
                         ),
                         const SizedBox(height: AppSpace.md),
                       ],
@@ -475,168 +493,5 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
       ),
     );
   }
-
-  Widget _buildSectionHeader({
-    required MutunSection section,
-    required ReaderSurfaceTokens surfaceTokens,
-    required AppTextTheme textTheme,
-    required MutunThemeTokens tokens,
-  }) {
-    final isFirstSection = section == widget.curriculumBook.sections.first;
-
-    return Padding(
-      padding: EdgeInsetsDirectional.only(
-        top: isFirstSection ? AppSpace.xs : AppSpace.xl,
-        bottom: AppSpace.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!isFirstSection) ...[
-            Divider(
-              color: surfaceTokens.border.withValues(alpha: 0.5),
-              height: 1,
-            ),
-            const SizedBox(height: AppSpace.md),
-          ],
-          Material(
-            color: surfaceTokens.surfaceRaised,
-            borderRadius: AppRadius.mdRadius,
-            child: InkWell(
-              borderRadius: AppRadius.mdRadius,
-              onTap: () {
-                widget.onToggleControls?.call();
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.sm,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: AppRadius.mdRadius,
-                  border: Border.all(
-                    color: tokens.rosetteGold.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    MutunRosetteIcon(
-                      size: AppIcon.sm,
-                      color: tokens.rosetteGold.withValues(alpha: 0.85),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    Flexible(
-                      child: Text(
-                        section.title,
-                        textAlign: TextAlign.center,
-                        style: textTheme.titleSmall.copyWith(
-                          color: tokens.rosetteGold,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: _fontFamily,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    MutunRosetteIcon(
-                      size: AppIcon.sm,
-                      color: tokens.rosetteGold.withValues(alpha: 0.85),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildParagraphBlock({
-    required MutunParagraph para,
-    required ReaderSurfaceTokens surfaceTokens,
-    required MutunThemeTokens tokens,
-    required AppPalette palette,
-    required AppTextTheme textTheme,
-  }) {
-    final key = _paragraphKeys[para.index];
-
-    return KeyedSubtree(
-      key: key,
-      child: Padding(
-        padding: const EdgeInsetsDirectional.symmetric(
-          vertical: AppSpace.xs,
-          horizontal: AppSpace.xxs,
-        ),
-        child: InkWell(
-          onTap: () {
-            _recordParagraphProgress(para.index);
-            widget.onToggleControls?.call();
-          },
-          onLongPress: () {
-            _recordParagraphProgress(para.index);
-            _showParagraphOptions(para);
-          },
-          borderRadius: AppRadius.mdRadius,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Clean Dignified Scholarly Text or Memorization Mode ──
-              _memorizationMode
-                  ? MutnMemorizationView(
-                      content: para.text,
-                      fontFamily: _fontFamily,
-                      fontSizeDelta: _fontSizeDelta,
-                      lineHeight: _lineHeight,
-                    )
-                  : Text.rich(
-                      ShamelaTextHighlighter.buildSpans(
-                        text: para.text,
-                        palette: palette,
-                        textTheme: textTheme,
-                        fontFamily: _fontFamily,
-                        fontSizeDelta: _fontSizeDelta,
-                        lineHeight: _lineHeight,
-                        accentColor: _accentColor,
-                        surface: _surface,
-                      ),
-                      textAlign: TextAlign.start,
-                    ),
-
-              const SizedBox(height: AppSpace.xs),
-
-              // ── Paragraph Number Badge (- 1 -, - 2 - ...) ─────────
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.xs,
-                    vertical: AppSpace.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: surfaceTokens.surfaceRaised,
-                    borderRadius: AppRadius.pillRadius,
-                    border: Border.all(
-                      color: surfaceTokens.border.withValues(alpha: 0.6),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    '- ${para.index} -',
-                    style: textTheme.caption.copyWith(
-                      color: tokens.paragraphNumber,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
+

@@ -4,11 +4,12 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../data/services/quran_audio_downloader.dart';
 import '../data/services/quran_audio_service.dart';
+import 'widgets/empty_downloaded_audio_state.dart';
 import 'widgets/quran_audio_download_item.dart';
+import 'widgets/quran_audio_storage_header.dart';
 
 /// Screen for managing offline Holy Quran audio recitations, tracking
 /// storage usage, downloading surahs per reciter with pause/resume, and offline listening.
@@ -227,162 +228,19 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
         child: Column(
           children: [
             // ── Reciter Selector & Storage Summary Card ─────────────────
-            Padding(
-              padding: const EdgeInsetsDirectional.only(
-                top: AppSpace.sm,
-                start: AppSpace.lg,
-                end: AppSpace.lg,
-                bottom: AppSpace.xs,
-              ),
-              child: AppCard(
-                padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                color: palette.surface,
-                borderRadius: AppRadius.lgRadius,
-                border: Border.all(
-                  color: palette.border.withValues(alpha: 0.7),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: AppUi.iconBoxSize,
-                          height: AppUi.iconBoxSize,
-                          decoration: BoxDecoration(
-                            color: palette.primarySoft,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.record_voice_over_rounded,
-                            color: palette.primary,
-                            size: AppIcon.md,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'القارئ الصوتي المختار',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
-                                ),
-                              ),
-                              DropdownButtonHideUnderline(
-                                child: DropdownButton<QuranReciter>(
-                                  value: _currentReciter,
-                                  isDense: true,
-                                  isExpanded: true,
-                                  dropdownColor: palette.surface,
-                                  icon: Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    color: palette.primary,
-                                    size: AppIcon.md,
-                                  ),
-                                  items: QuranAudioService.reciters.map((r) {
-                                    return DropdownMenuItem<QuranReciter>(
-                                      value: r,
-                                      child: Text(
-                                        r.name,
-                                        style: textTheme.label.copyWith(
-                                          color: palette.text,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setState(() => _currentReciter = val);
-                                      _audioService.setSelectedReciter(val);
-                                      _refreshStorageAndStatus();
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: palette.border.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.sd_storage_rounded,
-                              size: AppIcon.sm,
-                              color: palette.gold,
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            Text(
-                              'المساحة المستهلكة: ',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                            ),
-                            Text(
-                              QuranAudioDownloader.formatBytes(_totalStorageBytes),
-                              style: textTheme.label.copyWith(
-                                color: palette.gold,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (downloadedCount > 0) ...[
-                              Text(
-                                ' ($downloadedCount سورة)',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (_totalStorageBytes > 0)
-                          InkWell(
-                            onTap: _confirmDeleteAll,
-                            borderRadius: AppRadius.pillRadius,
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs,
-                                vertical: AppSpace.xxs,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete_sweep_outlined,
-                                    size: AppIcon.sm,
-                                    color: palette.error,
-                                  ),
-                                  const SizedBox(width: AppSpace.xxs),
-                                  Text(
-                                    'تفريغ الكل',
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.error,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            QuranAudioStorageHeader(
+              currentReciter: _currentReciter,
+              reciters: QuranAudioService.reciters,
+              onReciterChanged: (val) {
+                if (val != null) {
+                  setState(() => _currentReciter = val);
+                  _audioService.setSelectedReciter(val);
+                  _refreshStorageAndStatus();
+                }
+              },
+              totalStorageBytes: _totalStorageBytes,
+              downloadedCount: downloadedCount,
+              onConfirmDeleteAll: _confirmDeleteAll,
             ),
 
             // ── Segment Filter: All Surahs vs Downloaded Only ─────────────
@@ -562,7 +420,11 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                       ),
                     )
                   : _showOnlyDownloaded && displaySurahs.isEmpty
-                      ? _buildEmptyDownloadedState(palette, textTheme)
+                      ? EmptyDownloadedAudioState(
+                          onBrowseAll: () {
+                            setState(() => _showOnlyDownloaded = false);
+                          },
+                        )
                       : ValueListenableBuilder<Map<String, SurahDownloadProgress>>(
                           valueListenable: _downloader.downloadProgressNotifier,
                           builder: (context, progressMap, _) {
@@ -617,56 +479,5 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       ),
     );
   }
-
-  Widget _buildEmptyDownloadedState(AppPalette palette, AppTextTheme textTheme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: AppUi.emptyIllustrationSize,
-              height: AppUi.emptyIllustrationSize,
-              decoration: BoxDecoration(
-                color: palette.primarySoft,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.cloud_download_outlined,
-                size: AppIcon.xl,
-                color: palette.primary,
-              ),
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              'لا توجد سور محمّلة لهذا القارئ',
-              style: textTheme.titleSmall.copyWith(
-                color: palette.text,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              'يمكنك تنزيل السور التي ترغب في الاستماع إليها بدون إنترنت بالنقر على زر التنزيل في قائمة جميع السور.',
-              textAlign: TextAlign.center,
-              style: textTheme.bodySmall.copyWith(
-                color: palette.textMuted,
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            AppButton(
-              label: 'تصفح جميع السور للتنزيل',
-              variant: AppButtonVariant.primary,
-              icon: Icons.format_list_bulleted_rounded,
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                setState(() => _showOnlyDownloaded = false);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+

@@ -8,6 +8,7 @@ import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import 'prayer_notification_mode_pill.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
   final AdhanSettings settings;
@@ -536,141 +537,18 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
     required String subtitle,
     required IconData icon,
   }) {
-    final isSelected = widget.settings.defaultMode == mode;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: AppRadius.mdRadius,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          widget.onSettingsChanged(
-            widget.settings.copyWith(
-              defaultMode: mode,
-              silentNotifications: mode == PrayerNotificationMode.silent,
-            ),
-          );
-        },
-        child: AnimatedContainer(
-          duration: AppMotion.fast,
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.md,
-            vertical: AppSpace.sm,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? palette.primarySoft : palette.surfaceMuted,
-            borderRadius: AppRadius.mdRadius,
-            border: Border.all(
-              color: isSelected ? palette.primary : palette.border,
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: isSelected ? palette.primary : palette.surfaceRaised,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: AppIcon.sm,
-                  color: isSelected ? palette.onPrimary : palette.textMuted,
-                ),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: textTheme.body.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? palette.primary : palette.text,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (mode == PrayerNotificationMode.takbeer ||
-                  mode == PrayerNotificationMode.announcement) ...[
-                const SizedBox(width: AppSpace.xs),
-                StreamBuilder<PlayerState>(
-                  stream: widget.adhanService.playerStateStream,
-                  builder: (context, _) {
-                    final isAudioActive =
-                        widget.adhanService.isPlaying && _previewingMode == mode;
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _togglePreviewMode(mode),
-                        borderRadius: AppRadius.smRadius,
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.sm,
-                            vertical: AppSpace.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isAudioActive
-                                ? palette.primary
-                                : palette.surface,
-                            borderRadius: AppRadius.smRadius,
-                            border: Border.all(
-                              color: palette.primary,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isAudioActive
-                                    ? Icons.stop_rounded
-                                    : Icons.play_arrow_rounded,
-                                size: AppIcon.xs,
-                                color: isAudioActive
-                                    ? palette.onPrimary
-                                    : palette.primary,
-                              ),
-                              const SizedBox(width: AppSpace.xxs),
-                              Text(
-                                isAudioActive ? 'إيقاف' : 'استمع',
-                                style: textTheme.caption.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: isAudioActive
-                                      ? palette.onPrimary
-                                      : palette.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-              if (isSelected) ...[
-                const SizedBox(width: AppSpace.xs),
-                Icon(
-                  Icons.check_circle_rounded,
-                  color: palette.primary,
-                  size: AppIcon.sm,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return PrayerNotificationModePill(
+      palette: palette,
+      textTheme: textTheme,
+      settings: widget.settings,
+      adhanService: widget.adhanService,
+      mode: mode,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      previewingMode: _previewingMode,
+      onSettingsChanged: widget.onSettingsChanged,
+      onTogglePreview: _togglePreviewMode,
     );
   }
 }

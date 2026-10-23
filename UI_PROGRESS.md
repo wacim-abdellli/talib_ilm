@@ -1806,4 +1806,30 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly.
 - **Open Issues:** None.
 
+## Round 45 — Maintainability, Dependency Hygiene & Modularization (T15 / Finding C25)
+- **Status:** Complete
+- **Branch:** `ui/r45-maintainability-dependency-hygiene`
+- **Core Problems Solved:**
+  1. **Zero Deprecation Debt & Global Suppression Elimination (C25):**
+     - Completely eliminated blanket `deprecated_member_use: ignore` and `deprecated_member_use_from_same_package: ignore` from `analysis_options.yaml`.
+     - Resolved all 7 active deprecations across the repository:
+       - Replaced `withOpacity()` with `withValues(alpha: ...)` in `adhkar_font_size_sheet.dart`, `mushaf_settings_sheet.dart`, and `tajweed_service.dart`.
+       - Replaced deprecated `playbackEventStream` with modern `playerStateStream` in `quran_radio_service.dart`.
+     - Static analysis now enforces strict deprecation checks without warning suppression.
+  2. **Modularization of Oversized Presentation & Data Services (Rule 8):**
+     - Refactored `lib/features/quran/data/models/quran_models.dart`: extracted `Reciter` and `QuranEdition` into `lib/features/quran/data/models/reciter_model.dart` (104 lines); `quran_models.dart` reduced to 516 lines.
+     - Refactored `lib/features/prayer/presentation/location_settings_sheet.dart`: extracted `LocationSearchResultsList` into `lib/features/prayer/presentation/widgets/location_search_results_list.dart` (116 lines); reduced to 576 lines.
+     - Refactored `lib/features/prayer/presentation/widgets/sunnah_fasting_card.dart`: extracted `WhiteDayTile` into `lib/features/prayer/presentation/widgets/white_day_tile.dart` (146 lines); reduced to 522 lines.
+     - Refactored `lib/features/prayer/presentation/widgets/prayer_adhan_section.dart`: extracted `PrayerNotificationModePill` into `lib/features/prayer/presentation/widgets/prayer_notification_mode_pill.dart` (177 lines); reduced to 554 lines.
+     - Refactored `lib/features/quran/presentation/quran_audio_downloads_page.dart`: extracted `QuranAudioStorageHeader` (197 lines) and `EmptyDownloadedAudioState` (68 lines); reduced from 673 to 484 lines.
+     - Refactored `lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart`: extracted `MutnCurriculumSectionHeader` (108 lines) and `MutnParagraphBlock` (108 lines); reduced from 643 to 480 lines.
+     - Refactored `lib/features/ilm/data/services/book_progress_service.dart`: extracted `SharhAnnotationService` into `lib/features/ilm/data/services/sharh_annotation_service.dart` (122 lines); reduced from 677 to 588 lines.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (No issues found, ran in 9.3s).
+  - `python tool/ui_lint_v2.py`: OK (6 allow markers / cap 10).
+  - `flutter test`: 44/44 tests passed across `verified_location_and_prayer_test.dart`, `quran_audio_download_test.dart`, `quran_audio_lifecycle_test.dart`, and 23/23 tests passed across `persistence_consistency_test.dart`, `book_progress_audit_test.dart`, `mutun_curriculum_reader_test.dart`.
+  - `flutter build apk --debug`: Built cleanly in 79.7s (`build\app\outputs\flutter-apk\app-debug.apk`, SHA-256: `2D40B2C7EBE15BF66EC92459947728B85B9301B9BCF7866F3641011A1726E085`, 299,120,723 bytes).
+- **Open Issues:** None.
+
+
 

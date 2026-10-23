@@ -37,9 +37,12 @@ class QuranRadioService extends ChangeNotifier {
   double get volume => _volume;
   List<QuranRadioStation> get stations => _stations;
 
+  // ignore: deprecated_member_use
   ConcatenatingAudioSource? _playlist;
 
+  // ignore: deprecated_member_use
   ConcatenatingAudioSource _buildPlaylist(List<QuranRadioStation> list) {
+    // ignore: deprecated_member_use
     return ConcatenatingAudioSource(
       useLazyPreparation: true,
       children: list.map((s) => _createAudioSource(s)).toList(),

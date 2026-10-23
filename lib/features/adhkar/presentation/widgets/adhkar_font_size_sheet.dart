@@ -316,7 +316,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                   ),
                   Switch.adaptive(
                     value: _showTashkeel,
-                    activeColor: palette.gold,
+                    activeTrackColor: palette.gold,
+                    activeThumbColor: palette.gold,
                     onChanged: (val) => _toggleTashkeel(),
                   ),
                 ],

@@ -259,7 +259,7 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                           ),
                           Switch(
                             value: _tajweed,
-                            activeColor: palette.onPrimary,
+                            activeThumbColor: palette.onPrimary,
                             activeTrackColor: palette.primary,
                             inactiveThumbColor: palette.textMuted,
                             inactiveTrackColor: palette.surfaceMuted,
@@ -320,7 +320,7 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
                       ),
                       Switch(
                         value: _keepScreenAwake,
-                        activeColor: palette.onPrimary,
+                        activeThumbColor: palette.onPrimary,
                         activeTrackColor: palette.gold,
                         inactiveThumbColor: palette.textMuted,
                         inactiveTrackColor: palette.surfaceMuted,

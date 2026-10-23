@@ -46,7 +46,7 @@ class TajweedService {
     }
 
     final cacheKey =
-        '$plainUthmani|${quranComMarkup ?? ""}|${baseStyle.color?.value}|${baseStyle.fontSize}|${baseStyle.height}';
+        '$plainUthmani|${quranComMarkup ?? ""}|${baseStyle.color?.toARGB32()}|${baseStyle.fontSize}|${baseStyle.height}';
     final cached = _spanCache[cacheKey];
     if (cached != null) {
       return cached;
