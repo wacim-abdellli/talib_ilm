@@ -4,6 +4,12 @@ This continues the release-readiness audit. It repairs verification infrastructu
 
 ## Environment recovery
 
+**Latest recovery result (R31):** Git commits and remote branch pushes now work; checkpoint `4d09095` and audio fix `154dc74` are on GitHub. Normal whole-project analyze passes (zero issues, 14.3s) after excluding only generated `build/**`. The copied SDK's Git ownership error is resolved by process-scoped trust of that exact SDK, preserving existing injected Git settings. The verification runner applies/restores that environment; its syntax is checked, not an end-to-end successful runner execution.
+
+The fresh debug APK **built successfully in 312.5s** at `build/app/outputs/flutter-apk/app-debug.apk` (329,476,785 bytes; SHA-256 `B67CE1AEFE23B785F40001B877D5FB3B3D73B99BD2C1E279466E5A8156E66417`). This is a debug artifact, not the earlier approximately 140 MB release APK. Log: `build/release-tools/r31-build-final.log`. First R31 build failed on the copied SDK's Git ownership check; the corrected retry passed. No install/device playback or release signing certification is claimed.
+
+Current full suite: **356 passed / 34 failed**, all failed entries in `test/golden/`; 37 focused audio/download/action tests pass, including 14 new lifecycle tests. Existing golden reference work remains pending. Historical failed/interrupted attempts below are retained as history; they do not override the successful latest build.
+
 The shared Flutter SDK could not write its cache lockfile. A writable copy of Flutter 3.38.7 / Dart 3.10.7 was prepared under ignored `build/release-tools/flutter`. A separate writable Gradle cache was seeded under `build/release-tools/gradle`, excluding lock files. These are local build tools, not application assets or committed files. Generated `android/local.properties` now points to the local SDK; Git ignores that machine-specific file.
 
 `tool/verify_release_readiness.ps1` detects that local SDK, accepts `-FlutterSdk` and `-NoPub`, runs the four project gates, saves logs/results, and restores the previous Gradle cache environment variable. Its PowerShell syntax was checked. The complete script was not itself rerun end-to-end; the commands below were executed directly while diagnosing failures.
