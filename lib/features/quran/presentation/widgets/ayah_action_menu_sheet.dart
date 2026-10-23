@@ -171,15 +171,34 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     );
   }
 
+  void _playContinuous() {
+    HapticFeedback.mediumImpact();
+    Navigator.of(context).pop();
+    widget.audioService.setRepeatMode(AudioRepeatMode.none);
+    widget.audioService.playContinuous(
+      surah: widget.surahNumber,
+      startAyah: widget.ayahNumber,
+    );
+    final surahName = quran.getSurahNameArabic(widget.surahNumber);
+    AppSnackbar.info(
+      context,
+      'بدء التلاوة المستمرة من الآية ${widget.ayahNumber} من سورة $surahName',
+    );
+  }
+
   void _playVerse() {
     HapticFeedback.mediumImpact();
     Navigator.of(context).pop();
     widget.audioService.setRepeatMode(AudioRepeatMode.none);
-    widget.audioService.playVerse(widget.surahNumber, widget.ayahNumber);
+    widget.audioService.playVerse(
+      widget.surahNumber,
+      widget.ayahNumber,
+      singleVerse: true,
+    );
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.info(
       context,
-      'بدء تلاوة الآية ${widget.ayahNumber} من سورة $surahName',
+      'تلاوة الآية ${widget.ayahNumber} من سورة $surahName',
     );
   }
 
@@ -338,19 +357,35 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 2: Listen & Repeat
+                  // Row 2: Continuous Recitation & Single Ayah
                   Row(
                     children: [
                       Expanded(
                         child: _ActionTile(
+                          icon: Icons.playlist_play_rounded,
+                          title: 'تلاوة مستمرة',
+                          subtitle: 'متابعة القراءة للآيات التالية تلقائياً',
+                          color: palette.primary,
+                          onTap: _playContinuous,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: _ActionTile(
                           icon: Icons.play_circle_fill_rounded,
                           title: 'استماع للآية',
-                          subtitle: 'تلاوة بالصوت العذب',
+                          subtitle: 'تلاوة هذه الآية فقط',
                           color: palette.primary,
                           onTap: _playVerse,
                         ),
                       ),
-                      const SizedBox(width: AppSpace.sm),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+
+                  // Row 3: Repeat & Audio Options
+                  Row(
+                    children: [
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.repeat_one_rounded,
@@ -358,6 +393,16 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           subtitle: 'تكرار مستمر للحفظ والمراجعة',
                           color: palette.gold,
                           onTap: _repeatVerseInfinite,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.record_voice_over_rounded,
+                          title: 'خيارات التلاوة',
+                          subtitle: 'تغيير القارئ وسرعة الصوت',
+                          color: palette.primary,
+                          onTap: () => _openDetailsAtTab(2),
                         ),
                       ),
                     ],

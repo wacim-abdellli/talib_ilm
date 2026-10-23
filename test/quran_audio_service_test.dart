@@ -89,6 +89,11 @@ void main() {
         AudioRepeatMode.infinite,
       ]);
     });
+
+    test('isContinuous reflects continuous playback mode vs single verse', () async {
+      await service.stop();
+      expect(service.isContinuous, isFalse);
+    });
   });
 }
 

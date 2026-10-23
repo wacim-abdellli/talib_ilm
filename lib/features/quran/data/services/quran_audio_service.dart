@@ -145,10 +145,13 @@ class QuranAudioService {
   final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
 
   bool _isContinuous = false;
+  bool _isSingleVerseOnly = false;
   int _endAyah = 0;
   bool _isTransitioning = false;
   String? _lastCompletedAyahKey;
   int _ayahRepeatCount = 0;
+
+  bool get isContinuous => _isContinuous;
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   bool get isPlaying => _player.playing;
@@ -220,10 +223,16 @@ class QuranAudioService {
   }
 
   /// Play a single verse
-  Future<void> playVerse(int surah, int ayah, {QuranReciter? reciter}) async {
+  Future<void> playVerse(
+    int surah,
+    int ayah, {
+    QuranReciter? reciter,
+    bool singleVerse = false,
+  }) async {
     _lastCompletedAyahKey = null;
     _ayahRepeatCount = 0;
     _isContinuous = false;
+    _isSingleVerseOnly = singleVerse;
     await _startPlay(surah, ayah, reciter: reciter);
   }
 
@@ -237,6 +246,7 @@ class QuranAudioService {
     _lastCompletedAyahKey = null;
     _ayahRepeatCount = 0;
     _isContinuous = true;
+    _isSingleVerseOnly = false;
     _endAyah = endAyah ?? quran.getVerseCount(surah);
     await _startPlay(surah, startAyah, reciter: reciter);
   }
@@ -357,10 +367,17 @@ class QuranAudioService {
       _ayahRepeatCount = 0;
     }
 
+    // 3. Single Verse Mode: stops after completing the requested single verse
+    if (_isSingleVerseOnly) {
+      _isSingleVerseOnly = false;
+      stop();
+      return;
+    }
+
     final totalVerses = quran.getVerseCount(surah);
     final limit = (_isContinuous && _endAyah > 0) ? _endAyah : totalVerses;
 
-    // 3. Continuous / Standard Playback (sequential verse by verse)
+    // 4. Continuous / Standard Playback (sequential verse by verse)
     if (_isContinuous) {
       if (ayah < limit) {
         _startPlay(surah, ayah + 1);
@@ -415,6 +432,7 @@ class QuranAudioService {
   Future<void> nextAyah() async {
     _lastCompletedAyahKey = null;
     _ayahRepeatCount = 0;
+    _isSingleVerseOnly = false;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -430,6 +448,7 @@ class QuranAudioService {
   Future<void> previousAyah() async {
     _lastCompletedAyahKey = null;
     _ayahRepeatCount = 0;
+    _isSingleVerseOnly = false;
     final s = activeSurahNotifier.value;
     final a = activeAyahNotifier.value;
     if (s == null || a == null) return;
@@ -446,6 +465,7 @@ class QuranAudioService {
     _lastCompletedAyahKey = null;
     _ayahRepeatCount = 0;
     _isTransitioning = false;
+    _isSingleVerseOnly = false;
     activeSurahNotifier.value = null;
     activeAyahNotifier.value = null;
     isPlayingNotifier.value = false;

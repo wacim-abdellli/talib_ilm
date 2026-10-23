@@ -48,13 +48,36 @@ void main() {
       // Actions
       expect(find.text('تفسير الآية'), findsOneWidget);
       expect(find.text('معاني الكلمات'), findsOneWidget);
+      expect(find.text('تلاوة مستمرة'), findsOneWidget);
       expect(find.text('استماع للآية'), findsOneWidget);
       expect(find.text('تكرار الآية'), findsOneWidget);
+      expect(find.text('خيارات التلاوة'), findsOneWidget);
       expect(find.textContaining('الفواصل'), findsOneWidget);
       expect(find.text('تعيين كموضع قراءة'), findsOneWidget);
       expect(find.text('تدبر وملاحظات'), findsOneWidget);
       expect(find.text('نسخ الآية'), findsOneWidget);
       expect(find.text('مشاركة الآية الكريمة'), findsOneWidget);
+    });
+
+    testWidgets('Tapping continuous reading triggers audioService playContinuous', (tester) async {
+      final audioService = QuranAudioService();
+
+      await tester.pumpWidget(
+        buildTestApp(
+          AyahActionMenuSheet(
+            surahNumber: 1,
+            ayahNumber: 2,
+            audioService: audioService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('تلاوة مستمرة'));
+      await tester.pump();
+
+      expect(audioService.isContinuous, isTrue);
+      expect(audioService.repeatModeNotifier.value, AudioRepeatMode.none);
     });
   });
 

@@ -1528,3 +1528,28 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly in 65.1s (`build\app\outputs\flutter-apk\app-debug.apk`).
 - **Open Issues:** None.
 
+## Round 29 — Quran Continuous Ayah Reading Option & Recitation Action Grid Polish
+- **Status:** Complete
+- **Branch:** `ui/r29-quran-continuous-ayah-reading-option`
+- **Core Problems Solved:**
+  1. **Continuous Ayah Reading Action in `AyahActionMenuSheet`:**
+     - Previously, the quick action sheet for verses on the Quran reader page only displayed "استماع للآية" (Listen to verse) and "تكرار الآية" (Repeat verse), with no option to continue reading to the next Ayah.
+     - Added a dedicated, prominent action tile "تلاوة مستمرة" (`Icons.playlist_play_rounded`) with title "تلاوة مستمرة" and subtitle "متابعة القراءة للآيات التالية تلقائياً".
+     - Wired directly to `QuranAudioService.playContinuous(surah: surahNumber, startAyah: ayahNumber)` with `AudioRepeatMode.none`, which sequentially advances verse by verse, turns Mushaf pages automatically via `_onAudioAyahChanged`, and advances seamlessly to subsequent surahs (`surah + 1`).
+  2. **Dedicated Recitation Options & Single Verse Listening Clarification:**
+     - Added "خيارات التلاوة" action tile (`Icons.record_voice_over_rounded`, "تغيير القارئ وسرعة الصوت") directly opening Tab 2 (`التلاوة`) in `AyahDetailsSheet` to switch between all 10 reciters and configure playback speed.
+     - Clarified "استماع للآية" with `singleVerse: true` (subtitle "تلاوة هذه الآية فقط"), cleanly stopping once that single verse concludes.
+     - Kept "تكرار الآية" (`Icons.repeat_one_rounded`, subtitle "تكرار مستمر للحفظ والمراجعة") for infinite memorization repetition.
+  3. **Service State & Single-Verse Lifecycle:**
+     - Added `isContinuous` getter to `QuranAudioService`.
+     - Handled `_isSingleVerseOnly` in `_handleTrackCompleted()`, `stop()`, `nextAyah()`, and `previousAyah()`.
+  4. **Code Quality & Constraint Compliance:**
+     - Preserved Rule 8 file size ceiling for `AyahActionMenuSheet` (598 lines, strictly <= 600 lines).
+     - Verified with comprehensive widget and unit tests in `test/ayah_action_menu_test.dart` and `test/quran_audio_service_test.dart`.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (ran in 12.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/ayah_action_menu_test.dart test/quran_audio_service_test.dart`: 12/12 tests pass (100%).
+  - `flutter build apk --debug`: Built cleanly in 49.1s (`build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open Issues:** None.
+
