@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -61,25 +62,33 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
         allowedExtensions: ['json'],
       );
 
+      if (!mounted) return;
       if (result == null || result.files.isEmpty) {
-        setState(() => _isProcessing = false);
         return;
       }
 
       final file = result.files.first;
       String content;
 
-      if (file.bytes != null) {
-        content = String.fromCharCodes(file.bytes!);
-      } else if (file.path != null) {
-        content = await File(file.path!).readAsString();
-      } else {
-        if (mounted) {
-          AppSnackbar.error(context, 'تعذر قراءة الملف المحدد');
+      try {
+        if (file.bytes != null) {
+          content = utf8.decode(file.bytes!, allowMalformed: false);
+        } else if (file.path != null) {
+          content = await File(file.path!).readAsString(encoding: utf8);
+        } else {
+          if (mounted) {
+            AppSnackbar.error(context, 'تعذر قراءة الملف المحدد');
+          }
+          return;
         }
-        setState(() => _isProcessing = false);
+      } on FormatException {
+        if (mounted) {
+          AppSnackbar.error(context, 'الملف المحدد ليس بترميز UTF-8 صالح');
+        }
         return;
       }
+
+      if (!mounted) return;
 
       final validation = BookmarkBackupService.validateAndParse(content);
       if (!validation.isValid) {
@@ -89,7 +98,6 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
             validation.errorMessage ?? 'ملف النسخة الاحتياطية غير صالح',
           );
         }
-        setState(() => _isProcessing = false);
         return;
       }
 
@@ -140,8 +148,8 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
         },
       );
 
+      if (!mounted) return;
       if (overwrite == null) {
-        setState(() => _isProcessing = false);
         return;
       }
 

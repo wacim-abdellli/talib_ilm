@@ -1,5 +1,15 @@
 # UI Progress Log
 
+## R32 / T02 — Backup UTF-8 decoding, schema bounds, and lifecycle validation
+- **Scope:** Findings C03 (Latin1/char code corruption on imported bytes), C04 (type safety for top-level backup fields), C05 (Quran surah/ayah/page bounds validation), and C20 (widget mounted lifecycle checks across asynchronous picker and dialog operations).
+- **Implemented:**
+  - `lib/features/more/presentation/widgets/backup_restore_sheet.dart`: Replaced `String.fromCharCodes(file.bytes!)` with `utf8.decode(file.bytes!, allowMalformed: false)` inside a try-catch for `FormatException`. Added explicit `if (!mounted) return;` guards after file picking, async reads, dialog confirmation, and merge execution.
+  - `lib/features/quran/data/services/bookmark_service.dart`: Added `Bookmark.isValidCoordinates(surah, ayah, [page])`. Hardened `Bookmark.fromJson` and `LastRead.fromJson` with type validation and Quran range checks (`surah` 1–114, `ayah` 1–`verseCount`, `page` 1–604). Enforced coordinates bounds on `BookmarkService.addBookmark` and `BookmarkService.saveLastRead`.
+  - `lib/features/quran/data/services/bookmark_backup_service.dart`: Replaced unchecked casts on `decoded['app']` with type-safe checks preventing `TypeError`. Sanitized item extraction and validated that imported backups contain at least one valid bookmark or last-read record.
+  - `test/bookmark_backup_test.dart`: Added 4 focused regression tests covering UTF-8 byte integrity for Arabic text/diacritics, malformed UTF-8 rejection, schema type validation without `TypeError`, coordinate bounds enforcement, and corrupted entry filtering.
+- **Verified:** 35/35 targeted tests pass across audio and bookmark suites (`test/quran_audio_lifecycle_test.dart`, `test/bookmark_backup_test.dart`, `test/bookmark_separation_test.dart`, `test/bookmark_entry_loader_test.dart`). `flutter analyze` completed with 0 issues (13.8s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (160.6s), SHA-256 `C861864143D3A106F50EDA55235D62A77D2748F24DAC29BCF59A88FA02A4E18A`.
+- **Open issues:** T02 complete. Proceed to T03 (Storage Consistency & Concurrent Write Serialization).
+
 ## R31 continuation — Section targets and audio navigation boundaries
 - **Plan:** Map all ten code-quality sections to the existing 17-task implementation backlog, with explicit acceptance evidence in `docs/CODE_PRODUCTION_AUDIT_AND_AGENT_GUIDE.md`. Publication remains deferred; proceed sequentially.
 - **Implemented:** Correct manual Next/Previous continuation across surahs, reset obsolete range bounds when deliberately leaving a range, retain an explicit end when navigating within it, preserve single-verse mode on a no-op Previous at 1:1, and stop Next at the Quran's final verse. Six boundary regressions added; five failed before the fix. Audio service remains 562 lines; no Arabic strings or visual assets changed.

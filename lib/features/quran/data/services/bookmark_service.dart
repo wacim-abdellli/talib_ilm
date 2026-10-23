@@ -19,16 +19,36 @@ class Bookmark {
     this.isSurah = false,
   });
 
+  static bool isValidCoordinates(int surah, int ayah, [int? page]) {
+    if (surah < 1 || surah > 114) return false;
+    if (ayah < 1 || ayah > quran.getVerseCount(surah)) return false;
+    if (page != null && (page < 1 || page > 604)) return false;
+    return true;
+  }
+
   factory Bookmark.fromJson(Map<String, dynamic> json) {
-    final s = json['surah'] as int;
-    final a = json['ayah'] as int;
+    final s = json['surah'];
+    final a = json['ayah'];
+    if (s is! int || a is! int) {
+      throw const FormatException('Invalid or missing surah/ayah number');
+    }
+    if (!isValidCoordinates(s, a)) {
+      throw FormatException('Coordinates out of range: surah $s, ayah $a');
+    }
+    final rawPage = json['page'];
+    final int pageNumber;
+    if (rawPage is int && rawPage >= 1 && rawPage <= 604) {
+      pageNumber = rawPage;
+    } else {
+      pageNumber = quran.getPageNumber(s, a);
+    }
     return Bookmark(
       surah: s,
       ayah: a,
-      page: json['page'] as int? ?? quran.getPageNumber(s, a),
+      page: pageNumber,
       note: json['note'] as String?,
       timestamp: json['timestamp'] != null
-          ? DateTime.parse(json['timestamp'] as String)
+          ? (DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now())
           : DateTime.now(),
       isSurah: json['isSurah'] as bool? ?? false,
     );
@@ -58,14 +78,27 @@ class LastRead {
   });
 
   factory LastRead.fromJson(Map<String, dynamic> json) {
-    final s = json['surah'] as int;
-    final a = json['ayah'] as int;
+    final s = json['surah'];
+    final a = json['ayah'];
+    if (s is! int || a is! int) {
+      throw const FormatException('Invalid or missing surah/ayah number');
+    }
+    if (!Bookmark.isValidCoordinates(s, a)) {
+      throw FormatException('Coordinates out of range: surah $s, ayah $a');
+    }
+    final rawPage = json['page'];
+    final int pageNumber;
+    if (rawPage is int && rawPage >= 1 && rawPage <= 604) {
+      pageNumber = rawPage;
+    } else {
+      pageNumber = quran.getPageNumber(s, a);
+    }
     return LastRead(
       surah: s,
       ayah: a,
-      page: json['page'] as int? ?? quran.getPageNumber(s, a),
+      page: pageNumber,
       timestamp: json['timestamp'] != null
-          ? DateTime.parse(json['timestamp'] as String)
+          ? (DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now())
           : DateTime.now(),
     );
   }
@@ -96,6 +129,9 @@ class BookmarkService {
     String? note,
     bool isSurah = false,
   }) async {
+    if (!Bookmark.isValidCoordinates(surah, ayah)) {
+      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah');
+    }
     final bookmarks = await getBookmarks();
     bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah && b.isSurah == isSurah);
 
@@ -262,6 +298,9 @@ class BookmarkService {
     required int ayah,
     int? page,
   }) async {
+    if (!Bookmark.isValidCoordinates(surah, ayah, page)) {
+      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah, page $page');
+    }
     final prefs = await SharedPreferences.getInstance();
     final p = page ?? quran.getPageNumber(surah, ayah);
     final lastRead = LastRead(

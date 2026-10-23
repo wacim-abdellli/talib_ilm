@@ -101,12 +101,12 @@ class BookmarkBackupService {
       return BackupValidationResult.failure('الملف المحدد تالف أو ليس بصيغة JSON صالحة');
     }
 
-    if (decoded is! Map<String, dynamic>) {
+    if (decoded is! Map) {
       return BackupValidationResult.failure('بنية البيانات في الملف غير صالحة');
     }
 
-    final app = decoded['app'] as String?;
-    if (app != appIdentifier) {
+    final app = decoded['app'];
+    if (app is! String || app != appIdentifier) {
       return BackupValidationResult.failure(
         'الملف لا ينتمي لتطبيق طالب علم (توقيع غير مطابق)',
       );
@@ -130,9 +130,10 @@ class BookmarkBackupService {
 
     final List<Bookmark> parsedBookmarks = [];
     for (final item in rawBookmarks) {
-      if (item is Map<String, dynamic>) {
+      if (item is Map) {
         try {
-          parsedBookmarks.add(Bookmark.fromJson(item));
+          final map = item.map((k, v) => MapEntry(k.toString(), v));
+          parsedBookmarks.add(Bookmark.fromJson(map));
         } catch (_) {
           // Skip malformed individual entries
         }
@@ -141,10 +142,17 @@ class BookmarkBackupService {
 
     LastRead? parsedLastRead;
     final rawLastRead = decoded['lastRead'];
-    if (rawLastRead is Map<String, dynamic>) {
+    if (rawLastRead is Map) {
       try {
-        parsedLastRead = LastRead.fromJson(rawLastRead);
+        final map = rawLastRead.map((k, v) => MapEntry(k.toString(), v));
+        parsedLastRead = LastRead.fromJson(map);
       } catch (_) {}
+    }
+
+    if (parsedBookmarks.isEmpty && parsedLastRead == null) {
+      return BackupValidationResult.failure(
+        'لا توجد أي بيانات صالحة للاستيراد في الملف',
+      );
     }
 
     return BackupValidationResult.success(
