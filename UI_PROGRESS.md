@@ -1,5 +1,22 @@
 # UI Progress Log
 
+## R41 / T11 — Native widget snapshot and refresh consistency (C22)
+- **Scope:** Finding C22 (In `home_widget_service.dart`, `updateAllWidgets` fired uncoordinated, concurrent executions across the 5 widget providers; older bitmap/preference writes could complete after newer ones and overwrite fresh state; 10 SharedPreferences keys were redundantly written 5 times in parallel per update; missing snapshot versioning allowed mixed widget snapshots).
+- **Implemented:**
+  - `lib/core/services/home_widget_snapshot.dart`: Created dedicated snapshot coordinator (`HomeWidgetSnapshot` and `WidgetThemeMode`) to handle preference serialization, atomic versioning (`widget_snapshot_version`), and dark mode resolution. Reordered writes so SharedPreferences is committed reliably before native platform channel invocations (which are safely guarded with try/catch).
+  - `lib/core/services/home_widget_service.dart`:
+    - Added `_updateLock = AsyncLock()` and `_latestOperation` counter to serialize concurrent `updateAllWidgets` calls and coalesce rapid obsolete requests.
+    - Updated `updateRibbon`, `updateCompact`, `updateLarge`, `updateStandard`, and `updatePrayerWidget` to accept optional `preResolvedEval` and `preResolvedDark` parameters.
+    - When `updateAllWidgets` runs, it evaluates the prayer state and theme once and forwards them to all 5 providers, eliminating duplicate preference writes across providers.
+    - Re-exports `HomeWidgetSnapshot` and `WidgetThemeMode` for backwards compatibility; line count is 555 lines (strictly < 600 lines, Rule 8 compliant).
+  - `test/native_widget_snapshot_test.dart`: Added comprehensive unit tests covering:
+    - Atomic snapshot versioning and complete 10-key serialization in SharedPreferences.
+    - Theme resolution respecting explicit widget modes and app theme fallback.
+    - Sequential serialization of concurrent `updateAllWidgets` calls via `AsyncLock`.
+    - Yielding of older operations during rapid coalescing.
+- **Verified:** 24/24 tests passing across `test/native_widget_snapshot_test.dart` (4/4), `test/prayer_home_screen_widget_test.dart` (12/12), and `test/accessibility_ui_correctness_test.dart` (8/8). `flutter analyze` completed with 0 issues (8.2s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (67.8s), SHA-256 `809AB7F434382C43093DFB112A487A2AD4B1368A0542E50A5458697B14D67A8D`.
+- **Open issues:** T11 complete. Proceed to T12 (Quiz/catalog loading and progress invariants: C23).
+
 ## R40 / T10 — Accessibility and UI implementation correctness (C21)
 - **Scope:** Finding C21 (Small `AppButton` wrapped a 36dp container in outer `ConstrainedBox`/`Center`, leaving edge taps outside the 48dp minimum tap target unregistered; missing Semantics on `AppButton`; `app.dart:62` clamped system text scaling at 1.5, preventing real-app 2.0 accessibility scaling; measured contrast failures on `textSubtle` in light search bar and dark navigation bar).
 - **Implemented:**
