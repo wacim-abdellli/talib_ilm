@@ -139,7 +139,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border: Color(0xFFE5DDD0),
     text: Color(0xFF1C1917),
     textMuted: Color(0xFF5E574E),
-    textSubtle: Color(0xFF787169),
+    textSubtle: Color(0xFF716A62),
     primary: Color(0xFF8C580B),
     onPrimary: Color(0xFFFFFFFF),
     primarySoft: Color(0xFFFEF3C7),
@@ -176,7 +176,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border: Color(0xFF1C1A17),
     text: Color(0xFFFAF8F5),
     textMuted: Color(0xFFA8A096),
-    textSubtle: Color(0xFF7A7268),
+    textSubtle: Color(0xFF8A8278),
     primary: Color(0xFFF59E0B),
     onPrimary: Color(0xFF171203),
     primarySoft: Color(0xFF1E170A),
@@ -1079,7 +1079,7 @@ class AppSize {
 
   static const double textScaleBaseWidth = 360;
   static const double textScaleMin = 0.9;
-  static const double textScaleMax = 1.5;
+  static const double textScaleMax = 2.0;
 
   static const double tap = 48;
   static const double buttonH = 48;

@@ -27,9 +27,9 @@ class NavBar extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: AppSize.navMargin,
-        right: AppSize.navMargin,
+      padding: EdgeInsetsDirectional.only(
+        start: AppSize.navMargin,
+        end: AppSize.navMargin,
         bottom: bottomInset > 0 ? bottomInset : AppSpace.sm,
       ),
       child: Container(

@@ -1,5 +1,20 @@
 # UI Progress Log
 
+## R40 / T10 — Accessibility and UI implementation correctness (C21)
+- **Scope:** Finding C21 (Small `AppButton` wrapped a 36dp container in outer `ConstrainedBox`/`Center`, leaving edge taps outside the 48dp minimum tap target unregistered; missing Semantics on `AppButton`; `app.dart:62` clamped system text scaling at 1.5, preventing real-app 2.0 accessibility scaling; measured contrast failures on `textSubtle` in light search bar and dark navigation bar).
+- **Implemented:**
+  - `lib/shared/widgets/app_button.dart`: Re-architected `AppButton` with `Stack(fit: StackFit.passthrough)` where `Positioned.fill` wraps the full minimum 48x48dp tap target with `InkWell`, guaranteeing that taps at all 4 extreme corners and edges trigger `onPressed`. Added `Semantics(button: true, isEnabled: isEnabled, excludeSemantics: true, label: ...)` with loading announcements.
+  - `lib/app/theme/app_palette.dart`:
+    - Updated light `textSubtle` to `Color(0xFF716A62)` (was `Color(0xFF787169)`), achieving **4.65:1** on `surfaceMuted` (`#F4EFE6`), **5.03:1** on `bg` (`#FAF8F5`), and **5.33:1** on `surface` (`#FFFFFF`) — WCAG AA compliant.
+    - Updated dark `textSubtle` to `Color(0xFF8A8278)` (was `Color(0xFF7A7268)`), achieving **5.06:1** on `surfaceRaised` (`#0F0F0F`), **5.26:1** on `surfaceMuted` (`#090909`), and **5.54:1** on `bg` (`#000000`) — WCAG AA compliant.
+    - Updated `AppSize.textScaleMax` from `1.5` to `2.0`.
+  - `lib/app/theme/app_spacing.dart` & `lib/app/theme/app_ui.dart`: Updated `textScaleMax` from `1.5` to `2.0`.
+  - `lib/app/app.dart`: Updated `TextScaler.linear` clamp from `(0.9, 1.5)` to `(AppSize.textScaleMin, AppSize.textScaleMax)`, fully honoring user system text scaling up to 2.0 without truncation.
+  - `lib/shared/widgets/nav_bar.dart`: Replaced `EdgeInsets.only(left/right)` with `EdgeInsetsDirectional.only(start/end)` for RTL compliance.
+  - `test/accessibility_ui_correctness_test.dart`: Added 8 comprehensive regression tests covering edge taps at all 4 corners of small `AppButton`, enabled/disabled/loading Semantics, root app text scale 2.0 preservation, UI survival at 1.0/1.5/2.0 without overflow, and exact WCAG AA contrast ratio proofs.
+- **Verified:** 28/28 tests passing across `test/accessibility_ui_correctness_test.dart` (8/8) and UI suites (`ilm_section_switcher_test.dart`, `ilm_book_preview_test.dart`, `shamela_text_highlighter_test.dart` 20/20). `flutter analyze` completed with 0 issues (10.3s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (48.6s), SHA-256 `7D059FEBE3F670368333E19AA5C04FA2D8264E8DD283048E8FB0A3CC9B04BCB0`.
+- **Open issues:** T10 complete. Proceed to T11 (Native widget snapshot and refresh consistency: C22).
+
 ## R39 / T09 — Service and screen lifecycle; audio ownership (C18, C19, C20)
 - **Scope:** Findings C18 (In `foreground_prayer_service.dart`, `player.playerStateStream.listen` was cancelled on stop but never re-attached on restart; background timers continued running unpaused), C19 (Audio streams Quran, Radio, Mutun, and Adhan played simultaneously without mutual exclusivity or coordination), and C20 (In `quran_radio_service.dart`, stream subscriptions were leaked on service disposal).
 - **Implemented:**

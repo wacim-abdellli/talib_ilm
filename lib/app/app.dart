@@ -59,7 +59,12 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
                 .clamp(AppSize.textScaleMin, AppSize.textScaleMax)
                 .toDouble();
             final baseScale = mediaQuery.textScaler.scale(1.0);
-            final scaled = TextScaler.linear((baseScale * sizeScale).clamp(0.9, 1.5));
+            final scaled = TextScaler.linear(
+              (baseScale * sizeScale).clamp(
+                AppSize.textScaleMin,
+                AppSize.textScaleMax,
+              ),
+            );
 
             return MediaQuery(
               data: mediaQuery.copyWith(textScaler: scaled),

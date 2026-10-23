@@ -59,7 +59,7 @@ class AppSpacing {
   static const double pulseScaleDelta = 0.1;
   static const double textScaleBaseWidth = 360;
   static const double textScaleMin = 0.9;
-  static const double textScaleMax = 1.5;
+  static const double textScaleMax = 2.0;
   static const double transitionCurveEnd = 0.75;
 
   static const double iconXS = AppIcon.sm;

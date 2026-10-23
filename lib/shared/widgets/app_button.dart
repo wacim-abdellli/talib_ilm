@@ -114,7 +114,7 @@ class _AppButtonState extends State<AppButton> {
     final visualH = widget.size == AppButtonSize.sm
         ? AppSize.buttonSmallMinHeight
         : AppSize.buttonH;
-    final content = AnimatedScale(
+    final visualButton = AnimatedScale(
       scale: _pressed ? 0.98 : 1.0,
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
@@ -129,72 +129,84 @@ class _AppButtonState extends State<AppButton> {
             borderRadius: AppRadius.mdRadius,
             border: border,
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: AppRadius.mdRadius,
-              onTapDown: isEnabled ? _onTapDown : null,
-              onTapUp: isEnabled ? _onTapUp : null,
-              onTapCancel: isEnabled ? _onTapCancel : null,
-              onTap: isEnabled
-                  ? () {
-                      if (widget.variant == AppButtonVariant.primary) {
-                        HapticFeedback.lightImpact();
-                      }
-                      widget.onPressed?.call();
-                    }
-                  : null,
-              child: Padding(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: widget.size == AppButtonSize.sm
-                      ? AppSpace.md
-                      : AppSpace.lg,
-                  vertical: AppSpace.sm,
-                ),
-                child: Center(
-                  heightFactor: 1,
-                  child: widget.isLoading
-                      ? SizedBox(
-                          width: AppIcon.sm,
-                          height: AppIcon.sm,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(fg),
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (widget.icon != null) ...[
-                              Icon(widget.icon, size: AppIcon.md, color: fg),
-                              SizedBox(width: AppSpace.sm),
-                            ],
-                            Flexible(
-                              child: Text(
-                                widget.label,
-                                style: textTheme.label.copyWith(color: fg),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+          padding: EdgeInsetsDirectional.symmetric(
+            horizontal: widget.size == AppButtonSize.sm
+                ? AppSpace.md
+                : AppSpace.lg,
+            vertical: AppSpace.sm,
+          ),
+          child: Center(
+            heightFactor: 1,
+            child: widget.isLoading
+                ? SizedBox(
+                    width: AppIcon.sm,
+                    height: AppIcon.sm,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(fg),
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.icon != null) ...[
+                        Icon(widget.icon, size: AppIcon.md, color: fg),
+                        const SizedBox(width: AppSpace.sm),
+                      ],
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          style: textTheme.label.copyWith(color: fg),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                ),
-              ),
-            ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
     );
 
-    // Guaranteed minimum 48x48 hit target
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: AppSize.tap,
-        minWidth: AppSize.tap,
+    // Guaranteed minimum 48x48 hit target across all edges and corners
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      excludeSemantics: true,
+      label: widget.isLoading ? '${widget.label}، جاري التحميل' : widget.label,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: AppSize.tap,
+          minWidth: AppSize.tap,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          fit: StackFit.passthrough,
+          children: [
+            Center(child: visualButton),
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: AppRadius.mdRadius,
+                  onTapDown: isEnabled ? _onTapDown : null,
+                  onTapUp: isEnabled ? _onTapUp : null,
+                  onTapCancel: isEnabled ? _onTapCancel : null,
+                  onTap: isEnabled
+                      ? () {
+                          if (widget.variant == AppButtonVariant.primary) {
+                            HapticFeedback.lightImpact();
+                          }
+                          widget.onPressed?.call();
+                        }
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Center(child: content),
     );
   }
 }
