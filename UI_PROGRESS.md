@@ -1,5 +1,23 @@
 # UI Progress Log
 
+## R38 / T08 — Truthful complete-book downloads and offline integrity verification (C17)
+- **Scope:** Finding C17 (In `shamela_service.dart`, page download errors were swallowed and books were marked `downloaded = true` regardless of gaps, missing pages, or network dropouts; arbitrary fallback to 50 pages; callers showed false offline success).
+- **Implemented:**
+  - `lib/features/ilm/data/services/shamela_html_parser.dart`: Extracted HTML parsing routines (`ShamelaHtmlParser`) to adhere strictly to Rule 8 file size limits.
+  - `lib/features/ilm/data/services/shamela_download_manager.dart`: Created dedicated download coordinator with:
+    - Truthful total page discovery (no blind 50-page fallback).
+    - Database page manifest query (`getCachedPageNumbers`, `getMissingPages`) asserting all pages in range `1..totalPages` contain non-whitespace text.
+    - Gap-retry capability: subsequent download attempts only fetch missing page gaps without re-downloading existing validated pages.
+    - In-flight deduplication: concurrent download calls for the same book join the identical single Future.
+    - Graceful cancellation (`cancelDownload`) and exception reporting via `ShamelaDownloadException` with localized Arabic error messages.
+    - Automatic healing: if `isBookDownloaded()` finds missing pages on disk, it resets any stale/false preference flag to `false`.
+    - Batch catalog support: `getDownloadedBooksMap()` computes verified download statuses across the entire library in a single grouped SQL query.
+  - `lib/features/ilm/data/services/shamela_service.dart`: Delegated download, status, and manifest queries to `ShamelaDownloadManager`; kept public API backwards-compatible; line count reduced to 570 lines (Rule 8 compliant).
+  - `lib/features/ilm/presentation/widgets/maktaba_shamela_view.dart` & `shamela_reader_top_bar.dart`: Updated to use batch status check and handle typed `ShamelaDownloadException` with clean Arabic snackbars and mounted lifecycle safety.
+  - `test/shamela_download_test.dart`: Added 10 comprehensive regression tests covering bundled books, missing middle page detection, offline verification, unknown length rejection, all-fail exceptions, gap retries, cancellation, whitespace rejection, concurrent deduplication, and batch maps.
+- **Verified:** 10/10 tests passing in `test/shamela_download_test.dart`, 54/54 regression tests passing across all recent suites. `flutter analyze` completed with 0 issues (8.8s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (80.1s), SHA-256 `A530D3A669AE3A7C82ACC69BC84127C00EF231FB6D0737F957A342FECBB83358`.
+- **Open issues:** T08 complete. Proceed to T09 (Service and screen lifecycle; audio ownership: C18–C20).
+
 ## R36 / T06 — Notification routing and navigation invariants (C13)
 - **Scope:** Finding C13 (Adhkar notifications selected tab 2 / Ilm instead of tab 3 / Adhkar in `NotificationRouter`, causing Back navigation to land on the wrong section; missing authoritative destination mapping and unverified post-pop tab invariants).
 - **Implemented:**

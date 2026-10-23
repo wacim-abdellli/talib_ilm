@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
@@ -9,7 +10,11 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
+import 'shamela_download_manager.dart';
 import 'shamela_html_parser.dart';
+
+export 'shamela_download_manager.dart'
+    show ShamelaDownloadException, ShamelaDownloadManager;
 
 class ShamelaService {
   static Database? _db;
@@ -18,6 +23,14 @@ class ShamelaService {
   static const String _lastReadPrefix = 'shamela_last_read_';
   static const String _bookmarksKey = 'shamela_bookmarks';
   static const String _totalPagesPrefix = 'shamela_total_pages_';
+
+  static const String tableNamePages = _tableNamePages;
+  static bool isBundled(int bookId) => _bundledBookAssets.containsKey(bookId);
+  static Iterable<int> get bundledBookIds => _bundledBookAssets.keys;
+  static Future<Database> getDatabase() => _getDatabase();
+
+  @visibleForTesting
+  static void setMockDatabase(Database? db) => _db = db;
 
   static const Map<int, String> _bundledBookAssets = {
     50001: 'assets/data/minhaj_al_muslim.json',
@@ -471,51 +484,36 @@ class ShamelaService {
     return [];
   }
 
-  /// Download entire book for full offline access
+  /// Download entire book for full offline access with truthful completeness verification
   static Future<void> downloadBook(
     ShamelaBook book, {
     Function(int current, int total)? onProgress,
-  }) async {
-    if (_bundledBookAssets.containsKey(book.id)) {
-      onProgress?.call(book.totalPages, book.totalPages);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('shamela_downloaded_${book.id}', true);
-      return;
-    }
+  }) =>
+      ShamelaDownloadManager.downloadBook(book, onProgress: onProgress);
 
-    // Try to use dynamically discovered total first
-    int total = await getDiscoveredTotalPages(book.id) ?? 0;
-    // If not known, fetch page 1 to discover it
-    if (total <= 0) {
-      try {
-        final firstPage = await fetchPage(bookId: book.id, pageNumber: 1);
-        total = firstPage.detectedTotalPages ?? book.totalPages;
-        if (total > 0) {
-          await saveDiscoveredTotalPages(book.id, total);
-        }
-      } catch (_) {
-        total = book.totalPages;
-      }
-    }
-    if (total <= 0) total = book.totalPages;
-    if (total <= 0) total = 50; // absolute fallback
-    for (int p = 1; p <= total; p++) {
-      try {
-        await fetchPage(bookId: book.id, pageNumber: p);
-        onProgress?.call(p, total);
-        await Future.delayed(AppMotion.microPause);
-      } catch (_) {}
-    }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('shamela_downloaded_${book.id}', true);
-  }
+  /// Check if book is fully downloaded and verified offline
+  static Future<bool> isBookDownloaded(int bookId, {int? totalPages}) =>
+      ShamelaDownloadManager.isBookDownloaded(bookId, totalPages: totalPages);
 
-  /// Check if book is fully downloaded
-  static Future<bool> isBookDownloaded(int bookId) async {
-    if (_bundledBookAssets.containsKey(bookId)) return true;
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('shamela_downloaded_$bookId') ?? false;
-  }
+  /// Returns a map of bookId -> isDownloaded for fast batch checking
+  static Future<Map<int, bool>> getDownloadedBooksMap() =>
+      ShamelaDownloadManager.getDownloadedBooksMap();
+
+  /// Signal cancellation of download for [bookId]
+  static void cancelDownload(int bookId) =>
+      ShamelaDownloadManager.cancelDownload(bookId);
+
+  /// Check if a download is currently active for [bookId]
+  static bool isDownloading(int bookId) =>
+      ShamelaDownloadManager.isDownloading(bookId);
+
+  /// Get set of cached valid page numbers for [bookId]
+  static Future<Set<int>> getCachedPageNumbers(int bookId) =>
+      ShamelaDownloadManager.getCachedPageNumbers(bookId);
+
+  /// Get list of missing page numbers in range 1..totalPages
+  static Future<List<int>> getMissingPages(int bookId, int totalPages) =>
+      ShamelaDownloadManager.getMissingPages(bookId, totalPages);
 
   /// Save last read position
   static Future<void> saveLastReadPage(int bookId, int page) async {

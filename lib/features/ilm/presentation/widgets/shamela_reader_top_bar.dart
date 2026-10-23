@@ -83,6 +83,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
       await ShamelaService.downloadBook(
         widget.book!,
         onProgress: (current, total) {
+          if (!mounted) return;
           if (total > 0) {
             _downloadProgress.value = (current / total).clamp(0.0, 1.0);
           }

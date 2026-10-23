@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -51,12 +49,8 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   }
 
   Future<void> _checkDownloadedBooks() async {
-    final prefs = await SharedPreferences.getInstance();
+    final map = await ShamelaService.getDownloadedBooksMap();
     if (!mounted) return;
-    final map = <int, bool>{};
-    for (final book in ShamelaService.curatedClassics) {
-      map[book.id] = prefs.getBool('shamela_downloaded_${book.id}') ?? false;
-    }
     setState(() => _downloadedMap.addAll(map));
   }
 
