@@ -1,5 +1,17 @@
 # UI Progress Log
 
+## R33 / T03 — Persistence consistency, write serialization, and corruption recovery
+- **Scope:** Findings C06 (Concurrent bookmark write collisions & data loss), C07 (Corrupted progress JSON throwing FormatException and wiping collections), and C08 (Unbounded session growth and corrupted session crashes in reading statistics).
+- **Implemented:**
+  - `lib/core/utils/async_lock.dart`: Introduced an isolate-local asynchronous FIFO mutex queue to serialize concurrent read-modify-write cycles cleanly without deadlocks.
+  - `lib/features/quran/data/services/bookmark_service.dart`: Serialized `addBookmark`, `removeBookmark`, `updateNote`, `saveAllBookmarks`, and `saveLastRead` via `AsyncLock`. Hardened `getBookmarks()` with per-record error recovery, isolating corrupt individual records without wiping out valid bookmarks.
+  - `lib/core/services/progress_service.dart`: Serialized `saveProgress` via `AsyncLock`. Wrapped `jsonDecode` with per-record recovery in `getAllProgress()` and safe key lookup in `getProgress()`.
+  - `lib/features/ilm/data/services/book_progress_service.dart`: Replaced unawaited preferences writes with awaited calls. Serialized `saveBookProgress` via `AsyncLock`. Filtered corrupted entries and invalid items missing `bookId` in `getAllProgress()`.
+  - `lib/features/quran/data/services/reading_stats_service.dart`: Serialized `recordSession` with `AsyncLock`. Capped session history to a rolling window of 500 recent sessions. Hardened `getDailyStats()` and `getStreak()` with per-entry try-catch blocks and safe type checks, preventing malformed sibling sessions from breaking calculations.
+  - `test/persistence_consistency_test.dart`: Added 10 regression tests covering concurrent writes (`Future.wait`), corrupted storage recovery, bounds enforcement, and daily calculation resilience.
+- **Verified:** 50/50 targeted tests pass across audio, bookmarks, and progress suites (`test/persistence_consistency_test.dart`, `test/bookmark_backup_test.dart`, `test/bookmark_separation_test.dart`, `test/bookmark_entry_loader_test.dart`, `test/book_progress_audit_test.dart`, `test/quran_audio_lifecycle_test.dart`). `flutter analyze` completed with 0 issues (10.8s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (92.6s), SHA-256 `EFA906002DC68545684FC9349B5529208247BBE4B6A4544C362523714771EDD9`.
+- **Open issues:** T03 complete. Proceed to T04 (Initialization & User-Owned Permissions).
+
 ## R32 / T02 — Backup UTF-8 decoding, schema bounds, and lifecycle validation
 - **Scope:** Findings C03 (Latin1/char code corruption on imported bytes), C04 (type safety for top-level backup fields), C05 (Quran surah/ayah/page bounds validation), and C20 (widget mounted lifecycle checks across asynchronous picker and dialog operations).
 - **Implemented:**

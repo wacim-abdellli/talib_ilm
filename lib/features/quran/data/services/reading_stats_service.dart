@@ -2,31 +2,40 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:collection';
 
+import '../../../../core/utils/async_lock.dart';
+
 class ReadingStatsService {
   static const String _sessionsKey = 'quran_reading_sessions';
+  static final AsyncLock _lock = AsyncLock();
+  static const int _maxStoredSessions = 500;
 
   // Save a reading session
   Future<void> recordSession({
     required int durationSeconds,
     required int versesRead,
     required int surahNumber,
-  }) async {
+  }) {
     if (durationSeconds < 5 && versesRead == 0) {
-      return; // Ignore very short accidental opens
+      return Future.value(); // Ignore very short accidental opens
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
+    return _lock.synchronized(() async {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> sessions = prefs.getStringList(_sessionsKey) ?? [];
 
-    final sessionMap = {
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'duration': durationSeconds,
-      'verses': versesRead,
-      'surah': surahNumber,
-    };
+      final sessionMap = {
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'duration': durationSeconds > 0 ? durationSeconds : 0,
+        'verses': versesRead > 0 ? versesRead : 0,
+        'surah': surahNumber,
+      };
 
-    sessions.add(jsonEncode(sessionMap));
-    await prefs.setStringList(_sessionsKey, sessions);
+      sessions.add(jsonEncode(sessionMap));
+      if (sessions.length > _maxStoredSessions) {
+        sessions.removeRange(0, sessions.length - _maxStoredSessions);
+      }
+      await prefs.setStringList(_sessionsKey, sessions);
+    });
   }
 
   // Get stats for today
@@ -40,12 +49,21 @@ class ReadingStatsService {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
 
-    for (var s in sessions) {
-      final map = jsonDecode(s);
-      final date = DateTime.fromMillisecondsSinceEpoch(map['timestamp']);
-      if (date.isAfter(startOfDay)) {
-        totalSeconds += (map['duration'] as int);
-        totalVerses += (map['verses'] as int);
+    for (final s in sessions) {
+      try {
+        final decoded = jsonDecode(s);
+        if (decoded is! Map) continue;
+        final ts = decoded['timestamp'];
+        if (ts is! int) continue;
+        final date = DateTime.fromMillisecondsSinceEpoch(ts);
+        if (date.isAfter(startOfDay)) {
+          final dur = decoded['duration'];
+          final ver = decoded['verses'];
+          if (dur is int && dur > 0) totalSeconds += dur;
+          if (ver is int && ver > 0) totalVerses += ver;
+        }
+      } catch (_) {
+        // Skip malformed individual session
       }
     }
 
@@ -65,12 +83,18 @@ class ReadingStatsService {
     // Use a Set to store unique dates (yyyy-mm-dd) that have activity
     final SplayTreeSet<String> activeDays = SplayTreeSet<String>();
 
-    for (var s in sessions) {
-      final map = jsonDecode(s);
-      final date = DateTime.fromMillisecondsSinceEpoch(map['timestamp']);
-      // Format as YYYY-MM-DD to ignore time
-      final dayKey = _formatDate(date);
-      activeDays.add(dayKey);
+    for (final s in sessions) {
+      try {
+        final decoded = jsonDecode(s);
+        if (decoded is! Map) continue;
+        final ts = decoded['timestamp'];
+        if (ts is! int) continue;
+        final date = DateTime.fromMillisecondsSinceEpoch(ts);
+        final dayKey = _formatDate(date);
+        activeDays.add(dayKey);
+      } catch (_) {
+        // Skip malformed individual session
+      }
     }
 
     if (activeDays.isEmpty) return 0;

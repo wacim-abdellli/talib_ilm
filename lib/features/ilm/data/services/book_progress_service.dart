@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/utils/async_lock.dart';
 import '../catalogs/mutun_curriculum_catalog.dart';
 import '../catalogs/mutun_digital_catalog.dart';
 import '../models/book_progress_model.dart';
@@ -11,6 +12,8 @@ class BookProgressService {
   static const String _progressKey = 'book_progress_data';
   static const String _sharhBookmarksKey = 'sharh_bookmarks';
   static const String _sharhNotesKey = 'sharh_notes';
+
+  static final AsyncLock _lock = AsyncLock();
 
   final SharedPreferences _prefs;
 
@@ -93,29 +96,48 @@ class BookProgressService {
 
   Future<List<BookProgress>> getAllProgress() async {
     final jsonString = _prefs.getString(_progressKey);
-    if (jsonString == null) return [];
+    if (jsonString == null || jsonString.isEmpty) return [];
 
-    final List<dynamic> jsonList = json.decode(jsonString);
+    dynamic decoded;
+    try {
+      decoded = json.decode(jsonString);
+    } catch (_) {
+      return [];
+    }
+    if (decoded is! List) return [];
+
     bool changed = false;
-    final list = jsonList.map((jsonItem) {
-      final p = BookProgress.fromJson(jsonItem);
-      final isRaw = p.bookTitle.isEmpty ||
-          p.bookTitle == p.bookId ||
-          p.bookTitle.startsWith('bk_') ||
-          p.bookTitle.contains('_');
-      if (isRaw) {
-        final canonical = canonicalTitleFor(p.bookId, p.bookTitle);
-        if (canonical != p.bookTitle && canonical != p.bookId) {
-          changed = true;
-          return p.copyWith(bookTitle: canonical);
+    final List<BookProgress> list = [];
+    for (final jsonItem in decoded) {
+      if (jsonItem is Map) {
+        try {
+          final typedItem = jsonItem.map((k, v) => MapEntry(k.toString(), v));
+          final p = BookProgress.fromJson(typedItem);
+          if (p.bookId.trim().isEmpty) {
+            continue;
+          }
+          final isRaw = p.bookTitle.isEmpty ||
+              p.bookTitle == p.bookId ||
+              p.bookTitle.startsWith('bk_') ||
+              p.bookTitle.contains('_');
+          if (isRaw) {
+            final canonical = canonicalTitleFor(p.bookId, p.bookTitle);
+            if (canonical != p.bookTitle && canonical != p.bookId) {
+              changed = true;
+              list.add(p.copyWith(bookTitle: canonical));
+              continue;
+            }
+          }
+          list.add(p);
+        } catch (_) {
+          // Per-record recovery: ignore single corrupted book record
         }
       }
-      return p;
-    }).toList();
+    }
 
     if (changed) {
       final encoded = json.encode(list.map((p) => p.toJson()).toList());
-      unawaited(_prefs.setString(_progressKey, encoded));
+      await _prefs.setString(_progressKey, encoded);
     }
 
     return list;
@@ -130,22 +152,24 @@ class BookProgressService {
     }
   }
 
-  Future<void> saveBookProgress(BookProgress progress) async {
-    final allProgress = await getAllProgress();
-    final index = allProgress.indexWhere(
-      (existing) => existing.bookId == progress.bookId,
-    );
+  Future<void> saveBookProgress(BookProgress progress) {
+    return _lock.synchronized(() async {
+      final allProgress = await getAllProgress();
+      final index = allProgress.indexWhere(
+        (existing) => existing.bookId == progress.bookId,
+      );
 
-    if (index >= 0) {
-      allProgress[index] = progress;
-    } else {
-      allProgress.add(progress);
-    }
+      if (index >= 0) {
+        allProgress[index] = progress;
+      } else {
+        allProgress.add(progress);
+      }
 
-    final jsonString = json.encode(
-      allProgress.map((progress) => progress.toJson()).toList(),
-    );
-    await _prefs.setString(_progressKey, jsonString);
+      final jsonString = json.encode(
+        allProgress.map((p) => p.toJson()).toList(),
+      );
+      await _prefs.setString(_progressKey, jsonString);
+    });
   }
 
   Future<void> updateCurrentPage(
