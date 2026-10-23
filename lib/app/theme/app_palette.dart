@@ -1083,6 +1083,8 @@ class AppSize {
 
   static const double tap = 48;
   static const double buttonH = 48;
+  static const double buttonSmallMinHeight = 40;
+  static const double tagMinHeight = 28;
   static const double inputH = 52;
   static const double navH = 64;
   static const double navMargin = 16;

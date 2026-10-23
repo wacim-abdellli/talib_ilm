@@ -7,10 +7,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Widget buildTestableWidget() {
-    return MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: const MorePage(),
-    );
+    return MaterialApp(theme: AppTheme.lightTheme, home: const MorePage());
   }
 
   group('MorePage Streamlined Settings Tests', () {
@@ -32,6 +29,8 @@ void main() {
       expect(find.text('التنزيلات الصوتية'), findsOneWidget);
       expect(find.text('إعدادات الصلاة والأذان'), findsOneWidget);
       expect(find.text('الموقع وطرق الحساب'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('المظهر والسمة'), 250);
+      await tester.pumpAndSettle();
       expect(find.text('المظهر والسمة'), findsOneWidget);
 
       // Verify purged items are NOT present in the settings list
@@ -47,7 +46,9 @@ void main() {
 
       expect(find.text('طالب علم • الإصدار 2.0.0'), findsOneWidget);
       expect(
-        find.text('«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الجَنَّةِ»'),
+        find.text(
+          '«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الجَنَّةِ»',
+        ),
         findsOneWidget,
       );
       expect(find.text('بيانات الإسناد ومصادر المحتوى'), findsOneWidget);

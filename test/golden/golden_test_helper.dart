@@ -1,7 +1,31 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+
+Future<void>? _fontsLoaded;
+
+Future<void> _loadBundledFonts() async {
+  final manifest =
+      jsonDecode(await rootBundle.loadString('FontManifest.json'))
+          as List<dynamic>;
+  final families = manifest.cast<Map<String, dynamic>>();
+  for (final requiredFamily in ['Cairo', 'Amiri', 'MaterialIcons']) {
+    if (!families.any((entry) => entry['family'] == requiredFamily)) {
+      throw StateError('Golden font manifest is missing $requiredFamily');
+    }
+  }
+  for (final entry in families) {
+    final loader = FontLoader(entry['family'] as String);
+    for (final font in entry['fonts'] as List<dynamic>) {
+      loader.addFont(rootBundle.load(font['asset'] as String));
+    }
+    await loader.load();
+  }
+}
 
 /// Golden test runner helper
 Future<void> testGoldenWidget({
@@ -13,7 +37,10 @@ Future<void> testGoldenWidget({
   Size surfaceSize = const Size(390, 844),
   Finder? finder,
 }) async {
+  // Font/asset I/O must finish outside the widget test's fake clock.
+  await tester.runAsync(() => _fontsLoaded ??= _loadBundledFonts());
   await tester.binding.setSurfaceSize(surfaceSize);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
 
   final theme = isDark ? AppTheme.dark() : AppTheme.light();
 
@@ -59,9 +86,10 @@ Future<void> testGoldenWidget({
   await tester.pumpAndSettle();
 
   await expectLater(
-    finder ?? (find.byType(Scaffold).evaluate().length > 1
-        ? find.byType(Scaffold).last
-        : find.byType(Scaffold)),
+    finder ??
+        (find.byType(Scaffold).evaluate().length > 1
+            ? find.byType(Scaffold).last
+            : find.byType(Scaffold)),
     matchesGoldenFile('$fileName.png'),
   );
 }

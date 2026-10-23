@@ -1,10 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/shared/widgets/app_widgets.dart';
 import 'golden_test_helper.dart';
 
 void main() {
   group('Components Golden Tests', () {
+    for (final isDark in [false, true]) {
+      testWidgets('Core components - ${isDark ? 'dark' : 'light'} 2.0', (
+        tester,
+      ) async {
+        await testGoldenWidget(
+          tester: tester,
+          isDark: isDark,
+          textScale: 2.0,
+          fileName: 'goldens/core_components_${isDark ? 'dark' : 'light'}_2_0',
+          widget: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppButton(label: 'زر رئيسي', onPressed: () {}),
+                const SizedBox(height: 12),
+                AppButton.outline(label: 'زر مخطط', onPressed: () {}),
+                const SizedBox(height: 12),
+                AppButton(
+                  label: 'زر صغير',
+                  size: AppButtonSize.sm,
+                  onPressed: () {},
+                ),
+                const SizedBox(height: 12),
+                AppButton(
+                  label: 'بطاقة اختبار العلم الشرعي',
+                  icon: Icons.menu_book_rounded,
+                  width: 180,
+                  onPressed: () {},
+                ),
+                const SizedBox(height: 12),
+                AppListTile(
+                  icon: Icons.bookmark_rounded,
+                  title: 'كتاب التوحيد',
+                  subtitle: 'الشيخ محمد بن عبد الوهاب',
+                  onTap: () {},
+                ),
+                const SizedBox(height: 12),
+                const AppTag(label: 'عقيدة', subject: 'عقيدة'),
+                const SizedBox(height: 12),
+                const AppProgress(progress: 0.65),
+              ],
+            ),
+          ),
+        );
+        final tagLabel = tester.renderObject<RenderParagraph>(
+          find.text('عقيدة'),
+        );
+        expect(
+          tagLabel.size.height,
+          greaterThanOrEqualTo(
+            tagLabel.getMinIntrinsicHeight(tagLabel.size.width),
+          ),
+          reason: 'The tag must allow its full scaled text height.',
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+
     testWidgets('AppButton variants - light 1.0', (tester) async {
       final widget = Column(
         mainAxisSize: MainAxisSize.min,
@@ -58,9 +117,7 @@ void main() {
           children: [
             const IconBadge(icon: Icons.book_rounded),
             const SizedBox(width: 16),
-            const Expanded(
-              child: Text('بطاقة اختبار العلم الشرعي'),
-            ),
+            const Expanded(child: Text('بطاقة اختبار العلم الشرعي')),
           ],
         ),
       );
@@ -81,9 +138,7 @@ void main() {
           children: [
             const IconBadge(icon: Icons.book_rounded),
             const SizedBox(width: 16),
-            const Expanded(
-              child: Text('بطاقة اختبار العلم الشرعي'),
-            ),
+            const Expanded(child: Text('بطاقة اختبار العلم الشرعي')),
           ],
         ),
       );

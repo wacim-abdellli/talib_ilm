@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/mushaf_single_page.dart';
 import 'package:talib_ilm/app/theme/app_ui.dart';
+import 'helpers/mushaf_assets.dart';
 
 void main() {
-  testWidgets('MushafSinglePage renders page 1, 2, and 3 without error', (tester) async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadMushafTestAssets);
+
+  testWidgets('MushafSinglePage renders page 1, 2, and 3 without error', (
+    tester,
+  ) async {
     for (final page in [1, 2, 3]) {
       await tester.pumpWidget(
         MaterialApp(
@@ -28,7 +34,9 @@ void main() {
     }
   });
 
-  testWidgets('MushafSinglePage renders with Tajweed enabled and disabled', (tester) async {
+  testWidgets('MushafSinglePage renders with Tajweed enabled and disabled', (
+    tester,
+  ) async {
     for (final isTajweed in [true, false]) {
       await tester.pumpWidget(
         MaterialApp(

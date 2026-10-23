@@ -26,13 +26,17 @@ class AppTag extends StatelessWidget {
     final effectiveBg = bg ?? cat.bg;
 
     final tag = Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+      constraints: const BoxConstraints(minHeight: AppSize.tagMinHeight),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.xs,
+      ),
       decoration: BoxDecoration(
         color: effectiveBg,
         borderRadius: AppRadius.smRadius,
       ),
       child: Center(
+        heightFactor: 1,
         child: Text(
           label,
           style: textTheme.caption.copyWith(

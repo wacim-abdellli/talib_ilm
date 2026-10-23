@@ -111,7 +111,9 @@ class _AppButtonState extends State<AppButton> {
         break;
     }
 
-    final visualH = widget.size == AppButtonSize.sm ? 40.0 : AppSize.buttonH;
+    final visualH = widget.size == AppButtonSize.sm
+        ? AppSize.buttonSmallMinHeight
+        : AppSize.buttonH;
     final content = AnimatedScale(
       scale: _pressed ? 0.98 : 1.0,
       duration: AppMotion.fast,
@@ -120,7 +122,7 @@ class _AppButtonState extends State<AppButton> {
         opacity: isEnabled ? 1.0 : 0.38,
         duration: AppMotion.fast,
         child: Container(
-          height: visualH,
+          constraints: BoxConstraints(minHeight: visualH),
           width: widget.width,
           decoration: BoxDecoration(
             color: bg,
@@ -143,12 +145,14 @@ class _AppButtonState extends State<AppButton> {
                     }
                   : null,
               child: Padding(
-                padding: EdgeInsets.symmetric(
+                padding: EdgeInsetsDirectional.symmetric(
                   horizontal: widget.size == AppButtonSize.sm
                       ? AppSpace.md
                       : AppSpace.lg,
+                  vertical: AppSpace.sm,
                 ),
                 child: Center(
+                  heightFactor: 1,
                   child: widget.isLoading
                       ? SizedBox(
                           width: AppIcon.sm,
@@ -166,11 +170,13 @@ class _AppButtonState extends State<AppButton> {
                               Icon(widget.icon, size: AppIcon.md, color: fg),
                               SizedBox(width: AppSpace.sm),
                             ],
-                            Text(
-                              widget.label,
-                              style: textTheme.label.copyWith(color: fg),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Flexible(
+                              child: Text(
+                                widget.label,
+                                style: textTheme.label.copyWith(color: fg),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -234,11 +240,7 @@ class AppIconButton extends StatelessWidget {
               child: Opacity(
                 opacity: isEnabled ? 1.0 : 0.38,
                 child: Center(
-                  child: Icon(
-                    icon,
-                    size: iconSize,
-                    color: effectiveColor,
-                  ),
+                  child: Icon(icon, size: iconSize, color: effectiveColor),
                 ),
               ),
             ),
