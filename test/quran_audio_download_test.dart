@@ -247,4 +247,157 @@ void main() {
       expect(uriSource.uri.toString(), contains('114001.mp3'));
     });
   });
+
+  group('QuranAudioDownloader Robustness & Error Remediation (T07)', () {
+    test('joins duplicate concurrent calls without redundant work (C14)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+
+      int networkRequests = 0;
+      final mockClient = MockClient((request) async {
+        networkRequests++;
+        return http.Response.bytes(
+          List.filled(64, 42),
+          200,
+          headers: {'content-type': 'audio/mpeg'},
+        );
+      });
+
+      // Launch 2 simultaneous downloads of Surah 112 (4 ayahs)
+      await Future.wait([
+        downloader.downloadSurah(surah: 112, client: mockClient),
+        downloader.downloadSurah(surah: 112, client: mockClient),
+      ]);
+
+      // Exactly 4 requests should have been dispatched (not 8)
+      expect(networkRequests, equals(4));
+      expect(await QuranAudioDownloader.isSurahDownloaded(112), isTrue);
+    });
+
+    test('rejects 200 OK with text/html content-type and leaves status failed without corrupted mp3 (C15)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_114';
+
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          '<html><head><title>Login</title></head><body>Redirecting</body></html>',
+          200,
+          headers: {'content-type': 'text/html; charset=utf-8'},
+        );
+      });
+
+      await downloader.downloadSurah(surah: 114, client: mockClient);
+
+      final progress = downloader.downloadProgressNotifier.value[key];
+      expect(progress?.status, equals(SurahDownloadStatus.failed));
+      expect(progress?.errorMessage, contains('غير صالحة'));
+
+      // Ensure no corrupt mp3 was promoted
+      final isDownloaded = await QuranAudioDownloader.isSurahDownloaded(114);
+      expect(isDownloaded, isFalse);
+
+      final surahDir = await QuranAudioDownloader.getSurahDir(114, reciter.id);
+      final mp3Files = surahDir.existsSync()
+          ? surahDir.listSync().where((f) => f.path.endsWith('.mp3'))
+          : <FileSystemEntity>[];
+      expect(mp3Files, isEmpty);
+    });
+
+    test('rejects zero-byte response body and does not promote empty file (C15)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_113';
+
+      final mockClient = MockClient((request) async {
+        return http.Response.bytes(
+          <int>[],
+          200,
+          headers: {'content-type': 'audio/mpeg'},
+        );
+      });
+
+      await downloader.downloadSurah(surah: 113, client: mockClient);
+
+      final progress = downloader.downloadProgressNotifier.value[key];
+      expect(progress?.status, equals(SurahDownloadStatus.failed));
+      expect(progress?.errorMessage, contains('فارغ'));
+      expect(await QuranAudioDownloader.isSurahDownloaded(113), isFalse);
+    });
+
+    test('rejects truncated response when Content-Length does not match streamed bytes (C15)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+      final reciter = QuranAudioService().selectedReciter;
+      final key = '${reciter.id}_113';
+
+      final mockClient = MockClient.streaming((request, bodyStream) async {
+        return http.StreamedResponse(
+          Stream.value(List.filled(50, 99)),
+          200,
+          contentLength: 1000,
+          headers: {'content-type': 'audio/mpeg'},
+        );
+      });
+
+      await downloader.downloadSurah(surah: 113, client: mockClient);
+
+      final progress = downloader.downloadProgressNotifier.value[key];
+      expect(progress?.status, equals(SurahDownloadStatus.failed));
+      expect(progress?.errorMessage, contains('مبتور'));
+      expect(await QuranAudioDownloader.isSurahDownloaded(113), isFalse);
+    });
+
+    test('isSurahDownloaded rejects corrupted files (< 32 bytes or HTML markup) and cleans them on resume (C15)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+      final reciter = QuranAudioService().selectedReciter;
+
+      // Corrupt Surah 114 Ayah 1 by writing an HTML error page
+      final surahDir = await QuranAudioDownloader.getSurahDir(114, reciter.id);
+      final corruptFile = File('${surahDir.path}/114001.mp3');
+      await corruptFile.create(recursive: true);
+      await corruptFile.writeAsString('<!DOCTYPE html><html><body>Error</body></html>');
+
+      // isSurahDownloaded must reject this
+      expect(await QuranAudioDownloader.isSurahDownloaded(114), isFalse);
+
+      // Now run download with valid client; it should clean and replace the corrupt file
+      final validClient = MockClient((request) async {
+        return http.Response.bytes(
+          List.filled(80, 20),
+          200,
+          headers: {'content-type': 'audio/mpeg'},
+        );
+      });
+
+      await downloader.downloadSurah(surah: 114, client: validClient);
+
+      expect(await QuranAudioDownloader.isSurahDownloaded(114), isTrue);
+      // Validated file must no longer contain the html markup
+      final firstByte = (await File('${surahDir.path}/114001.mp3').readAsBytes())[0];
+      expect(firstByte, equals(20));
+    });
+
+    test('caller-injected client is not closed by downloader (C16)', () async {
+      final downloader = QuranAudioDownloader();
+      downloader.resetStateForTesting();
+
+      final client = MockClient((request) async {
+        return http.Response.bytes(
+          List.filled(64, 15),
+          200,
+          headers: {'content-type': 'audio/mpeg'},
+        );
+      });
+
+      await downloader.downloadSurah(surah: 112, client: client);
+
+      // Injected client should still be able to make requests after download finishes
+      final probeResponse = await client.get(Uri.parse('https://example.com'));
+      expect(probeResponse.statusCode, equals(200));
+    });
+  });
 }

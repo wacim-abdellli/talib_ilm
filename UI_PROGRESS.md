@@ -1649,3 +1649,34 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built cleanly in 49.1s (`build\app\outputs\flutter-apk\app-debug.apk`).
 - **Open Issues:** None.
 
+## Round 37 — Quran Audio Download Atomic Promotion, Robustness & Error Remediation (T07 / C14 / C15 / C16)
+- **Status:** Complete
+- **Branch:** `ui/r37-audio-download-atomic-validation`
+- **Core Problems Solved:**
+  1. **Duplicate Concurrent In-Flight Download Deduplication (C14):**
+     - Identified that initiating parallel downloads for the same surah dispatched redundant HTTP requests, collided on write streams, and caused corrupted files.
+     - Added `_inFlightDownloads` deduplication table in `QuranAudioDownloader.downloadSurah()`. If a download is already in flight for `reciter_surah`, caller joins the active Future without duplicating requests.
+     - Added generation token tracking (`_operationGenerations`) to ensure cancelled or paused downloads cannot write to disk or overwrite a subsequent download generation.
+  2. **Atomic Temp-File Staging & Rigorous Audio Validation (C15):**
+     - Replaced direct writing into destination `.mp3` with staging in unique generation-tagged temp files (`${sStr}${aStr}_g${gen}.tmp`).
+     - Added comprehensive integrity gate before atomic promotion (`temp.rename(target.path)`):
+       - Rejected zero-byte or empty responses.
+       - Validated Content-Type headers, immediately rejecting HTML / captive portals / plaintext responses (`text/html`, `text/plain`, `application/json`).
+       - Enforced stream size bounds (max 25MB per ayah) and verified downloaded bytes against declared `Content-Length`.
+       - Added `isAyahAudioFileValid()` validation ensuring audio files have plausible length (≥ 32 bytes) and do not contain HTML markup (`<!DOCTYPE`, `<html`, `<?xml`).
+       - Enhanced `isSurahDownloaded()` and initial resume scan to automatically detect and purge corrupted/stale audio files.
+  3. **Http Client Ownership, Timeout Bounds & Cancellation Cleanup (C16):**
+     - Bound network requests with explicit timeouts (`AppMotion.networkTimeout` connection deadline, `AppMotion.networkMedium` body idle timeout).
+     - Added strict resource lifecycle management: owned clients (`http.Client()`) are properly closed in `finally` and cancellation blocks, while caller-injected clients remain open and undamaged.
+     - Cleaned up temp files on cancel, pause, and disposal.
+  4. **Code Quality, Modularity & Rule 8 Compliance:**
+     - Extracted `SurahDownloadStatus` and `SurahDownloadProgress` into `lib/features/quran/data/models/surah_download_progress.dart` (exported from `quran_audio_downloader.dart`).
+     - Streamlined progress updates with `_setProg()` helper, keeping `quran_audio_downloader.dart` strictly under 600 lines (599 lines).
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (No issues found, ran in 8.5s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/quran_audio_download_test.dart test/quran_audio_lifecycle_test.dart test/bookmark_backup_test.dart`: 46/46 tests passed (100% pass across all 3 suites in 1.4s).
+  - `flutter build apk --debug`: Built cleanly.
+- **Open Issues:** None.
+
+

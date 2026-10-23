@@ -5,42 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:quran/quran.dart' as quran;
 
+import '../../../../app/theme/app_palette.dart';
 import 'quran_audio_service.dart';
 
-enum SurahDownloadStatus {
-  idle,
-  downloading,
-  paused,
-  completed,
-  failed,
-}
-
-class SurahDownloadProgress {
-  final int surah;
-  final String reciterId;
-  final int downloadedAyahs;
-  final int totalAyahs;
-  final int downloadedBytes;
-  final SurahDownloadStatus status;
-  final String? errorMessage;
-
-  const SurahDownloadProgress({
-    required this.surah,
-    required this.reciterId,
-    required this.downloadedAyahs,
-    required this.totalAyahs,
-    required this.downloadedBytes,
-    required this.status,
-    this.errorMessage,
-  });
-
-  double get progressFraction =>
-      totalAyahs > 0 ? (downloadedAyahs / totalAyahs).clamp(0.0, 1.0) : 0.0;
-
-  bool get isCompleted => status == SurahDownloadStatus.completed;
-  bool get isDownloading => status == SurahDownloadStatus.downloading;
-  bool get isPaused => status == SurahDownloadStatus.paused;
-}
+export '../models/surah_download_progress.dart';
+import '../models/surah_download_progress.dart';
 
 /// Service managing offline downloading, storage tracking, and local cache
 /// resolution for Holy Quran audio recitations by Surah.
@@ -62,6 +31,12 @@ class QuranAudioDownloader {
   final Map<String, bool> _pauseFlags = {};
   final Map<String, bool> _cancelFlags = {};
   final Map<String, http.Client> _activeHttpClients = {};
+
+  /// In-flight active download futures (C14: join/no-op duplicate requests)
+  final Map<String, Future<void>> _inFlightDownloads = {};
+
+  /// Operation generations to prevent stale operations from mutating state (C14)
+  final Map<String, int> _operationGenerations = {};
 
   static String _formatNumber(int n) => n.toString().padLeft(3, '0');
 
@@ -99,6 +74,32 @@ class QuranAudioDownloader {
     return '${dir.path}/$sStr$aStr.mp3';
   }
 
+  /// Check whether an ayah audio file exists, has plausible size (>= 32 bytes),
+  /// and does not start with ASCII text markup (<html, {"error", etc.).
+  static bool isAyahAudioFileValid(File file) {
+    if (!file.existsSync()) return false;
+    final length = file.lengthSync();
+    if (length < 32) return false;
+    try {
+      final raf = file.openSync(mode: FileMode.read);
+      try {
+        final sampleSize = length < 64 ? length : 64;
+        final header = raf.readSync(sampleSize);
+        if (header.isEmpty) return false;
+        final first = header[0];
+        // '<' (0x3C), '{' (0x7B), '[' (0x5B), '!' (0x21)
+        if (first == 0x3C || first == 0x7B || first == 0x5B || first == 0x21) {
+          return false;
+        }
+        return true;
+      } finally {
+        raf.closeSync();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Check whether an entire surah has all verses downloaded and verified
   static Future<bool> isSurahDownloaded(
     int surah, {
@@ -113,7 +114,7 @@ class QuranAudioDownloader {
       final sStr = _formatNumber(surah);
       final aStr = _formatNumber(a);
       final file = File('${dir.path}/$sStr$aStr.mp3');
-      if (!file.existsSync() || file.lengthSync() == 0) {
+      if (!isAyahAudioFileValid(file)) {
         return false;
       }
     }
@@ -133,7 +134,7 @@ class QuranAudioDownloader {
     try {
       final files = dir.listSync();
       for (final f in files) {
-        if (f is File && f.path.endsWith('.mp3')) {
+        if (f is File && f.path.endsWith('.mp3') && isAyahAudioFileValid(f)) {
           total += f.lengthSync();
         }
       }
@@ -194,7 +195,8 @@ class QuranAudioDownloader {
   }
 
   /// Downloads all verses for a Surah sequentially.
-  /// Automatically resumes by skipping any verses already stored on disk.
+  /// Automatically joins any in-flight download for the same reciter/surah.
+  /// Automatically resumes by skipping any verses already stored on disk and verified.
   Future<void> downloadSurah({
     required int surah,
     QuranReciter? reciter,
@@ -202,246 +204,291 @@ class QuranAudioDownloader {
   }) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final key = '${r.id}_$surah';
+
+    // C14: Join in-flight download if one is already active (join / no-op)
+    final existingFuture = _inFlightDownloads[key];
+    if (existingFuture != null) {
+      return existingFuture;
+    }
+
+    final future = _executeDownloadSurah(
+      surah: surah,
+      reciter: r,
+      client: client,
+    );
+    _inFlightDownloads[key] = future;
+    return future;
+  }
+
+  Future<void> _executeDownloadSurah({
+    required int surah,
+    required QuranReciter reciter,
+    http.Client? client,
+  }) async {
+    final key = '${reciter.id}_$surah';
+    final gen = (_operationGenerations[key] ?? 0) + 1;
+    _operationGenerations[key] = gen;
+
     final totalVerses = quran.getVerseCount(surah);
-    final surahDir = await getSurahDir(surah, r.id);
+    final surahDir = await getSurahDir(surah, reciter.id);
 
     _pauseFlags[key] = false;
     _cancelFlags[key] = false;
 
+    final bool ownsClient = client == null;
     final httpClient = client ?? http.Client();
     _activeHttpClients[key] = httpClient;
 
-    // Check already downloaded verses for resume
-    int existingCount = 0;
-    int existingBytes = 0;
-    for (int a = 1; a <= totalVerses; a++) {
-      final sStr = _formatNumber(surah);
-      final aStr = _formatNumber(a);
-      final file = File('${surahDir.path}/$sStr$aStr.mp3');
-      if (file.existsSync() && file.lengthSync() > 0) {
-        existingCount++;
-        existingBytes += file.lengthSync();
-      }
-    }
-
-    if (existingCount == totalVerses) {
-      _updateProgress(
-        key,
-        SurahDownloadProgress(
-          surah: surah,
-          reciterId: r.id,
-          downloadedAyahs: totalVerses,
-          totalAyahs: totalVerses,
-          downloadedBytes: existingBytes,
-          status: SurahDownloadStatus.completed,
-        ),
-      );
-      return;
-    }
-
-    _updateProgress(
-      key,
-      SurahDownloadProgress(
-        surah: surah,
-        reciterId: r.id,
-        downloadedAyahs: existingCount,
-        totalAyahs: totalVerses,
-        downloadedBytes: existingBytes,
-        status: SurahDownloadStatus.downloading,
-      ),
-    );
-
-    int currentCount = existingCount;
-    int currentBytes = existingBytes;
-
-    // Clean up any stale temp files from prior aborted attempts
     try {
-      if (await surahDir.exists()) {
-        for (final file in surahDir.listSync()) {
-          if (file is File && file.path.endsWith('.tmp')) {
+      // Check already downloaded and verified verses for resume
+      int existingCount = 0;
+      int existingBytes = 0;
+      for (int a = 1; a <= totalVerses; a++) {
+        final sStr = _formatNumber(surah);
+        final aStr = _formatNumber(a);
+        final file = File('${surahDir.path}/$sStr$aStr.mp3');
+        if (isAyahAudioFileValid(file)) {
+          existingCount++;
+          existingBytes += file.lengthSync();
+        } else if (file.existsSync()) {
+          // Stale / corrupted / empty file from older runs: delete so it re-downloads
+          try {
             file.deleteSync();
+          } catch (_) {}
+        }
+      }
+
+      if (_operationGenerations[key] != gen) return;
+
+      if (existingCount == totalVerses) {
+        _setProg(key, surah, reciter.id, totalVerses, totalVerses, existingBytes, SurahDownloadStatus.completed);
+        return;
+      }
+
+      _setProg(key, surah, reciter.id, existingCount, totalVerses, existingBytes, SurahDownloadStatus.downloading);
+
+      int currentCount = existingCount;
+      int currentBytes = existingBytes;
+
+      // Clean up any stale temp files from prior aborted attempts
+      try {
+        if (await surahDir.exists()) {
+          for (final file in surahDir.listSync()) {
+            if (file is File && file.path.endsWith('.tmp')) {
+              file.deleteSync();
+            }
           }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
 
-    for (int a = 1; a <= totalVerses; a++) {
-      // Check for pause
-      if (_pauseFlags[key] == true) {
-        _updateProgress(
-          key,
-          SurahDownloadProgress(
-            surah: surah,
-            reciterId: r.id,
-            downloadedAyahs: currentCount,
-            totalAyahs: totalVerses,
-            downloadedBytes: currentBytes,
-            status: SurahDownloadStatus.paused,
-          ),
-        );
-        return;
-      }
+      for (int a = 1; a <= totalVerses; a++) {
+        if (_operationGenerations[key] != gen) return;
 
-      // Check for cancel
-      if (_cancelFlags[key] == true) {
-        _removeProgress(key);
-        return;
-      }
-
-      final sStr = _formatNumber(surah);
-      final aStr = _formatNumber(a);
-      final targetFile = File('${surahDir.path}/$sStr$aStr.mp3');
-
-      // If already downloaded and valid, skip
-      if (targetFile.existsSync() && targetFile.lengthSync() > 0) {
-        continue;
-      }
-
-      final remoteUrl =
-          'https://everyayah.com/data/${r.subfolder}/$sStr$aStr.mp3';
-
-      try {
-        final request = http.Request('GET', Uri.parse(remoteUrl));
-        final response = await httpClient.send(request);
-
-        if (response.statusCode != 200) {
-          throw HttpException('Server returned ${response.statusCode}');
+        // Check for pause
+        if (_pauseFlags[key] == true) {
+          _setProg(key, surah, reciter.id, currentCount, totalVerses, currentBytes, SurahDownloadStatus.paused);
+          return;
         }
 
-        final tempFile = File('${surahDir.path}/$sStr$aStr.tmp');
-        final sink = tempFile.openWrite();
+        // Check for cancel
+        if (_cancelFlags[key] == true) {
+          _removeProgress(key);
+          return;
+        }
+
+        final sStr = _formatNumber(surah);
+        final aStr = _formatNumber(a);
+        final targetFile = File('${surahDir.path}/$sStr$aStr.mp3');
+
+        // If already downloaded and valid, skip
+        if (isAyahAudioFileValid(targetFile)) {
+          continue;
+        }
+
+        final remoteUrl =
+            'https://everyayah.com/data/${reciter.subfolder}/$sStr$aStr.mp3';
+        final tempFile = File('${surahDir.path}/$sStr${aStr}_g$gen.tmp');
 
         try {
-          await response.stream.listen(
-            (chunk) {
+          final request = http.Request('GET', Uri.parse(remoteUrl));
+          // C15: Connection deadline
+          final http.StreamedResponse response = await httpClient
+              .send(request)
+              .timeout(AppMotion.networkTimeout);
+
+          if (response.statusCode != 200) {
+            throw HttpException('Server returned ${response.statusCode}');
+          }
+
+          // C15: Content-Type check (reject 200 HTML or text error body)
+          final contentType =
+              response.headers['content-type']?.toLowerCase() ?? '';
+          if (contentType.contains('text/html') ||
+              contentType.contains('text/plain') ||
+              contentType.contains('application/json')) {
+            throw const HttpException('استجابة الخادم غير صالحة (HTML/Text)');
+          }
+
+          final expectedLength = response.contentLength;
+          final sink = tempFile.openWrite();
+          int downloadedAyahBytes = 0;
+          const int maxAyahBytes = 25 * 1024 * 1024; // 25 MB max bound
+
+          try {
+            // C15: Body chunk idle timeout
+            await for (final chunk
+                in response.stream.timeout(AppMotion.networkMedium)) {
+              if (_cancelFlags[key] == true ||
+                  _pauseFlags[key] == true ||
+                  _operationGenerations[key] != gen) {
+                break;
+              }
+              downloadedAyahBytes += chunk.length;
+              if (downloadedAyahBytes > maxAyahBytes) {
+                throw const HttpException('حجم الآية يتجاوز الحد المسموح به');
+              }
               sink.add(chunk);
-            },
-            cancelOnError: true,
-          ).asFuture<void>();
-        } finally {
-          await sink.flush();
-          await sink.close();
-        }
+            }
+          } finally {
+            await sink.flush();
+            await sink.close();
+          }
 
-        // Check if canceled during write
-        if (_cancelFlags[key] == true) {
+          // Check if superseded during download
+          if (_operationGenerations[key] != gen) {
+            try {
+              if (tempFile.existsSync()) await tempFile.delete();
+            } catch (_) {}
+            return;
+          }
+
+          // Check if canceled during write
+          if (_cancelFlags[key] == true) {
+            try {
+              if (tempFile.existsSync()) await tempFile.delete();
+            } catch (_) {}
+            _removeProgress(key);
+            return;
+          }
+
+          // Check if paused during write
+          if (_pauseFlags[key] == true) {
+            try {
+              if (tempFile.existsSync()) await tempFile.delete();
+            } catch (_) {}
+            _setProg(key, surah, reciter.id, currentCount, totalVerses, currentBytes, SurahDownloadStatus.paused);
+            return;
+          }
+
+          // C15: Integrity validation before atomic promotion
+          // 1. Nonempty check
+          if (!tempFile.existsSync() || tempFile.lengthSync() == 0) {
+            try {
+              if (tempFile.existsSync()) await tempFile.delete();
+            } catch (_) {}
+            throw const HttpException('الملف الصوتي المستلم فارغ');
+          }
+
+          // 2. Declared Content-Length check
+          if (expectedLength != null && expectedLength > 0) {
+            if (downloadedAyahBytes != expectedLength) {
+              try {
+                if (tempFile.existsSync()) await tempFile.delete();
+              } catch (_) {}
+              throw HttpException(
+                'تم استلام ملف مبتور ($downloadedAyahBytes من $expectedLength بايت)',
+              );
+            }
+          }
+
+          // 3. Plausible audio validation
+          if (!isAyahAudioFileValid(tempFile)) {
+            try {
+              if (tempFile.existsSync()) await tempFile.delete();
+            } catch (_) {}
+            throw const HttpException('الملف الصوتي المستلم تالف أو غير صالح');
+          }
+
+          // Atomic promotion: rename temp to target
+          if (targetFile.existsSync()) await targetFile.delete();
+          await tempFile.rename(targetFile.path);
+
+          currentCount++;
+          currentBytes += targetFile.lengthSync();
+
+          _setProg(
+            key,
+            surah,
+            reciter.id,
+            currentCount,
+            totalVerses,
+            currentBytes,
+            currentCount == totalVerses ? SurahDownloadStatus.completed : SurahDownloadStatus.downloading,
+          );
+        } catch (e) {
+          // Safely cleanup temp file
           try {
             if (tempFile.existsSync()) await tempFile.delete();
           } catch (_) {}
-          _removeProgress(key);
-          return;
-        }
 
-        // Check if paused during write
-        if (_pauseFlags[key] == true) {
-          try {
-            if (tempFile.existsSync()) await tempFile.delete();
-          } catch (_) {}
-          _updateProgress(
+          if (_operationGenerations[key] != gen) return;
+
+          // User intentionally canceled
+          if (_cancelFlags[key] == true) {
+            _removeProgress(key);
+            return;
+          }
+
+          // User intentionally paused
+          if (_pauseFlags[key] == true) {
+            _setProg(key, surah, reciter.id, currentCount, totalVerses, currentBytes, SurahDownloadStatus.paused);
+            return;
+          }
+
+          // True network or disk failure
+          final isDiskError = e is FileSystemException;
+          final String errorMsg;
+          if (isDiskError) {
+            errorMsg = 'المساحة التخزينية غير كافية لإكمال التنزيل';
+          } else if (e is TimeoutException) {
+            errorMsg = 'انتهت مهلة الاتصال بالخادم، يرجى المحاولة لاحقاً';
+          } else if (e is HttpException) {
+            errorMsg = e.message;
+          } else if (e.toString().contains('Connection closed') ||
+              e.toString().contains('SocketException') ||
+              e.toString().contains('TimeoutException') ||
+              e.toString().contains('Failed host lookup') ||
+              e.toString().contains('ClientException')) {
+            errorMsg = 'تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت';
+          } else {
+            errorMsg = 'تعذر تحميل الآية $a، يرجى إعادة المحاولة';
+          }
+
+          _setProg(
             key,
-            SurahDownloadProgress(
-              surah: surah,
-              reciterId: r.id,
-              downloadedAyahs: currentCount,
-              totalAyahs: totalVerses,
-              downloadedBytes: currentBytes,
-              status: SurahDownloadStatus.paused,
-            ),
+            surah,
+            reciter.id,
+            currentCount,
+            totalVerses,
+            currentBytes,
+            SurahDownloadStatus.failed,
+            errorMsg,
           );
           return;
         }
+      }
 
-        // Rename temp to target
-        if (targetFile.existsSync()) await targetFile.delete();
-        await tempFile.rename(targetFile.path);
-
-        currentCount++;
-        currentBytes += targetFile.lengthSync();
-
-        _updateProgress(
-          key,
-          SurahDownloadProgress(
-            surah: surah,
-            reciterId: r.id,
-            downloadedAyahs: currentCount,
-            totalAyahs: totalVerses,
-            downloadedBytes: currentBytes,
-            status: currentCount == totalVerses
-                ? SurahDownloadStatus.completed
-                : SurahDownloadStatus.downloading,
-          ),
-        );
-      } catch (e) {
-        // Safely cleanup temp file
-        try {
-          final tempFile = File('${surahDir.path}/$sStr$aStr.tmp');
-          if (tempFile.existsSync()) await tempFile.delete();
-        } catch (_) {}
-
-        // User intentionally canceled
-        if (_cancelFlags[key] == true) {
-          _removeProgress(key);
-          return;
-        }
-
-        // User intentionally paused
-        if (_pauseFlags[key] == true) {
-          _updateProgress(
-            key,
-            SurahDownloadProgress(
-              surah: surah,
-              reciterId: r.id,
-              downloadedAyahs: currentCount,
-              totalAyahs: totalVerses,
-              downloadedBytes: currentBytes,
-              status: SurahDownloadStatus.paused,
-            ),
-          );
-          return;
-        }
-
-        // True network or disk failure
-        final isDiskError = e is FileSystemException;
-        final String errorMsg;
-        if (isDiskError) {
-          errorMsg = 'المساحة التخزينية غير كافية لإكمال التنزيل';
-        } else if (e.toString().contains('Connection closed') ||
-            e.toString().contains('SocketException') ||
-            e.toString().contains('TimeoutException') ||
-            e.toString().contains('Failed host lookup') ||
-            e.toString().contains('ClientException')) {
-          errorMsg = 'تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت';
-        } else {
-          errorMsg = 'تعذر تحميل الآية $a، يرجى إعادة المحاولة';
-        }
-
-        _updateProgress(
-          key,
-          SurahDownloadProgress(
-            surah: surah,
-            reciterId: r.id,
-            downloadedAyahs: currentCount,
-            totalAyahs: totalVerses,
-            downloadedBytes: currentBytes,
-            status: SurahDownloadStatus.failed,
-            errorMessage: errorMsg,
-          ),
-        );
-        return;
+      if (_operationGenerations[key] == gen) {
+        _setProg(key, surah, reciter.id, totalVerses, totalVerses, currentBytes, SurahDownloadStatus.completed);
+      }
+    } finally {
+      // C16: Release resources and in-flight tracking on every exit
+      _inFlightDownloads.remove(key);
+      _activeHttpClients.remove(key);
+      if (ownsClient) {
+        httpClient.close();
       }
     }
-
-    _updateProgress(
-      key,
-      SurahDownloadProgress(
-        surah: surah,
-        reciterId: r.id,
-        downloadedAyahs: totalVerses,
-        totalAyahs: totalVerses,
-        downloadedBytes: currentBytes,
-        status: SurahDownloadStatus.completed,
-      ),
-    );
   }
 
   void pauseDownload(int surah, {QuranReciter? reciter}) {
@@ -454,16 +501,14 @@ class QuranAudioDownloader {
 
     final prev = downloadProgressNotifier.value[key];
     if (prev != null) {
-      _updateProgress(
+      _setProg(
         key,
-        SurahDownloadProgress(
-          surah: surah,
-          reciterId: r.id,
-          downloadedAyahs: prev.downloadedAyahs,
-          totalAyahs: prev.totalAyahs,
-          downloadedBytes: prev.downloadedBytes,
-          status: SurahDownloadStatus.paused,
-        ),
+        surah,
+        r.id,
+        prev.downloadedAyahs,
+        prev.totalAyahs,
+        prev.downloadedBytes,
+        SurahDownloadStatus.paused,
       );
     }
   }
@@ -473,6 +518,8 @@ class QuranAudioDownloader {
     final key = '${r.id}_$surah';
     _cancelFlags[key] = true;
     _pauseFlags[key] = false;
+    // Advance generation so in-flight writes cannot promote or alter state
+    _operationGenerations[key] = (_operationGenerations[key] ?? 0) + 1;
     _activeHttpClients[key]?.close();
     _activeHttpClients.remove(key);
 
@@ -490,6 +537,19 @@ class QuranAudioDownloader {
     });
 
     _removeProgress(key);
+  }
+
+  /// Reset internal state and notifiers for test isolation
+  void resetStateForTesting() {
+    _inFlightDownloads.clear();
+    _operationGenerations.clear();
+    _pauseFlags.clear();
+    _cancelFlags.clear();
+    for (final client in _activeHttpClients.values) {
+      client.close();
+    }
+    _activeHttpClients.clear();
+    downloadProgressNotifier.value = {};
   }
 
   /// Delete all downloaded audio files for a specific Surah
@@ -513,16 +573,30 @@ class QuranAudioDownloader {
     }
   }
 
+  void _setProg(String key, int surah, String reciterId, int downloadedAyahs,
+      int totalAyahs, int downloadedBytes, SurahDownloadStatus status, [String? errorMessage]) {
+    _updateProgress(
+      key,
+      SurahDownloadProgress(
+        surah: surah,
+        reciterId: reciterId,
+        downloadedAyahs: downloadedAyahs,
+        totalAyahs: totalAyahs,
+        downloadedBytes: downloadedBytes,
+        status: status,
+        errorMessage: errorMessage,
+      ),
+    );
+  }
+
   void _updateProgress(String key, SurahDownloadProgress progress) {
-    final current =
-        Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
+    final current = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
     current[key] = progress;
     downloadProgressNotifier.value = current;
   }
 
   void _removeProgress(String key) {
-    final current =
-        Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
+    final current = Map<String, SurahDownloadProgress>.from(downloadProgressNotifier.value);
     current.remove(key);
     downloadProgressNotifier.value = current;
   }
