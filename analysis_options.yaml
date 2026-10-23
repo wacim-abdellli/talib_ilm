@@ -4,6 +4,9 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    # Generated outputs and the ignored local SDK used for build recovery.
+    - build/**
   errors:
     deprecated_member_use: ignore
     deprecated_member_use_from_same_package: ignore

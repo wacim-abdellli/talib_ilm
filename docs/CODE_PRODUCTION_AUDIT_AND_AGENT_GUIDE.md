@@ -2,6 +2,8 @@
 
 Date: 23 October 2026. Status: audit and implementation plan; fixes below are not implemented by this document.
 
+Implementation update: the R30 checkpoint is committed and remotely backed up as `4d09095` on `ui/r30-release-verification`. R31 implements the first T01 audio fix batch with five demonstrated pre-fix failures and 14 new lifecycle regressions; see the latest `UI_PROGRESS.md` entry for exact gate results. Findings/line anchors below describe the pre-fix audit. Remaining golden failures are carried forward explicitly; the owner's instruction to proceed with code fixes permits isolated behavioral remediation without pretending the unrelated visual baseline is green. Publication remains deferred.
+
 ## 1. Objective and scope
 
 Make the existing application dependable, maintainable, accessible, and demonstrably correct before starting Play Store preparation. The owner explicitly requested code quality first. This plan includes Dart services, persistence, asynchronous behavior, native widget integration, UI correctness, tests, and development tooling. It excludes store listing, publication, developer-account setup, signing credentials, and legal/scholarly certification. Those belong to a later release phase.

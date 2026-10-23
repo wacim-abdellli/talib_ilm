@@ -31,9 +31,27 @@ $logDirectory = Join-Path $projectRoot "build/release-readiness/$runStamp"
 New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
 $checkResults = @()
 $previousGradleHome = $env:GRADLE_USER_HOME
+$previousGitConfigCount = $env:GIT_CONFIG_COUNT
+$sdkGitKeyName = $null
+$sdkGitValueName = $null
+$previousSdkGitKey = $null
+$previousSdkGitValue = $null
 $localGradleHome = Join-Path $projectRoot 'build/release-tools/gradle'
 if ($FlutterSdk -and (Test-Path $localGradleHome)) {
     $env:GRADLE_USER_HOME = $localGradleHome
+}
+if ($FlutterSdk) {
+    # A recovery SDK copied by another Windows account still needs Git's
+    # ownership check. Trust this selected SDK only in child processes;
+    # preserve existing injected Git settings and never change global config.
+    $sdkGitIndex = if ($previousGitConfigCount) { [int]$previousGitConfigCount } else { 0 }
+    $sdkGitKeyName = "GIT_CONFIG_KEY_$sdkGitIndex"
+    $sdkGitValueName = "GIT_CONFIG_VALUE_$sdkGitIndex"
+    $previousSdkGitKey = [Environment]::GetEnvironmentVariable($sdkGitKeyName, 'Process')
+    $previousSdkGitValue = [Environment]::GetEnvironmentVariable($sdkGitValueName, 'Process')
+    [Environment]::SetEnvironmentVariable($sdkGitKeyName, 'safe.directory', 'Process')
+    [Environment]::SetEnvironmentVariable($sdkGitValueName, $FlutterSdk.Replace('\', '/'), 'Process')
+    $env:GIT_CONFIG_COUNT = [string]($sdkGitIndex + 1)
 }
 $checks = @(
     @{ Name = 'analyze'; Command = $flutterCommand; Arguments = @($flutterPrefix) + @('analyze') },
@@ -83,6 +101,11 @@ try {
     Write-Host "Results saved to $logDirectory"
 } finally {
     $env:GRADLE_USER_HOME = $previousGradleHome
+    $env:GIT_CONFIG_COUNT = $previousGitConfigCount
+    if ($sdkGitKeyName) {
+        [Environment]::SetEnvironmentVariable($sdkGitKeyName, $previousSdkGitKey, 'Process')
+        [Environment]::SetEnvironmentVariable($sdkGitValueName, $previousSdkGitValue, 'Process')
+    }
     Pop-Location
 }
 
