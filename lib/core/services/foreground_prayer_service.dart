@@ -52,14 +52,20 @@ class ForegroundPrayerService {
   final Set<String> _alertedKeys = <String>{};
   bool _initialized = false;
 
+  bool get isPolling => _timer != null && _timer!.isActive;
+
   Future<void> init() async {
-    if (_initialized) return;
-    _initialized = true;
+    if (!_initialized) {
+      _initialized = true;
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getStringList('adhan_alerted_keys') ?? [];
+      _alertedKeys.addAll(saved);
+    }
 
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList('adhan_alerted_keys') ?? [];
-    _alertedKeys.addAll(saved);
+    _attachPlayerSubscription();
+  }
 
+  void _attachPlayerSubscription() {
     // Auto-dismiss alert when audio finishes playing
     _playerSub?.cancel();
     _playerSub = _adhanService.playerStateStream.listen((state) {
@@ -73,6 +79,7 @@ class ForegroundPrayerService {
 
   void start() {
     unawaited(init());
+    _attachPlayerSubscription();
     _initialTimer?.cancel();
     _timer?.cancel();
     _widgetTimer?.cancel();
@@ -88,12 +95,23 @@ class ForegroundPrayerService {
     _checkAndUpdateWidgetsIfNeeded();
   }
 
-  void stop() {
+  /// Pauses foreground periodic UI polling when app is minimized/paused/hidden.
+  /// Preserves active alerts and audio completion subscriptions.
+  void pausePolling() {
     _initialTimer?.cancel();
+    _initialTimer = null;
     _timer?.cancel();
+    _timer = null;
     _widgetTimer?.cancel();
-    _playerSub?.cancel();
+    _widgetTimer = null;
     _lastWidgetPhaseKey = null;
+  }
+
+  void stop() {
+    pausePolling();
+    _playerSub?.cancel();
+    _playerSub = null;
+    activeAlert.value = null;
   }
 
   String? _lastWidgetPhaseKey;

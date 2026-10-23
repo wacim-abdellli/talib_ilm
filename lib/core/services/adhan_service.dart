@@ -3,9 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 import '../../app/constants/app_assets.dart';
-import '../../features/quran/data/services/quran_audio_service.dart';
-import '../../features/radio/data/services/quran_radio_service.dart';
 import 'adhan_settings_service.dart';
+import 'audio_coordinator.dart';
 
 export 'package:just_audio/just_audio.dart' show PlayerState;
 
@@ -17,8 +16,12 @@ class AdhanService {
     }
     return _instance;
   }
-  AdhanService._internal() : _player = AudioPlayer();
-  AdhanService._withPlayer(this._player);
+  AdhanService._internal() : _player = AudioPlayer() {
+    AudioCoordinator.onPauseAdhan = stop;
+  }
+  AdhanService._withPlayer(this._player) {
+    AudioCoordinator.onPauseAdhan = stop;
+  }
 
   AudioPlayer _player;
 
@@ -57,11 +60,8 @@ class AdhanService {
     try {
       _ensurePlayerActive();
 
-      // Pause Quran recitation and radio to prevent audio collision
-      try {
-        QuranAudioService().pause();
-        QuranRadioService().pause();
-      } catch (_) {}
+      // Acquire supreme Adhan audio focus: automatically pauses Quran recitation, radio, and mutun
+      await AudioCoordinator.acquireFocus(AudioStreamType.adhan);
 
       // Ensure Full Adhan mode strictly plays a full muezzin sound
       final effectiveSound =
@@ -111,6 +111,7 @@ class AdhanService {
     _ensurePlayerActive();
     try {
       await _player.stop();
+      AudioCoordinator.releaseFocus(AudioStreamType.adhan);
     } catch (e) {
       debugPrint('AdhanService.stop error: $e');
     }

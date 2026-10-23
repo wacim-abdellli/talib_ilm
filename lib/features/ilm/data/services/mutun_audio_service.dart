@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../core/services/audio_coordinator.dart';
 import '../catalogs/mutun_audio_catalog.dart';
 export '../catalogs/mutun_audio_catalog.dart'
     show MutunReciter, MutunReciterDefaults, MutunRepeatMode;
-
 
 class MutunAudioService {
   static final MutunAudioService _instance = MutunAudioService._internal();
@@ -42,13 +42,9 @@ class MutunAudioService {
     _initAudioListener();
   }
 
-
   static const List<MutunReciter> defaultReciters = [
-    MutunReciterDefaults.sini,
-    MutunReciterDefaults.fahad,
-    MutunReciterDefaults.faqeeh,
-    MutunReciterDefaults.shaydzmi,
-    MutunReciterDefaults.afasy,
+    MutunReciterDefaults.sini, MutunReciterDefaults.fahad, MutunReciterDefaults.faqeeh,
+    MutunReciterDefaults.shaydzmi, MutunReciterDefaults.afasy,
   ];
   static const List<MutunReciter> availableReciters = defaultReciters;
 
@@ -61,10 +57,8 @@ class MutunAudioService {
   final ValueNotifier<bool> isPlayingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<double> speedNotifier = ValueNotifier<double>(1.0);
-  final ValueNotifier<MutunRepeatMode> repeatModeNotifier =
-      ValueNotifier<MutunRepeatMode>(MutunRepeatMode.none);
-  final ValueNotifier<MutunReciter> selectedReciterNotifier =
-      ValueNotifier<MutunReciter>(MutunReciterDefaults.sini);
+  final ValueNotifier<MutunRepeatMode> repeatModeNotifier = ValueNotifier<MutunRepeatMode>(MutunRepeatMode.none);
+  final ValueNotifier<MutunReciter> selectedReciterNotifier = ValueNotifier<MutunReciter>(MutunReciterDefaults.sini);
   final ValueNotifier<Duration> positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<String?> playbackErrorNotifier = ValueNotifier<String?>(null);
@@ -82,6 +76,7 @@ class MutunAudioService {
       MutunAudioCatalog.hasAudio(activeBookIdNotifier.value!);
 
   void _initAudioListener() {
+    AudioCoordinator.onPauseMutun = pause;
     _playerStateSub?.cancel();
     _playbackEventSub?.cancel();
     _positionSub?.cancel();
@@ -203,7 +198,6 @@ class MutunAudioService {
     }
   }
 
-
   void setSelectedReciter(MutunReciter reciter) {
     if (_selectedReciter.id != reciter.id) {
       _selectedReciter = reciter;
@@ -230,11 +224,7 @@ class MutunAudioService {
   }
 
   void toggleRepeatMode() {
-    const modes = [
-      MutunRepeatMode.none,
-      MutunRepeatMode.singleParagraph,
-      MutunRepeatMode.entireMatn,
-    ];
+    const modes = [MutunRepeatMode.none, MutunRepeatMode.singleParagraph, MutunRepeatMode.entireMatn];
     final idx = modes.indexOf(repeatModeNotifier.value);
     repeatModeNotifier.value = modes[(idx + 1) % modes.length];
   }
@@ -279,6 +269,9 @@ class MutunAudioService {
 
     final entry = MutunAudioCatalog.getEntry(bookId);
     final mediaTitle = entry?.title ?? 'متن طالب العلم';
+
+    // Acquire audio focus: automatically pauses Quran recitation and radio
+    await AudioCoordinator.acquireFocus(AudioStreamType.mutun);
 
     // Stop and reset previous playback cleanly
     try {
@@ -485,7 +478,6 @@ class MutunAudioService {
     if (current > 1) seekToParagraph(current - 1);
   }
 
-
   Future<void> togglePlayPause({String? bookId}) async {
     try {
       _ensurePlayerActive();
@@ -571,11 +563,13 @@ class MutunAudioService {
     } catch (_) {}
     isPlayingNotifier.value = false;
     isLoadingNotifier.value = false;
+    AudioCoordinator.releaseFocus(AudioStreamType.mutun);
   }
 
   Future<void> resume() async {
     try {
       _ensurePlayerActive();
+      await AudioCoordinator.acquireFocus(AudioStreamType.mutun);
       await _player.play();
       isPlayingNotifier.value = true;
     } catch (_) {}
@@ -586,6 +580,7 @@ class MutunAudioService {
       _ensurePlayerActive();
       await _player.stop();
     } catch (_) {}
+    AudioCoordinator.releaseFocus(AudioStreamType.mutun);
     activeBookIdNotifier.value = null;
     activeParagraphNotifier.value = null;
     positionNotifier.value = Duration.zero;
@@ -593,5 +588,10 @@ class MutunAudioService {
     isLoadingNotifier.value = false;
   }
 
-  void dispose() => pause();
+  void dispose() {
+    if (AudioCoordinator.onPauseMutun == pause) {
+      AudioCoordinator.onPauseMutun = null;
+    }
+    pause();
+  }
 }

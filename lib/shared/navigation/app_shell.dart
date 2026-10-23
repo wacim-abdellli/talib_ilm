@@ -109,6 +109,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.inactive) {
+      ForegroundPrayerService().pausePolling();
       unawaited(HomeWidgetService.updateAllWidgets(force: true));
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -5,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
-import 'package:talib_ilm/features/quran/data/services/quran_audio_service.dart';
+import '../../../../core/services/audio_coordinator.dart';
 import '../models/quran_radio_model.dart';
 
 class QuranRadioService extends ChangeNotifier {
@@ -17,6 +18,10 @@ class QuranRadioService extends ChangeNotifier {
   }
 
   final AudioPlayer _player = AudioPlayer();
+
+  StreamSubscription<PlayerState>? _playerStateSub;
+  StreamSubscription<int?>? _currentIndexSub;
+  StreamSubscription<PlaybackEvent>? _playbackEventSub;
 
   QuranRadioStation? _currentStation;
   bool _isPlaying = false;
@@ -59,7 +64,10 @@ class QuranRadioService extends ChangeNotifier {
   }
 
   void _init() {
-    _player.playerStateStream.listen((state) {
+    AudioCoordinator.onPauseRadio = pause;
+
+    _playerStateSub?.cancel();
+    _playerStateSub = _player.playerStateStream.listen((state) {
       final wasPlaying = _isPlaying;
       final wasConnecting = _isConnecting;
 
@@ -72,7 +80,8 @@ class QuranRadioService extends ChangeNotifier {
       }
     });
 
-    _player.currentIndexStream.listen((index) {
+    _currentIndexSub?.cancel();
+    _currentIndexSub = _player.currentIndexStream.listen((index) {
       if (index != null && index >= 0 && index < _stations.length) {
         final station = _stations[index];
         if (_currentStation?.id != station.id) {
@@ -82,7 +91,8 @@ class QuranRadioService extends ChangeNotifier {
       }
     });
 
-    _player.playbackEventStream.listen(
+    _playbackEventSub?.cancel();
+    _playbackEventSub = _player.playbackEventStream.listen(
       (_) {},
       onError: (Object e, StackTrace st) {
         _errorMessage = 'تعذر الاتصال بالبث المباشر. يرجى التحقق من الشبكة.';
@@ -150,10 +160,8 @@ class QuranRadioService extends ChangeNotifier {
   Future<void> playStation(QuranRadioStation station) async {
     if (_currentStation?.id == station.id && _isPlaying) return;
 
-    // Pause Quran recitation so audios don't collide
-    try {
-      QuranAudioService().pause();
-    } catch (_) {}
+    // Acquire audio focus: automatically pauses Quran recitation and Mutun audio
+    await AudioCoordinator.acquireFocus(AudioStreamType.radio);
 
     final stationIndex = _stations.indexWhere((s) => s.id == station.id);
     if (stationIndex == -1) return;
@@ -177,6 +185,7 @@ class QuranRadioService extends ChangeNotifier {
       _errorMessage = 'تعذر تشغيل هذه الإذاعة حالياً.';
       _isConnecting = false;
       _isPlaying = false;
+      AudioCoordinator.releaseFocus(AudioStreamType.radio);
       notifyListeners();
     }
   }
@@ -216,14 +225,13 @@ class QuranRadioService extends ChangeNotifier {
   Future<void> pause() async {
     await _player.pause();
     _isPlaying = false;
+    AudioCoordinator.releaseFocus(AudioStreamType.radio);
     notifyListeners();
   }
 
   Future<void> resume() async {
     if (_currentStation != null) {
-      try {
-        QuranAudioService().pause();
-      } catch (_) {}
+      await AudioCoordinator.acquireFocus(AudioStreamType.radio);
       await _player.play();
       _isPlaying = true;
       notifyListeners();
@@ -235,6 +243,7 @@ class QuranRadioService extends ChangeNotifier {
     _currentStation = null;
     _isPlaying = false;
     _isConnecting = false;
+    AudioCoordinator.releaseFocus(AudioStreamType.radio);
     notifyListeners();
   }
 
@@ -246,6 +255,12 @@ class QuranRadioService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _playerStateSub?.cancel();
+    _currentIndexSub?.cancel();
+    _playbackEventSub?.cancel();
+    if (AudioCoordinator.onPauseRadio == pause) {
+      AudioCoordinator.onPauseRadio = null;
+    }
     _player.dispose();
     super.dispose();
   }

@@ -6,6 +6,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../core/services/audio_coordinator.dart';
 import 'quran_audio_downloader.dart';
 
 enum AudioRepeatMode { none, repeatOnce, infinite }
@@ -215,6 +216,7 @@ class QuranAudioService {
   }
 
   void _initAudioListener() {
+    AudioCoordinator.onPauseQuran = pause;
     _playerStateSub?.cancel();
     final player = _player;
     _playerStateSub = _player.playerStateStream.listen(
@@ -320,6 +322,7 @@ class QuranAudioService {
     _completionArmed = false;
     activeSurahNotifier.value = surah;
     activeAyahNotifier.value = ayah;
+    unawaited(AudioCoordinator.acquireFocus(AudioStreamType.quran));
 
     try {
       for (var attempt = 0; attempt < 3; attempt++) {
@@ -370,6 +373,8 @@ class QuranAudioService {
         _isTransitioning = false;
         _completionArmed = true;
         if (!_playWhenReady) return;
+        await AudioCoordinator.acquireFocus(AudioStreamType.quran);
+        if (!_ownsOperation(operation) || !_playWhenReady) return;
         unawaited(
           player.play().catchError((Object error) async {
             await _handlePlaybackError(error, operation);
@@ -445,11 +450,13 @@ class QuranAudioService {
 
   Future<void> pause() {
     _playWhenReady = false;
+    AudioCoordinator.releaseFocus(AudioStreamType.quran);
     return _player.pause();
   }
 
   Future<void> resume() async {
     if (_disposed || activeAyahNotifier.value == null) return;
+    await AudioCoordinator.acquireFocus(AudioStreamType.quran);
     _playWhenReady = true;
     if (_isTransitioning) return;
     if (activeSurahNotifier.value != null && activeAyahNotifier.value != null) {
@@ -531,6 +538,7 @@ class QuranAudioService {
 
   Future<void> stop() async {
     if (_disposed) return;
+    AudioCoordinator.releaseFocus(AudioStreamType.quran);
     ++_operation;
     _completionArmed = false;
     _playWhenReady = false;
@@ -553,6 +561,9 @@ class QuranAudioService {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    if (AudioCoordinator.onPauseQuran == pause) {
+      AudioCoordinator.onPauseQuran = null;
+    }
     ++_operation;
     _sleepTimer?.cancel();
     _playerStateSub?.cancel();

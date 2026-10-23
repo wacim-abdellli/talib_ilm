@@ -1,5 +1,19 @@
 # UI Progress Log
 
+## R39 / T09 — Service and screen lifecycle; audio ownership (C18, C19, C20)
+- **Scope:** Findings C18 (In `foreground_prayer_service.dart`, `player.playerStateStream.listen` was cancelled on stop but never re-attached on restart; background timers continued running unpaused), C19 (Audio streams Quran, Radio, Mutun, and Adhan played simultaneously without mutual exclusivity or coordination), and C20 (In `quran_radio_service.dart`, stream subscriptions were leaked on service disposal).
+- **Implemented:**
+  - `lib/core/services/audio_coordinator.dart`: Created central audio manager (`AudioCoordinator`) with typed stream enum `AudioStreamType { quran, radio, mutun, adhan }`. Enforces mutual exclusivity among media streams and supreme priority for Adhan (pauses Quran, Radio, and Mutun when Adhan triggers).
+  - `lib/core/services/foreground_prayer_service.dart`: Added `_attachPlayerSubscription()` ensuring player completion listener is always cleanly re-attached across repeated `start() -> stop() -> start()` cycles (resolving C18). Added `pausePolling()` method to cancel 30s/10s periodic timers while retaining active prayer alert state.
+  - `lib/shared/navigation/app_shell.dart`: Hooked `ForegroundPrayerService().pausePolling()` into `AppLifecycleState.paused | hidden | inactive` to prevent CPU and battery drain when app is in the background.
+  - `lib/features/radio/data/services/quran_radio_service.dart`: Retained 3 player stream subscriptions (`_playerStateSub`, `_currentIndexSub`, `_playbackEventSub`) and cancelled on `dispose()`; integrated `AudioCoordinator.acquireFocus(AudioStreamType.radio)` and `releaseFocus()`.
+  - `lib/core/services/adhan_service.dart`: Integrated `AudioCoordinator.acquireFocus(AudioStreamType.adhan)` to pause Quran, Radio, and Mutun when Adhan sounds.
+  - `lib/features/ilm/data/services/mutun_audio_service.dart`: Integrated `AudioCoordinator` focus acquisition and release; refactored to preserve Rule 8 (< 600 lines, at 597 lines).
+  - `lib/features/quran/data/services/quran_audio_service.dart`: Integrated `AudioCoordinator` focus acquisition and pause callback with synchronous operation/state initialization, cleanly passing all 20 lifecycle tests without race conditions (572 lines, strictly < 600 lines).
+  - `test/audio_lifecycle_and_coordination_test.dart`: Added 8 comprehensive regression tests covering start-stop-start re-subscription, pausePolling timer management, mutual exclusivity between Quran, Radio, and Mutun, Adhan supreme priority, focus caller matching, and rapid concurrent switching.
+- **Verified:** 28/28 tests passing across `test/audio_lifecycle_and_coordination_test.dart` (8/8) and `test/quran_audio_lifecycle_test.dart` (20/20). `flutter analyze` completed with 0 issues (9.3s). `python tool/ui_lint_v2.py` passed with 0 errors (7 allow markers, cap 10). Fresh debug APK build PASSED (46.0s), SHA-256 `8F8304F0DB7396E71031BE752CC5049AC1CAC7F9BE04A97794277165CD71F836`.
+- **Open issues:** T09 complete. Proceed to T10 (Accessibility and UI implementation correctness: C21).
+
 ## R38 / T08 — Truthful complete-book downloads and offline integrity verification (C17)
 - **Scope:** Finding C17 (In `shamela_service.dart`, page download errors were swallowed and books were marked `downloaded = true` regardless of gaps, missing pages, or network dropouts; arbitrary fallback to 50 pages; callers showed false offline success).
 - **Implemented:**
