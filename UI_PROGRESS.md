@@ -1421,4 +1421,17 @@ FAILED (54 violations)
   - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass (100%).
 - **Open Issues:** None.
 
+## Round 25 — Set Medium Size as the Strict Minimum (Block Narrow 3-Column Sizing)
+- **Status:** Complete
+- **Branch:** `ui/r25-widget-lock-minimum-to-medium`
+- **Core Problem Solved:**
+  1. On 5-column Android launchers (MIUI/HyperOS), `minResizeWidth="220dp"` still allowed shrinking the widget down to 3 columns (~235dp), creating a narrow, cramped layout (as captured in the 1:45 AM screenshot).
+  2. The user instructed to block this narrow size entirely so that the previous "medium size" (4 columns on a 5-column launcher) becomes the absolute minimum allowable size.
+  3. In `widget_ribbon.xml` and `widget_large.xml`, updated `android:minWidth="280dp"` and `android:minResizeWidth="280dp"`. Because 3 columns is ≤ 240dp on modern phones, 3-column shrinking is now strictly blocked by the launcher, making 4-column (medium) the absolute minimum and 5-column (maximized) the maximum.
+- **Verification Gate:**
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - `flutter test test/prayer_settings_sheet_test.dart test/prayer_home_screen_widget_test.dart`: 14/14 tests pass (100%).
+- **Open Issues:** None.
+
+
 
