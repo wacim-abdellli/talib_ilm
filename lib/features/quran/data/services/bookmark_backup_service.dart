@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'bookmark_service.dart';
+export 'bookmark_service.dart' show MergeResult;
 
 class BackupValidationResult {
   final bool isValid;
@@ -40,18 +41,6 @@ class BackupValidationResult {
       lastRead: lastRead,
     );
   }
-}
-
-class MergeResult {
-  final int addedCount;
-  final int updatedCount;
-  final int skippedCount;
-
-  const MergeResult({
-    required this.addedCount,
-    required this.updatedCount,
-    required this.skippedCount,
-  });
 }
 
 class BookmarkBackupService {
@@ -163,65 +152,19 @@ class BookmarkBackupService {
   }
 
   /// Merges imported bookmarks with current bookmarks without duplicates.
+  ///
+  /// Delegates directly to [BookmarkService.atomicMergeBookmarks], ensuring the entire
+  /// read, deduplication, note-handling, and write cycle occurs as an atomic repository
+  /// transaction under the service lock.
   static Future<MergeResult> mergeBookmarks({
     required List<Bookmark> importedBookmarks,
     required bool overwriteExistingNotes,
     LastRead? importedLastRead,
-  }) async {
-    final current = await BookmarkService.getBookmarks();
-    int added = 0;
-    int updated = 0;
-    int skipped = 0;
-
-    for (final imported in importedBookmarks) {
-      final existingIndex = current.indexWhere(
-        (b) =>
-            b.surah == imported.surah &&
-            b.ayah == imported.ayah &&
-            b.isSurah == imported.isSurah,
-      );
-
-      if (existingIndex == -1) {
-        // Brand new bookmark
-        current.add(imported);
-        added++;
-      } else {
-        // Exists already
-        final existing = current[existingIndex];
-        if (overwriteExistingNotes) {
-          current[existingIndex] = Bookmark(
-            surah: imported.surah,
-            ayah: imported.ayah,
-            page: imported.page,
-            note: imported.note ?? existing.note,
-            timestamp: imported.timestamp,
-            isSurah: imported.isSurah,
-          );
-          updated++;
-        } else {
-          skipped++;
-        }
-      }
-    }
-
-    // Save back to BookmarkService
-    await BookmarkService.saveAllBookmarks(current);
-
-    if (importedLastRead != null) {
-      final currentLastRead = await BookmarkService.getLastRead();
-      if (importedLastRead.timestamp.isAfter(currentLastRead.timestamp)) {
-        await BookmarkService.saveLastRead(
-          surah: importedLastRead.surah,
-          ayah: importedLastRead.ayah,
-          page: importedLastRead.page,
-        );
-      }
-    }
-
-    return MergeResult(
-      addedCount: added,
-      updatedCount: updated,
-      skippedCount: skipped,
+  }) {
+    return BookmarkService.atomicMergeBookmarks(
+      importedBookmarks: importedBookmarks,
+      overwriteExistingNotes: overwriteExistingNotes,
+      importedLastRead: importedLastRead,
     );
   }
 }

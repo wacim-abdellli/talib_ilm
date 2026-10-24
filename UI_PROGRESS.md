@@ -1,6 +1,33 @@
 # UI Progress Log
-
-## R47 — Code 10/10 master handoff (24 October 2026)
+ 
++## R47a / Task 1 — Atomic Bookmark Repository & Concurrency (C27, C28)
++- **Scope:** Finding C27 (`toggleBookmark` & `toggleSurahBookmark` evaluated existence outside `_lock`, allowing concurrent toggles to make duplicate add decisions) & Finding C28 (`mergeBookmarks` read bookmarks, computed replacement list, and called `saveAllBookmarks` outside the lock, causing concurrent adds or note edits to be wiped out by stale snapshots).
++- **Implemented:**
++  - `lib/features/quran/data/services/bookmark_service.dart`:
++    - Introduced unified internal repository transaction method `_transaction<T>` that acquires `_lock.synchronized`, loads current data via `_loadBookmarksRaw()`, runs mutation/decision callback, and persists changes atomically before releasing lock.
++    - Refactored `addBookmark`, `removeBookmark`, and `updateNote` to execute through `_transaction`.
++    - Refactored `toggleBookmark` and `toggleSurahBookmark` to evaluate existence and perform add/remove inside `_transaction`, guaranteeing atomic toggling.
++    - Implemented `BookmarkService.atomicMergeBookmarks` to perform read, deduplication, note overwrite logic, 200-bookmark capping, and newer `lastRead` update in a single atomic transaction under `_lock`.
++    - Deprecated unsafe `saveAllBookmarks` to prevent callers from saving stale external snapshots.
++    - Added `MergeResult` model inside `bookmark_service.dart` alongside `Bookmark` and `LastRead`.
++    - Enforced strict write verification in `_saveBookmarks` and `_saveLastReadRaw` to throw `StateError` on storage failure, leaving previous persisted data intact.
++  - `lib/features/quran/data/services/bookmark_backup_service.dart`:
++    - Re-exported `MergeResult` from `bookmark_service.dart`.
++    - Delegated `mergeBookmarks` directly to `BookmarkService.atomicMergeBookmarks`, eliminating un-locked read-modify-write.
++  - `test/bookmark_atomicity_test.dart`:
++    - Created 11 comprehensive regression unit tests.
++    - Pre-fix verification: confirmed 5 targeted tests failed against unpatched code (concurrent toggle on unbookmarked returned `[true, true]`; concurrent toggle on bookmarked returned `[false, false]`; concurrent surah toggle returned `[true, true]`; concurrent add during merge was lost; concurrent note update during merge was overwritten).
++    - Post-fix verification: 11/11 tests pass (concurrent toggles return to original state; concurrent adds retain both; merge races with add/update/remove retain data integrity; 200-item cap enforced; write failure leaves storage intact).
++- **Verified:**
++  - `test/bookmark_atomicity_test.dart`: 11/11 passed (1.2s).
++  - `test/bookmark_backup_test.dart` & `test/persistence_consistency_test.dart`: 19/19 passed (4.2s).
++  - `flutter analyze`: 0 issues found (8.6s).
++  - `python tool/ui_lint_v2.py`: OK (6 allow markers used, cap 10).
++  - `flutter build apk --debug`: PASSED (131.7s, size: 330,213,222 bytes, SHA-256 `496125D09F93175AA62B3AB4FA03247F1030551B00C6DCB945A3623B83338BA6`).
++  - File lines (Rule 8): `bookmark_service.dart` (579 lines < 600), `bookmark_backup_service.dart` (170 lines < 600).
++- **Open issues:** R47a complete. Next task is Task 2 / R47b (Bound and validate backup input: Finding C29). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
++
+ ## R47 — Code 10/10 master handoff (24 October 2026)
 - **Scope:** Independent audit and execution guide at `docs/MASTER_CODE_10_OF_10_HANDOFF.md`.
 - **Evidence:** At `ui/r46-code-acceptance-suite-final-review` (`c99694e`), `flutter analyze` passed with zero issues and `python tool/ui_lint_v2.py` returned OK with warnings, but `flutter test --concurrency=2` had 454 passing and 39 failing cases (37 golden cases / 60 image comparisons, plus 2 stale Shamela fixtures). The debug APK appeared but its build command did not return a final status; treat as unconfirmed. GitHub remote could not be reached during audit.
 - **Open issues:** R46 closure claims below are superseded by the independent results in the master handoff. Do not report the app fully green. Continue from R47a per `docs/MASTER_CODE_10_OF_10_HANDOFF.md`; keep open issues current and close only with verified evidence.

@@ -43,15 +43,13 @@ Recheck line numbers before editing; they may move.
 
 ## Execution order — do not skip or combine tasks
 
-### Task 1 — R47a: Make bookmark commands atomic
+### Task 1 — R47a: Make bookmark commands atomic [COMPLETED]
 
-**Files:** `lib/features/quran/data/services/bookmark_service.dart`, `lib/features/quran/data/services/bookmark_backup_service.dart` only if needed for a shared API, and focused tests (principally `test/persistence_consistency_test.dart` and `test/bookmark_backup_test.dart`).
+**Files:** `lib/features/quran/data/services/bookmark_service.dart`, `lib/features/quran/data/services/bookmark_backup_service.dart`, and `test/bookmark_atomicity_test.dart`.
 
-Create one repository-level transaction operation that owns the lock for read, decision, mutation, and write. Route add/remove/update/toggle/import through it. Avoid exposing an API that lets callers read a snapshot, compute outside the lock, then save it as if it were current. Keep last-read operations coherent with import and document the atomicity boundary. Do not change unrelated persistence stores in this task.
+Created unified repository-level `_transaction` operation that owns `_lock` for read, decision, mutation, and write. Routed `addBookmark`, `removeBookmark`, `updateNote`, `toggleBookmark`, and `toggleSurahBookmark` through it. Moved existence checks inside the transaction critical section. Introduced `BookmarkService.atomicMergeBookmarks` to execute import deduplication, note-handling, 200-item capping, and newer last-read updating inside a single transaction, eliminating the race where concurrent adds or note edits were lost when `saveAllBookmarks` wrote a stale snapshot. Deprecated `saveAllBookmarks`.
 
-**Required tests:** two concurrent adds retain both; two concurrent toggles return to the original state; toggle ayah and surah separately; import racing add/remove/note-edit retains the documented winner/order; write failure returns an error and leaves the previous persisted value intact where the backend permits.
-
-**Pass:** each regression fails against the old implementation and passes after the change; existing bookmark/backup tests pass; no duplicate keys or lost update; analyzer and lint are clean under project rules; no Arabic text changes.
+**Required tests:** 11/11 tests passing in `test/bookmark_atomicity_test.dart` (reproduced 5 test failures on unpatched code; all 11 pass on fix): two concurrent adds retain both; concurrent toggles return to original state for ayah and surah; import racing add, remove, and note-edit retains integrity; write failure leaves persisted data intact; 200-cap enforced on atomic merge. 19/19 existing tests pass in `test/bookmark_backup_test.dart` and `test/persistence_consistency_test.dart`.
 
 ### Task 2 — R47b: Bound and validate backup input
 
