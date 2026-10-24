@@ -11,7 +11,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val customKeyProps = System.getenv("KEY_PROPERTIES_PATH")
 val keystorePropertiesFile = when {
+    !customKeyProps.isNullOrBlank() -> file(customKeyProps)
     rootProject.file("key.properties").exists() -> rootProject.file("key.properties")
     file("key.properties").exists() -> file("key.properties")
     else -> rootProject.file("key.properties")

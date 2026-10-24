@@ -1,5 +1,32 @@
 # UI Progress Log
 
+## R61 — Make Signing Validation Incapable of Deleting Owner Files (24 October 2026)
+- **Scope:** Fix high-priority defect in `tool/verify_release_signing_config.py` where unconditional startup and teardown cleanup deleted `android/key.properties` and temporary keystores, risking loss of real owner signing credentials. Add deterministic regression tests and isolated Gradle test seam.
+- **Implemented:**
+  - `android/app/build.gradle.kts`: Added `KEY_PROPERTIES_PATH` environment variable test seam (`System.getenv("KEY_PROPERTIES_PATH")`) allowing signing verification to supply an isolated properties path, preventing Gradle from reading or modifying any workspace-level `android/key.properties`.
+  - `tool/verify_release_signing_config.py`: Completely refactored into `SafeSigningVerifier`:
+    - Removed hardcoded fixed paths (`android/key.properties`, `android/app/test-upload-keystore.jks`).
+    - Uses `tempfile.mkdtemp(prefix="talib_ilm_signing_test_")` strictly located outside tracked project directories.
+    - Creates an empty properties file in the temp root and injects `KEY_PROPERTIES_PATH` to guarantee isolation.
+    - Created unique test keystore (`test-upload-<hex>.jks`) in the temp directory, passing credentials via environment variables (`KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
+    - Test 1 verifies release build fails actionably without signing secrets; Test 2 verifies debug build succeeds without release secrets; Test 3 builds release APK with test credentials; Test 4 verifies release APK signer is `CN=TestUpload` and not `CN=Android Debug`.
+    - `cleanup()` strictly validates canonical path prefix: refuses to delete any file or directory outside the unique temporary root.
+  - `tool/test_signing_verifier_safety.py`: Created 3-test regression suite:
+    - `test_cleanup_never_deletes_or_modifies_key_properties`: Plants sentinel `android/key.properties` fixture, executes verifier, and proves file remains byte-identical (identical SHA-256).
+    - `test_cleanup_bounds_enforcement`: Asserts rogue path outside temp root triggers security alert and is never deleted.
+    - `test_isolated_env_configuration`: Validates environment variable clearing and isolated test properties redirection.
+- **Verified:**
+  - `python tool/test_signing_verifier_safety.py`: 3/3 tests passed (reproduced defect first on old script, confirmed fix on refactored script).
+  - `python tool/verify_release_signing_config.py`: PASS, exit 0 (Step 1 actionable failure confirmed, Step 2 debug APK build passed, Step 3 release APK build passed, Step 4 certificate verification confirmed `CN=TestUpload`).
+  - `flutter analyze`: PASS, 0 issues found (9.8s).
+  - `python tool/ui_lint_v2.py`: PASS (248 warnings, 6 allow markers, cap 10).
+  - `flutter test`: PASS, 537/537 passed (0 failures).
+  - Clean state check: Confirmed no stray files or `android/key.properties` created or left in workspace.
+- **Open issues & Owner actions:**
+  - Status: Task R61 complete. Running signing verifier with or without a real `android/key.properties` is completely safe.
+  - Owner action: Google Play upload remains blocked pending permanent application ID, real owner-managed production keystore, and subsequent R62–R70 tasks.
+  - Next task: R62 — Make location privacy true at every provider boundary (P0).
+
 ## R60 — Independent Gemini report review and master remediation guide (24 October 2026)
 - **Scope:** Deep review of R59 and creation of `docs/MASTER_GEMINI_FLASH_3_8_APP_REMEDIATION_GUIDE.md` for the next single-task-at-a-time implementation sequence.
 - **Confirmed evidence:** Retained R57 log ends with 537 passing tests; analyzer log says no issues; debug build log succeeded; UI lint returns OK with 248 warnings. The captured summary is branch R57 / commit `5f6aa5c` with `is_dirty: true`; later app/test source changes are the deterministic golden fix committed in R57, while R58/R59 changed tooling/docs. A fresh final-head runner attempt did not pass Flutter startup and was interrupted, so exact-head verification remains open.
