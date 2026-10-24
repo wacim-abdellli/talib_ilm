@@ -1,5 +1,32 @@
 # UI Progress Log
 
+## R69 — Measure Runtime Performance, Startup, and Memory (25 October 2026)
+- **Scope:** Profile and document reproducible runtime performance, cold/warm startup latency, and memory baselines across all 7 operational journeys: startup initialization, Quran 604-page indexing and full-text search, offline Shamela syllabus catalog and scholarly text parsing, centralized audio focus arbitration, prayer calculation across Algerian wilayas, prolonged reading memory footprint, and background-to-foreground lifecycle resumption. Avoid arbitrary thresholds; enforce trace-backed empirical measurements.
+- **Implemented:**
+  - `test/runtime_performance_benchmarks_test.dart`: Added 7 automated benchmark tests measuring:
+    1. Core startup sequence (mean 1.22ms, p95 1.26ms, cold 16.10ms).
+    2. Quran page retrieval (604 pages in 3ms, 6µs/page) and ayah search (83ms for high-frequency "الله", 22ms for "الصلاة").
+    3. Offline Shamela syllabus load (1.47ms) and scholarly paragraph parsing (14µs).
+    4. Audio focus arbitration (12µs/switch across 200 switches).
+    5. Prayer calculation across Algerian wilayas (917µs/city, sub-millisecond).
+    6. Prolonged 150-session memory footprint (+1.37MB RSS delta over 150 recorded sessions).
+    7. Background-to-foreground lifecycle resumption & active timetable recalculation (869µs).
+  - `tool/measure_runtime_performance.py`: Created CLI tool gathering environment metadata (OS, CPU, Flutter, Dart, ADB devices), executing benchmark test harness, computing metrics, and persisting `docs/runtime_performance_baseline.json`.
+  - `tool/test_performance_runner.py`: Added 3-test unit suite verifying environment metadata extraction, benchmark log regex parsing, and baseline JSON file schema validation (3/3 pass).
+  - `docs/RUNTIME_PERFORMANCE_AND_MEMORY_BASELINE_REPORT.md`: Comprehensive 6-section authoritative report documenting empirical performance metrics, methodology, hardware environment, memory footprint, bottlenecks, and optimization recommendations without breaking offline reading or audio behavior.
+  - `docs/runtime_performance_baseline.json`: Structured machine-readable baseline data for automated regression checking.
+- **Verified:**
+  - `python tool/test_performance_runner.py`: 3/3 passed (1.1s).
+  - `python tool/test_ui_lint_warnings.py`: 5/5 passed (1.2s).
+  - `python tool/measure_runtime_performance.py`: PASS (generated `docs/runtime_performance_baseline.json`).
+  - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 8.2s).
+  - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (226 warnings, 0 FAIL, 6 allow markers, cap 10).
+  - Gate 3: Automated Test Suite (`flutter test`): PASS (562 passed, 0 failed, 2m13s).
+  - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (assembleDebug clean build, 15.7s, `build/app/outputs/flutter-apk/app-debug.apk`).
+- **Open issues & Owner actions:**
+  - Status: Task R69 complete. Authoritative performance and memory baselines established and tracked.
+  - Next task: R70 — Final release acceptance and owner handoff (P3).
+
 ## R68 — Reduce UI Warning Debt and Validate Accessibility (25 October 2026)
 - **Scope:** Triage and reduce UI warning debt across screens, eliminating 100% of RTL directional layout warnings (8 -> 0) and 100% of numeric SizedBox dimension warnings (14 -> 0). Fix directional layout with canonical `AlignmentDirectional.topStart` / `AlignmentDirectional.bottomEnd` APIs. Replace numeric micro-spacing literals with canonical `AppSpace.xxs` token. Propose zero new tokens, retain allow markers at 6/10 cap (zero new allow markers added). Validate accessibility under Arabic RTL, light and dark modes, text scales 1.0, 1.5, and 2.0 without clipping or overflow, 48dp hit targets, semantics/tooltips, and WCAG AA contrast compliance. Retain visual review evidence and update golden baselines.
 - **Implemented:**
