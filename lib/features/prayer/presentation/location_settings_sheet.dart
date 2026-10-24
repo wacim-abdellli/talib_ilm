@@ -14,6 +14,7 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
 import 'widgets/location_search_results_list.dart';
+import 'widgets/remote_geocoding_consent_tile.dart';
 
 class LocationSettingsSheet extends StatefulWidget {
   final VoidCallback? onSaved;
@@ -367,9 +368,14 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                   ),
                 ),
 
+                const SizedBox(height: AppSpace.lg),
+
+                // 3. User-controlled remote geocoding consent
+                const RemoteGeocodingConsentTile(),
+
                 const SizedBox(height: AppSpace.xl),
 
-                // 3. Clean Search Header
+                // 4. Clean Search Header
                 Row(
                   children: [
                     Icon(

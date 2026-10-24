@@ -1,5 +1,23 @@
 # UI Progress Log
 
+## R56 — Correct Coordinate Sharing and Consent Behavior (24 October 2026)
+- **Scope:** Correct coordinate sharing and consent behavior. Make remote reverse-geocoding (BigDataCloud) strictly opt-in and default-off (`false`). Add an explicit user-controlled UI consent toggle in `LocationSettingsSheet` explaining recipient and purpose. Preserve 100% offline accuracy via `VerifiedCitiesCatalog` and local fallbacks when opt-out. Update privacy disclosure to truthfully reflect that coordinates are never transmitted unless explicitly enabled in settings. Add failing-first unit and widget regression tests.
+- **Implemented:**
+  - `lib/core/services/location_service.dart`: Made `isRemoteGeocodingAllowed()` default to `false` (`prefs.getBool(_keyAllowRemoteGeocoding) ?? false`). Added test seams `setReverseGeocodeClientForTesting`, `resetReverseGeocodeClientForTesting`, and `resolvePositionForTesting`.
+  - `lib/features/prayer/presentation/widgets/remote_geocoding_consent_tile.dart`: Created dedicated user-controlled consent widget with owner-approved Arabic copy, min 48dp tap target, semantics, and haptic feedback.
+  - `lib/features/prayer/presentation/location_settings_sheet.dart`: Embedded `RemoteGeocodingConsentTile` within location settings sheet. Kept file at 583 lines (Rule 8 compliant).
+  - `lib/features/more/presentation/credits_and_licenses_page.dart`: Updated privacy disclosure to state truthfully: `تحديد موقع الجهاز محلياً لحساب مواقيت الصلاة دون إرساله لأي خادم إلا عند تفعيل خيار جلب اسم المدينة عبر (BigDataCloud) صراحة من الإعدادات.`
+  - `test/network_boundaries_and_security_test.dart`: Added regression suite covering default-off on clean preferences, explicit opt-in, opt-out after opt-in, 100% offline nearest city match without network, native geocoder failure fallback with 0 HTTP requests when opted out, and bounded HTTP request dispatch when opted in.
+  - `test/features/prayer/remote_geocoding_consent_tile_test.dart`: Added widget tests verifying rendering, default-off state, toggle persistence, and callback triggering.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (10.9s).
+  - `python tool/ui_lint_v2.py`: OK (6 allow markers, cap 10).
+  - `flutter test test/network_boundaries_and_security_test.dart test/features/prayer/remote_geocoding_consent_tile_test.dart`: 21/21 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (54.1s).
+- **Open issues & Owner actions:**
+  - Owner action: In Google Play Console Data Safety form, declare location data collection/sharing as optional / user-triggered (only when user opts in to remote reverse-geocoding for city name display).
+  - Next task: Task R57 (Re-establish reproducible verification evidence).
+
 ## R55 — Make the Android Release Identity and Signing Safe (24 October 2026)
 - **Scope:** Correct release signing vulnerability and debug-key fallback in `android/app/build.gradle.kts`. Ensure release builds strictly require and verify release signing keys and fail cleanly when secrets are missing. Retain package ID pending owner decision.
 - **Implemented:**

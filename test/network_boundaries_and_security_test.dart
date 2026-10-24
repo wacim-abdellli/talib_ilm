@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:talib_ilm/core/constants/verified_cities.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:talib_ilm/core/services/location_service.dart';
 import 'package:talib_ilm/core/services/reverse_geocode_client.dart';
 
@@ -86,6 +86,8 @@ class FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResp
 class FakeHttpClient implements HttpClient {
   bool isClosed = false;
   bool forceClosed = false;
+  int requestCount = 0;
+  final List<Uri> requestedUris = [];
   Uri? lastRequestedUri;
   HttpClientResponse Function()? responseGenerator;
   Duration? getUrlDelay;
@@ -98,6 +100,8 @@ class FakeHttpClient implements HttpClient {
 
   @override
   Future<HttpClientRequest> getUrl(Uri url) async {
+    requestCount++;
+    requestedUris.add(url);
     lastRequestedUri = url;
     if (getUrlDelay != null) {
       await Future.delayed(getUrlDelay!);
@@ -327,25 +331,133 @@ void main() {
   });
 
   group('T14 / C24 — LocationService User Intent & Security Hardening', () {
+    Position createPosition(double lat, double lon) => Position(
+          latitude: lat,
+          longitude: lon,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(0),
+          accuracy: 5.0,
+          altitude: 0.0,
+          altitudeAccuracy: 0.0,
+          heading: 0.0,
+          headingAccuracy: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        );
+
     setUp(() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('User intent gating: isRemoteGeocodingAllowed toggles correctly', () async {
-      expect(await LocationService.isRemoteGeocodingAllowed(), isTrue);
+    tearDown(() {
+      LocationService.resetReverseGeocodeClientForTesting();
+    });
 
-      await LocationService.setRemoteGeocodingAllowed(false);
+    test('Fresh preferences default isRemoteGeocodingAllowed to false (opt-in only)', () async {
+      expect(await LocationService.isRemoteGeocodingAllowed(), isFalse);
+    });
+
+    test('User intent gating: explicit opt-in enables remote geocoding, and opt-out disables it', () async {
       expect(await LocationService.isRemoteGeocodingAllowed(), isFalse);
 
       await LocationService.setRemoteGeocodingAllowed(true);
       expect(await LocationService.isRemoteGeocodingAllowed(), isTrue);
+
+      await LocationService.setRemoteGeocodingAllowed(false);
+      expect(await LocationService.isRemoteGeocodingAllowed(), isFalse);
     });
 
-    test('Nearest verified city catalog lookup provides 100% offline accuracy', () {
+    test('100% offline accuracy: coordinates within 45km of verified city never dispatch HTTP', () async {
+      final fakeHttp = FakeHttpClient();
+      LocationService.setReverseGeocodeClientForTesting(
+        ReverseGeocodeClient(clientFactory: () => fakeHttp),
+      );
+      await LocationService.setRemoteGeocodingAllowed(true);
+
       // Coordinate near Algiers (within 45km)
-      final nearest = VerifiedCitiesCatalog.findNearest(36.7538, 3.0588, maxDistanceKm: 45.0);
-      expect(nearest, isNotNull);
-      expect(nearest!.country, 'الجزائر');
+      final pos = createPosition(36.7538, 3.0588);
+      final service = LocationService();
+      final res = await service.resolvePositionForTesting(pos, 'FallbackCity');
+
+      expect(res.city, 'الجزائر العاصمة');
+      expect(res.country, 'الجزائر');
+      expect(fakeHttp.requestCount, 0);
+      expect(fakeHttp.lastRequestedUri, isNull);
+    });
+
+    test('Native geocoder failure with default opt-out falls back to offline catalog with 0 HTTP requests', () async {
+      final fakeHttp = FakeHttpClient();
+      LocationService.setReverseGeocodeClientForTesting(
+        ReverseGeocodeClient(clientFactory: () => fakeHttp),
+      );
+      // Clean install: allow_remote_geocoding is unset (default-off)
+      expect(await LocationService.isRemoteGeocodingAllowed(), isFalse);
+
+      // Coordinate ~70km from Algiers (outside 45km exact match, but within 250km broad catalog)
+      final pos = createPosition(36.3, 3.1);
+      final service = LocationService();
+      final res = await service.resolvePositionForTesting(pos, 'FallbackCity');
+
+      expect(fakeHttp.requestCount, 0);
+      expect(fakeHttp.lastRequestedUri, isNull);
+      expect(res.city, isNotEmpty);
+      expect(res.city, isNot('FallbackCity'));
+    });
+
+    test('Native geocoder failure with explicit opt-in dispatches exactly 1 HTTP request with bounded coordinates', () async {
+      final fakeHttp = FakeHttpClient();
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            body: jsonEncode({
+              'city': 'RemoteCity',
+              'principalSubdivision': 'RemoteProvince',
+              'countryName': 'RemoteCountry',
+              'countryCode': 'RC',
+            }),
+          );
+      LocationService.setReverseGeocodeClientForTesting(
+        ReverseGeocodeClient(clientFactory: () => fakeHttp),
+      );
+
+      await LocationService.setRemoteGeocodingAllowed(true);
+
+      // Coordinate outside Algeria/Makkah catalogs
+      final pos = createPosition(12.3456, 78.9101);
+      final service = LocationService();
+      final res = await service.resolvePositionForTesting(pos, 'FallbackCity');
+
+      expect(fakeHttp.requestCount, 1);
+      expect(fakeHttp.lastRequestedUri?.host, 'api.bigdatacloud.net');
+      expect(fakeHttp.lastRequestedUri?.path, '/data/reverse-geocode-client');
+      expect(fakeHttp.lastRequestedUri?.queryParameters['latitude'], '12.3456');
+      expect(fakeHttp.lastRequestedUri?.queryParameters['longitude'], '78.9101');
+      expect(fakeHttp.lastRequestedUri?.queryParameters['localityLanguage'], 'ar');
+      expect(res.city, 'RemoteCity');
+      expect(res.province, 'RemoteProvince');
+      expect(res.country, 'RemoteCountry');
+      expect(res.countryCode, 'RC');
+    });
+
+    test('Opt-out after opt-in immediately ceases remote HTTP requests', () async {
+      final fakeHttp = FakeHttpClient();
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            body: jsonEncode({'city': 'RemoteCity'}),
+          );
+      LocationService.setReverseGeocodeClientForTesting(
+        ReverseGeocodeClient(clientFactory: () => fakeHttp),
+      );
+
+      // 1. Opt in -> sends request
+      await LocationService.setRemoteGeocodingAllowed(true);
+      final pos = createPosition(12.3456, 78.9101);
+      final service = LocationService();
+      await service.resolvePositionForTesting(pos, 'FallbackCity');
+      expect(fakeHttp.requestCount, 1);
+
+      // 2. Opt out -> immediately ceases remote requests
+      await LocationService.setRemoteGeocodingAllowed(false);
+      await service.resolvePositionForTesting(pos, 'FallbackCity');
+      expect(fakeHttp.requestCount, 1); // No new request dispatched!
     });
 
     test('Remote geocode delegation through LocationService works as expected', () async {
@@ -370,6 +482,7 @@ void main() {
       expect(res, isNotNull);
       expect(res!['city'], 'Oran');
       expect(res['countryCode'], 'DZ');
+      expect(fakeHttp.requestCount, 1);
     });
   });
 }

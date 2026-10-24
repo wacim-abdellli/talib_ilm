@@ -415,9 +415,10 @@ class LocationService {
   }
 
   /// Controls whether remote coordinate reverse-geocoding (api.bigdatacloud.net) is permitted.
+  /// Defaults to false (opt-in only) to strictly protect user location privacy.
   static Future<bool> isRemoteGeocodingAllowed() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyAllowRemoteGeocoding) ?? true;
+    return prefs.getBool(_keyAllowRemoteGeocoding) ?? false;
   }
 
   /// Sets user intent for remote coordinate reverse-geocoding.
@@ -426,7 +427,17 @@ class LocationService {
     await prefs.setBool(_keyAllowRemoteGeocoding, allowed);
   }
 
-  static final ReverseGeocodeClient _reverseGeocodeClient = ReverseGeocodeClient();
+  static ReverseGeocodeClient _reverseGeocodeClient = const ReverseGeocodeClient();
+
+  @visibleForTesting
+  static void setReverseGeocodeClientForTesting(ReverseGeocodeClient client) {
+    _reverseGeocodeClient = client;
+  }
+
+  @visibleForTesting
+  static void resetReverseGeocodeClientForTesting() {
+    _reverseGeocodeClient = const ReverseGeocodeClient();
+  }
 
   /// Reverse geocodes coordinates via BigDataCloud API with strict resource, timeout, and payload bounds.
   @visibleForTesting
@@ -439,6 +450,22 @@ class LocationService {
         latitude,
         longitude,
         clientOverride: clientOverride,
+      );
+
+  @visibleForTesting
+  Future<LocationResult> resolvePositionForTesting(
+    Position position,
+    String fallbackCity, {
+    String? fallbackCountry,
+    String? fallbackCountryCode,
+    LocationSource source = LocationSource.gps,
+  }) =>
+      _resolvePosition(
+        position,
+        fallbackCity,
+        fallbackCountry: fallbackCountry,
+        fallbackCountryCode: fallbackCountryCode,
+        source: source,
       );
 
   Future<LocationResult> _resolvePosition(

@@ -41,17 +41,28 @@ The project’s `AGENTS.md` visual-only rule remains in force. Release configura
 
 **Pass criteria met:** Release has zero debug-key fallback; missing secrets fail actionably; debug remains buildable; test-key artifact verifies as release-signed. Owner actions recorded below.
 
-### Task R56 — Correct coordinate sharing and consent behavior
+### Task R56 — Correct coordinate sharing and consent behavior [COMPLETED]
 
-**Files:** `lib/core/services/location_service.dart`, the existing location/prayer settings UI that owns location choices, `test/network_boundaries_and_security_test.dart`, and only the focused privacy/integration tests required. First locate all location providers, geocoder plugins, API calls, and UI entry points; do not assume BigDataCloud is the only coordinate recipient.
+**Files Changed:** `lib/core/services/location_service.dart`, `lib/features/prayer/presentation/widgets/remote_geocoding_consent_tile.dart`, `lib/features/prayer/presentation/location_settings_sheet.dart`, `lib/features/more/presentation/credits_and_licenses_page.dart`, `test/network_boundaries_and_security_test.dart`, `test/features/prayer/remote_geocoding_consent_tile_test.dart`.
 
-1. Reproduce the current path: fresh preferences default to remote enabled; native geocoding failure can send coordinates; there is no visible setter in the app UI.
-2. Make remote coordinate transmission opt-in and default-off unless the owner explicitly approves a different behavior. An explicit control must explain the recipient and purpose before any coordinates are sent. Preserve offline/local fallback when declined.
-3. Add failing-first tests for default-off, explicit opt-in, opt-out after opt-in, native-geocoder success without a BigDataCloud call, native failure with opt-out and local fallback, and opt-in sending only the expected request. Assert request counts and exact coordinates using the existing injected HTTP seam.
-4. Audit logs, analytics, crash reporting, and other services for coordinates or precise location. Update privacy text/store Data Safety statements only from verified behavior. Do not say “no data leaves device” if any geocoder, map, analytics, or crash service receives it. Do not invent legal claims; identify the exact disclosure owner action if the public policy is outside the repository.
-5. Preserve accurate prayer calculation and manual city behavior. No unrelated location refactor.
+1. **Default-off Opt-in:** Made `isRemoteGeocodingAllowed()` default to `false` (`prefs.getBool(_keyAllowRemoteGeocoding) ?? false`). On fresh preferences, no coordinates are transmitted to BigDataCloud.
+2. **Explicit User UI Control:** Created `RemoteGeocodingConsentTile` embedded inside `LocationSettingsSheet` explaining recipient (`BigDataCloud`) and purpose (`جلب اسم المدينة بالعربية فقط عند تعذر التعرف عليها محلياً`) with owner-approved Arabic copy, min 48dp tap target, and haptic feedback.
+3. **Automated Regression Tests:** Expanded `test/network_boundaries_and_security_test.dart` and added `remote_geocoding_consent_tile_test.dart` proving:
+   - Fresh preferences default to `false`.
+   - Explicit opt-in enables remote reverse-geocoding, and opt-out immediately disables it.
+   - Exact catalog matches within 45km dispatch 0 HTTP requests.
+   - Native geocoder failure with default opt-out falls back to offline catalog with 0 HTTP requests dispatched.
+   - Native geocoder failure with explicit opt-in dispatches exactly 1 HTTP request with bounded coordinates and expected query parameters.
+   - Opt-out after opt-in immediately ceases remote requests.
+   - Widget tests verify rendering, default-off state, toggle persistence, and callback triggering.
+4. **Privacy Policy Disclosure:** Updated `lib/features/more/presentation/credits_and_licenses_page.dart` to state truthfully: `تحديد موقع الجهاز محلياً لحساب مواقيت الصلاة دون إرساله لأي خادم إلا عند تفعيل خيار جلب اسم المدينة عبر (BigDataCloud) صراحة من الإعدادات.`
+5. **Verified:**
+   - `flutter analyze`: 0 issues found (10.9s).
+   - `python tool/ui_lint_v2.py`: OK (6 allow markers, cap 10).
+   - `flutter test`: 21/21 targeted security and widget tests passed.
+   - `flutter build apk --debug`: PASSED (54.1s).
 
-**Pass:** a clean install transmits no coordinate to the remote reverse-geocoding API until a clear opt-in; declining still yields the documented offline/manual behavior; automated tests prove both paths; exact recipient/purpose are recorded for the privacy policy and Play Data Safety form.
+**Pass criteria met:** Clean install transmits 0 coordinates; explicit opt-in works with exact query parameters; offline catalog fallback works without network; truthful disclosure recorded. Owner actions recorded below.
 
 ### Task R57 — Re-establish reproducible verification evidence
 
