@@ -33,4 +33,7 @@ class AppPolicy {
   static const int maxBackupFileBytes = 512 * 1024; // 512 KB
   static const int maxBackupBookmarks = 200;
   static const int maxBookmarkNoteLength = 2000;
+
+  // Network & Geocode Payload Budgets (C32)
+  static const int maxGeocodeBytes = 64 * 1024; // 64 KB
 }

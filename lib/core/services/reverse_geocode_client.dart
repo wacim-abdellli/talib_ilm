@@ -15,39 +15,66 @@ class ReverseGeocodeClient {
     double latitude,
     double longitude, {
     HttpClient? clientOverride,
+    Duration? timeoutOverride,
   }) async {
     // 1. Sanity bounds on coordinates
     if (latitude < -90.0 || latitude > 90.0 || longitude < -180.0 || longitude > 180.0) {
       return null;
     }
 
+    final deadline = timeoutOverride ?? AppPolicy.networkFast;
     final client = clientOverride ?? (clientFactory != null ? clientFactory!() : HttpClient());
-    client.connectionTimeout = AppPolicy.networkFast;
+    client.connectionTimeout = deadline;
+
+    HttpClientRequest? activeRequest;
+    StreamSubscription<List<int>>? responseSub;
 
     try {
-      final uri = Uri.parse(
-        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$latitude&longitude=$longitude&localityLanguage=ar',
-      );
-      if (uri.scheme != 'https') {
-        return null;
-      }
-
-      final request = await client.getUrl(uri).timeout(AppPolicy.networkFast);
-      final response = await request.close().timeout(AppPolicy.networkFast);
-
-      if (response.statusCode == HttpStatus.ok) {
-        // Enforce 64KB bound to prevent runaway payload memory exhaustion
-        int totalBytes = 0;
-        final buffer = StringBuffer();
-        await for (final chunk in response.transform(utf8.decoder).timeout(AppPolicy.networkFast)) {
-          totalBytes += chunk.length;
-          if (totalBytes > 65536) {
-            throw const FormatException('Reverse geocode payload exceeded 64KB bound');
-          }
-          buffer.write(chunk);
+      // Single overall operation deadline encompassing connection, request, response, and raw body streaming
+      return await Future<Map<String, String>?>.sync(() async {
+        final uri = Uri.parse(
+          'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$latitude&longitude=$longitude&localityLanguage=ar',
+        );
+        if (uri.scheme != 'https') {
+          return null;
         }
 
-        final payload = buffer.toString();
+        activeRequest = await client.getUrl(uri);
+        final response = await activeRequest!.close();
+
+        if (response.statusCode != HttpStatus.ok) {
+          return null;
+        }
+
+        // Count raw bytes before decoding to prevent memory exhaustion and handle multibyte UTF-8 correctly (C32)
+        final rawBytes = <int>[];
+        final completer = Completer<void>();
+
+        responseSub = response.listen(
+          (chunk) {
+            rawBytes.addAll(chunk);
+            if (rawBytes.length > AppPolicy.maxGeocodeBytes) {
+              responseSub?.cancel();
+              if (!completer.isCompleted) {
+                completer.completeError(
+                  const FormatException('Reverse geocode payload exceeded raw byte limit'),
+                );
+              }
+            }
+          },
+          onError: (e) {
+            if (!completer.isCompleted) completer.completeError(e);
+          },
+          onDone: () {
+            if (!completer.isCompleted) completer.complete();
+          },
+          cancelOnError: true,
+        );
+
+        await completer.future;
+
+        // Strict UTF-8 decoding (rejects malformed bytes)
+        final payload = utf8.decode(rawBytes, allowMalformed: false);
         final data = jsonDecode(payload);
         if (data is Map<String, dynamic>) {
           final res = <String, String>{};
@@ -69,15 +96,19 @@ class ReverseGeocodeClient {
           }
           return res;
         }
-      }
+        return null;
+      }).timeout(deadline);
     } catch (_) {
+      try {
+        activeRequest?.abort();
+      } catch (_) {}
       return null;
     } finally {
+      await responseSub?.cancel();
       if (clientOverride == null && clientFactory == null) {
         client.close(force: true);
       }
     }
-    return null;
   }
 
   String? pickCleanCity(List<Placemark> placemarks) {

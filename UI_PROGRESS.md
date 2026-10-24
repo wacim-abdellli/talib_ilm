@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## R49 / Task 4 — Enforce Real Network Byte and Wall-Clock Limits (Finding C32)
+- **Scope:** Finding C32 (`ReverseGeocodeClient` counted decoded string units toward the 64KB cap rather than raw incoming bytes, allowing multibyte UTF-8 payloads to evade the budget; applied chunk stream idle timeouts rather than an overarching wall-clock operation deadline, allowing slow-drip evasion).
+- **Implemented:**
+  - `lib/app/theme/app_policy.dart`:
+    - Added policy token `maxGeocodeBytes = 64 * 1024` (64KB).
+  - `lib/core/services/reverse_geocode_client.dart`:
+    - Replaced decoded string unit counting with raw `List<int>` byte accumulation before UTF-8 decoding. Aborts immediately if incoming bytes exceed `AppPolicy.maxGeocodeBytes`.
+    - Applied a single overarching wall-clock deadline (`timeoutOverride ?? AppPolicy.networkFast`) encompassing URL dispatch, HTTP connection, response headers, and streaming body consumption.
+    - Added strict UTF-8 decoding (`utf8.decode(rawBytes, allowMalformed: false)`).
+    - Hardened resource lifecycle: on error, timeout, or payload limit trigger, calls `activeRequest?.abort()`, cancels stream subscription, and force-closes unowned client in `finally`.
+    - Line count: 149 lines (strictly < 600 lines, Rule 8 compliant).
+  - `test/network_boundaries_and_security_test.dart`:
+    - Enhanced test doubles (`FakeHttpClientRequest.abort()`, `FakeHttpClient.lastCreatedRequest`).
+    - Added 4 targeted C32 regression tests:
+      1. Multibyte UTF-8 payload (35,000 Arabic characters = 70KB raw bytes > 64KB) is rejected before decoding (pre-fix reproduced bug by accepting the payload; post-fix reliably rejects).
+      2. Slow drip payload staying below chunk timeout but exceeding overall wall-clock deadline aborts cleanly.
+      3. Malformed UTF-8 response bytes return null without unhandled exceptions.
+      4. Stalled response stream triggers `abort()` on the active request and cleans up socket.
+    - 15/15 tests passing in suite.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test --no-pub test/network_boundaries_and_security_test.dart test/prayer_scheduling_serialization_test.dart test/bookmark_backup_test.dart test/bookmark_atomicity_test.dart`: 52/52 passed (2.1s).
+  - `flutter build apk --debug`: PASSED (63.2s, size: 330,218,002 bytes, SHA-256 `D6FEB444B789292AADF753EBCC6AECF742E18773E5D6F91E6D88EF46CA6814E6`).
+- **Open issues:** R49 complete. Next task is Task 5 / R50 (Make tests and CI prove the claims: Findings C31, C33, C34). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
+
 ## R48 / Task 3 — Serialize Prayer Scheduling Across Instances (Finding C30)
 - **Scope:** Finding C30 (`PrayerScheduleService._refreshLock` was an instance-level lock; multiple entry points constructed separate instances, resulting in concurrent cancellations/re-schedulings of the same notification IDs and risk of overwriting SharedPreferences with stale fingerprints).
 - **Implemented:**

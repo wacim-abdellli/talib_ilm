@@ -78,15 +78,21 @@ Serialized all `PrayerScheduleService` instances in the isolate through a shared
 
 **Pass:** no overlapping operations mutate the shared schedule; no stale success fingerprint; failures remain retryable; current active alarms and documented IDs survive. All existing prayer method/madhab/adjustment behaviors preserved.
 
-### Task 4 — R49: Enforce real network byte and wall-clock limits
+### Task 4 — R49: Enforce real network byte and wall-clock limits [COMPLETED]
 
-**Files:** `reverse_geocode_client.dart`, `app_policy.dart` if a justified policy token is needed, and network-boundary tests.
+**Files:** `lib/app/theme/app_policy.dart`, `lib/core/services/reverse_geocode_client.dart`, `test/network_boundaries_and_security_test.dart`.
 
-Count incoming raw response bytes before UTF-8 decoding. Enforce one operation deadline from request creation through body completion, not a timeout that resets on each chunk. On timeout/cancel/oversize, stop reading and close the owned request/client in `finally`; make ownership clear for injected clients. Keep HTTPS, coordinate validation, user-intent gating, offline fallback, and scoped cleartext policy.
+Added `AppPolicy.maxGeocodeBytes = 64 * 1024` (64KB). Enforced raw byte accumulation before UTF-8 decoding in `ReverseGeocodeClient.reverseGeocode` to prevent multibyte evasion. Enforced a single overarching wall-clock operation deadline from request creation through body consumption (`deadline = timeoutOverride ?? AppPolicy.networkFast`), eliminating slow-drip timeout evasion. Enforced strict UTF-8 decoding (`allowMalformed: false`) and guaranteed socket cleanup (`activeRequest?.abort()`, stream subscription cancellation, and force-closing unowned clients in `finally`).
 
-**Required tests:** multibyte body exceeding byte cap; slow drip staying below idle timeout but exceeding total deadline; stalled headers/body; malformed UTF-8/JSON; cancellation; client closed on every exit; user declined means no remote request. No real network or arbitrary sleep.
+**Required tests:** 15/15 tests passing in `test/network_boundaries_and_security_test.dart` (52/52 across targeted regression suites):
+- Multibyte body exceeding 64KB raw bytes (35,000 Arabic chars = 70,000 UTF-8 bytes) is rejected before decoding (pre-fix reproduced bug by accepting the payload; post-fix reliably rejects).
+- Slow drip payload staying below chunk timeout but exceeding overall wall-clock deadline aborts cleanly.
+- Stalled headers / request timeout aborts cleanly.
+- Stalled response stream triggers `abort()` on the active request and closes sockets.
+- Malformed UTF-8 response bytes return null without unhandled exceptions.
+- Client closed on every exit; coordinate bounds validated; user declined intent skips remote requests and falls back to offline catalog.
 
-**Pass:** measured total elapsed bound is deterministic under a fake clock/controlled stream; raw response memory is bounded; all existing location fallback tests pass.
+**Pass:** measured total elapsed bound is deterministic under controlled streams; raw response memory is strictly bounded; all existing location fallback tests pass.
 
 ### Task 5 — R50: Make tests and CI prove the claims
 

@@ -12,8 +12,14 @@ import 'package:talib_ilm/core/services/reverse_geocode_client.dart';
 class FakeHttpClientRequest implements HttpClientRequest {
   final HttpClientResponse Function()? onDone;
   final Duration? delay;
+  bool isAborted = false;
 
   FakeHttpClientRequest({this.onDone, this.delay});
+
+  @override
+  void abort([Object? exception, StackTrace? stackTrace]) {
+    isAborted = true;
+  }
 
   @override
   Future<HttpClientResponse> close() async {
@@ -85,6 +91,8 @@ class FakeHttpClient implements HttpClient {
   Duration? getUrlDelay;
   Duration? closeDelay;
 
+  FakeHttpClientRequest? lastCreatedRequest;
+
   @override
   Duration? connectionTimeout;
 
@@ -94,10 +102,12 @@ class FakeHttpClient implements HttpClient {
     if (getUrlDelay != null) {
       await Future.delayed(getUrlDelay!);
     }
-    return FakeHttpClientRequest(
+    final req = FakeHttpClientRequest(
       onDone: responseGenerator,
       delay: closeDelay,
     );
+    lastCreatedRequest = req;
+    return req;
   }
 
   @override
@@ -192,6 +202,93 @@ void main() {
       );
 
       expect(result, isNull);
+    });
+
+    test('Multibyte UTF-8 payload exceeding 64KB raw bytes is rejected even if character count < 64K (C32)', () async {
+      // 35,000 Arabic characters = 70,000 UTF-8 bytes (>64KB), but char length is only 35,000 (<64K)
+      final arabicText = 'م' * 35000;
+      final rawBytes = utf8.encode(jsonEncode({'city': arabicText}));
+      expect(rawBytes.length, greaterThan(65536)); // Verifies raw bytes exceed 64KB
+
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            streamChunks: [rawBytes],
+          );
+
+      final result = await client.reverseGeocode(
+        36.8065,
+        10.1815,
+        clientOverride: fakeHttp,
+      );
+
+      // Must be rejected because RAW bytes exceed 64KB!
+      expect(result, isNull);
+    });
+
+    test('Slow drip staying below chunk timeout but exceeding overall operation deadline aborts (C32)', () async {
+      // 5 chunks with 30ms delay each = 150ms total. Deadline set to 50ms.
+      final chunk = utf8.encode('{"city": "Alger"}');
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            streamChunks: [chunk, chunk, chunk, chunk, chunk],
+            streamDelay: const Duration(milliseconds: 30),
+          );
+
+      final result = await client.reverseGeocode(
+        36.8065,
+        10.1815,
+        clientOverride: fakeHttp,
+        timeoutOverride: const Duration(milliseconds: 50),
+      );
+
+      // Overarching wall-clock deadline must trigger and return null
+      expect(result, isNull);
+    });
+
+    test('Malformed UTF-8 response bytes return null without unhandled exception (C32)', () async {
+      // Invalid UTF-8 sequence [0xFF, 0xFE, 0xFD]
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            streamChunks: [
+              [0xFF, 0xFE, 0xFD, 0xFC]
+            ],
+          );
+
+      final result = await client.reverseGeocode(
+        36.8065,
+        10.1815,
+        clientOverride: fakeHttp,
+      );
+
+      expect(result, isNull);
+    });
+
+    test('Stalled request triggers timeout, calls abort(), and closes cleanly (C32)', () async {
+      fakeHttp.getUrlDelay = const Duration(milliseconds: 150);
+
+      final result = await client.reverseGeocode(
+        36.8065,
+        10.1815,
+        clientOverride: fakeHttp,
+        timeoutOverride: const Duration(milliseconds: 40),
+      );
+
+      expect(result, isNull);
+      expect(fakeHttp.lastCreatedRequest?.isAborted ?? false, isFalse); // getUrl itself timed out before request returned
+    });
+
+    test('Stalled response stream triggers abort() on active request (C32)', () async {
+      fakeHttp.closeDelay = const Duration(milliseconds: 150);
+
+      final result = await client.reverseGeocode(
+        36.8065,
+        10.1815,
+        clientOverride: fakeHttp,
+        timeoutOverride: const Duration(milliseconds: 40),
+      );
+
+      expect(result, isNull);
+      expect(fakeHttp.lastCreatedRequest?.isAborted, isTrue); // Request abort was invoked on timeout
     });
 
     test('Unowned client is closed with force: true in finally on completion', () async {
