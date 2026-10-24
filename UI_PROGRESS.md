@@ -1,5 +1,10 @@
 # UI Progress Log
 
+## R47 — Code 10/10 master handoff (24 October 2026)
+- **Scope:** Independent audit and execution guide at `docs/MASTER_CODE_10_OF_10_HANDOFF.md`.
+- **Evidence:** At `ui/r46-code-acceptance-suite-final-review` (`c99694e`), `flutter analyze` passed with zero issues and `python tool/ui_lint_v2.py` returned OK with warnings, but `flutter test --concurrency=2` had 454 passing and 39 failing cases (37 golden cases / 60 image comparisons, plus 2 stale Shamela fixtures). The debug APK appeared but its build command did not return a final status; treat as unconfirmed. GitHub remote could not be reached during audit.
+- **Open issues:** R46 closure claims below are superseded by the independent results in the master handoff. Do not report the app fully green. Continue from R47a per `docs/MASTER_CODE_10_OF_10_HANDOFF.md`; keep open issues current and close only with verified evidence.
+
 ## R44 / T14 — Network boundaries and local security hardening (C24)
 - **Scope:** Finding C24 (`location_service.dart:481–516` had unclosed `HttpClient` outside `finally`, unbounded payload collection, missing overarching operation timeouts, and un-gated remote coordinate transmission; AndroidManifest enabled global cleartext HTTP traffic across all domains).
 - **Implemented:**

@@ -1,5 +1,7 @@
 # Final Production Audit Verification & Quality Closure Report
 
+> **Superseded on 24 October 2026:** An independent rerun found the full suite is not green (454 passed, 39 failed), and the debug APK build did not return a final status. The historical claims below must not be used as current release evidence. See [`MASTER_CODE_10_OF_10_HANDOFF.md`](MASTER_CODE_10_OF_10_HANDOFF.md) and the R47 entry in `UI_PROGRESS.md` for verified current state and the ordered remediation plan.
+
 **Date:** 24 October 2026  
 **Status:** Audit Remediation Complete & Fully Verified  
 **Branch:** `ui/r46-code-acceptance-suite-final-review`  
