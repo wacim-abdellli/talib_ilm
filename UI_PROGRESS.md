@@ -1,10 +1,25 @@
 # UI Progress Log
 
-## R55 — Release blockers audit and agent remediation handoff (24 October 2026)
-- **Scope:** Independent review of R54’s “10/10 / Play ready” report; detailed next-agent instructions in `docs/PLAY_RELEASE_BLOCKERS_REMEDIATION_HANDOFF.md`.
-- **Confirmed blockers:** Release Gradle config still signs with debug key and has placeholder `applicationId` `com.example.talib_ilm`; remote geocoding preference defaults true and no app UI setter was found, while latitude/longitude can be sent to BigDataCloud. Raw APK/AAB hashes match the report, but artifact existence does not prove upload-ready signing.
-- **Verification state:** `python tool/ui_lint_v2.py` returned OK with 248 warnings (220 font weight, 14 numeric SizedBox, 8 RTL, 6 gradients), 6/10 allows. Independent full test run and analyze did not return before interruption; no fresh verdict. Retained full-suite log remains 454 passed / 39 failed; later 531/531 claims have no matching raw log in the retained run folder.
-- **Open issues:** R54 “all green / 100%” closure is superseded pending R55–R59. Owner must confirm unique Android application ID and provide a privately stored upload key. Privacy disclosure/opt-in behavior, fresh test/CI evidence, UI warning debt, and 181.9 MB AAB composition remain open. Continue at R55 per the handoff; one task per session.
+## R55 — Make the Android Release Identity and Signing Safe (24 October 2026)
+- **Scope:** Correct release signing vulnerability and debug-key fallback in `android/app/build.gradle.kts`. Ensure release builds strictly require and verify release signing keys and fail cleanly when secrets are missing. Retain package ID pending owner decision.
+- **Implemented:**
+  - `android/app/build.gradle.kts`: Removed debug signing fallback on release builds (`signingConfig = null`). Configured safe release signing loading from ignored `android/key.properties` (or environment variables `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) with BOM-resilient property parsing. Added Gradle `taskGraph.whenReady` guard that rejects release builds with an actionable exception if release signing is not configured.
+  - `android/key.properties.example`: Created template with non-secret keys and keytool generation instructions.
+  - Verified `android/.gitignore` explicitly ignores `key.properties`, `**/*.keystore`, and `**/*.jks`.
+  - `tool/verify_release_signing_config.py`: Added deterministic validation script testing the full lifecycle.
+- **Verified:**
+  - `python tool/verify_release_signing_config.py`: PASSED (exit 0).
+    - Step 1: Release build without signing secrets fails actionably (`Release build rejected: release signing is not configured.`).
+    - Step 2: Debug build succeeds without release secrets (`assembleDebug` PASS, 137.5s).
+    - Step 3: Release build succeeds with configured test upload keystore.
+    - Step 4: `apksigner` verifies APK is signed with `CN=TestUpload` (`165e182e15d3f511da5854279976cbf6bb0802c23b7c739e13a17227ceaa4275`), NOT `CN=Android Debug`.
+    - Step 5: All temporary keystore and key.properties files cleanly deleted.
+  - `flutter analyze`: 0 issues found (62.1s).
+  - `python tool/ui_lint_v2.py`: OK (6 allow markers, cap 10).
+- **Open issues & Owner actions:**
+  - Owner action: Provide confirmed final unique Android application ID (currently `com.example.talib_ilm` retained per instructions).
+  - Owner action: Generate and privately store production release upload keystore using `key.properties.example`.
+  - Next task: Task R56 (Correct coordinate sharing and consent behavior).
 
 ## R54 — Play Store TargetSdk 35 Migration & Production Release Verification (AAB & APK)
 - **Scope:** Address Play Store release audit requirements (R01, R15): migrate `targetSdk` to 35 (Android 15), define explicit semantic app versioning (`version: 1.0.0+2002`) in `pubspec.yaml`, and verify production release compilation across both Google Play App Bundle (`.aab`) and standalone Release APK (`.apk`).

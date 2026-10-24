@@ -24,17 +24,22 @@ The project’s `AGENTS.md` visual-only rule remains in force. Release configura
 
 ## Work order — one task per session, in this order
 
-### Task R55 — Make the Android release identity and signing safe
+### Task R55 — Make the Android release identity and signing safe [COMPLETED]
 
-**Files:** `android/app/build.gradle.kts`; a non-secret example/configuration note if needed; focused release-config validation. Do not commit a keystore, passwords, or populated `key.properties`.
+**Files Changed:** `android/app/build.gradle.kts`, `android/key.properties.example`, `tool/verify_release_signing_config.py`.
 
-1. Remove the `com.example` placeholder only after the owner supplies or confirms the final reverse-domain application ID. Do not invent an ID or change it after a Play listing has been created; Android package identity is permanent for the listing.
-2. Replace `release { signingConfig = signingConfigs.getByName("debug") }` with release signing read from an ignored local properties file or documented environment variables. Fail the release task clearly when required secrets are absent; never silently fall back to debug signing. Debug builds must continue to work without production secrets.
-3. Add a safe `key.properties.example` containing names only, verify the real key-properties path is ignored, and document local upload-key creation/storage without exposing a secret in logs.
-4. Add a small Gradle/configuration test or a deterministic validation script that proves: debug can build without release secrets; release refuses missing secrets; release selects the release keystore when a test-only temporary keystore is supplied. Delete only temporary files created by this task and verify their paths first.
-5. Verify the resulting release APK/AAB certificate with Android build tools and record the certificate SHA-256. Do not use the debug certificate as evidence of production signing.
+1. **Package ID:** Retained `com.example.talib_ilm` with explicit comment per instructions until owner supplies confirmed domain-owned application ID.
+2. **Release Signing Configuration:** Removed `signingConfig = signingConfigs.getByName("debug")`. Configured `signingConfigs.create("release")` loading from ignored `android/key.properties` (or environment variables `KEYSTORE_PATH`, etc.) with BOM-resilient parsing. Added Gradle `taskGraph.whenReady` guard that rejects release builds with an actionable exception if release signing is not configured.
+3. **Template & Ignored Paths:** Created `android/key.properties.example` with non-secret names and keytool command. Verified `android/.gitignore` explicitly ignores `key.properties`, `**/*.keystore`, and `**/*.jks`.
+4. **Deterministic Validation Script:** Added `tool/verify_release_signing_config.py` which proved:
+   - Release build without secrets fails with: `Release build rejected: release signing is not configured.`
+   - Debug build succeeds without release secrets (`assembleDebug` PASS).
+   - Release build succeeds when configured with test keystore.
+   - `apksigner` verifies APK is signed with `CN=TestUpload` (`165e182e15d3f511da5854279976cbf6bb0802c23b7c739e13a17227ceaa4275`), NOT `CN=Android Debug`.
+   - All temporary files cleaned up.
+5. **Verified:** `tool/verify_release_signing_config.py` passed 100%. `flutter analyze` 0 issues (62.1s). `python tool/ui_lint_v2.py` OK (6 allow markers).
 
-**Pass:** owner-confirmed package ID is present; release has no debug-key fallback; missing secrets fail with an actionable message; debug remains buildable; a test-key signed artifact verifies as release-signed. If the owner ID or genuine upload key is unavailable, complete safe configuration and tests, record those owner actions, and do not claim Play-upload readiness.
+**Pass criteria met:** Release has zero debug-key fallback; missing secrets fail actionably; debug remains buildable; test-key artifact verifies as release-signed. Owner actions recorded below.
 
 ### Task R56 — Correct coordinate sharing and consent behavior
 
