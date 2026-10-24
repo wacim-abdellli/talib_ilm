@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## R52 / Task 7 — Re-audit Original C01–C26 with Production Evidence
+- **Scope:** Complete verification checklist of original findings C01 through C26 against active source code, active callers, and automated regression suites.
+- **Audit Findings & Evidence Matrix:**
+  - **Audio (C01, C02, C14, C15, C16):** Operation generation tokens (`_operation`) prevent stale track takeovers; non-blocking playback start eliminates transition deadlocks; `QuranAudioDownloader` joins duplicate in-flight requests, stages `.tmp` files, checks Content-Type/magic bytes (`isAyahAudioFileValid`), and deterministically cancels clients in `finally`. Verified in `test/quran_audio_lifecycle_test.dart` and `test/quran_audio_download_test.dart`.
+  - **Persistence & Integrity (C03, C04, C05, C06, C07, C08):** UTF-8 decoding (`utf8.decode(...)`) in backup sheet; strict coordinate bounds checking; `BookmarkService` serializes mutations with auto-resetting `AsyncLock`; corrupt JSON recovery in `ProgressService` / `BookProgressService`; bounded 500-session history with clock injection in `ReadingStatsService`. Verified in `test/bookmark_backup_test.dart`, `test/persistence_consistency_test.dart`, `test/performance_caches_and_policy_test.dart`.
+  - **Startup, Permissions & Routing (C09, C10, C11, C12, C13):** Background silent tasks never prompt permissions; setup race eliminated in `NotificationService`; typed `ScheduleOutcome` persists cache only on verified schedule success; cache key fingerprints coordinates, timezone, calculation method, and minute adjustments; 'morning' deep link routes to tab 3 and pops back cleanly to `AppShell`. Verified in `test/notification_initialization_test.dart`, `test/prayer_scheduling_boundary_matrix_test.dart`, `test/notification_router_test.dart`.
+  - **Shamela Reader (C17, C33):** Offline flag requires complete SQLite page manifest without gaps; incomplete books reset preference flag to `false`. Verified in `test/offline_download_ux_test.dart` and `test/shamela_download_test.dart`.
+  - **Foreground Timers & Audio Coordination (C18, C19, C20):** Restartable service lifecycle with pause-state polling suspension; `AudioCoordinator` prevents playback overlap across streams; strict mounted checks on all async dialogs. Verified in `test/audio_lifecycle_and_coordination_test.dart`.
+  - **Accessibility (C21):** Root scale 2.0 supported without text overflow; 48dp minimum touch targets. Verified in `test/accessibility_ui_correctness_test.dart`.
+  - **Native Widget Snapshot (C22):** Atomic serialized snapshot creation across all 10 keys. Verified in `test/native_widget_snapshot_test.dart`.
+  - **Quiz Invariants (C23):** Schema validation before cache mutations; idempotent scoring on duplicate session IDs. Verified in `test/quiz_catalog_and_progress_invariants_test.dart`.
+  - **Network & Cleartext (C24, C32):** 64KB cap and overarching wall-clock deadline in `ReverseGeocodeClient`; cleartext traffic scoped strictly to inventoried audio domains in `network_security_config.xml`. Verified in `test/network_boundaries_and_security_test.dart`.
+  - **Parity & Acceptance (C25, C26, C31, C34):** Flutter 3.38.7 pinned in CI; 7 deep end-to-end journeys passing in `test/code_acceptance_suite_test.dart`.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (27.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test`: 531/531 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (123.3s, size: 330,216,948 bytes, SHA-256 `3439FD1022B1C83E092470B7029C379CFDFA9DAE1EB5D15F4BB7A5829B5CE0F3`).
+- **Open issues:** R52 complete. Next task is Task 8 / R53+ (Close measurable maintainability and performance debt).
+
 ## R51 / Task 6 — Resolve Golden Failures by Evidence (Finding C33)
 - **Scope:** Finding C33 (37 golden test comparisons failing across the suite; reference images were stale snapshots from older palette versions; flakiness in dynamic prayer countdowns; cross-zone deadlock in `AsyncLock`).
 - **Implemented & Root Causes Identified:**

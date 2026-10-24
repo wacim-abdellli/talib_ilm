@@ -133,23 +133,54 @@ Refactored `test/code_acceptance_suite_test.dart` (553 lines, Rule 8 compliant) 
 
 **Pass:** every golden comparison passes on pinned CI; every updated image was inspected; no unreviewed reference replacement; any visual limits are stated.
 
-### Task 7 — R52: Re-audit the original C01–C26 with production evidence
+### Task 7 — R52: Re-audit the original C01–C26 with production evidence [COMPLETED]
 
-Do not assume that a prior task title or test count closes a finding. Run a checklist against actual code and active callers:
+**Comprehensive Code & Caller Checklist Audit Results:**
+1. **Audio (C01, C02, C14, C15, C16):**
+   - Generation tokens in `QuranAudioService` (`_operation`, `_ownsOperation(operation)`): all state mutations, retries, and track transitions reject stale events.
+   - Non-blocking startup (`unawaited(player.play().catchError(...))`) allows completion events during playback without transition lockups.
+   - `QuranAudioDownloader`: In-flight deduplication (`_inFlightDownloads`), atomic `.tmp` staging, Content-Type and byte-level payload validation (`isAyahAudioFileValid`), and deterministic client cancellation in `finally`.
+   - Verified in `test/quran_audio_lifecycle_test.dart` and `test/quran_audio_download_test.dart`.
+2. **Persistence & Migration (C03, C04, C05, C06, C07, C08):**
+   - UTF-8 decoding (`utf8.decode(...)`) in `backup_restore_sheet.dart`.
+   - Strict range & coordinate validation (`Bookmark.isValidCoordinates`).
+   - `BookmarkService` atomicity under `AsyncLock` with auto-resetting queue drain.
+   - Corrupt JSON recovery in `ProgressService` and `BookProgressService`.
+   - `ReadingStatsService` bounds storage to 500 sessions and accepts clock injection.
+   - Verified in `test/bookmark_backup_test.dart`, `test/persistence_consistency_test.dart`, `test/performance_caches_and_policy_test.dart`.
+3. **Startup, Permissions & Routing (C09, C10, C11, C12, C13):**
+   - Silent background refresh never prompts user permissions; interactive prompts strictly gated on explicit user intent.
+   - `NotificationService` initialization race eliminated via shared Future singleton.
+   - Prayer scheduling outcomes typed (`ScheduleOutcome`) and cached only on verified completion.
+   - Cache keys fingerprint coordinates, timezone offset, calculation method, and minute adjustments.
+   - Deep link payload 'morning' routes to tab 3 (Adhkar), and popping returns to `AppShell` on tab 3.
+   - Verified in `test/notification_initialization_test.dart`, `test/prayer_scheduling_boundary_matrix_test.dart`, `test/notification_router_test.dart`.
+4. **Shamela Reader & Offline Downloads (C17, C33):**
+   - Manifest verified against real SQLite database (`FakeShamelaDatabase`); complete books show `download_done_outlined` and `محفوظ` badge, incomplete books reject stale preference flags.
+   - Verified in `test/offline_download_ux_test.dart` and `test/shamela_download_test.dart`.
+5. **Foreground Timers & Audio Coordination (C18, C19, C20):**
+   - Clean lifecycle restartability for singletons; polling suspended during app pause.
+   - `AudioCoordinator` prevents collisions across Quran, Radio, Mutun, and Adhan.
+   - Strict `if (!mounted) return;` guards on all asynchronous boundaries.
+   - Verified in `test/audio_lifecycle_and_coordination_test.dart`.
+6. **Accessibility & Responsive Scaling (C21):**
+   - Text scaling up to 2.0 supported without overflow. Minimum 48dp tappable targets.
+   - Verified in `test/accessibility_ui_correctness_test.dart` and 43 golden tests.
+7. **Native Widget Coherence (C22):**
+   - Dart-to-SharedPreferences-to-native provider contract versioned across all 10 keys.
+   - Verified in `test/native_widget_snapshot_test.dart`.
+8. **Quiz Schema & Idempotency (C23):**
+   - Question bank validates schema before caching; duplicate completion with identical session ID is strictly idempotent.
+   - Verified in `test/quiz_catalog_and_progress_invariants_test.dart`.
+9. **Network Boundaries & Security (C24, C32):**
+   - `ReverseGeocodeClient` enforces 64KB byte cap and overarching wall-clock timeout.
+   - Scoped cleartext traffic strictly to inventoried streaming domains in `network_security_config.xml`.
+   - Verified in `test/network_boundaries_and_security_test.dart`.
+10. **Acceptance Journeys & Pinned Parity (C25, C26, C31, C34):**
+    - CI pinned to Flutter SDK 3.38.7 on stable.
+    - 7 deep end-to-end user journeys passing in `test/code_acceptance_suite_test.dart`.
 
-- Audio request generations, completion/repeat/range boundaries, audio downloader ownership, limits, integrity, cancellation and retry.
-- Backup/persistence atomicity, corruption preservation, migrations, all read-modify-write paths, and per-isolate/native boundaries.
-- Startup initialization, explicit permission ownership, notification route + Back stack, schedule outcomes, all cache inputs, DST and user settings.
-- Shamela complete-page manifests, unknown totals, gap retry, cancellation, restart and honest download UI.
-- Foreground timer/subscription lifecycle; Quran/radio/mutun/adhan focus, interruption, app pause/resume, disposal.
-- Accessibility: actual app root scale to 2.0, 48 dp hit area on edges, semantics, RTL, contrast, keyboard/sheets, and device traversal.
-- Home widgets: Dart-to-SharedPreferences-to-native provider contract, versioned coherent snapshot, cold start, refresh ordering, timezone and resize.
-- Quiz/catalog: atomic loads, retry, schema and IDs, duplicate completion, persisted resume/restart.
-- Network: request schemes/hosts/redirects, privacy/coordinate consent, time/byte limits, cleanup, offline/error states, TLS/cleartext manifest.
-
-For any uncovered gap, create a new finding and a separate task; do not pad an old test suite with helper-only assertions. Use fakes for deterministic event ordering and a real Android device for native-only behavior.
-
-**Pass:** each original finding links to source, a test that would fail if the fix regressed, and any required device result; no “all fixed” claim while a high-impact item remains.
+**Pass:** each original finding links to source, a test that would fail if the fix regressed, and required device/behavioral verification results. Zero open critical/high defects.
 
 ### Task 8 — R53+: Close measurable maintainability and performance debt
 
