@@ -1,5 +1,30 @@
 # UI Progress Log
 
+## R67 — Rebuild the Whole-Repository Code and Asset Inventory (24 October 2026)
+- **Scope:** Complete, automated, reproducible inventory of all 1,572 tracked files across the repository. Categorize first-party app code, vendored packages, tests, tooling, assets, and Android native configs. Detail exact file and line counts, oversized files (>600L) with exemption rationales, UI lint warning breakdown, exact file/line audit of all 6 allow markers, complete asset size breakdown (103.98 MB total), asset deduplication necessity analysis, unreferenced asset observation, and Android permissions/security configuration.
+- **Implemented:**
+  - `tool/generate_code_and_asset_inventory.py`: Created robust CLI generator scanning `git ls-files`, parsing line counts, classifying files, auditing allow markers, calculating asset sizes, and generating Markdown documentation.
+  - `tool/test_inventory_generator.py`: Added 5-test unit suite verifying file parsing, line counting, allow marker detection (6/6), oversized file detection, and report generation.
+  - `docs/CODE_AND_ASSET_INVENTORY_REPORT.md`: Authoritative inventory report:
+    - First-party Dart code (`lib/`): 373 files, 95,559 lines (3.77 MB). Exactly 0 behavior files >600 lines repo-wide. 4 static data catalogs documented (`app_palette.dart` 1274L, `mutun_lessons_catalog.dart` 1236L, `verified_cities.dart` 950L, `mutun_audio_catalog.dart` 908L).
+    - Vendored package (`packages/qcf_quran_plus`): 25 files, 115,238 lines (7.13 MB). Upstream `https://github.com/hussein12347/qcf_quran_plus` v0.0.9; vendored locally due to pub.dev SDK constraint (^3.11 vs pinned 3.10.7); 105,650-line `quran_data.dart` and 802-line `quran_page_view.dart` documented under third-party governance.
+    - Automated tests (`test/`): 100 files, 15,673 lines (0.58 MB), 0 oversized files.
+    - Tooling (`tool/`): 2 Dart files (203L), 27 Python files (8,071L).
+    - UI Lint: 248 warnings (220 `FontWeight`, 14 `SizedBox`, 8 RTL, 6 gradient). Exactly 6 allow markers used (cap 10), all strictly in domain service duration boundaries.
+    - Assets: 103.98 MB total (66.81 MB KFC 604 vector page fonts, 14.95 MB Mutun PDFs, 5.97 MB JSON datasets, 4.15 MB typography fonts, 3.84 MB Android native audio, 3.84 MB Flutter audio, 4.42 MB branding/icons). Documented 3.84 MB audio duplication necessity for killed-state native `AlarmManager` alerts.
+    - Preserved unreferenced `assets/pdfs/mutun/` in Git without bundling in `pubspec.yaml`.
+  - `lib/features/home/presentation/widgets/home_header.dart` & `test/golden/home_golden_test.dart`: Added `@visibleForTesting final DateTime? currentDate;` to `HomeHeader` and passed deterministic `baseTime` to eliminate midnight date golden drift.
+- **Verified:**
+  - `python tool/test_inventory_generator.py`: 5/5 passed (0.69s).
+  - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 10.4s).
+  - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (248 warnings, 6 allow markers, cap 10).
+  - Gate 3: Automated Test Suite (`flutter test`): PASS (551 passed, 0 failed, 2m05s).
+  - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (43.5s assembleDebug, `build/app/outputs/flutter-apk/app-debug.apk`).
+- **Open issues & Owner actions:**
+  - Status: Task R67 complete. Whole-repository inventory is 100% current, reproducible, and tracked.
+  - Owner action: Google Play upload remains blocked by placeholder app ID, private production upload key, Data Safety declaration, and tasks R68–R70.
+  - Next task: R68 — Reduce UI warning debt and validate accessibility (P2).
+
 ## R66 — Re-Audit All Previously Closed C01–C35 Findings Against Current Code (24 October 2026)
 - **Scope:** Hostile, evidence-backed re-audit of all 35 architectural, persistence, concurrency, audio, lifecycle, scheduling, offline, and network security findings (C01 through C35) across 8 finding families and all 7 acceptance journeys. Document live source anchors, production callers, regression test names, defect mechanisms prevented, and platform-only distinctions. Assert that zero findings rely solely on commit messages or progress notes; every high-impact finding is backed by an automated regression test that would fail if regressed.
 - **Implemented:**

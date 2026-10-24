@@ -21,6 +21,8 @@ class HomeHeader extends StatelessWidget {
   final VoidCallback? onQiblaTap;
   final VoidCallback? onEmblemTap;
   final VoidCallback? onDateTap;
+  @visibleForTesting
+  final DateTime? currentDate;
 
   const HomeHeader({
     super.key,
@@ -33,6 +35,7 @@ class HomeHeader extends StatelessWidget {
     this.onQiblaTap,
     this.onEmblemTap,
     this.onDateTap,
+    this.currentDate,
   });
 
   void _defaultEmblemTap(BuildContext context) {
@@ -177,7 +180,7 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final date = DateTime.now();
+    final date = currentDate ?? DateTime.now();
     final hijriStr = _formatHijri(date);
 
     return Column(

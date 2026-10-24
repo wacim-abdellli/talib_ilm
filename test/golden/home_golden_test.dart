@@ -129,10 +129,11 @@ void main() {
     });
 
     testWidgets('HomeHeader - light 1.0', (tester) async {
-      const widget = HomeHeader(
+      final widget = HomeHeader(
         city: 'مكة المكرمة',
         greeting: 'أصبحنا وأصبح الملك لله',
         greetingSubtitle: 'طاب مسعاك يا طالب العلم',
+        currentDate: DateTime(2026, 10, 24),
       );
 
       await testGoldenWidget(
@@ -145,10 +146,11 @@ void main() {
     });
 
     testWidgets('HomeHeader - dark 1.5', (tester) async {
-      const widget = HomeHeader(
+      final widget = HomeHeader(
         city: 'مكة المكرمة',
         greeting: 'أصبحنا وأصبح الملك لله',
         greetingSubtitle: 'طاب مسعاك يا طالب العلم',
+        currentDate: DateTime(2026, 10, 24),
       );
 
       await testGoldenWidget(
