@@ -1,6 +1,7 @@
 name: talib_ilm
-description: "A new Flutter project."
-publish_to: 'none' 
+description: "A comprehensive Arabic Islamic knowledge application."
+publish_to: 'none'
+version: 1.0.0+2002
 
 environment:
   sdk: ^3.10.4
