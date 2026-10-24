@@ -1,33 +1,69 @@
 # UI Progress Log
  
-+## R47a / Task 1 — Atomic Bookmark Repository & Concurrency (C27, C28)
-+- **Scope:** Finding C27 (`toggleBookmark` & `toggleSurahBookmark` evaluated existence outside `_lock`, allowing concurrent toggles to make duplicate add decisions) & Finding C28 (`mergeBookmarks` read bookmarks, computed replacement list, and called `saveAllBookmarks` outside the lock, causing concurrent adds or note edits to be wiped out by stale snapshots).
-+- **Implemented:**
-+  - `lib/features/quran/data/services/bookmark_service.dart`:
-+    - Introduced unified internal repository transaction method `_transaction<T>` that acquires `_lock.synchronized`, loads current data via `_loadBookmarksRaw()`, runs mutation/decision callback, and persists changes atomically before releasing lock.
-+    - Refactored `addBookmark`, `removeBookmark`, and `updateNote` to execute through `_transaction`.
-+    - Refactored `toggleBookmark` and `toggleSurahBookmark` to evaluate existence and perform add/remove inside `_transaction`, guaranteeing atomic toggling.
-+    - Implemented `BookmarkService.atomicMergeBookmarks` to perform read, deduplication, note overwrite logic, 200-bookmark capping, and newer `lastRead` update in a single atomic transaction under `_lock`.
-+    - Deprecated unsafe `saveAllBookmarks` to prevent callers from saving stale external snapshots.
-+    - Added `MergeResult` model inside `bookmark_service.dart` alongside `Bookmark` and `LastRead`.
-+    - Enforced strict write verification in `_saveBookmarks` and `_saveLastReadRaw` to throw `StateError` on storage failure, leaving previous persisted data intact.
-+  - `lib/features/quran/data/services/bookmark_backup_service.dart`:
-+    - Re-exported `MergeResult` from `bookmark_service.dart`.
-+    - Delegated `mergeBookmarks` directly to `BookmarkService.atomicMergeBookmarks`, eliminating un-locked read-modify-write.
-+  - `test/bookmark_atomicity_test.dart`:
-+    - Created 11 comprehensive regression unit tests.
-+    - Pre-fix verification: confirmed 5 targeted tests failed against unpatched code (concurrent toggle on unbookmarked returned `[true, true]`; concurrent toggle on bookmarked returned `[false, false]`; concurrent surah toggle returned `[true, true]`; concurrent add during merge was lost; concurrent note update during merge was overwritten).
-+    - Post-fix verification: 11/11 tests pass (concurrent toggles return to original state; concurrent adds retain both; merge races with add/update/remove retain data integrity; 200-item cap enforced; write failure leaves storage intact).
-+- **Verified:**
-+  - `test/bookmark_atomicity_test.dart`: 11/11 passed (1.2s).
-+  - `test/bookmark_backup_test.dart` & `test/persistence_consistency_test.dart`: 19/19 passed (4.2s).
-+  - `flutter analyze`: 0 issues found (8.6s).
-+  - `python tool/ui_lint_v2.py`: OK (6 allow markers used, cap 10).
-+  - `flutter build apk --debug`: PASSED (131.7s, size: 330,213,222 bytes, SHA-256 `496125D09F93175AA62B3AB4FA03247F1030551B00C6DCB945A3623B83338BA6`).
-+  - File lines (Rule 8): `bookmark_service.dart` (579 lines < 600), `bookmark_backup_service.dart` (170 lines < 600).
-+- **Open issues:** R47a complete. Next task is Task 2 / R47b (Bound and validate backup input: Finding C29). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
-+
- ## R47 — Code 10/10 master handoff (24 October 2026)
+## R47b / Task 2 — Bound and Validate Backup Input (C29)
+- **Scope:** Finding C29 (Backup import had no explicit bounds on file bytes, entry count, or note length; validator allowed un-bounded lists bypassing the 200-bookmark cap; page values were not checked against Quran coordinate mappings; malformed entries were silently swallowed; partial import results were not communicated to users; file reading did not handle growing file races between stat and read).
+- **Implemented:**
+  - `lib/app/theme/app_policy.dart`:
+    - Added policy budget tokens: `maxBackupFileBytes = 512 * 1024` (512KB), `maxBackupBookmarks = 200`, and `maxBookmarkNoteLength = 2000`.
+  - `lib/features/quran/data/models/bookmark_models.dart`:
+    - Extracted `Bookmark`, `LastRead`, and `MergeResult` into a dedicated model file to strictly respect Rule 8 (< 600 lines).
+    - Hardened `Bookmark.isValidCoordinates(surah, ayah, {page, strictPage})`: verifies surah (1–114), ayah (1–`verseCount`), and strict page-coordinate consistency matching `quran.getPageNumber(surah, ayah)`.
+    - Added note length validation (clamped/capped at `maxBookmarkNoteLength = 2000` chars).
+    - Enforced strict boolean validation for `isSurah`, timestamp validity (rejecting timestamps > now + 1 day), and field typing.
+  - `lib/features/quran/data/services/bookmark_service.dart`:
+    - Re-exported `bookmark_models.dart` for backwards compatibility. Line count reduced to 461 lines (strictly < 600 lines).
+  - `lib/features/quran/data/services/bookmark_backup_service.dart`:
+    - Added `readBackupFile(PlatformFile)`: enforces metadata size checks, file length checks, chunk accumulator limit (rejecting streams that exceed 512KB if file grows between stat and read), and strict UTF-8 decoding (`allowMalformed: false`).
+    - Added coordinate deduplication and strict schema parsing in `validateAndParse`.
+    - Structured `BackupValidationResult` with `acceptedCount`, `rejectedCount`, and detailed `rejectionReasons`.
+    - Rejects backups with > 200 bookmarks or zero valid bookmarks.
+    - Preserves compatibility with valid version 1 backups.
+    - Line count: 281 lines (< 600 lines).
+  - `lib/features/more/presentation/widgets/backup_restore_sheet.dart`:
+    - Integrated `readBackupFile` with graceful user-facing error reporting.
+    - Wrapped layout in `SingleChildScrollView` to prevent flex overflows across text scale 2.0.
+    - Displayed exact partial validation statistics (`acceptedCount` and `rejectedCount`) in confirmation dialog and post-import feedback.
+    - Guarded all asynchronous boundaries with `if (!mounted) return;`.
+    - Line count: 383 lines (< 600 lines).
+  - `test/bookmark_backup_test.dart`:
+    - Added 15 comprehensive C29 regression tests covering oversized file bytes (>512KB), oversized entries (>200 items), oversized notes (>2000 chars), future timestamps, duplicate coordinates, coordinate/page mismatches, malformed UTF-8, and atomic zero-write rejection. (20/20 tests passing).
+  - `test/backup_restore_sheet_test.dart`:
+    - Added 3 widget lifecycle and dialog interaction tests (3/3 passing).
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.4s).
+  - `python tool/ui_lint_v2.py`: OK (6 allow markers used, cap 10).
+  - `flutter test --no-pub test/bookmark_backup_test.dart test/backup_restore_sheet_test.dart test/bookmark_atomicity_test.dart test/persistence_consistency_test.dart`: 44/44 tests passed (2.3s).
+  - `flutter build apk --debug`: PASSED (53.9s, size: 330,217,377 bytes, SHA-256 `61E0CC8EC3B9BA0CE33B22944871046847E2B96A4259FD688698F7216D955EC4`).
+- **Open issues:** R47b complete. Next task is Task 3 / R48 (Serialize prayer scheduling across instances: Finding C30). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
+
+## R47a / Task 1 — Atomic Bookmark Repository & Concurrency (C27, C28)
+- **Scope:** Finding C27 (`toggleBookmark` & `toggleSurahBookmark` evaluated existence outside `_lock`, allowing concurrent toggles to make duplicate add decisions) & Finding C28 (`mergeBookmarks` read bookmarks, computed replacement list, and called `saveAllBookmarks` outside the lock, causing concurrent adds or note edits to be wiped out by stale snapshots).
+- **Implemented:**
+  - `lib/features/quran/data/services/bookmark_service.dart`:
+    - Introduced unified internal repository transaction method `_transaction<T>` that acquires `_lock.synchronized`, loads current data via `_loadBookmarksRaw()`, runs mutation/decision callback, and persists changes atomically before releasing lock.
+    - Refactored `addBookmark`, `removeBookmark`, and `updateNote` to execute through `_transaction`.
+    - Refactored `toggleBookmark` and `toggleSurahBookmark` to evaluate existence and perform add/remove inside `_transaction`, guaranteeing atomic toggling.
+    - Implemented `BookmarkService.atomicMergeBookmarks` to perform read, deduplication, note overwrite logic, 200-bookmark capping, and newer `lastRead` update in a single atomic transaction under `_lock`.
+    - Deprecated unsafe `saveAllBookmarks` to prevent callers from saving stale external snapshots.
+    - Added `MergeResult` model inside `bookmark_service.dart` alongside `Bookmark` and `LastRead`.
+    - Enforced strict write verification in `_saveBookmarks` and `_saveLastReadRaw` to throw `StateError` on storage failure, leaving previous persisted data intact.
+  - `lib/features/quran/data/services/bookmark_backup_service.dart`:
+    - Re-exported `MergeResult` from `bookmark_service.dart`.
+    - Delegated `mergeBookmarks` directly to `BookmarkService.atomicMergeBookmarks`, eliminating un-locked read-modify-write.
+  - `test/bookmark_atomicity_test.dart`:
+    - Created 11 comprehensive regression unit tests.
+    - Pre-fix verification: confirmed 5 targeted tests failed against unpatched code (concurrent toggle on unbookmarked returned `[true, true]`; concurrent toggle on bookmarked returned `[false, false]`; concurrent surah toggle returned `[true, true]`; concurrent add during merge was lost; concurrent note update during merge was overwritten).
+    - Post-fix verification: 11/11 tests pass (concurrent toggles return to original state; concurrent adds retain both; merge races with add/update/remove retain data integrity; 200-item cap enforced; write failure leaves storage intact).
+- **Verified:**
+  - `test/bookmark_atomicity_test.dart`: 11/11 passed (1.2s).
+  - `test/bookmark_backup_test.dart` & `test/persistence_consistency_test.dart`: 19/19 passed (4.2s).
+  - `flutter analyze`: 0 issues found (8.6s).
+  - `python tool/ui_lint_v2.py`: OK (6 allow markers used, cap 10).
+  - `flutter build apk --debug`: PASSED (131.7s, size: 330,213,222 bytes, SHA-256 `496125D09F93175AA62B3AB4FA03247F1030551B00C6DCB945A3623B83338BA6`).
+  - File lines (Rule 8): `bookmark_service.dart` (579 lines < 600), `bookmark_backup_service.dart` (170 lines < 600).
+- **Open issues:** R47a complete. Next task is Task 2 / R47b (Bound and validate backup input: Finding C29). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
+
+## R47 — Code 10/10 master handoff (24 October 2026)
 - **Scope:** Independent audit and execution guide at `docs/MASTER_CODE_10_OF_10_HANDOFF.md`.
 - **Evidence:** At `ui/r46-code-acceptance-suite-final-review` (`c99694e`), `flutter analyze` passed with zero issues and `python tool/ui_lint_v2.py` returned OK with warnings, but `flutter test --concurrency=2` had 454 passing and 39 failing cases (37 golden cases / 60 image comparisons, plus 2 stale Shamela fixtures). The debug APK appeared but its build command did not return a final status; treat as unconfirmed. GitHub remote could not be reached during audit.
 - **Open issues:** R46 closure claims below are superseded by the independent results in the master handoff. Do not report the app fully green. Continue from R47a per `docs/MASTER_CODE_10_OF_10_HANDOFF.md`; keep open issues current and close only with verified evidence.

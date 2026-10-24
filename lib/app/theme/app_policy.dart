@@ -28,4 +28,9 @@ class AppPolicy {
   static const int maxStoredReadingSessions = 500;
   static const int maxReadingSessionAgeDays = 90;
   static const int maxCachedDownloadedBooks = 1000;
+
+  // Backup & Import Budgets (C29)
+  static const int maxBackupFileBytes = 512 * 1024; // 512 KB
+  static const int maxBackupBookmarks = 200;
+  static const int maxBookmarkNoteLength = 2000;
 }

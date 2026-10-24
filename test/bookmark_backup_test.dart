@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/features/quran/data/services/bookmark_backup_service.dart';
@@ -262,6 +265,182 @@ void main() {
       final allCorruptResult = BookmarkBackupService.validateAndParse(allCorruptJson);
       expect(allCorruptResult.isValid, isFalse);
       expect(allCorruptResult.errorMessage, contains('لا توجد أي بيانات صالحة'));
+    });
+
+    test('validateAndParse rejects mismatched page against Quran coordinate (C29)', () {
+      // Surah 1:1 is on page 1, but file provides page 500
+      final mismatchedPageJson = json.encode({
+        'app': 'talib_ilm',
+        'version': 1,
+        'bookmarks': [
+          {'surah': 1, 'ayah': 1, 'page': 500, 'note': 'Mismatched page'},
+        ],
+      });
+
+      final result = BookmarkBackupService.validateAndParse(mismatchedPageJson);
+      // Under strict coordinate validation, mismatched page must not be accepted as a valid bookmark
+      expect(result.bookmarks.isEmpty, isTrue, reason: 'Page 500 is inconsistent with Surah 1:1');
+    });
+
+    test('validateAndParse rejects oversized bookmark list exceeding 200 items (C29)', () {
+      final oversizedList = List.generate(
+        250,
+        (i) => {'surah': 2, 'ayah': i + 1, 'page': 2},
+      );
+      final jsonStr = json.encode({
+        'app': 'talib_ilm',
+        'version': 1,
+        'bookmarks': oversizedList,
+      });
+
+      final result = BookmarkBackupService.validateAndParse(jsonStr);
+      expect(result.isValid, isFalse);
+      expect(result.errorMessage, contains('الحد الأقصى'));
+    });
+
+    test('validateAndParse filters out oversized notes exceeding 2000 chars (C29)', () {
+      final hugeNote = 'أ' * 3000;
+      final jsonStr = json.encode({
+        'app': 'talib_ilm',
+        'version': 1,
+        'bookmarks': [
+          {'surah': 1, 'ayah': 1, 'page': 1, 'note': hugeNote},
+        ],
+      });
+
+      final result = BookmarkBackupService.validateAndParse(jsonStr);
+      expect(result.bookmarks.isEmpty, isTrue, reason: 'Oversized note must be rejected');
+    });
+
+    test('validateAndParse filters out future timestamps beyond clock skew (C29)', () {
+      final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
+      final jsonStr = json.encode({
+        'app': 'talib_ilm',
+        'version': 1,
+        'bookmarks': [
+          {'surah': 1, 'ayah': 1, 'page': 1, 'timestamp': futureDate},
+        ],
+      });
+
+      final result = BookmarkBackupService.validateAndParse(jsonStr);
+      expect(result.bookmarks.isEmpty, isTrue, reason: 'Future timestamp must be rejected');
+    });
+
+    test('validateAndParse deduplicates identical coordinates within import file (C29)', () {
+      final jsonStr = json.encode({
+        'app': 'talib_ilm',
+        'version': 1,
+        'bookmarks': [
+          {'surah': 1, 'ayah': 1, 'page': 1, 'note': 'First entry'},
+          {'surah': 1, 'ayah': 1, 'page': 1, 'note': 'Duplicate entry'},
+        ],
+      });
+
+      final result = BookmarkBackupService.validateAndParse(jsonStr);
+      expect(result.isValid, isTrue);
+      expect(result.bookmarks.length, equals(1), reason: 'Duplicate coordinates must be deduplicated');
+      expect(result.rejectedCount, equals(1), reason: 'Duplicate entry must be counted as rejected');
+    });
+
+    test('readBackupFile safely reads bytes branch preserving Arabic, diacritics, and newlines (C29)', () async {
+      const sample = 'بسم الله\nالرحمن الرحيم\nملاحظة قرآنية شاملة مع حركات: ﴿قُلْ هُوَ اللَّهُ أَحَدٌ﴾';
+      final bytes = Uint8List.fromList(utf8.encode(sample));
+      final platformFile = PlatformFile(
+        name: 'backup.json',
+        size: bytes.length,
+        bytes: bytes,
+      );
+
+      final read = await BookmarkBackupService.readBackupFile(platformFile);
+      expect(read, equals(sample));
+    });
+
+    test('readBackupFile safely reads path branch (C29)', () async {
+      const sample = '{"app":"talib_ilm","version":1,"bookmarks":[]}';
+      final tempDir = await Directory.systemTemp.createTemp('talib_ilm_test_');
+      final tempFile = File('${tempDir.path}/test_backup.json');
+      await tempFile.writeAsString(sample, encoding: utf8);
+
+      final platformFile = PlatformFile(
+        name: 'test_backup.json',
+        size: await tempFile.length(),
+        path: tempFile.path,
+      );
+
+      final read = await BookmarkBackupService.readBackupFile(platformFile);
+      expect(read, equals(sample));
+
+      await tempDir.delete(recursive: true);
+    });
+
+    test('readBackupFile rejects oversized file exceeding 512KB (C29)', () async {
+      // 1. Oversized via metadata size
+      final oversizedMetaFile = PlatformFile(
+        name: 'oversized.json',
+        size: 600 * 1024, // 600 KB > 512 KB
+      );
+      expect(
+        () => BookmarkBackupService.readBackupFile(oversizedMetaFile),
+        throwsA(isA<FormatException>()),
+      );
+
+      // 2. Oversized via actual byte array
+      final oversizedBytes = Uint8List.fromList(List<int>.filled(550 * 1024, 65));
+      final oversizedByteFile = PlatformFile(
+        name: 'oversized_bytes.json',
+        size: oversizedBytes.length,
+        bytes: oversizedBytes,
+      );
+      expect(
+        () => BookmarkBackupService.readBackupFile(oversizedByteFile),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('readBackupFile rejects malformed UTF-8 in bytes (C29)', () async {
+      final invalidBytes = Uint8List.fromList([0xC0, 0xAF, 0xFF]);
+      final badUtf8File = PlatformFile(
+        name: 'bad_utf8.json',
+        size: invalidBytes.length,
+        bytes: invalidBytes,
+      );
+
+      expect(
+        () => BookmarkBackupService.readBackupFile(badUtf8File),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('validateAndParse rejects oversized JSON payload exceeding 512KB (C29)', () {
+      final hugePayload = '{"app":"talib_ilm","data":"${'a' * (550 * 1024)}"}';
+      final result = BookmarkBackupService.validateAndParse(hugePayload);
+      expect(result.isValid, isFalse);
+      expect(result.errorMessage, contains('الحد الأقصى'));
+    });
+
+    test('failed validation does not mutate saved bookmarks or last read state (C29)', () async {
+      await BookmarkService.addBookmark(1, 1, note: 'Existing bookmark');
+      await BookmarkService.saveLastRead(surah: 1, ayah: 1);
+
+      // Attempt to validate invalid backup
+      final invalidJson = json.encode({
+        'app': 'talib_ilm',
+        'version': 999, // future version
+        'bookmarks': [
+          {'surah': 2, 'ayah': 1, 'page': 2},
+        ],
+      });
+
+      final validation = BookmarkBackupService.validateAndParse(invalidJson);
+      expect(validation.isValid, isFalse);
+
+      // Verify no writes occurred
+      final storedBookmarks = await BookmarkService.getBookmarks();
+      expect(storedBookmarks.length, equals(1));
+      expect(storedBookmarks.first.surah, equals(1));
+
+      final storedLastRead = await BookmarkService.getLastRead();
+      expect(storedLastRead.surah, equals(1));
     });
   });
 }

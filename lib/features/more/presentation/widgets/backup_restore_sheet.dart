@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -68,22 +67,23 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
       }
 
       final file = result.files.first;
-      String content;
+      final String content;
 
       try {
-        if (file.bytes != null) {
-          content = utf8.decode(file.bytes!, allowMalformed: false);
-        } else if (file.path != null) {
-          content = await File(file.path!).readAsString(encoding: utf8);
-        } else {
-          if (mounted) {
-            AppSnackbar.error(context, 'تعذر قراءة الملف المحدد');
-          }
-          return;
-        }
-      } on FormatException {
+        content = await BookmarkBackupService.readBackupFile(file);
+      } on FormatException catch (e) {
         if (mounted) {
-          AppSnackbar.error(context, 'الملف المحدد ليس بترميز UTF-8 صالح');
+          AppSnackbar.error(context, e.message);
+        }
+        return;
+      } on FileSystemException catch (e) {
+        if (mounted) {
+          AppSnackbar.error(context, e.message);
+        }
+        return;
+      } catch (e) {
+        if (mounted) {
+          AppSnackbar.error(context, 'تعذر قراءة الملف المحدد: $e');
         }
         return;
       }
@@ -104,6 +104,10 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
       if (!mounted) return;
 
       // Ask confirmation about overwriting existing notes
+      final String partialNotice = validation.rejectedCount > 0
+          ? '\n(تم استبعاد ${validation.rejectedCount} عنصر غير مطابق أو مكرر)'
+          : '';
+
       final bool? overwrite = await showDialog<bool>(
         context: context,
         builder: (ctx) {
@@ -121,7 +125,7 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
               ),
             ),
             content: Text(
-              'تم التحقق من الملف (${validation.bookmarks.length} علامة وملاحظة).\nهل ترغب في تحديث الملاحظات السابقة في حال تطابق الآيات، أم الاحتفاظ بها ودمج الجديد فقط؟',
+              'تم التحقق من الملف (${validation.bookmarks.length} علامة وملاحظة)$partialNotice.\nهل ترغب في تحديث الملاحظات السابقة في حال تطابق الآيات، أم الاحتفاظ بها ودمج الجديد فقط؟',
               style: textTheme.body.copyWith(
                 color: palette.textMuted,
                 height: 1.5,
@@ -161,10 +165,10 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        AppSnackbar.success(
-          context,
-          'تم استيراد المحفوظات بنجاح (أُضيف: ${mergeStats.addedCount}، حُدّث: ${mergeStats.updatedCount})',
-        );
+        final String statsMsg = validation.rejectedCount > 0
+            ? 'تم استيراد المحفوظات بنجاح (أُضيف: ${mergeStats.addedCount}، حُدّث: ${mergeStats.updatedCount}، استُبعد: ${validation.rejectedCount})'
+            : 'تم استيراد المحفوظات بنجاح (أُضيف: ${mergeStats.addedCount}، حُدّث: ${mergeStats.updatedCount})';
+        AppSnackbar.success(context, statsMsg);
       }
     } catch (e) {
       if (mounted) {
@@ -198,20 +202,21 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
           ),
           border: Border.all(color: palette.border),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: palette.border,
-                  borderRadius: AppRadius.pillRadius,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: palette.border,
+                    borderRadius: AppRadius.pillRadius,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: AppSpace.md),
 
             Row(
@@ -372,6 +377,7 @@ class _BackupRestoreSheetState extends State<BackupRestoreSheet> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
