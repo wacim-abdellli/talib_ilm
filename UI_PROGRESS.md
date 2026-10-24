@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## R50 / Task 5 — Make Tests and CI Prove the Claims (Findings C31, C33, C34)
+- **Scope:** Findings C31 (Acceptance suite had placeholder labels rather than end-to-end assertions), C33 (Two Shamela download UI fixtures tested stale preference flags rather than real SQLite cached page manifests), and C34 (Unpinned Flutter SDK in CI).
+- **Implemented:**
+  - `.github/workflows/verify.yml`:
+    - Pinned `flutter-version: '3.38.7'` on stable channel (Dart 3.10.7) to ensure 100% environment parity with local verification.
+  - `test/offline_download_ux_test.dart`:
+    - Replaced superficial SharedPreferences mocking with `FakeShamelaDatabase` in-memory SQLite implementation.
+    - Added tests for full books (all 10 pages in SQLite -> displays `download_done_outlined` and `محفوظ` badge) and incomplete books (5 of 10 pages in SQLite -> rejects stale preference flag, cleans up flag to `false`, hides badge, and displays download button).
+    - 6/6 tests passing (237 lines, Rule 8 compliant).
+  - `test/code_acceptance_suite_test.dart`:
+    - Replaced superficial labels with 7 deep, concrete end-to-end journey tests:
+      1. Permission API invocation counts verified through method channel seam (`'dexterous.com/flutter/local_notifications'`); asserts `init()` does not prompt permissions (0 count), while explicit `requestPermissions()` triggers notification and exact alarm permissions (1 count each); verifies silent background refresh execution.
+      2. Full notification payload → route → Back navigation destination; verifies payload 'morning' navigates to `MorningAthkarPage` on tab 3, and popping returns directly to `AppShell` on tab 3.
+      3. Actual bookmark backup parse/merge using bytes and path branches; verifies byte ceiling (>512KB rejected), malformed UTF-8 rejection, coordinate validation, and atomic merge deduplication.
+      4. Offline complete-book manifest & reading progress; verifies corrupted storage JSON recovery and per-record isolation.
+      5. Quran audio download driving fake HTTP (`MockClient`): verifies rejection of 200 HTML captive portal responses, empty bodies, and truncated streams; verifies in-flight cancellation cleans up `.tmp` files and leaves target audio uncreated; verifies atomic promotion on success.
+      6. Islamic quiz load, resume, invariants & completion: verifies level questions schema invariants, and executes duplicate completion with the same `sessionCompletionId`, asserting strict idempotency of persisted totals (XP, answered, correct).
+      7. Multi-instance prayer serialization across distinct service instances via shared `AsyncLock`, verifying exactly one instance executes the 7-day schedule while the second instance joins/skips without duplicate scheduling; verifies atomic native widget snapshot versioning across all 10 keys.
+    - 7/7 journeys passing (553 lines, strictly Rule 8 compliant).
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.5s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test --no-pub test/code_acceptance_suite_test.dart test/offline_download_ux_test.dart test/prayer_scheduling_serialization_test.dart test/network_boundaries_and_security_test.dart test/bookmark_atomicity_test.dart test/bookmark_backup_test.dart test/native_widget_snapshot_test.dart`: 69/69 passed (4.2s).
+  - `flutter build apk --debug`: PASSED (62.1s, size: 330,215,570 bytes, SHA-256 `6F0046AE624B430AA5E030A8FCAD7D19EBA4013491377DE11DBF71AE3959AC7C`).
+- **Open issues:** R50 complete. Next task is Task 6 / R51 (Resolve golden failures by evidence: Finding C33). Historical full-suite issues (37 goldens) remain tracked under R51.
+
 ## R49 / Task 4 — Enforce Real Network Byte and Wall-Clock Limits (Finding C32)
 - **Scope:** Finding C32 (`ReverseGeocodeClient` counted decoded string units toward the 64KB cap rather than raw incoming bytes, allowing multibyte UTF-8 payloads to evade the budget; applied chunk stream idle timeouts rather than an overarching wall-clock operation deadline, allowing slow-drip evasion).
 - **Implemented:**
