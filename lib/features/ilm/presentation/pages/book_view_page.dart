@@ -3,40 +3,32 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:talib_ilm/core/services/last_activity_service.dart';
-import 'package:talib_ilm/core/services/last_sharh_service.dart';
-import 'package:talib_ilm/shared/widgets/app_popup.dart';
-import 'package:talib_ilm/shared/widgets/app_snackbar.dart';
-import '../../../../app/constants/app_assets.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
-import '../../../../app/theme/theme_colors.dart';
-import '../../../../shared/navigation/fade_page_route.dart';
-import '../../data/models/mutun_models.dart';
-import '../../data/models/sharh_model.dart';
-import '../../../../shared/widgets/pdf_viewer_page.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../core/services/last_activity_service.dart';
+import '../../../../core/services/last_sharh_service.dart';
 import '../../../../core/services/progress_service.dart';
-import '../../../ilm/data/models/progress_models.dart';
-import '../../data/catalogs/mutun_curriculum_catalog.dart';
+import '../../../../shared/widgets/app_popup.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/pdf_viewer_page.dart';
+import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/catalogs/mutun_lessons_catalog.dart';
-import '../../data/catalogs/turath_catalog.dart';
-import '../../data/models/shamela_models.dart';
-import '../../data/services/shamela_service.dart';
-import 'shamela_reader_page.dart';
-import 'sharh_reader_page.dart';
+import '../../data/models/mutun_models.dart';
+import '../../data/models/progress_models.dart';
+import '../../data/models/sharh_model.dart';
+import '../../data/services/book_progress_service.dart';
+import '../../data/services/mutun_audio_service.dart';
+import '../services/book_view_navigation_helper.dart';
+import '../services/book_view_note_coordinator.dart';
+import '../services/book_view_persistence_delegate.dart';
+import '../services/book_view_sharh_navigator.dart';
 import '../widgets/book_lessons_tab.dart';
 import '../widgets/book_mutn_tab.dart';
 import '../widgets/book_sharh_tab.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
-import '../widgets/book_view_app_bar.dart';
-import '../widgets/book_view_controls.dart' show BookNoteDialog;
-import '../../../../core/services/favorites_service.dart';
-import '../../../../core/models/favorite_item.dart';
-import '../../../../core/services/asset_service.dart';
-import '../../data/catalogs/mutun_digital_catalog.dart';
-import '../../data/services/book_progress_service.dart';
-import '../../data/services/mutun_audio_service.dart';
+import '../widgets/book_view_header.dart';
 
 class BookViewPage extends StatefulWidget {
   final IlmBook book;
@@ -112,40 +104,16 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<int> _resolveInitialMutunPage(MutunDigitalEntry? digitalEntry) async {
-    int resolvedPage = widget.initialPage ?? 1;
-
-    if (widget.initialPage == null) {
-      try {
-        final info = await _lastActivityService.getPdfPage(_mutunPdfKey);
-        if (info != null && info.page > resolvedPage) {
-          resolvedPage = info.page;
-        }
-      } catch (_) {}
-
-      try {
-        final progressService = await _getProgressService();
-        final progress = await progressService.getBookProgress(widget.book.id);
-        if (progress != null && progress.currentPage > resolvedPage) {
-          resolvedPage = progress.currentPage;
-        }
-      } catch (_) {}
-
-      if (digitalEntry != null) {
-        try {
-          final shamelaPage =
-              await ShamelaService.getLastReadPage(digitalEntry.shamelaId);
-          if (shamelaPage > resolvedPage) {
-            resolvedPage = shamelaPage;
-          }
-        } catch (_) {}
-      }
-    }
-
-    final maxPage = _totalPages > 0
-        ? _totalPages
-        : (digitalEntry?.totalPages ??
-            (widget.book.totalPages > 0 ? widget.book.totalPages : 1));
-    final safePage = resolvedPage.clamp(1, maxPage);
+    final progressService = await _getProgressService();
+    final safePage = await BookViewPersistenceDelegate.resolveInitialMutunPage(
+      book: widget.book,
+      initialPage: widget.initialPage,
+      totalPages: _totalPages,
+      mutunPdfKey: _mutunPdfKey,
+      lastActivityService: _lastActivityService,
+      progressService: progressService,
+      digitalEntry: digitalEntry,
+    );
     _currentPage = safePage;
     return safePage;
   }
@@ -191,33 +159,17 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _resolveBookLevel() async {
-    try {
-      final program = await AssetService.loadMutunProgram();
-      for (final level in program.levels) {
-        if (level.books.any((book) => book.id == widget.book.id)) {
-          _bookLevelLabel = level.title;
-          return;
-        }
-      }
-    } catch (_) {}
+    final title = await BookViewPersistenceDelegate.resolveBookLevel(widget.book.id);
+    _bookLevelLabel = title;
   }
 
   Future<void> _ensureBookInitialized({int? totalPages}) async {
     final progressService = await _getProgressService();
-    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
-    final canonicalTotal = (digitalEntry != null && digitalEntry.totalPages > 0)
-        ? digitalEntry.totalPages
-        : (widget.book.totalPages > 0 ? widget.book.totalPages : 0);
-    final pages = totalPages ?? _totalPages;
-    final safePages = pages > canonicalTotal
-        ? pages
-        : (canonicalTotal > 0 ? canonicalTotal : (pages <= 0 ? 1 : pages));
-
-    await progressService.initializeBook(
-      bookId: widget.book.id,
-      bookTitle: widget.book.title,
-      level: _bookLevelLabel,
-      totalPages: safePages,
+    await BookViewPersistenceDelegate.ensureBookInitialized(
+      book: widget.book,
+      bookLevelLabel: _bookLevelLabel,
+      totalPages: totalPages ?? _totalPages,
+      progressService: progressService,
     );
   }
 
@@ -256,17 +208,14 @@ class _BookViewPageState extends State<BookViewPage>
     _sessionMinutes = 0;
   }
 
-  void _persistLastPositionSync() {
-    _lastActivityService.savePdfPage(
-      key: _mutunPdfKey,
-      page: _currentPage,
-      total: _totalPages > 0 ? _totalPages : 1,
-    );
-    final digitalEntry = MutunDigitalCatalog.getEntry(widget.book.id);
-    if (digitalEntry != null) {
-      ShamelaService.saveLastReadPage(digitalEntry.shamelaId, _currentPage);
-    }
-  }
+  void _persistLastPositionSync() =>
+      BookViewPersistenceDelegate.persistLastPositionSync(
+        bookId: widget.book.id,
+        mutunPdfKey: _mutunPdfKey,
+        currentPage: _currentPage,
+        totalPages: _totalPages,
+        lastActivityService: _lastActivityService,
+      );
 
   @override
   void dispose() {
@@ -281,73 +230,40 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   Future<void> _loadLastSharh() async {
-    final file = await _lastSharhService.get(widget.book.id);
-    if (!mounted) return;
-
-    final sharh = widget.book.shuruh.where((s) => s.file == file).firstOrNull;
-
-    final Map<String, int> pages = {};
-    for (final s in widget.book.shuruh) {
-      if (s.shamelaId != null) {
-        final page = await ShamelaService.getLastReadPage(s.shamelaId!);
-        if (page > 1) {
-          pages[s.file] = page;
-        }
-      } else {
-        final key = _lastActivityService.pdfKeyForSharh(widget.book.id, s.file);
-        final pageInfo = await _lastActivityService.getPdfPage(key);
-        if (pageInfo != null && pageInfo.page > 1) {
-          pages[s.file] = pageInfo.page;
-        }
-      }
-    }
-
-    PdfPageInfo? info;
-    if (file != null) {
-      if (sharh != null && sharh.shamelaId != null) {
-        final page =
-            pages[file] ?? await ShamelaService.getLastReadPage(sharh.shamelaId!);
-        final total = sharh.totalPages ?? 50;
-        info = PdfPageInfo(page: page, total: total);
-      } else {
-        final key = _lastActivityService.pdfKeyForSharh(widget.book.id, file);
-        info = await _lastActivityService.getPdfPage(key);
-      }
-    }
-
+    final state = await BookViewSharhNavigator.loadSharhState(
+      book: widget.book,
+      lastSharhService: _lastSharhService,
+      lastActivityService: _lastActivityService,
+    );
     if (!mounted) return;
     setState(() {
-      _lastSharhFile = file;
-      _lastSharh = sharh;
-      _lastSharhPage = info;
+      _lastSharhFile = state.lastSharhFile;
+      _lastSharh = state.lastSharh;
+      _lastSharhPage = state.lastSharhPage;
       _shuruhPages
         ..clear()
-        ..addAll(pages);
+        ..addAll(state.shuruhPages);
     });
   }
 
   Future<void> _loadFavorite() async {
-    final saved = await _favoritesService.isFavorite(
-      FavoriteType.book,
-      widget.book.id,
-    );
     final progressService = await _getProgressService();
-    await progressService.setFavorite(widget.book.id, saved);
+    final saved = await BookViewPersistenceDelegate.loadFavorite(
+      bookId: widget.book.id,
+      favoritesService: _favoritesService,
+      progressService: progressService,
+    );
     if (!mounted) return;
     setState(() => _isFavorite = saved);
   }
 
   Future<void> _toggleFavorite() async {
-    final saved = await _favoritesService.toggle(
-      FavoriteItem(
-        type: FavoriteType.book,
-        id: widget.book.id,
-        title: widget.book.title,
-        subtitle: widget.book.author,
-      ),
-    );
     final progressService = await _getProgressService();
-    await progressService.setFavorite(widget.book.id, saved);
+    final saved = await BookViewPersistenceDelegate.toggleFavorite(
+      book: widget.book,
+      favoritesService: _favoritesService,
+      progressService: progressService,
+    );
     if (!mounted) return;
     setState(() => _isFavorite = saved);
 
@@ -445,74 +361,16 @@ class _BookViewPageState extends State<BookViewPage>
     }
   }
 
-  Future<void> _openSharhPdf(Sharh sharh) async {
-    await _lastSharhService.save(widget.book.id, sharh.file);
-    await _lastActivityService.setLastSharh(widget.book.id, sharh.file);
-
-    if (sharh.shamelaId != null) {
-      final match = TurathCatalog.books
-          .where((b) => b.id == sharh.shamelaId)
-          .firstOrNull;
-      final totalPages = sharh.totalPages ?? match?.totalPages ?? 50;
-      final shamelaBook = match?.copyWith(totalPages: totalPages) ??
-          ShamelaBook(
-            id: sharh.shamelaId!,
-            title: sharh.title,
-            author: sharh.scholar,
-            category: 'شروح المتون',
-            categoryId: 1,
-            totalPages: totalPages,
-            description: sharh.description ?? sharh.title,
-          );
-
-      final initialPage =
-          await ShamelaService.getLastReadPage(sharh.shamelaId!);
-
-      if (!mounted) return;
-
-      await Navigator.push(
-        context,
-        buildFadeRoute(
-          page: ShamelaReaderPage(
-            book: shamelaBook,
-            initialPage: initialPage,
-          ),
-        ),
+  Future<void> _openSharhPdf(Sharh sharh) =>
+      BookViewSharhNavigator.openSharh(
+        context: context,
+        book: widget.book,
+        sharh: sharh,
+        lastSharhService: _lastSharhService,
+        lastActivityService: _lastActivityService,
+        getProgressService: _getProgressService,
+        onReload: _loadLastSharh,
       );
-
-      await _loadLastSharh();
-      return;
-    }
-
-    final pdfPath = AppAssets.sharhPdf(widget.book.id, sharh.file);
-    final pdfKey = _lastActivityService.pdfKeyForSharh(
-      widget.book.id,
-      sharh.file,
-    );
-    final initialPage = await _lastActivityService
-        .getPdfPage(pdfKey)
-        .then((info) => info?.page ?? 1);
-
-    final progressService = await _getProgressService();
-    if (!mounted) return;
-
-    await Navigator.push(
-      context,
-      buildFadeRoute(
-        page: SharhReaderPage(
-          bookId: widget.book.id,
-          sharh: sharh,
-          pdfPath: pdfPath,
-          pdfKey: pdfKey,
-          initialPage: initialPage,
-          progressService: progressService,
-          lastActivityService: _lastActivityService,
-        ),
-      ),
-    );
-
-    await _loadLastSharh();
-  }
 
   void _goToMutn() {
     _tabController.animateTo(0);
@@ -545,56 +403,16 @@ class _BookViewPageState extends State<BookViewPage>
     await _refreshBookmarkState();
   }
 
-  void _showNoteDialog() async {
-    final progressService = await _getProgressService();
-    final progress = await progressService.getBookProgress(widget.book.id);
-    final targetPage = _currentPage > 0 ? _currentPage : 1;
-    final existingNote = progress?.notes[targetPage] ?? '';
-    _noteController.text = existingNote;
-
-    if (!mounted) return;
-    BookNoteDialog.show(
-      context,
-      controller: _noteController,
-      hasExistingNote: existingNote.isNotEmpty,
-      onDelete: existingNote.isNotEmpty
-          ? () async {
-              await progressService.deleteNote(widget.book.id, targetPage);
-              _noteController.clear();
-              if (!mounted) return;
-              Navigator.of(context).pop();
-              AppSnackbar.info(context, 'تم حذف الملاحظة (صفحة $targetPage)');
-            }
-          : null,
-      onShowAllNotes: () {
-        Navigator.of(context).pop();
-        _showBookmarksAndNotes(initialTab: 1);
-      },
-      onSave: () async {
-        final text = _noteController.text.trim();
-        final progressService = await _getProgressService();
-        await _ensureBookInitialized(totalPages: _totalPages);
-        if (text.isEmpty) {
-          await progressService.deleteNote(widget.book.id, targetPage);
-        } else {
-          await progressService.saveNote(
-            widget.book.id,
-            targetPage,
-            text,
-          );
-        }
-        _noteController.clear();
-        if (!mounted) return;
-        Navigator.of(context).pop();
-        AppSnackbar.success(
-          context,
-          text.isEmpty
-              ? 'تم حذف الملاحظة'
-              : 'تم حفظ الملاحظة على صفحة $targetPage',
-        );
-      },
-    );
-  }
+  void _showNoteDialog() => BookViewNoteCoordinator.showNoteDialog(
+        context: context,
+        bookId: widget.book.id,
+        currentPage: _currentPage,
+        totalPages: _totalPages,
+        noteController: _noteController,
+        getProgressService: _getProgressService,
+        ensureBookInitialized: _ensureBookInitialized,
+        onShowBookmarksAndNotes: _showBookmarksAndNotes,
+      );
 
   void _showBookmarksAndNotes({int initialTab = 0}) async {
     final progressService = await _getProgressService();
@@ -608,64 +426,30 @@ class _BookViewPageState extends State<BookViewPage>
     );
   }
 
-  void _navigateToEntry(BookmarkEntry entry) async {
-    if (entry.bookId == widget.book.id) {
-      if (entry.sharhFile != null) {
-        _tabController.animateTo(1);
-        final sharh = widget.book.shuruh.firstWhere(
-          (s) => s.file == entry.sharhFile,
-          orElse: () => widget.book.shuruh.first,
-        );
-        _openSharhPdf(sharh);
-      } else {
-        _tabController.animateTo(0);
-
-        final curriculum = MutunCurriculumCatalog.getBook(widget.book.id);
-        final digital = MutunDigitalCatalog.getEntry(widget.book.id);
-        final totalParas = curriculum?.totalParagraphs ?? 0;
-        final totalPages = digital?.totalPages ??
-            (widget.book.totalPages > 0 ? widget.book.totalPages : 1);
-
-        // Map canonical page to first paragraph of that page for curriculum view
-        final targetPara = (totalPages > 0 && totalParas > 0)
-            ? (((entry.page - 1) * totalParas) ~/ totalPages) + 1
-            : entry.page;
-
-        setState(() {
-          _targetParagraph = targetPara;
-          _targetParagraphKey = Object();
-          _currentPage = entry.page;
-          _totalPages = totalPages;
-          _isBookmarked = _bookmarkedPages.contains(entry.page);
-        });
-
-        _mutnPdfKey.currentState?.jumpToPage(entry.page);
-        AppSnackbar.info(context, 'انتقال إلى صفحة ${entry.page}');
-      }
-    } else {
-      final program = await AssetService.loadMutunProgram();
-      IlmBook? targetBook;
-      for (final lvl in program.levels) {
-        for (final b in lvl.books) {
-          if (b.id == entry.bookId) {
-            targetBook = b;
-            break;
-          }
-        }
-      }
-      if (targetBook != null && mounted) {
-        Navigator.of(context).push(
-          buildFadeRoute(
-            page: BookViewPage(
-              book: targetBook,
-              initialPage: entry.page,
-              autoOpenSharhFile: entry.sharhFile,
-            ),
-          ),
-        );
-      }
-    }
-  }
+  void _navigateToEntry(BookmarkEntry entry) =>
+      BookViewNavigationHelper.navigateToEntry(
+        context: context,
+        entry: entry,
+        currentBook: widget.book,
+        tabController: _tabController,
+        mutnPdfKey: _mutnPdfKey,
+        bookmarkedPages: _bookmarkedPages,
+        onUpdateMutnState: ({
+          required int targetParagraph,
+          required int currentPage,
+          required int totalPages,
+          required bool isBookmarked,
+        }) {
+          setState(() {
+            _targetParagraph = targetParagraph;
+            _targetParagraphKey = Object();
+            _currentPage = currentPage;
+            _totalPages = totalPages;
+            _isBookmarked = isBookmarked;
+          });
+        },
+        onOpenSharh: _openSharhPdf,
+      );
 
   Future<void> _onMutnPageChanged(int page, int total) async {
     if (total <= 0) return;
@@ -689,14 +473,7 @@ class _BookViewPageState extends State<BookViewPage>
     }
 
     // Persist immediately across both storage systems
-    _lastActivityService.savePdfPage(
-      key: _mutunPdfKey,
-      page: page,
-      total: safeTotal,
-    );
-    if (digitalEntry != null) {
-      ShamelaService.saveLastReadPage(digitalEntry.shamelaId, page);
-    }
+    _persistLastPositionSync();
 
     final progressService = await _getProgressService();
     await _ensureBookInitialized(totalPages: safeTotal);
@@ -729,10 +506,6 @@ class _BookViewPageState extends State<BookViewPage>
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final topBarHeight = topPadding + kToolbarHeight + 48.0;
-    final minimalBarHeight = topPadding + 42.0;
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -748,102 +521,16 @@ class _BookViewPageState extends State<BookViewPage>
         floatingActionButton: null,
       body: Column(
         children: [
-          AnimatedContainer(
-            duration: AppMotion.fast,
-            curve: AppMotion.easeOut,
-            height: _showControls ? topBarHeight : minimalBarHeight,
-            decoration: BoxDecoration(
-              color: _showControls ? context.palette.surfaceRaised : context.palette.bg,
-              border: Border(
-                bottom: BorderSide(
-                  color: _showControls
-                      ? context.palette.border
-                      : context.palette.border.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: ClipRect(
-              child: Stack(
-                children: [
-                  // Minimal header when controls hidden
-                  Positioned(
-                    top: topPadding,
-                    left: AppSpace.md,
-                    right: AppSpace.md,
-                    height: 42.0,
-                    child: AnimatedOpacity(
-                      duration: AppMotion.fast,
-                      curve: AppMotion.easeOut,
-                      opacity: _showControls ? 0.0 : 1.0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.book.title,
-                              style: context.text.titleSmall.copyWith(
-                                color: context.palette.text,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.sm),
-                          Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.sm,
-                              vertical: AppSpace.xxs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.palette.goldSoft,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(
-                                color: context.palette.gold.withValues(alpha: 0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'صفحة $_currentPage من $_totalPages',
-                              style: context.text.caption.copyWith(
-                                color: context.palette.gold,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Full App Bar when controls visible
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: topBarHeight,
-                    child: IgnorePointer(
-                      ignoring: !_showControls,
-                      child: AnimatedOpacity(
-                        duration: AppMotion.fast,
-                        curve: AppMotion.easeOut,
-                        opacity: _showControls ? 1.0 : 0.0,
-                        child: BookViewAppBar(
-                          title: widget.book.title,
-                          isFavorite: _isFavorite,
-                          onToggleFavorite: _toggleFavorite,
-                          onResetProgress: _resetProgress,
-                          onShowBookmarksAndNotes: () => _showBookmarksAndNotes(),
-                          tabController: _tabController,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          BookViewHeader(
+            showControls: _showControls,
+            bookTitle: widget.book.title,
+            currentPage: _currentPage,
+            totalPages: _totalPages,
+            isFavorite: _isFavorite,
+            onToggleFavorite: _toggleFavorite,
+            onResetProgress: _resetProgress,
+            onShowBookmarksAndNotes: () => _showBookmarksAndNotes(),
+            tabController: _tabController,
           ),
           Expanded(
             child: TabBarView(

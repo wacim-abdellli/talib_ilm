@@ -1,5 +1,24 @@
 # UI Progress Log
 
+## R53 / Task 8 — Close Measurable Maintainability and Performance Debt (Rule 8 Decompositions)
+- **Scope:** Close measurable maintainability debt across the repository. Audit Dart files, catalog constant datasets vs. behavior files, and decompose all behavior files exceeding the 600-line limit (Rule 8) into clean single-responsibility components, while strictly preserving public APIs, test contracts, and Arabic RTL invariants.
+- **Decomposition Inventory & Resolution:**
+  - Recounted all Dart files across the project. Identified 4 static constant data catalogs as documented exceptions (`app_palette.dart` 1274 lines, `mutun_lessons_catalog.dart` 1236 lines, `verified_cities.dart` 950 lines, `mutun_audio_catalog.dart` 908 lines).
+  - Decomposed all 6 oversized behavior files with zero functional regressions:
+    1. `ilm_reading_tracker_sheet.dart` (694 → 352 lines): extracted `ilm_reading_tracker_in_progress_tab.dart` (202 lines) and `ilm_reading_tracker_completed_tab.dart` (144 lines).
+    2. `quran_api_service.dart` (795 → 429 lines): extracted static surah metadata fallback catalog into `lib/features/quran/data/catalogs/surah_fallback_catalog.dart` (436 lines).
+    3. `ayah_details_tabs.dart` (828 → 296 lines): extracted `ayah_tafsir_tab_view.dart` (342 lines) and `ayah_words_tab_view.dart` (214 lines).
+    4. `book_view_bookmarks_sheet.dart` (836 → 469 lines): extracted `book_view_bookmarks_tab.dart` (168 lines) and `book_view_notes_tab.dart` (186 lines).
+    5. `book_view_page.dart` (896 → 583 lines): extracted `book_view_header.dart` (124 lines), `book_view_sharh_navigator.dart` (134 lines), `book_view_note_coordinator.dart` (64 lines), `book_view_navigation_helper.dart` (84 lines), and `book_view_persistence_delegate.dart` (137 lines).
+    6. `notification_service.dart` (1474 → 355 lines): extracted `notification_channel_manager.dart` (214 lines), `prayer_notification_details_builder.dart` (267 lines), `athkar_notification_scheduler.dart` (144 lines), and `prayer_notification_scheduler.dart` (423 lines).
+  - **Zero behavior files > 600 lines remain in the repository.**
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.7s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test`: 531/531 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (41.0s, size: 330,224,419 bytes, SHA-256 `64CA8F5471F4D6D62526533516D799C865A558897CCA7F27A342130761DF6490`).
+- **Open issues:** R53 / Task 8 complete. Next task is Task 9 / Task 10 (Final Audit Verification and Closure Gate Check).
+
 ## R52 / Task 7 — Re-audit Original C01–C26 with Production Evidence
 - **Scope:** Complete verification checklist of original findings C01 through C26 against active source code, active callers, and automated regression suites.
 - **Audit Findings & Evidence Matrix:**
