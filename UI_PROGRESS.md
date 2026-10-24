@@ -1,5 +1,34 @@
 # UI Progress Log
 
+## R64 — Establish One Trustworthy Final Verification Record (24 October 2026)
+- **Scope:** Overhaul release readiness verification runner (`tool/run_release_readiness_checks.py`), CI workflow (`.github/workflows/verify.yml`), and add unit/regression suite (`tool/test_release_readiness_checks.py`). Eliminate Windows Flutter version probe hang via explicit subprocess timeout and headless environment configuration. Record exact clean HEAD SHA, Flutter/Dart/Java/OS versions, command durations, exit codes, and artifact hashes. Enforce strict final test summary parsing (rejecting intermediate progress or partial runs). Add test-signed release AAB verification with certificate signer check (`CN=TestUpload`). Add CI log upload with exact commit SHA identification. Strictly zero application code changes.
+- **Implemented:**
+  - `tool/run_release_readiness_checks.py`:
+    - Resilient preflight environment probing: added explicit 30s timeout to `flutter --version` probe with `stdin=subprocess.DEVNULL`, `CI=true`, and `FLUTTER_SUPPRESS_ANALYTICS=true` to prevent hangs. Gracefully catches `TimeoutExpired` and records actionable failure. Probes Java 17+ via `java -version` (15s timeout) and host OS details.
+    - Git clean status enforcement: captures exact 40-char `HEAD` SHA, active branch, and `git status --porcelain`. Warns or aborts if tree is dirty (`--require-clean`).
+    - Output artifact verification & hashing: computes SHA-256, decimal MB (`bytes / 1,000,000`), and binary MiB (`bytes / 1,048,576`) for all generated build artifacts, asserting freshness via modification time (`mtime >= start_time - 5.0`).
+    - Strict test log parser: parses test counts strictly from final summary regex (`All tests passed!` or `Some tests failed.`), handling carriage returns `\r`, ANSI color sequences, and skipped tests. Asserts `exit_code == 0`, `failed == 0`, and `passed > 0`. Rejects empty, interrupted (partial `+N`), or malformed logs without inferring pass.
+    - Gate 5 (Test-Signed Release AAB Verification): isolates test signing credentials inside a temporary directory (`tempfile.mkdtemp`) via Gradle environment variables (`KEYSTORE_PATH`, `KEY_PROPERTIES_PATH`), builds release AAB, verifies signature certificate via `keytool -printcert -jarfile`, asserts presence of `CN=TestUpload` and absence of `CN=Android Debug`, and cleans up safely.
+    - Deterministic reporting: persists timestamped logs and machine-readable `summary.json` under `build/release-readiness/<run_id>/` and mirrors to `latest/`.
+  - `.github/workflows/verify.yml`:
+    - Preflight step: visibly logs commit SHA (`${{ github.sha }}`), ref, run ID, git commit metadata, clean status, Flutter version, and Java version.
+    - Resilient gate execution: gates 1–5 run with `if: success() || failure()` to ensure diagnostic logs are gathered across all gates.
+    - Artifact archive: uploads `build/ci-logs/` with exact commit identification `verification-logs-${{ github.sha }}` on `if: always()`.
+    - GitHub step summary: renders formatted Markdown verification table directly into `$GITHUB_STEP_SUMMARY`.
+  - `tool/test_release_readiness_checks.py`: Created 18-test regression suite testing pass, skipped, fail, empty, interrupted, malformed, and nonzero exit code logs; Flutter probe timeout handling; Dart/Flutter version extraction; Java version extraction; git clean/dirty detection; artifact hashing; and AAB signer certificate verification.
+- **Verified:**
+  - `python tool/test_release_readiness_checks.py`: 18/18 passed (exit 0).
+  - `python tool/run_release_readiness_checks.py`: ALL 5 GATES GREEN (exit 0):
+    - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 28.9s).
+    - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (248 warnings, 6 allow markers, cap 10, 1.3s).
+    - Gate 3: Automated Test Suite (`flutter test`): PASS (548 passed, 0 failed, 0 skipped, 148.2s).
+    - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (24.5s, `app-debug.apk`: 330.29 MB / 314.99 MiB, SHA-256 `5c5f77d0ab0ceb80ee1852f6f50eeeb80580ab3e1366001f06c789e5859a3550`).
+    - Gate 5: Test-Signed Release AAB Verification (`flutter build appbundle --release`): PASS (31.7s, `app-release.aab`: 181.87 MB / 173.45 MiB, SHA-256 `0fb59182413bfc87bbe7fdec50ad07864bbfb434d1e77482311e386416acca38`, verified `CN=TestUpload`).
+- **Open issues & Owner actions:**
+  - Status: Task R64 complete. Verification record is unified, hashed, trustworthy, timeout-resilient, and cert-verified.
+  - Owner action: Google Play upload remains blocked by placeholder app ID, private production upload key, Data Safety declaration, and tasks R65–R70.
+  - Next task: R65 — Reconcile privacy and Play disclosures with actual behavior (P1).
+
 ## R63 — Repair Bundle-Size Measurements and Stop Stale-Success Reports (24 October 2026)
 - **Scope:** Repair bundle-size runner (`tool/run_bundle_size_analysis.py`). Make build failures fatal, reject stale artifacts via run timestamp and SHA-256 binding, isolate signing credentials without modifying or deleting workspace `android/key.properties`, report explicit decimal MB (10^6) and binary MiB (2^20) units, parse exact Flutter `--analyze-size` JSON, and measure actual device-specific Play download size via official Android `bundletool`. Add regression test suite.
 - **Implemented:**

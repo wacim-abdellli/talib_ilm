@@ -37,24 +37,85 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Preflight & Environment Record
+        run: |
+          mkdir -p build/ci-logs
+          echo "=== Release Readiness Preflight Record ===" | tee build/ci-logs/preflight.log
+          echo "Commit SHA: ${{ github.sha }}" | tee -a build/ci-logs/preflight.log
+          echo "Ref:        ${{ github.ref }}" | tee -a build/ci-logs/preflight.log
+          echo "Run ID:     ${{ github.run_id }}" | tee -a build/ci-logs/preflight.log
+          echo "Date (UTC): $(date -u '+%Y-%m-%d %H:%M:%S UTC')" | tee -a build/ci-logs/preflight.log
+          echo "--- Git Commit Info ---" | tee -a build/ci-logs/preflight.log
+          git log -1 --format="Commit:  %H%nAuthor:  %an <%ae>%nDate:    %ad%nSubject: %s" | tee -a build/ci-logs/preflight.log
+          echo "--- Git Clean Status ---" | tee -a build/ci-logs/preflight.log
+          git status --porcelain | tee build/ci-logs/git-status.log
+          cat build/ci-logs/git-status.log | tee -a build/ci-logs/preflight.log
+          echo "--- Tool Versions ---" | tee -a build/ci-logs/preflight.log
+          flutter --version | tee build/ci-logs/flutter-version.log
+          cat build/ci-logs/flutter-version.log | tee -a build/ci-logs/preflight.log
+          java -version 2>&1 | tee build/ci-logs/java-version.log
+          cat build/ci-logs/java-version.log | tee -a build/ci-logs/preflight.log
+          echo "==========================================" | tee -a build/ci-logs/preflight.log
+
       - name: Gate 1 - Static Analysis
+        if: success() || failure()
         run: |
           mkdir -p build/ci-logs
           flutter analyze 2>&1 | tee build/ci-logs/analyze.log
 
       - name: Gate 2 - UI Lint V2
-        run: python tool/ui_lint_v2.py 2>&1 | tee build/ci-logs/ui-lint-v2.log
+        if: success() || failure()
+        run: |
+          mkdir -p build/ci-logs
+          python tool/ui_lint_v2.py 2>&1 | tee build/ci-logs/ui-lint-v2.log
 
       - name: Gate 3 - Automated Test Suite
-        run: flutter test 2>&1 | tee build/ci-logs/tests.log
+        if: success() || failure()
+        run: |
+          mkdir -p build/ci-logs
+          flutter test 2>&1 | tee build/ci-logs/tests.log
+
+      - name: Tool Regression Tests
+        if: success() || failure()
+        run: |
+          mkdir -p build/ci-logs
+          python tool/test_release_readiness_checks.py 2>&1 | tee build/ci-logs/readiness-tests.log
 
       - name: Gate 4 - Debug APK Compilation
-        run: flutter build apk --debug 2>&1 | tee build/ci-logs/build-debug.log
+        if: success() || failure()
+        run: |
+          mkdir -p build/ci-logs
+          flutter build apk --debug 2>&1 | tee build/ci-logs/build-debug.log
+
+      - name: Gate 5 - Test-Signed Release AAB & Signer Verification
+        if: success() || failure()
+        run: |
+          mkdir -p build/ci-logs
+          python tool/run_release_readiness_checks.py --only-bundle 2>&1 | tee build/ci-logs/release-bundle.log
+
+      - name: Generate GitHub Step Summary
+        if: always()
+        run: |
+          echo "## Release Readiness Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch / Ref:** \`${{ github.ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check / Gate | Log Artifact |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Preflight Environment | \`preflight.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate 1: Static Analysis (\`flutter analyze\`) | \`analyze.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate 2: UI Lint V2 (\`tool/ui_lint_v2.py\`) | \`ui-lint-v2.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate 3: Automated Tests (\`flutter test\`) | \`tests.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Readiness Tool Regressions | \`readiness-tests.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate 4: Debug APK Compilation | \`build-debug.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate 5: Release AAB & Signer Check | \`release-bundle.log\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Artifact archive for this commit: **verification-logs-${{ github.sha }}**" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Verification Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: verification-logs
+          name: verification-logs-${{ github.sha }}
           path: build/ci-logs/
           retention-days: 14
