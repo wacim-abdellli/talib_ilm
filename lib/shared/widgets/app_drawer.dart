@@ -77,7 +77,7 @@ class AppDrawer extends StatelessWidget {
                           AppStrings.appName,
                           style: textTheme.titleSmall.copyWith(color: palette.text),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpace.xxs),
                         Text(
                           'v${AppStrings.appVersion}',
                           style: textTheme.caption.copyWith(color: palette.textSubtle),

@@ -78,8 +78,8 @@ class LearningPulseCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgRadius,
             gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 catColors.fg.withValues(alpha: 0.10),
                 Colors.transparent,
@@ -98,8 +98,8 @@ class LearningPulseCard extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                         colors: [
                           catColors.fg.withValues(alpha: 0.28),
                           catColors.fg.withValues(alpha: 0.10),
@@ -154,7 +154,7 @@ class LearningPulseCard extends StatelessWidget {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpace.xxs),
                         Text(
                           hasData ? data!.book.title : 'استكشف المتون العلمية وشروحها',
                           style: context.text.titleSmall.copyWith(

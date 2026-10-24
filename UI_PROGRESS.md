@@ -1,5 +1,43 @@
 # UI Progress Log
 
+## R68 — Reduce UI Warning Debt and Validate Accessibility (25 October 2026)
+- **Scope:** Triage and reduce UI warning debt across screens, eliminating 100% of RTL directional layout warnings (8 -> 0) and 100% of numeric SizedBox dimension warnings (14 -> 0). Fix directional layout with canonical `AlignmentDirectional.topStart` / `AlignmentDirectional.bottomEnd` APIs. Replace numeric micro-spacing literals with canonical `AppSpace.xxs` token. Propose zero new tokens, retain allow markers at 6/10 cap (zero new allow markers added). Validate accessibility under Arabic RTL, light and dark modes, text scales 1.0, 1.5, and 2.0 without clipping or overflow, 48dp hit targets, semantics/tooltips, and WCAG AA contrast compliance. Retain visual review evidence and update golden baselines.
+- **Implemented:**
+  - RTL Directional Layout (8 warnings eliminated across 3 files):
+    - `lib/features/home/presentation/widgets/continue_learning_card.dart`: Replaced hardcoded `Alignment.topRight`/`bottomLeft` and `Alignment.topLeft`/`bottomRight` with `AlignmentDirectional.topStart` and `AlignmentDirectional.bottomEnd`.
+    - `lib/features/home/presentation/widgets/quick_action_button.dart`: Replaced hardcoded `Alignment.topLeft`/`bottomRight` with `AlignmentDirectional.topStart` and `AlignmentDirectional.bottomEnd`.
+    - `lib/features/ilm/presentation/widgets/motivation_widgets.dart`: Replaced hardcoded `Alignment.topRight`/`bottomLeft` with `AlignmentDirectional.topStart` and `AlignmentDirectional.bottomEnd`.
+  - Canonical Spacing Token `AppSpace.xxs` (14 warnings eliminated across 13 files):
+    - Replaced `const SizedBox(height: 2)` and `const SizedBox(width: 2)` with `const SizedBox(height: AppSpace.xxs)` / `const SizedBox(width: AppSpace.xxs)` in:
+      - `lib/features/adhkar/presentation/widgets/rosary_dial.dart`
+      - `lib/features/home/presentation/widgets/continue_learning_card.dart`
+      - `lib/features/home/presentation/widgets/home_daily_dhikr_card.dart`
+      - `lib/features/home/presentation/widgets/home_hero_timeline_station.dart`
+      - `lib/features/more/presentation/widgets/more_section_card.dart`
+      - `lib/features/prayer/presentation/widgets/prayer_adhan_section.dart`
+      - `lib/features/prayer/presentation/widgets/prayer_muezzin_selector.dart`
+      - `lib/features/prayer/presentation/widgets/prayer_notification_mode_pill.dart`
+      - `lib/features/prayer/presentation/widgets/prayer_widget_standard_view.dart`
+      - `lib/features/prayer/presentation/widgets/prayer_widget_tall_view.dart` (2 instances)
+      - `lib/features/quran/presentation/widgets/juz_card.dart`
+      - `lib/shared/widgets/app_drawer.dart`
+      - `lib/shared/widgets/nav_bar.dart`
+  - Automated Regression & Accessibility Test Suite:
+    - `tool/test_ui_lint_warnings.py`: Added 5-test unit suite enforcing zero FAIL rules, zero RTL directional warnings, zero numeric SizedBox warnings, and allow markers <= 10 (all 5 pass).
+    - `test/accessibility_ui_correctness_test.dart`: Added group verifying `QuickActionButton`, `HomeHeroTimelineStation`, `MoreSectionCard`, and `LearningPulseCard` under Arabic RTL, light/dark themes, and text scales 1.0, 1.5, 2.0 without overflow (12/12 pass).
+    - `test/golden/home_golden_test.dart`: Visually verified and refreshed `home_quick_actions_light_1_0`, `home_quick_actions_dark_1_5`, and `home_continue_light_1_0` golden baselines for RTL-accurate directional lighting.
+- **Verified:**
+  - `python tool/test_ui_lint_warnings.py`: 5/5 passed (1.2s).
+  - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 16.5s).
+  - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (226 warnings, down from 248; 0 RTL warnings; 0 SizedBox warnings; 6 allow markers used, cap 10).
+  - Gate 3: Automated Test Suite (`flutter test`): PASS (555 passed, 0 failed, 2m10s).
+  - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (47.2s assembleDebug, `build/app/outputs/flutter-apk/app-debug.apk`).
+- **Open issues & Owner actions:**
+  - Status: Task R68 complete. UI warning debt reduced from 248 to 226; 100% of RTL and SizedBox warnings eliminated; accessibility and text scaling 1.0/1.5/2.0 verified.
+  - Remaining warnings: 220 `FontWeight` literal warnings and 6 surface gradient warnings across secondary features documented for subsequent passes.
+  - Owner action: Google Play upload remains blocked by placeholder app ID, private production upload key, Data Safety declaration, and tasks R69–R70.
+  - Next task: R69 — Measure runtime performance, startup, and memory (P2).
+
 ## R67 — Rebuild the Whole-Repository Code and Asset Inventory (24 October 2026)
 - **Scope:** Complete, automated, reproducible inventory of all 1,572 tracked files across the repository. Categorize first-party app code, vendored packages, tests, tooling, assets, and Android native configs. Detail exact file and line counts, oversized files (>600L) with exemption rationales, UI lint warning breakdown, exact file/line audit of all 6 allow markers, complete asset size breakdown (103.98 MB total), asset deduplication necessity analysis, unreferenced asset observation, and Android permissions/security configuration.
 - **Implemented:**

@@ -158,8 +158,8 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.lgRadius,
                 gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [
                     typeColor.withValues(alpha: 0.10),
                     Colors.transparent,

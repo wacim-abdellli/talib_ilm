@@ -5,6 +5,10 @@ import 'package:talib_ilm/app/theme/app_palette.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/shared/widgets/app_button.dart';
 import 'package:talib_ilm/shared/widgets/search_bar_widget.dart';
+import 'package:talib_ilm/features/home/presentation/widgets/continue_learning_card.dart';
+import 'package:talib_ilm/features/home/presentation/widgets/home_hero_timeline_station.dart';
+import 'package:talib_ilm/features/home/presentation/widgets/quick_action_button.dart';
+import 'package:talib_ilm/features/more/presentation/widgets/more_section_card.dart';
 
 Widget wrapWithTheme(Widget child, {bool isDark = false, double textScale = 1.0}) {
   final theme = isDark ? AppTheme.darkTheme : AppTheme.lightTheme;
@@ -267,6 +271,89 @@ void main() {
       expect(ratioRaised, greaterThanOrEqualTo(4.5), reason: 'Dark textSubtle on surfaceRaised must be AA');
       expect(ratioMuted, greaterThanOrEqualTo(4.5), reason: 'Dark textSubtle on surfaceMuted must be AA');
       expect(ratioBg, greaterThanOrEqualTo(4.5), reason: 'Dark textSubtle on bg must be AA');
+    });
+  });
+
+  group('Task R68 — RTL Directional & Spacing Token Accessibility & Scalability', () {
+    testWidgets('QuickActionButton renders with Directional gradient and survives scales 1.0, 1.5, 2.0', (tester) async {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        for (final isDark in [false, true]) {
+          await tester.pumpWidget(
+            wrapWithTheme(
+              QuickActionButton(
+                icon: Icons.menu_book_rounded,
+                label: 'القرآن الكريم',
+                onTap: () {},
+              ),
+              isDark: isDark,
+              textScale: scale,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull, reason: 'QuickActionButton failed at scale $scale isDark=$isDark');
+          expect(find.text('القرآن الكريم'), findsOneWidget);
+        }
+      }
+    });
+
+    testWidgets('HomeHeroTimelineStation with AppSpace.xxs renders cleanly at scales 1.0, 1.5, 2.0', (tester) async {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        await tester.pumpWidget(
+          wrapWithTheme(
+            Row(
+              children: [
+                HomeHeroTimelineStation(
+                  prayerName: 'الفجر',
+                  prayerTime: DateTime(2026, 10, 24, 5, 20),
+                  isCurrent: true,
+                  isPast: false,
+                  isInPrayerTime: false,
+                ),
+              ],
+            ),
+            textScale: scale,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'HomeHeroTimelineStation failed at scale $scale');
+        expect(find.text('الفجر'), findsOneWidget);
+      }
+    });
+
+    testWidgets('MoreSectionCard with AppSpace.xxs renders cleanly in RTL at scales 1.0, 1.5, 2.0', (tester) async {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        await tester.pumpWidget(
+          wrapWithTheme(
+            MoreSectionCard(
+              section: MoreSection(
+                title: 'إعدادات المظهر',
+                subtitle: 'الوضع الداكن والفاتح وألوان الواجهة',
+                icon: Icons.palette_outlined,
+                color: AppPalette.light.primary,
+                onTap: () {},
+              ),
+            ),
+            textScale: scale,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'MoreSectionCard failed at scale $scale');
+        expect(find.text('إعدادات المظهر'), findsOneWidget);
+      }
+    });
+
+    testWidgets('LearningPulseCard with Directional gradient renders without overflow at scales 1.0, 1.5, 2.0', (tester) async {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        await tester.pumpWidget(
+          wrapWithTheme(
+            const LearningPulseCard(),
+            textScale: scale,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'LearningPulseCard failed at scale $scale');
+        expect(find.text('ابدأ رحلة طلب العلم'), findsOneWidget);
+      }
     });
   });
 }

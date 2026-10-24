@@ -101,7 +101,7 @@ class MoreSectionCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.xxs),
                 Text(
                   section.subtitle,
                   style: textTheme.caption.copyWith(

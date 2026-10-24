@@ -505,7 +505,7 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpace.xxs),
                       Text(
                         item.subtitle,
                         style: textTheme.caption.copyWith(

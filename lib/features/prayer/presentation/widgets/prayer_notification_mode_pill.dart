@@ -92,7 +92,7 @@ class PrayerNotificationModePill extends StatelessWidget {
                         color: isSelected ? palette.primary : palette.text,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xxs),
                     Text(
                       subtitle,
                       style: textTheme.caption.copyWith(

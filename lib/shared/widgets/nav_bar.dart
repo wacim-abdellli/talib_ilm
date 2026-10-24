@@ -173,7 +173,7 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
                     ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.xxs),
                 Text(
                   item.label,
                   style: textTheme.caption.copyWith(

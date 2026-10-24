@@ -75,7 +75,7 @@ class PrayerWidgetTallView extends StatelessWidget {
             ),
             const SizedBox(width: AppSpace.xs),
             Icon(Icons.location_on_rounded, size: AppIcon.xs, color: prayerColor),
-            const SizedBox(width: 2),
+            const SizedBox(width: AppSpace.xxs),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 80),
               child: Text(
@@ -137,7 +137,7 @@ class PrayerWidgetTallView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.end,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xxs),
                     Text(
                       eval.timePillLabel,
                       style: textTheme.titleSmall.copyWith(

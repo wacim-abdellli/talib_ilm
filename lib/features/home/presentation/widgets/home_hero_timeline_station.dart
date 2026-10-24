@@ -111,7 +111,7 @@ class HomeHeroTimelineStation extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpace.xxs),
 
             // Prayer Time with Western Arabic numerals (123456)
             if (timeStr.isNotEmpty)

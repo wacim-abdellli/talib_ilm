@@ -221,7 +221,7 @@ class _RosaryDialState extends State<RosaryDial>
                                               : palette.text,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: AppSpace.xxs),
                                       Text(
                                         widget.target != null
                                             ? 'الهدف: ${widget.target}'

@@ -118,7 +118,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                               color: palette.text,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: AppSpace.xxs),
                           Text(
                             'إطلاق الأذان والتنبيهات عند دخول وقت كل صلاة',
                             style: textTheme.caption.copyWith(

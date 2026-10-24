@@ -107,7 +107,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpace.xxs),
                         Text(
                           item.countDescription.isNotEmpty
                               ? item.countDescription

@@ -139,7 +139,7 @@ class JuzCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xxs),
                     Text(
                       'بداية سورة $surahName • آية $firstVerse',
                       style: context.text.caption.copyWith(

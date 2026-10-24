@@ -259,7 +259,7 @@ class _PrayerStation extends StatelessWidget {
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpace.xxs),
           // Time — active gets golden rounded badge
           isCurrent
               ? Container(
