@@ -1,5 +1,31 @@
 # UI Progress Log
- 
+
+## R48 / Task 3 — Serialize Prayer Scheduling Across Instances (Finding C30)
+- **Scope:** Finding C30 (`PrayerScheduleService._refreshLock` was an instance-level lock; multiple entry points constructed separate instances, resulting in concurrent cancellations/re-schedulings of the same notification IDs and risk of overwriting SharedPreferences with stale fingerprints).
+- **Implemented:**
+  - `lib/core/services/prayer_schedule_service.dart`:
+    - Replaced instance-level lock with isolate-shared `static AsyncLock _sharedLock = AsyncLock();`.
+    - Allowed test lock injection via `AsyncLock? lock`, defaulting to `_sharedLock`.
+    - Added `@visibleForTesting static void resetSharedStateForTesting()` to reset the shared lock between test cases.
+    - Verified that all SharedPreferences reads, fingerprint calculations, notification cancellations, 7-day scheduling, and fingerprint persists execute atomically inside `_refreshLock.synchronized`.
+    - Line count: 328 lines (strictly < 600 lines, Rule 8 compliant).
+  - `test/prayer_scheduling_serialization_test.dart`:
+    - Created 6 comprehensive regression unit tests verifying:
+      1. Two distinct service instances refreshing concurrently serialize cleanly through `_sharedLock` (one schedules 7 days, the other returns cached batch in 0.1ms; exactly 1 cancellation).
+      2. Forced refresh overlapping normal refresh on separate instances executes safely.
+      3. Settings change while a refresh is pending is picked up by the queued instance and updates the fingerprint.
+      4. Mid-batch plugin failure leaves fingerprint unsaved, allowing subsequent instance to retry and succeed.
+      5. Location change while a refresh is pending updates to the new city with a fresh fingerprint.
+      6. Permission denial returns typed failure and omits the success fingerprint.
+    - Pre-fix verification: confirmed test failed against unpatched code (expected 1 scheduling run, actual was 2 concurrent runs). All 6 pass post-fix.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (9.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test --no-pub test/prayer_scheduling_serialization_test.dart test/prayer_scheduling_boundary_matrix_test.dart test/prayer_notification_resilience_test.dart test/notification_initialization_test.dart`: 22/22 passed (1.4s).
+  - `flutter test --no-pub test/bookmark_backup_test.dart test/backup_restore_sheet_test.dart test/bookmark_atomicity_test.dart test/persistence_consistency_test.dart`: 44/44 passed (2.2s).
+  - `flutter build apk --debug`: PASSED (40.5s, size: 330,215,908 bytes, SHA-256 `1E688441FA7A09B3349B1BD138419237A8CA4CF51B41FEDA30384176DE975F22`).
+- **Open issues:** R48 complete. Next task is Task 4 / R49 (Enforce real network byte and wall-clock limits: Finding C32). Historical full-suite issues (37 goldens, 2 Shamela download UI fixtures) remain tracked under C33/R50/R51.
+
 ## R47b / Task 2 — Bound and Validate Backup Input (C29)
 - **Scope:** Finding C29 (Backup import had no explicit bounds on file bytes, entry count, or note length; validator allowed un-bounded lists bypassing the 200-bookmark cap; page values were not checked against Quran coordinate mappings; malformed entries were silently swallowed; partial import results were not communicated to users; file reading did not handle growing file races between stat and read).
 - **Implemented:**

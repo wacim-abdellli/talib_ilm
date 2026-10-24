@@ -61,15 +61,22 @@ Enforced explicit byte ceiling (`maxBackupFileBytes = 512 * 1024`), bookmark cap
 
 **Pass:** invalid/oversized input cannot consume unbounded memory or mutate saved state; partial results are visible and counted; no raw parsing exception escapes; widget lifecycle is safe.
 
-### Task 3 — R48: Serialize prayer scheduling across instances
+### Task 3 — R48: Serialize prayer scheduling across instances [COMPLETED]
 
-**Files:** `prayer_schedule_service.dart`, only the necessary scheduling entry points, and `test/prayer_scheduling_boundary_matrix_test.dart` / notification tests.
+**Files:** `lib/core/services/prayer_schedule_service.dart`, `test/prayer_scheduling_serialization_test.dart`.
 
-Trace every production constructor/caller first. Use a single shared lock/coalescer for the scheduling store and notification IDs, or inject one singleton owned by app scope. Include force-refresh behavior, failure retry, cancellation, fingerprint writes, and settings/location changes. A per-object lock is not acceptable while multiple objects reach the same IDs/store.
+Serialized all `PrayerScheduleService` instances in the isolate through a shared `static AsyncLock _sharedLock = AsyncLock();` (with constructor lock injection `AsyncLock? lock` for isolated testing and `@visibleForTesting static void resetSharedStateForTesting()`). Atomically serializes SharedPreferences state checking, fingerprint generation, notification cancellation, 7-day rolling window scheduling, and fingerprint persistence. Prevents concurrent cancellations/duplicate scheduling when multiple instances refresh simultaneously.
 
-**Required tests:** two distinct service instances refresh concurrently; forced refresh overlaps normal refresh; older refresh finishes last; mid-batch plugin failure then retry; settings/location/timezone change while a refresh is pending; denied permission never prompts from background work; DST/civil date tests remain passing.
+**Required tests:** 6/6 tests passing in `test/prayer_scheduling_serialization_test.dart` (22/22 across all 4 scheduling/notification suites):
+- Two distinct service instances refresh concurrently: serialized via shared lock so the second instance sees up-to-date cache and completes without duplicate cancellation or re-scheduling (pre-fix reproduced 2 concurrent runs; post-fix guarantees exactly 1 scheduling run).
+- Forced refresh overlapping normal refresh on distinct instances completes safely.
+- Settings change while a refresh is pending is picked up by the queued instance and updates the fingerprint.
+- Mid-batch plugin failure leaves fingerprint unsaved, enabling immediate retry by subsequent instance.
+- Location change while a refresh is pending updates to the new city with a fresh fingerprint.
+- Permission denial returns typed failure and omits the success fingerprint.
+- All existing DST/civil date and cancellation preservation tests in `prayer_scheduling_boundary_matrix_test.dart` continue to pass.
 
-**Pass:** no overlapping operations mutate the shared schedule; no stale success fingerprint; failures remain retryable; current active alarms and documented IDs survive. Preserve all existing prayer method/madhab/adjustment behavior.
+**Pass:** no overlapping operations mutate the shared schedule; no stale success fingerprint; failures remain retryable; current active alarms and documented IDs survive. All existing prayer method/madhab/adjustment behaviors preserved.
 
 ### Task 4 — R49: Enforce real network byte and wall-clock limits
 

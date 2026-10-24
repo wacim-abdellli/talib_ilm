@@ -17,25 +17,35 @@ class PrayerScheduleService {
   static const _keySettings = 'prayer_schedule_settings';
   static const _keyTimestamp = 'prayer_schedule_timestamp';
 
+  static AsyncLock _sharedLock = AsyncLock();
+
   final PrayerTimeService _prayerTimeService;
   final NotificationService _notificationService;
   final AdhanSettingsService _adhanSettingsService;
   final DateTime Function() _now;
-  final AsyncLock _refreshLock = AsyncLock();
+  final AsyncLock _refreshLock;
 
   PrayerScheduleService({
     PrayerTimeService? prayerTimeService,
     NotificationService? notificationService,
     AdhanSettingsService? adhanSettingsService,
     DateTime Function()? now,
+    AsyncLock? lock,
   })  : _prayerTimeService = prayerTimeService ?? PrayerTimeService(),
         _notificationService = notificationService ?? NotificationService(),
         _adhanSettingsService =
             adhanSettingsService ?? AdhanSettingsService(),
-        _now = now ?? (prayerTimeService?.now ?? DateTime.now);
+        _now = now ?? (prayerTimeService?.now ?? DateTime.now),
+        _refreshLock = lock ?? _sharedLock;
+
+  @visibleForTesting
+  static void resetSharedStateForTesting() {
+    _sharedLock = AsyncLock();
+  }
 
   /// Synchronizes and schedules the 7-day rolling window of prayer notifications.
-  /// Serialized through an internal [AsyncLock] to prevent concurrent race conditions.
+  /// Serialized through a shared [AsyncLock] across all instances in the isolate
+  /// to eliminate duplicate or competing schedule execution.
   Future<ScheduleBatchResult> refreshSchedulesIfNeeded({
     PrayerTimesDay? day,
     bool force = false,
