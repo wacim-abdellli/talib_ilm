@@ -1,5 +1,24 @@
 # UI Progress Log
 
+## R57 — Re-establish Reproducible Verification Evidence (24 October 2026)
+- **Scope:** Re-establish reproducible verification evidence for Google Play readiness. Pin Flutter 3.38.7 / Dart 3.10.7 environment, create deterministic verification runner (`tool/run_release_readiness_checks.py`), capture stdout/stderr and exit codes for all 4 gates (`flutter analyze`, `ui_lint_v2.py`, `flutter test`, `flutter build apk --debug`), preserve raw logs and machine-readable `summary.json` in timestamped `build/release-readiness/<run-id>/`, configure CI artifact upload (`actions/upload-artifact@v4`) in `.github/workflows/verify.yml`, diagnose and resolve test failures, and report honest counts.
+- **Implemented:**
+  - `tool/run_release_readiness_checks.py`: Deterministic test runner capturing environment metadata (OS, Git commit/branch, Flutter/Dart versions), executing Gate 1 (`flutter analyze`), Gate 2 (`ui_lint_v2.py`), Gate 3 (`flutter test`), Gate 4 (`flutter build apk --debug`), preserving individual raw logs, and generating machine-readable `summary.json`.
+  - `.github/workflows/verify.yml`: Piped stdout/stderr of analyze, lint, test, and debug build steps to `build/ci-logs/` using `tee`, added `actions/upload-artifact@v4` with `if: always()` to preserve verification logs as CI artifacts for 14 days.
+  - `lib/features/adhkar/presentation/widgets/adhkar_contextual_hero.dart`: Added optional `currentTime` parameter (defaults to `DateTime.now()`) to make contextual hero rendering deterministic across unit and golden tests regardless of local wall-clock execution time. Kept file under 600 lines (127 lines).
+  - `test/golden/adhkar_golden_test.dart`: Injected fixed morning timestamp `DateTime(2026, 10, 24, 8, 0)` matching the baseline reference snapshot, resolving non-deterministic 2.76% pixel mismatch when tests run in the afternoon/evening.
+- **Verified:**
+  - Environment: Windows 10 (64-bit), Flutter 3.38.7 channel stable, Dart 3.10.7, DevTools 2.51.1.
+  - Gate 1 (`flutter analyze`): PASS, 0 issues (15.79s).
+  - Gate 2 (`python tool/ui_lint_v2.py`): PASS, 248 warnings, 6 allow markers (cap 10) (1.37s).
+  - Gate 3 (`flutter test`): PASS, 537 passed, 0 failed (170.37s).
+  - Gate 4 (`flutter build apk --debug`): PASS, `assembleDebug` succeeded (49.22s).
+  - Raw evidence archived at: `build/release-readiness/20261024-185547/` (`analyze.log`, `ui-lint-v2.log`, `tests.log`, `build-debug.log`, `summary.json`).
+  - Overall status: ALL GATES GREEN.
+- **Open issues & Owner actions:**
+  - Remote CI workflow will run against the pushed commit on GitHub Actions.
+  - Next task: Task R58 (Measure and reduce delivered bundle size).
+
 ## R56 — Correct Coordinate Sharing and Consent Behavior (24 October 2026)
 - **Scope:** Correct coordinate sharing and consent behavior. Make remote reverse-geocoding (BigDataCloud) strictly opt-in and default-off (`false`). Add an explicit user-controlled UI consent toggle in `LocationSettingsSheet` explaining recipient and purpose. Preserve 100% offline accuracy via `VerifiedCitiesCatalog` and local fallbacks when opt-out. Update privacy disclosure to truthfully reflect that coordinates are never transmitted unless explicitly enabled in settings. Add failing-first unit and widget regression tests.
 - **Implemented:**

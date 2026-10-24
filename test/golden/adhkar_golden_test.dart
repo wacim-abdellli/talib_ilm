@@ -134,6 +134,7 @@ void main() {
         width: 358,
         child: AdhkarContextualHero(
           catalog: catalog,
+          currentTime: DateTime(2026, 10, 24, 8, 0),
           onOpenCategory: (c, cat) {},
         ),
       );

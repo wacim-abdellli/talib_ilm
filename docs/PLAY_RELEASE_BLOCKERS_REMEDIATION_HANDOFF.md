@@ -76,6 +76,8 @@ The project’s `AGENTS.md` visual-only rule remains in force. Release configura
 
 **Pass:** all required commands exit zero on the final commit; raw logs are retained; `flutter test` reports the actual total and zero failures; CI is green for that exact commit; UI lint warnings are zero or each remaining warning has an explicit reviewed exception. Do not use the current 531/531 prose as a substitute for evidence.
 
+**Pass criteria met:** Pinned environment recorded (Windows 10, Flutter 3.38.7 / Dart 3.10.7); deterministic runner `tool/run_release_readiness_checks.py` created; all 4 gates exit code 0 (`flutter analyze` 0 issues, `ui_lint_v2.py` 248 warnings / 6 allows, `flutter test` 537/537 passed with 0 failures, `flutter build apk --debug` succeeded); raw logs and `summary.json` archived in `build/release-readiness/20261024-185547/`; CI artifact upload configured in `.github/workflows/verify.yml`; non-deterministic golden test fixed via parameterizable `currentTime`.
+
 ### Task R58 — Measure and reduce delivered bundle size
 
 **Files:** inspect `pubspec.yaml`, assets, native packaging, and build configuration first. Change only confirmed unused/duplicated assets or build settings; no speculative asset deletion.

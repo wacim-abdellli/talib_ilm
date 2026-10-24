@@ -8,17 +8,19 @@ import '../../data/adhkar_models.dart';
 class AdhkarContextualHero extends StatelessWidget {
   final AthkarCatalog catalog;
   final void Function(BuildContext context, AthkarCategoryData? category) onOpenCategory;
+  final DateTime? currentTime;
 
   const AdhkarContextualHero({
     super.key,
     required this.catalog,
     required this.onOpenCategory,
+    this.currentTime,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final now = DateTime.now();
+    final now = currentTime ?? DateTime.now();
     final hour = now.hour;
     final String recId;
     final String recTitle;

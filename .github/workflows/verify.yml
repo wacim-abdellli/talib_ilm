@@ -38,13 +38,23 @@ jobs:
         run: flutter pub get
 
       - name: Gate 1 - Static Analysis
-        run: flutter analyze
+        run: |
+          mkdir -p build/ci-logs
+          flutter analyze 2>&1 | tee build/ci-logs/analyze.log
 
       - name: Gate 2 - UI Lint V2
-        run: python tool/ui_lint_v2.py
+        run: python tool/ui_lint_v2.py 2>&1 | tee build/ci-logs/ui-lint-v2.log
 
       - name: Gate 3 - Automated Test Suite
-        run: flutter test
+        run: flutter test 2>&1 | tee build/ci-logs/tests.log
 
       - name: Gate 4 - Debug APK Compilation
-        run: flutter build apk --debug
+        run: flutter build apk --debug 2>&1 | tee build/ci-logs/build-debug.log
+
+      - name: Upload Verification Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-logs
+          path: build/ci-logs/
+          retention-days: 14
