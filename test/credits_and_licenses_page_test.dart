@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/features/more/presentation/credits_and_licenses_page.dart';
+import 'package:talib_ilm/shared/widgets/app_button.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -53,5 +54,35 @@ void main() {
       expect(find.textContaining('لا جمع للبيانات الشخصية'), findsOneWidget);
       expect(find.textContaining('خلو تام من الإعلانات'), findsOneWidget);
     });
+
+    testWidgets('tapping detailed privacy button opens dialog with full disclosure',
+        (tester) async {
+      await tester.pumpWidget(buildTestableWidget());
+      await tester.pumpAndSettle();
+
+      // Scroll to bottom
+      await tester.drag(find.byType(ListView), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+
+      final buttonFinder = find.byType(AppButton).last;
+      expect(buttonFinder, findsOneWidget);
+
+      await tester.ensureVisible(buttonFinder);
+      await tester.pumpAndSettle();
+
+      await tester.tap(buttonFinder, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('بيان الخصوصية واستخدام البيانات'), findsOneWidget);
+      expect(find.textContaining('صفر بيانات مجمعة'), findsOneWidget);
+      expect(find.textContaining('الموقع الجغرافي: اختياري بالكامل'), findsOneWidget);
+
+      // Dismiss dialog
+      await tester.tap(find.text('إغلاق'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('بيان الخصوصية واستخدام البيانات'), findsNothing);
+    });
   });
 }
+

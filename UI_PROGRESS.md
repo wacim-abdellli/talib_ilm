@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## R65 — Reconcile Privacy and Play Disclosures with Actual Behavior (24 October 2026)
+- **Scope:** Complete end-to-end reconciliation of in-app privacy disclosures, external Privacy Policy documentation, and Google Play Data Safety preparation against traced application code and R62 location boundaries. Accurately enumerate all 7 external content and geocoding network hosts. Eliminate incomplete or misleading claims (never claiming "no data leaves device" when public media is streamed). Provide exact Play Console question-by-question mapping and owner action items.
+- **Implemented:**
+  - `lib/features/more/presentation/credits_and_licenses_page.dart`:
+    - Updated Arabic privacy policy card: accurately articulates zero personal data collection, zero commercial advertising/analytics, local SQLite/preferences storage, explicit opt-in only location sharing for city name lookup, and transparently lists all external media providers (EveryAyah, Quran.com, mp3quran, Shamela, YouTube).
+    - Added transparent detailed policy dialog (`عرض بيان الخصوصية المفصل`) summarizing full data practices and linking to `docs/PRIVACY_POLICY.md` with strict design token compliance (`palette.surface`, `palette.primary`, `AppButton`, `AppSpace`). Kept file at 371 lines (Rule 8 compliant).
+  - `docs/PRIVACY_POLICY.md`:
+    - Authored comprehensive, formal, production-ready Privacy Policy for `talib_ilm`.
+    - Distinctly separates local processing (prayer times via `adhan` astronomical library) from optional remote geocoding (BigDataCloud and Android Platform Geocoder).
+    - Explicitly inventories all third-party media recipients (EveryAyah, Quran.com, jsDelivr, Mp3Quran, Shamela, YouTube) and discloses that external media servers receive standard HTTP/IP connection metadata according to their independent privacy policies.
+    - Documents Android system permissions rationale (`ACCESS_FINE_LOCATION`, `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `WAKE_LOCK`).
+    - Details data deletion mechanisms (instant local erasure via Android storage settings).
+  - `docs/GOOGLE_PLAY_DATA_SAFETY_FACT_SHEET.md`:
+    - Created authoritative question-by-question fact sheet for owner to complete the Google Play Console Data Safety form.
+    - Accurately declares: Location (Approximate/Precise: Collected for app functionality, Shared conditionally on explicit opt-in, Ephemeral, Optional); all other 13 categories (Personal Info, Financial, Health, Messages, Photos/Videos, Audio, Files, Calendar, Contacts, App Activity, Web Browsing, App Info/Performance, Device/Other IDs) declared as **No Data Collected or Shared**.
+    - Detailed Play Console checklist including Declarations for `FOREGROUND_SERVICE_MEDIA_PLAYBACK` and `SCHEDULE_EXACT_ALARM`.
+  - `test/privacy_and_play_disclosures_test.dart`: Added widget and document regression tests verifying in-app copy, dialog dismissal, document existence, inclusion of all 6 traced network hosts, and absence of misleading "no data leaves device" claims.
+  - `test/credits_and_licenses_page_test.dart`: Expanded widget tests to cover dialog opening, disclosure contents, and dialog dismissal.
+- **Verified:**
+  - `test/privacy_and_play_disclosures_test.dart`: 2/2 passed (exit 0).
+  - `test/credits_and_licenses_page_test.dart`: 2/2 passed (exit 0).
+  - `test/location_privacy_boundaries_test.dart`: 11/11 passed (exit 0).
+  - `python tool/test_release_readiness_checks.py`: 18/18 passed (exit 0).
+  - `flutter analyze`: PASS, 0 issues found (23.5s).
+  - `python tool/ui_lint_v2.py`: PASS (248 warnings, 6 allow markers, cap 10).
+- **Open issues & Owner actions:**
+  - Status: Task R65 complete. App copy, external privacy policy, and Play Data Safety fact sheet strictly agree with traced code.
+  - Owner action: Host `docs/PRIVACY_POLICY.md` at a public URL (e.g. GitHub Pages) and enter the URL in Google Play Console. Complete Play Console Data Safety form following `docs/GOOGLE_PLAY_DATA_SAFETY_FACT_SHEET.md`. Play upload remains blocked by placeholder app ID, private production upload key, and tasks R66–R70.
+  - Next task: R66 — Re-audit all previously closed C01–C35 findings against current code (P1).
+
 ## R64 — Establish One Trustworthy Final Verification Record (24 October 2026)
 - **Scope:** Overhaul release readiness verification runner (`tool/run_release_readiness_checks.py`), CI workflow (`.github/workflows/verify.yml`), and add unit/regression suite (`tool/test_release_readiness_checks.py`). Eliminate Windows Flutter version probe hang via explicit subprocess timeout and headless environment configuration. Record exact clean HEAD SHA, Flutter/Dart/Java/OS versions, command durations, exit codes, and artifact hashes. Enforce strict final test summary parsing (rejecting intermediate progress or partial runs). Add test-signed release AAB verification with certificate signer check (`CN=TestUpload`). Add CI log upload with exact commit SHA identification. Strictly zero application code changes.
 - **Implemented:**
