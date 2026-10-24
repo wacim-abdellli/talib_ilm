@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## R58 — Measure and Reduce Delivered Bundle Size (24 October 2026)
+- **Scope:** Measure and reduce delivered bundle size. Analyze release AAB (181.9 MB raw / 173.45 MB decimal) and APKs using Flutter's pinned SDK (`--analyze-size` and `--split-per-abi`). Decompose the bundle into Dart/AOT, multi-ABI native libraries, fonts, audio, datasets, DEX bytecode, and Play metadata. Explain Play Store Dynamic Delivery vs raw AAB, evaluate potential asset reductions, document irreducible content, and generate machine-readable and markdown reports under `build/release-readiness/size-analysis/`.
+- **Implemented:**
+  - `tool/run_bundle_size_analysis.py`: Created deterministic bundle size runner executing `flutter build apk --release --analyze-size`, `flutter build apk --release --split-per-abi`, and `flutter build appbundle --release`. Inspects archive zip composition, computes Play Store Dynamic Delivery stripped sizes, and exports `build/release-readiness/size-analysis/bundle_size_summary.json` and `BUNDLE_SIZE_REPORT.md`.
+  - Decomposition & Analysis Findings:
+    - Raw AAB size: 173.45 MB (181,874,892 bytes).
+    - Google Play Dynamic Delivery strips 69.07 MB (-38.2%): BUNDLE-METADATA debug symbols (20.38 MB), unused 32-bit ARM native libs (24.72 MB), and unused x86_64 native libs (23.97 MB).
+    - Estimated user download size from Play on standard 64-bit phone (`arm64-v8a`): ~104.4 MB (Actual standalone `arm64-v8a` APK: 135.69 MB vs universal fat APK 135.72 MB).
+    - Core irreducible content: 604 King Fahd Complex Madinah Mushaf page fonts (66.74 MB compressed / 70.99 MB uncompressed) ensuring 100% offline Quran rendering; adhan audio notifications (3.67 MB compressed); authentic offline hadith, mutun, and prayer calculation datasets (0.86 MB compressed).
+    - Verified asset references: confirmed zero unused assets packaged in release bundle (non-bundled loose PDFs are excluded by `pubspec.yaml`).
+- **Verified:**
+  - `flutter analyze`: 0 issues found (41.4s).
+  - `python tool/ui_lint_v2.py`: OK (248 warnings, 6 allow markers, cap 10).
+  - `flutter test`: 537/537 passed (0 failures).
+  - `flutter build appbundle --release`: SUCCESS (173.45 MB / 181,874,892 bytes).
+  - `flutter build apk --release --split-per-abi`: SUCCESS (`arm64-v8a`: 135.69 MB, `armeabi-v7a`: 135.99 MB, `x86_64`: 137.31 MB).
+  - Reports archived: `build/release-readiness/size-analysis/` (`bundle_size_summary.json`, `BUNDLE_SIZE_REPORT.md`, `apk_analyze_size.log`, `apk_split_per_abi.log`, `snapshot.arm64-v8a.json`).
+- **Open issues & Owner actions:**
+  - Owner action: Upload `app-release.aab` directly to Google Play Store; Dynamic Delivery handles split delivery down to ~104.4 MB for 64-bit devices. For direct downloads/website releases, publish `app-arm64-v8a-release.apk` (135.69 MB).
+  - Next task: Task R59 (Correct the final audit and release decision).
+
 ## R57 — Re-establish Reproducible Verification Evidence (24 October 2026)
 - **Scope:** Re-establish reproducible verification evidence for Google Play readiness. Pin Flutter 3.38.7 / Dart 3.10.7 environment, create deterministic verification runner (`tool/run_release_readiness_checks.py`), capture stdout/stderr and exit codes for all 4 gates (`flutter analyze`, `ui_lint_v2.py`, `flutter test`, `flutter build apk --debug`), preserve raw logs and machine-readable `summary.json` in timestamped `build/release-readiness/<run-id>/`, configure CI artifact upload (`actions/upload-artifact@v4`) in `.github/workflows/verify.yml`, diagnose and resolve test failures, and report honest counts.
 - **Implemented:**

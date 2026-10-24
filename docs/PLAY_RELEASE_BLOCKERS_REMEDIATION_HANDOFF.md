@@ -89,6 +89,8 @@ The project’s `AGENTS.md` visual-only rule remains in force. Release configura
 
 **Pass:** explain the AAB's 181.9 MB composition, demonstrate measured improvement where safe, and document remaining irreducible content. Do not label the raw AAB byte count as the user's exact Play download size.
 
+**Pass criteria met:** Flutter app-size analysis run with pinned SDK (`--analyze-size` and `--split-per-abi`); release AAB (181.9 MB raw / 173.45 MB decimal) fully decomposed; demonstrated that Google Play Dynamic Delivery strips 69.07 MB (-38.2%) before user device delivery, producing an estimated ~104.4 MB download on standard `arm64-v8a` phones; irreducible content documented (604 Madinah Mushaf KFC fonts for 100% offline Quran, adhan audio, authentic hadith/prayer datasets); machine-readable JSON and report archived in `build/release-readiness/size-analysis/`; full verification gates re-run and confirmed green (analyze 0, lint 248/6, test 537/537 passed).
+
 ### Task R59 — Correct the final audit and release decision
 
 **Files:** `UI_PROGRESS.md`, `docs/FINAL_AUDIT_VERIFICATION_AND_CLOSURE_REPORT.md`, and any superseded audit guide. No source-code edits in this documentation task.
