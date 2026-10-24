@@ -1,6 +1,31 @@
 # UI Progress Log
 
-## R65 — Reconcile Privacy and Play Disclosures with Actual Behavior (24 October 2026)
+## R66 — Re-Audit All Previously Closed C01–C35 Findings Against Current Code (24 October 2026)
+- **Scope:** Hostile, evidence-backed re-audit of all 35 architectural, persistence, concurrency, audio, lifecycle, scheduling, offline, and network security findings (C01 through C35) across 8 finding families and all 7 acceptance journeys. Document live source anchors, production callers, regression test names, defect mechanisms prevented, and platform-only distinctions. Assert that zero findings rely solely on commit messages or progress notes; every high-impact finding is backed by an automated regression test that would fail if regressed.
+- **Implemented:**
+  - `docs/C01_C35_HOSTILE_EVIDENCE_RE_AUDIT_REPORT.md`:
+    - Created authoritative 35-finding hostile evidence matrix with exact live source paths, line anchors, production callers, regression test files/cases, prevented failure modes, and platform-only vs host-mock limitations.
+    - Family 1 (Audio Lifecycle & Cancellation: C01, C02, C14, C15, C16): Re-verified non-blocking play startup, generation tokens, in-flight download deduplication, MP3 magic-byte validation, and client cleanup in `finally`.
+    - Family 2 (Persistence & Import Limits: C03, C04, C05, C06, C07, C08, C27, C28, C29): Re-verified UTF-8 Arabic decoding, type safety, coordinate/page consistency, `AsyncLock` bookmark transaction atomicity, `atomicMergeBookmarks`, progress JSON corruption isolation, 500-session reading stats bounds, and 512KB/200 item backup ceilings.
+    - Family 3 (Prayer Scheduling & Timezones: C09, C10, C11, C12, C30): Re-verified decoupled silent permissions, startup initialization deduplication, typed `ScheduleOutcome`, cache key fingerprinting (lat/lng, timezone, DST offset, adjustments), and multi-instance shared `AsyncLock` serialization.
+    - Family 4 (Notification Routing & Navigation: C13): Re-verified deep-link router tab mapping (Adhkar = tab 3, Ilm = tab 2) and pop Back invariant.
+    - Family 5 (Offline Book Manifests & Download UX: C17, C33b): Re-verified SQLite manifest verification (1..total page completeness) and honest `محفوظ` badge display in `FakeShamelaDatabase`.
+    - Family 6 (Lifecycle & Audio Coordination: C18, C19, C20): Re-verified foreground prayer subscription re-attachment, central `AudioCoordinator` priority (Adhan > Radio > Quran), and `mounted` checks across async sheet gaps.
+    - Family 7 (UI Accessibility & Native Widgets: C21, C22, C33a): Re-verified root text scale 2.0 support, `AppButton` 48dp edge taps, atomic 10-key native widget snapshots, and deterministic golden test harness.
+    - Family 8 (Learning Data, Network Bounds, Hygiene & Parity: C23, C24, C25, C26, C31, C32, C34, C35): Re-verified quiz atomic loading, session completion idempotency, 64KB raw byte limit, wall-clock timeout, 0 behavior files >600L repo-wide, exact Flutter 3.38.7 CI pinning, and all 7 acceptance journeys.
+    - Re-verified all 10 areas of the Whole-App Review Matrix (Quran, Prayer, Audio, Persistence, Offline, Network, Notifications, Quiz, UI, Release).
+- **Verified:**
+  - Targeted findings test suites: 200/200 passed across 20 test files (exit 0).
+  - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 26.6s).
+  - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (248 warnings, 6 allow markers, cap 10).
+  - Gate 3: Automated Test Suite (`flutter test`): PASS (551 passed, 0 failed, 2m29s).
+  - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (30.7s assembleDebug, `build/app/outputs/flutter-apk/app-debug.apk`).
+- **Open issues & Owner actions:**
+  - Status: Task R66 complete. All 35 findings verified closed against live source code and backed by real service/UI-seam regressions. Zero open defects.
+  - Owner action: Google Play upload remains blocked by placeholder app ID, private production upload key, Data Safety declaration, and tasks R67–R70.
+  - Next task: R67 — Rebuild the whole-repository code and asset inventory (P2).
+
+
 - **Scope:** Complete end-to-end reconciliation of in-app privacy disclosures, external Privacy Policy documentation, and Google Play Data Safety preparation against traced application code and R62 location boundaries. Accurately enumerate all 7 external content and geocoding network hosts. Eliminate incomplete or misleading claims (never claiming "no data leaves device" when public media is streamed). Provide exact Play Console question-by-question mapping and owner action items.
 - **Implemented:**
   - `lib/features/more/presentation/credits_and_licenses_page.dart`:
