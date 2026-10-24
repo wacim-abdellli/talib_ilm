@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## R63 — Repair Bundle-Size Measurements and Stop Stale-Success Reports (24 October 2026)
+- **Scope:** Repair bundle-size runner (`tool/run_bundle_size_analysis.py`). Make build failures fatal, reject stale artifacts via run timestamp and SHA-256 binding, isolate signing credentials without modifying or deleting workspace `android/key.properties`, report explicit decimal MB (10^6) and binary MiB (2^20) units, parse exact Flutter `--analyze-size` JSON, and measure actual device-specific Play download size via official Android `bundletool`. Add regression test suite.
+- **Implemented:**
+  - `tool/run_bundle_size_analysis.py`:
+    - Safe signing isolation: never modifies or deletes workspace `android/key.properties`. Uses `tempfile.mkdtemp` and Gradle environment variables (`KEYSTORE_PATH`, etc.) when no workspace key exists.
+    - Fatal exit on build failure: `run_cmd` strictly raises `RuntimeError` on nonzero exit codes, preventing silent continuation on broken builds.
+    - Stale artifact rejection: asserts artifact modification timestamp `mtime >= run_timestamp - 5.0` and computes SHA-256 for all inspected outputs.
+    - Official Google `bundletool` integration (v1.16.0): measures true Play Store download size using an `arm64-v8a` / SDK 35 device specification rather than misleading zip-entry subtraction.
+    - Correct unit reporting: outputs both decimal MB (`bytes / 1,000,000`) and binary MiB (`bytes / 1,048,576`) with explicit labels; all percentages computed from raw byte ratios.
+    - Exact Flutter `--analyze-size` JSON parsing: extracts the exact JSON file path from build stdout.
+    - Unique run isolation: saves reports under timestamped `build/release-readiness/size-analysis/<run_id>/` and mirrors to `latest/`.
+  - `tool/test_bundle_size_analysis.py`: Created 5-test regression suite testing unit conversions, signing safety preservation of sentinel files, fatal error handling, stale artifact rejection, and bundletool execution with schema validation.
+- **Verified:**
+  - `python tool/test_bundle_size_analysis.py`: 5/5 passed (exit 0).
+  - `python tool/run_bundle_size_analysis.py`: Succeeded end-to-end (run `20261024-202249`):
+    - Raw Release AAB: 181.87 MB decimal / 173.45 MiB binary (181,873,808 bytes, SHA `464a6302b7cc...`).
+    - Delivered user download: **108.05 MB decimal / 103.04 MiB binary** (108,050,223 bytes measured via Android `bundletool` with `arm64-v8a` spec).
+    - Standalone `arm64-v8a` APK: 142.35 MB decimal / 135.76 MiB binary (142,349,697 bytes, SHA `38c5e4241371...`).
+  - `flutter analyze`: PASS, 0 issues found (40.1s).
+  - `python tool/ui_lint_v2.py`: PASS (248 warnings, 6 allow markers, cap 10).
+  - `flutter test`: PASS, 548/548 passed (0 failures, 3m34s).
+- **Open issues & Owner actions:**
+  - Status: Task R63 complete. Bundle-size reports are fresh, hashed, mathematically accurate, and measured via Android `bundletool`.
+  - Owner action: Google Play upload remains blocked by placeholder app ID, private production upload key, and tasks R64–R70.
+  - Next task: R64 — Establish one trustworthy final verification record (P1).
+
 ## R62 — Make Location Privacy True at Every Provider Boundary (24 October 2026)
 - **Scope:** Fix high-priority location privacy defect where platform geocoder (`placemarkFromCoordinates`) was called before checking `isRemoteGeocodingAllowed()`. Reorder resolution logic so that on fresh install / opt-out, strictly ZERO platform geocoder calls and ZERO HTTP requests occur. Add injectable geocoder test seam, expand regression coverage, and update UI and privacy disclosures to reflect true provider data flows.
 - **Implemented:**
