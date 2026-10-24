@@ -1,5 +1,12 @@
 # UI Progress Log
 
+## R60 — Independent Gemini report review and master remediation guide (24 October 2026)
+- **Scope:** Deep review of R59 and creation of `docs/MASTER_GEMINI_FLASH_3_8_APP_REMEDIATION_GUIDE.md` for the next single-task-at-a-time implementation sequence.
+- **Confirmed evidence:** Retained R57 log ends with 537 passing tests; analyzer log says no issues; debug build log succeeded; UI lint returns OK with 248 warnings. The captured summary is branch R57 / commit `5f6aa5c` with `is_dirty: true`; later app/test source changes are the deterministic golden fix committed in R57, while R58/R59 changed tooling/docs. A fresh final-head runner attempt did not pass Flutter startup and was interrupted, so exact-head verification remains open.
+- **New high-priority findings:** `tool/verify_release_signing_config.py` unconditionally deletes `android/key.properties` in cleanup; `LocationService._resolvePosition` calls the platform geocoder before consulting opt-in, and Android Geocoder may use the network; bundle-size script ignores build exit codes and may use stale artifacts; AAB and estimated-size values mix MB/MiB and the Play download is not measured with `bundletool`.
+- **Inventory correction:** The R59 “four files repo-wide” inventory is stale/inaccurate. The current repository includes a vendored local `qcf_quran_plus` package with an 802-line `quran_page_view.dart`; report first-party and vendored scope separately.
+- **Open issues:** R59 closure claims are superseded pending R61–R70. Play upload remains blocked by placeholder app ID, no production upload key, incomplete location-provider privacy proof, exact-final verification/CI, and device acceptance. Follow the R60 master guide; do not run the current signing verifier after installing a real key until R61 fixes its cleanup.
+
 ## R59 — Correct the Final Audit and Release Decision (24 October 2026)
 - **Scope:** Correct the final audit and release decision documentation. Update `docs/FINAL_AUDIT_VERIFICATION_AND_CLOSURE_REPORT.md` to replace unconditional "10/10 / fully release-ready" assertions with an evidence-based assessment tied to verifiable command logs, test metrics, and outstanding owner actions. Accurately distinguish generated artifacts, build exit status, signing certificates, automated tests, CI parity, and actual Google Play upload readiness.
 - **Implemented:**

@@ -1,5 +1,7 @@
 # Play release blockers — strict remediation handoff
 
+> **Superseded by the whole-app R60 plan:** This document records the earlier R55–R59 sequence. Use [`MASTER_GEMINI_FLASH_3_8_APP_REMEDIATION_GUIDE.md`](MASTER_GEMINI_FLASH_3_8_APP_REMEDIATION_GUIDE.md) for current findings and the authoritative R61–R70 work order, including the signing-script deletion risk, platform-geocoder privacy path, and bundle-size measurement defects.
+
 **Prepared:** 24 October 2026  
 **Audited revision:** `main` at `5374fe6` (`ui-r54-done`)  
 **Purpose:** Give the next coding agent a concrete, evidence-led sequence to correct the remaining release blockers and substantiate the quality claims. This guide records inspected facts separately from commands that completed in this audit. It does not certify a release.
