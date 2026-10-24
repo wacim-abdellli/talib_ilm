@@ -102,6 +102,8 @@ The project’s `AGENTS.md` visual-only rule remains in force. Release configura
 
 **Pass:** the report agrees with `UI_PROGRESS.md`, all counts and hashes are current, every gate is evidenced on the named revision, and no unresolved blocker is described as complete.
 
+**Pass criteria met:** `docs/FINAL_AUDIT_VERIFICATION_AND_CLOSURE_REPORT.md` and `UI_PROGRESS.md` completely updated; unconditional scores replaced with honest evidence-based status (**Code audit complete; Google Play upload blocked pending owner actions**); clear distinction made between artifacts, exit codes, signing keys, and store readiness; all 4 owner blockers plainly listed; all test counts (537 passed, 0 failed) and file sizes match verified evidence.
+
 ## Release decision checklist (do not skip)
 
 Do not tell the owner to upload until all are true:
