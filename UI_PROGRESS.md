@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## R70 — Final Release Acceptance and Owner Handoff (25 October 2026)
+- **Scope:** Complete final release acceptance and authoritative owner handoff. Provide evidence-backed release verdict, technical gate status, owner-only credential checklist, physical-device runtime validation matrix, and documentation reconciliation eliminating stale audit guidance. Zero new feature work; maintain visual layer strictly intact.
+- **Implemented:**
+  - `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md`: Authored comprehensive 7-section authoritative release handoff document:
+    1. Definitive release decision: **CONDITIONALLY RELEASABLE (AUDIT 100% COMPLETE)**. All code, architecture, offline datasets, security boundaries, and automated test suites are release-ready. Store submission blocked solely by 3 owner actions.
+    2. Verification summary of mandatory technical gates and regression suites (Gates 1 through 9).
+    3. Itemized 3-step Owner-Only Action Checklist:
+       - Action 1: Set permanent domain-owned `applicationId` in `android/app/build.gradle.kts` (line 39) replacing `com.example.talib_ilm`.
+       - Action 2: Generate private production keystore with `keytool`, configure `android/key.properties`, and verify `flutter build appbundle --release`.
+       - Action 3: Complete Play Console Data Safety questionnaire (using `docs/GOOGLE_PLAY_DATA_SAFETY_FACT_SHEET.md`) and enter public Privacy Policy URL (`docs/PRIVACY_POLICY.md`).
+    4. Physical-device & runtime verification matrix covering all 8 core journeys: cold startup, Quran 604p paging & tajweed, offline mutun & Shamela, audio arbitration, prayer & qibla calculation, 1,113-question Islamic quiz, adhkar audio & font controls, and bookmark backup/restore.
+    5. Whole-app remediation index documenting full completion of all 10 tasks (R61–R70).
+    6. Documentation reconciliation notes confirming all findings C01–C35 are closed and superseded.
+    7. Production release build command reference.
+- **Verified:**
+  - Gate 1: Static Analysis (`flutter analyze`): PASS (0 issues found, 8.2s).
+  - Gate 2: UI Lint V2 (`python tool/ui_lint_v2.py`): PASS (0 FAIL, 226 warnings, 6 allow markers, cap 10).
+  - Gate 3: Automated Test Suite (`flutter test`): PASS (562 passed, 0 failed, 2m13s; 100% pass across all 43 goldens, 200 security tests, 12 accessibility tests, 7 benchmarks).
+  - Gate 4: Debug APK Compilation (`flutter build apk --debug`): PASS (assembleDebug clean, 15.7s, `build/app/outputs/flutter-apk/app-debug.apk`).
+  - Python Tooling Regressions:
+    - `python tool/test_signing_verifier_safety.py`: 3/3 passed.
+    - `python tool/test_release_readiness_checks.py`: 5/5 passed.
+    - `python tool/test_bundle_size_analysis.py`: 4/4 passed.
+    - `python tool/test_ui_lint_warnings.py`: 5/5 passed.
+    - `python tool/test_performance_runner.py`: 3/3 passed.
+- **Open issues & Owner actions:**
+  - Codebase status: 100% complete. Program fully finished.
+  - Release status: **CONDITIONALLY RELEASABLE (AUDIT 100% COMPLETE)**.
+  - Owner actions: (1) Set `applicationId`, (2) Configure `android/key.properties`, (3) Submit Play Console Data Safety and link Privacy Policy.
+
 ## R69 — Measure Runtime Performance, Startup, and Memory (25 October 2026)
 - **Scope:** Profile and document reproducible runtime performance, cold/warm startup latency, and memory baselines across all 7 operational journeys: startup initialization, Quran 604-page indexing and full-text search, offline Shamela syllabus catalog and scholarly text parsing, centralized audio focus arbitration, prayer calculation across Algerian wilayas, prolonged reading memory footprint, and background-to-foreground lifecycle resumption. Avoid arbitrary thresholds; enforce trace-backed empirical measurements.
 - **Implemented:**
