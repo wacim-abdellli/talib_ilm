@@ -10,15 +10,17 @@ import 'golden_test_helper.dart';
 void main() {
   group('Home Widgets Golden Tests', () {
     testWidgets('HomeHeroCard - light 1.0', (tester) async {
+      final baseTime = DateTime(2026, 10, 24, 11, 5);
       final widget = HomeHeroCard(
+        currentTime: baseTime,
         nextPrayerName: 'الظهر',
-        nextPrayerTime: DateTime.now().add(const Duration(hours: 1, minutes: 25)),
+        nextPrayerTime: baseTime.add(const Duration(hours: 1, minutes: 25)),
         allPrayers: {
-          'الفجر': DateTime.now().subtract(const Duration(hours: 6)),
-          'الظهر': DateTime.now().add(const Duration(hours: 1, minutes: 25)),
-          'العصر': DateTime.now().add(const Duration(hours: 4)),
-          'المغرب': DateTime.now().add(const Duration(hours: 7)),
-          'العشاء': DateTime.now().add(const Duration(hours: 8, minutes: 30)),
+          'الفجر': baseTime.subtract(const Duration(hours: 6)),
+          'الظهر': baseTime.add(const Duration(hours: 1, minutes: 25)),
+          'العصر': baseTime.add(const Duration(hours: 4)),
+          'المغرب': baseTime.add(const Duration(hours: 7)),
+          'العشاء': baseTime.add(const Duration(hours: 8, minutes: 30)),
         },
       );
 
@@ -32,15 +34,17 @@ void main() {
     });
 
     testWidgets('HomeHeroCard - dark 1.5', (tester) async {
+      final baseTime = DateTime(2026, 10, 24, 15, 18);
       final widget = HomeHeroCard(
+        currentTime: baseTime,
         nextPrayerName: 'العصر',
-        nextPrayerTime: DateTime.now().add(const Duration(minutes: 12)),
+        nextPrayerTime: baseTime.add(const Duration(minutes: 12)),
         allPrayers: {
-          'الفجر': DateTime.now().subtract(const Duration(hours: 9)),
-          'الظهر': DateTime.now().subtract(const Duration(hours: 3)),
-          'العصر': DateTime.now().add(const Duration(minutes: 12)),
-          'المغرب': DateTime.now().add(const Duration(hours: 3)),
-          'العشاء': DateTime.now().add(const Duration(hours: 4, minutes: 30)),
+          'الفجر': baseTime.subtract(const Duration(hours: 9)),
+          'الظهر': baseTime.subtract(const Duration(hours: 3)),
+          'العصر': baseTime.add(const Duration(minutes: 12)),
+          'المغرب': baseTime.add(const Duration(hours: 3)),
+          'العشاء': baseTime.add(const Duration(hours: 4, minutes: 30)),
         },
       );
 

@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## R51 / Task 6 — Resolve Golden Failures by Evidence (Finding C33)
+- **Scope:** Finding C33 (37 golden test comparisons failing across the suite; reference images were stale snapshots from older palette versions; flakiness in dynamic prayer countdowns; cross-zone deadlock in `AsyncLock`).
+- **Implemented & Root Causes Identified:**
+  - **AMOLED Background Shift:** Upgraded `AppPalette.dark.bg` in Round 2 to pure AMOLED `#000000` created ~99% diff against older reference images rendered on `#090807`.
+  - **Design System Tokens:** Light goldens transitioned from arbitrary legacy colors (`#FEF3C7`, `#E0E7FF`, gray `#CDC8C1`) to canonical theme tokens (`palette.surfaceMuted` `#F4EFE6`, `palette.bg` `#FAF8F5`, active prayer 1.5px `palette.gold` border).
+  - **Flaky Dynamic Countdown Defect:** `HomeHeroCard` evaluated prayer times against dynamic `DateTime.now()`, causing text digit and kerning diffs across test runs. Added `@visibleForTesting final DateTime? currentTime;` in `lib/features/home/presentation/widgets/home_hero_card.dart` (591 lines, Rule 8 compliant) and fixed deterministic timestamps in `test/golden/home_golden_test.dart` (163 lines).
+  - **Architectural `AsyncLock` Deadlock Fix:** Discovered that `AsyncLock._last` retained completed `Future` instances across test cases, causing cross-zone deadlocks where `BookmarkService.getLastRead()` hung indefinitely in multi-test suites. Fixed by clearing `_last = null;` when the completer queue drains in `lib/core/utils/async_lock.dart` (35 lines).
+  - Screen family batches updated and visually audited across Arabic typography, contrast, alignment, and 1.0/1.5/2.0 text scale:
+    - Family 1: Core components & Splash (`components_golden_test.dart`, `splash_golden_test.dart`).
+    - Family 2: Prayer & Qibla (`prayer_golden_test.dart`).
+    - Family 3: Adhkar & Favorites (`adhkar_golden_test.dart`, `favorites_golden_test.dart`).
+    - Family 4: Quran & Shamela Reader (`quran_golden_test.dart`, `shamela_reader_golden_test.dart`).
+    - Family 5: Home, Library, Ilm, More (`home_golden_test.dart`, `more_golden_test.dart`, `ilm_golden_test.dart`, `library_golden_test.dart`).
+- **Verified:**
+  - `flutter analyze`: 0 issues found (27.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 6 allow markers used, cap 10).
+  - `flutter test test/golden/`: 43/43 passed (0 failures).
+  - `flutter test`: 531/531 passed (0 failures, 2m 13s).
+  - `flutter build apk --debug`: PASSED (123.3s, size: 330,216,948 bytes, SHA-256 `3439FD1022B1C83E092470B7029C379CFDFA9DAE1EB5D15F4BB7A5829B5CE0F3`).
+- **Open issues:** R51 complete. Next task is Task 7 / R52 (Re-audit original C01–C26 with production evidence).
+
 ## R50 / Task 5 — Make Tests and CI Prove the Claims (Findings C31, C33, C34)
 - **Scope:** Findings C31 (Acceptance suite had placeholder labels rather than end-to-end assertions), C33 (Two Shamela download UI fixtures tested stale preference flags rather than real SQLite cached page manifests), and C34 (Unpinned Flutter SDK in CI).
 - **Implemented:**

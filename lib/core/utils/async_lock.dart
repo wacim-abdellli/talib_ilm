@@ -21,6 +21,9 @@ class AsyncLock {
     try {
       return await operation();
     } finally {
+      if (identical(_last, completer.future)) {
+        _last = null;
+      }
       completer.complete();
     }
   }

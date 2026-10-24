@@ -16,6 +16,7 @@ class HomeHeroCard extends StatefulWidget {
   final bool isEstimated;
   final Map<String, DateTime>? allPrayers;
   final VoidCallback? onTap;
+  final DateTime? currentTime;
 
   const HomeHeroCard({
     super.key,
@@ -24,6 +25,7 @@ class HomeHeroCard extends StatefulWidget {
     this.isEstimated = false,
     this.allPrayers,
     this.onTap,
+    this.currentTime,
   });
 
   @override
@@ -55,14 +57,16 @@ class _PrayerEvaluation {
 }
 
 class _HomeHeroCardState extends State<HomeHeroCard> {
-  late Timer _timer;
+  Timer? _timer;
   late _PrayerEvaluation _eval;
 
   @override
   void initState() {
     super.initState();
-    _eval = _evaluatePrayer(DateTime.now());
-    _startTimer();
+    _eval = _evaluatePrayer(widget.currentTime ?? DateTime.now());
+    if (widget.currentTime == null) {
+      _startTimer();
+    }
   }
 
   @override
@@ -70,7 +74,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.nextPrayerTime != widget.nextPrayerTime ||
         oldWidget.nextPrayerName != widget.nextPrayerName ||
-        oldWidget.allPrayers != widget.allPrayers) {
+        oldWidget.allPrayers != widget.allPrayers ||
+        oldWidget.currentTime != widget.currentTime) {
       _updateEvaluation();
     }
   }
@@ -82,7 +87,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
   }
 
   void _updateEvaluation() {
-    final now = DateTime.now();
+    final now = widget.currentTime ?? DateTime.now();
     final newEval = _evaluatePrayer(now);
     if (mounted) {
       setState(() => _eval = newEval);
@@ -205,7 +210,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
   @override
   void dispose() {
-    if (_timer.isActive) _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
