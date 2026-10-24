@@ -12,6 +12,8 @@ import '../models/location_result.dart';
 import 'reverse_geocode_client.dart';
 export '../models/location_result.dart';
 
+typedef PlatformGeocoder = Future<List<Placemark>> Function(double latitude, double longitude);
+
 class LocationService {
   static const _defaultCity = AppStrings.locationDefaultCity;
   static const _defaultLat = 21.3891;
@@ -428,6 +430,7 @@ class LocationService {
   }
 
   static ReverseGeocodeClient _reverseGeocodeClient = const ReverseGeocodeClient();
+  static PlatformGeocoder _platformGeocoder = placemarkFromCoordinates;
 
   @visibleForTesting
   static void setReverseGeocodeClientForTesting(ReverseGeocodeClient client) {
@@ -437,6 +440,16 @@ class LocationService {
   @visibleForTesting
   static void resetReverseGeocodeClientForTesting() {
     _reverseGeocodeClient = const ReverseGeocodeClient();
+  }
+
+  @visibleForTesting
+  static void setPlatformGeocoderForTesting(PlatformGeocoder geocoder) {
+    _platformGeocoder = geocoder;
+  }
+
+  @visibleForTesting
+  static void resetPlatformGeocoderForTesting() {
+    _platformGeocoder = placemarkFromCoordinates;
   }
 
   /// Reverse geocodes coordinates via BigDataCloud API with strict resource, timeout, and payload bounds.
@@ -502,27 +515,31 @@ class LocationService {
     String? country = fallbackCountry;
     String? countryCode = fallbackCountryCode;
 
-    // 2. Try native device geocoder
-    try {
-      final placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      ).timeout(AppPolicy.networkFast);
-      if (placemarks.isNotEmpty) {
-        final p = placemarks.first;
-        country = p.country?.trim() ?? country;
-        countryCode = p.isoCountryCode?.trim().toUpperCase() ?? countryCode;
-        if (p.administrativeArea != null && p.administrativeArea!.trim().isNotEmpty) {
-          province = _cleanAdministrativeName(p.administrativeArea!.trim());
-        }
+    // 2. Check user consent for remote reverse-geocoding before ANY platform or external call
+    final allowRemote = await isRemoteGeocodingAllowed();
 
-        final picked = _pickCleanCity(placemarks);
-        if (picked != null) city = picked;
-      }
-    } catch (_) {
-      // 3. Fallback: HTTP reverse geocoding (gated by user intent / preference)
-      final allowRemote = await isRemoteGeocodingAllowed();
-      if (allowRemote) {
+    if (allowRemote) {
+      // User explicitly opted in: attempt platform geocoder, fallback to BigDataCloud
+      try {
+        final placemarks = await _platformGeocoder(
+          position.latitude,
+          position.longitude,
+        ).timeout(AppPolicy.networkFast);
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          country = p.country?.trim() ?? country;
+          countryCode = p.isoCountryCode?.trim().toUpperCase() ?? countryCode;
+          if (p.administrativeArea != null && p.administrativeArea!.trim().isNotEmpty) {
+            province = _cleanAdministrativeName(p.administrativeArea!.trim());
+          }
+
+          final picked = _pickCleanCity(placemarks);
+          if (picked != null) city = picked;
+        }
+      } catch (_) {}
+
+      // Fallback: HTTP reverse geocoding if platform geocoder threw or found no clean city
+      if (city == fallbackCity) {
         final arabicGeo = await reverseGeocodeHttp(position.latitude, position.longitude);
         if (arabicGeo != null) {
           if (arabicGeo['city'] != null) city = arabicGeo['city']!;
@@ -530,19 +547,20 @@ class LocationService {
           if (arabicGeo['country'] != null) country = arabicGeo['country'];
           if (arabicGeo['countryCode'] != null) countryCode = arabicGeo['countryCode'];
         }
-      } else {
-        // Offline broader catalog fallback without remote coordinate transmission
-        final nearestBroad = VerifiedCitiesCatalog.findNearest(
-          position.latitude,
-          position.longitude,
-          maxDistanceKm: 250.0,
-        );
-        if (nearestBroad != null) {
-          city = nearestBroad.name;
-          province = nearestBroad.province;
-          country = nearestBroad.country;
-          countryCode = nearestBroad.countryCode;
-        }
+      }
+    } else {
+      // User has not opted in (clean install default): strictly ZERO network/platform geocoder calls.
+      // Offline broader catalog fallback without remote coordinate transmission
+      final nearestBroad = VerifiedCitiesCatalog.findNearest(
+        position.latitude,
+        position.longitude,
+        maxDistanceKm: 250.0,
+      );
+      if (nearestBroad != null) {
+        city = nearestBroad.name;
+        province = nearestBroad.province;
+        country = nearestBroad.country;
+        countryCode = nearestBroad.countryCode;
       }
     }
 

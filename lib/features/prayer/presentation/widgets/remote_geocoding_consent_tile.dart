@@ -72,7 +72,7 @@ class _RemoteGeocodingConsentTileState
                 ),
                 const SizedBox(height: AppSpace.xxs),
                 Text(
-                  'يسمح بإرسال الإحداثيات إلى (BigDataCloud) لجلب اسم المدينة بالعربية فقط عند تعذر التعرف عليها محلياً. معطل افتراضياً لحماية الخصوصية.',
+                  'يسمح بالاستعلام عن اسم المدينة عبر خدمات النظام والإنترنت (مثل BigDataCloud) عند تعذر التعرف عليها محلياً. معطل افتراضياً لحماية الخصوصية.',
                   style: context.text.caption.copyWith(
                     color: palette.textMuted,
                     height: 1.5,

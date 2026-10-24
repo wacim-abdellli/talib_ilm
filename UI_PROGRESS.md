@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## R62 — Make Location Privacy True at Every Provider Boundary (24 October 2026)
+- **Scope:** Fix high-priority location privacy defect where platform geocoder (`placemarkFromCoordinates`) was called before checking `isRemoteGeocodingAllowed()`. Reorder resolution logic so that on fresh install / opt-out, strictly ZERO platform geocoder calls and ZERO HTTP requests occur. Add injectable geocoder test seam, expand regression coverage, and update UI and privacy disclosures to reflect true provider data flows.
+- **Implemented:**
+  - `lib/core/services/location_service.dart`: Added injectable `PlatformGeocoder` seam (`setPlatformGeocoderForTesting`, `resetPlatformGeocoderForTesting`). Moved `isRemoteGeocodingAllowed()` check before any external geocoder call. In opt-out path (clean install default), strictly ZERO platform geocoder calls and ZERO HTTP requests occur, using `VerifiedCitiesCatalog.findNearest(..., 250.0)` and local fallback. In opt-in path, attempts platform geocoder, falling back to BigDataCloud HTTP if platform geocoder throws or returns no city. Kept file at 588 lines (Rule 8 compliant).
+  - `lib/features/prayer/presentation/widgets/remote_geocoding_consent_tile.dart`: Updated Arabic subtitle disclosure to state truthfully that enabling lookup allows querying system location services as well as internet providers (BigDataCloud).
+  - `lib/features/more/presentation/credits_and_licenses_page.dart`: Updated privacy disclosure to state truthfully that prayer calculations occur 100% locally on-device and coordinates are never transmitted to any external provider (neither OS geocoder nor BigDataCloud) unless user explicitly opts in.
+  - `test/location_privacy_boundaries_test.dart`: Added 11-test regression suite reproducing the defect first (old code called geocoder when opt-out on coordinates outside catalog) and proving all boundary conditions: clean install defaults, zero calls on opt-out, local catalog resolution without network, explicit opt-in with coordinates, platform failure fallback to HTTP, empty placemarks fallback to HTTP, immediate opt-out halting, manual city override, coordinate bounds guards, and complete provider failure resilience.
+  - `test/features/prayer/remote_geocoding_consent_tile_test.dart`: Updated widget test expectations to match truthful copy.
+- **Verified:**
+  - `test/location_privacy_boundaries_test.dart`: 11/11 passed (reproduced defect first with 1 geocoder call, confirmed fix with 0 calls).
+  - `test/network_boundaries_and_security_test.dart`: 19/19 passed.
+  - `test/features/prayer/remote_geocoding_consent_tile_test.dart`: 2/2 passed.
+  - `flutter analyze`: PASS, 0 issues found (8.3s).
+  - `python tool/ui_lint_v2.py`: PASS (248 warnings, 6 allow markers, cap 10).
+  - `flutter test`: PASS, 548/548 passed (0 failures, 2m46s).
+  - `flutter build apk --debug`: SUCCESS (`app-debug.apk` built in 45.9s).
+- **Open issues & Owner actions:**
+  - Status: Task R62 complete. All app-controlled reverse-geocoding boundaries record zero calls on opt-out.
+  - Owner action: In Google Play Console Data Safety declaration, declare location data as optional / user-triggered (only when user explicitly enables city lookup). Play upload remains blocked by placeholder app ID, production upload key, and tasks R63–R70.
+  - Next task: R63 — Repair bundle-size measurements and stop stale-success reports (P1).
+
 ## R61 — Make Signing Validation Incapable of Deleting Owner Files (24 October 2026)
 - **Scope:** Fix high-priority defect in `tool/verify_release_signing_config.py` where unconditional startup and teardown cleanup deleted `android/key.properties` and temporary keystores, risking loss of real owner signing credentials. Add deterministic regression tests and isolated Gradle test seam.
 - **Implemented:**
