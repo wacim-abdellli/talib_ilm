@@ -43,4 +43,10 @@ class AppPolicy {
   static const int maxShamelaTocChildBytes = 256 * 1024; // 256 KB raw child limit
   static const int maxShamelaTocNodes = 50; // Maximum expandable child nodes to process
   static const int maxShamelaConcurrentRequests = 4; // Max concurrent HTTP requests
+
+  // Quran Remote Fetching & Cache Budgets (R80)
+  static const int maxTafsirResponseBytes = 256 * 1024; // 256 KB raw response ceiling
+  static const int maxWordMeaningResponseBytes = 128 * 1024; // 128 KB raw response ceiling
+  static const int maxTafsirMemoryEntries = 200; // In-memory Tafsir RAM entries
+  static const int maxWordMeaningMemoryEntries = 100; // In-memory WordMeanings RAM entries
 }

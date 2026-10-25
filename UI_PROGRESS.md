@@ -1,5 +1,29 @@
 # UI Progress Log
 
+## R80 — Harden Quran Tafsir & Word-by-Word Remote Fetching (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching vulnerabilities and unbounded data handling in `QuranTafsirService` (`lib/features/quran/data/services/quran_tafsir_service.dart`):
+    1. **HTTP Client Test Seam:** Replaced implicit static `http.get` calls with `@visibleForTesting` `setHttpClient` and `resetHttpClient` test seams, enabling deterministic testing of remote network streams, headers, timeouts, and byte limits.
+    2. **Streaming Byte Ceilings & Early Cancellation:** Implemented `_fetchStreamedStringWithLimit` with explicit raw response streaming byte caps (`AppPolicy.maxTafsirResponseBytes = 256 KB` and `AppPolicy.maxWordMeaningResponseBytes = 128 KB`). Oversized responses trigger immediate `StreamSubscription.cancel()` to abort the network socket before memory can be consumed, gracefully falling back to bundled translations or verse text.
+    3. **Authentic Quran Identifier Validation:** Added `isValidVerse(surah, ayah)` checking authentic Surah bounds (1..114) and Ayah counts against canonical `quran.getVerseCount(surah)`. Invalid requests are rejected immediately without triggering network requests or SharedPreferences/RAM writes.
+    4. **Bounded RAM Cache with FIFO Eviction:** Replaced unbounded static memory maps with size-capped FIFO caches (`AppPolicy.maxTafsirMemoryEntries = 200`, `AppPolicy.maxWordMeaningMemoryEntries = 100`) preventing memory bloat during extensive reading sessions.
+    5. **In-Flight Request Deduplication & Retry:** Added `_inFlightTafsir` and `_inFlightWords` deduplication tracking in-flight Futures so concurrent identical verse calls share the same network request. On failure, in-flight state is removed cleanly to allow subsequent retries.
+- **Files Modified (2 app files + 2 test files + UI_PROGRESS.md):**
+  - `lib/app/theme/app_policy.dart`: Defined response byte limits and memory entry capacities for Tafsir and Word-by-Word fetching.
+  - `lib/features/quran/data/services/quran_tafsir_service.dart`: Re-implemented with HTTP seam, streaming byte ceilings, input validation, FIFO memory bounds, and in-flight deduplication (436 lines, Rule 8 compliant).
+  - `test/quran_tafsir_service_test.dart`: Added comprehensive 12-test regression suite covering input validation, streaming byte limits, cancellation, deduplication, retry, and FIFO eviction.
+  - `test/shamela_remote_hardening_test.dart`: Cleaned up 3 unused imports identified by analyzer.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers used, cap 10).
+  - `flutter test test/quran_tafsir_service_test.dart`: 12/12 passed (1.3s).
+  - `flutter test`: 585/585 passed (0 failures, 2m 34s).
+  - `flutter build apk --debug`: PASSED (70.1s, built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Quran Tafsir and Word-by-Word remote fetching fully hardened with byte caps, input bounds, and in-flight deduplication.
+  - Ready for next task in Master Implementation Directive (e.g. `TajweedVerseService` review in Area B).
+
 ## R78 — Harden Shamela Remote Fetching & Streaming Byte Caps (25 October 2026)
 - **Scope & Context:**
   - Resolved three remote fetching vulnerabilities in `ShamelaService` (`lib/features/ilm/data/services/shamela_service.dart`):
