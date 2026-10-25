@@ -19,6 +19,9 @@ import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/services/book_progress_service.dart';
 import '../../ilm/data/services/bookmark_entry_loader.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
+import '../../ilm/data/catalogs/turath_catalog.dart';
+import '../../ilm/data/models/shamela_models.dart';
+import '../../ilm/presentation/pages/shamela_reader_page.dart';
 import 'widgets/favorite_item_launcher.dart';
 import 'widgets/favorites_book_entries_view.dart';
 
@@ -88,6 +91,26 @@ class _FavoritesPageState extends State<FavoritesPage> {
             book: targetBook,
             initialPage: entry.page,
             autoOpenSharhFile: entry.sharhFile,
+          ),
+        ),
+      );
+      _reload();
+      return;
+    }
+
+    final shamelaMatch = TurathCatalog.books.cast<ShamelaBook?>().firstWhere(
+          (b) =>
+              b?.id.toString() == entry.bookId ||
+              'shamela_${b?.id}' == entry.bookId,
+          orElse: () => null,
+        );
+    if (shamelaMatch != null && mounted) {
+      await Navigator.push(
+        context,
+        buildFadeRoute(
+          page: ShamelaReaderPage(
+            book: shamelaMatch,
+            initialPage: entry.page,
           ),
         ),
       );

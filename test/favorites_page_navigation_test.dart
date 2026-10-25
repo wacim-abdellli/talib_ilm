@@ -7,8 +7,8 @@ import 'package:talib_ilm/features/adhkar/presentation/duas_misc_page.dart';
 import 'package:talib_ilm/features/adhkar/presentation/morning_athkar_page.dart';
 import 'package:talib_ilm/features/favorites/presentation/favorites_page.dart';
 import 'package:talib_ilm/features/hadith/presentation/pages/hadith_explorer_page.dart';
+import 'package:talib_ilm/features/quran/presentation/widgets/mushaf_page_viewer.dart';
 import 'package:talib_ilm/shared/widgets/app_dialog.dart';
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -137,6 +137,35 @@ void main() {
 
     expect(find.byType(MorningAthkarPage), findsOneWidget);
   });
+
+  testWidgets('Tapping Quran favorite item opens MushafPageViewer', (tester) async {
+    final item = const FavoriteItem(
+      type: FavoriteType.quran,
+      id: '293',
+      title: 'سورة الكهف',
+      subtitle: 'الصفحة 293',
+    );
+    SharedPreferences.setMockInitialValues({
+      'favorites_items': [jsonEncode(item.toJson())],
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FavoritesPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('سورة الكهف'), findsOneWidget);
+
+    // Tap the item card
+    await tester.tap(find.text('سورة الكهف'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(MushafPageViewer), findsOneWidget);
+  });
+
 
   testWidgets('Tapping Quote favorite item shows detail dialog with copy and share actions',
       (tester) async {

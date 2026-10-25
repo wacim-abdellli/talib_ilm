@@ -52,8 +52,10 @@ class FavoriteItemLauncher {
       case FavoriteType.quran:
         await _launchQuran(context, item);
         break;
-      case FavoriteType.quote:
       case FavoriteType.lesson:
+        await _launchLesson(context, item);
+        break;
+      case FavoriteType.quote:
         showDetailDialog(context, item);
         break;
     }
@@ -83,7 +85,10 @@ class FavoriteItemLauncher {
     IlmBook? targetBook;
     for (final lvl in program.levels) {
       for (final b in lvl.books) {
-        if (b.id == item.id || b.title == item.title) {
+        if (b.id == item.id ||
+            b.title == item.title ||
+            item.title.contains(b.title) ||
+            b.title.contains(item.title)) {
           targetBook = b;
           break;
         }
@@ -101,7 +106,10 @@ class FavoriteItemLauncher {
 
     // 3. Fallback: Shamela catalog by ID or title match
     final shamelaMatch = TurathCatalog.books.cast<ShamelaBook?>().firstWhere(
-          (b) => b?.id.toString() == item.id || b?.title == item.title,
+          (b) =>
+              b?.id.toString() == item.id ||
+              b?.title == item.title ||
+              (b != null && item.title.contains(b.title)),
           orElse: () => null,
         );
     if (shamelaMatch != null && context.mounted) {
@@ -152,7 +160,8 @@ class FavoriteItemLauncher {
     }
     if (lowerId == 'after_prayer' ||
         lowerId == 'afterprayer' ||
-        lowerTitle.contains('الصلاة')) {
+        lowerTitle.contains('الصلاة') ||
+        lowerTitle.contains('دبر')) {
       await Navigator.push(context, buildFadeRoute(page: const AfterPrayerAthkarPage()));
       return;
     }
@@ -178,7 +187,10 @@ class FavoriteItemLauncher {
     // Attempt matching specific catalog category
     final catalog = await AthkarService().loadCatalog();
     final match = catalog.categories.cast<AthkarCategoryData?>().firstWhere(
-          (c) => c?.id == item.id || c?.title == item.title,
+          (c) =>
+              c?.id == item.id ||
+              c?.title == item.title ||
+              (c != null && item.title.contains(c.title)),
           orElse: () => null,
         );
     if (match != null && context.mounted) {
@@ -208,20 +220,35 @@ class FavoriteItemLauncher {
     int? targetSurah;
     int? targetAyah;
 
-    // Direct numeric page ID check (1 - 604)
+    // 1. Direct numeric page ID check (1 - 604)
     final numericId = int.tryParse(item.id.trim());
     if (numericId != null && numericId >= 1 && numericId <= 604) {
       targetPage = numericId;
-    } else {
-      // Regex parse surah name and verse number from subtitle or title
+    } else if (item.id.contains(':') || item.id.contains('_')) {
+      // 2. Surah:Ayah or Surah_Ayah identifier
+      final delimiter = item.id.contains(':') ? ':' : '_';
+      final parts = item.id.split(delimiter);
+      if (parts.length >= 2) {
+        final s = int.tryParse(parts[0].replaceAll(RegExp(r'[^\d]'), ''));
+        final a = int.tryParse(parts[1].replaceAll(RegExp(r'[^\d]'), ''));
+        if (s != null && s >= 1 && s <= 114) {
+          targetSurah = s;
+          targetAyah = a ?? 1;
+          targetPage = quran.getPageNumber(s, targetAyah);
+        }
+      }
+    }
+
+    // 3. Regex parse surah name and verse number from subtitle or title
+    if (targetPage == null) {
       final combined = '${item.subtitle} ${item.title}';
-      final match = RegExp(
+      final matchWithAyah = RegExp(
         r'(?:سورة\s+)?([^\d:\[\]\(\)\s]+)\s*[:：]\s*(\d+)',
       ).firstMatch(combined);
 
-      if (match != null) {
-        final parsedSurahName = match.group(1)?.trim() ?? '';
-        final parsedAyah = int.tryParse(match.group(2) ?? '');
+      if (matchWithAyah != null) {
+        final parsedSurahName = matchWithAyah.group(1)?.trim() ?? '';
+        final parsedAyah = int.tryParse(matchWithAyah.group(2) ?? '');
         if (parsedSurahName.isNotEmpty) {
           for (int s = 1; s <= 114; s++) {
             final officialName = quran.getSurahNameArabic(s);
@@ -233,6 +260,19 @@ class FavoriteItemLauncher {
               targetPage = quran.getPageNumber(s, targetAyah);
               break;
             }
+          }
+        }
+      }
+
+      // 4. Surah name mention check
+      if (targetSurah == null) {
+        for (int s = 1; s <= 114; s++) {
+          final officialName = quran.getSurahNameArabic(s);
+          if (combined.contains('سورة $officialName') || combined.contains(officialName)) {
+            targetSurah = s;
+            targetAyah = 1;
+            targetPage = quran.getPageNumber(s, 1);
+            break;
           }
         }
       }
@@ -252,12 +292,42 @@ class FavoriteItemLauncher {
     }
   }
 
+  static Future<void> _launchLesson(BuildContext context, FavoriteItem item) async {
+    // Attempt resolving as book first
+    final program = await AssetService.loadMutunProgram();
+    IlmBook? matchedBook;
+    for (final lvl in program.levels) {
+      for (final b in lvl.books) {
+        if (b.id == item.id || b.title == item.title) {
+          matchedBook = b;
+          break;
+        }
+      }
+      if (matchedBook != null) break;
+    }
+
+    if (matchedBook != null && context.mounted) {
+      await Navigator.push(
+        context,
+        buildFadeRoute(page: BookViewPage(book: matchedBook)),
+      );
+      return;
+    }
+
+    if (context.mounted) {
+      showDetailDialog(context, item);
+    }
+  }
+
   static String _extractSearchKeywords(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return '';
-    final words = trimmed.split(RegExp(r'\s+'));
-    if (words.length <= 5) return trimmed;
-    return words.take(5).join(' ');
+    final cleaned = text
+        .replaceAll(RegExp(r'''[«»"'\[\]().,:!؟–-]'''), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (cleaned.isEmpty) return '';
+    final words = cleaned.split(' ');
+    if (words.length <= 4) return cleaned;
+    return words.take(4).join(' ');
   }
 
   static void showDetailDialog(BuildContext context, FavoriteItem item) {
