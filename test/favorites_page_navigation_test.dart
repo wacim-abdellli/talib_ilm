@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/features/favorites/presentation/favorites_page.dart';
-import 'package:talib_ilm/shared/widgets/app_back_button.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,12 +35,12 @@ void main() {
     await tester.tap(find.text('Open Favorites'));
     await tester.pumpAndSettle();
 
-    // Verify FavoritesPage is presented and AppBackButton exists
+    // Verify FavoritesPage is presented and back button exists
     expect(find.byType(FavoritesPage), findsOneWidget);
-    expect(find.byType(AppBackButton), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
 
-    // Tap AppBackButton
-    await tester.tap(find.byType(AppBackButton));
+    // Tap back button
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
     await tester.pumpAndSettle();
 
     // Verify route was popped

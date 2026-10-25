@@ -9,8 +9,8 @@ import '../../../core/models/favorite_item.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
-import '../../../shared/widgets/app_back_button.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/primary_app_bar.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_snackbar.dart';
@@ -176,177 +176,117 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final currentCount = _selectedTab == 0 ? _favoritesCount : _bookEntriesCount;
-
     return Scaffold(
       backgroundColor: palette.bg,
-      body: Column(
-        children: [
-          Container(
+      appBar: PrimaryAppBar(
+        title: 'المفضلة والمحفوظات',
+        showBack: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpace.xl,
               AppSpace.lg,
-              AppSpace.xl,
+              0,
+              AppSpace.lg,
               AppSpace.md,
             ),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              border: Border(
-                bottom: BorderSide(color: palette.border, width: 1),
+            child: Container(
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(color: palette.border),
               ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
+              padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      const AppBackButton(),
-                      const SizedBox(width: AppSpace.xs),
-                      Container(
-                        width: AppSize.tap,
-                        height: AppSize.tap,
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: AppRadius.smRadius,
+                      onTap: () => setState(() => _selectedTab = 0),
+                      child: AnimatedContainer(
+                        duration: AppMotion.fast,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: AppSpace.xs,
+                        ),
                         decoration: BoxDecoration(
-                          color: palette.goldSoft,
-                          borderRadius: AppRadius.mdRadius,
-                          border: Border.all(
-                            color: palette.gold.withValues(alpha: 0.25),
-                            width: 1,
+                          color: _selectedTab == 0
+                              ? palette.primarySoft
+                              : Colors.transparent,
+                          borderRadius: AppRadius.smRadius,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'المفضلة العامة ($_favoritesCount)',
+                            style: textTheme.caption.copyWith(
+                              color: _selectedTab == 0
+                                  ? palette.primary
+                                  : palette.textMuted,
+                              fontWeight: _selectedTab == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
                         ),
-                        child: Icon(
-                          Icons.collections_bookmark_rounded,
-                          color: palette.gold,
-                          size: AppIcon.lg,
-                        ),
                       ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'المفضلة والمحفوظات',
-                              style: textTheme.title.copyWith(
-                                color: palette.text,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _selectedTab == 0
-                                  ? '$currentCount عنصر محفوظ'
-                                  : '$currentCount إشارة وملاحظة محفوظة',
-                              style: textTheme.bodySmall.copyWith(
-                                color: palette.textMuted,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.md),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: palette.surfaceRaised,
-                      borderRadius: AppRadius.mdRadius,
-                      border: Border.all(color: palette.border),
                     ),
-                    padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            borderRadius: AppRadius.smRadius,
-                            onTap: () => setState(() => _selectedTab = 0),
-                            child: AnimatedContainer(
-                              duration: AppMotion.fast,
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                vertical: AppSpace.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _selectedTab == 0
-                                    ? palette.primarySoft
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.smRadius,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'المفضلة العامة ($_favoritesCount)',
-                                  style: textTheme.caption.copyWith(
-                                    color: _selectedTab == 0
-                                        ? palette.primary
-                                        : palette.textMuted,
-                                    fontWeight: _selectedTab == 0
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: AppRadius.smRadius,
+                      onTap: () => setState(() => _selectedTab = 1),
+                      child: AnimatedContainer(
+                        duration: AppMotion.fast,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: AppSpace.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedTab == 1
+                              ? palette.primarySoft
+                              : Colors.transparent,
+                          borderRadius: AppRadius.smRadius,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'إشارات وملاحظات الكتب ($_bookEntriesCount)',
+                            style: textTheme.caption.copyWith(
+                              color: _selectedTab == 1
+                                  ? palette.primary
+                                  : palette.textMuted,
+                              fontWeight: _selectedTab == 1
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: InkWell(
-                            borderRadius: AppRadius.smRadius,
-                            onTap: () => setState(() => _selectedTab = 1),
-                            child: AnimatedContainer(
-                              duration: AppMotion.fast,
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                vertical: AppSpace.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _selectedTab == 1
-                                    ? palette.primarySoft
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.smRadius,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'إشارات وملاحظات الكتب ($_bookEntriesCount)',
-                                  style: textTheme.caption.copyWith(
-                                    color: _selectedTab == 1
-                                        ? palette.primary
-                                        : palette.textMuted,
-                                    fontWeight: _selectedTab == 1
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          Expanded(
-            child: _selectedTab == 0
-                ? _buildGeneralFavoritesView(palette, textTheme)
-                : FutureBuilder<List<BookmarkEntry>>(
-                    future: _bookEntriesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const AppLoadingIndicator();
-                      }
-                      final entries = snapshot.data ?? const [];
-                      return FavoritesBookEntriesView(
-                        entries: entries,
-                        onSelect: _openBookEntry,
-                        onRemoveBookmark: (BookmarkEntry e) => _removeBookEntry(e, isNote: false),
-                        onRemoveNote: (BookmarkEntry e) => _removeBookEntry(e, isNote: true),
-                        onEditNote: _editBookNote,
-                      );
-                    },
-                  ),
-          ),
-        ],
+        ),
       ),
+      body: _selectedTab == 0
+          ? _buildGeneralFavoritesView(palette, textTheme)
+          : FutureBuilder<List<BookmarkEntry>>(
+              future: _bookEntriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const AppLoadingIndicator();
+                }
+                final entries = snapshot.data ?? const [];
+                return FavoritesBookEntriesView(
+                  entries: entries,
+                  onSelect: _openBookEntry,
+                  onRemoveBookmark: (BookmarkEntry e) =>
+                      _removeBookEntry(e, isNote: false),
+                  onRemoveNote: (BookmarkEntry e) =>
+                      _removeBookEntry(e, isNote: true),
+                  onEditNote: _editBookNote,
+                );
+              },
+            ),
     );
   }
 

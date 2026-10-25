@@ -2,12 +2,12 @@
 
 ## R78 — Add Back Arrow Button to FavoritesPage (25 October 2026)
 - **Scope & Context:**
-  - Added standard `AppBackButton` to the top header of `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`).
+  - Modernized `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`) with the app's canonical `PrimaryAppBar` architecture.
   - Resolves screen trapping on mobile devices where users navigate to Favorites from HomeHeader, MorePage, or AppDrawer and require an in-app back navigation control.
-  - Adheres strictly to design system: uses `AppBackButton` (with `AppStrings.tooltipBack`, `Icons.arrow_back_ios_new_rounded`, 48dp minimum tap target, ink ripple, semantics), RTL-correct start alignment, and tokenized spacing (`AppSpace.xs`).
+  - Replaced ad-hoc header container with canonical `PrimaryAppBar(title: 'المفضلة والمحفوظات', showBack: true)` featuring standard RTL back button navigation (48dp tap target, ink ripple, semantics), centered title, and integrated segmented tab control in `bottom: PreferredSize(...)`.
 - **Files Modified (1 app file + 1 test file + 4 goldens):**
-  - `lib/features/favorites/presentation/favorites_page.dart`: Imported `app_back_button.dart` and integrated `AppBackButton` into header `Row`.
-  - `test/favorites_page_navigation_test.dart`: Added widget test verifying presence of `AppBackButton` and popping route on press.
+  - `lib/features/favorites/presentation/favorites_page.dart`: Integrated `PrimaryAppBar` with centered title, back button, and segmented tabs in `appBar.bottom`.
+  - `test/favorites_page_navigation_test.dart`: Added widget test verifying presence of back navigation arrow and route pop on press.
   - Updated 4 golden files in `test/golden/goldens/` (`favorites_page_empty_light_1_0.png`, `favorites_page_empty_dark_1_5.png`, `favorites_page_populated_light_1_0.png`, `favorites_page_populated_dark_1_5.png`).
 - **Verified:**
   - `flutter analyze`: 0 issues found.
