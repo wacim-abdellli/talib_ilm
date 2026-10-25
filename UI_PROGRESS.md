@@ -1,5 +1,21 @@
 # UI Progress Log
 
+## R78 — Add Back Arrow Button to FavoritesPage (25 October 2026)
+- **Scope & Context:**
+  - Added standard `AppBackButton` to the top header of `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`).
+  - Resolves screen trapping on mobile devices where users navigate to Favorites from HomeHeader, MorePage, or AppDrawer and require an in-app back navigation control.
+  - Adheres strictly to design system: uses `AppBackButton` (with `AppStrings.tooltipBack`, `Icons.arrow_back_ios_new_rounded`, 48dp minimum tap target, ink ripple, semantics), RTL-correct start alignment, and tokenized spacing (`AppSpace.xs`).
+- **Files Modified (1 app file + 1 test file + 4 goldens):**
+  - `lib/features/favorites/presentation/favorites_page.dart`: Imported `app_back_button.dart` and integrated `AppBackButton` into header `Row`.
+  - `test/favorites_page_navigation_test.dart`: Added widget test verifying presence of `AppBackButton` and popping route on press.
+  - Updated 4 golden files in `test/golden/goldens/` (`favorites_page_empty_light_1_0.png`, `favorites_page_empty_dark_1_5.png`, `favorites_page_populated_light_1_0.png`, `favorites_page_populated_dark_1_5.png`).
+- **Verified:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 156 warnings, 7 allow markers used, cap 10).
+  - `flutter test`: Targeted tests passed (favorites golden & navigation test suite).
+- **Open issues & Next steps:**
+  - Complete.
+
 ## R77c — Eliminate Surface Gradients & Finalize UI Lint Closure (25 October 2026)
 - **Scope & Context:**
   - Completely eliminated all remaining surface gradient warnings repository-wide (`motivation_widgets.dart` and `video_player_overlay.dart`).

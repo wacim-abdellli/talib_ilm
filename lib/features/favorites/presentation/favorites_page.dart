@@ -9,6 +9,7 @@ import '../../../core/models/favorite_item.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../../shared/widgets/app_back_button.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -200,6 +201,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 children: [
                   Row(
                     children: [
+                      const AppBackButton(),
+                      const SizedBox(width: AppSpace.xs),
                       Container(
                         width: AppSize.tap,
                         height: AppSize.tap,
