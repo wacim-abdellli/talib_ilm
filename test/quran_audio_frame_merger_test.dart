@@ -62,6 +62,46 @@ void main() {
       expect(stripped, audioPayload);
     });
 
+    test('stripId3Tags removes encoder Xing and Info header frames', () {
+      // Mock Info frame: starts with MP3 sync, contains 'Info' at offset 36, followed by sync at 100
+      final infoFrame = Uint8List(100);
+      infoFrame[0] = 0xFF;
+      infoFrame[1] = 0xFA;
+      infoFrame[36] = 0x49; // 'I'
+      infoFrame[37] = 0x6E; // 'n'
+      infoFrame[38] = 0x66; // 'f'
+      infoFrame[39] = 0x6F; // 'o'
+
+      final audioFrame = Uint8List.fromList([0xFF, 0xFB, 0x90, 0x64, 99, 100, 101]);
+      final fullBytes = Uint8List.fromList([...infoFrame, ...audioFrame]);
+
+      final stripped = QuranAudioFrameMerger.stripId3Tags(fullBytes);
+      expect(stripped, audioFrame);
+    });
+
+    test('isFullSurahFileHealthy detects legacy poisoned files containing Info tag', () async {
+      final healthyFile = File('${tempDir.path}/healthy.mp3');
+      final healthyBytes = Uint8List(2000);
+      healthyBytes.fillRange(0, 2000, 0xAA);
+      healthyBytes[0] = 0xFF;
+      healthyBytes[1] = 0xFB;
+      await healthyFile.writeAsBytes(healthyBytes);
+
+      expect(QuranAudioFrameMerger.isFullSurahFileHealthy(healthyFile, 1), isTrue);
+
+      final poisonedFile = File('${tempDir.path}/poisoned.mp3');
+      final poisonedBytes = Uint8List(2000);
+      poisonedBytes[0] = 0xFF;
+      poisonedBytes[1] = 0xFA;
+      poisonedBytes[36] = 0x49; // 'I'
+      poisonedBytes[37] = 0x6E; // 'n'
+      poisonedBytes[38] = 0x66; // 'f'
+      poisonedBytes[39] = 0x6F; // 'o'
+      await poisonedFile.writeAsBytes(poisonedBytes);
+
+      expect(QuranAudioFrameMerger.isFullSurahFileHealthy(poisonedFile, 1), isFalse);
+    });
+
     test('assembleFullSurahAudio concatenates verses into single full_surah.mp3', () async {
       final reciter = QuranAudioService.reciters.first;
       // Surah Al-Fatihah (7 verses)

@@ -12,9 +12,15 @@ class QuranAudioFrameMerger {
 
   static String _formatNumber(int n) => n.toString().padLeft(3, '0');
 
-  /// Strips ID3v2 metadata header at the beginning (starts with 'ID3') and
-  /// ID3v1 metadata tag at the end (128 bytes starting with 'TAG') to extract
-  /// pure MPEG audio frames for seamless, gapless audio concatenation.
+  /// Strips ID3v2 metadata header at the beginning (starts with 'ID3'),
+  /// ID3v1 metadata tag at the end (128 bytes starting with 'TAG'), and
+  /// any encoder Xing/Info VBR/CBR header frame in the first MPEG frame.
+  ///
+  /// Everyayah.com MP3s include an 'Info' frame specifying the single-ayah
+  /// frame count (e.g. 137 frames = 3 seconds). If preserved in a concatenated
+  /// file, ExoPlayer reads this first header and terminates playback after
+  /// just 3 seconds. Stripping the Info frame ensures pure, continuous MPEG
+  /// frames that play seamlessly from start to finish.
   static Uint8List stripId3Tags(Uint8List data) {
     int start = 0;
     // Strip ID3v2 header: 'ID3' (0x49, 0x44, 0x33) followed by version and 4-byte synchsafe size
@@ -41,7 +47,30 @@ class QuranAudioFrameMerger {
       }
     }
 
+    // Strip Xing / Info header frame
+    final searchLimit = (start + 128 < end) ? start + 128 : end;
+    int infoIdx = -1;
+    for (int i = start; i < searchLimit - 4; i++) {
+      if ((data[i] == 0x58 && data[i + 1] == 0x69 && data[i + 2] == 0x6E && data[i + 3] == 0x67) || // 'Xing'
+          (data[i] == 0x49 && data[i + 1] == 0x6E && data[i + 2] == 0x66 && data[i + 3] == 0x6F)) {  // 'Info'
+        infoIdx = i;
+        break;
+      }
+    }
+
+    if (infoIdx != -1) {
+      // Find the next MPEG frame sync word (0xFF, 0xEx or 0xFF, 0xFx) after the Info frame
+      final syncLimit = (infoIdx + 1500 < end) ? infoIdx + 1500 : end;
+      for (int i = infoIdx + 4; i < syncLimit - 1; i++) {
+        if (data[i] == 0xFF && (data[i + 1] & 0xE0) == 0xE0) {
+          start = i;
+          break;
+        }
+      }
+    }
+
     if (start == 0 && end == data.length) return data;
+    if (start >= end) return Uint8List(0);
     return Uint8List.sublistView(data, start, end);
   }
 
@@ -52,19 +81,62 @@ class QuranAudioFrameMerger {
     return File('${dir.path}/full_surah.mp3');
   }
 
+  /// Checks whether an existing full_surah.mp3 is valid and complete, or if
+  /// it suffers from legacy truncation or Info-header poisoning.
+  static bool isFullSurahFileHealthy(File file, int surah) {
+    if (!file.existsSync()) return false;
+    final length = file.lengthSync();
+    if (length < 1024) return false;
+
+    final totalVerses = quran.getVerseCount(surah);
+    // 1. Check if the file still has the legacy 'Info' or 'Xing' header in the first 250 bytes
+    try {
+      final raf = file.openSync(mode: FileMode.read);
+      try {
+        final sampleSize = length < 250 ? length : 250;
+        final sample = raf.readSync(sampleSize);
+        for (int i = 0; i < sample.length - 4; i++) {
+          if ((sample[i] == 0x58 && sample[i + 1] == 0x69 && sample[i + 2] == 0x6E && sample[i + 3] == 0x67) ||
+              (sample[i] == 0x49 && sample[i + 1] == 0x6E && sample[i + 2] == 0x66 && sample[i + 3] == 0x6F)) {
+            return false; // Legacy poisoned file! Needs rebuild!
+          }
+        }
+      } finally {
+        raf.closeSync();
+      }
+    } catch (_) {
+      return false;
+    }
+
+    // 2. Check if the file size is plausibly large enough for all verses in the Surah
+    if (totalVerses > 1) {
+      final minExpected = totalVerses * 128;
+      if (length < minExpected) {
+        return false; // Truncated file!
+      }
+    }
+
+    return true;
+  }
+
   /// Checks if a valid, assembled full-surah MP3 recording exists on disk
   static Future<bool> isFullSurahAssembled(int surah, {QuranReciter? reciter}) async {
     final file = await getFullSurahFile(surah, reciter: reciter);
-    return file.existsSync() && file.lengthSync() > 1024;
+    return isFullSurahFileHealthy(file, surah);
   }
 
   /// Returns the full-surah audio file if available or all verses exist.
-  /// If all individual verses exist but full_surah.mp3 is not yet created,
-  /// assembles it on-the-fly and returns the resulting File.
+  /// If all individual verses exist but full_surah.mp3 is not yet created
+  /// or is corrupted/truncated, assembles it on-the-fly and returns the resulting File.
   static Future<File?> getFullSurahAudioFile(int surah, {QuranReciter? reciter}) async {
     final file = await getFullSurahFile(surah, reciter: reciter);
-    if (file.existsSync() && file.lengthSync() > 1024) {
-      return file;
+    if (file.existsSync()) {
+      if (isFullSurahFileHealthy(file, surah)) {
+        return file;
+      }
+      try {
+        file.deleteSync();
+      } catch (_) {}
     }
 
     final isDownloaded = await QuranAudioDownloader.isSurahDownloaded(
@@ -82,13 +154,19 @@ class QuranAudioFrameMerger {
   static Future<File?> assembleFullSurahAudio(
     int surah, {
     QuranReciter? reciter,
+    bool forceRebuild = false,
   }) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final dir = await QuranAudioDownloader.getSurahDir(surah, r.id);
     final targetFile = File('${dir.path}/full_surah.mp3');
 
-    if (targetFile.existsSync() && targetFile.lengthSync() > 1024) {
-      return targetFile;
+    if (!forceRebuild && targetFile.existsSync()) {
+      if (isFullSurahFileHealthy(targetFile, surah)) {
+        return targetFile;
+      }
+      try {
+        targetFile.deleteSync();
+      } catch (_) {}
     }
 
     final totalVerses = quran.getVerseCount(surah);

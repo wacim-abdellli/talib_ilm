@@ -184,6 +184,7 @@ class QuranAudioDownloader {
 
       if (existingCount == totalVerses) {
         _setProg(key, surah, reciter.id, totalVerses, totalVerses, existingBytes, SurahDownloadStatus.completed);
+        await QuranAudioFrameMerger.assembleFullSurahAudio(surah, reciter: reciter);
         return;
       }
 
@@ -361,6 +362,7 @@ class QuranAudioDownloader {
           currentCount++;
           currentBytes += targetFile.lengthSync();
 
+          final isDone = currentCount == totalVerses;
           _setProg(
             key,
             surah,
@@ -368,8 +370,15 @@ class QuranAudioDownloader {
             currentCount,
             totalVerses,
             currentBytes,
-            currentCount == totalVerses ? SurahDownloadStatus.completed : SurahDownloadStatus.downloading,
+            isDone ? SurahDownloadStatus.completed : SurahDownloadStatus.downloading,
           );
+          if (isDone) {
+            await QuranAudioFrameMerger.assembleFullSurahAudio(
+              surah,
+              reciter: reciter,
+              forceRebuild: true,
+            );
+          }
         } catch (e) {
           // Safely cleanup temp file
           try {

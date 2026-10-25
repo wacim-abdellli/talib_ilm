@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## R91 — Gapless Full Surah Audio Frame Assembly & Playback Healing (25 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issue on the Quran Audio Downloads ("التنزيلات الصوتية") screen where playing a downloaded Surah (e.g. Surah 51 Adh-Dhariyat) played for only 3 seconds (single verse) and terminated prematurely with duration showing 00:03/00:03:
+    1. **Encoder Info/Xing Header Frame Stripping:** In `everyayah.com` MP3 files, the first MPEG frame following the ID3 tag is an encoder `Info`/`Xing` metadata frame. This frame contains a 4-byte big-endian `Frames` count specifying the single-ayah frame count (e.g., 137 frames = 3.5 seconds). When ayah files were concatenated, ExoPlayer parsed this first frame's header, concluded the entire file was only 3 seconds long, and stopped playing after verse 1. Enhanced `QuranAudioFrameMerger.stripId3Tags` to search for `Info`/`Xing` signatures in the initial header and advance the stream to the true first audio frame sync word (`0xFF 0xEx/0xFx`), ensuring all concatenated bytes are 100% pure audio frames.
+    2. **Self-Healing Legacy File Detection:** Added `QuranAudioFrameMerger.isFullSurahFileHealthy(File file, int surah)` which detects whether an existing `full_surah.mp3` on disk contains the legacy poisoned `Info`/`Xing` header in its first 250 bytes or has a truncated file size (< `totalVerses * 128` bytes). If poisoned or truncated, it automatically purges the stale file and triggers clean on-the-fly reassembly, immediately repairing previously downloaded Surahs without requiring user re-downloads.
+    3. **Background Assembly on Download Completion:** In `QuranAudioDownloader._executeDownloadSurah`, added automatic `assembleFullSurahAudio` invocation once all verses reach 100% completion or on verified resume, guaranteeing that `full_surah.mp3` is ready on disk before the user taps play.
+    4. **Regression Unit Testing:** Added unit tests in `test/quran_audio_frame_merger_test.dart` asserting that `stripId3Tags` cleanly strips `Info`/`Xing` header frames and that `isFullSurahFileHealthy` accurately detects and rejects legacy poisoned files.
+- **Files Modified (2 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/quran_audio_frame_merger.dart`: Added Xing/Info frame stripping, health validation, and auto-purging of poisoned files (226 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/quran_audio_downloader.dart`: Added background assembly trigger on download completion (527 lines, Rule 8 compliant).
+  - `test/quran_audio_frame_merger_test.dart`: Added unit tests for Info header stripping and health verification.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (12.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/quran_audio_frame_merger_test.dart`, `test/quran_audio_download_test.dart`, `test/quran_audio_service_test.dart`, `test/quran_audio_download_hardening_test.dart`, `test/quran_audio_lifecycle_test.dart`): 62/62 passed.
+  - `flutter build apk --debug`: PASSED.
+- **Open issues & Next steps:**
+  - Full surah playback on downloaded Surahs is 100% continuous and gapless with accurate durations.
+
 ## R90 — Fix Location Search Bar Layout, Latin Aliases & Online Capital Search (25 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues on the Location Settings sheet ("موقعك ومواقيت الصلاة"):
