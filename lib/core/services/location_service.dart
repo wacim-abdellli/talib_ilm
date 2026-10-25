@@ -465,6 +465,15 @@ class LocationService {
         clientOverride: clientOverride,
       );
 
+  static Future<List<VerifiedCity>> searchCitiesOnline(
+    String query, {
+    HttpClient? clientOverride,
+  }) =>
+      _reverseGeocodeClient.searchCitiesOnline(
+        query,
+        clientOverride: clientOverride,
+      );
+
   @visibleForTesting
   Future<LocationResult> resolvePositionForTesting(
     Position position,

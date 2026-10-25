@@ -1,18 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
+import '../../../core/constants/app_policy.dart';
 import '../../../core/constants/verified_cities.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
+import 'widgets/active_location_card.dart';
 import 'widgets/location_search_results_list.dart';
 import 'widgets/remote_geocoding_consent_tile.dart';
 
@@ -44,6 +46,10 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   bool _loading = true;
   bool _locatingGps = false;
   String _searchQuery = '';
+  bool _isSearchingOnline = false;
+  List<VerifiedCity> _onlineResults = const [];
+  Timer? _onlineSearchDebounce;
+  bool _isRemoteAllowed = false;
 
   @override
   void initState() {
@@ -53,16 +59,49 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
 
   @override
   void dispose() {
+    _onlineSearchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     final loc = await _locationService.getLocation();
+    final allowed = await LocationService.isRemoteGeocodingAllowed();
     if (!mounted) return;
     setState(() {
       _currentLocation = loc;
+      _isRemoteAllowed = allowed;
       _loading = false;
+    });
+  }
+
+  void _onSearchChanged(String val) {
+    setState(() => _searchQuery = val);
+    _onlineSearchDebounce?.cancel();
+    if (val.trim().length < 2) {
+      setState(() {
+        _onlineResults = const [];
+        _isSearchingOnline = false;
+      });
+      return;
+    }
+
+    if (_isRemoteAllowed) {
+      _onlineSearchDebounce = Timer(AppPolicy.debounce, () {
+        _triggerOnlineSearch(val.trim());
+      });
+    }
+  }
+
+  Future<void> _triggerOnlineSearch(String query) async {
+    final clean = query.trim();
+    if (clean.length < 2) return;
+    setState(() => _isSearchingOnline = true);
+    final results = await LocationService.searchCitiesOnline(clean);
+    if (!mounted) return;
+    setState(() {
+      _onlineResults = results;
+      _isSearchingOnline = false;
     });
   }
 
@@ -350,7 +389,10 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
               padding: const EdgeInsets.all(AppSpace.xl),
               children: [
                 // 1. Current Active Location Card
-                _buildActiveLocationCard(palette),
+                ActiveLocationCard(
+                  location: _currentLocation,
+                  onClearManual: _clearManual,
+                ),
 
                 const SizedBox(height: AppSpace.lg),
 
@@ -371,7 +413,9 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
                 const SizedBox(height: AppSpace.lg),
 
                 // 3. User-controlled remote geocoding consent
-                const RemoteGeocodingConsentTile(),
+                RemoteGeocodingConsentTile(
+                  onChanged: (val) => setState(() => _isRemoteAllowed = val),
+                ),
 
                 const SizedBox(height: AppSpace.xl),
 
@@ -411,105 +455,6 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
     );
   }
 
-  Widget _buildActiveLocationCard(AppPalette palette) {
-    final loc = _currentLocation;
-    if (loc == null) return const SizedBox.shrink();
-
-    final isAccurate = loc.isAccurate;
-    final sourceColor = isAccurate ? palette.primary : palette.gold;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: AppSpace.xs / 2,
-                ),
-                decoration: BoxDecoration(
-                  color: sourceColor.withValues(alpha: 0.15),
-                  borderRadius: AppRadius.pillRadius,
-                  border: Border.all(
-                    color: sourceColor.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isAccurate
-                          ? Icons.check_circle_rounded
-                          : Icons.info_outline_rounded,
-                      size: AppIcon.sm,
-                      color: sourceColor,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      loc.sourceLabel,
-                      style: context.text.caption.copyWith(
-                        color: sourceColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (loc.source == LocationSource.manual)
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _clearManual,
-                    borderRadius: AppRadius.smRadius,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.xs,
-                        vertical: AppSpace.xs / 2,
-                      ),
-                      child: Text(
-                        'العودة للـ GPS',
-                        style: context.text.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            loc.city,
-            style: context.text.title.copyWith(
-              fontWeight: FontWeight.bold,
-              color: palette.text,
-            ),
-          ),
-          if (loc.province != null || loc.country != null) ...[
-            const SizedBox(height: AppSpace.xs / 2),
-            Text(
-              [loc.province, loc.country].whereType<String>().join(' • '),
-              style: context.text.caption.copyWith(
-                color: palette.textMuted,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpace.xs),
-          Text(
-            'الإحداثيات: ${loc.latitude.toStringAsFixed(4)}° N, ${loc.longitude.toStringAsFixed(4)}° E',
-            style: context.text.caption.copyWith(
-              color: palette.textSubtle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildGpsButton(AppPalette palette) {
     return AppButton(
       label: _locatingGps
@@ -524,15 +469,31 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   Widget _buildSearchBar(AppPalette palette) {
     return TextField(
       controller: _searchController,
-      onChanged: (val) => setState(() => _searchQuery = val),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.start,
+      onChanged: _onSearchChanged,
+      onSubmitted: (val) {
+        if (val.trim().length >= 2) {
+          _triggerOnlineSearch(val.trim());
+        }
+      },
       style: context.text.body.copyWith(
         color: palette.text,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
-        hintText: 'اكتب اسم مدينتك أو ولايتك...',
+        hintText: 'اكتب اسم مدينتك أو عاصمتك...',
         hintStyle: context.text.body.copyWith(
           color: palette.textSubtle,
+        ),
+        hintTextDirection: TextDirection.rtl,
+        prefixIconConstraints: const BoxConstraints.tightFor(
+          width: AppSize.tap,
+          height: AppSize.tap,
+        ),
+        suffixIconConstraints: const BoxConstraints.tightFor(
+          width: AppSize.tap,
+          height: AppSize.tap,
         ),
         prefixIcon: Icon(
           Icons.search_rounded,
@@ -540,20 +501,24 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
           color: palette.primary,
         ),
         suffixIcon: _searchQuery.isNotEmpty
-            ? AppIconButton(
-                icon: Icons.clear_rounded,
+            ? IconButton(
+                icon: const Icon(Icons.clear_rounded, size: AppIcon.sm),
                 tooltip: 'مسح',
                 color: palette.textMuted,
                 onPressed: () {
                   _searchController.clear();
-                  setState(() => _searchQuery = '');
+                  setState(() {
+                    _searchQuery = '';
+                    _onlineResults = const [];
+                    _isSearchingOnline = false;
+                  });
                 },
               )
             : null,
         filled: true,
         fillColor: palette.surfaceMuted,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.lg,
+        contentPadding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpace.md,
           vertical: AppSpace.sm,
         ),
         border: OutlineInputBorder(
@@ -575,6 +540,10 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   Widget _buildSearchResults(AppPalette palette, List<VerifiedCity> cities) {
     return LocationSearchResultsList(
       cities: cities,
+      onlineCities: _onlineResults,
+      isSearchingOnline: _isSearchingOnline,
+      searchQuery: _searchQuery.trim(),
+      onTriggerOnlineSearch: () => _triggerOnlineSearch(_searchQuery.trim()),
       currentLocation: _currentLocation,
       onSelectCity: _selectVerifiedCity,
     );

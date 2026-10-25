@@ -64,6 +64,31 @@ void main() {
       expect(tunisiaOnly.every((c) => c.countryCode == 'TN'), isTrue);
       expect(tunisiaOnly.length, greaterThanOrEqualTo(10));
     });
+
+    test('search resolves Latin transliterations, capitals, and international cities', () {
+      final algiers = VerifiedCitiesCatalog.search('algiers');
+      expect(algiers.any((c) => c.name.contains('الجزائر')), isTrue);
+
+      final alger = VerifiedCitiesCatalog.search('alger');
+      expect(alger.any((c) => c.name.contains('الجزائر')), isTrue);
+
+      final capital = VerifiedCitiesCatalog.search('capital');
+      expect(capital.any((c) => c.name.contains('الجزائر')), isTrue);
+
+      final paris = VerifiedCitiesCatalog.search('paris');
+      expect(paris.isNotEmpty, isTrue);
+      expect(paris.first.countryCode, 'FR');
+      expect(paris.first.name, 'باريس');
+
+      final london = VerifiedCitiesCatalog.search('london');
+      expect(london.isNotEmpty, isTrue);
+      expect(london.first.countryCode, 'GB');
+      expect(london.first.name, 'لندن');
+
+      final cairoLatin = VerifiedCitiesCatalog.search('cairo');
+      expect(cairoLatin.isNotEmpty, isTrue);
+      expect(cairoLatin.first.countryCode, 'EG');
+    });
   });
 
   group('LocationService & LocationResult Tests', () {

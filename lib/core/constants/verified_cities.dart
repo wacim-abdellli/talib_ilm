@@ -55,8 +55,85 @@ class VerifiedCitiesCatalog {
 
   static final Map<String, String> _citySearchIndex = {
     for (final c in all)
-      c.id: _normalize('${c.name} ${c.province ?? ''} ${c.country}'),
+      c.id: _normalize('${c.name} ${c.province ?? ''} ${c.country} ${c.id.replaceAll('_', ' ')} ${_latinAlias(c.id)}'),
   };
+
+  static String _latinAlias(String id) {
+    switch (id) {
+      case 'dz_algiers':
+        return 'algiers alger algerie capital capitale العاصمة الجزائر';
+      case 'dz_oran':
+        return 'oran wahran وهران';
+      case 'dz_constantine':
+        return 'constantine qacentina قسنطينة';
+      case 'dz_annaba':
+        return 'annaba bone عنابة';
+      case 'dz_blida':
+        return 'blida البليدة';
+      case 'dz_setif':
+        return 'setif سطيف';
+      case 'dz_batna':
+        return 'batna باتنة';
+      case 'dz_tlemcen':
+        return 'tlemcen تلمسان';
+      case 'dz_bejaia':
+        return 'bejaia bgayet bougie بجاية';
+      case 'dz_tizi_ouzou':
+        return 'tizi ouzou تيزي وزو';
+      case 'tn_tunis':
+        return 'tunis tunisie tunisia capital capitale العاصمة تونس';
+      case 'ma_rabat':
+        return 'rabat maroc morocco capital capitale العاصمة الرباط';
+      case 'ma_casablanca':
+        return 'casablanca dar el beida الدار البيضاء';
+      case 'eg_cairo':
+        return 'cairo egypt le caire capital capitale العاصمة القاهرة';
+      case 'sa_riyadh':
+        return 'riyadh riad saudi capital capitale العاصمة الرياض';
+      case 'sa_makkah':
+        return 'makkah mecca mekka مكة';
+      case 'sa_madinah':
+        return 'madinah medina medine المدينة';
+      case 'sa_jeddah':
+        return 'jeddah jiddah جدة';
+      case 'ps_jerusalem':
+        return 'jerusalem al quds al-quds capital القدس';
+      case 'fr_paris':
+        return 'paris france capital capitale باريس';
+      case 'gb_london':
+        return 'london londres uk britain capital لندن';
+      case 'es_madrid':
+        return 'madrid spain espagne capital مدريد';
+      case 'de_berlin':
+        return 'berlin germany allemagne capital برلين';
+      case 'it_rome':
+        return 'rome roma italy italie capital روما';
+      case 'us_washington':
+        return 'washington usa capital واشنطن';
+      case 'ca_ottawa':
+        return 'ottawa canada capital أوتاوا';
+      case 'ca_montreal':
+        return 'montreal canada مونتريال';
+      case 'be_brussels':
+        return 'brussels bruxelles belgium belgique capital بروكسل';
+      case 'ae_dubai':
+        return 'dubai emirates uae دبي';
+      case 'ae_abu_dhabi':
+        return 'abu dhabi capital أبوظبي';
+      case 'qa_doha':
+        return 'doha qatar capital الدوحة';
+      case 'kw_kuwait':
+        return 'kuwait koweit capital الكويت';
+      case 'tr_istanbul':
+        return 'istanbul turkey turquie اسطنبول';
+      case 'iq_baghdad':
+        return 'baghdad iraq capital بغداد';
+      case 'sd_khartoum':
+        return 'khartoum sudan capital الخرطوم';
+      default:
+        return '';
+    }
+  }
 
   /// Search cities by normalized Arabic name or province
   static List<VerifiedCity> search(String query, {String? countryCode}) {
@@ -945,6 +1022,100 @@ class VerifiedCitiesCatalog {
       latitude: 41.0082,
       longitude: 28.9784,
       calculationMethod: 'turkey',
+    ),
+
+    // ==========================================
+    // عواصم ومراكز عالمية كبرى
+    // ==========================================
+    VerifiedCity(
+      id: 'fr_paris',
+      name: 'باريس',
+      province: 'إيل دو فرانس',
+      country: 'فرنسا',
+      countryCode: 'FR',
+      latitude: 48.8566,
+      longitude: 2.3522,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'gb_london',
+      name: 'لندن',
+      province: 'إنجلترا',
+      country: 'المملكة المتحدة',
+      countryCode: 'GB',
+      latitude: 51.5074,
+      longitude: -0.1278,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'es_madrid',
+      name: 'مدريد',
+      province: 'منطقة مدريد',
+      country: 'إسبانيا',
+      countryCode: 'ES',
+      latitude: 40.4168,
+      longitude: -3.7038,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'de_berlin',
+      name: 'برلين',
+      province: 'برلين',
+      country: 'ألمانيا',
+      countryCode: 'DE',
+      latitude: 52.5200,
+      longitude: 13.4050,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'it_rome',
+      name: 'روما',
+      province: 'لاتسيو',
+      country: 'إيطاليا',
+      countryCode: 'IT',
+      latitude: 41.9028,
+      longitude: 12.4964,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'be_brussels',
+      name: 'بروكسل',
+      province: 'إقليم بروكسل العاصمة',
+      country: 'بلجيكا',
+      countryCode: 'BE',
+      latitude: 50.8503,
+      longitude: 4.3517,
+      calculationMethod: 'mwl',
+    ),
+    VerifiedCity(
+      id: 'ca_ottawa',
+      name: 'أوتاوا',
+      province: 'أونتاريو',
+      country: 'كندا',
+      countryCode: 'CA',
+      latitude: 45.4215,
+      longitude: -75.6972,
+      calculationMethod: 'isna',
+    ),
+    VerifiedCity(
+      id: 'ca_montreal',
+      name: 'مونتريال',
+      province: 'كيبيك',
+      country: 'كندا',
+      countryCode: 'CA',
+      latitude: 45.5017,
+      longitude: -73.5673,
+      calculationMethod: 'isna',
+    ),
+    VerifiedCity(
+      id: 'us_washington',
+      name: 'واشنطن العاصمة',
+      province: 'واشنطن دي سي',
+      country: 'الولايات المتحدة الأمريكية',
+      countryCode: 'US',
+      latitude: 38.9072,
+      longitude: -77.0369,
+      calculationMethod: 'isna',
     ),
   ];
 }

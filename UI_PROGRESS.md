@@ -1,5 +1,30 @@
 # UI Progress Log
 
+## R90 — Fix Location Search Bar Layout, Latin Aliases & Online Capital Search (25 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issues on the Location Settings sheet ("موقعك ومواقيت الصلاة"):
+    1. **Search Bar Layout & 'X' Misplacement:** The clear ('X') button was rendered in the middle of the search bar, distorting the input field and breaking text alignment. Root cause: In Flutter's `InputDecorator`, `suffixIconConstraints` defaults to unbounded width; wrapping an icon in a `Center` without tight constraints caused the icon container to expand into the TextField and center itself across half the field width. Fixed by setting `suffixIconConstraints: const BoxConstraints.tightFor(width: AppSize.tap, height: AppSize.tap)` and `prefixIconConstraints: const BoxConstraints.tightFor(width: AppSize.tap, height: AppSize.tap)`, and explicitly configuring `textDirection: TextDirection.rtl`, `textAlign: TextAlign.start`, and `hintTextDirection: TextDirection.rtl`.
+    2. **Offline Capital & Latin Script Search Support:** The offline catalog (`VerifiedCitiesCatalog`) previously only matched raw Arabic substrings; searches using Latin transliterations or common aliases (`algiers`, `alger`, `paris`, `capital`, `capitale`, `العاصمة`, `tunis`, `cairo`, `rabat`) returned 0 results. Added search index keywords and Latin aliases across verified cities, and added major diaspora/international capitals (Paris, London, Madrid, Berlin, Rome, Brussels, Ottawa, Montreal, Washington).
+    3. **Live Online Geocoding Search ("البحث عبر الإنترنت"):** While the consent toggle ("البحث عن اسم المدينة عبر الإنترنت") existed, manual searching never queried online geocoding. Implemented `ReverseGeocodeClient.searchCitiesOnline(query)` querying OpenStreetMap Nominatim with strict `AppPolicy.maxGeocodeBytes` limit, `AppPolicy.networkFast` timeout, and Arabic/English language preference, fully integrated into `LocationService` and `LocationSearchResultsList`.
+    4. **Rule 8 File Split:** Extracted `ActiveLocationCard` into `lib/features/prayer/presentation/widgets/active_location_card.dart` (117 lines), reducing `location_settings_sheet.dart` from 600+ lines to 551 lines.
+    5. **Regression Unit Testing:** Added Latin transliteration, international capital, and alias tests in `test/verified_location_and_prayer_test.dart` (all 8 tests passing).
+- **Files Modified (4 app files + 1 new widget + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/prayer/presentation/location_settings_sheet.dart`: Fixed search bar constraints, RTL alignment, and online search wireup (551 lines, Rule 8 compliant).
+  - `lib/features/prayer/presentation/widgets/active_location_card.dart`: Extracted active location card widget (117 lines, Rule 8 compliant).
+  - `lib/features/prayer/presentation/widgets/location_search_results_list.dart`: Added online result rendering and online query trigger (285 lines, Rule 8 compliant).
+  - `lib/core/constants/verified_cities.dart`: Added Latin transliterations, capital keywords, and diaspora capitals.
+  - `lib/core/services/reverse_geocode_client.dart`: Implemented online search with byte limits and timeouts (256 lines, Rule 8 compliant).
+  - `lib/core/services/location_service.dart`: Delegated online search to reverse geocode client (596 lines, Rule 8 compliant).
+  - `test/verified_location_and_prayer_test.dart`: Added Latin alias and capital verification tests.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (8.5s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/verified_location_and_prayer_test.dart`, `test/features/prayer/remote_geocoding_consent_tile_test.dart`): 10/10 passed.
+  - `flutter build apk --debug`: PASSED (`√ Built build\app\outputs\flutter-apk\app-debug.apk` in 89.3s).
+- **Open issues & Next steps:**
+  - Location settings search bar layout and search experience fully functional offline and online.
+
 ## R89 — Harden SQLite QuranDatabase & Bookmark Migration Reliability (25 October 2026)
 - **Scope & Context:**
   - Hardened local SQLite storage and SharedPreferences persistence layers against corruption, out-of-bounds queries, batch failure, and legacy bookmark resurrection (`quran_database.dart`, `bookmark_service.dart`):

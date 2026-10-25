@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:geocoding/geocoding.dart';
 import '../constants/app_policy.dart';
+import '../constants/verified_cities.dart';
 
 /// Bounded, secure HTTP reverse geocoding client for location resolution.
 class ReverseGeocodeClient {
@@ -145,5 +146,111 @@ class ReverseGeocodeClient {
     if (s.startsWith('ولاية ')) s = s.substring(6).trim();
     if (s.startsWith('محافظة ')) s = s.substring(7).trim();
     return s.trim();
+  }
+
+  /// Searches for cities online using Nominatim / OpenStreetMap API with strict timeout and byte bounds
+  Future<List<VerifiedCity>> searchCitiesOnline(
+    String query, {
+    HttpClient? clientOverride,
+    Duration? timeoutOverride,
+  }) async {
+    final clean = query.trim();
+    if (clean.length < 2) return const [];
+
+    final deadline = timeoutOverride ?? AppPolicy.networkFast;
+    final client = clientOverride ?? (clientFactory != null ? clientFactory!() : HttpClient());
+    client.connectionTimeout = deadline;
+
+    HttpClientRequest? activeRequest;
+    StreamSubscription<List<int>>? responseSub;
+
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(clean)}&format=json&accept-language=ar,en&limit=6&addressdetails=1',
+      );
+      if (uri.scheme != 'https') return const [];
+
+      activeRequest = await client.getUrl(uri);
+      activeRequest.headers.set(HttpHeaders.userAgentHeader, 'TalibIlm/1.0 (Islamic App)');
+      final response = await activeRequest.close().timeout(deadline);
+      if (response.statusCode != HttpStatus.ok) return const [];
+
+      final rawBytes = <int>[];
+      final completer = Completer<void>();
+      responseSub = response.listen(
+        (chunk) {
+          rawBytes.addAll(chunk);
+          if (rawBytes.length > AppPolicy.maxGeocodeBytes) {
+            responseSub?.cancel();
+            if (!completer.isCompleted) completer.complete();
+          }
+        },
+        onError: (_) {
+          if (!completer.isCompleted) completer.complete();
+        },
+        onDone: () {
+          if (!completer.isCompleted) completer.complete();
+        },
+        cancelOnError: true,
+      );
+
+      await completer.future.timeout(deadline);
+
+      final payload = utf8.decode(rawBytes, allowMalformed: true);
+      final list = jsonDecode(payload);
+      if (list is! List) return const [];
+
+      final results = <VerifiedCity>[];
+      for (final item in list) {
+        if (item is! Map<String, dynamic>) continue;
+        final lat = double.tryParse(item['lat']?.toString() ?? '');
+        final lon = double.tryParse(item['lon']?.toString() ?? '');
+        if (lat == null || lon == null) continue;
+
+        final address = item['address'];
+        String name = '';
+        String? province;
+        String country = '';
+        String countryCode = '';
+
+        if (address is Map<String, dynamic>) {
+          name = address['city'] ?? address['town'] ?? address['village'] ?? address['municipality'] ?? address['state_district'] ?? '';
+          province = address['state']?.toString() ?? address['region']?.toString();
+          country = address['country']?.toString() ?? '';
+          countryCode = address['country_code']?.toString().toUpperCase() ?? '';
+        }
+
+        if (name.trim().isEmpty) {
+          final display = item['display_name']?.toString() ?? '';
+          name = display.split(',').first.trim();
+        }
+
+        if (name.trim().isNotEmpty) {
+          results.add(
+            VerifiedCity(
+              id: 'online_${lat.toStringAsFixed(3)}_${lon.toStringAsFixed(3)}',
+              name: cleanAdministrativeName(name.trim()),
+              province: province != null ? cleanAdministrativeName(province.trim()) : null,
+              country: country.trim().isNotEmpty ? country.trim() : 'عالمي',
+              countryCode: countryCode.trim().isNotEmpty ? countryCode.trim() : 'INT',
+              latitude: lat,
+              longitude: lon,
+              calculationMethod: 'mwl',
+            ),
+          );
+        }
+      }
+      return results;
+    } catch (_) {
+      try {
+        activeRequest?.abort();
+      } catch (_) {}
+      return const [];
+    } finally {
+      await responseSub?.cancel();
+      if (clientOverride == null && clientFactory == null) {
+        client.close(force: true);
+      }
+    }
   }
 }
