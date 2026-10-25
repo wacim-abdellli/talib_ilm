@@ -7,14 +7,15 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../../../core/constants/app_policy.dart';
 import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
 import 'shamela_download_manager.dart';
 import 'shamela_html_parser.dart';
+import 'shamela_remote_fetcher.dart';
 
 export 'shamela_download_manager.dart'
     show ShamelaDownloadException, ShamelaDownloadManager;
+export 'shamela_remote_fetcher.dart' show ShamelaRemoteFetcher;
 
 class ShamelaService {
   static Database? _db;
@@ -38,7 +39,16 @@ class ShamelaService {
   static final Map<int, Map<String, dynamic>> _loadedBundledBooks = {};
 
   static final Map<int, int> _knownTotalPages = {};
-  static final http.Client _httpClient = http.Client();
+
+  @visibleForTesting
+  static http.Client get httpClient => ShamelaRemoteFetcher.httpClient;
+
+  @visibleForTesting
+  static void setHttpClient(http.Client? client) =>
+      ShamelaRemoteFetcher.setHttpClient(client);
+
+  @visibleForTesting
+  static void resetHttpClient() => ShamelaRemoteFetcher.resetHttpClient();
 
   static Future<Map<String, dynamic>?> _getBundledBookData(int bookId) async {
     if (_loadedBundledBooks.containsKey(bookId)) {
@@ -149,24 +159,21 @@ class ShamelaService {
     int categoryId = 0,
     int level = 0,
     bool rootOnly = false,
-  }) {
-    return TurathCatalog.search(
-      query: query,
-      categoryId: categoryId,
-      level: level,
-      rootOnly: rootOnly,
-    );
-  }
+  }) =>
+      TurathCatalog.search(
+        query: query,
+        categoryId: categoryId,
+        level: level,
+        rootOnly: rootOnly,
+      );
 
   /// Get verified commentaries (شروح وحواشي) for a mother book
-  static List<ShamelaBook> getShuruh(int parentId) {
-    return TurathCatalog.getShuruh(parentId);
-  }
+  static List<ShamelaBook> getShuruh(int parentId) =>
+      TurathCatalog.getShuruh(parentId);
 
   /// Get parent mother book for a commentary
-  static ShamelaBook? getParentBook(int parentId) {
-    return TurathCatalog.getParentBook(parentId);
-  }
+  static ShamelaBook? getParentBook(int parentId) =>
+      TurathCatalog.getParentBook(parentId);
 
   /// Fetch single page content from local cache or stream from shamela.ws
   static Future<ShamelaPage> fetchPage({
@@ -249,26 +256,10 @@ class ShamelaService {
     }
 
     // 3. Fetch over network
-    final url = Uri.parse('https://shamela.ws/book/$bookId/$pageNumber');
-    final response = await _httpClient.get(
-      url,
-      headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'ar,en;q=0.9',
-      },
-    ).timeout(AppPolicy.networkTimeout);
-
-    if (response.statusCode == 404) {
-      throw Exception('صفحة غير متوفرة في الكتاب (404)');
-    }
-    if (response.statusCode != 200) {
-      throw Exception('تعذر تحميل الصفحة من المكتبة الشاملة (${response.statusCode})');
-    }
-
-    final html = utf8.decode(response.bodyBytes, allowMalformed: true);
-    final parsed = ShamelaHtmlParser.parsePageHtml(bookId, pageNumber, html);
+    final parsed = await ShamelaRemoteFetcher.fetchRemotePage(
+      bookId: bookId,
+      pageNumber: pageNumber,
+    );
 
     // Save discovered total pages if parsed from page navigation
     if (parsed.detectedTotalPages != null && parsed.detectedTotalPages! > 0) {
@@ -376,112 +367,35 @@ class ShamelaService {
     }
 
     // 3. Fetch from shamela.ws
-    try {
-      final url = Uri.parse('https://shamela.ws/book/$bookId');
-      final response = await _httpClient.get(url, headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      }).timeout(AppPolicy.networkTimeout);
-
-      if (response.statusCode == 200) {
-        final html = utf8.decode(response.bodyBytes, allowMalformed: true);
-        final linkRegex = RegExp(
-          r"""<a[^>]+href=["'](?:https://shamela\.ws)?/book/\d+/(\d+)["'][^>]*>(.*?)</a>""",
+    return await ShamelaRemoteFetcher.fetchRemoteTableOfContents(
+      bookId: bookId,
+      onDiscoveredTotalPages: (maxChapterPage) {
+        final current = _knownTotalPages[bookId] ?? 0;
+        if (maxChapterPage > current) {
+          unawaited(saveDiscoveredTotalPages(bookId, maxChapterPage));
+        }
+      },
+      onCommitValidFihris: (chapters) async {
+        await db.delete(
+          _tableNameFihris,
+          where: 'book_id = ?',
+          whereArgs: [bookId],
         );
-
-        final Map<int, String> chaptersMap = {};
-
-        // A. Extract all direct chapters on cover page
-        for (final m in linkRegex.allMatches(html)) {
-          final pageNum = int.tryParse(m.group(1)!);
-          final rawTitle = ShamelaHtmlParser.cleanHtml(m.group(2)!);
-
-          if (pageNum != null &&
-              rawTitle.isNotEmpty &&
-              rawTitle != '*' &&
-              !rawTitle.contains('تصفح') &&
-              !rawTitle.contains('الرئيسية')) {
-            chaptersMap[pageNum] = rawTitle;
-          }
-        }
-
-        // B. Check for expandable tree nodes (exp_bu buttons)
-        final rootMatches = RegExp(
-          r"""data-id=["'](\d+)["'][^>]*data-book-id=["'](\d+)["']""",
-        ).allMatches(html);
-
-        if (rootMatches.isNotEmpty) {
-          final futures = rootMatches.map((rm) async {
-            final dataId = rm.group(1)!;
-            final bId = rm.group(2)!;
-            try {
-              final childUrl =
-                  Uri.parse('https://shamela.ws/ajax/titlechilds/$bId/$dataId');
-              final childResp = await _httpClient.get(childUrl, headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'X-Requested-With': 'XMLHttpRequest',
-              }).timeout(AppPolicy.networkTimeout);
-
-              if (childResp.statusCode == 200) {
-                final childHtml =
-                    utf8.decode(childResp.bodyBytes, allowMalformed: true);
-                for (final cm in linkRegex.allMatches(childHtml)) {
-                  final cp = int.tryParse(cm.group(1)!);
-                  var ct = ShamelaHtmlParser.cleanHtml(cm.group(2)!);
-                  if (ct.startsWith('-')) ct = ct.substring(1).trim();
-                  if (cp != null && ct.isNotEmpty && ct != '*') {
-                    chaptersMap[cp] = ct;
-                  }
-                }
-              }
-            } catch (_) {}
-          });
-
-          await Future.wait(futures);
-        }
-
-        final sortedPages = chaptersMap.keys.toList()..sort();
-        final List<ShamelaChapter> chapters = sortedPages
-            .map((p) => ShamelaChapter(title: chaptersMap[p]!, pageNumber: p))
-            .toList();
-
-        final maxChapterPage =
-            chaptersMap.keys.fold<int>(0, (prev, elem) => elem > prev ? elem : prev);
-        if (maxChapterPage > 0) {
-          final current = _knownTotalPages[bookId] ?? 0;
-          if (maxChapterPage > current) {
-            unawaited(saveDiscoveredTotalPages(bookId, maxChapterPage));
-          }
-        }
-
-        if (chapters.isNotEmpty) {
-          // Clear old fihris and cache new chapters in SQLite
-          await db.delete(
+        final batch = db.batch();
+        for (final c in chapters) {
+          batch.insert(
             _tableNameFihris,
-            where: 'book_id = ?',
-            whereArgs: [bookId],
+            {
+              'book_id': bookId,
+              'page_num': c.pageNumber,
+              'title': c.title,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          final batch = db.batch();
-          for (final c in chapters) {
-            batch.insert(
-              _tableNameFihris,
-              {
-                'book_id': bookId,
-                'page_num': c.pageNumber,
-                'title': c.title,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-          }
-          await batch.commit(noResult: true);
         }
-
-        return chapters;
-      }
-    } catch (_) {}
-
-    return [];
+        await batch.commit(noResult: true);
+      },
+    );
   }
 
   /// Download entire book for full offline access with truthful completeness verification

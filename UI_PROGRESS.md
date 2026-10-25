@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R78 — Harden Shamela Remote Fetching & Streaming Byte Caps (25 October 2026)
+- **Scope & Context:**
+  - Resolved three remote fetching vulnerabilities in `ShamelaService` (`lib/features/ilm/data/services/shamela_service.dart`):
+    1. **HTTP Client Test Seam:** Replaced private static final `http.Client` with `@visibleForTesting` `setHttpClient` and `resetHttpClient` test seams on `ShamelaService` and `ShamelaRemoteFetcher`, enabling deterministic network mocking.
+    2. **Streaming Byte Ceilings & Early Cancellation:** Streamed response chunks directly with strict byte thresholds (`AppPolicy.maxShamelaPageBytes = 512 KB`, `maxShamelaTocCoverBytes = 1 MB`, `maxShamelaTocChildBytes = 256 KB`). Oversized responses cancel underlying stream subscriptions immediately and throw `ShamelaDownloadException` before memory exhaustion can occur.
+    3. **TOC Fanout & Concurrency Throttle:** Replaced unthrottled `Future.wait` on server tree buttons with a maximum expandable node cap (`AppPolicy.maxShamelaTocNodes = 50`) and chunked worker concurrency pool (`AppPolicy.maxShamelaConcurrentRequests = 4`).
+    4. **Incomplete/Truncated Cache Invariant:** Guaranteed that truncated TOCs (exceeding node cap) or TOCs with child network/oversize errors are returned in memory for active reading but are NEVER committed to SQLite `shamela_fihris` as complete, preserving valid existing cached table of contents.
+- **Files Modified (3 app files + 1 test file):**
+  - `lib/app/theme/app_policy.dart`: Defined payload and concurrency budgets for Shamela remote fetching.
+  - `lib/features/ilm/data/services/shamela_remote_fetcher.dart`: Created modular streaming fetcher with cancellation, concurrency pool, and cache guards (239 lines).
+  - `lib/features/ilm/data/services/shamela_service.dart`: Delegated remote fetching to `ShamelaRemoteFetcher`, exposed visible test seams, and reduced file size to 485 lines (Rule 8 strictly preserved).
+  - `test/shamela_remote_hardening_test.dart`: Added comprehensive regression suite testing HTTP seam injection, page/TOC streaming byte caps, concurrency throttling, node limits, and SQLite cache invariants.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (10.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 158 font-weight warnings, 7 allow markers used, cap 10).
+  - `flutter test test/shamela_remote_hardening_test.dart`: 7/7 passed.
+  - `flutter test`: 575/575 passed (0 failures, 0 skipped, 1m 59s).
+  - `flutter build apk --debug`: PASSED (53.9s, built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Shamela remote fetching is completely hardened against unbounded buffering and socket flood attacks.
+  - Stopped per instruction. Do not begin R79.
+
 ## R79 — Interactive Favorites Item Navigation to Canonical Paths (25 October 2026)
 - **Scope & Context:**
   - Implemented interactive navigation for all items in `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`). Tapping any favorite item card now takes the user directly to its authentic path in the app.

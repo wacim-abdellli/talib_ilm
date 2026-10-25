@@ -36,4 +36,11 @@ class AppPolicy {
 
   // Network & Geocode Payload Budgets (C32)
   static const int maxGeocodeBytes = 64 * 1024; // 64 KB
+
+  // Shamela Remote Fetching Budgets (R78)
+  static const int maxShamelaPageBytes = 512 * 1024; // 512 KB raw page limit
+  static const int maxShamelaTocCoverBytes = 1024 * 1024; // 1 MB raw cover limit
+  static const int maxShamelaTocChildBytes = 256 * 1024; // 256 KB raw child limit
+  static const int maxShamelaTocNodes = 50; // Maximum expandable child nodes to process
+  static const int maxShamelaConcurrentRequests = 4; // Max concurrent HTTP requests
 }
