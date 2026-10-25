@@ -70,4 +70,7 @@ class AppPolicy {
 
   // Quran Editions Download & Storage Budgets (R85)
   static const int maxQuranEditionBytes = 6 * 1024 * 1024; // 6 MB raw edition payload ceiling
+
+  // Quran Audio Download Budgets (R86)
+  static const int maxAyahAudioBytes = 25 * 1024 * 1024; // 25 MB raw audio verse payload ceiling
 }

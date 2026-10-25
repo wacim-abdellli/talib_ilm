@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../core/constants/app_policy.dart';
 import 'quran_audio_frame_merger.dart';
 import 'quran_audio_service.dart';
+import 'quran_audio_storage.dart';
 
 export '../models/surah_download_progress.dart';
 import '../models/surah_download_progress.dart';
+export 'quran_audio_storage.dart';
 
 /// Service managing offline downloading, storage tracking, and local cache
 /// resolution for Holy Quran audio recitations by Surah.
@@ -20,8 +21,65 @@ class QuranAudioDownloader {
   factory QuranAudioDownloader() => _instance;
   QuranAudioDownloader._internal();
 
-  /// Directory root override for unit testing
-  static Directory? testBaseDir;
+  /// Directory root override for unit testing, delegated to [QuranAudioStorage].
+  static Directory? get testBaseDir => QuranAudioStorage.testBaseDir;
+  static set testBaseDir(Directory? dir) => QuranAudioStorage.testBaseDir = dir;
+
+  /// Optional test HTTP client seam for deterministic unit testing.
+  @visibleForTesting
+  static http.Client? testClient;
+
+  @visibleForTesting
+  static void setHttpClient(http.Client client) => testClient = client;
+
+  @visibleForTesting
+  static void resetHttpClient() => testClient = null;
+
+  /// Storage and file helper delegations for backward compatibility
+  static Future<Directory> getAudioBaseDir() =>
+      QuranAudioStorage.getAudioBaseDir();
+
+  static Future<Directory> getSurahDir(int surah, String reciterId) =>
+      QuranAudioStorage.getSurahDir(surah, reciterId);
+
+  static Future<String> getLocalAyahPath(
+    int surah,
+    int ayah, {
+    QuranReciter? reciter,
+  }) =>
+      QuranAudioStorage.getLocalAyahPath(surah, ayah, reciter: reciter);
+
+  static bool isAyahAudioFileValid(File file) =>
+      QuranAudioStorage.isAyahAudioFileValid(file);
+
+  static Future<bool> isSurahDownloaded(
+    int surah, {
+    QuranReciter? reciter,
+  }) =>
+      QuranAudioStorage.isSurahDownloaded(surah, reciter: reciter);
+
+  static Future<int> getSurahDownloadedBytes(
+    int surah, {
+    QuranReciter? reciter,
+  }) =>
+      QuranAudioStorage.getSurahDownloadedBytes(surah, reciter: reciter);
+
+  static Future<int> getTotalStorageUsed({String? reciterId}) =>
+      QuranAudioStorage.getTotalStorageUsed(reciterId: reciterId);
+
+  static double estimateSurahSizeMb(int surah, {QuranReciter? reciter}) =>
+      QuranAudioStorage.estimateSurahSizeMb(surah, reciter: reciter);
+
+  static String formatBytes(int bytes) => QuranAudioStorage.formatBytes(bytes);
+
+  static Future<void> deleteSurahAudio(
+    int surah, {
+    QuranReciter? reciter,
+  }) =>
+      QuranAudioStorage.deleteSurahAudio(surah, reciter: reciter);
+
+  static Future<void> deleteAllDownloadedAudio() =>
+      QuranAudioStorage.deleteAllDownloadedAudio();
 
   /// Notifier mapping key `${reciterId}_${surah}` to active download progress.
   final ValueNotifier<Map<String, SurahDownloadProgress>>
@@ -39,161 +97,7 @@ class QuranAudioDownloader {
   /// Operation generations to prevent stale operations from mutating state (C14)
   final Map<String, int> _operationGenerations = {};
 
-  static String _formatNumber(int n) => n.toString().padLeft(3, '0');
-
-  /// Base directory for storing audio files: `<app_doc>/quran_audio/`
-  static Future<Directory> getAudioBaseDir() async {
-    if (testBaseDir != null) return testBaseDir!;
-    final appDoc = await getApplicationDocumentsDirectory();
-    final dir = Directory('${appDoc.path}/quran_audio');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-    return dir;
-  }
-
-  /// Directory for a specific reciter and surah
-  static Future<Directory> getSurahDir(int surah, String reciterId) async {
-    final base = await getAudioBaseDir();
-    final dir = Directory('${base.path}/$reciterId/$surah');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-    return dir;
-  }
-
-  /// Local path for a specific verse file
-  static Future<String> getLocalAyahPath(
-    int surah,
-    int ayah, {
-    QuranReciter? reciter,
-  }) async {
-    final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
-    final sStr = _formatNumber(surah);
-    final aStr = _formatNumber(ayah);
-    return '${dir.path}/$sStr$aStr.mp3';
-  }
-
-  /// Check whether an ayah audio file exists, has plausible size (>= 32 bytes),
-  /// and does not start with ASCII text markup (<html, {"error", etc.).
-  static bool isAyahAudioFileValid(File file) {
-    if (!file.existsSync()) return false;
-    final length = file.lengthSync();
-    if (length < 32) return false;
-    try {
-      final raf = file.openSync(mode: FileMode.read);
-      try {
-        final sampleSize = length < 64 ? length : 64;
-        final header = raf.readSync(sampleSize);
-        if (header.isEmpty) return false;
-        final first = header[0];
-        // '<' (0x3C), '{' (0x7B), '[' (0x5B), '!' (0x21)
-        if (first == 0x3C || first == 0x7B || first == 0x5B || first == 0x21) {
-          return false;
-        }
-        return true;
-      } finally {
-        raf.closeSync();
-      }
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Check whether an entire surah has all verses downloaded and verified
-  static Future<bool> isSurahDownloaded(
-    int surah, {
-    QuranReciter? reciter,
-  }) async {
-    final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
-    if (!await dir.exists()) return false;
-
-    final totalVerses = quran.getVerseCount(surah);
-    for (int a = 1; a <= totalVerses; a++) {
-      final sStr = _formatNumber(surah);
-      final aStr = _formatNumber(a);
-      final file = File('${dir.path}/$sStr$aStr.mp3');
-      if (!isAyahAudioFileValid(file)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /// Calculate total size of downloaded files for a surah in bytes
-  static Future<int> getSurahDownloadedBytes(
-    int surah, {
-    QuranReciter? reciter,
-  }) async {
-    final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
-    if (!await dir.exists()) return 0;
-
-    int total = 0;
-    try {
-      final files = dir.listSync();
-      for (final f in files) {
-        if (f is File && f.path.endsWith('.mp3') && !f.path.contains('full_surah') && isAyahAudioFileValid(f)) {
-          total += f.lengthSync();
-        }
-      }
-    } catch (_) {}
-    return total;
-  }
-
-  /// Total storage used across all reciters or a specific reciter
-  static Future<int> getTotalStorageUsed({String? reciterId}) async {
-    final base = await getAudioBaseDir();
-    if (!await base.exists()) return 0;
-
-    int totalBytes = 0;
-    try {
-      final entities = base.listSync(recursive: true);
-      for (final e in entities) {
-        if (e is File && e.path.endsWith('.mp3') && !e.path.contains('full_surah')) {
-          if (reciterId != null) {
-            // Check if within reciter's directory
-            final normalized = e.path.replaceAll('\\', '/');
-            if (!normalized.contains('/$reciterId/')) continue;
-          }
-          totalBytes += e.lengthSync();
-        }
-      }
-    } catch (_) {}
-    return totalBytes;
-  }
-
-  /// Estimates the total download size of a surah in megabytes
-  static double estimateSurahSizeMb(int surah, {QuranReciter? reciter}) {
-    final r = reciter ?? QuranAudioService().selectedReciter;
-    final totalVerses = quran.getVerseCount(surah);
-
-    // Approximate size in KB per verse based on bitrate
-    int kbPerVerse = 85;
-    if (r.subfolder.contains('64kbps')) {
-      kbPerVerse = 45;
-    } else if (r.subfolder.contains('40kbps')) {
-      kbPerVerse = 28;
-    }
-
-    final totalKb = totalVerses * kbPerVerse;
-    return totalKb / 1024.0;
-  }
-
-  /// Human-friendly format for bytes
-  static String formatBytes(int bytes) {
-    if (bytes <= 0) return '0 ب';
-    const suffixes = ['ب', 'ك.ب', 'م.ب', 'ج.ب'];
-    int i = 0;
-    double dBytes = bytes.toDouble();
-    while (dBytes >= 1024 && i < suffixes.length - 1) {
-      dBytes /= 1024;
-      i++;
-    }
-    return '${dBytes.toStringAsFixed(1)} ${suffixes[i]}';
-  }
+  static String _formatNumber(int n) => QuranAudioStorage.formatNumber(n);
 
   /// Downloads all verses for a Surah sequentially.
   /// Automatically joins any in-flight download for the same reciter/surah.
@@ -227,17 +131,34 @@ class QuranAudioDownloader {
     http.Client? client,
   }) async {
     final key = '${reciter.id}_$surah';
+
+    // Input bounds validation
+    if (surah < 1 || surah > 114) {
+      _setProg(
+        key,
+        surah,
+        reciter.id,
+        0,
+        0,
+        0,
+        SurahDownloadStatus.failed,
+        'رقم السورة غير صالح ($surah)',
+      );
+      return;
+    }
+
     final gen = (_operationGenerations[key] ?? 0) + 1;
     _operationGenerations[key] = gen;
 
     final totalVerses = quran.getVerseCount(surah);
-    final surahDir = await getSurahDir(surah, reciter.id);
+    final surahDir = await QuranAudioStorage.getSurahDir(surah, reciter.id);
 
     _pauseFlags[key] = false;
     _cancelFlags[key] = false;
 
-    final bool ownsClient = client == null;
-    final httpClient = client ?? http.Client();
+    final effectiveClient = client ?? testClient;
+    final bool ownsClient = client == null && testClient == null;
+    final httpClient = effectiveClient ?? http.Client();
     _activeHttpClients[key] = httpClient;
 
     try {
@@ -248,7 +169,7 @@ class QuranAudioDownloader {
         final sStr = _formatNumber(surah);
         final aStr = _formatNumber(a);
         final file = File('${surahDir.path}/$sStr$aStr.mp3');
-        if (isAyahAudioFileValid(file)) {
+        if (QuranAudioStorage.isAyahAudioFileValid(file)) {
           existingCount++;
           existingBytes += file.lengthSync();
         } else if (file.existsSync()) {
@@ -302,7 +223,7 @@ class QuranAudioDownloader {
         final targetFile = File('${surahDir.path}/$sStr$aStr.mp3');
 
         // If already downloaded and valid, skip
-        if (isAyahAudioFileValid(targetFile)) {
+        if (QuranAudioStorage.isAyahAudioFileValid(targetFile)) {
           continue;
         }
 
@@ -312,7 +233,7 @@ class QuranAudioDownloader {
 
         try {
           final request = http.Request('GET', Uri.parse(remoteUrl));
-          // C15: Connection deadline
+          // Connection deadline
           final http.StreamedResponse response = await httpClient
               .send(request)
               .timeout(AppPolicy.networkTimeout);
@@ -321,7 +242,7 @@ class QuranAudioDownloader {
             throw HttpException('Server returned ${response.statusCode}');
           }
 
-          // C15: Content-Type check (reject 200 HTML or text error body)
+          // Content-Type check (reject 200 HTML or text error body)
           final contentType =
               response.headers['content-type']?.toLowerCase() ?? '';
           if (contentType.contains('text/html') ||
@@ -331,25 +252,48 @@ class QuranAudioDownloader {
           }
 
           final expectedLength = response.contentLength;
+          if (expectedLength != null &&
+              expectedLength > AppPolicy.maxAyahAudioBytes) {
+            throw const HttpException('حجم الآية يتجاوز الحد المسموح به');
+          }
+
           final sink = tempFile.openWrite();
           int downloadedAyahBytes = 0;
-          const int maxAyahBytes = 25 * 1024 * 1024; // 25 MB max bound
+          final completer = Completer<void>();
+          late final StreamSubscription<List<int>> sub;
 
-          try {
-            // C15: Body chunk idle timeout
-            await for (final chunk
-                in response.stream.timeout(AppPolicy.networkMedium)) {
+          sub = response.stream.timeout(AppPolicy.networkMedium).listen(
+            (chunk) {
               if (_cancelFlags[key] == true ||
                   _pauseFlags[key] == true ||
                   _operationGenerations[key] != gen) {
-                break;
+                sub.cancel();
+                if (!completer.isCompleted) completer.complete();
+                return;
               }
               downloadedAyahBytes += chunk.length;
-              if (downloadedAyahBytes > maxAyahBytes) {
-                throw const HttpException('حجم الآية يتجاوز الحد المسموح به');
+              if (downloadedAyahBytes > AppPolicy.maxAyahAudioBytes) {
+                sub.cancel();
+                if (!completer.isCompleted) {
+                  completer.completeError(
+                    const HttpException('حجم الآية يتجاوز الحد المسموح به'),
+                  );
+                }
+                return;
               }
               sink.add(chunk);
-            }
+            },
+            onError: (Object error) {
+              if (!completer.isCompleted) completer.completeError(error);
+            },
+            onDone: () {
+              if (!completer.isCompleted) completer.complete();
+            },
+            cancelOnError: true,
+          );
+
+          try {
+            await completer.future;
           } finally {
             await sink.flush();
             await sink.close();
@@ -381,7 +325,7 @@ class QuranAudioDownloader {
             return;
           }
 
-          // C15: Integrity validation before atomic promotion
+          // Integrity validation before atomic promotion
           // 1. Nonempty check
           if (!tempFile.existsSync() || tempFile.lengthSync() == 0) {
             try {
@@ -403,7 +347,7 @@ class QuranAudioDownloader {
           }
 
           // 3. Plausible audio validation
-          if (!isAyahAudioFileValid(tempFile)) {
+          if (!QuranAudioStorage.isAyahAudioFileValid(tempFile)) {
             try {
               if (tempFile.existsSync()) await tempFile.delete();
             } catch (_) {}
@@ -486,7 +430,7 @@ class QuranAudioDownloader {
         }
       }
     } finally {
-      // C16: Release resources and in-flight tracking on every exit
+      // Release resources and in-flight tracking on every exit
       _inFlightDownloads.remove(key);
       _activeHttpClients.remove(key);
       if (ownsClient) {
@@ -528,7 +472,7 @@ class QuranAudioDownloader {
     _activeHttpClients.remove(key);
 
     // Clean up any temp files for this surah
-    getSurahDir(surah, r.id).then((dir) {
+    QuranAudioStorage.getSurahDir(surah, r.id).then((dir) {
       try {
         if (dir.existsSync()) {
           for (final file in dir.listSync()) {
@@ -554,33 +498,6 @@ class QuranAudioDownloader {
     }
     _activeHttpClients.clear();
     downloadProgressNotifier.value = {};
-  }
-
-  /// Delete all downloaded audio files for a specific Surah
-  static Future<void> deleteSurahAudio(
-    int surah, {
-    QuranReciter? reciter,
-  }) async {
-    final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
-    if (await dir.exists()) {
-      await dir.delete(recursive: true);
-    }
-  }
-
-  /// Delete all downloaded audio files across all reciters
-  static Future<void> deleteAllDownloadedAudio() async {
-    final base = await getAudioBaseDir();
-    if (await base.exists()) {
-      try {
-        final entities = base.listSync();
-        for (final entity in entities) {
-          try {
-            entity.deleteSync(recursive: true);
-          } catch (_) {}
-        }
-      } catch (_) {}
-    }
   }
 
   void _setProg(String key, int surah, String reciterId, int downloadedAyahs,

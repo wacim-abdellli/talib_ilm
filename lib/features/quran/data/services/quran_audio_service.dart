@@ -26,8 +26,7 @@ class QuranAudioService {
   @visibleForTesting
   QuranAudioService.forTesting({
     required AudioPlayer player,
-    required Future<AudioSource> Function(int, int, QuranReciter)
-    sourceResolver,
+    required Future<AudioSource> Function(int, int, QuranReciter) sourceResolver,
     AudioPlayer Function()? playerFactory,
     Future<void> Function()? retryDelay,
   }) : _player = player,
@@ -39,8 +38,7 @@ class QuranAudioService {
 
   AudioPlayer _player = AudioPlayer();
   AudioPlayer Function() _playerFactory = () => AudioPlayer();
-  Future<void> Function() _retryDelay = () =>
-      Future<void>.delayed(AppPolicy.debounce);
+  Future<void> Function() _retryDelay = () => Future<void>.delayed(AppPolicy.debounce);
   Future<AudioSource> Function(int, int, QuranReciter)? _sourceResolver;
   StreamSubscription? _playerStateSub;
 
@@ -67,33 +65,19 @@ class QuranAudioService {
   final ValueNotifier<int?> activeAyahNotifier = ValueNotifier<int?>(null);
   final ValueNotifier<bool> isPlayingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<double> speedNotifier = ValueNotifier<double>(1.0);
-  final ValueNotifier<AudioRepeatMode> repeatModeNotifier =
-      ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
-  final ValueNotifier<AudioPlaybackError?> errorNotifier =
-      ValueNotifier<AudioPlaybackError?>(null);
+  final ValueNotifier<AudioRepeatMode> repeatModeNotifier = ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
+  final ValueNotifier<AudioPlaybackError?> errorNotifier = ValueNotifier<AudioPlaybackError?>(null);
+  final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
+  final ValueNotifier<bool> isFullSurahModeNotifier = ValueNotifier<bool>(false);
 
   Timer? _sleepTimer;
-  final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(
-    null,
-  );
-
-  bool _isContinuous = false;
-  bool _isSingleVerseOnly = false;
-  bool _hasExplicitEnd = false;
-  bool _playWhenReady = false;
-  int _endAyah = 0;
-  bool _isTransitioning = false;
-  bool _completionArmed = false;
-  bool _disposed = false;
-  int _operation = 0;
-  int _ayahRepeatCount = 0;
+  bool _isContinuous = false, _isSingleVerseOnly = false, _hasExplicitEnd = false, _playWhenReady = false;
+  bool _isTransitioning = false, _completionArmed = false, _disposed = false;
+  int _endAyah = 0, _operation = 0, _ayahRepeatCount = 0;
   QuranReciter? _playbackReciter;
 
-  final ValueNotifier<bool> isFullSurahModeNotifier = ValueNotifier<bool>(false);
   bool get isFullSurahMode => isFullSurahModeNotifier.value;
-
   bool _ownsOperation(int operation) => !_disposed && operation == _operation;
-
   bool get isContinuous => _isContinuous;
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
@@ -105,13 +89,10 @@ class QuranAudioService {
 
   Future<void> seek(Duration position) => _player.seek(position);
   Future<void> seekMilliseconds(int ms) => _player.seek(Duration(days: 0, milliseconds: ms));
-  Future<void> seekRelativeSeconds(int seconds) =>
-      seekRelative(Duration(days: 0, seconds: seconds));
+  Future<void> seekRelativeSeconds(int seconds) => seekRelative(Duration(days: 0, seconds: seconds));
 
   Future<void> seekRelative(Duration offset) async {
-    final cur = _player.position;
-    final tot = _player.duration ?? Duration.zero;
-    final tgt = cur + offset;
+    final cur = _player.position, tot = _player.duration ?? Duration.zero, tgt = cur + offset;
     await _player.seek(tgt < Duration.zero ? Duration.zero : (tot > Duration.zero && tgt > tot ? tot : tgt));
   }
 
@@ -152,9 +133,22 @@ class QuranAudioService {
     );
   }
 
+  static bool isValidSurah(int surah) => surah >= 1 && surah <= 114;
+
+  static bool isValidVerse(int surah, int ayah) {
+    if (!isValidSurah(surah)) return false;
+    return ayah >= 1 && ayah <= quran.getVerseCount(surah);
+  }
+
   String _formatNumber(int n) => n.toString().padLeft(3, '0');
 
   String getAudioUrl(int surah, int ayah, {QuranReciter? reciter}) {
+    if (!isValidSurah(surah)) {
+      throw ArgumentError('Invalid surah number: $surah. Must be 1..114');
+    }
+    if (!isValidVerse(surah, ayah)) {
+      throw ArgumentError('Invalid ayah number: $ayah for surah $surah');
+    }
     final r = reciter ?? _selectedReciter;
     final sStr = _formatNumber(surah);
     final aStr = _formatNumber(ayah);
@@ -168,6 +162,7 @@ class QuranAudioService {
     QuranReciter? reciter,
     bool singleVerse = false,
   }) async {
+    if (!isValidSurah(surah) || !isValidVerse(surah, ayah)) return;
     _ayahRepeatCount = 0;
     _isContinuous = false;
     _isSingleVerseOnly = singleVerse;
@@ -181,6 +176,7 @@ class QuranAudioService {
     required int surah,
     QuranReciter? reciter,
   }) async {
+    if (!isValidSurah(surah)) return;
     final r = reciter ?? _selectedReciter;
     final fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(
       surah,
@@ -194,18 +190,7 @@ class QuranAudioService {
       _endAyah = quran.getVerseCount(surah);
       isFullSurahModeNotifier.value = true;
       final surahName = quran.getSurahNameArabic(surah);
-      final tag = MediaItem(
-        id: '${r.id}_surah_$surah',
-        album: 'القرآن الكريم',
-        title: 'سورة $surahName',
-        artist: r.name,
-        artUri: Uri.parse(
-          'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
-        ),
-        displayTitle: 'سورة $surahName',
-        displaySubtitle: r.name,
-        displayDescription: 'تلاوة سورة $surahName كاملة · ${r.name}',
-      );
+      final tag = _buildSurahMediaItem(surah, r, surahName);
       final source = AudioSource.file(fullFile.path, tag: tag);
       await _startPlaySource(surah, 1, source, reciter: r);
       return;
@@ -220,6 +205,7 @@ class QuranAudioService {
     int? endAyah,
     QuranReciter? reciter,
   }) async {
+    if (!isValidSurah(surah) || !isValidVerse(surah, startAyah)) return;
     final r = reciter ?? _selectedReciter;
     final totalVerses = quran.getVerseCount(surah);
     // If starting from verse 1 for full surah and offline recording exists,
@@ -240,6 +226,39 @@ class QuranAudioService {
     await _startPlay(surah, startAyah, reciter: r);
   }
 
+  static final Uri _appIconUri = Uri.parse(
+    'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
+  );
+
+  MediaItem _buildSurahMediaItem(int surah, QuranReciter r, String surahName) =>
+      MediaItem(
+        id: '${r.id}_surah_$surah',
+        album: 'القرآن الكريم',
+        title: 'سورة $surahName',
+        artist: r.name,
+        artUri: _appIconUri,
+        displayTitle: 'سورة $surahName',
+        displaySubtitle: r.name,
+        displayDescription: 'تلاوة سورة $surahName كاملة · ${r.name}',
+      );
+
+  MediaItem _buildAyahMediaItem(
+    int surah,
+    int ayah,
+    QuranReciter r,
+    String surahName,
+  ) =>
+      MediaItem(
+        id: '${r.id}_${surah}_$ayah',
+        album: 'سورة $surahName',
+        title: 'الآية $ayah - سورة $surahName',
+        artist: r.name,
+        artUri: _appIconUri,
+        displayTitle: 'سورة $surahName',
+        displaySubtitle: 'الآية $ayah · ${r.name}',
+        displayDescription: 'تلاوة القرآن الكريم - طالب العلم',
+      );
+
   /// Resolves the audio source: uses locally downloaded file if exists, otherwise streams from URL.
   Future<AudioSource> getAudioSource(
     int surah,
@@ -249,18 +268,7 @@ class QuranAudioService {
     final r = reciter ?? _selectedReciter;
     if (_sourceResolver != null) return _sourceResolver!(surah, ayah, r);
     final surahName = quran.getSurahNameArabic(surah);
-    final tag = MediaItem(
-      id: '${r.id}_${surah}_$ayah',
-      album: 'سورة $surahName',
-      title: 'الآية $ayah - سورة $surahName',
-      artist: r.name,
-      artUri: Uri.parse(
-        'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
-      ),
-      displayTitle: 'سورة $surahName',
-      displaySubtitle: 'الآية $ayah · ${r.name}',
-      displayDescription: 'تلاوة القرآن الكريم - طالب العلم',
-    );
+    final tag = _buildAyahMediaItem(surah, ayah, r, surahName);
 
     try {
       final localPath = await QuranAudioDownloader.getLocalAyahPath(
@@ -501,14 +509,11 @@ class QuranAudioService {
     await _player.setSpeed(speed);
   }
 
-  Future<void> setRepeatMode(AudioRepeatMode mode) async {
-    repeatModeNotifier.value = mode;
-  }
+  Future<void> setRepeatMode(AudioRepeatMode mode) async => repeatModeNotifier.value = mode;
 
   void setSleepTimer(int? minutes) {
     _sleepTimer?.cancel();
     sleepTimerMinutesNotifier.value = minutes;
-
     if (minutes != null && minutes > 0) {
       _sleepTimer = Timer(Duration(minutes: minutes), () {
         stop();
@@ -518,10 +523,8 @@ class QuranAudioService {
   }
 
   Future<void> nextAyah() async {
-    final s = activeSurahNotifier.value;
-    final a = activeAyahNotifier.value;
+    final s = activeSurahNotifier.value, a = activeAyahNotifier.value;
     if (s == null || a == null) return;
-
     final total = quran.getVerseCount(s);
     if (a < total) {
       await _navigateTo(s, a + 1);
@@ -533,15 +536,12 @@ class QuranAudioService {
   }
 
   Future<void> previousAyah() async {
-    final s = activeSurahNotifier.value;
-    final a = activeAyahNotifier.value;
+    final s = activeSurahNotifier.value, a = activeAyahNotifier.value;
     if (s == null || a == null) return;
-
     if (a > 1) {
       await _navigateTo(s, a - 1);
     } else if (s > 1) {
-      final prevTotal = quran.getVerseCount(s - 1);
-      await _navigateTo(s - 1, prevTotal);
+      await _navigateTo(s - 1, quran.getVerseCount(s - 1));
     }
   }
 

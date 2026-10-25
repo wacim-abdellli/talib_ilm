@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## R88 — Harden Quran Audio & Recitation Streaming / Download Boundaries (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching risks, unbounded buffering, missing input bounds validation, and file-length Rule 8 violations across Quran audio playback and downloading (`quran_audio_service.dart`, `quran_audio_downloader.dart`, `quran_audio_storage.dart`):
+    1. **Rule 8 Architecture Split:** Extracted `QuranAudioStorage` (`lib/features/quran/data/services/quran_audio_storage.dart`, 188 lines) from `QuranAudioDownloader` (previously 602 lines -> 518 lines) to encapsulate storage directories, file integrity checks, size calculations, and cleanup, keeping both files strictly ≤ 600 lines. Kept `QuranAudioService` at 597 lines.
+    2. **Input Bounds Validation:** Added `isValidSurah` (1..114) and `isValidVerse` (1..`quran.getVerseCount(surah)`) on `QuranAudioService`. Out-of-bounds surah/ayah requests throw `ArgumentError` on `getAudioUrl` and safely abort `playVerse` and `playContinuous` without corrupting audio player state. In `QuranAudioDownloader`, invalid surah numbers set status to `SurahDownloadStatus.failed` with 0 network calls dispatched.
+    3. **HTTP Client Test Seam:** Added `@visibleForTesting` `testClient`, `setHttpClient`, and `resetHttpClient` seams on `QuranAudioDownloader`, enabling deterministic testing of socket streams, network errors, and payloads without touching live CDNs.
+    4. **Streaming Byte Ceilings & Socket Cancellation:** Tokenized `AppPolicy.maxAyahAudioBytes = 25 * 1024 * 1024; // 25 MB`. Implemented streaming listener with immediate `StreamSubscription.cancel()` on oversized payloads, pause, cancellation, or generational supersession, immediately cutting off socket consumption.
+    5. **Atomic Disk Writes & Clean Windows Cleanup:** Streamed chunks directly to `.tmp` files and ensured `sink.close()` is always awaited before `.rename()` or error `.delete()`, eliminating Windows file-lock errors.
+    6. **Regression Test Suite:** Added `test/quran_audio_download_hardening_test.dart` (8 regression tests) covering input bounds, safe abort, HTTP seam injection, content-type checks, early stream cancellation, atomic file save, and disk deletion.
+- **Files Modified (4 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/app/theme/app_policy.dart`: Defined `maxAyahAudioBytes = 25 * 1024 * 1024;` ceiling.
+  - `lib/features/quran/data/services/quran_audio_storage.dart`: Extracted storage and file validation utilities (188 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/quran_audio_downloader.dart`: Re-implemented with HTTP test seam, streaming cancellation, input validation, and delegation to storage (518 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/quran_audio_service.dart`: Added input validation bounds and streamlined media item generation (597 lines, Rule 8 compliant).
+  - `test/quran_audio_download_hardening_test.dart`: Added 8 comprehensive regression tests.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (9.2s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/quran_audio_download_hardening_test.dart`, `test/quran_audio_service_test.dart`, `test/quran_audio_lifecycle_test.dart`): 37/37 passed (1.4s).
+  - `flutter test`: 640/640 passed (0 failures).
+  - `flutter build apk --debug`: PASSED.
+- **Open issues & Next steps:**
+  - Quran audio streaming and reciter downloading boundaries (Area C/B) are fully hardened.
+  - Next task: R89 — Storage & Database Reliability: SQLite migration guards, backup limits, and atomic transaction recovery (Area D).
+
 ## R87 — Seamless Full Surah Offline Playback & Audio Player Bar (25 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues on the Quran Audio Downloads ("التنزيلات الصوتية") screen:
