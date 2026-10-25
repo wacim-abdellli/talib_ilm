@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../core/constants/app_policy.dart';
+import 'quran_audio_frame_merger.dart';
 import 'quran_audio_service.dart';
 
 export '../models/surah_download_progress.dart';
@@ -134,7 +135,7 @@ class QuranAudioDownloader {
     try {
       final files = dir.listSync();
       for (final f in files) {
-        if (f is File && f.path.endsWith('.mp3') && isAyahAudioFileValid(f)) {
+        if (f is File && f.path.endsWith('.mp3') && !f.path.contains('full_surah') && isAyahAudioFileValid(f)) {
           total += f.lengthSync();
         }
       }
@@ -151,7 +152,7 @@ class QuranAudioDownloader {
     try {
       final entities = base.listSync(recursive: true);
       for (final e in entities) {
-        if (e is File && e.path.endsWith('.mp3')) {
+        if (e is File && e.path.endsWith('.mp3') && !e.path.contains('full_surah')) {
           if (reciterId != null) {
             // Check if within reciter's directory
             final normalized = e.path.replaceAll('\\', '/');
@@ -480,6 +481,9 @@ class QuranAudioDownloader {
 
       if (_operationGenerations[key] == gen) {
         _setProg(key, surah, reciter.id, totalVerses, totalVerses, currentBytes, SurahDownloadStatus.completed);
+        if (testBaseDir == null) {
+          unawaited(QuranAudioFrameMerger.assembleFullSurahAudio(surah, reciter: reciter));
+        }
       }
     } finally {
       // C16: Release resources and in-flight tracking on every exit
@@ -568,25 +572,23 @@ class QuranAudioDownloader {
   static Future<void> deleteAllDownloadedAudio() async {
     final base = await getAudioBaseDir();
     if (await base.exists()) {
-      await base.delete(recursive: true);
-      await base.create(recursive: true);
+      try {
+        final entities = base.listSync();
+        for (final entity in entities) {
+          try {
+            entity.deleteSync(recursive: true);
+          } catch (_) {}
+        }
+      } catch (_) {}
     }
   }
 
   void _setProg(String key, int surah, String reciterId, int downloadedAyahs,
       int totalAyahs, int downloadedBytes, SurahDownloadStatus status, [String? errorMessage]) {
-    _updateProgress(
-      key,
-      SurahDownloadProgress(
-        surah: surah,
-        reciterId: reciterId,
-        downloadedAyahs: downloadedAyahs,
-        totalAyahs: totalAyahs,
-        downloadedBytes: downloadedBytes,
-        status: status,
-        errorMessage: errorMessage,
-      ),
-    );
+    _updateProgress(key, SurahDownloadProgress(
+      surah: surah, reciterId: reciterId, downloadedAyahs: downloadedAyahs,
+      totalAyahs: totalAyahs, downloadedBytes: downloadedBytes, status: status, errorMessage: errorMessage,
+    ));
   }
 
   void _updateProgress(String key, SurahDownloadProgress progress) {

@@ -79,9 +79,8 @@ class QuranAudioDownloadItem extends StatelessWidget {
                   if (isAudioPlaying) {
                     audioService.pause();
                   } else {
-                    audioService.playContinuous(
+                    audioService.playFullSurah(
                       surah: surah,
-                      startAyah: 1,
                       reciter: reciter,
                     );
                   }
@@ -365,9 +364,8 @@ class QuranAudioDownloadItem extends StatelessWidget {
               if (isAudioPlaying) {
                 audioService.pause();
               } else {
-                audioService.playContinuous(
+                audioService.playFullSurah(
                   surah: surah,
-                  startAyah: 1,
                   reciter: reciter,
                 );
               }

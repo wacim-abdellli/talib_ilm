@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## R87 — Seamless Full Surah Offline Playback & Audio Player Bar (25 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issues on the Quran Audio Downloads ("التنزيلات الصوتية") screen:
+    1. **Ayah-by-Ayah Playback with Bad Cuts & Dead Silence:** Previously, playing a downloaded Surah treated it as a sequence of isolated verse files (`023001.mp3`, etc.). `QuranAudioService` was invoking `await player.stop()` before every verse, which tore down ExoPlayer's hardware `AudioTrack` and audio decoder, creating a 500ms–1500ms jarring silence between every verse. In addition, files from `everyayah.com` contained 4096-byte ID3v2 headers on every verse.
+    2. **MPEG Frame Merging Engine (`QuranAudioFrameMerger`):** Implemented pure MPEG frame extraction and assembly (`stripId3Tags`), stripping ID3v2 container headers and ID3v1 footers to concatenate pure MPEG frames into a single, continuous, seamless `full_surah.mp3` recording when a Surah is downloaded or on-demand.
+    3. **Continuous Full Surah Playback Mode:** Added `playFullSurah` to `QuranAudioService` which plays the seamless full Surah recording as a single audio track with continuous audio decoders, accurate total duration (e.g., 21:35), and gapless continuous playback across the whole chapter.
+    4. **Interactive Floating Audio Player Bar (`QuranAudioPlayerBar`):** Built a persistent player HUD at the bottom of `QuranAudioDownloadsPage` featuring Surah medallion number, Surah title, reciter name, real-time position slider, duration counters, ±10s relative seeking, playback speed dropdown, and play/pause/close controls with full haptic feedback and RTL compliance.
+    5. **Architecture & Line Count Compliance (Rule 8):** Extracted `QuranReciter` (64 lines) and `AudioPlaybackError` (44 lines) to separate model files to ensure `quran_audio_service.dart` remains strictly under 600 lines (597 lines).
+    6. **Comprehensive Test Suite:** Added `test/quran_audio_frame_merger_test.dart` (5 tests) verifying ID3 tag stripping (ID3v2 & ID3v1), file concatenation, full surah playback mode notifiers, and reciter catalog availability.
+- **Files Modified (4 app files + 4 new files + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/models/audio_playback_error.dart`: Extracted error model and classifier (44 lines).
+  - `lib/features/quran/data/models/quran_reciter.dart`: Extracted reciter models and official reciters catalog (64 lines).
+  - `lib/features/quran/data/services/quran_audio_frame_merger.dart`: Frame merger for seamless `full_surah.mp3` (148 lines).
+  - `lib/features/quran/presentation/widgets/quran_audio_player_bar.dart`: Floating bottom player bar (305 lines).
+  - `lib/features/quran/data/services/quran_audio_service.dart`: Added full surah playback, seek streams, and helpers (597 lines, < 600).
+  - `lib/features/quran/data/services/quran_audio_downloader.dart`: Added offline frame merger trigger and storage isolation (594 lines, < 600).
+  - `lib/features/quran/presentation/widgets/quran_audio_download_item.dart`: Bound tap to play full surah.
+  - `lib/features/quran/presentation/quran_audio_downloads_page.dart`: Integrated bottom player bar and active Surah tracking.
+  - `test/quran_audio_frame_merger_test.dart`: Added unit tests for frame merging and continuous playback.
+  - `test/quran_audio_download_test.dart`: Updated tearDown for Windows lock resistance.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (14.2s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test test/quran_audio_frame_merger_test.dart test/quran_audio_service_test.dart test/quran_audio_lifecycle_test.dart test/quran_audio_download_test.dart`: 52/52 passed.
+  - `flutter test`: 632/632 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Quran Surah audio download and gapless full-surah playback are fully resolved and verified.
+
 ## R86 — Fix Native Prayer Widget Countdown Disappearance, Negative Durations, Celestial Icon & Transitions (25 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues on the Android home screen prayer widget countdown and liturgical header:

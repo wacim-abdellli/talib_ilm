@@ -18,9 +18,11 @@ void main() {
 
   tearDown(() async {
     QuranAudioDownloader.testBaseDir = null;
-    if (await tempDir.exists()) {
-      await tempDir.delete(recursive: true);
-    }
+    try {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    } catch (_) {}
   });
 
   group('SurahDownloadProgress State Tests', () {
