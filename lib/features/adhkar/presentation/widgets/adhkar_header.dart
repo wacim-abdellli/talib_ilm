@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 
 class AdhkarHeader extends StatefulWidget {
@@ -8,6 +9,8 @@ class AdhkarHeader extends StatefulWidget {
   final ValueChanged<String> onSelectCategory;
   final ValueChanged<String>? onSearch;
   final VoidCallback? onNotifications;
+  final bool showBack;
+  final VoidCallback? onBack;
 
   const AdhkarHeader({
     super.key,
@@ -16,6 +19,8 @@ class AdhkarHeader extends StatefulWidget {
     required this.onSelectCategory,
     this.onSearch,
     this.onNotifications,
+    this.showBack = false,
+    this.onBack,
   });
 
   @override
@@ -193,6 +198,10 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
               // Standard Dashboard Header
               Row(
                 children: [
+                  if (widget.showBack || Navigator.canPop(context)) ...[
+                    AppBackButton(onTap: widget.onBack),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
                   const IconBadge(
                     icon: Icons.auto_awesome_rounded,
                   ),

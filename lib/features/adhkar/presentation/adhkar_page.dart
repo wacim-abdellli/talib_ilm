@@ -28,7 +28,8 @@ class _DhikrSearchResult {
 }
 
 class AdhkarPage extends StatefulWidget {
-  const AdhkarPage({super.key});
+  final bool showBack;
+  const AdhkarPage({super.key, this.showBack = false});
 
   @override
   State<AdhkarPage> createState() => _AdhkarPageState();
@@ -102,6 +103,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
         children: [
           AdhkarHeader(
             streak: _streak,
+            showBack: widget.showBack,
             selectedCategory: _selectedCategory,
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
             onSearch: (q) => setState(() => _searchQuery = q.trim()),
@@ -556,7 +558,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
         Navigator.push(context, buildFadeRoute(page: const SleepingAthkarPage()));
         return;
     }
-
     final parsed = adhkarCategoryFromId(category.id) ?? AdhkarCategory.general;
     Navigator.push(
       context,
@@ -570,7 +571,6 @@ class _AdhkarPageState extends State<AdhkarPage> {
       ),
     );
   }
-
 
   String _normalizeId(String id) {
     final normalized = id.trim().toLowerCase();
