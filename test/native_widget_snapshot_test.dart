@@ -51,6 +51,40 @@ void main() {
       expect(prefs.getBool('is_prayer_active'), isFalse);
     });
 
+    test('savePrayerSnapshot writes full 24-hour prayer schedule when allPrayers is provided', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      final eval = PrayerWidgetStateEvaluator.evaluate(
+        now: DateTime(2026, 10, 23, 17, 0),
+        all: testPrayerDay.prayers,
+      );
+
+      await HomeWidgetSnapshot.savePrayerSnapshot(
+        eval,
+        preResolvedDark: true,
+        allPrayers: testPrayerDay.prayers,
+      );
+
+      expect(prefs.getInt('prayer_fajr_epoch_ms'), testPrayerDay.prayers[AppStrings.prayerFajr]!.millisecondsSinceEpoch);
+      expect(prefs.getInt('prayer_dhuhr_epoch_ms'), testPrayerDay.prayers[AppStrings.prayerDhuhr]!.millisecondsSinceEpoch);
+      expect(prefs.getInt('prayer_asr_epoch_ms'), testPrayerDay.prayers[AppStrings.prayerAsr]!.millisecondsSinceEpoch);
+      expect(prefs.getInt('prayer_maghrib_epoch_ms'), testPrayerDay.prayers[AppStrings.prayerMaghrib]!.millisecondsSinceEpoch);
+      expect(prefs.getInt('prayer_isha_epoch_ms'), testPrayerDay.prayers[AppStrings.prayerIsha]!.millisecondsSinceEpoch);
+      expect(prefs.getInt('prayer_tomorrow_fajr_epoch_ms'), isNotNull);
+      expect(prefs.getBool('is_friday'), isTrue); // 2026-10-23 is Friday
+      expect(prefs.getInt('iqama_fajr_min'), 25);
+      expect(prefs.getInt('iqama_dhuhr_min'), 25); // Jumua is 25 mins
+      expect(prefs.getInt('iqama_asr_min'), 20);
+      expect(prefs.getInt('iqama_maghrib_min'), 10);
+      expect(prefs.getInt('iqama_isha_min'), 15);
+      expect(prefs.getInt('prayer_color_fajr'), isNotNull);
+      expect(prefs.getInt('prayer_color_dhuhr'), isNotNull);
+      expect(prefs.getInt('prayer_color_asr'), isNotNull);
+      expect(prefs.getInt('prayer_color_maghrib'), isNotNull);
+      expect(prefs.getInt('prayer_color_isha'), isNotNull);
+    });
+
     test('resolveWidgetIsDark respects explicit widget mode and app theme fallback', () async {
       SharedPreferences.setMockInitialValues({'prayer_widget_theme_mode': 'light'});
       expect(await HomeWidgetSnapshot.resolveWidgetIsDark(), isFalse);

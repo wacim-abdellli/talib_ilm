@@ -3,6 +3,7 @@ package com.example.talib_ilm
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -18,7 +19,10 @@ class RibbonWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
+        val effectiveIds = if (appWidgetIds.isNotEmpty()) appWidgetIds else {
+            appWidgetManager.getAppWidgetIds(ComponentName(context, this::class.java))
+        }
+        for (appWidgetId in effectiveIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }

@@ -1,6 +1,35 @@
 # UI Progress Log
 
-## R85 — Harden Quran Edition Downloads, Streaming Byte Limits & Atomic Writes (25 October 2026)
+## R86 — Fix Native Prayer Widget Countdown Disappearance, Negative Durations, Celestial Icon & Transitions (25 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issues on the Android home screen prayer widget countdown and liturgical header:
+    1. **Timer Disappearance & Stale GONE State:** Previously, when a prayer passed, `WidgetChronometerHelper` evaluated `isPrayerActive` from stale snapshot keys, setting status to empty and hiding the countdown (`View.GONE`). Fixed by implementing full autonomous 24-hour prayer lifecycle schedule evaluation (`evaluateAndApplySchedule`) in Kotlin, seamlessly handling all 5 liturgical states: `beforeAdhan` (countdown to Adhan), `atAdhan` (60s Adhan banner), `betweenAdhanAndIqama` (Iqama countdown), `inSalah` (congregational prayer in progress), and `postSalah` (immediate transition to next prayer or tomorrow's Fajr).
+    2. **Negative Countdown ("بعد -36:40"):** Android native `Chronometer` with `setCountDown(true)` ticks into negative numbers when zero is passed. Also, setting static text on the chronometer view resulted in the system ticker overwriting the text every second. Resolved by separating `@+id/widget_status_badge` (`TextView`) from `@+id/widget_countdown` (`Chronometer`) in both `widget_ribbon_layout.xml` and `widget_large_layout.xml`, explicitly stopping the chronometer (`isStarted = false`) and setting visibility to `GONE` during static phases ("الأذان الآن", "تقام الصلاة الآن").
+    3. **Deformed Celestial Icon:** `ic_prayer_isha.xml` previously contained a broken, truncated arc that was distorted and cut off in small containers. Replaced with canonical Google Material `bedtime_rounded` vector drawable. Also smoothed `ic_prayer_maghrib.xml` star shapes.
+    4. **AlarmManager Precise Triggers:** Scheduled `AlarmManager.RTC_WAKEUP` alarms at each liturgical milestone so widgets update synchronously even when the device is idle or the app process is terminated.
+    5. **Daily Schedule Serialization:** Updated `HomeWidgetSnapshot.savePrayerSnapshot` to serialize full daily prayer epoch timestamps, Jumua detection, iqama minutes, and prayer palette colors (`prayer_fajr_epoch_ms`, `iqama_fajr_min`, `prayer_color_fajr`, etc.). Passed full prayer map in `HomeWidgetService` across all widget update calls.
+    6. **RTL Directional Margins & Layout Cleanup:** Cleaned up conflicting RTL margins (`marginRight` vs `marginStart`/`marginEnd`) and ensured proper alignment for Arabic RTL home screen launchers.
+- **Files Modified (10 files):**
+  - `android/app/src/main/res/drawable/ic_prayer_isha.xml`: Fixed canonical Material crescent vector drawable.
+  - `android/app/src/main/res/drawable/ic_prayer_maghrib.xml`: Smoothed star path rendering.
+  - `android/app/src/main/res/layout/widget_ribbon_layout.xml`: Added dedicated `widget_status_badge` and clean RTL margins.
+  - `android/app/src/main/res/layout/widget_large_layout.xml`: Added `widget_prayer_icon`, `widget_status_badge`, and RTL alignment.
+  - `android/app/src/main/kotlin/com/example/talib_ilm/WidgetChronometerHelper.kt`: Implemented autonomous 24h schedule lifecycle, halting chronometers at 0 to prevent negative values, and precise milestone alarms.
+  - `android/app/src/main/kotlin/com/example/talib_ilm/RibbonWidgetProvider.kt`: Added `effectiveIds` fallback and `ComponentName` import.
+  - `android/app/src/main/kotlin/com/example/talib_ilm/LargeWidgetProvider.kt`: Added `effectiveIds` fallback and `ComponentName` import.
+  - `lib/core/services/home_widget_snapshot.dart`: Serialized full 24h prayer epochs, iqama durations, and colors.
+  - `lib/core/services/home_widget_service.dart`: Passed `allPrayers` across all widget update methods (557 lines, < 600 limit).
+  - `test/native_widget_snapshot_test.dart`: Added test for 24h schedule persistence.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (11.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test test/native_widget_snapshot_test.dart`: 5/5 passed.
+  - `flutter test test/prayer_home_screen_widget_test.dart test/prayer_iqama_and_home_hero_test.dart`: 16/16 passed.
+  - `flutter test`: 626/626 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Native Android prayer widget countdown, icon rendering, and liturgical phase transitions are fully resolved.
+
 - **Scope & Context:**
   - Resolved remote fetching risks, unbounded buffering, missing input/path validation, and partial-download corruption in `EditionService` (`lib/features/quran/data/services/edition_service.dart`):
     1. **HTTP Client Test Seam & Base Directory Override:** Added `@visibleForTesting` `setHttpClient`, `resetHttpClient`, `resetForTesting`, and `testBaseDir` seams on `EditionService`, enabling fully isolated headless testing of file downloading, streaming, disk persistence, and deletion without touching user device directories or native platform channels.

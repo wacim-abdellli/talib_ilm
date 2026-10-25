@@ -135,9 +135,11 @@ class HomeWidgetService {
   /// Saves the target prayer epoch timestamp and properties for native widgets.
   static Future<void> _saveNextPrayerEpoch(
     EvaluatedPrayerWidgetState eval, {
+    Map<String, DateTime>? allPrayers,
     bool? preResolvedDark,
   }) => HomeWidgetSnapshot.savePrayerSnapshot(
     eval,
+    allPrayers: allPrayers,
     preResolvedDark: preResolvedDark,
   );
 
@@ -177,7 +179,7 @@ class HomeWidgetService {
       final all = day.prayers;
       final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval);
+        await _saveNextPrayerEpoch(eval, allPrayers: all);
       }
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -250,7 +252,7 @@ class HomeWidgetService {
       final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
       }
       final hijri = _formatHijri(now);
 
@@ -316,7 +318,7 @@ class HomeWidgetService {
       final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
       }
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -377,7 +379,7 @@ class HomeWidgetService {
       final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
       }
       final hijri = _formatHijri(now);
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
@@ -443,7 +445,7 @@ class HomeWidgetService {
       final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
       }
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -508,7 +510,7 @@ class HomeWidgetService {
         final useDark = await _resolveWidgetIsDark();
         if (op < _latestOperation && !force) return;
 
-        await _saveNextPrayerEpoch(eval, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(eval, allPrayers: day.prayers, preResolvedDark: useDark);
         if (op < _latestOperation && !force) return;
 
         await Future.wait([
