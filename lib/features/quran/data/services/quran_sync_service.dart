@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,12 @@ import '../../../../core/constants/app_policy.dart';
 import '../database/quran_database.dart';
 import 'quran_page_service.dart';
 
+typedef PageGetter = Future<QuranPageData?> Function(int pageNumber);
+typedef PageSaver = Future<void> Function(int pageNumber, QuranPageData data);
+
+/// Service for background chunk syncing of Quran page data from quran.com API
+/// into local SQLite database for offline Mushaf rendering.
+/// Hardened with streaming byte limits, input validation, in-flight deduplication, and testing seams.
 class QuranSyncService {
   static const String _chunkKeyPrefix = 'quran_chunk_synced_';
   static const String _baseUrl = 'https://api.quran.com/api/v4';
@@ -17,34 +24,177 @@ class QuranSyncService {
   static QuranSyncService get instance => _instance;
 
   final StreamController<double> _progressController =
-      StreamController.broadcast();
+      StreamController<double>.broadcast();
   Stream<double> get progressStream => _progressController.stream;
 
-  // Track active downloads to prevent duplicates
+  // Track active downloads to prevent duplicate executions
   final Set<int> _activeDownloads = {};
+  final Map<int, Future<void>> _inFlightChunkDownloads = {};
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HTTP TEST SEAM & TESTING HOOKS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static http.Client? _injectedClient;
+  static http.Client? _defaultClient;
+  static PageGetter? _testPageGetter;
+  static PageSaver? _testPageSaver;
+
+  @visibleForTesting
+  static Duration retryDelay = AppPolicy.oneSecond;
+
+  @visibleForTesting
+  static void setHttpClient(http.Client client) {
+    _injectedClient = client;
+  }
+
+  @visibleForTesting
+  static void resetHttpClient() {
+    _injectedClient?.close();
+    _injectedClient = null;
+    _defaultClient?.close();
+    _defaultClient = null;
+  }
+
+  static http.Client get _client =>
+      _injectedClient ?? (_defaultClient ??= http.Client());
+
+  @visibleForTesting
+  static void setDatabaseHooks({PageGetter? getPage, PageSaver? savePage}) {
+    _testPageGetter = getPage;
+    _testPageSaver = savePage;
+  }
+
+  @visibleForTesting
+  static void resetForTesting() {
+    resetHttpClient();
+    retryDelay = AppPolicy.oneSecond;
+    _testPageGetter = null;
+    _testPageSaver = null;
+    _instance._activeDownloads.clear();
+    _instance._inFlightChunkDownloads.clear();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INPUT BOUNDS VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static bool isValidChunkIndex(int chunkIndex) =>
+      chunkIndex >= 1 && chunkIndex <= 31;
+
+  static bool isValidPageNumber(int pageNumber) =>
+      pageNumber >= 1 && pageNumber <= 604;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAMED HTTP GET WITH BYTE CEILING & EARLY CANCELLATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static Future<String> _fetchStreamedStringWithLimit(
+    Uri uri, {
+    required int maxBytes,
+    required Duration timeout,
+  }) async {
+    final request = http.Request('GET', uri)
+      ..headers.addAll({
+        'User-Agent':
+            'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+        'Accept': 'application/json',
+      });
+
+    final streamedResponse = await _client.send(request).timeout(timeout);
+
+    if (streamedResponse.statusCode != 200) {
+      throw Exception('HTTP error ${streamedResponse.statusCode}');
+    }
+
+    final contentLength = streamedResponse.contentLength;
+    if (contentLength != null && contentLength > maxBytes) {
+      throw Exception('Response exceeded maximum byte limit ($maxBytes)');
+    }
+
+    final bytesBuilder = BytesBuilder(copy: false);
+    int totalBytes = 0;
+    final completer = Completer<List<int>>();
+    late final StreamSubscription<List<int>> subscription;
+
+    subscription = streamedResponse.stream.listen(
+      (chunk) {
+        totalBytes += chunk.length;
+        if (totalBytes > maxBytes) {
+          subscription.cancel();
+          if (!completer.isCompleted) {
+            completer.completeError(
+              Exception('Response stream cancelled: exceeded $maxBytes bytes'),
+            );
+          }
+          return;
+        }
+        bytesBuilder.add(chunk);
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!completer.isCompleted) completer.completeError(error, stackTrace);
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete(bytesBuilder.takeBytes());
+      },
+      cancelOnError: true,
+    );
+
+    final bytes = await completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        subscription.cancel();
+        throw TimeoutException('Request timed out', timeout);
+      },
+    );
+
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHUNK SYNC & INITIAL CONTENT
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /// Check if a specific chunk (20 pages) is downloaded
   Future<bool> isChunkDownloaded(int chunkIndex) async {
+    if (!isValidChunkIndex(chunkIndex)) return false;
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('$_chunkKeyPrefix$chunkIndex') ?? false;
   }
 
-  /// Download Initial content (Al-Fatiha + Pages 1-3)
+  /// Download Initial content (Chunk 1: Pages 1-20)
   /// Blocking, fast, essential for First Launch.
   Future<void> downloadInitialContent() async {
-    if (await isChunkDownloaded(1)) return; // Already have first chunk
-
-    // Just download first 3 pages quickly
-    // But for simplicity, we can trigger Chunk 1 download and wait for it.
-    // Chunk 1 is pages 1-20.
+    if (await isChunkDownloaded(1)) return;
     await downloadChunk(1);
   }
 
   /// Download a logical chunk of pages (Index 1..31)
   /// Each chunk is 20 pages (Juz-like size).
-  Future<void> downloadChunk(int chunkIndex) async {
-    if (_activeDownloads.contains(chunkIndex)) return; // Already downloading
-    if (await isChunkDownloaded(chunkIndex)) return; // Already done
+  /// Synchronously joins existing in-flight download if already in progress.
+  Future<void> downloadChunk(int chunkIndex) {
+    if (!isValidChunkIndex(chunkIndex)) return Future.value();
+
+    // Join in-flight download if one is already active (join/no-op)
+    final existingFuture = _inFlightChunkDownloads[chunkIndex];
+    if (existingFuture != null) return existingFuture;
+
+    final completer = Completer<void>();
+    _inFlightChunkDownloads[chunkIndex] = completer.future;
+
+    _executeDownloadChunk(chunkIndex).then((_) {
+      if (!completer.isCompleted) completer.complete();
+    }).catchError((Object error, StackTrace stackTrace) {
+      if (!completer.isCompleted) completer.completeError(error, stackTrace);
+    }).whenComplete(() {
+      _inFlightChunkDownloads.remove(chunkIndex);
+    });
+
+    return completer.future;
+  }
+
+  Future<void> _executeDownloadChunk(int chunkIndex) async {
+    if (await isChunkDownloaded(chunkIndex)) return;
 
     _activeDownloads.add(chunkIndex);
     _progressController.add(0.0);
@@ -62,7 +212,10 @@ class QuranSyncService {
         final pageNum = startPage + i;
 
         // Check DB first (Checkpointing)
-        final existing = await QuranDatabase.instance.getPage(pageNum);
+        final existing = _testPageGetter != null
+            ? await _testPageGetter!(pageNum)
+            : await QuranDatabase.instance.getPage(pageNum);
+
         if (existing == null) {
           await _fetchAndSavePage(pageNum);
         }
@@ -87,37 +240,38 @@ class QuranSyncService {
     }
   }
 
-  /// Single Page Fetcher (Internal)
+  /// Single Page Fetcher (Internal) with byte cap and retry
   Future<void> _fetchAndSavePage(int pageNumber) async {
+    if (!isValidPageNumber(pageNumber)) {
+      throw ArgumentError('Invalid page number: $pageNumber');
+    }
+
     int attempts = 0;
     while (attempts < 3) {
       try {
         final uri = Uri.parse(
           '$_baseUrl/verses/by_page/$pageNumber?fields=text_uthmani',
         );
-        final response = await http
-            .get(
-              uri,
-              headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-                'Accept': 'application/json',
-              },
-            )
-            .timeout(AppPolicy.networkRetry);
 
-        if (response.statusCode == 200) {
-          final json = jsonDecode(response.body);
-          final data = QuranPageData.fromApiResponse(pageNumber, json);
-          await QuranDatabase.instance.savePage(pageNumber, data);
-          return;
+        final body = await _fetchStreamedStringWithLimit(
+          uri,
+          maxBytes: AppPolicy.maxQuranPageResponseBytes,
+          timeout: AppPolicy.networkRetry,
+        );
+
+        final json = jsonDecode(body);
+        final data = QuranPageData.fromApiResponse(pageNumber, json);
+
+        if (_testPageSaver != null) {
+          await _testPageSaver!(pageNumber, data);
         } else {
-          throw Exception('HTTP ${response.statusCode}');
+          await QuranDatabase.instance.savePage(pageNumber, data);
         }
+        return;
       } catch (e) {
         attempts++;
         if (attempts >= 3) rethrow;
-        await Future.delayed(AppPolicy.oneSecond);
+        await Future.delayed(retryDelay);
       }
     }
   }

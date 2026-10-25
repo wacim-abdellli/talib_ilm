@@ -1,5 +1,28 @@
 # UI Progress Log
 
+## R84 — Harden Quran Page Sync Remote Fetching & Database Bounds (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching risks, unbounded buffering, missing input bounds validation, and duplicate in-flight requests in `QuranSyncService` (`lib/features/quran/data/services/quran_sync_service.dart`):
+    1. **HTTP Client Test Seam & Database Hooks:** Added `@visibleForTesting` `setHttpClient` and `resetHttpClient` test seams alongside `setDatabaseHooks` (`PageGetter` / `PageSaver`), enabling deterministic network and database testing without native SQLite binary dependencies.
+    2. **Input Bounds Validation:** Added authentic bounds validation for chunk indices (`isValidChunkIndex`: 1..31) and page numbers (`isValidPageNumber`: 1..604). Out-of-bounds requests return early with zero network calls dispatched.
+    3. **Streaming Byte Ceilings & Socket Cancellation:** Implemented `_fetchStreamedStringWithLimit` with explicit raw page streaming byte ceiling (`AppPolicy.maxQuranPageResponseBytes = 128 KB`). Oversized responses cancel underlying `StreamSubscription` instances immediately to abort socket reads and prevent memory exhaustion.
+    4. **Synchronous In-Flight Deduplication & Concurrency Join:** Synchronously registered in-flight chunk download Futures prior to any asynchronous await, ensuring concurrent callers for the same chunk join the identical active Future rather than returning prematurely or duplicating network transfers. Cleaned up in `whenComplete` on both success and error.
+    5. **Configurable Retry Backoff:** Added `@visibleForTesting static Duration retryDelay = AppPolicy.oneSecond;` to allow fast deterministic retry testing without wall-clock sleep waits.
+    6. **Regression Test Suite:** Added `test/quran_sync_service_test.dart` (8 regression tests) covering chunk and page input bounds validation, zero-network rejection, database hooks, streaming byte limits, cancellation, concurrency deduplication, and retry recovery.
+- **Files Modified (1 app file + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/quran_sync_service.dart`: Re-implemented with HTTP test seam, database hooks, streaming byte caps, authentic input bounds validation, synchronous in-flight deduplication, and testing hooks (221 lines, Rule 8 compliant).
+  - `test/quran_sync_service_test.dart`: Added comprehensive 8-test regression suite covering input validation, zero-network rejection, database hooks, streaming byte limits, cancellation, deduplication, and retry recovery.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (7.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test test/quran_sync_service_test.dart`: 8/8 passed (1.8s).
+  - `flutter test`: 621/621 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Quran page sync remote boundaries and SQLite checkpointing (Area C/B) are fully hardened.
+  - Ready to proceed to next task upon owner "continue".
+
 ## R83 — Harden Quran Core API Remote Fetching & Input Boundaries (25 October 2026)
 - **Scope & Context:**
   - Resolved remote fetching risks, unbounded buffering, missing input validation, and duplicate in-flight requests in `QuranApiService` (`lib/features/quran/data/quran_api_service.dart`):
