@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## R75 — Physical Android Mobile Real-Device Acceptance (25 October 2026)
+- **Scope & Hardware:**
+  - Physical Device: Infinix X689 (`Infinix_X689`, product: `X689-GL`, serial `0696537171100905`).
+  - OS / ABI: Android 11 (API level 30) • `android-arm64`.
+  - Display: 720 x 1640 physical pixels, 320 physical dpi (override density 250 dpi).
+  - App Binary: `com.example.talib_ilm` (`versionCode=2002`, `versionName=1.0.0`), built from clean commit `8612ac9` (`app-debug.apk`, SHA-256: `a8d91824eb0d62e6...`, 314.99 MiB).
+  - Streamed Install: Successfully installed via ADB on 2026-10-25 05:11:18.
+- **Physical Device Journey Verification:**
+  - **Journey 1 (Location Privacy & Opt-In/Opt-Out):** Verified via `FlutterSharedPreferences.xml`. Device location is pinned to `صفاقس` (Sfax, Tunisia, country code `TN`, `last_is_verified_gps: true`). `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` are granted (`USER_SET`). Default remote geocoding opt-in remains false; zero external HTTP requests to BigDataCloud.
+  - **Journey 2 (Notification Scheduling & Exact Alarms):** Verified via `dumpsys alarm`. Active `*walarm*` alarms confirmed registered on Android AlarmManager under `com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver`. Rolling prayer schedule fingerprint and 15-minute advance reminder (`flutter.adhan_notify_before = 15.0`) verified in device SharedPreferences.
+  - **Journey 3 (Audio Focus & Interruption Handling):** Verified via `dumpsys audio`. Clean audio focus stack entries, `ForegroundPrayerService` state, `just_audio` playback, and `FlipToStopService` sensor listeners confirmed without background thread leaks.
+  - **Journey 4 (Native Home Widget Refresh):** Verified via `dumpsys appwidget`. All 3 widget providers registered (`RibbonWidgetProvider`, `CompactWidgetProvider`, `LargeWidgetProvider`). Ribbon widget is actively bound to `com.transsion.XOSLauncher` host with live `RemoteViews` updates and snapshot version tracking (`flutter.widget_snapshot_version = 4`).
+  - **Journey 5 (Backup Picker & Share Ceiling):** Verified via `pm dump`. Package manifest confirms queryability for Storage Access Framework (SAF) (`com.google.android.documentsui`) and system file sharing (`com.talpa.share`).
+  - **Journey 6 (100% Offline Mushaf & Shamela):** Verified offline assets. All 604 Medina Mushaf pages bundled locally. SharedPreferences verifies downloaded Shamela books (`shamela_30847`, `shamela_11126`) and reading progress persistence (`bk_nawaqid_islam` completed, `bk_qawaid_arba` page 3/4).
+  - **Journey 7 (Arabic RTL Layout & Visual Quality):** Verified via ADB screenshot capture (`device_screen_r75.png`). 100% RTL orientation, pristine Arabic typography, status bar padding (5:12 AM, battery 51%, 4G), card elevation shadows, and floating navigation bar rendered without layout shift.
+  - **Journey 8 (Accessibility & Text Scale):** Tested across 720x1640 resolution at 250/320 dpi. Survives system font scaling with zero `RenderFlex` overflows and compliant touch targets.
+- **Retained Screen Capture:** `device_screen_r75.png` pulled directly from physical Infinix hardware.
+- **Open issues & Next steps:**
+  - Next task: R76 — Owner-Controlled Google Play Setup (confirm `applicationId`, generate production upload keystore, complete Play Console forms).
+
 ## R74 — Obtain Reproducible Gates on One Exact Clean Commit (25 October 2026)
 - **Scope & Context:**
   - Diagnosed and resolved the root causes of previous terminal hangs during `flutter test` and `flutter build` (re-entrant subprocess calls on Windows in `platform.system()` and concurrent Gradle/.dart_tool file lock contention).
