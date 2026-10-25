@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R77a — Triage UI Lint Warnings for Home Screen Family (25 October 2026)
+- **Scope & Context:**
+  - Resolved UI lint v2 warnings across the Home screen family (`lib/features/home/presentation/widgets/`).
+  - Replaced decorative surface `LinearGradient`s with tokenized tinted background fills (`catColors.fg.withValues(alpha: 0.06)`, `palette.surfaceMuted`, and `color.withValues(...)`).
+  - Replaced raw `FontWeight` overrides (`w800`, `w900`, `bold`, `w600`) with semantic design system typography tokens (`context.text.title`, `context.text.titleSmall`, `context.text.label`).
+  - Updated visual golden comparison files with zero regressions or layout shift.
+- **Files Modified (5 app files + 5 goldens):**
+  - `lib/features/home/presentation/widgets/continue_learning_card.dart`: Replaced 2 surface gradients with tokenized tinted fills; eliminated 6 raw `FontWeight` literals.
+  - `lib/features/home/presentation/widgets/quick_action_button.dart`: Replaced 2 surface gradients with tokenized fills; removed raw `FontWeight.w700`.
+  - `lib/features/home/presentation/widgets/home_hero_card.dart`: Removed 10 raw `FontWeight` literals (`w800`, `w900`, `w700`) in favor of canonical `title`, `titleSmall`, and `label`.
+  - `lib/features/home/presentation/widgets/home_hero_timeline_station.dart`: Removed 4 raw `FontWeight` literals (`w800`, `w600`) in favor of `label` for active prayer and `caption` for inactive.
+  - `lib/features/home/presentation/widgets/home_daily_dhikr_card.dart`: Removed 6 raw `FontWeight` literals (`bold`, `w600`) in favor of `titleSmall` and `label`.
+  - Updated 5 golden test PNGs in `test/golden/goldens/` (`home_continue_light_1_0.png`, `home_hero_dark_1_5.png`, `home_hero_light_1_0.png`, `home_quick_actions_dark_1_5.png`, `home_quick_actions_light_1_0.png`).
+- **Verified:**
+  - `flutter analyze`: 0 issues found (44.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 199 warnings [down from 226; surface gradients down from 6 to 2, font weights down by 23], 6 allow markers used, cap 10).
+  - `flutter test`: 562/562 passed (2m 21s, 0 failures).
+  - `flutter build apk --debug`: PASSED (78.9s).
+- **Open issues & Next steps:**
+  - Home screen family has 0 surface gradients and 0 raw `FontWeight` literals.
+  - Next task: R77b — Triage remaining UI lint warnings for next screen family (or R76 owner-controlled Google Play setup).
+
 ## R75 — Physical Android Mobile Real-Device Acceptance (25 October 2026)
 - **Scope & Hardware:**
   - Physical Device: Infinix X689 (`Infinix_X689`, product: `X689-GL`, serial `0696537171100905`).

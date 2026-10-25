@@ -77,15 +77,7 @@ class LearningPulseCard extends StatelessWidget {
           padding: const EdgeInsetsDirectional.all(AppSpace.lg),
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgRadius,
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
-              colors: [
-                catColors.fg.withValues(alpha: 0.10),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.45],
-            ),
+            color: catColors.fg.withValues(alpha: 0.06),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,14 +89,7 @@ class LearningPulseCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        end: AlignmentDirectional.bottomEnd,
-                        colors: [
-                          catColors.fg.withValues(alpha: 0.28),
-                          catColors.fg.withValues(alpha: 0.10),
-                        ],
-                      ),
+                      color: catColors.fg.withValues(alpha: 0.14),
                       borderRadius: AppRadius.mdRadius,
                       border: Border.all(
                         color: catColors.fg.withValues(alpha: 0.45),
@@ -129,9 +114,8 @@ class LearningPulseCard extends StatelessWidget {
                           children: [
                             Text(
                               hasData ? 'متابعة التعلّم' : 'ابدأ رحلة طلب العلم',
-                              style: context.text.caption.copyWith(
+                              style: context.text.label.copyWith(
                                 color: catColors.fg,
-                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             if (hasData)
@@ -146,9 +130,8 @@ class LearningPulseCard extends StatelessWidget {
                                 ),
                                 child: Text(
                                   data!.book.subject,
-                                  style: context.text.caption.copyWith(
+                                  style: context.text.label.copyWith(
                                     color: catColors.fg,
-                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
@@ -159,7 +142,6 @@ class LearningPulseCard extends StatelessWidget {
                           hasData ? data!.book.title : 'استكشف المتون العلمية وشروحها',
                           style: context.text.titleSmall.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.w800,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -192,9 +174,8 @@ class LearningPulseCard extends StatelessWidget {
                   children: [
                     Text(
                       '$safePercent% مكتمل',
-                      style: context.text.caption.copyWith(
+                      style: context.text.label.copyWith(
                         color: palette.text,
-                        fontWeight: FontWeight.w700,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
@@ -211,7 +192,6 @@ class LearningPulseCard extends StatelessWidget {
                         'متابعة القراءة',
                         style: context.text.caption.copyWith(
                           color: palette.textMuted,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                   ],
@@ -261,9 +241,8 @@ class LearningPulseCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'الأصول الثلاثة • القواعد الأربع • كتاب التوحيد',
-                        style: context.text.caption.copyWith(
+                        style: context.text.label.copyWith(
                           color: context.palette.textMuted,
-                          fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

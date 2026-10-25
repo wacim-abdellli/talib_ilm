@@ -46,15 +46,7 @@ class QuickActionButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgRadius,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                color.withValues(alpha: 0.10),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.5],
-            ),
+            color: color.withValues(alpha: 0.05),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -63,14 +55,7 @@ class QuickActionButton extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: AlignmentDirectional.topStart,
-                    end: AlignmentDirectional.bottomEnd,
-                    colors: [
-                      color.withValues(alpha: 0.25),
-                      color.withValues(alpha: 0.10),
-                    ],
-                  ),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: AppRadius.mdRadius,
                   border: Border.all(
                     color: color.withValues(alpha: 0.4),
@@ -92,7 +77,6 @@ class QuickActionButton extends StatelessWidget {
                   label,
                   style: context.text.label.copyWith(
                     color: palette.text,
-                    fontWeight: FontWeight.w700,
                   ),
                   maxLines: 1,
                   textAlign: TextAlign.center,

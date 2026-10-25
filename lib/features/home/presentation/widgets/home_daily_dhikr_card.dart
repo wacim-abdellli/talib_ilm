@@ -104,7 +104,6 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                           widget.payload.categoryLabel,
                           style: context.text.titleSmall.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: AppSpace.xxs),
@@ -112,9 +111,8 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                           item.countDescription.isNotEmpty
                               ? item.countDescription
                               : (target > 1 ? '$target مرات' : 'مرة واحدة'),
-                          style: context.text.caption.copyWith(
+                          style: context.text.label.copyWith(
                             color: isDone ? palette.gold : palette.textMuted,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -161,7 +159,6 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                   item.arabic,
                   textAlign: TextAlign.center,
                   style: context.text.titleSmall.copyWith(
-                    fontWeight: FontWeight.bold,
                     height: 1.8,
                     color: palette.text,
                   ),
@@ -183,8 +180,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                     Expanded(
                       child: Text(
                         item.fadl,
-                        style: context.text.caption.copyWith(
-                          fontWeight: FontWeight.w600,
+                        style: context.text.label.copyWith(
                           color: palette.gold,
                           height: 1.4,
                         ),
@@ -237,8 +233,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                               isDone
                                   ? 'تمت القراءة'
                                   : '$_tapCount من $target',
-                              style: context.text.caption.copyWith(
-                                fontWeight: FontWeight.bold,
+                              style: context.text.label.copyWith(
                                 color: isDone
                                     ? palette.gold
                                     : palette.textMuted,
@@ -260,9 +255,8 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                     ),
                     label: Text(
                       'فتح الورد كاملًا',
-                      style: context.text.caption.copyWith(
+                      style: context.text.label.copyWith(
                         color: palette.primary,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

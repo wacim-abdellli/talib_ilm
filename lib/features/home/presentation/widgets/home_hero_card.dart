@@ -296,14 +296,12 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                   text: 'صلاة ',
                                   style: textTheme.title.copyWith(
                                     color: palette.text,
-                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                                 TextSpan(
                                   text: eval.prayerName,
                                   style: textTheme.title.copyWith(
                                     color: prayerColor,
-                                    fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ],
@@ -345,7 +343,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                           prayerTimeDisplay,
                           style: textTheme.label.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.w800,
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
@@ -391,9 +388,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                           const SizedBox(width: AppSpace.xs),
                           Text(
                             nearnessLabel,
-                            style: textTheme.caption.copyWith(
+                            style: textTheme.label.copyWith(
                               color: prayerColor,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -434,7 +430,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                           Text(
                                             iqamaMinutesStr,
                                             style: textTheme.titleSmall.copyWith(
-                                              fontWeight: FontWeight.w800,
                                               color: prayerColor,
                                               fontFeatures: const [FontFeature.tabularFigures()],
                                             ),
@@ -443,7 +438,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                           Text(
                                             iqamaSecondsStr,
                                             style: textTheme.titleSmall.copyWith(
-                                              fontWeight: FontWeight.w800,
                                               color: prayerColor,
                                               fontFeatures: const [FontFeature.tabularFigures()],
                                             ),
@@ -464,9 +458,8 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                     const SizedBox(width: AppSpace.xs),
                                     Text(
                                       'أداء الفريضة',
-                                      style: textTheme.caption.copyWith(
+                                      style: textTheme.label.copyWith(
                                         color: prayerColor,
-                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ],
@@ -495,7 +488,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                 Text(
                                   hours,
                                   style: textTheme.titleSmall.copyWith(
-                                    fontWeight: FontWeight.w800,
                                     color: palette.text,
                                     fontFeatures: const [FontFeature.tabularFigures()],
                                   ),
@@ -504,7 +496,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                 Text(
                                   minutes,
                                   style: textTheme.titleSmall.copyWith(
-                                    fontWeight: FontWeight.w800,
                                     color: palette.text,
                                     fontFeatures: const [FontFeature.tabularFigures()],
                                   ),
@@ -513,7 +504,6 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
                                 Text(
                                   seconds,
                                   style: textTheme.titleSmall.copyWith(
-                                    fontWeight: FontWeight.w800,
                                     color: prayerColor,
                                     fontFeatures: const [FontFeature.tabularFigures()],
                                   ),

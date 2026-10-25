@@ -99,13 +99,11 @@ class HomeHeroTimelineStation extends StatelessWidget {
               child: Text(
                 prayerName,
                 style: isCurrent
-                    ? textTheme.caption.copyWith(
+                    ? textTheme.label.copyWith(
                         color: pColor,
-                        fontWeight: FontWeight.w800,
                       )
                     : textTheme.caption.copyWith(
                         color: isPast ? palette.textMuted : palette.text,
-                        fontWeight: FontWeight.w600,
                       ),
                 maxLines: 1,
                 textAlign: TextAlign.center,
@@ -120,9 +118,8 @@ class HomeHeroTimelineStation extends StatelessWidget {
                 child: Text(
                   timeStr,
                   style: isCurrent
-                      ? textTheme.caption.copyWith(
+                      ? textTheme.label.copyWith(
                           color: palette.text,
-                          fontWeight: FontWeight.w800,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         )
                       : textTheme.caption.copyWith(
@@ -180,7 +177,6 @@ class CountdownColon extends StatelessWidget {
       child: Text(
         ':',
         style: context.text.titleSmall.copyWith(
-          fontWeight: FontWeight.w800,
           color: color.withValues(alpha: 0.7),
         ),
       ),
