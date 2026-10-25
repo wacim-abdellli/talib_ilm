@@ -14,7 +14,12 @@ import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
 
 class DuasMiscPage extends StatefulWidget {
-  const DuasMiscPage({super.key});
+  final String? initialSearchQuery;
+
+  const DuasMiscPage({
+    super.key,
+    this.initialSearchQuery,
+  });
 
   @override
   State<DuasMiscPage> createState() => _DuasMiscPageState();
@@ -30,6 +35,11 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchQuery != null &&
+        widget.initialSearchQuery!.isNotEmpty) {
+      _searchController.text = widget.initialSearchQuery!;
+      _searchQuery = widget.initialSearchQuery!;
+    }
     _loadDuas();
   }
 

@@ -4,6 +4,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/models/favorite_item.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/hadith_favorites_service.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/hadith_models.dart';
@@ -43,12 +45,36 @@ class _HadithCardState extends State<HadithCard> {
   }
 
   Future<void> _checkFavorite() async {
-    final fav = await _favService.isSaved(widget.hadith.toLegacyHadith());
+    final legacySaved = await _favService.isSaved(widget.hadith.toLegacyHadith());
+    final hadithId = widget.hadith.id.isNotEmpty
+        ? widget.hadith.id
+        : widget.hadith.matn.hashCode.toString();
+    final generalSaved = await FavoritesService().isFavorite(
+      FavoriteType.hadith,
+      hadithId,
+    );
+    final fav = legacySaved || generalSaved;
     if (mounted) setState(() => _isFavorite = fav);
   }
 
   Future<void> _toggleFavorite() async {
     final next = await _favService.toggleSaved(widget.hadith.toLegacyHadith());
+    final hadithId = widget.hadith.id.isNotEmpty
+        ? widget.hadith.id
+        : widget.hadith.matn.hashCode.toString();
+    final favItem = FavoriteItem(
+      type: FavoriteType.hadith,
+      id: hadithId,
+      title: widget.hadith.title.isNotEmpty ? widget.hadith.title : widget.hadith.matn,
+      subtitle: widget.hadith.source.isNotEmpty
+          ? '${widget.hadith.source} • ${widget.hadith.category}'
+          : widget.hadith.category,
+    );
+    if (next) {
+      await FavoritesService().add(favItem);
+    } else {
+      await FavoritesService().remove(FavoriteType.hadith, favItem.id);
+    }
     if (mounted) setState(() => _isFavorite = next);
   }
 

@@ -12,10 +12,12 @@ import '../../data/services/hadith_service.dart';
 
 class HadithExplorerPage extends StatefulWidget {
   final String? initialCategory;
+  final String? initialSearchQuery;
 
   const HadithExplorerPage({
     super.key,
     this.initialCategory,
+    this.initialSearchQuery,
   });
 
   @override
@@ -38,6 +40,10 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchQuery != null &&
+        widget.initialSearchQuery!.isNotEmpty) {
+      _searchController.text = widget.initialSearchQuery!;
+    }
     _loadHadiths();
   }
 

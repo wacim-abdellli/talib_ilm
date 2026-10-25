@@ -19,6 +19,7 @@ import '../../ilm/data/models/mutun_models.dart';
 import '../../ilm/data/services/book_progress_service.dart';
 import '../../ilm/data/services/bookmark_entry_loader.dart';
 import '../../ilm/presentation/pages/book_view_page.dart';
+import 'widgets/favorite_item_launcher.dart';
 import 'widgets/favorites_book_entries_view.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -315,6 +316,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
           return _Section(
             title: _labelFor(type),
             items: list,
+            onSelect: (item) async {
+              await FavoriteItemLauncher.launch(context, item);
+              _reload();
+            },
             onRemove: (item) async {
               await _service.remove(item.type, item.id);
               _reload();
@@ -343,11 +348,13 @@ class _FavoritesPageState extends State<FavoritesPage> {
 class _Section extends StatelessWidget {
   final String title;
   final List<FavoriteItem> items;
+  final void Function(FavoriteItem item) onSelect;
   final void Function(FavoriteItem item) onRemove;
 
   const _Section({
     required this.title,
     required this.items,
+    required this.onSelect,
     required this.onRemove,
   });
 
@@ -368,6 +375,7 @@ class _Section extends StatelessWidget {
           (item) => Padding(
             padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
             child: AppCard(
+              onTap: () => onSelect(item),
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpace.lg,
                 vertical: AppSpace.md,

@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## R79 — Interactive Favorites Item Navigation to Canonical Paths (25 October 2026)
+- **Scope & Context:**
+  - Implemented interactive navigation for all items in `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`). Tapping any favorite item card now takes the user directly to its authentic path in the app.
+  - Built `FavoriteItemLauncher` (`lib/features/favorites/presentation/widgets/favorite_item_launcher.dart`) to handle type-based dispatch:
+    - `FavoriteType.book`: Resolves Mutun program books and navigates to `BookViewPage`, resolves Shamela library books and opens `ShamelaReaderPage`.
+    - `FavoriteType.hadith`: Opens `HadithExplorerPage` pre-filtered directly to the exact hadith.
+    - `FavoriteType.dua`: Opens `DuasMiscPage` pre-filtered to the target supplication.
+    - `FavoriteType.dhikr`: Maps to canonical sessions (`MorningAthkarPage`, `EveningAthkarPage`, `AfterPrayerAthkarPage`, `SleepingAthkarPage`, `TasbeehIstighfarPage`, `AdhkarSessionPage`, or `AdhkarPage`).
+    - `FavoriteType.quran`: Parses surah and ayah metadata or page number and jumps directly into `MushafPageViewer`.
+    - `FavoriteType.quote` & `FavoriteType.lesson`: Opens a rich `AppDialog` with full text, attribution, one-tap copy to clipboard, and native share.
+  - Updated `HadithCard` to automatically sync favorited items with `FavoritesService` so newly starred hadiths appear immediately in `FavoritesPage`.
+  - Added `initialSearchQuery` support to `HadithExplorerPage` and `DuasMiscPage` with seamless text clearing and instant filtering.
+- **Files Modified (5 app files + 1 test file):**
+  - `lib/features/favorites/presentation/widgets/favorite_item_launcher.dart`: Created canonical dispatcher with deep links for books, hadith, duas, adhkar, quran, and quotes.
+  - `lib/features/favorites/presentation/favorites_page.dart`: Connected `onSelect` callback and `AppCard.onTap` to `FavoriteItemLauncher.launch`.
+  - `lib/features/hadith/presentation/pages/hadith_explorer_page.dart`: Added `initialSearchQuery` parameter and automated query filtering.
+  - `lib/features/adhkar/presentation/duas_misc_page.dart`: Added `initialSearchQuery` parameter and automated search field initialization.
+  - `lib/features/hadith/presentation/widgets/hadith_card.dart`: Synchronized favorite state with `FavoritesService`.
+  - `test/favorites_page_navigation_test.dart`: Added comprehensive widget tests verifying navigation for hadith, dua, morning dhikr, quote dialog, and back button.
+- **Verified:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers used, cap 10).
+  - `flutter test`: 5/5 navigation tests passed, 2/2 favorites golden tests passed.
+- **Open issues & Next steps:**
+  - Complete.
+
 ## R78 — Add Back Arrow Button to FavoritesPage (25 October 2026)
 - **Scope & Context:**
   - Modernized `FavoritesPage` (`lib/features/favorites/presentation/favorites_page.dart`) with the app's canonical `PrimaryAppBar` architecture.
