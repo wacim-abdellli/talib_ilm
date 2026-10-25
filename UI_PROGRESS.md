@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R73 — Correct Release Report Claims to Match Available Evidence (25 October 2026)
+- **Scope:** Reconcile and correct claims in `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md` and `docs/RUNTIME_PERFORMANCE_AND_MEMORY_BASELINE_REPORT.md`. Strictly distinguish host-engine in-memory benchmarks from physical Android mobile device acceptance. Reclassify all physical-device verification rows as PENDING (Task R75) unless supported by dated physical device logs. Label the Play Console Data Safety questionnaire as an engineering draft for owner review. Document test types across all technical gates.
+- **Implemented:**
+  - `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md`:
+    - Updated release status banner to `CONDITIONALLY RELEASABLE (HOST CODE AUDIT COMPLETE · PHYSICAL DEVICE & OWNER ACTIONS PENDING)`.
+    - Added explicit "Test Type" column to Section 2 technical gates table (Host CLI, Host AST, Host Engine Harness, Host Gradle Build, Tooling Tests).
+    - Preserved 3 owner actions (Task R76: applicationId, upload keystore, and Play Console forms); added legal disclaimer clarifying that `docs/GOOGLE_PLAY_DATA_SAFETY_FACT_SHEET.md` is an engineering preparation worksheet, not a formal legal determination.
+    - Updated Section 4 verification matrix to explicitly separate Host Verification Evidence (PASS) from Physical Android Device Status (PENDING Task R75) across all 8 journeys (location privacy, alarms, audio focus/interruption, home widget, backup picker, offline Mushaf, RTL layout, 2.0 text scale).
+    - Updated Section 5 progress index reflecting R61–R72 complete, R73 active, and R74–R77 pending per `docs/GEMINI_NEXT_STEPS_AND_RELEASE_CLOSURE_GUIDE.md`.
+  - `docs/RUNTIME_PERFORMANCE_AND_MEMORY_BASELINE_REPORT.md`:
+    - Added explicit methodology disclaimers in Sections 1, 2, 3, and 4 stating that all R69 benchmark data was gathered on the Windows host engine harness (`test/runtime_performance_benchmarks_test.dart`) with no connected physical device.
+    - Clarified that in-memory metrics (such as 12 µs audio focus state switch and 1.22 ms Dart engine init) measure Dart algorithmic execution, not physical hardware audio output, Android Activity launch, or mobile memory under LMK.
+- **Verified:**
+  - `python tool/test_release_readiness_checks.py`: PASS (27/27 passed in 0.02s).
+  - `python tool/test_performance_runner.py`: PASS (3/3 passed in 1.4s).
+  - `python tool/test_signing_verifier_safety.py`: PASS (3/3 passed in 0.02s).
+  - `python tool/test_ui_lint_warnings.py`: PASS (5/5 passed in 1.2s).
+  - `git diff --check`: PASS (0 whitespace / syntax errors).
+  - Available gates: `flutter --version` (3.38.7 / Dart 3.10.7), `flutter analyze` (0 issues), `python tool/ui_lint_v2.py` (0 FAIL, 226 warnings, 6 allow markers).
+- **Open issues & Next steps:**
+  - Next task: R74 — Obtain reproducible gates on one exact clean commit (verification).
+
 ## R72 — Repair Release-Readiness Timeout Regression Test (25 October 2026)
 - **Scope:** Reproduce and repair timeout handling in `tool/run_release_readiness_checks.py` and regression suite in `tool/test_release_readiness_checks.py`. Make platform detection independent of mocked subprocesses to prevent secondary subprocess execution during tests or probe timeouts. Stay strictly within tool/test files (< 25 files), without modifying app runtime code, package ID, or credentials.
 - **Implemented:**
