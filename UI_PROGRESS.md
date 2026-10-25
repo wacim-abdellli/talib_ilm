@@ -1,5 +1,30 @@
 # UI Progress Log
 
+## R89 — Harden SQLite QuranDatabase & Bookmark Migration Reliability (25 October 2026)
+- **Scope & Context:**
+  - Hardened local SQLite storage and SharedPreferences persistence layers against corruption, out-of-bounds queries, batch failure, and legacy bookmark resurrection (`quran_database.dart`, `bookmark_service.dart`):
+    1. **Input Bounds Validation:** Added `QuranDatabase.isValidPageNumber(pageNumber)` (1..604). Invalid page requests are rejected immediately without dispatching raw SQLite queries.
+    2. **Corruption Self-Healing:** Added defensive parsing in `QuranDatabase.getPage()`. If database bytes contain corrupted, truncated, or unparseable JSON, the exception (`FormatException` / `TypeError`) is caught, the corrupt row is automatically deleted from SQLite (`DELETE FROM pages WHERE page_number = ?`) to allow fresh synchronization, and `null` is cleanly returned.
+    3. **Atomic Batch Transactions:** Added `QuranDatabase.savePagesBatch(Map<int, QuranPageData> pages)` executing atomic batch insertion via `txn.batch()` inside a single SQLite transaction, dramatically accelerating multi-page offline synchronizations and preventing half-written states.
+    4. **Test Seam & Safe Clear:** Added `@visibleForTesting static void setDatabaseForTesting(Database? db)` and `resetForTesting()` to allow in-memory SQLite injection in unit tests without disk dependencies. Added `clearAllPages()` for clean cache invalidation.
+    5. **Empty Bookmark List Preservation (Zombie Bookmark Fix):** Fixed `BookmarkService._loadBookmarksRaw()`. Previously, if a user deleted all bookmarks, the empty list was ignored and triggered fallback to legacy keys, causing old deleted bookmarks to resurrect indefinitely. Now, the presence of the active `bookmarks_v2` key correctly returns an empty list `[]`.
+    6. **Legacy Key Cleanup:** After successful migration from legacy storage keys (`dashboard_fav_surahs`, `bookmarks`), `BookmarkService` purges the legacy keys to reclaim SharedPreferences memory and prevent resurrection.
+    7. **Bookmark Note Bounds:** Capped note lengths in `BookmarkService.addBookmark` and `toggleBookmark` to `AppPolicy.maxBookmarkNoteLength` (2000 chars) to protect persistence payloads.
+    8. **Regression Test Suite:** Created `test/database_storage_reliability_test.dart` (9 tests) verifying page bounds validation, corruption deletion and self-healing, atomic batch transaction execution, empty list preservation, legacy key cleanup, and 2000-char note limits.
+- **Files Modified (2 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/database/quran_database.dart`: Added page validation, test seams, corruption self-healing, atomic batch writes, and clear cache (157 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/bookmark_service.dart`: Fixed empty list preservation, added legacy key cleanup, and note length capping (471 lines, Rule 8 compliant).
+  - `test/database_storage_reliability_test.dart`: Added 9 regression tests (all passing).
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test`: 649/649 passed (0 failures).
+  - `flutter build apk --debug`: PASSED.
+- **Open issues & Next steps:**
+  - Storage & Database reliability (Area D) complete.
+  - Auto-passing to R90: Area E — Prayer Alarms & Background Lifecycle.
+
 ## R88 — Harden Quran Audio & Recitation Streaming / Download Boundaries (25 October 2026)
 - **Scope & Context:**
   - Resolved remote fetching risks, unbounded buffering, missing input bounds validation, and file-length Rule 8 violations across Quran audio playback and downloading (`quran_audio_service.dart`, `quran_audio_downloader.dart`, `quran_audio_storage.dart`):

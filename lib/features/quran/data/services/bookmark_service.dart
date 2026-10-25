@@ -54,11 +54,14 @@ class BookmarkService {
       bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah && b.isSurah == isSurah);
 
       final page = quran.getPageNumber(surah, ayah);
+      final cleanNote = (note != null && note.length > 2000)
+          ? note.substring(0, 2000)
+          : note;
       final newBookmark = Bookmark(
         surah: surah,
         ayah: ayah,
         page: page,
-        note: note,
+        note: cleanNote,
         timestamp: DateTime.now(),
         isSurah: isSurah,
       );
@@ -137,13 +140,16 @@ class BookmarkService {
         return false;
       } else {
         final page = quran.getPageNumber(surah, ayah);
+        final cleanNote = (note != null && note.length > 2000)
+            ? note.substring(0, 2000)
+            : note;
         bookmarks.insert(
           0,
           Bookmark(
             surah: surah,
             ayah: ayah,
             page: page,
-            note: note,
+            note: cleanNote,
             timestamp: DateTime.now(),
             isSurah: false,
           ),
@@ -290,28 +296,30 @@ class BookmarkService {
 
   static Future<List<Bookmark>> _loadBookmarksRaw() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_bookmarksKey);
 
-    if (jsonString != null && jsonString.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(jsonString);
-        if (decoded is List) {
-          final List<Bookmark> list = [];
-          for (final item in decoded) {
-            if (item is Map) {
-              try {
-                final map = item.map((k, v) => MapEntry(k.toString(), v));
-                list.add(Bookmark.fromJson(map));
-              } catch (_) {
-                // Skip corrupt single entry
+    // If active storage key exists, trust its contents (even if empty list)
+    if (prefs.containsKey(_bookmarksKey)) {
+      final jsonString = prefs.getString(_bookmarksKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(jsonString);
+          if (decoded is List) {
+            final List<Bookmark> list = [];
+            for (final item in decoded) {
+              if (item is Map) {
+                try {
+                  final map = item.map((k, v) => MapEntry(k.toString(), v));
+                  list.add(Bookmark.fromJson(map));
+                } catch (_) {
+                  // Skip corrupt single entry
+                }
               }
             }
-          }
-          if (list.isNotEmpty) {
             return list;
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
+      return [];
     }
 
     // Attempt migration from v1 bookmarks
@@ -331,6 +339,7 @@ class BookmarkService {
           }
           if (migrated.isNotEmpty) {
             await _saveBookmarks(migrated);
+            await prefs.remove(_legacyBookmarksKey);
             return migrated;
           }
         }
@@ -358,6 +367,7 @@ class BookmarkService {
       }
       if (migrated.isNotEmpty) {
         await _saveBookmarks(migrated);
+        await prefs.remove(_legacyFavSurahsKey);
         return migrated;
       }
     }

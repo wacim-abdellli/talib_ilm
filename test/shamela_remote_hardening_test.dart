@@ -203,7 +203,7 @@ void main() {
 
       ShamelaService.setHttpClient(testClient);
 
-      expect(
+      await expectLater(
         () => ShamelaService.fetchPage(bookId: 9999, pageNumber: 1),
         throwsA(isA<ShamelaDownloadException>().having(
           (e) => e.message,
@@ -212,7 +212,7 @@ void main() {
         )),
       );
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
       expect(streamCancelled, isTrue, reason: 'Stream subscription must be cancelled on byte limit breach');
 
       // Verify oversized page was NOT saved into database

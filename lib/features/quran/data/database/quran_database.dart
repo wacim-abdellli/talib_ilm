@@ -10,7 +10,20 @@ class QuranDatabase {
   static Database? _database;
 
   QuranDatabase._init();
- 
+
+  /// Canonical maximum pages in the Medina Mushaf
+  static const int maxPages = 604;
+
+  /// Validates that a Quran page number is within canonical Mushaf bounds (1..604)
+  static bool isValidPageNumber(int pageNumber) =>
+      pageNumber >= 1 && pageNumber <= maxPages;
+
+  @visibleForTesting
+  static void setDatabaseForTesting(Database? db) => _database = db;
+
+  @visibleForTesting
+  static void resetForTesting() => _database = null;
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('quran_data.db');
@@ -19,11 +32,16 @@ class QuranDatabase {
 
   Future<Database> _initDB(String filePath) async {
     if (kIsWeb) {
-      throw UnsupportedError('SQFLite not supported on Web'); // Placeholder
+      throw UnsupportedError('SQFLite not supported on Web');
     }
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -35,8 +53,19 @@ class QuranDatabase {
     ''');
   }
 
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    // Migration hook for future schema upgrades
+  }
+
+  /// Saves a single page to the database with bounds validation.
   Future<void> savePage(int pageNumber, QuranPageData data) async {
-    if (kIsWeb) return; // Skip for web
+    if (kIsWeb) return;
+    if (!isValidPageNumber(pageNumber)) {
+      throw ArgumentError(
+        'Invalid Quran page number: $pageNumber (must be 1..$maxPages)',
+      );
+    }
+
     final db = await database;
     final jsonStr = jsonEncode(data.toJson());
 
@@ -46,8 +75,27 @@ class QuranDatabase {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// Atomically saves multiple pages within a single SQLite transaction.
+  Future<void> savePagesBatch(Map<int, QuranPageData> pages) async {
+    if (kIsWeb || pages.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final entry in pages.entries) {
+        if (!isValidPageNumber(entry.key)) continue;
+        final jsonStr = jsonEncode(entry.value.toJson());
+        batch.insert('pages', {
+          'page_number': entry.key,
+          'json_data': jsonStr,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// Retrieves a Quran page from the database with corruption self-healing.
   Future<QuranPageData?> getPage(int pageNumber) async {
-    if (kIsWeb) return null; // Skip for web
+    if (kIsWeb || !isValidPageNumber(pageNumber)) return null;
     final db = await database;
 
     final maps = await db.query(
@@ -59,11 +107,26 @@ class QuranDatabase {
 
     if (maps.isNotEmpty) {
       final jsonStr = maps.first['json_data'] as String;
-      return QuranPageData.fromJson(jsonDecode(jsonStr));
+      try {
+        final decoded = jsonDecode(jsonStr);
+        if (decoded is Map<String, dynamic>) {
+          return QuranPageData.fromJson(decoded);
+        }
+      } catch (_) {
+        // Corrupted JSON row; delete to heal database and enable clean re-fetch
+        try {
+          await db.delete(
+            'pages',
+            where: 'page_number = ?',
+            whereArgs: [pageNumber],
+          );
+        } catch (_) {}
+      }
     }
     return null;
   }
 
+  /// Retrieves all stored page numbers.
   Future<List<int>> getStoredPageNumbers() async {
     if (kIsWeb) return [];
     final db = await database;
@@ -71,10 +134,18 @@ class QuranDatabase {
     return result.map((e) => e['page_number'] as int).toList();
   }
 
+  /// Safely deletes all cached Quran pages.
+  Future<void> clearAllPages() async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.delete('pages');
+  }
+
   Future<void> close() async {
     final db = _database;
     if (db != null) {
       await db.close();
+      _database = null;
     }
   }
 }
