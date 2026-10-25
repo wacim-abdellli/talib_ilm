@@ -159,7 +159,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         // Prayer name
         Text(
           eval.displayTitle,
-          style: textTheme.label.copyWith(fontWeight: FontWeight.w800, color: palette.text),
+          style: textTheme.label.copyWith(color: palette.text),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -168,7 +168,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
         Text(
           eval.timePillLabel,
           style: textTheme.titleSmall.copyWith(
-            fontWeight: FontWeight.w900,
             color: prayerColor,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -190,7 +189,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
               Flexible(
                 child: Text(
                   eval.statusLabel,
-                  style: textTheme.caption.copyWith(fontWeight: FontWeight.w600, color: bannerText),
+                  style: textTheme.label.copyWith(color: bannerText),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -200,8 +199,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
                 textDirection: TextDirection.ltr,
                 child: Text(
                   eval.countdownFormatted,
-                  style: textTheme.caption.copyWith(
-                    fontWeight: FontWeight.w800,
+                  style: textTheme.label.copyWith(
                     color: palette.text,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
@@ -217,7 +215,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
           Text(
             'التالي: ${eval.nextPrayerName} ${formatPrayerTime12h(eval.nextPrayerTime!)}',
             style: textTheme.caption.copyWith(
-              fontWeight: FontWeight.w600,
               color: palette.textMuted,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
@@ -250,14 +247,13 @@ class PrayerHomeScreenWidget extends StatelessWidget {
             children: [
               Text(
                 eval.displayTitle,
-                style: textTheme.label.copyWith(fontWeight: FontWeight.w800, color: palette.text),
+                style: textTheme.label.copyWith(color: palette.text),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
                 eval.timePillLabel,
-                style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w700,
+                style: textTheme.label.copyWith(
                   color: prayerColor,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
@@ -280,7 +276,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
             children: [
               Text(
                 eval.statusLabel,
-                style: textTheme.caption.copyWith(fontWeight: FontWeight.w600, color: bannerText),
+                style: textTheme.label.copyWith(color: bannerText),
                 maxLines: 1,
               ),
               Directionality(
@@ -288,7 +284,6 @@ class PrayerHomeScreenWidget extends StatelessWidget {
                 child: Text(
                   eval.countdownFormatted,
                   style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w900,
                     color: palette.text,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),

@@ -65,8 +65,7 @@ class PrayerWidgetTallView extends StatelessWidget {
             Expanded(
               child: Text(
                 hijriStr.isNotEmpty ? hijriStr : now.year.toString(),
-                style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w700,
+                style: textTheme.label.copyWith(
                   color: palette.text,
                 ),
                 maxLines: 1,
@@ -80,8 +79,7 @@ class PrayerWidgetTallView extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 80),
               child: Text(
                 cityName,
-                style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: textTheme.label.copyWith(
                   color: palette.textMuted,
                 ),
                 maxLines: 1,
@@ -130,7 +128,6 @@ class PrayerWidgetTallView extends StatelessWidget {
                     Text(
                       eval.displayTitle,
                       style: textTheme.label.copyWith(
-                        fontWeight: FontWeight.w900,
                         color: palette.text,
                       ),
                       maxLines: 1,
@@ -141,7 +138,6 @@ class PrayerWidgetTallView extends StatelessWidget {
                     Text(
                       eval.timePillLabel,
                       style: textTheme.titleSmall.copyWith(
-                        fontWeight: FontWeight.w900,
                         color: prayerColor,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
@@ -225,8 +221,7 @@ class _HeroBadge extends StatelessWidget {
         children: [
           Text(
             statusLabel,
-            style: textTheme.caption.copyWith(
-              fontWeight: FontWeight.w600,
+            style: textTheme.label.copyWith(
               color: textColor,
             ),
             maxLines: 1,
@@ -237,7 +232,6 @@ class _HeroBadge extends StatelessWidget {
             child: Text(
               countdown,
               style: textTheme.label.copyWith(
-                fontWeight: FontWeight.w900,
                 color: countdownColor,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),

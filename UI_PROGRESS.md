@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R77b — Triage UI Lint Warnings for Android Home Screen Widget Family (25 October 2026)
+- **Scope & Context:**
+  - Resolved UI lint v2 warnings across the Android Home Screen Widget family (`lib/features/prayer/presentation/widgets/`).
+  - Replaced raw `FontWeight` overrides (`w700`, `w800`, `w900`, `bold`, `w600`) with semantic design system typography tokens (`context.text.label`, `context.text.titleSmall`, `context.text.caption`).
+  - Verified multi-size responsiveness across Ribbon (4x1), Compact (2x2), Standard (4x2), and Large/Tall (4x4) widgets under 1.0, 1.5, and 2.0 text scales.
+- **Files Modified (7 widget files):**
+  - `lib/features/prayer/presentation/widgets/prayer_home_screen_widget.dart`: Removed 9 raw `FontWeight` literals (`w800`, `w900`, `w600`, `w700`) in favor of `label`, `titleSmall`, and `caption`.
+  - `lib/features/prayer/presentation/widgets/widget_large.dart`: Removed 8 raw `FontWeight` literals (`w700`, `w600`, `w800`) in favor of `label` and `caption`.
+  - `lib/features/prayer/presentation/widgets/prayer_widget_standard_view.dart`: Removed 7 raw `FontWeight` literals in favor of `label` and `caption`.
+  - `lib/features/prayer/presentation/widgets/prayer_widget_tall_view.dart`: Removed 6 raw `FontWeight` literals in favor of `label` and `titleSmall`.
+  - `lib/features/prayer/presentation/widgets/widget_ribbon.dart`: Removed 3 raw `FontWeight` literals (`w700`, `w600`) in favor of `label`.
+  - `lib/features/prayer/presentation/widgets/widget_standard.dart`: Removed 2 raw `FontWeight` literals (`bold`, `w600`) in favor of `label`.
+  - `lib/features/prayer/presentation/widgets/widget_shared_components.dart`: Removed 3 raw `FontWeight` literals in favor of `label` and `caption`.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (28.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 162 warnings [down from 199; font weights down by 37], 6 allow markers used, cap 10).
+  - `flutter test`: 562/562 passed (2m 29s, 0 failures; including 16/16 prayer widget unit and layout tests).
+  - `flutter build apk --debug`: PASSED (61.1s).
+- **Open issues & Next steps:**
+  - Prayer widget family is 100% clean of raw `FontWeight` literals.
+  - Next task: R77c — Triage remaining UI lint warnings for next screen family (Quran/Adhkar) or R76 owner-controlled Google Play setup.
+
 ## R77a — Triage UI Lint Warnings for Home Screen Family (25 October 2026)
 - **Scope & Context:**
   - Resolved UI lint v2 warnings across the Home screen family (`lib/features/home/presentation/widgets/`).

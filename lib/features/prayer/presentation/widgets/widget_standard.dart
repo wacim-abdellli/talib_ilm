@@ -95,7 +95,6 @@ class WidgetStandard extends StatelessWidget {
                                   eval.displayTitle,
                                   style: textTheme.label.copyWith(
                                     color: palette.text,
-                                    fontWeight: FontWeight.bold,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -153,9 +152,8 @@ class WidgetStandard extends StatelessWidget {
                               children: [
                                 Text(
                                   eval.statusLabel,
-                                  style: textTheme.caption.copyWith(
+                                  style: textTheme.label.copyWith(
                                     color: palette.gold,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

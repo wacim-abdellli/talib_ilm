@@ -56,7 +56,6 @@ class PrayerWidgetStandardView extends StatelessWidget {
                     child: Text(
                       eval.displayTitle,
                       style: textTheme.label.copyWith(
-                        fontWeight: FontWeight.w800,
                         color: palette.text,
                       ),
                       maxLines: 1,
@@ -149,8 +148,7 @@ class _CountdownBadge extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 96),
             child: Text(
               statusLabel,
-              style: textTheme.caption.copyWith(
-                fontWeight: FontWeight.w600,
+              style: textTheme.label.copyWith(
                 color: textColor,
               ),
               maxLines: 1,
@@ -164,8 +162,7 @@ class _CountdownBadge extends StatelessWidget {
               textDirection: TextDirection.ltr,
               child: Text(
                 countdown,
-                style: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.w800,
+                style: textTheme.label.copyWith(
                   color: countdownColor,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
@@ -203,8 +200,7 @@ class _TimePill extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 64),
         child: Text(
           label,
-          style: textTheme.caption.copyWith(
-            fontWeight: FontWeight.w800,
+          style: textTheme.label.copyWith(
             color: color,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -251,10 +247,9 @@ class _PrayerStation extends StatelessWidget {
           // Prayer name
           Text(
             name,
-            style: textTheme.caption.copyWith(
-              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-              color: nameColor,
-            ),
+            style: isCurrent
+                ? textTheme.label.copyWith(color: nameColor)
+                : textTheme.caption.copyWith(color: nameColor),
             maxLines: 1,
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
@@ -273,8 +268,7 @@ class _PrayerStation extends StatelessWidget {
                   ),
                   child: Text(
                     timeStr,
-                    style: textTheme.caption.copyWith(
-                      fontWeight: FontWeight.w900,
+                    style: textTheme.label.copyWith(
                       color: palette.onPrimary,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
@@ -285,7 +279,6 @@ class _PrayerStation extends StatelessWidget {
               : Text(
                   timeStr,
                   style: textTheme.caption.copyWith(
-                    fontWeight: FontWeight.w700,
                     color: isPast
                         ? palette.textMuted.withValues(alpha: 0.75)
                         : palette.text,

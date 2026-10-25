@@ -73,10 +73,9 @@ class PrayerStrip extends StatelessWidget {
                   // 2. Prayer Name
                   Text(
                     name,
-                    style: textTheme.caption.copyWith(
-                      color: nameColor,
-                      fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-                    ),
+                    style: isCurrent
+                        ? textTheme.label.copyWith(color: nameColor)
+                        : textTheme.caption.copyWith(color: nameColor),
                     maxLines: 1,
                     textAlign: TextAlign.center,
                   ),
@@ -95,9 +94,8 @@ class PrayerStrip extends StatelessWidget {
                       ),
                       child: Text(
                         timeStr,
-                        style: textTheme.caption.copyWith(
+                        style: textTheme.label.copyWith(
                           color: palette.surface,
-                          fontWeight: FontWeight.w800,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                         maxLines: 1,
@@ -115,7 +113,6 @@ class PrayerStrip extends StatelessWidget {
                           color: isPast
                               ? palette.textMuted.withValues(alpha: 0.75)
                               : palette.text,
-                          fontWeight: FontWeight.w600,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                         maxLines: 1,

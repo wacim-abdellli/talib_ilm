@@ -83,7 +83,6 @@ class WidgetRibbon extends StatelessWidget {
                               eval.displayTitle,
                               style: textTheme.label.copyWith(
                                 color: activeColor,
-                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(width: AppSpace.xs),
@@ -93,7 +92,6 @@ class WidgetRibbon extends StatelessWidget {
                                 eval.headerCountdownLabel,
                                 style: textTheme.label.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w700,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
@@ -124,9 +122,8 @@ class WidgetRibbon extends StatelessWidget {
                               const SizedBox(width: AppSpace.xs),
                               Text(
                                 displayDate,
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.label.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 1,
                               ),

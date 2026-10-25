@@ -85,9 +85,8 @@ class WidgetLarge extends StatelessWidget {
                           if (!forNativeWidget) ...[
                             Text(
                               displayTitle,
-                              style: textTheme.caption.copyWith(
+                              style: textTheme.label.copyWith(
                                 color: activePrayerColor,
-                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(width: AppSpace.xs),
@@ -95,9 +94,8 @@ class WidgetLarge extends StatelessWidget {
                               textDirection: TextDirection.rtl,
                               child: Text(
                                 eval.headerCountdownLabel,
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.label.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w700,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
@@ -121,9 +119,8 @@ class WidgetLarge extends StatelessWidget {
                             children: [
                               Text(
                                 displayDate,
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.label.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 1,
                               ),
@@ -140,9 +137,8 @@ class WidgetLarge extends StatelessWidget {
                                 const SizedBox(width: AppSpace.xs),
                                 Text(
                                   cityName,
-                                  style: textTheme.caption.copyWith(
+                                  style: textTheme.label.copyWith(
                                     color: palette.textMuted,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
                                 ),
@@ -184,12 +180,9 @@ class WidgetLarge extends StatelessWidget {
                           // Prayer Name
                           Text(
                             name,
-                            style: textTheme.caption.copyWith(
-                              color: nameColor,
-                              fontWeight: isCurrent
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                            ),
+                            style: isCurrent
+                                ? textTheme.label.copyWith(color: nameColor)
+                                : textTheme.caption.copyWith(color: nameColor),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
@@ -209,9 +202,8 @@ class WidgetLarge extends StatelessWidget {
                               ),
                               child: Text(
                                 timeStr,
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.label.copyWith(
                                   color: palette.surface,
-                                  fontWeight: FontWeight.w800,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
@@ -232,7 +224,6 @@ class WidgetLarge extends StatelessWidget {
                                   color: isPast
                                       ? palette.textMuted
                                       : palette.text,
-                                  fontWeight: FontWeight.w700,
                                   fontFeatures: const [
                                     FontFeature.tabularFigures()
                                   ],
