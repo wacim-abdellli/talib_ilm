@@ -58,4 +58,13 @@ class AppPolicy {
   // Quran Radio Remote Fetching & Capacity Budgets (R82)
   static const int maxRadioCatalogBytes = 256 * 1024; // 256 KB raw radio catalog ceiling
   static const int maxRadioStations = 150; // Maximum radio stations retained in memory
+
+  // Quran API Remote Fetching Budgets (R83)
+  static const int maxQuranSurahsCatalogBytes = 64 * 1024; // 64 KB raw surahs metadata ceiling
+  static const int maxQuranSurahResponseBytes = 512 * 1024; // 512 KB raw surah payload ceiling
+  static const int maxQuranPageResponseBytes = 128 * 1024; // 128 KB raw page payload ceiling
+  static const int maxQuranJuzResponseBytes = 256 * 1024; // 256 KB raw juz payload ceiling
+  static const int maxQuranAyahResponseBytes = 64 * 1024; // 64 KB raw ayah payload ceiling
+  static const int maxQuranSearchResponseBytes = 256 * 1024; // 256 KB raw search payload ceiling
+  static const int maxQuranSearchQueryLength = 100; // Maximum allowed search query characters
 }

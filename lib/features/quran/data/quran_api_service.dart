@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:quran/quran.dart' as quran;
 import '../../../core/constants/app_policy.dart';
 import 'catalogs/surah_fallback_catalog.dart';
 import 'models/quran_models.dart';
 
-/// Quran API Service using alquran.cloud
-/// Supports: Surahs, Verses, Translations, Audio, Search
-/// Responsible ONLY for network requests. Caching is handled by QuranRepository.
+/// Quran API Service using alquran.cloud & quran.com API v4
+/// Supports: Surahs, Verses, Translations, Audio, Search, Pages, Juzs
+/// Hardened with streaming byte limits, input validation, HTTP seams, and concurrency deduplication.
 class QuranApiService {
   static const String _baseUrl = 'https://api.alquran.cloud/v1';
 
@@ -24,20 +28,153 @@ class QuranApiService {
   static const String reciterAbdulbasit = 'ar.abdulbasit';
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // HTTP TEST SEAM & DEDUPLICATION STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static http.Client? _injectedClient;
+  static http.Client? _defaultClient;
+
+  @visibleForTesting
+  static void setHttpClient(http.Client client) {
+    _injectedClient = client;
+  }
+
+  @visibleForTesting
+  static void resetHttpClient() {
+    _injectedClient?.close();
+    _injectedClient = null;
+    _defaultClient?.close();
+    _defaultClient = null;
+  }
+
+  static http.Client get _client =>
+      _injectedClient ?? (_defaultClient ??= http.Client());
+
+  static Future<List<SurahMeta>>? _inFlightAllSurahs;
+  static Future<List<Juz>>? _inFlightAllJuzs;
+  static final Map<String, Future<Surah?>> _inFlightSurahs = {};
+  static final Map<String, Future<List<Ayah>>> _inFlightPages = {};
+  static final Map<String, Future<Juz?>> _inFlightJuzs = {};
+  static final Map<String, Future<List<QuranSearchResult>>> _inFlightSearches =
+      {};
+  static final Map<String, Future<Ayah?>> _inFlightAyahs = {};
+
+  @visibleForTesting
+  static void resetForTesting() {
+    resetHttpClient();
+    _inFlightAllSurahs = null;
+    _inFlightAllJuzs = null;
+    _inFlightSurahs.clear();
+    _inFlightPages.clear();
+    _inFlightJuzs.clear();
+    _inFlightSearches.clear();
+    _inFlightAyahs.clear();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INPUT BOUNDS VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static bool isValidSurahNumber(int number) => number >= 1 && number <= 114;
+
+  static bool isValidPageNumber(int number) => number >= 1 && number <= 604;
+
+  static bool isValidJuzNumber(int number) => number >= 1 && number <= 30;
+
+  static bool isValidAyah(int surahNumber, int ayahNumber) {
+    if (!isValidSurahNumber(surahNumber)) return false;
+    final totalVerses = quran.getVerseCount(surahNumber);
+    return ayahNumber >= 1 && ayahNumber <= totalVerses;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAMED HTTP GET WITH BYTE CEILING & EARLY CANCELLATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static Future<String> _fetchStreamedStringWithLimit(
+    Uri uri, {
+    required int maxBytes,
+    required Duration timeout,
+  }) async {
+    final request = http.Request('GET', uri);
+    final streamedResponse = await _client.send(request).timeout(timeout);
+
+    if (streamedResponse.statusCode != 200) {
+      throw Exception('HTTP error ${streamedResponse.statusCode}');
+    }
+
+    final contentLength = streamedResponse.contentLength;
+    if (contentLength != null && contentLength > maxBytes) {
+      throw Exception('Response exceeded maximum byte limit ($maxBytes)');
+    }
+
+    final bytesBuilder = BytesBuilder(copy: false);
+    int totalBytes = 0;
+    final completer = Completer<List<int>>();
+    late final StreamSubscription<List<int>> subscription;
+
+    subscription = streamedResponse.stream.listen(
+      (chunk) {
+        totalBytes += chunk.length;
+        if (totalBytes > maxBytes) {
+          subscription.cancel();
+          if (!completer.isCompleted) {
+            completer.completeError(
+              Exception('Response stream cancelled: exceeded $maxBytes bytes'),
+            );
+          }
+          return;
+        }
+        bytesBuilder.add(chunk);
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!completer.isCompleted) completer.completeError(error, stackTrace);
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete(bytesBuilder.takeBytes());
+      },
+      cancelOnError: true,
+    );
+
+    final bytes = await completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        subscription.cancel();
+        throw TimeoutException('Request timed out', timeout);
+      },
+    );
+
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // 1. GET ALL SURAHS
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Fetch all 114 surahs metadata using quran.com API v4
   static Future<List<SurahMeta>> getAllSurahs() async {
-    try {
-      // Use quran.com API v4 (more reliable)
-      final response = await http
-          .get(Uri.parse('https://api.quran.com/api/v4/chapters'))
-          .timeout(AppPolicy.networkMedium);
+    if (_inFlightAllSurahs != null) return _inFlightAllSurahs!;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> chapters = data['chapters'] ?? [];
+    final future = _fetchAllSurahsInternal();
+    _inFlightAllSurahs = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightAllSurahs = null;
+    }
+  }
+
+  static Future<List<SurahMeta>> _fetchAllSurahsInternal() async {
+    try {
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('https://api.quran.com/api/v4/chapters'),
+        maxBytes: AppPolicy.maxQuranSurahsCatalogBytes,
+        timeout: AppPolicy.networkMedium,
+      );
+
+      final data = jsonDecode(body);
+      final List<dynamic> chapters = data['chapters'] ?? [];
+      if (chapters.isNotEmpty) {
         return chapters
             .map(
               (json) => SurahMeta(
@@ -55,14 +192,11 @@ class QuranApiService {
       }
     } catch (_) {}
 
-    // Fallback to hardcoded list
     return SurahFallbackCatalog.getSurahs();
   }
 
-
   /// Load surahs from local JSON assets as fallback
   static Future<List<SurahMeta>> _loadSurahsFromAssets() async {
-    // Try different paths (web vs mobile can have different requirements)
     final possiblePaths = [
       'data/quran/surahs.json',
       'assets/data/quran/surahs.json',
@@ -74,28 +208,23 @@ class QuranApiService {
         final List<dynamic> surahsJson = jsonDecode(jsonString);
 
         return surahsJson.map((json) {
-          // Map local JSON format to SurahMeta format
           return SurahMeta(
             number: json['id'],
             name: json['nameArabic'],
-            englishName: json['nameEnglish'],
-            englishNameTranslation: json['nameEnglish'],
-            numberOfAyahs: json['ayahCount'],
+            englishName: json['nameEnglish'] ?? '',
+            englishNameTranslation: json['nameEnglish'] ?? '',
+            numberOfAyahs: json['ayahCount'] ?? 0,
             revelationType: json['revelationType'] == 'makkah'
                 ? 'Meccan'
                 : 'Medinan',
           );
         }).toList();
-      } catch (e) {
-        // Try next path
+      } catch (_) {
         continue;
       }
     }
 
-    // If all paths failed
-    throw Exception(
-      'Failed to load surahs from assets. Tried paths: $possiblePaths',
-    );
+    return SurahFallbackCatalog.getSurahs();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -104,18 +233,30 @@ class QuranApiService {
 
   /// Fetch a single surah with all its verses (Uthmani script)
   static Future<Surah?> getSurah(int number) async {
-    try {
-      return await getSurahWithEdition(number, editionUthmani);
-    } catch (e) {
-      // Try to load from local assets if API fails
-      return _loadSurahFromAssets(number);
-    }
+    return getSurahWithEdition(number, editionUthmani);
   }
 
   /// Fetch surah with specific edition
   static Future<Surah?> getSurahWithEdition(int number, String edition) async {
-    // QUICK LOAD STRATEGY FOR FATIHA (Surah 1)
-    // Always try local asset first for Surah 1 to ensure instant load
+    if (!isValidSurahNumber(number)) return null;
+
+    final key = '$number:$edition';
+    if (_inFlightSurahs.containsKey(key)) return _inFlightSurahs[key]!;
+
+    final future = _fetchSurahWithEditionInternal(number, edition);
+    _inFlightSurahs[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightSurahs.remove(key);
+    }
+  }
+
+  static Future<Surah?> _fetchSurahWithEditionInternal(
+    int number,
+    String edition,
+  ) async {
+    // Quick load strategy for Al-Fatiha
     if (number == 1) {
       try {
         final localFatiha = await _loadSurahFromAssets(1);
@@ -127,19 +268,17 @@ class QuranApiService {
     int attempts = 0;
     while (attempts < 2) {
       try {
-        final response = await http
-            .get(Uri.parse('$_baseUrl/surah/$number/$edition'))
-            .timeout(
-              attempts == 0 ? AppPolicy.networkFast : AppPolicy.networkRetry,
-            ); // FAST TIMEOUT FIRST
+        final timeout =
+            attempts == 0 ? AppPolicy.networkFast : AppPolicy.networkRetry;
+        final body = await _fetchStreamedStringWithLimit(
+          Uri.parse('$_baseUrl/surah/$number/$edition'),
+          maxBytes: AppPolicy.maxQuranSurahResponseBytes,
+          timeout: timeout,
+        );
 
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
+        final data = jsonDecode(body);
+        if (data['data'] != null) {
           return Surah.fromJson(data['data']);
-        } else {
-          if (response.statusCode < 500) {
-            throw Exception('Failed to load surah $number');
-          }
         }
       } catch (e) {
         attempts++;
@@ -151,9 +290,7 @@ class QuranApiService {
     // SECONDARY SOURCE: Quran.com API v4
     try {
       return await _fetchFromQuranComV4(number);
-    } catch (_) {
-      // Ignore
-    }
+    } catch (_) {}
 
     // FINAL FALLBACK: Local Assets
     return _loadSurahFromAssets(number);
@@ -162,18 +299,15 @@ class QuranApiService {
   /// Load surah from local assets (only Al-Fatiha available)
   static Future<Surah?> _loadSurahFromAssets(int number) async {
     try {
-      // Get surah metadata first (handle errors gracefully)
       SurahMeta surahMeta;
       try {
         final surahsList = await _loadSurahsFromAssets();
         surahMeta = surahsList.firstWhere((s) => s.number == number);
       } catch (_) {
-        // Fallback metadata if asset list load fails
         final allHardcoded = SurahFallbackCatalog.getSurahs();
         surahMeta = allHardcoded.firstWhere((s) => s.number == number);
       }
 
-      // Try to load local ayahs file
       for (final path in [
         'data/quran/surah_$number.json',
         'assets/data/quran/surah_$number.json',
@@ -204,11 +338,11 @@ class QuranApiService {
             numberOfAyahs: ayahs.length,
             ayahs: ayahs,
           );
-        } catch (e) {
+        } catch (_) {
           continue;
         }
       }
-    } catch (e) {
+    } catch (_) {
       return null;
     }
     return null;
@@ -220,48 +354,51 @@ class QuranApiService {
 
   /// Private helper: Fetch from quran.com API v4 as fallback
   static Future<Surah> _fetchFromQuranComV4(int surahNumber) async {
-    final response = await http
-        .get(
-          Uri.parse(
-            'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber',
-          ),
-        )
-        .timeout(AppPolicy.networkMedium);
-
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      final List<dynamic> verses = json['verses'];
-
-      // Get Surah metadata for details
-      final surahs = await getAllSurahs();
-      final meta = surahs.firstWhere((s) => s.number == surahNumber);
-
-      final ayahs = verses.map((v) {
-        final verseKey = v['verse_key'] as String;
-        final ayahNum = int.parse(verseKey.split(':')[1]);
-
-        return Ayah(
-          number: v['id'],
-          text: v['text_uthmani'],
-          numberInSurah: ayahNum,
-          juz:
-              0, // Not provided directly, will be approximated or updated later
-          page: 0,
-          sajda: false,
-        );
-      }).toList();
-
-      return Surah(
-        number: surahNumber,
-        name: meta.name,
-        englishName: meta.englishName,
-        englishNameTranslation: meta.englishNameTranslation,
-        numberOfAyahs: ayahs.length,
-        revelationType: meta.revelationType,
-        ayahs: ayahs,
-      );
+    if (!isValidSurahNumber(surahNumber)) {
+      throw ArgumentError('Invalid surah number: $surahNumber');
     }
-    throw Exception('Failed to load from quran.com');
+
+    final body = await _fetchStreamedStringWithLimit(
+      Uri.parse(
+        'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber',
+      ),
+      maxBytes: AppPolicy.maxQuranSurahResponseBytes,
+      timeout: AppPolicy.networkMedium,
+    );
+
+    final json = jsonDecode(body);
+    final List<dynamic> verses = json['verses'] ?? [];
+
+    final surahs = await getAllSurahs();
+    final meta = surahs.firstWhere(
+      (s) => s.number == surahNumber,
+      orElse: () => SurahFallbackCatalog.getSurahs()
+          .firstWhere((s) => s.number == surahNumber),
+    );
+
+    final ayahs = verses.map((v) {
+      final verseKey = v['verse_key'] as String;
+      final ayahNum = int.parse(verseKey.split(':')[1]);
+
+      return Ayah(
+        number: v['id'],
+        text: v['text_uthmani'] ?? '',
+        numberInSurah: ayahNum,
+        juz: 0,
+        page: 0,
+        sajda: false,
+      );
+    }).toList();
+
+    return Surah(
+      number: surahNumber,
+      name: meta.name,
+      englishName: meta.englishName,
+      englishNameTranslation: meta.englishNameTranslation,
+      numberOfAyahs: ayahs.length,
+      revelationType: meta.revelationType,
+      ayahs: ayahs,
+    );
   }
 
   /// Fetch surah with translation
@@ -281,31 +418,52 @@ class QuranApiService {
     String query, {
     String edition = editionUthmani,
   }) async {
-    if (query.isEmpty) return [];
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
 
+    final sanitizedQuery = trimmed.length > AppPolicy.maxQuranSearchQueryLength
+        ? trimmed.substring(0, AppPolicy.maxQuranSearchQueryLength)
+        : trimmed;
+
+    final key = '$edition:$sanitizedQuery';
+    if (_inFlightSearches.containsKey(key)) return _inFlightSearches[key]!;
+
+    final future = _searchQuranInternal(sanitizedQuery, edition);
+    _inFlightSearches[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightSearches.remove(key);
+    }
+  }
+
+  static Future<List<QuranSearchResult>> _searchQuranInternal(
+    String query,
+    String edition,
+  ) async {
     try {
       final encodedQuery = Uri.encodeComponent(query);
-      final response = await http
-          .get(Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'))
-          .timeout(AppPolicy.networkLong);
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'),
+        maxBytes: AppPolicy.maxQuranSearchResponseBytes,
+        timeout: AppPolicy.networkLong,
+      );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['data'] != null && data['data']['matches'] != null) {
-          final List<dynamic> matches = data['data']['matches'];
-          return matches
-              .map((json) => QuranSearchResult.fromJson(json))
-              .toList();
-        }
+      final data = jsonDecode(body);
+      if (data['data'] != null && data['data']['matches'] != null) {
+        final List<dynamic> matches = data['data']['matches'];
+        return matches
+            .map((json) => QuranSearchResult.fromJson(json))
+            .toList();
       }
       return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 5. AUDIO URL
+  // 5. AUDIO URL GENERATION
   // ═══════════════════════════════════════════════════════════════════════════
 
   static String getAudioUrl(
@@ -338,17 +496,45 @@ class QuranApiService {
     String reference, {
     String edition = editionUthmani,
   }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/ayah/$reference/$edition'))
-          .timeout(AppPolicy.networkLong);
+    final parts = reference.split(':');
+    if (parts.length != 2) return null;
+    final surahNum = int.tryParse(parts[0]);
+    final ayahNum = int.tryParse(parts[1]);
+    if (surahNum == null ||
+        ayahNum == null ||
+        !isValidAyah(surahNum, ayahNum)) {
+      return null;
+    }
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    final key = '$reference:$edition';
+    if (_inFlightAyahs.containsKey(key)) return _inFlightAyahs[key]!;
+
+    final future = _getAyahInternal(reference, edition);
+    _inFlightAyahs[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightAyahs.remove(key);
+    }
+  }
+
+  static Future<Ayah?> _getAyahInternal(
+    String reference,
+    String edition,
+  ) async {
+    try {
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('$_baseUrl/ayah/$reference/$edition'),
+        maxBytes: AppPolicy.maxQuranAyahResponseBytes,
+        timeout: AppPolicy.networkLong,
+      );
+
+      final data = jsonDecode(body);
+      if (data['data'] != null) {
         return Ayah.fromJson(data['data']);
       }
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -366,18 +552,29 @@ class QuranApiService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static Future<List<Juz>> getAllJuzs() async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/juz'))
-          .timeout(AppPolicy.networkMedium);
+    if (_inFlightAllJuzs != null) return _inFlightAllJuzs!;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> juzsJson = data['data'];
-        return juzsJson.map((json) => Juz.fromJson(json)).toList();
-      }
-      return [];
-    } catch (e) {
+    final future = _getAllJuzsInternal();
+    _inFlightAllJuzs = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightAllJuzs = null;
+    }
+  }
+
+  static Future<List<Juz>> _getAllJuzsInternal() async {
+    try {
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('$_baseUrl/juz'),
+        maxBytes: AppPolicy.maxQuranJuzResponseBytes,
+        timeout: AppPolicy.networkMedium,
+      );
+
+      final data = jsonDecode(body);
+      final List<dynamic> juzsJson = data['data'] ?? [];
+      return juzsJson.map((json) => Juz.fromJson(json)).toList();
+    } catch (_) {
       return [];
     }
   }
@@ -386,17 +583,34 @@ class QuranApiService {
     int number, {
     String edition = editionUthmani,
   }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/juz/$number/$edition'))
-          .timeout(AppPolicy.networkLong);
+    if (!isValidJuzNumber(number)) return null;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    final key = '$number:$edition';
+    if (_inFlightJuzs.containsKey(key)) return _inFlightJuzs[key]!;
+
+    final future = _getJuzInternal(number, edition);
+    _inFlightJuzs[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightJuzs.remove(key);
+    }
+  }
+
+  static Future<Juz?> _getJuzInternal(int number, String edition) async {
+    try {
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('$_baseUrl/juz/$number/$edition'),
+        maxBytes: AppPolicy.maxQuranJuzResponseBytes,
+        timeout: AppPolicy.networkLong,
+      );
+
+      final data = jsonDecode(body);
+      if (data['data'] != null) {
         return Juz.fromJson(data['data']);
       }
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -410,19 +624,39 @@ class QuranApiService {
     int pageNumber, {
     String edition = editionUthmani,
   }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/page/$pageNumber/$edition'))
-          .timeout(AppPolicy.networkLong);
+    if (!isValidPageNumber(pageNumber)) return [];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final dataMap = data['data'] as Map<String, dynamic>;
+    final key = '$pageNumber:$edition';
+    if (_inFlightPages.containsKey(key)) return _inFlightPages[key]!;
+
+    final future = _getPageInternal(pageNumber, edition);
+    _inFlightPages[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightPages.remove(key);
+    }
+  }
+
+  static Future<List<Ayah>> _getPageInternal(
+    int pageNumber,
+    String edition,
+  ) async {
+    try {
+      final body = await _fetchStreamedStringWithLimit(
+        Uri.parse('$_baseUrl/page/$pageNumber/$edition'),
+        maxBytes: AppPolicy.maxQuranPageResponseBytes,
+        timeout: AppPolicy.networkLong,
+      );
+
+      final data = jsonDecode(body);
+      final dataMap = data['data'] as Map<String, dynamic>?;
+      if (dataMap != null && dataMap['ayahs'] != null) {
         final List<dynamic> ayahsJson = dataMap['ayahs'];
         return ayahsJson.map((json) => Ayah.fromJson(json)).toList();
       }
       return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }

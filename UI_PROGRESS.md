@@ -1,5 +1,29 @@
 # UI Progress Log
 
+## R83 — Harden Quran Core API Remote Fetching & Input Boundaries (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching risks, unbounded buffering, missing input validation, and duplicate in-flight requests in `QuranApiService` (`lib/features/quran/data/quran_api_service.dart`):
+    1. **HTTP Client Test Seam:** Added `@visibleForTesting` `setHttpClient` and `resetHttpClient` test seams on `QuranApiService`, replacing unconfigurable static `http.get` calls and enabling controlled, deterministic network simulation.
+    2. **Input Bounds Validation:** Added authentic bounds validation for Surahs (1..114), Pages (1..604), Juzs (1..30), Ayahs (1..canonical verse count per Surah), and search queries (rejecting empty/whitespace and capping query length to 100 characters). Invalid inputs immediately return null/empty without dispatching network calls.
+    3. **Streaming Byte Ceilings & Socket Cancellation:** Implemented `_fetchStreamedStringWithLimit` with explicit raw response streaming byte caps (`AppPolicy.maxQuranSurahsCatalogBytes = 64 KB`, `maxQuranSurahResponseBytes = 512 KB`, `maxQuranPageResponseBytes = 128 KB`, `maxQuranJuzResponseBytes = 256 KB`, `maxQuranAyahResponseBytes = 64 KB`, `maxQuranSearchResponseBytes = 256 KB`). Oversized responses cancel underlying `StreamSubscription` instances immediately to abort socket reads and prevent memory exhaustion.
+    4. **In-Flight Request Deduplication:** Added in-flight Future deduplication tracking concurrent requests for all Surahs, individual Surahs, Pages, Juzs, Ayahs, and Search queries. Cleaned up in `finally` blocks on both success and error to prevent sticky failures and duplicate network bandwidth.
+    5. **Graceful Multi-Tier Fallback:** Preserved multi-tier fallback (AlQuran.Cloud -> Quran.com API v4 -> local bundled assets -> hardcoded fallback catalog) for maximum offline robustness.
+    6. **Regression Test Suite:** Added `test/quran_api_service_test.dart` (13 regression tests) covering input bounds validation, zero-network rejection, HTTP seams, streaming byte limits, cancellation, deduplication, and retry recovery.
+- **Files Modified (2 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/app/theme/app_policy.dart`: Defined payload ceilings and query length bounds for Quran API operations.
+  - `lib/features/quran/data/quran_api_service.dart`: Re-implemented with HTTP test seam, streaming byte caps, authentic input bounds validation, and in-flight deduplication (573 lines, Rule 8 compliant).
+  - `test/quran_api_service_test.dart`: Added comprehensive 13-test regression suite covering input validation, zero-network rejection, HTTP seam, streaming byte limits, cancellation, deduplication, and retry recovery.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (9.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test test/quran_api_service_test.dart`: 13/13 passed (1.4s).
+  - `flutter test`: 613/613 passed (0 failures).
+  - `flutter build apk --debug`: PASSED (built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Quran core API remote boundaries (Area B) are now completely hardened for QuranApiService alongside Tafsir, Word-by-Word, and Tajweed.
+  - Ready to proceed to next task upon owner "continue".
+
 ## R82 — Harden Quran Radio Remote Catalog, HTTPS Validation & Byte Caps (25 October 2026)
 - **Scope & Context:**
   - Resolved network vulnerabilities, cleartext stream risks, and unbounded payload processing in `QuranRadioService` (`lib/features/radio/data/services/quran_radio_service.dart`):
