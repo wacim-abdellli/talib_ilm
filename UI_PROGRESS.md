@@ -1,5 +1,39 @@
 # UI Progress Log
 
+## R72 — Repair Release-Readiness Timeout Regression Test (25 October 2026)
+- **Scope:** Reproduce and repair timeout handling in `tool/run_release_readiness_checks.py` and regression suite in `tool/test_release_readiness_checks.py`. Make platform detection independent of mocked subprocesses to prevent secondary subprocess execution during tests or probe timeouts. Stay strictly within tool/test files (< 25 files), without modifying app runtime code, package ID, or credentials.
+- **Implemented:**
+  - `tool/run_release_readiness_checks.py`:
+    - Added deterministic `is_windows()` function relying directly on `sys.platform == "win32" or os.name == "nt"`, completely avoiding subprocess invocation (e.g. `platform.system()` / `_syscmd_ver`).
+    - Replaced all 5 `platform.system() == "Windows"` instances in `probe_git_info`, `probe_flutter_version`, `probe_java_version`, `run_command_with_logging`, and `build_and_verify_release_bundle` with `is_windows()`.
+    - Protected `is_win = is_windows()` and probe execution within the `try:` block in `probe_flutter_version` and added explicit `subprocess.TimeoutExpired` handling to `probe_java_version`.
+  - `tool/test_release_readiness_checks.py`:
+    - Added `import sys`.
+    - Expanded `TestEnvironmentProbing` suite from 4 to 13 tests (total suite grew from 18 to 27 tests):
+      - `test_is_windows_deterministic_no_subprocess`: proves `is_windows()` executes without calling `subprocess.run`.
+      - `test_flutter_probe_timeout_handling`: proves base timeout returns `timed_out: True`, `summary: "timed out after 30s"`, `exit_code: -1`.
+      - `test_flutter_probe_timeout_handling_windows`: proves timeout on Windows sets `shell=True` and makes exactly 1 subprocess call.
+      - `test_flutter_probe_timeout_handling_non_windows`: proves timeout on non-Windows sets `shell=False` and makes exactly 1 subprocess call.
+      - `test_flutter_probe_timeout_does_not_invoke_os_detection_subprocess`: regression confirming that even if `platform.system` were to raise an exception, `probe_flutter_version` does not invoke OS detection subprocesses.
+      - `test_flutter_probe_empty_output`: asserts safe handling of empty stdout.
+      - `test_flutter_probe_malformed_output`: asserts safe handling of unrecognized stdout lines.
+      - `test_flutter_probe_nonzero_exit`: asserts proper exit code reporting on tool failure.
+      - `test_flutter_probe_generic_exception`: asserts unhandled OS exceptions produce `execution failed: ...` without crashing.
+      - `test_java_probe_timeout_handling`: proves `probe_java_version` timeout returns `timed_out after 15s`.
+- **Verified:**
+  - `python tool/test_release_readiness_checks.py`: PASS (Ran 27 tests in 0.021s, 0 failures, 0 errors).
+  - `python tool/test_performance_runner.py`: PASS (3/3 passed in 1.5s).
+  - `python tool/test_signing_verifier_safety.py`: PASS (3/3 passed in 0.02s).
+  - `python tool/test_ui_lint_warnings.py`: PASS (5/5 passed in 1.3s).
+  - `git diff --check`: PASS (0 whitespace / syntax errors).
+  - Gates (available):
+    - `flutter --version`: Flutter 3.38.7 • Dart 3.10.7 (clean in 2.0s).
+    - `python tool/ui_lint_v2.py`: PASS (0 FAIL, 226 warnings, 6 allow markers / cap 10).
+    - `flutter analyze`: PASS (0 issues found, ran in 9.6s).
+  - Gates (deferred to R74 per plan): `flutter test` and `flutter build apk --debug` to be verified on clean exact SHA during R74.
+- **Open issues & Next steps:**
+  - Next task: R73 — Correct release report claims to match available evidence (documentation).
+
 ## R71 — Correct R70 Evidence Claims and Prepare Next-Step Gemini Handoff (25 October 2026)
 - **Scope:** Audit the R70 completion claim, classify remaining work by effort and evidence dependency, and provide Gemini a strict ordered handoff beginning with the reproducible R72 tooling-test failure.
 - **Implemented:** Added `docs/GEMINI_NEXT_STEPS_AND_RELEASE_CLOSURE_GUIDE.md` with copy/paste R72 prompt and R72–R77 sequence; added an evidence-correction notice to `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md`.

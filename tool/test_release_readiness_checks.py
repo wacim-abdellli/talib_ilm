@@ -13,6 +13,7 @@ Validates:
 
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -119,12 +120,54 @@ All tests pa...
 
 
 class TestEnvironmentProbing(unittest.TestCase):
+    def test_is_windows_deterministic_no_subprocess(self):
+        # Guarantee is_windows() relies only on sys.platform / os.name without calling subprocess
+        with patch("subprocess.run", side_effect=RuntimeError("subprocess must not be called")):
+            is_win = runner.is_windows()
+            self.assertIsInstance(is_win, bool)
+            expected = sys.platform == "win32" or os.name == "nt"
+            self.assertEqual(is_win, expected)
+
     @patch("subprocess.run")
     def test_flutter_probe_timeout_handling(self, mock_run):
         mock_run.side_effect = subprocess.TimeoutExpired(cmd=["flutter", "--version"], timeout=30)
         info = runner.probe_flutter_version(Path("."), timeout_sec=30)
         self.assertTrue(info["timed_out"])
         self.assertIn("timed out after 30s", info["summary"])
+        self.assertEqual(info["exit_code"], -1)
+
+    @patch("subprocess.run")
+    def test_flutter_probe_timeout_handling_windows(self, mock_run):
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["flutter", "--version"], timeout=30)
+        with patch("run_release_readiness_checks.is_windows", return_value=True):
+            info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertTrue(info["timed_out"])
+        self.assertIn("timed out after 30s", info["summary"])
+        self.assertEqual(info["exit_code"], -1)
+        self.assertEqual(mock_run.call_count, 1)
+        self.assertTrue(mock_run.call_args[1].get("shell"))
+
+    @patch("subprocess.run")
+    def test_flutter_probe_timeout_handling_non_windows(self, mock_run):
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["flutter", "--version"], timeout=30)
+        with patch("run_release_readiness_checks.is_windows", return_value=False):
+            info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertTrue(info["timed_out"])
+        self.assertIn("timed out after 30s", info["summary"])
+        self.assertEqual(info["exit_code"], -1)
+        self.assertEqual(mock_run.call_count, 1)
+        self.assertFalse(mock_run.call_args[1].get("shell"))
+
+    @patch("subprocess.run")
+    def test_flutter_probe_timeout_does_not_invoke_os_detection_subprocess(self, mock_run):
+        # Regression: If platform.system() was invoked and dispatched a subprocess,
+        # it would leak or cause a second call. Verify only 1 subprocess call is made.
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["flutter", "--version"], timeout=30)
+        with patch("platform.system", side_effect=RuntimeError("platform.system must not be called during probe")):
+            info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertTrue(info["timed_out"])
+        self.assertEqual(mock_run.call_count, 1)
+        self.assertEqual(mock_run.call_args[0][0], ["flutter", "--version"])
 
     @patch("subprocess.run")
     def test_flutter_version_parsing(self, mock_run):
@@ -142,6 +185,40 @@ Tools • Dart 3.10.7 • DevTools 2.51.1
         self.assertEqual(info["dart_version"], "3.10.7")
 
     @patch("subprocess.run")
+    def test_flutter_probe_empty_output(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertFalse(info["timed_out"])
+        self.assertEqual(info["flutter_version"], "unknown")
+        self.assertEqual(info["dart_version"], "unknown")
+        self.assertEqual(info["summary"], "")
+
+    @patch("subprocess.run")
+    def test_flutter_probe_malformed_output(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="Unparseable stream without version headers\nSecond line")
+        info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertFalse(info["timed_out"])
+        self.assertEqual(info["flutter_version"], "unknown")
+        self.assertEqual(info["channel"], "unknown")
+        self.assertEqual(info["dart_version"], "unknown")
+        self.assertEqual(info["summary"], "Unparseable stream without version headers")
+
+    @patch("subprocess.run")
+    def test_flutter_probe_nonzero_exit(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1, stdout="Error: flutter tool crashed during bootstrap\n")
+        info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertFalse(info["timed_out"])
+        self.assertEqual(info["exit_code"], 1)
+        self.assertEqual(info["summary"], "Error: flutter tool crashed during bootstrap")
+
+    @patch("subprocess.run")
+    def test_flutter_probe_generic_exception(self, mock_run):
+        mock_run.side_effect = OSError("flutter binary not executable")
+        info = runner.probe_flutter_version(Path("."), timeout_sec=30)
+        self.assertFalse(info["timed_out"])
+        self.assertIn("execution failed: flutter binary not executable", info["summary"])
+
+    @patch("subprocess.run")
     def test_java_version_parsing(self, mock_run):
         stdout_fixture = """openjdk version "17.0.12" 2024-07-16
 OpenJDK Runtime Environment (build 17.0.12+7)
@@ -151,6 +228,12 @@ OpenJDK 64-Bit Server VM (build 17.0.12+7, mixed mode)
         info = runner.probe_java_version(timeout_sec=15)
         self.assertEqual(info["version"], "17.0.12")
         self.assertEqual(info["exit_code"], 0)
+
+    @patch("subprocess.run")
+    def test_java_probe_timeout_handling(self, mock_run):
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["java", "-version"], timeout=15)
+        info = runner.probe_java_version(timeout_sec=15)
+        self.assertIn("timed out after 15s", info["summary"])
 
     @patch("subprocess.run")
     def test_git_clean_and_dirty_detection(self, mock_run):

@@ -47,6 +47,15 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
+def is_windows():
+    """
+    Deterministic Windows platform detection without subprocess invocation.
+    Uses sys.platform and os.name to prevent re-entrant subprocess calls when
+    subprocess.run / Popen are patched during tests or timeout probing.
+    """
+    return sys.platform == "win32" or os.name == "nt"
+
+
 def bytes_to_mb(b):
     """Decimal Megabytes (MB = 1,000,000 bytes)."""
     return round(b / 1_000_000, 2)
@@ -66,7 +75,7 @@ def compute_sha256(file_path):
 
 
 def probe_git_info(cwd):
-    is_win = platform.system() == "Windows"
+    is_win = is_windows()
     info = {
         "commit": "unknown",
         "branch": "unknown",
@@ -122,7 +131,6 @@ def probe_git_info(cwd):
 
 
 def probe_flutter_version(cwd, timeout_sec=30):
-    is_win = platform.system() == "Windows"
     env = os.environ.copy()
     env["CI"] = "true"
     env["FLUTTER_SUPPRESS_ANALYTICS"] = "true"
@@ -140,6 +148,7 @@ def probe_flutter_version(cwd, timeout_sec=30):
 
     print(f"[PREFLIGHT] Probing Flutter & Dart version (timeout={timeout_sec}s)...")
     try:
+        is_win = is_windows()
         proc = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
@@ -181,7 +190,6 @@ def probe_flutter_version(cwd, timeout_sec=30):
 
 
 def probe_java_version(timeout_sec=15):
-    is_win = platform.system() == "Windows"
     result = {
         "version": "unknown",
         "summary": "unknown",
@@ -190,6 +198,7 @@ def probe_java_version(timeout_sec=15):
     }
     print(f"[PREFLIGHT] Probing Java version (timeout={timeout_sec}s)...")
     try:
+        is_win = is_windows()
         proc = subprocess.run(
             ["java", "-version"],
             stdout=subprocess.PIPE,
@@ -208,6 +217,9 @@ def probe_java_version(timeout_sec=15):
         v_match = re.search(r'version\s+"([^"]+)"', proc.stdout)
         if v_match:
             result["version"] = v_match.group(1)
+    except subprocess.TimeoutExpired:
+        print(f"[ERROR] 'java -version' timed out after {timeout_sec}s!")
+        result["summary"] = f"timed out after {timeout_sec}s"
     except Exception as e:
         result["summary"] = f"execution failed: {e}"
 
@@ -350,7 +362,7 @@ def parse_test_log(log_input, exit_code=0):
 
 
 def run_command_with_logging(cmd, log_path, cwd, env=None, expected_artifact=None):
-    is_win = platform.system() == "Windows"
+    is_win = is_windows()
     cmd_display = " ".join(cmd) if isinstance(cmd, list) else cmd
     print(f"\n[RUN] {cmd_display}")
     start_time = time.time()
@@ -454,7 +466,7 @@ def build_and_verify_release_bundle(repo_root, output_dir):
             "-keypass", "testpass123",
             "-dname", f'"{dname}"',
         ]
-        is_win = platform.system() == "Windows"
+        is_win = is_windows()
         res_kt = subprocess.run(
             " ".join(keytool_cmd) if is_win else keytool_cmd,
             shell=is_win,
