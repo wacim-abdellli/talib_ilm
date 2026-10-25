@@ -1,5 +1,38 @@
 # UI Progress Log
 
+## R74 — Obtain Reproducible Gates on One Exact Clean Commit (25 October 2026)
+- **Scope & Context:**
+  - Diagnosed and resolved the root causes of previous terminal hangs during `flutter test` and `flutter build` (re-entrant subprocess calls on Windows in `platform.system()` and concurrent Gradle/.dart_tool file lock contention).
+  - Executed all 5 mandatory release readiness gates against exact clean commit SHA `8612ac9d3416f40b43d8e3dacc5dd02f36468fea` (`ui/r74-reproducible-gates-clean-commit` branch, `is_dirty: false`).
+  - Captured and retained all tool logs and structured execution metadata under `build/release-readiness/20261025-035807/`.
+- **Environment:**
+  - Host OS: Windows 10 Pro x64 (Build 10.0.19045, AMD64).
+  - Flutter SDK: `3.38.7` • channel stable • Framework rev `3b62efc2a3` • Engine hash `6f3039bf7c`.
+  - Dart SDK: `3.10.7` • DevTools `2.51.1`.
+  - Java Runtime: `17.0.12` LTS (Oracle Java SE Runtime Environment build 17.0.12+8-LTS-286, 64-Bit Server VM).
+  - Python: `3.14.3` x64.
+- **Why Previous Attempts Hung vs. What Made This Run Reproducible:**
+  - *Diagnosis:* Previous session hangs were caused by: (1) `platform.system() == "Windows"` in `tool/run_release_readiness_checks.py` spawning re-entrant `cmd.exe /c ver` subprocesses while subprocess mocking or other child processes were active; (2) orphaned Gradle daemons and Dart analysis server processes holding file locks on `.dart_tool/` and `build/app/intermediates/`.
+  - *Remediation:* Replaced subprocess platform detection with deterministic `is_windows()` using `sys.platform == "win32" or os.name == "nt"`, verified no stale processes held locks, and ran `python tool/run_release_readiness_checks.py --require-clean` end-to-end.
+- **Five Technical Gates Results (Commit `8612ac9`, `is_dirty: false`):**
+  - **Gate 1 (`flutter analyze`):** PASS (0 issues found, duration 10.91s, log: `analyze.log`).
+  - **Gate 2 (`python tool/ui_lint_v2.py`):** PASS (0 FAILs, 226 warnings, 6 allow markers / cap 10, duration 1.33s, log: `ui-lint-v2.log`).
+  - **Gate 3 (`flutter test`):** PASS (562 passed, 0 failed, 0 skipped, duration 156.51s, log: `tests.log`).
+  - **Gate 4 (`flutter build apk --debug`):** PASS (Exit code 0, duration 64.27s, log: `build-debug.log`).
+    - Output: `build\app\outputs\flutter-apk\app-debug.apk` (330,290,266 bytes / 330.29 MB / 314.99 MiB).
+    - SHA-256: `a8d91824eb0d62e68a38a5c26d143b8503994ab6f5ff48ff4b7dcd55b7beb0a8`.
+  - **Gate 5 (Test-Signed Release AAB & Signer Verification):** PASS (Exit code 0, duration 185.46s, logs: `build-release-bundle.log`, `verify-bundle-signer.log`).
+    - Output: `build\app\outputs\bundle\release\app-release.aab` (181,925,046 bytes / 181.93 MB / 173.5 MiB).
+    - SHA-256: `ff9456a1417f8b86732136ff3437992f7c91db010a57de51e9109acd0b8b60f9`.
+    - Signer Certificate: Verified via `keytool -printcert -jarfile`. Certificate owner/issuer: `CN=TestUpload, OU=ReleaseReadiness, O=TalibIlm, C=DZ`. Serial number: `1bedfb95eeaf9b4b`. SHA-256: `8A:AC:3A:89:1C:39:04:9D:14:26:3B:29:6B:73:A3:D4:FC:46:0A:2D:A7:C5:69:FD:9E:75:58:41:FC:B3:5A:98`. Validity: Sun Oct 25 04:02:02 GMT 2026 to Mon Oct 26 04:02:02 GMT 2026. Zero debug keystore fallback.
+- **Retained Run Artifacts:**
+  - Summary JSON: `build/release-readiness/20261025-035807/summary.json` (mirrored at `build/release-readiness/latest/summary.json`).
+  - Logs directory: `build/release-readiness/20261025-035807/` (`analyze.log`, `ui-lint-v2.log`, `tests.log`, `build-debug.log`, `build-release-bundle.log`, `verify-bundle-signer.log`).
+- **Remote CI Status:**
+  - GitHub Actions run `40160042746` for commit `8612ac9d3416f40b43d8e3dacc5dd02f36468fea`: SUCCESS (all 5 gates, regression tests, and artifact uploads completed green on Ubuntu runner).
+- **Open issues & Next steps:**
+  - Next task: R75 — Physical Android Mobile Real-Device Acceptance (manual owner verification on target devices per journeys 1-8).
+
 ## R73 — Correct Release Report Claims to Match Available Evidence (25 October 2026)
 - **Scope:** Reconcile and correct claims in `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md` and `docs/RUNTIME_PERFORMANCE_AND_MEMORY_BASELINE_REPORT.md`. Strictly distinguish host-engine in-memory benchmarks from physical Android mobile device acceptance. Reclassify all physical-device verification rows as PENDING (Task R75) unless supported by dated physical device logs. Label the Play Console Data Safety questionnaire as an engineering draft for owner review. Document test types across all technical gates.
 - **Implemented:**
