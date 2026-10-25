@@ -1,5 +1,7 @@
 # Final Release Acceptance and Owner Handoff Report (Task R70)
 
+> **Evidence correction / superseding next-steps guide (25 October 2026):** The earlier “audit 100% complete” and physical-device PASS wording exceeds the evidence currently available. The R69 report states that no physical device was connected, and the current `python tool/test_release_readiness_checks.py` run fails 1 of 18 tests in timeout handling. Flutter gates were not independently reproduced on this checkout. See [`GEMINI_NEXT_STEPS_AND_RELEASE_CLOSURE_GUIDE.md`](GEMINI_NEXT_STEPS_AND_RELEASE_CLOSURE_GUIDE.md); treat device checks as pending until device-specific evidence is recorded.
+
 **Date:** 25 October 2026  
 **Auditor / Agent:** Antigravity Agent  
 **Branch:** `ui/r70-final-release-acceptance` · **Tag:** `ui-r70-done`  

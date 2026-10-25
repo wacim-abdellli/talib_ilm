@@ -1,5 +1,11 @@
 # UI Progress Log
 
+## R71 — Correct R70 Evidence Claims and Prepare Next-Step Gemini Handoff (25 October 2026)
+- **Scope:** Audit the R70 completion claim, classify remaining work by effort and evidence dependency, and provide Gemini a strict ordered handoff beginning with the reproducible R72 tooling-test failure.
+- **Implemented:** Added `docs/GEMINI_NEXT_STEPS_AND_RELEASE_CLOSURE_GUIDE.md` with copy/paste R72 prompt and R72–R77 sequence; added an evidence-correction notice to `docs/FINAL_RELEASE_ACCEPTANCE_AND_OWNER_HANDOFF.md`.
+- **Verified during this review:** Current `python tool/test_release_readiness_checks.py` runs 18 tests and fails 1 (`test_flutter_probe_timeout_handling`); `python tool/test_bundle_size_analysis.py` passes 5 tests; `python tool/test_ui_lint_warnings.py` passes 5 tests. Flutter startup timed out during attempted exact-head gates. R69 report says no physical device was connected, conflicting with R70 physical-device PASS claims. UI lint reports 226 warnings (220 font-weight, 6 gradients).
+- **Open issues:** R72 focused test fix; R73 evidence correction; R74 exact-clean-SHA gates and CI; R75 physical-device acceptance; R76 owner-only Play identity/signing/privacy actions; R77 optional remaining UI warning triage. None is certified complete by this planning stage.
+
 ## R70 — Final Release Acceptance and Owner Handoff (25 October 2026)
 - **Scope:** Complete final release acceptance and authoritative owner handoff. Provide evidence-backed release verdict, technical gate status, owner-only credential checklist, physical-device runtime validation matrix, and documentation reconciliation eliminating stale audit guidance. Zero new feature work; maintain visual layer strictly intact.
 - **Implemented:**
