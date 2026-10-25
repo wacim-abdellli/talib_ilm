@@ -1,5 +1,29 @@
 # UI Progress Log
 
+## R81 — Harden Tajweed Remote Fetching, Cache Reliability & Deduplication (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching vulnerabilities, sticky session failures, and unbounded data handling in `TajweedVerseService` (`lib/features/quran/data/services/tajweed_verse_service.dart`):
+    1. **HTTP Client Test Seam:** Added `@visibleForTesting` `setHttpClient` and `resetHttpClient` test seams on `TajweedVerseService`, replacing unconfigurable static `http.get` and enabling deterministic network testing.
+    2. **Sticky Cache Poisoning Elimination:** Previously, network timeouts or server 500 errors caught in `catch (_)` caused an empty map `_surahCache[surah] = {}` to be stored permanently in memory, making temporary network glitches permanently break Tajweed for that surah until an app restart. Enforced that ONLY non-empty successful maps are saved to `_surahCache`, allowing subsequent requests to retry and recover cleanly upon reconnection.
+    3. **In-Flight Request Deduplication:** Added `_inFlightSurahs` deduplication tracking in-flight Futures so concurrent calls for the same chapter (e.g. from multiple ayah sheets or widgets) share a single network call. Guaranteed in-flight cleanup in a `finally` block on both success and error.
+    4. **Streaming Byte Ceilings & Early Cancellation:** Implemented `_fetchStreamedStringWithLimit` with explicit raw chapter streaming byte ceiling (`AppPolicy.maxTajweedChapterResponseBytes = 512 KB`). Oversized responses trigger immediate `StreamSubscription.cancel()` to abort socket reads and prevent memory exhaustion.
+    5. **Quran Chapter & Verse Bounds Checking:** Added `isValidSurah(surah)` (1..114) and `isValidVerse(surah, ayah)` (1..`verseCount`). Invalid surah/ayah requests are immediately rejected without dispatching HTTP calls or mutating memory caches.
+    6. **Bounded FIFO RAM Eviction:** Implemented capacity bounds on in-memory caches (`AppPolicy.maxTajweedSurahMemoryEntries = 30`, `AppPolicy.maxTajweedAyahMemoryEntries = 500`) with FIFO eviction when exceeding capacity.
+- **Files Modified (2 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/app/theme/app_policy.dart`: Defined payload ceiling and FIFO memory capacities for Tajweed chapter and verse caches.
+  - `lib/features/quran/data/services/tajweed_verse_service.dart`: Re-implemented with HTTP test seam, streaming byte caps, sticky failure prevention, in-flight deduplication, and FIFO memory limits (204 lines, Rule 8 compliant).
+  - `test/tajweed_verse_service_test.dart`: Added comprehensive 9-test regression suite covering input validation, streaming byte limits, cancellation, deduplication, retry recovery, and FIFO eviction.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (10.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers used, cap 10).
+  - `flutter test test/tajweed_verse_service_test.dart`: 9/9 passed (1.2s).
+  - `flutter test`: 594/594 passed (0 failures, 2m 19s).
+  - `flutter build apk --debug`: PASSED (65.1s, built `build\app\outputs\flutter-apk\app-debug.apk`).
+- **Open issues & Next steps:**
+  - Quran remote-data boundaries (Area B) are now completely hardened for Tafsir, Word-by-Word, and Tajweed services.
+  - Ready to proceed to next area (Area C: Network and resource policy across the app) upon owner "continue".
+
 ## R80 — Harden Quran Tafsir & Word-by-Word Remote Fetching (25 October 2026)
 - **Scope & Context:**
   - Resolved remote fetching vulnerabilities and unbounded data handling in `QuranTafsirService` (`lib/features/quran/data/services/quran_tafsir_service.dart`):

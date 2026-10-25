@@ -49,4 +49,9 @@ class AppPolicy {
   static const int maxWordMeaningResponseBytes = 128 * 1024; // 128 KB raw response ceiling
   static const int maxTafsirMemoryEntries = 200; // In-memory Tafsir RAM entries
   static const int maxWordMeaningMemoryEntries = 100; // In-memory WordMeanings RAM entries
+
+  // Quran Tajweed Remote Fetching & Cache Budgets (R81)
+  static const int maxTajweedChapterResponseBytes = 512 * 1024; // 512 KB raw chapter response ceiling
+  static const int maxTajweedSurahMemoryEntries = 30; // In-memory Tajweed Surah RAM entries
+  static const int maxTajweedAyahMemoryEntries = 500; // In-memory Tajweed Ayah RAM entries
 }
