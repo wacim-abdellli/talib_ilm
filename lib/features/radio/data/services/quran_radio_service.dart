@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
+import '../../../../app/theme/app_policy.dart';
 import '../../../../core/services/audio_coordinator.dart';
 import '../models/quran_radio_model.dart';
 
@@ -16,6 +18,23 @@ class QuranRadioService extends ChangeNotifier {
   QuranRadioService._internal() {
     _init();
   }
+
+  static http.Client? _testClient;
+  static http.Client? _sharedClient;
+
+  @visibleForTesting
+  static void setHttpClient(http.Client client) => _testClient = client;
+
+  @visibleForTesting
+  static void resetHttpClient() => _testClient = null;
+
+  static http.Client get httpClient =>
+      _testClient ?? (_sharedClient ??= http.Client());
+
+  Future<void>? _inFlightRefresh;
+
+  @visibleForTesting
+  Future<void>? get inFlightRefreshForTesting => _inFlightRefresh;
 
   final AudioPlayer _player = AudioPlayer();
 
@@ -120,43 +139,150 @@ class QuranRadioService extends ChangeNotifier {
       notifyListeners();
     } catch (_) {}
 
-    // Background online refresh from MP3Quran API
-    _refreshOnlineStations();
+    // Background online refresh from MP3Quran API with deduplication
+    unawaited(refreshOnlineStations());
   }
 
-  Future<void> _refreshOnlineStations() async {
+  /// Refreshes online stations with deduplication, byte limits, and HTTPS validation.
+  Future<void> refreshOnlineStations() async {
+    if (_inFlightRefresh != null) {
+      return _inFlightRefresh;
+    }
+    final future = _performOnlineRefresh();
+    _inFlightRefresh = future;
+    try {
+      await future;
+    } finally {
+      _inFlightRefresh = null;
+    }
+  }
+
+  Future<void> _performOnlineRefresh() async {
     try {
       final url = Uri.parse('https://mp3quran.net/api/v3/radios?language=ar');
-      final response = await http.get(url).timeout(const Duration(seconds: 8)); // ui-lint: allow network timeout
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final rawRadios = data['radios'] as List? ?? [];
-        if (rawRadios.isNotEmpty) {
-          final Set<String> existingUrls = _stations.map((s) => s.url).toSet();
-          final List<QuranRadioStation> updated = List.from(_stations);
+      final body = await _fetchStreamedStringWithLimit(
+        url,
+        maxBytes: AppPolicy.maxRadioCatalogBytes,
+        timeout: const Duration(seconds: 8), // ui-lint: allow network timeout
+      );
 
-          for (final item in rawRadios) {
-            final u = item['url'] as String? ?? '';
-            if (u.isNotEmpty && !existingUrls.contains(u)) {
-              updated.add(QuranRadioStation(
-                id: (item['id'] as num?)?.toInt() ?? 0,
-                name: item['name'] as String? ?? '',
-                rawName: item['name'] as String? ?? '',
-                url: u,
-                category: 'قراء العالم الإسلامي',
-              ));
-              existingUrls.add(u);
-            }
-          }
+      final data = json.decode(body);
+      if (data is! Map<String, dynamic>) return;
+      final rawRadios = data['radios'] as List? ?? [];
+      if (rawRadios.isEmpty) return;
 
-          if (updated.length != _stations.length) {
-            _stations = updated;
-            _playlist = _buildPlaylist(_stations);
-            notifyListeners();
-          }
+      final Set<String> existingUrls = _stations.map((s) => s.url).toSet();
+      final List<QuranRadioStation> updated = List.from(_stations);
+
+      for (final item in rawRadios) {
+        if (updated.length >= AppPolicy.maxRadioStations) break;
+        if (item is! Map<String, dynamic>) continue;
+
+        final rawUrl = item['url'] as String? ?? '';
+        final parsedUri = Uri.tryParse(rawUrl);
+
+        // Security requirement: station streams must strictly use secure HTTPS
+        if (parsedUri == null ||
+            !parsedUri.isScheme('https') ||
+            parsedUri.host.isEmpty) {
+          continue;
         }
+
+        final cleanUrl = parsedUri.toString();
+        if (existingUrls.contains(cleanUrl)) continue;
+
+        final rawName = (item['name'] as String? ?? '').trim();
+        if (rawName.isEmpty) continue;
+        final sanitizedName =
+            rawName.length > 120 ? rawName.substring(0, 120) : rawName;
+
+        updated.add(QuranRadioStation(
+          id: (item['id'] as num?)?.toInt() ?? (1000 + updated.length),
+          name: sanitizedName,
+          rawName: rawName,
+          url: cleanUrl,
+          category: 'قراء العالم الإسلامي',
+        ));
+        existingUrls.add(cleanUrl);
       }
-    } catch (_) {}
+
+      if (updated.length != _stations.length) {
+        _stations = updated;
+        _playlist = _buildPlaylist(_stations);
+        notifyListeners();
+      }
+    } catch (_) {
+      // Offline safety invariant: network timeout, stream cancellation,
+      // or server errors leave existing bundled stations intact.
+    }
+  }
+
+  static Future<String> _fetchStreamedStringWithLimit(
+    Uri url, {
+    required int maxBytes,
+    Duration timeout = const Duration(seconds: 8), // ui-lint: allow network timeout
+  }) async {
+    final request = http.Request('GET', url);
+    request.headers['Accept'] = 'application/json';
+
+    final streamedResponse = await httpClient.send(request).timeout(timeout);
+
+    if (streamedResponse.statusCode != 200) {
+      throw Exception('HTTP error ${streamedResponse.statusCode}');
+    }
+
+    final contentLength = streamedResponse.contentLength;
+    if (contentLength != null && contentLength > maxBytes) {
+      throw Exception('Response exceeded maximum byte limit ($maxBytes)');
+    }
+
+    final bytesBuilder = BytesBuilder(copy: false);
+    int totalBytes = 0;
+    final completer = Completer<List<int>>();
+    late final StreamSubscription<List<int>> subscription;
+
+    subscription = streamedResponse.stream.listen(
+      (chunk) {
+        totalBytes += chunk.length;
+        if (totalBytes > maxBytes) {
+          subscription.cancel();
+          if (!completer.isCompleted) {
+            completer.completeError(
+              Exception('Response stream cancelled: exceeded $maxBytes bytes'),
+            );
+          }
+          return;
+        }
+        bytesBuilder.add(chunk);
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!completer.isCompleted) completer.completeError(error, stackTrace);
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete(bytesBuilder.takeBytes());
+      },
+      cancelOnError: true,
+    );
+
+    final bytes = await completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        subscription.cancel();
+        throw TimeoutException('Radio catalog request timed out', timeout);
+      },
+    );
+
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  @visibleForTesting
+  void resetForTesting({List<QuranRadioStation>? stations}) {
+    _stations = stations ?? [];
+    _currentStation = null;
+    _isPlaying = false;
+    _isConnecting = false;
+    _errorMessage = null;
+    _inFlightRefresh = null;
   }
 
   /// Plays a radio station

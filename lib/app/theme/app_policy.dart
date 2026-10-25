@@ -54,4 +54,8 @@ class AppPolicy {
   static const int maxTajweedChapterResponseBytes = 512 * 1024; // 512 KB raw chapter response ceiling
   static const int maxTajweedSurahMemoryEntries = 30; // In-memory Tajweed Surah RAM entries
   static const int maxTajweedAyahMemoryEntries = 500; // In-memory Tajweed Ayah RAM entries
+
+  // Quran Radio Remote Fetching & Capacity Budgets (R82)
+  static const int maxRadioCatalogBytes = 256 * 1024; // 256 KB raw radio catalog ceiling
+  static const int maxRadioStations = 150; // Maximum radio stations retained in memory
 }

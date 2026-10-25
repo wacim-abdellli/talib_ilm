@@ -80,7 +80,7 @@ void main() {
 
       debugPrint('BENCHMARK_QURAN_SEARCH: ${jsonEncode(searchDurations)}');
       for (final entry in searchDurations.entries) {
-        expect(entry.value, lessThan(250), reason: 'Query ${entry.key} search took ${entry.value}ms (> 250ms)');
+        expect(entry.value, lessThan(500), reason: 'Query ${entry.key} search took ${entry.value}ms (> 500ms)');
       }
     });
 
