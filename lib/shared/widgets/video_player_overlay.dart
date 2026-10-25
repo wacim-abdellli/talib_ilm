@@ -180,7 +180,7 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
               duration: AppMotion.fast,
               child: Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: LinearGradient( // ui-lint: allow video player overlay scrim
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
@@ -229,7 +229,6 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                     widget.title,
                                     style: context.text.titleSmall.copyWith(
                                       color: AppPalette.videoControlFg,
-                                      fontWeight: FontWeight.bold,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -271,9 +270,8 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                           const SizedBox(width: AppSpace.xxs),
                                           Text(
                                             'المحاور',
-                                            style: context.text.caption.copyWith(
+                                            style: context.text.label.copyWith(
                                               color: AppPalette.videoControlFg,
-                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ],
@@ -307,9 +305,8 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                     ),
                                     child: Text(
                                       '${widget.playbackSpeed}x',
-                                      style: context.text.caption.copyWith(
+                                      style: context.text.label.copyWith(
                                         color: AppPalette.videoControlFg,
-                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
@@ -480,9 +477,8 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                 children: [
                                   Text(
                                     '$posStr / $durStr',
-                                    style: context.text.caption.copyWith(
+                                    style: context.text.label.copyWith(
                                       color: AppPalette.videoControlFg,
-                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   if (activeChapter != null) ...[
@@ -492,9 +488,8 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                                         textDirection: TextDirection.rtl,
                                         child: Text(
                                           '• $activeChapter',
-                                          style: context.text.caption.copyWith(
+                                          style: context.text.label.copyWith(
                                             color: AppPalette.videoScrubberActive,
-                                            fontWeight: FontWeight.w600,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,

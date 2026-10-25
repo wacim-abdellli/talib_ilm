@@ -156,16 +156,8 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
             child: Container(
               padding: const EdgeInsetsDirectional.all(AppSpace.lg),
               decoration: BoxDecoration(
+                color: typeColor.withValues(alpha: 0.05),
                 borderRadius: AppRadius.lgRadius,
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  end: AlignmentDirectional.bottomEnd,
-                  colors: [
-                    typeColor.withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.45],
-                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,9 +240,8 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                       Expanded(
                         child: Text(
                           widget.quote.source,
-                          style: context.text.caption.copyWith(
+                          style: context.text.label.copyWith(
                             color: typeColor,
-                            fontWeight: FontWeight.w700,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -445,9 +436,8 @@ class EncouragementBanner extends StatelessWidget {
           Expanded(
             child: Text(
               encouragement.message,
-              style: context.text.bodySmall.copyWith(
+              style: context.text.label.copyWith(
                 color: textColor,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -495,9 +485,7 @@ class ProgressInsightCard extends StatelessWidget {
               children: [
                 Text(
                   insight,
-                  style: context.text.body.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.text.label,
                 ),
                 const SizedBox(height: AppSpace.xs),
                 Text(
