@@ -67,4 +67,7 @@ class AppPolicy {
   static const int maxQuranAyahResponseBytes = 64 * 1024; // 64 KB raw ayah payload ceiling
   static const int maxQuranSearchResponseBytes = 256 * 1024; // 256 KB raw search payload ceiling
   static const int maxQuranSearchQueryLength = 100; // Maximum allowed search query characters
+
+  // Quran Editions Download & Storage Budgets (R85)
+  static const int maxQuranEditionBytes = 6 * 1024 * 1024; // 6 MB raw edition payload ceiling
 }

@@ -1,5 +1,29 @@
 # UI Progress Log
 
+## R85 — Harden Quran Edition Downloads, Streaming Byte Limits & Atomic Writes (25 October 2026)
+- **Scope & Context:**
+  - Resolved remote fetching risks, unbounded buffering, missing input/path validation, and partial-download corruption in `EditionService` (`lib/features/quran/data/services/edition_service.dart`):
+    1. **HTTP Client Test Seam & Base Directory Override:** Added `@visibleForTesting` `setHttpClient`, `resetHttpClient`, `resetForTesting`, and `testBaseDir` seams on `EditionService`, enabling fully isolated headless testing of file downloading, streaming, disk persistence, and deletion without touching user device directories or native platform channels.
+    2. **Input Bounds & Path Sanitization:** Added validation for edition IDs (`hafs`, `warsh`, `tajweed`), rejecting path traversal attempts (`..`, `/`, `\`), and validated Surah bounds (1..114). Invalid inputs throw an `ArgumentError` or return early with zero network calls.
+    3. **Streaming Byte Ceilings & Socket Cancellation:** Implemented streaming download with explicit raw response streaming byte limit (`AppPolicy.maxQuranEditionBytes = 6 * 1024 * 1024; // 6 MB`). Oversized responses abort and cancel underlying `StreamSubscription` instances immediately to cut off network sockets and avoid memory bloat.
+    4. **Atomic Disk Writes & Clean Windows Handle Cleanup:** Streamed chunks directly to a temporary file (`.edition_<id>.tmp`) and performed an atomic rename to final destination (`edition_<id>.json`) only when the payload is verified complete and valid. Correctly closed `IOSink` before attempting cleanup deletion to prevent Windows file locking errors.
+    5. **Clean Uninstallation & Preference Sync:** Preserved active edition preference persistence and safe removal of downloaded edition files upon deletion.
+    6. **Regression Test Suite:** Added `test/edition_service_test.dart` (4 regression tests) covering path sanitization, out-of-bounds rejection, complete download and atomic save, parsing from disk, deletion, and oversized payload stream cancellation with clean tmp file removal.
+- **Files Modified (2 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/app/theme/app_policy.dart`: Defined `maxQuranEditionBytes = 6 * 1024 * 1024;` (6 MB) streaming ceiling.
+  - `lib/features/quran/data/services/edition_service.dart`: Re-implemented with HTTP test seam, directory override, streaming byte limits, path sanitization, and atomic writes (337 lines, Rule 8 compliant).
+  - `test/edition_service_test.dart`: Added comprehensive 4-test regression suite covering input validation, atomic writes, streaming byte limits, cancellation, and deletion.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (9.5s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test test/edition_service_test.dart`: 4/4 passed (0.6s).
+  - `flutter test`: 625/625 passed (0 failures).
+  - `flutter build apk --debug`: PASSED.
+- **Open issues & Next steps:**
+  - Quran edition downloads and offline storage (Area C/B) are fully hardened.
+  - Ready to proceed to next task upon owner "continue".
+
 ## R84 — Harden Quran Page Sync Remote Fetching & Database Bounds (25 October 2026)
 - **Scope & Context:**
   - Resolved remote fetching risks, unbounded buffering, missing input bounds validation, and duplicate in-flight requests in `QuranSyncService` (`lib/features/quran/data/services/quran_sync_service.dart`):
