@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R99 — Failure-Safe Replacement of Downloaded Quran Editions (26 October 2026)
+- **Scope & Context:**
+  - Implemented Task FIX-01 (AUD-101):
+    1. **Data-Loss Window Remediation (P2):** Eliminated the data loss window in `EditionService.downloadEdition` (`lib/features/quran/data/services/edition_service.dart`). Previously, downloading an existing edition deleted the valid local file (`$editionId.json`) prior to renaming the newly downloaded temporary file (`$editionId.json.tmp`). If the rename operation failed (e.g. disk full, permission denied, I/O lock), the catch block deleted the temporary file, leaving the user with no offline edition.
+    2. **Atomic Backup & Automatic Rollback:** Implemented a backup-and-rollback pattern. If a valid offline edition exists, it is moved to `$editionId.json.bak` before installing the new file. If installation/rename succeeds, the backup is safely deleted. If installation fails, the catch block rolls back the backup file to its original location, guaranteeing the pre-existing offline edition remains intact, readable, and marked downloaded.
+    3. **Crash Recovery & Defensive Cleanup:** Added orphan backup recovery in `loadSurahFromEdition` and `isEditionDownloaded`. If a mid-replacement crash or power loss occurred when the backup was present, the service automatically restores the backup file. Cleaned up `.bak` and `.tmp` files in `deleteEdition`.
+    4. **Narrow Test Seam & Regression Suite:** Added `@visibleForTesting static Future<void> Function(File source, File destination)? testFileInstaller;` to deterministically simulate installation/rename failures without test flags in production code. Added 3 new unit tests in `test/edition_service_test.dart` verifying failing-first preservation of existing offline files, successful replacement with cleanup, and orphan backup recovery.
+- **Files Modified (1 app service + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/edition_service.dart`: Added backup/rollback, crash recovery, and cleanup (467 lines, Rule 8 compliant).
+  - `test/edition_service_test.dart`: Added AUD-101 regression tests and crash recovery test (438 lines, Rule 8 compliant).
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 8.4s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/edition_service_test.dart --no-pub`: 7/7 passed.
+  - `flutter test --no-pub`: 677/677 passed (ran in 2m 53s, +3 new tests).
+  - `flutter test test/golden --no-pub`: 43/43 passed (ran in 10s).
+  - `flutter build apk --debug --no-pub`: PASSED, built `build\app\outputs\flutter-apk\app-debug.apk` in 62.3s.
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+
 ## R98 — Enforce Response Byte Limit in Online City Search (26 October 2026)
 - **Scope & Context:**
   - Implemented Task FIX-01 (AUD-001) from the Independent Audit Report:

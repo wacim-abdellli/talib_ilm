@@ -169,5 +169,268 @@ void main() {
       expect(await tmpFile.exists(), isFalse);
       expect(await EditionService.isEditionDownloaded('tajweed'), isFalse);
     });
+
+    test('AUD-101: Failed edition replacement preserves existing offline file and download state', () async {
+      final initialData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة الأصلية',
+              'englishName': 'Al-Faatiha',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final replacementData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة البديلة',
+              'englishName': 'Al-Faatiha Updated',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      // 1. Seed existing valid offline edition
+      final finalFile = File('${tempDir.path}/warsh.json');
+      final tmpFile = File('${tempDir.path}/warsh.json.tmp');
+      final backupFile = File('${tempDir.path}/warsh.json.bak');
+      final initialJsonString = jsonEncode(initialData);
+      await finalFile.writeAsString(initialJsonString);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('downloaded_editions', ['warsh']);
+      expect(await EditionService.isEditionDownloaded('warsh'), isTrue);
+
+      // 2. Prepare mock client returning valid replacement payload
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          jsonEncode(replacementData),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      EditionService.setHttpClient(mockClient);
+
+      // 3. Inject simulated file installation failure (e.g. disk full during install)
+      EditionService.testFileInstaller = (src, dst) async {
+        throw const FileSystemException('Simulated disk full or I/O failure during rename');
+      };
+
+      // 4. Run downloadEdition attempting replacement
+      final events = <DownloadProgress>[];
+      await for (final progress in EditionService.downloadEdition('warsh')) {
+        events.add(progress);
+      }
+
+      // 5. Verify error was reported
+      expect(events.isNotEmpty, isTrue);
+      expect(events.last.isError, isTrue);
+
+      // 6. Verify CRITICAL INVARIANT: Existing offline edition was NOT lost!
+      expect(
+        await finalFile.exists(),
+        isTrue,
+        reason: 'AUD-101: Original offline edition file must survive failed replacement!',
+      );
+      final preservedContent = await finalFile.readAsString();
+      expect(
+        preservedContent,
+        equals(initialJsonString),
+        reason: 'Preserved edition content must remain byte-for-byte identical to original',
+      );
+      expect(
+        await EditionService.isEditionDownloaded('warsh'),
+        isTrue,
+        reason: 'Edition must still be marked as downloaded in preferences',
+      );
+
+      // Verify temporary files are cleaned up and no leftover backup exists
+      expect(await tmpFile.exists(), isFalse, reason: 'Temporary file must be deleted on failure');
+      expect(await backupFile.exists(), isFalse, reason: 'Backup file must be restored/removed');
+    });
+
+    test('AUD-101: Successful edition replacement safely installs new edition and cleans up backup', () async {
+      final initialData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - الإصدار القديم',
+              'englishName': 'Al-Faatiha Old',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final updatedData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - الإصدار الجديد',
+              'englishName': 'Al-Faatiha New',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final finalFile = File('${tempDir.path}/warsh.json');
+      final tmpFile = File('${tempDir.path}/warsh.json.tmp');
+      final backupFile = File('${tempDir.path}/warsh.json.bak');
+      await finalFile.writeAsString(jsonEncode(initialData));
+
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          jsonEncode(updatedData),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      EditionService.setHttpClient(mockClient);
+
+      final events = <DownloadProgress>[];
+      await for (final progress in EditionService.downloadEdition('warsh')) {
+        events.add(progress);
+      }
+
+      expect(events.isNotEmpty, isTrue);
+      expect(events.last.isError, isFalse);
+      expect(events.last.progress, equals(1.0));
+
+      // Verify new content is written and old files are cleaned up
+      expect(await finalFile.exists(), isTrue);
+      expect(await finalFile.readAsString(), equals(jsonEncode(updatedData)));
+      expect(await tmpFile.exists(), isFalse);
+      expect(await backupFile.exists(), isFalse);
+      expect(await EditionService.isEditionDownloaded('warsh'), isTrue);
+    });
+
+    test('AUD-101 Crash Recovery: loadSurahFromEdition recovers orphan backup if primary file is missing', () async {
+      final seedData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - نسخة مسترجعة',
+              'englishName': 'Al-Faatiha Recovered',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final finalFile = File('${tempDir.path}/warsh.json');
+      final backupFile = File('${tempDir.path}/warsh.json.bak');
+
+      // Simulate power loss / termination midway through replacement:
+      // Primary file does not exist, but backup file exists
+      await backupFile.writeAsString(jsonEncode(seedData));
+      expect(await finalFile.exists(), isFalse);
+      expect(await backupFile.exists(), isTrue);
+
+      // Attempt to load surah from edition
+      final surah = await EditionService.loadSurahFromEdition('warsh', 1);
+
+      expect(surah, isNotNull);
+      expect(surah!.name, contains('نسخة مسترجعة'));
+
+      // Verify that primary file was restored from backup
+      expect(await finalFile.exists(), isTrue);
+      expect(await backupFile.exists(), isFalse);
+    });
   });
 }

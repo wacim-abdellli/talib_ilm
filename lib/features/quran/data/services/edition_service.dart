@@ -32,6 +32,9 @@ class EditionService {
   @visibleForTesting
   static Directory? testBaseDir;
 
+  @visibleForTesting
+  static Future<void> Function(File source, File destination)? testFileInstaller;
+
   static final Set<String> _activeDownloads = {};
 
   @visibleForTesting
@@ -54,6 +57,7 @@ class EditionService {
   static void resetForTesting() {
     resetHttpClient();
     testBaseDir = null;
+    testFileInstaller = null;
     _activeDownloads.clear();
   }
 
@@ -225,12 +229,46 @@ class EditionService {
 
       yield DownloadProgress(0.8, 'جاري الحفظ في الجهاز...');
 
-      // Atomic rename from .tmp to final .json
+      // AUD-101: Failure-safe atomic replacement preserving existing offline edition.
+      // 1. If an existing edition file is present, move it to a temporary backup (.bak).
+      // 2. Install the new validated file into place.
+      // 3. If installation fails, roll back the backup file to restore the previous edition.
+      // 4. On successful installation, delete the backup file.
       final finalFile = File('${directory.path}/$editionId.json');
-      if (await finalFile.exists()) {
-        await finalFile.delete();
+      final backupFile = File('${directory.path}/$editionId.json.bak');
+      final hadExisting = await finalFile.exists();
+
+      if (hadExisting) {
+        if (await backupFile.exists()) {
+          try {
+            await backupFile.delete();
+          } catch (_) {}
+        }
+        await finalFile.rename(backupFile.path);
       }
-      await tmpFile.rename(finalFile.path);
+
+      try {
+        final installer = testFileInstaller ?? (File src, File dst) => src.rename(dst.path);
+        await installer(tmpFile, finalFile);
+
+        // Installation succeeded: safely delete backup
+        if (hadExisting && await backupFile.exists()) {
+          try {
+            await backupFile.delete();
+          } catch (_) {}
+        }
+      } catch (installError) {
+        // Rollback: restore backupFile back to finalFile if it existed
+        if (hadExisting && await backupFile.exists()) {
+          try {
+            if (await finalFile.exists()) {
+              await finalFile.delete();
+            }
+            await backupFile.rename(finalFile.path);
+          } catch (_) {}
+        }
+        rethrow;
+      }
 
       yield DownloadProgress(0.95, 'جاري التحديث...');
 
@@ -284,6 +322,14 @@ class EditionService {
     try {
       final directory = await _getEditionsDirectory();
       final file = File('${directory.path}/$editionId.json');
+      final backupFile = File('${directory.path}/$editionId.json.bak');
+
+      // Crash-recovery: if primary file was midway through replacement when crash occurred
+      if (!await file.exists() && await backupFile.exists()) {
+        try {
+          await backupFile.rename(file.path);
+        } catch (_) {}
+      }
 
       if (!await file.exists()) {
         return null;
@@ -321,9 +367,17 @@ class EditionService {
     try {
       final directory = await _getEditionsDirectory();
       final file = File('${directory.path}/$editionId.json');
+      final backupFile = File('${directory.path}/$editionId.json.bak');
+      final tmpFile = File('${directory.path}/$editionId.json.tmp');
 
       if (await file.exists()) {
         await file.delete();
+      }
+      if (await backupFile.exists()) {
+        await backupFile.delete();
+      }
+      if (await tmpFile.exists()) {
+        await tmpFile.delete();
       }
 
       final prefs = await SharedPreferences.getInstance();
