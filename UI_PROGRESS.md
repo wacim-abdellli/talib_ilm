@@ -1,5 +1,33 @@
 # UI Progress Log
 
+## R97 — Isolate Bundle-Size Analysis Signing Safety Test Fixture (26 October 2026)
+- **Scope & Context:**
+  - Implemented Task S01 from the Independent Audit Report:
+    1. **Tooling Safety Defect Remediation (P2):** Eliminated the credential safety hazard in `tool/test_bundle_size_analysis.py`, which previously wrote sentinel bytes directly to the repository's `android/key.properties` and restored/deleted it in `finally:`.
+    2. **Isolated Fixture Architecture:** Updated `setup_test_signing` in `tool/run_bundle_size_analysis.py` to accept an optional `android_dir` parameter (defaulting to repository `ANDROID_DIR`). All signing safety regression tests now execute strictly against isolated `tempfile.TemporaryDirectory` fixtures.
+    3. **Byte-for-Byte Preservation Verification:** Added regression tests proving that existing signing credentials in an isolated fixture are preserved byte-for-byte (SHA-256 verified) both in normal execution and across mid-run exception/cleanup paths.
+    4. **Active Workspace Write & Deletion Guards:** Installed `unittest.mock.patch` guards on `builtins.open`, `os.remove`, and `os.unlink` preventing write modes (`"w"`, `"wb"`, `"a"`, `"r+"`, `"+"`, `"x"`) or deletion targeting the workspace `android/key.properties`. Tests prove attempts to open the workspace path for writing immediately raise `PermissionError: TOOLING SAFETY VIOLATION`.
+    5. **Pre-existing Owner Credentials Preservation:** Added class-level `setUp`/`tearDown` hooks that record the pre-test presence and SHA-256 fingerprint of the workspace `android/key.properties`, ensuring tests pass cleanly without altering or deleting owner credentials when already present on disk.
+- **Files Modified (2 tool files + UI_PROGRESS.md):**
+  - `tool/run_bundle_size_analysis.py`: Added optional `android_dir` parameter to `setup_test_signing`.
+  - `tool/test_bundle_size_analysis.py`: Converted tests to use isolated fixtures, added exception path test, added workspace write mode guards, and added setUp/tearDown state assertions.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 16.7s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 FontWeight warnings).
+  - `flutter test --no-pub`: 669/669 passed (ran in 2m 55s).
+  - Python readiness & tooling suites:
+    - `python tool/test_bundle_size_analysis.py`: 8/8 OK (ran with and without pre-existing owner key.properties).
+    - `python tool/test_release_readiness_checks.py`: 27/27 OK.
+    - `python tool/test_signing_verifier_safety.py`: 3/3 OK.
+    - `python tool/test_performance_runner.py`: 3/3 OK.
+    - `python tool/test_inventory_generator.py`: 5/5 OK.
+    - `python tool/test_ui_lint_warnings.py`: 5/5 OK.
+  - `flutter build apk --debug --no-pub`: PASSED in 16.7s.
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+
 ## R96 — Final Hostile Review & Source-to-Test Audit Matrix Closure (26 October 2026)
 - **Scope & Context:**
   - Completed Section 3.H of the Master Implementation Directive (Final Hostile Review):

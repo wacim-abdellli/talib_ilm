@@ -68,14 +68,16 @@ def get_git_info():
     return {"commit": sha, "branch": branch, "is_dirty": is_dirty}
 
 
-def setup_test_signing():
+def setup_test_signing(android_dir=None):
     """
     Ensures release signing credentials are available without ever
     modifying or deleting the workspace android/key.properties.
     """
-    key_props_workspace = os.path.join(ANDROID_DIR, "key.properties")
+    target_android_dir = android_dir if android_dir is not None else ANDROID_DIR
+    key_props_workspace = os.path.join(target_android_dir, "key.properties")
     if os.path.exists(key_props_workspace):
-        print("[SETUP] Using existing owner credentials at android/key.properties...")
+        rel_label = os.path.relpath(key_props_workspace, REPO_ROOT) if key_props_workspace.startswith(REPO_ROOT) else key_props_workspace
+        print(f"[SETUP] Using existing owner credentials at {rel_label}...")
         return None, {}
 
     temp_dir = tempfile.mkdtemp(prefix="talib_ilm_bundle_size_")
