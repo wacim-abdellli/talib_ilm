@@ -429,7 +429,13 @@ class NotificationService {
         if (tz.timeZoneDatabase.locations.containsKey(currentTzName)) {
           tz.setLocalLocation(tz.getLocation(currentTzName));
         } else {
-          tz.setLocalLocation(tz.getLocation('UTC'));
+          final offsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
+          final matched = findLocationByOffset(offsetMinutes);
+          if (matched != null) {
+            tz.setLocalLocation(matched);
+          } else {
+            tz.setLocalLocation(tz.getLocation('UTC'));
+          }
         }
       } catch (_) {
         tz.setLocalLocation(tz.getLocation('UTC'));
@@ -437,6 +443,42 @@ class NotificationService {
     }
 
     _tzInitialized = true;
+  }
+
+  /// Resolves an IANA location matching the given offset in minutes for timezone resilience.
+  @visibleForTesting
+  static tz.Location? findLocationByOffset(int offsetMinutes) {
+    switch (offsetMinutes) {
+      case 60:
+        if (tz.timeZoneDatabase.locations.containsKey('Africa/Algiers')) {
+          return tz.getLocation('Africa/Algiers');
+        }
+        break;
+      case 120:
+        if (tz.timeZoneDatabase.locations.containsKey('Africa/Cairo')) {
+          return tz.getLocation('Africa/Cairo');
+        }
+        break;
+      case 180:
+        if (tz.timeZoneDatabase.locations.containsKey('Asia/Riyadh')) {
+          return tz.getLocation('Asia/Riyadh');
+        }
+        break;
+      case 240:
+        if (tz.timeZoneDatabase.locations.containsKey('Asia/Dubai')) {
+          return tz.getLocation('Asia/Dubai');
+        }
+        break;
+      case 0:
+        return tz.getLocation('UTC');
+    }
+    final targetMs = offsetMinutes * 60 * 1000;
+    for (final loc in tz.timeZoneDatabase.locations.values) {
+      if (loc.currentTimeZone.offset == targetMs) {
+        return loc;
+      }
+    }
+    return null;
   }
 
   /// Schedules a repeating daily notification for Morning, Evening, or Sleep Adhkar.

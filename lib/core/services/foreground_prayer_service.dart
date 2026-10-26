@@ -114,6 +114,29 @@ class ForegroundPrayerService {
     activeAlert.value = null;
   }
 
+  @visibleForTesting
+  void resetForTesting() {
+    stop();
+    _alertedKeys.clear();
+    _initialized = false;
+    _lastWidgetPhaseKey = null;
+    activeAlert.value = null;
+  }
+
+  @visibleForTesting
+  Set<String> get alertedKeysForTesting => Set.unmodifiable(_alertedKeys);
+
+  @visibleForTesting
+  Future<void> checkForTesting() => _check();
+
+  void _trimAlertedKeys() {
+    if (_alertedKeys.length > 50) {
+      final list = _alertedKeys.toList();
+      _alertedKeys.clear();
+      _alertedKeys.addAll(list.sublist(list.length - 50));
+    }
+  }
+
   String? _lastWidgetPhaseKey;
 
   void _checkAndUpdateWidgetsIfNeeded() {
@@ -169,6 +192,7 @@ class ForegroundPrayerService {
             final preAlertKey = '${todayStr}_pre_$name';
             if (!_alertedKeys.contains(preAlertKey)) {
               _alertedKeys.add(preAlertKey);
+              _trimAlertedKeys();
               final prefs = await SharedPreferences.getInstance();
               await prefs.setStringList(
                   'adhan_alerted_keys', _alertedKeys.toList());
@@ -191,6 +215,7 @@ class ForegroundPrayerService {
           final alertKey = '${todayStr}_$name';
           if (!_alertedKeys.contains(alertKey)) {
             _alertedKeys.add(alertKey);
+            _trimAlertedKeys();
             final prefs = await SharedPreferences.getInstance();
             await prefs.setStringList('adhan_alerted_keys', _alertedKeys.toList());
 

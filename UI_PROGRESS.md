@@ -22,6 +22,29 @@
 - **Open issues & Next steps:**
   - Quran audio download list is 100% overflow-free and updates seamlessly with no page reloads or spinner flickers.
 
+## R92 — Harden Prayer Alarms & Background Lifecycle Across DST Boundaries (26 October 2026)
+- **Scope & Context:**
+  - Hardened prayer notification scheduling, background foreground service lifecycle, and civil calendar rollover against daylight saving time (DST) shifts and unmapped timezone identifier crashes (`prayer_time_service.dart`, `home_widget_snapshot.dart`, `notification_service.dart`, `foreground_prayer_service.dart`):
+    1. **Civil Calendar Rollover Across DST Transitions:** Using `DateTime.add(const Duration(days: 1))` performs a rigid 24-hour leap that shifts local clock times by ±1 hour on 23-hour or 25-hour DST change days. Replaced in `PrayerTimeService.todayTimes` and `HomeWidgetSnapshot.savePrayerSnapshot` with native civil calendar date arithmetic: `DateTime(current.year, current.month, current.day + 1)` and `DateTime(current.year, current.month, current.day + 1, fajrHour, fajrMinute)`.
+    2. **Resilient Timezone Fallback via Offset Matching:** In `NotificationService._initTimeZones()`, devices with custom OEM ROMs or unrecognized timezone names previously failed location lookup in `tz.timeZoneDatabase.locations`, causing fallback to UTC and off-by-hours alarms. Added `findLocationByOffset(int offsetMinutes)` matching against standard canonical Islamic timezones (`Africa/Algiers` UTC+1, `Africa/Cairo` UTC+2, `Asia/Riyadh` UTC+3, `Asia/Dubai` UTC+4, and UTC), providing accurate regional wall-clock alarms before defaulting to UTC.
+    3. **Bounded Foreground Alerted Keys:** In `ForegroundPrayerService`, bounded `_alertedKeys` to 50 entries using `_trimAlertedKeys()`, preventing unbounded `SharedPreferences` growth across prolonged app execution.
+    4. **Lifecycle Test Seams & Regression Suite:** Added `@visibleForTesting` seams on `ForegroundPrayerService` (`resetForTesting`, `alertedKeysForTesting`, `checkForTesting`). Created `test/prayer_alarms_lifecycle_test.dart` (5 tests) verifying DST civil rollover, tomorrow Fajr calculation, timezone offset lookup, and alerted key memory pruning.
+- **Files Modified (4 app files + 1 test file + UI_PROGRESS.md):**
+  - `lib/core/services/prayer_time_service.dart`: Replaced Duration(days: 1) with civil date arithmetic (364 lines, Rule 8 compliant).
+  - `lib/core/services/home_widget_snapshot.dart`: Protected tomorrow Fajr against DST hour shift (183 lines, Rule 8 compliant).
+  - `lib/core/services/notification_service.dart`: Added findLocationByOffset and regional timezone fallback (522 lines, Rule 8 compliant).
+  - `lib/core/services/foreground_prayer_service.dart`: Bounded alerted keys and added testing seams (272 lines, Rule 8 compliant).
+  - `test/prayer_alarms_lifecycle_test.dart`: Added 5 lifecycle regression tests.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (22.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/prayer_alarms_lifecycle_test.dart`, `test/quran_audio_download_ui_test.dart`, `test/database_storage_reliability_test.dart`, `test/quran_audio_download_hardening_test.dart`): 27/27 passed.
+  - `flutter build apk --debug`: PASSED (`√ Built build\app\outputs\flutter-apk\app-debug.apk` in 78.0s).
+- **Open issues & Next steps:**
+  - Area E (Prayer Alarms & Background Lifecycle) complete.
+  - Advancing to R94: Area F — Performance Profiling & SharedPreferences I/O Batching.
+
 ## R91 — Gapless Full Surah Audio Frame Assembly & Playback Healing (25 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issue on the Quran Audio Downloads ("التنزيلات الصوتية") screen where playing a downloaded Surah (e.g. Surah 51 Adh-Dhariyat) played for only 3 seconds (single verse) and terminated prematurely with duration showing 00:03/00:03:

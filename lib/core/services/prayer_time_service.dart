@@ -340,7 +340,7 @@ class PrayerTimeService {
     } else {
       // All of today's prayers have passed (after Isha); next prayer is tomorrow's Fajr
       nextPrayer = AppStrings.prayerFajr;
-      final tomorrow = current.add(const Duration(days: 1));
+      final tomorrow = DateTime(current.year, current.month, current.day + 1);
       final tomorrowComponents = DateComponents.from(tomorrow);
       final tomorrowTimes = PrayerTimes(coordinates, tomorrowComponents, params);
       nextPrayerTime = tomorrowTimes.fajr;

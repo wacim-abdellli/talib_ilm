@@ -119,7 +119,9 @@ class HomeWidgetSnapshot {
         final asrTime = allPrayers[AppStrings.prayerAsr];
         final maghribTime = allPrayers[AppStrings.prayerMaghrib];
         final ishaTime = allPrayers[AppStrings.prayerIsha];
-        final tomorrowFajrTime = fajrTime?.add(const Duration(days: 1));
+        final tomorrowFajrTime = fajrTime != null
+            ? DateTime(fajrTime.year, fajrTime.month, fajrTime.day + 1, fajrTime.hour, fajrTime.minute, fajrTime.second)
+            : null;
 
         final refTime = dhuhrTime ?? DateTime.now();
         final isFriday = refTime.weekday == DateTime.friday;
