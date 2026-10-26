@@ -37,11 +37,13 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   void initState() {
     super.initState();
     _currentReciter = _audioService.selectedReciter;
-    _refreshStorageAndStatus();
+    _refreshStorageAndStatus(showLoading: true);
   }
 
-  Future<void> _refreshStorageAndStatus() async {
-    setState(() => _isLoading = true);
+  Future<void> _refreshStorageAndStatus({bool showLoading = false}) async {
+    if (showLoading) {
+      setState(() => _isLoading = true);
+    }
     final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
 
     final statusMap = <int, bool>{};
@@ -73,13 +75,35 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
     }
   }
 
+  Future<void> _updateSingleSurahStatus(int surah) async {
+    final isDownloaded = await QuranAudioDownloader.isSurahDownloaded(
+      surah,
+      reciter: _currentReciter,
+    );
+    final bytes = isDownloaded
+        ? await QuranAudioDownloader.getSurahDownloadedBytes(
+            surah,
+            reciter: _currentReciter,
+          )
+        : 0;
+    final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
+
+    if (mounted) {
+      setState(() {
+        _surahDownloadedStatus[surah] = isDownloaded;
+        _surahBytesOnDisk[surah] = bytes;
+        _totalStorageBytes = totalBytes;
+      });
+    }
+  }
+
   Future<void> _startDownload(int surah) async {
     HapticFeedback.lightImpact();
     _downloader.downloadSurah(
       surah: surah,
       reciter: _currentReciter,
     ).then((_) {
-      if (mounted) _refreshStorageAndStatus();
+      if (mounted) _updateSingleSurahStatus(surah);
     });
   }
 
@@ -132,7 +156,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       );
       if (mounted) {
         AppSnackbar.success(context, 'تم حذف تلاوة سورة $surahName');
-        _refreshStorageAndStatus();
+        _updateSingleSurahStatus(surah);
       }
     }
   }
@@ -182,7 +206,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       await QuranAudioDownloader.deleteAllDownloadedAudio();
       if (mounted) {
         AppSnackbar.success(context, 'تم حذف جميع التنزيلات الصوتية بنجاح');
-        _refreshStorageAndStatus();
+        _refreshStorageAndStatus(showLoading: false);
       }
     }
   }
@@ -236,7 +260,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                 if (val != null) {
                   setState(() => _currentReciter = val);
                   _audioService.setSelectedReciter(val);
-                  _refreshStorageAndStatus();
+                  _refreshStorageAndStatus(showLoading: true);
                 }
               },
               totalStorageBytes: _totalStorageBytes,
@@ -288,43 +312,52 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                 : null,
                           ),
                           alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'جميع السور',
-                                style: textTheme.label.copyWith(
-                                  color: !_showOnlyDownloaded
-                                      ? palette.primary
-                                      : palette.textMuted,
-                                  fontWeight: !_showOnlyDownloaded
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.xs,
                               ),
-                              const SizedBox(width: AppSpace.xs),
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.xs,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: !_showOnlyDownloaded
-                                      ? palette.primarySoft
-                                      : palette.surface,
-                                  borderRadius: AppRadius.pillRadius,
-                                ),
-                                child: Text(
-                                  '114',
-                                  style: textTheme.caption.copyWith(
-                                    color: !_showOnlyDownloaded
-                                        ? palette.primary
-                                        : palette.textMuted,
-                                    fontWeight: FontWeight.bold,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'جميع السور',
+                                    style: textTheme.label.copyWith(
+                                      color: !_showOnlyDownloaded
+                                          ? palette.primary
+                                          : palette.textMuted,
+                                      fontWeight: !_showOnlyDownloaded
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Container(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.xs,
+                                      vertical: AppSpace.xxs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: !_showOnlyDownloaded
+                                          ? palette.primarySoft
+                                          : palette.surface,
+                                      borderRadius: AppRadius.pillRadius,
+                                    ),
+                                    child: Text(
+                                      '114',
+                                      style: textTheme.caption.copyWith(
+                                        color: !_showOnlyDownloaded
+                                            ? palette.primary
+                                            : palette.textMuted,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -357,51 +390,60 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                 : null,
                           ),
                           alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.offline_pin_rounded,
-                                size: AppIcon.sm,
-                                color: _showOnlyDownloaded
-                                    ? palette.primary
-                                    : palette.textMuted,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.xs,
                               ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                'المحمّلة فقط',
-                                style: textTheme.label.copyWith(
-                                  color: _showOnlyDownloaded
-                                      ? palette.primary
-                                      : palette.textMuted,
-                                  fontWeight: _showOnlyDownloaded
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              const SizedBox(width: AppSpace.xs),
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.xs,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _showOnlyDownloaded
-                                      ? palette.primarySoft
-                                      : palette.surface,
-                                  borderRadius: AppRadius.pillRadius,
-                                ),
-                                child: Text(
-                                  '$downloadedCount',
-                                  style: textTheme.caption.copyWith(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.offline_pin_rounded,
+                                    size: AppIcon.sm,
                                     color: _showOnlyDownloaded
                                         ? palette.primary
                                         : palette.textMuted,
-                                    fontWeight: FontWeight.bold,
                                   ),
-                                ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    'المحمّلة فقط',
+                                    style: textTheme.label.copyWith(
+                                      color: _showOnlyDownloaded
+                                          ? palette.primary
+                                          : palette.textMuted,
+                                      fontWeight: _showOnlyDownloaded
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Container(
+                                    padding: const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.xs,
+                                      vertical: AppSpace.xxs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _showOnlyDownloaded
+                                          ? palette.primarySoft
+                                          : palette.surface,
+                                      borderRadius: AppRadius.pillRadius,
+                                    ),
+                                    child: Text(
+                                      '$downloadedCount',
+                                      style: textTheme.caption.copyWith(
+                                        color: _showOnlyDownloaded
+                                            ? palette.primary
+                                            : palette.textMuted,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),

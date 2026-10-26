@@ -48,6 +48,7 @@ class QuranAudioDownloadItem extends StatelessWidget {
       surah,
       reciter: reciter,
     );
+    final estFormatted = estMb < 0.1 ? '< 0.1' : estMb.toStringAsFixed(1);
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -154,54 +155,65 @@ class QuranAudioDownloadItem extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: AppSpace.xs),
-                        Row(
-                          children: [
-                            Text(
-                              '$verseCount آيات',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs,
-                              ),
-                              child: Text(
-                                '•',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted.withValues(alpha: 0.4),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Wrap(
+                              spacing: AppSpace.xs,
+                              runSpacing: AppSpace.xxs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  '$verseCount آيات',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            if (isReadyOffline) ...[
-                              Icon(
-                                Icons.offline_pin_rounded,
-                                size: AppIcon.sm,
-                                color: palette.success,
-                              ),
-                              const SizedBox(width: AppSpace.xxs),
-                              Text(
-                                QuranAudioDownloader.formatBytes(downloadedBytes),
-                                style: textTheme.caption.copyWith(
-                                  color: palette.success,
-                                  fontWeight: FontWeight.bold,
+                                Text(
+                                  '•',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted.withValues(alpha: 0.4),
+                                  ),
                                 ),
-                              ),
-                            ] else ...[
-                              Icon(
-                                Icons.cloud_download_outlined,
-                                size: AppIcon.sm,
-                                color: palette.textMuted,
-                              ),
-                              const SizedBox(width: AppSpace.xxs),
-                              Text(
-                                'تقديري: ~$estMb م.ب',
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: constraints.maxWidth,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isReadyOffline
+                                            ? Icons.offline_pin_rounded
+                                            : Icons.cloud_download_outlined,
+                                        size: AppIcon.sm,
+                                        color: isReadyOffline
+                                            ? palette.success
+                                            : palette.textMuted,
+                                      ),
+                                      const SizedBox(width: AppSpace.xxs),
+                                      Flexible(
+                                        child: Text(
+                                          isReadyOffline
+                                              ? QuranAudioDownloader.formatBytes(downloadedBytes)
+                                              : 'تقديري: ~$estFormatted م.ب',
+                                          style: textTheme.caption.copyWith(
+                                            color: isReadyOffline
+                                                ? palette.success
+                                                : palette.textMuted,
+                                            fontWeight: isReadyOffline
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ],
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -240,14 +252,19 @@ class QuranAudioDownloadItem extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      progress!.isPaused
-                          ? 'متوقف مؤقتاً'
-                          : 'جارٍ التنزيل: ${progress!.downloadedAyahs}/${progress!.totalAyahs} آية',
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
+                    Expanded(
+                      child: Text(
+                        progress!.isPaused
+                            ? 'متوقف مؤقتاً'
+                            : 'جارٍ التنزيل: ${progress!.downloadedAyahs}/${progress!.totalAyahs} آية',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: AppSpace.xs),
                     Text(
                       '${(progress!.progressFraction * 100).toInt()}%',
                       style: textTheme.caption.copyWith(
@@ -304,6 +321,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
         children: [
           IconButton(
             tooltip: 'إيقاف مؤقت للتنزيل',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.pause_circle_filled_rounded,
               size: AppIcon.lg,
@@ -313,6 +335,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'إلغاء التنزيل',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.close_rounded,
               size: AppIcon.md,
@@ -331,6 +358,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
         children: [
           IconButton(
             tooltip: 'استئناف التنزيل',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.play_circle_fill_rounded,
               size: AppIcon.lg,
@@ -340,6 +372,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'إلغاء التنزيل',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.close_rounded,
               size: AppIcon.md,
@@ -359,6 +396,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
           // Play / Pause Circular Button
           IconButton(
             tooltip: isAudioPlaying ? 'إيقاف مؤقت' : 'استماع بدون إنترنت',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             onPressed: () {
               HapticFeedback.lightImpact();
               if (isAudioPlaying) {
@@ -387,6 +429,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
           // Delete Button
           IconButton(
             tooltip: 'حذف التلاوة من الجهاز',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.delete_outline_rounded,
               size: AppIcon.md,
@@ -405,6 +452,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
         children: [
           IconButton(
             tooltip: 'إعادة المحاولة',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.refresh_rounded,
               size: AppIcon.md,
@@ -414,6 +466,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'إلغاء التنزيل',
+            constraints: const BoxConstraints.tightFor(
+              width: AppSize.tap,
+              height: AppSize.tap,
+            ),
+            padding: EdgeInsets.zero,
             icon: Icon(
               Icons.close_rounded,
               size: AppIcon.md,
@@ -428,6 +485,11 @@ class QuranAudioDownloadItem extends StatelessWidget {
     // 5. Surah is not downloaded yet
     return IconButton(
       tooltip: 'تنزيل سورة $surahName للاستماع بدون إنترنت',
+      constraints: const BoxConstraints.tightFor(
+        width: AppSize.tap,
+        height: AppSize.tap,
+      ),
+      padding: EdgeInsets.zero,
       onPressed: onStartDownload,
       icon: Container(
         padding: const EdgeInsetsDirectional.all(AppSpace.xs),

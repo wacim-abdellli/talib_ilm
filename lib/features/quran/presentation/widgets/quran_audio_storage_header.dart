@@ -114,36 +114,47 @@ class QuranAudioStorageHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.sd_storage_rounded,
-                      size: AppIcon.sm,
-                      color: palette.gold,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      'المساحة المستهلكة: ',
-                      style: textTheme.caption.copyWith(
-                        color: palette.textMuted,
-                      ),
-                    ),
-                    Text(
-                      QuranAudioDownloader.formatBytes(totalStorageBytes),
-                      style: textTheme.label.copyWith(
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.sd_storage_rounded,
+                        size: AppIcon.sm,
                         color: palette.gold,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    if (downloadedCount > 0) ...[
-                      Text(
-                        ' ($downloadedCount سورة)',
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
+                      const SizedBox(width: AppSpace.xs),
+                      Flexible(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'المساحة المستهلكة: ',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                              ),
+                              TextSpan(
+                                text: QuranAudioDownloader.formatBytes(totalStorageBytes),
+                                style: textTheme.label.copyWith(
+                                  color: palette.gold,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (downloadedCount > 0)
+                                TextSpan(
+                                  text: ' ($downloadedCount سورة)',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.textMuted,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
                 if (totalStorageBytes > 0)
                   InkWell(

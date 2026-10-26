@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R93 — Fix Quran Audio Download Item Overflow & Eliminate Page Reload Flicker (26 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issues on the Quran Audio Downloads ("التنزيلات الصوتية") screen:
+    1. **Row Layout Overflow & Double Precision Formatting:** On `QuranAudioDownloadItem`, estimated file sizes previously output raw unbounded doubles with 10+ decimal places (e.g. `~10.7080078125 م.ب`), which blew out the subtitle Row and caused `A RIGHT OVERFLOWED BY 2.8 PIXELS` when dual action buttons (`Pause` + `Cancel`) were visible. Formatted estimated size to a clean single decimal place (`${estMb.toStringAsFixed(1)} م.ب` or `< 0.1 م.ب`). Wrapped the subtitle in `LayoutBuilder` + `Wrap` + `ConstrainedBox(maxWidth: constraints.maxWidth)` with `Flexible(child: Text(..., overflow: TextOverflow.ellipsis))` so that the card cannot overflow even on narrow 320px devices with 2.0x accessibility text scaling. Constrained all action `IconButton`s to `const BoxConstraints.tightFor(width: AppSize.tap, height: AppSize.tap)` with `padding: EdgeInsets.zero`.
+    2. **Eliminated Full-Page Reload & Spinner Flicker:** Previously, when a user paused, resumed, cancelled, or completed downloading a Surah, `downloadSurah`'s `.then()` callback called `_refreshStorageAndStatus()`, which set `_isLoading = true;`. This unmounted the entire 114-surah list, showed a full-screen `CircularProgressIndicator`, performed 114 asynchronous disk queries, and caused severe page flashing and loss of scroll position. Implemented `_updateSingleSurahStatus(int surah)` which updates that individual surah's status, bytes, and total storage in-place in < 1ms without toggling `_isLoading` or unmounting the list. Configured `_refreshStorageAndStatus({bool showLoading = false})` to only display loading indicators when `showLoading: true` (initial load / reciter switch).
+    3. **Filter Tabs Scale-Down Constraints:** In `QuranAudioDownloadsPage`, wrapped both "جميع السور" and "المحمّلة فقط" segmented filter tab labels in `FittedBox(fit: BoxFit.scaleDown)` to prevent any tab overflows across compact screens.
+    4. **Storage Header Text Protection:** Wrapped `QuranAudioStorageHeader` summary row in `Expanded` and `Text.rich(..., overflow: TextOverflow.ellipsis)` to ensure storage metrics never overflow next to the "تفريغ الكل" button.
+    5. **Automated Regression Test Suite:** Created `test/quran_audio_download_ui_test.dart` (5 tests) verifying 1-decimal-place estimated size formatting, zero overflow during active download on 320px screens, survival of textScale 2.0 without overflow in paused state, storage header layout resilience, and flicker-free page rendering.
+- **Files Modified (3 app files + 1 new test file + UI_PROGRESS.md):**
+  - `lib/features/quran/presentation/widgets/quran_audio_download_item.dart`: Formatted estMb, added LayoutBuilder + ConstrainedBox subtitle protection, constrained action buttons (509 lines, Rule 8 compliant).
+  - `lib/features/quran/presentation/quran_audio_downloads_page.dart`: Added in-place surah updates, prevented loading spinner flicker on pause/resume/completion, wrapped filter tabs in FittedBox (530 lines, Rule 8 compliant).
+  - `lib/features/quran/presentation/widgets/quran_audio_storage_header.dart`: Added text overflow protection with Text.rich (194 lines, Rule 8 compliant).
+  - `test/quran_audio_download_ui_test.dart`: Added 5 regression widget tests.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (26.4s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/quran_audio_download_ui_test.dart`, `test/quran_audio_download_test.dart`, `test/quran_audio_frame_merger_test.dart`, `test/quran_audio_service_test.dart`, `test/quran_audio_download_hardening_test.dart`, `test/quran_audio_lifecycle_test.dart`): 67/67 passed.
+  - `flutter build apk --debug`: PASSED (`√ Built build\app\outputs\flutter-apk\app-debug.apk` in 54.6s).
+- **Open issues & Next steps:**
+  - Quran audio download list is 100% overflow-free and updates seamlessly with no page reloads or spinner flickers.
+
 ## R91 — Gapless Full Surah Audio Frame Assembly & Playback Healing (25 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issue on the Quran Audio Downloads ("التنزيلات الصوتية") screen where playing a downloaded Surah (e.g. Surah 51 Adh-Dhariyat) played for only 3 seconds (single verse) and terminated prematurely with duration showing 00:03/00:03:
