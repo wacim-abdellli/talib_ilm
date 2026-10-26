@@ -101,40 +101,15 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   }
 
   void _onActiveParagraphChanged() {
-    final active = _audioService.activeParagraphNotifier.value;
-    if (active == null || !_audioService.isPlayingNotifier.value) return;
-
-    final targetPage = _getPageForParagraph(widget.book.id, active, _totalPages);
-    if (targetPage != _currentPage && targetPage >= 1 && targetPage <= _totalPages) {
-      _goToPage(targetPage);
-    }
+    // Keep page position under user control; do not flip pages automatically.
   }
 
   void _onAudioPlayingChanged() {
-    if (_audioService.isPlayingNotifier.value && !_showAudioBar) {
-      if (mounted) {
+    if (_audioService.isPlayingNotifier.value) {
+      if (!_showAudioBar && mounted) {
         setState(() => _showAudioBar = true);
       }
     }
-  }
-
-  int _getPageForParagraph(String bookId, int paragraphIndex, int totalPages) {
-    if (bookId == 'bk_nawaqid_islam') {
-      return paragraphIndex <= 5 ? 1 : 2;
-    }
-    if (bookId == 'bk_qawaid_arba') {
-      if (paragraphIndex <= 2) return 1;
-      if (paragraphIndex <= 3) return 2;
-      if (paragraphIndex <= 6) return 3;
-      return 4;
-    }
-    final startPage = widget.digitalEntry.startPage;
-    final usablePages = totalPages - startPage + 1;
-    final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
-    if (totalParas <= 1 || usablePages <= 1) return startPage;
-    final ratio = (paragraphIndex - 1) / totalParas;
-    final page = (ratio * usablePages).floor() + startPage;
-    return page.clamp(startPage, totalPages);
   }
 
   int _getStartingParagraphForPage(String bookId, int pageNum, int totalPages) {
@@ -146,6 +121,20 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       if (pageNum == 2) return 3;
       if (pageNum == 3) return 4;
       return 7;
+    }
+    if (bookId == 'bk_ajrumiyyah' ||
+        bookId == 'bk_ajrumiyya' ||
+        bookId == 'bk_waraqat' ||
+        bookId == 'bk_arbaeen_nawawi') {
+      return pageNum.clamp(1, MutunAudioCatalog.getTotalParagraphs(bookId));
+    }
+    if (bookId == 'bk_aqidah_tahawiyyah' || bookId == 'bk_tahawiyya') {
+      return pageNum.clamp(1, 50);
+    }
+    if (bookId == 'bk_wasitiyyah' || bookId == 'bk_wasitiyya') {
+      if (pageNum <= 2) return 1;
+      final start = (pageNum - 2) * 2 + 1;
+      return start.clamp(1, 35);
     }
     final startPage = widget.digitalEntry.startPage;
     if (pageNum < startPage) return 1;
@@ -285,13 +274,21 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     widget.onPageChanged(pageNum, _totalPages);
   }
 
-  void _goToPage(int page) {
+  void _goToPage(int page, {bool animate = false}) {
     final safe = page.clamp(1, _totalPages);
     if (safe == _currentPage) return;
     HapticFeedback.selectionClick();
     setState(() => _currentPage = safe);
     if (_pageController.hasClients) {
-      _pageController.jumpToPage(safe - 1);
+      if (animate) {
+        _pageController.animateToPage(
+          safe - 1,
+          duration: AppMotion.slow,
+          curve: Curves.easeInOutCubic,
+        );
+      } else {
+        _pageController.jumpToPage(safe - 1);
+      }
     }
     _preloadSurroundingPages(safe);
     ShamelaService.saveLastReadPage(widget.digitalEntry.shamelaId, safe);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_curriculum_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/mutun_digital_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart';
@@ -91,6 +92,75 @@ void main() {
       final audioEntry = MutunAudioCatalog.getEntry('bk_tuhfat_atfal');
       expect(audioEntry, isNotNull);
       expect(audioEntry!.totalParagraphs, book.totalParagraphs);
+    });
+
+    test('All curriculum mutun books have authentic text and dual reading support', () {
+      final bookIds = [
+        'bk_adhkar_adab',
+        'bk_nawaqid_islam',
+        'bk_qawaid_arba',
+        'bk_usul_thalatha',
+        'bk_shuroot_salah',
+        'bk_kitab_tawheed',
+        'bk_kashf_shubuhat',
+        'bk_wasitiyyah',
+        'bk_aqidah_tahawiyyah',
+        'bk_tuhfat_atfal',
+        'bk_manzumah_bayquniyyah',
+        'bk_ajrumiyyah',
+        'bk_waraqat',
+        'bk_arbaeen_nawawi',
+        'bk_unwan_al_hukm',
+        'bk_manzumah_albiri',
+        'bk_rahibiyyah',
+        'bk_bulugh_maram',
+        'bk_zad_mustaqni',
+      ];
+
+      final syllabusFullAudioBooks = [
+        'bk_adhkar_adab',
+        'bk_nawaqid_islam',
+        'bk_qawaid_arba',
+        'bk_usul_thalatha',
+        'bk_shuroot_salah',
+        'bk_kitab_tawheed',
+        'bk_kashf_shubuhat',
+        'bk_wasitiyyah',
+        'bk_aqidah_tahawiyyah',
+        'bk_tuhfat_atfal',
+        'bk_manzumah_bayquniyyah',
+        'bk_ajrumiyyah',
+        'bk_waraqat',
+        'bk_arbaeen_nawawi',
+      ];
+
+      for (final id in bookIds) {
+        expect(MutunCurriculumCatalog.hasBook(id), isTrue, reason: 'Book $id missing in curriculum');
+        final book = MutunCurriculumCatalog.getBook(id)!;
+        expect(book.totalParagraphs, greaterThan(0), reason: 'Book $id has 0 paragraphs');
+        expect(book.sections.isNotEmpty, isTrue, reason: 'Book $id has no sections');
+        expect(book.getParagraph(1), isNotNull, reason: 'Book $id missing paragraph 1');
+        expect(book.getParagraph(1)!.text.trim().isNotEmpty, isTrue);
+
+        expect(MutunDigitalCatalog.hasDigitalText(id), isTrue, reason: 'Book $id missing in digital catalog');
+        final digitalEntry = MutunDigitalCatalog.getEntry(id)!;
+        expect(digitalEntry.totalPages, greaterThan(0), reason: 'Book $id has 0 digital pages');
+
+        if (syllabusFullAudioBooks.contains(id)) {
+          final audioEntry = MutunAudioCatalog.getEntry(id);
+          expect(audioEntry, isNotNull, reason: 'Audio entry missing for $id');
+          expect(
+            book.totalParagraphs,
+            equals(audioEntry!.totalParagraphs),
+            reason: 'Book $id paragraph count does not match audio timestamps',
+          );
+        }
+      }
+
+      // Explicitly assert full complete editions for the poetic mutun
+      expect(MutunCurriculumCatalog.getBook('bk_manzumah_albiri')!.totalParagraphs, 110);
+      expect(MutunCurriculumCatalog.getBook('bk_unwan_al_hukm')!.totalParagraphs, 63);
+      expect(MutunCurriculumCatalog.getBook('bk_rahibiyyah')!.totalParagraphs, 183);
     });
   });
 

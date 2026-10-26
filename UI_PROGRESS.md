@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## Round 18 — Mutun Dual Reading Modes (Complete Paragraph Editions) & User-Controlled Scroll (26 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported issues:
+    1. **Complete Texts for Both Reading Modes:** Ensured that all poetic and prose mutun books are 100% complete in both reading modes ("فقرات" and "كتاب"). Expanded Taa'iyyat Al-Ilbiri to its full 110 verses (`MutunTextsAlbiri`), Qasidat Unwan Al-Hukm to all 63 verses (`MutunTextsUnwan`), and Matn Al-Rahibiyyah to all 183 verses (`MutunTextsRahibiyyah`), alongside the complete editions of Al-Arbaeen, Al-Waraqat, Al-Ajrumiyyah, Al-Wasitiyyah, Al-Tahawiyyah, Al-Bayquniyyah, and Level 0-2 mutun.
+    2. **User-Controlled Scrolling (Zero Random Jumps):** Removed all programmatic auto-scrolling (`ensureVisible` / `animateToPage`) when audio plays, tracks advance, or when the user skips forward/backward in audio. Viewport scrolling and page flipping remain 100% manual and controlled by the user, while active paragraph cards remain cleanly highlighted in-place.
+- **Files Modified / Created (10 files):**
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_albiri.dart` (created, 144 lines)
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_unwan.dart` (created, 92 lines)
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_rahibiyyah.dart` (created, 222 lines)
+  - `lib/features/ilm/data/catalogs/mutun_curriculum_catalog.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_digital_reader.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_paragraphs_view.dart` (updated)
+  - `test/mutun_curriculum_reader_test.dart` (updated)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 16.1s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10).
+  - Focused tests: `test/mutun_audio_catalog_ui_test.dart` (7/7 passed), `test/mutun_curriculum_reader_test.dart` (9/9 passed).
+- **Open issues:** None.
+
 ## Round 17 — Android Home Screen Widget Autonomous Auto-Refresh & Daily Pre-Rendered Snapshots (26 October 2026)
 - **Scope & Context:**
   - Resolved user-reported critical home screen widget bug where the 5-prayer strip and active prayer pill remained frozen on an earlier prayer (e.g. Dhuhr) while the native Chronometer showed the next prayer (e.g. Maghrib), requiring explicit app launch to refresh.
