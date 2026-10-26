@@ -35,6 +35,9 @@ class EditionService {
   @visibleForTesting
   static Future<void> Function(File source, File destination)? testFileInstaller;
 
+  @visibleForTesting
+  static Future<void> Function(File backup, File destination)? testFileRestorer;
+
   static final Set<String> _activeDownloads = {};
 
   @visibleForTesting
@@ -58,7 +61,25 @@ class EditionService {
     resetHttpClient();
     testBaseDir = null;
     testFileInstaller = null;
+    testFileRestorer = null;
     _activeDownloads.clear();
+  }
+
+  /// Restores a backup file to its destination, attempting atomic rename first,
+  /// then falling back to copy + delete if rename fails across volume boundaries.
+  static Future<void> _restoreFile(File backup, File destination) async {
+    if (testFileRestorer != null) {
+      await testFileRestorer!(backup, destination);
+      return;
+    }
+    try {
+      await backup.rename(destination.path);
+    } catch (_) {
+      await backup.copy(destination.path);
+      try {
+        await backup.delete();
+      } catch (_) {}
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -262,10 +283,18 @@ class EditionService {
         if (hadExisting && await backupFile.exists()) {
           try {
             if (await finalFile.exists()) {
-              await finalFile.delete();
+              try {
+                await finalFile.delete();
+              } catch (_) {}
             }
-            await backupFile.rename(finalFile.path);
-          } catch (_) {}
+            await _restoreFile(backupFile, finalFile);
+          } catch (rollbackError) {
+            debugPrint('CRITICAL: Edition rollback failure: failed to restore backup file: $rollbackError');
+            throw FileSystemException(
+              'Rollback error: $rollbackError (after install failure: $installError)',
+              finalFile.path,
+            );
+          }
         }
         rethrow;
       }
@@ -296,7 +325,7 @@ class EditionService {
       final msg = e.toString();
       yield DownloadProgress(
         0.0,
-        'حدث خطأ: ${msg.length > 50 ? msg.substring(0, 50) : msg}',
+        'حدث خطأ: ${msg.length > 120 ? msg.substring(0, 120) : msg}',
         isError: true,
       );
     } finally {
@@ -327,15 +356,20 @@ class EditionService {
       // Crash-recovery: if primary file was midway through replacement when crash occurred
       if (!await file.exists() && await backupFile.exists()) {
         try {
-          await backupFile.rename(file.path);
+          await _restoreFile(backupFile, file);
         } catch (_) {}
       }
 
-      if (!await file.exists()) {
+      // Read from primary file, or fall back to reading backupFile if primary cannot be restored
+      final activeFile = await file.exists()
+          ? file
+          : (await backupFile.exists() ? backupFile : null);
+
+      if (activeFile == null) {
         return null;
       }
 
-      final jsonString = await file.readAsString();
+      final jsonString = await activeFile.readAsString();
       final jsonData = jsonDecode(jsonString);
 
       final data = jsonData['data'];

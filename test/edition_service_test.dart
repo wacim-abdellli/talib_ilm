@@ -432,5 +432,116 @@ void main() {
       expect(await finalFile.exists(), isTrue);
       expect(await backupFile.exists(), isFalse);
     });
+
+    test('AUD-101 Rollback Resilience: rollback failure is explicitly surfaced and backup remains accessible', () async {
+      final seedData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة الموثوقة',
+              'englishName': 'Al-Faatiha Protected',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final replacementData = {
+        'code': 200,
+        'status': 'OK',
+        'data': {
+          'surahs': [
+            {
+              'number': 1,
+              'name': 'سُورَةُ ٱلْفَاتِحَةِ - نسخة جديدة فاشلة',
+              'englishName': 'Al-Faatiha Broken',
+              'englishNameTranslation': 'The Opening',
+              'revelationType': 'Meccan',
+              'numberOfAyahs': 7,
+              'ayahs': [
+                {
+                  'number': 1,
+                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                  'numberInSurah': 1,
+                  'juz': 1,
+                  'manzil': 1,
+                  'page': 1,
+                  'ruku': 1,
+                  'hizbQuarter': 1,
+                  'sajda': false,
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      final finalFile = File('${tempDir.path}/warsh.json');
+      final backupFile = File('${tempDir.path}/warsh.json.bak');
+      await finalFile.writeAsString(jsonEncode(seedData));
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('downloaded_editions', ['warsh']);
+
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          jsonEncode(replacementData),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      EditionService.setHttpClient(mockClient);
+
+      // 1. Simulate install failure
+      EditionService.testFileInstaller = (src, dst) async {
+        throw const FileSystemException('Simulated install failure');
+      };
+
+      // 2. Simulate rollback restoration failure
+      EditionService.testFileRestorer = (bak, dst) async {
+        throw const FileSystemException('Simulated rollback restoration failure');
+      };
+
+      final events = <DownloadProgress>[];
+      await for (final progress in EditionService.downloadEdition('warsh')) {
+        events.add(progress);
+      }
+
+      expect(events.isNotEmpty, isTrue);
+      expect(events.last.isError, isTrue);
+
+      // Verify that rollback failure was NOT silently swallowed
+      expect(
+        events.last.status,
+        contains('Rollback error'),
+        reason: 'Rollback failure must be explicitly surfaced in error status, not silently caught',
+      );
+
+      // Verify backup file was NOT deleted or lost
+      expect(await backupFile.exists(), isTrue, reason: 'Backup file must remain preserved');
+
+      // Verify emergency fallback: loadSurahFromEdition can still read the preserved edition from backup!
+      final surah = await EditionService.loadSurahFromEdition('warsh', 1);
+      expect(surah, isNotNull, reason: 'Reader must fall back to readable backup if primary is un-restorable');
+      expect(surah!.name, contains('النسخة الموثوقة'));
+    });
   });
 }

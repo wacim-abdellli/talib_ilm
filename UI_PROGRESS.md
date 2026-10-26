@@ -1,11 +1,33 @@
 # UI Progress Log
 
+## R100 — Edition Rollback Resilience & Emergency Backup Reader Fallback (26 October 2026)
+- **Scope & Context:**
+  - Implemented Stage R100 addressing AUD-101 follow-up findings:
+    1. **Eliminated Silent Rollback Failure Window:** In `EditionService.downloadEdition` (`lib/features/quran/data/services/edition_service.dart`), when the atomic installation failed, restoring the backup file (`$editionId.json.bak` -> `$editionId.json`) previously swallowed errors silently with `catch (_) {}`. Now, rollback failures are explicitly caught, logged via `debugPrint('CRITICAL: Edition rollback failure...')`, and rethrown as a descriptive `FileSystemException` surfacing both install and rollback failure context.
+    2. **Dual-Strategy File Restoration (Rename + Copy Fallback):** Added `_restoreFile` helper that attempts atomic `rename` first, and if volume boundaries or OS file locks reject rename, automatically falls back to `copy` followed by `delete`.
+    3. **Emergency Reader Fallback in `loadSurahFromEdition`:** If filesystem conditions prevent restoration of `$editionId.json`, `loadSurahFromEdition` falls back to reading directly from `$editionId.json.bak`. The user never loses access to their previously downloaded Quran edition, even during unrecoverable filesystem rollback errors.
+    4. **Narrow Seam & Deterministic Regression Test:** Added `@visibleForTesting static Future<void> Function(File backup, File destination)? testFileRestorer;` and a new test in `test/edition_service_test.dart` asserting that rollback failures are non-silently surfaced in download status and that `loadSurahFromEdition` safely reads from the intact backup file.
+- **Files Modified (1 app service + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/edition_service.dart`: Added `_restoreFile`, non-silent rollback exception chaining, and reader backup fallback (502 lines, Rule 8 compliant).
+  - `test/edition_service_test.dart`: Added rollback resilience regression test (545 lines, Rule 8 compliant).
+  - `UI_PROGRESS.md`: Recorded stage documentation and corrected R99 notes.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 8.3s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/edition_service_test.dart --no-pub`: 8/8 passed.
+  - `flutter test --no-pub`: 678/678 passed (ran in 2m 55s, +1 new test).
+  - `flutter test test/golden --no-pub`: 43/43 passed (ran in 10s).
+  - `flutter build apk --debug --no-pub`: PASSED, built `build\app\outputs\flutter-apk\app-debug.apk` in 62.0s.
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+
 ## R99 — Failure-Safe Replacement of Downloaded Quran Editions (26 October 2026)
 - **Scope & Context:**
   - Implemented Task FIX-01 (AUD-101):
     1. **Data-Loss Window Remediation (P2):** Eliminated the data loss window in `EditionService.downloadEdition` (`lib/features/quran/data/services/edition_service.dart`). Previously, downloading an existing edition deleted the valid local file (`$editionId.json`) prior to renaming the newly downloaded temporary file (`$editionId.json.tmp`). If the rename operation failed (e.g. disk full, permission denied, I/O lock), the catch block deleted the temporary file, leaving the user with no offline edition.
     2. **Atomic Backup & Automatic Rollback:** Implemented a backup-and-rollback pattern. If a valid offline edition exists, it is moved to `$editionId.json.bak` before installing the new file. If installation/rename succeeds, the backup is safely deleted. If installation fails, the catch block rolls back the backup file to its original location, guaranteeing the pre-existing offline edition remains intact, readable, and marked downloaded.
-    3. **Crash Recovery & Defensive Cleanup:** Added orphan backup recovery in `loadSurahFromEdition` and `isEditionDownloaded`. If a mid-replacement crash or power loss occurred when the backup was present, the service automatically restores the backup file. Cleaned up `.bak` and `.tmp` files in `deleteEdition`.
+    3. **Crash Recovery & Defensive Cleanup:** Added orphan backup recovery in `loadSurahFromEdition` (recovery is attempted in `loadSurahFromEdition` only; `isEditionDownloaded` checks `SharedPreferences`). If a mid-replacement crash or power loss occurred when the backup was present, the service automatically restores the backup file. Cleaned up `.bak` and `.tmp` files in `deleteEdition`.
     4. **Narrow Test Seam & Regression Suite:** Added `@visibleForTesting static Future<void> Function(File source, File destination)? testFileInstaller;` to deterministically simulate installation/rename failures without test flags in production code. Added 3 new unit tests in `test/edition_service_test.dart` verifying failing-first preservation of existing offline files, successful replacement with cleanup, and orphan backup recovery.
 - **Files Modified (1 app service + 1 test file + UI_PROGRESS.md):**
   - `lib/features/quran/data/services/edition_service.dart`: Added backup/rollback, crash recovery, and cleanup (467 lines, Rule 8 compliant).
