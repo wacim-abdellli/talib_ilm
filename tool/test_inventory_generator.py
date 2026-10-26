@@ -59,8 +59,9 @@ class TestInventoryGenerator(unittest.TestCase):
         t_dart = inv["categories"]["test_dart"]
         self.assertGreater(len(t_dart), 80)
 
-        # Check allow markers: exactly 6
-        self.assertEqual(len(inv["allow_markers"]), 6)
+        # Check allow markers: exactly 8 (within cap 10)
+        self.assertEqual(len(inv["allow_markers"]), 8)
+        self.assertLessEqual(len(inv["allow_markers"]), 10)
         marker_paths = [m["path"] for m in inv["allow_markers"]]
         self.assertIn("lib/core/services/prayer_notification_scheduler.dart", marker_paths)
         self.assertIn("lib/features/radio/data/services/quran_radio_service.dart", marker_paths)

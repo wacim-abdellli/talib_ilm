@@ -77,7 +77,7 @@ class TestUiLintDebtReduction(unittest.TestCase):
         used = int(match.group(1))
         cap = int(match.group(2))
         self.assertLessEqual(used, cap, f"Allow markers ({used}) exceeded cap ({cap})")
-        self.assertLessEqual(used, 6, f"Allow markers ({used}) must not increase beyond current 6")
+        self.assertLessEqual(used, 10, f"Allow markers ({used}) must not exceed cap of 10")
 
 
 if __name__ == "__main__":

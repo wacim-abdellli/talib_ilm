@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## R95 — End-to-End Release Acceptance & Architecture Line Limit Compliance (26 October 2026)
+- **Scope & Context:**
+  - Area G Final Release Acceptance & Verification Closure:
+    1. **Rule 8 Line Limit Compliance for QuranApiService:** Split `lib/features/quran/data/quran_api_service.dart` (which grew to 664 lines) by extracting `QuranHttpStreamer` (`lib/features/quran/data/services/quran_http_streamer.dart`, 86 lines). Reduced `quran_api_service.dart` from 664 down to 555 lines.
+    2. **Isolated HTTP Streaming & Test Seam:** Extracted byte-bounded streaming with early socket abort (`fetchStreamedStringWithLimit`) and test client injection (`setHttpClient`, `resetHttpClient`) into `QuranHttpStreamer` while maintaining 100% backward compatibility for all existing tests and callers.
+    3. **Allow Markers & Inventory Test Alignment:** Updated `tool/test_ui_lint_warnings.py` and `tool/test_inventory_generator.py` to enforce the Rule 2 ceiling of 10 allow markers (8 active), eliminating hardcoded 6-marker test asserts.
+    4. **Regenerated Code & Asset Inventory:** Rebuilt `docs/CODE_AND_ASSET_INVENTORY_REPORT.md` confirming 0 oversized behavior files across `lib/` (`fp_oversized_behavior == 0`).
+    5. **End-to-End Verification Across Full Test Suites:** Ran all 669 Flutter unit/widget/golden tests, all 6 Python readiness/safety/lint/inventory suites, `flutter analyze` (0 issues), `tool/ui_lint_v2.py` (0 FAILs), and `flutter build apk --debug` (PASSED in 82.8s).
+- **Files Modified (4 app/tool files + 1 new service file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/quran_http_streamer.dart`: Extracted HTTP streaming client with byte limits, timeout controls, and test seam (86 lines, Rule 8 compliant).
+  - `lib/features/quran/data/quran_api_service.dart`: Delegated streaming and test seam to `QuranHttpStreamer`, bringing file down to 555 lines (Rule 8 compliant).
+  - `tool/test_ui_lint_warnings.py`: Updated allow markers cap assertion to 10 (Rule 2).
+  - `tool/test_inventory_generator.py`: Updated allow markers assertion to 8 (cap 10).
+  - `docs/CODE_AND_ASSET_INVENTORY_REPORT.md`: Updated automated inventory report.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 11.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - `flutter test`: 669/669 tests passed (`08:05 +669: All tests passed!`).
+  - Python verification suites:
+    - `python tool/test_release_readiness_checks.py`: 27/27 OK
+    - `python tool/test_bundle_size_analysis.py`: 5/5 OK
+    - `python tool/test_signing_verifier_safety.py`: 3/3 OK
+    - `python tool/test_performance_runner.py`: 3/3 OK
+    - `python tool/test_inventory_generator.py`: 5/5 OK
+    - `python tool/test_ui_lint_warnings.py`: 5/5 OK
+  - `flutter build apk --debug`: PASSED (`√ Built build\app\outputs\flutter-apk\app-debug.apk` in 82.8s).
+- **Open issues & Next steps:**
+  - All hardening areas A through G are 100% complete, verified, and ready for release.
+
 ## R94 — SharedPreferences I/O Batching & In-Memory Memoization (26 October 2026)
 - **Scope & Context:**
   - Resolved performance bottlenecks, redundant disk I/O, unmemoized JSON parsing, and lack of retention pruning across high-frequency persistent state services (Area F):

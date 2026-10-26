@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
@@ -8,6 +7,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../core/constants/app_policy.dart';
 import 'catalogs/surah_fallback_catalog.dart';
 import 'models/quran_models.dart';
+import 'services/quran_http_streamer.dart';
 
 /// Quran API Service using alquran.cloud & quran.com API v4
 /// Supports: Surahs, Verses, Translations, Audio, Search, Pages, Juzs
@@ -31,24 +31,15 @@ class QuranApiService {
   // HTTP TEST SEAM & DEDUPLICATION STATE
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static http.Client? _injectedClient;
-  static http.Client? _defaultClient;
-
   @visibleForTesting
   static void setHttpClient(http.Client client) {
-    _injectedClient = client;
+    QuranHttpStreamer.setHttpClient(client);
   }
 
   @visibleForTesting
   static void resetHttpClient() {
-    _injectedClient?.close();
-    _injectedClient = null;
-    _defaultClient?.close();
-    _defaultClient = null;
+    QuranHttpStreamer.resetHttpClient();
   }
-
-  static http.Client get _client =>
-      _injectedClient ?? (_defaultClient ??= http.Client());
 
   static Future<List<SurahMeta>>? _inFlightAllSurahs;
   static Future<List<Juz>>? _inFlightAllJuzs;
@@ -88,66 +79,6 @@ class QuranApiService {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STREAMED HTTP GET WITH BYTE CEILING & EARLY CANCELLATION
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  static Future<String> _fetchStreamedStringWithLimit(
-    Uri uri, {
-    required int maxBytes,
-    required Duration timeout,
-  }) async {
-    final request = http.Request('GET', uri);
-    final streamedResponse = await _client.send(request).timeout(timeout);
-
-    if (streamedResponse.statusCode != 200) {
-      throw Exception('HTTP error ${streamedResponse.statusCode}');
-    }
-
-    final contentLength = streamedResponse.contentLength;
-    if (contentLength != null && contentLength > maxBytes) {
-      throw Exception('Response exceeded maximum byte limit ($maxBytes)');
-    }
-
-    final bytesBuilder = BytesBuilder(copy: false);
-    int totalBytes = 0;
-    final completer = Completer<List<int>>();
-    late final StreamSubscription<List<int>> subscription;
-
-    subscription = streamedResponse.stream.listen(
-      (chunk) {
-        totalBytes += chunk.length;
-        if (totalBytes > maxBytes) {
-          subscription.cancel();
-          if (!completer.isCompleted) {
-            completer.completeError(
-              Exception('Response stream cancelled: exceeded $maxBytes bytes'),
-            );
-          }
-          return;
-        }
-        bytesBuilder.add(chunk);
-      },
-      onError: (Object error, StackTrace stackTrace) {
-        if (!completer.isCompleted) completer.completeError(error, stackTrace);
-      },
-      onDone: () {
-        if (!completer.isCompleted) completer.complete(bytesBuilder.takeBytes());
-      },
-      cancelOnError: true,
-    );
-
-    final bytes = await completer.future.timeout(
-      timeout,
-      onTimeout: () {
-        subscription.cancel();
-        throw TimeoutException('Request timed out', timeout);
-      },
-    );
-
-    return utf8.decode(bytes, allowMalformed: true);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   // 1. GET ALL SURAHS
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -166,7 +97,7 @@ class QuranApiService {
 
   static Future<List<SurahMeta>> _fetchAllSurahsInternal() async {
     try {
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('https://api.quran.com/api/v4/chapters'),
         maxBytes: AppPolicy.maxQuranSurahsCatalogBytes,
         timeout: AppPolicy.networkMedium,
@@ -191,38 +122,6 @@ class QuranApiService {
             .toList();
       }
     } catch (_) {}
-
-    return SurahFallbackCatalog.getSurahs();
-  }
-
-  /// Load surahs from local JSON assets as fallback
-  static Future<List<SurahMeta>> _loadSurahsFromAssets() async {
-    final possiblePaths = [
-      'data/quran/surahs.json',
-      'assets/data/quran/surahs.json',
-    ];
-
-    for (final path in possiblePaths) {
-      try {
-        final String jsonString = await rootBundle.loadString(path);
-        final List<dynamic> surahsJson = jsonDecode(jsonString);
-
-        return surahsJson.map((json) {
-          return SurahMeta(
-            number: json['id'],
-            name: json['nameArabic'],
-            englishName: json['nameEnglish'] ?? '',
-            englishNameTranslation: json['nameEnglish'] ?? '',
-            numberOfAyahs: json['ayahCount'] ?? 0,
-            revelationType: json['revelationType'] == 'makkah'
-                ? 'Meccan'
-                : 'Medinan',
-          );
-        }).toList();
-      } catch (_) {
-        continue;
-      }
-    }
 
     return SurahFallbackCatalog.getSurahs();
   }
@@ -270,7 +169,7 @@ class QuranApiService {
       try {
         final timeout =
             attempts == 0 ? AppPolicy.networkFast : AppPolicy.networkRetry;
-        final body = await _fetchStreamedStringWithLimit(
+        final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
           Uri.parse('$_baseUrl/surah/$number/$edition'),
           maxBytes: AppPolicy.maxQuranSurahResponseBytes,
           timeout: timeout,
@@ -299,14 +198,7 @@ class QuranApiService {
   /// Load surah from local assets (only Al-Fatiha available)
   static Future<Surah?> _loadSurahFromAssets(int number) async {
     try {
-      SurahMeta surahMeta;
-      try {
-        final surahsList = await _loadSurahsFromAssets();
-        surahMeta = surahsList.firstWhere((s) => s.number == number);
-      } catch (_) {
-        final allHardcoded = SurahFallbackCatalog.getSurahs();
-        surahMeta = allHardcoded.firstWhere((s) => s.number == number);
-      }
+      final surahMeta = SurahFallbackCatalog.getSurahs().firstWhere((s) => s.number == number);
 
       for (final path in [
         'data/quran/surah_$number.json',
@@ -358,7 +250,7 @@ class QuranApiService {
       throw ArgumentError('Invalid surah number: $surahNumber');
     }
 
-    final body = await _fetchStreamedStringWithLimit(
+    final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
       Uri.parse(
         'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber',
       ),
@@ -443,7 +335,7 @@ class QuranApiService {
   ) async {
     try {
       final encodedQuery = Uri.encodeComponent(query);
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('$_baseUrl/search/$encodedQuery/all/$edition'),
         maxBytes: AppPolicy.maxQuranSearchResponseBytes,
         timeout: AppPolicy.networkLong,
@@ -523,7 +415,7 @@ class QuranApiService {
     String edition,
   ) async {
     try {
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('$_baseUrl/ayah/$reference/$edition'),
         maxBytes: AppPolicy.maxQuranAyahResponseBytes,
         timeout: AppPolicy.networkLong,
@@ -565,7 +457,7 @@ class QuranApiService {
 
   static Future<List<Juz>> _getAllJuzsInternal() async {
     try {
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('$_baseUrl/juz'),
         maxBytes: AppPolicy.maxQuranJuzResponseBytes,
         timeout: AppPolicy.networkMedium,
@@ -599,7 +491,7 @@ class QuranApiService {
 
   static Future<Juz?> _getJuzInternal(int number, String edition) async {
     try {
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('$_baseUrl/juz/$number/$edition'),
         maxBytes: AppPolicy.maxQuranJuzResponseBytes,
         timeout: AppPolicy.networkLong,
@@ -643,7 +535,7 @@ class QuranApiService {
     String edition,
   ) async {
     try {
-      final body = await _fetchStreamedStringWithLimit(
+      final body = await QuranHttpStreamer.fetchStreamedStringWithLimit(
         Uri.parse('$_baseUrl/page/$pageNumber/$edition'),
         maxBytes: AppPolicy.maxQuranPageResponseBytes,
         timeout: AppPolicy.networkLong,

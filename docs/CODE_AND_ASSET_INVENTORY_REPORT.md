@@ -13,11 +13,11 @@ In accordance with **Task R67** of [`MASTER_GEMINI_FLASH_3_8_APP_REMEDIATION_GUI
 
 | Category | Tracked Files | Total Lines | Total Size (MB) | Role / Governance Scope |
 |---|---|---|---|---|
-| **First-party Dart Code (`lib/`)** | 373 | 95,562 | 3.77 MB | Core application domain, data, presentation, services (Rule 8 strictly applied). |
-| **Vendored Dependency (`packages/qcf_quran_plus`)** | 25 | 115,238 | 7.13 MB | Third-party QCF Quran font package (105k-line ayah glyph dataset). |
-| **Automated Tests (`test/`)** | 100 | 15,675 | 0.58 MB | Unit, widget, golden, service, and end-to-end acceptance tests. |
-| **Tooling & Release Automation (`tool/`)** | 29 | 8,274 | 0.56 MB | Verification gates, UI lint, signing validation, and database builders. |
-| **Tracked Static Assets & Data** | 871 | N/A | 103.98 MB | King Fahd Complex fonts, audio recitations, Hadith/Adhkar datasets, Mutun PDFs. |
+| **First-party Dart Code (`lib/`)** | 381 | 98,888 | 3.85 MB | Core application domain, data, presentation, services (Rule 8 strictly applied). |
+| **Vendored Dependency (`packages/qcf_quran_plus`)** | 25 | 115,238 | 7.01 MB | Third-party QCF Quran font package (105k-line ayah glyph dataset). |
+| **Automated Tests (`test/`)** | 114 | 19,478 | 0.71 MB | Unit, widget, golden, service, and end-to-end acceptance tests. |
+| **Tooling & Release Automation (`tool/`)** | 34 | 9,209 | 0.61 MB | Verification gates, UI lint, signing validation, and database builders. |
+| **Tracked Static Assets & Data** | 871 | N/A | 103.78 MB | King Fahd Complex fonts, audio recitations, Hadith/Adhkar datasets, Mutun PDFs. |
 
 ---
 
@@ -36,7 +36,7 @@ Rule 8 of `AGENTS.md` mandates: *"Split files > 600 lines before restyling (sepa
 | [`packages/qcf_quran_plus/lib/src/data/suwar.dart`](file:///packages/qcf_quran_plus/lib/src/data/suwar.dart) | 1,628 | Data / Glyphs | Vendored (qcf_quran_plus) | Vendored third-party Surah metadata catalog (revelation place, ayah counts, names in Arabic/English). |
 | [`lib/app/theme/app_palette.dart`](file:///lib/app/theme/app_palette.dart) | 1,274 | Static Data Catalog | First-party app code | Design system token repository (colors, surface styles, elevation, AMOLED tokens). Contains no logic or branching. |
 | [`lib/features/ilm/data/catalogs/mutun_lessons_catalog.dart`](file:///lib/features/ilm/data/catalogs/mutun_lessons_catalog.dart) | 1,236 | Static Data Catalog | First-party app code | Static curriculum lesson metadata for 15 Islamic science Mutun disciplines. Immutable educational data. |
-| [`lib/core/constants/verified_cities.dart`](file:///lib/core/constants/verified_cities.dart) | 950 | Static Data Catalog | First-party app code | GPS coordinate dataset and prayer minute adjustments for all 58 Algerian wilayas. Offline prayer fallback. |
+| [`lib/core/constants/verified_cities.dart`](file:///lib/core/constants/verified_cities.dart) | 1,121 | Static Data Catalog | First-party app code | GPS coordinate dataset and prayer minute adjustments for all 58 Algerian wilayas. Offline prayer fallback. |
 | [`lib/features/ilm/data/catalogs/mutun_audio_catalog.dart`](file:///lib/features/ilm/data/catalogs/mutun_audio_catalog.dart) | 908 | Static Data Catalog | First-party app code | Audio track URLs, chapter breaks, and reciter metadata for Matn audio. Static catalog. |
 | [`packages/qcf_quran_plus/lib/src/widgets/quran_page_view.dart`](file:///packages/qcf_quran_plus/lib/src/widgets/quran_page_view.dart) | 802 | Widget / Wrapper | Vendored (qcf_quran_plus) | Vendored third-party PageView widget. Upstream repository ownership (`hussein12347/qcf_quran_plus`). |
 | [`packages/qcf_quran_plus/lib/qcf_quran_plus.dart`](file:///packages/qcf_quran_plus/lib/qcf_quran_plus.dart) | 642 | Widget / Wrapper | Vendored (qcf_quran_plus) | Vendored third-party package barrel export file. |
@@ -65,25 +65,27 @@ All 6 allow markers are located exclusively in domain services for necessary asy
 | 1 | [`lib/core/services/prayer_notification_scheduler.dart:382`](file:///lib/core/services/prayer_notification_scheduler.dart#L382) | `DateTime.now().add(Duration(seconds: seconds)); // ui-lint: allow` | Asynchronous domain timing boundary |
 | 2 | [`lib/core/services/prayer_notification_scheduler.dart:408`](file:///lib/core/services/prayer_notification_scheduler.dart#L408) | `Future.delayed(Duration(seconds: seconds), () { // ui-lint: allow` | Asynchronous domain timing boundary |
 | 3 | [`lib/features/ilm/data/services/mutun_audio_service.dart:447`](file:///lib/features/ilm/data/services/mutun_audio_service.dart#L447) | `Duration(milliseconds: ms); // ui-lint: allow audio seek position` | Asynchronous domain timing boundary |
-| 4 | [`lib/features/quran/data/services/quran_tafsir_service.dart:14`](file:///lib/features/quran/data/services/quran_tafsir_service.dart#L14) | `const Duration _kApiTimeout = Duration(seconds: 4); // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
-| 5 | [`lib/features/quran/data/services/tajweed_verse_service.dart:35`](file:///lib/features/quran/data/services/tajweed_verse_service.dart#L35) | `.timeout(const Duration(seconds: 4)); // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
-| 6 | [`lib/features/radio/data/services/quran_radio_service.dart:130`](file:///lib/features/radio/data/services/quran_radio_service.dart#L130) | `final response = await http.get(url).timeout(const Duration(seconds: 8)); // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
+| 4 | [`lib/features/quran/data/services/quran_tafsir_service.dart:20`](file:///lib/features/quran/data/services/quran_tafsir_service.dart#L20) | `const Duration _kApiTimeout = Duration(seconds: 4); // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
+| 5 | [`lib/features/quran/data/services/tajweed_verse_service.dart:31`](file:///lib/features/quran/data/services/tajweed_verse_service.dart#L31) | `static const Duration _kApiTimeout = Duration(seconds: 4); // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
+| 6 | [`lib/features/radio/data/services/quran_radio_service.dart:166`](file:///lib/features/radio/data/services/quran_radio_service.dart#L166) | `timeout: const Duration(seconds: 8), // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
+| 7 | [`lib/features/radio/data/services/quran_radio_service.dart:223`](file:///lib/features/radio/data/services/quran_radio_service.dart#L223) | `Duration timeout = const Duration(seconds: 8), // ui-lint: allow network timeout` | Asynchronous domain timing boundary |
+| 8 | [`lib/shared/widgets/video_player_overlay.dart:183`](file:///lib/shared/widgets/video_player_overlay.dart#L183) | `gradient: LinearGradient( // ui-lint: allow video player overlay scrim` | Asynchronous domain timing boundary |
 
 ---
 
 ## 4. Tracked Asset Inventory & Storage Breakdown
 
-**Total Tracked Asset Size:** 103,982,192 bytes (103.98 MB / 99.17 MiB)
+**Total Tracked Asset Size:** 103,776,576 bytes (103.78 MB / 98.97 MiB)
 
 | Asset Category | Files | Raw Bytes | Decimal (MB) | Binary (MiB) | Functional Role / Offline Invariant |
 |---|---|---|---|---|---|
 | **KFC 604 Page Fonts (.ttf.gz)** | 601 | 66,812,824 | 66.81 MB | 63.72 MiB | King Fahd Complex vector fonts for all 604 Medina Mushaf pages. 100% offline Quran reading. |
 | **Mutun Classical Books (.pdf)** | 16 | 14,948,148 | 14.95 MB | 14.26 MiB | Offline texts for 16 classical Islamic curricula in `assets/pdfs/mutun/`. |
-| **Authentic JSON Datasets** | 12 | 5,968,096 | 5.97 MB | 5.69 MiB | Sunnah Adhkar, Hadith collections, 1,000+ quiz questions, Minhaj Al Muslim. |
+| **Authentic JSON Datasets** | 12 | 5,910,095 | 5.91 MB | 5.64 MiB | Sunnah Adhkar, Hadith collections, 1,000+ quiz questions, Minhaj Al Muslim. |
 | **App Typography Fonts (.ttf)** | 12 | 4,146,024 | 4.15 MB | 3.95 MiB | Arabic typefaces: Cairo (5 weights), Scheherazade New (2 weights), Amiri (2 weights), Hafs. |
 | **Android Native Audio (`res/raw/`)** | 14 | 3,843,496 | 3.84 MB | 3.67 MiB | Native adhan audio files for Android background `AlarmManager` wakeup. |
 | **Flutter Audio (`assets/audio/`)** | 13 | 3,843,350 | 3.84 MB | 3.67 MiB | In-app audio files for foreground prayer listener and test preview. |
-| **Branding Images & Vector Icons** | 203 | 4,420,254 | 4.42 MB | 4.22 MiB | App icons, adaptive icons, splash screens, and UI banners. |
+| **Branding Images & Vector Icons** | 203 | 4,272,639 | 4.27 MB | 4.07 MiB | App icons, adaptive icons, splash screens, and UI banners. |
 
 ### Asset Deduplication Analysis (`assets/audio/` vs `res/raw/`):
 - Exactly 13 audio files (3.84 MB) are mirrored between `assets/audio/` (Flutter runtime) and `android/app/src/main/res/raw/` (Android native).
