@@ -177,26 +177,47 @@ class ReverseGeocodeClient {
 
       final rawBytes = <int>[];
       final completer = Completer<void>();
+      var isOverflow = false;
+
       responseSub = response.listen(
         (chunk) {
+          if (isOverflow) return;
           rawBytes.addAll(chunk);
           if (rawBytes.length > AppPolicy.maxGeocodeBytes) {
+            isOverflow = true;
             responseSub?.cancel();
-            if (!completer.isCompleted) completer.complete();
+            try {
+              activeRequest?.abort();
+            } catch (_) {}
+            if (!completer.isCompleted) {
+              completer.completeError(
+                const FormatException('Online city search payload exceeded raw byte limit'),
+              );
+            }
           }
         },
-        onError: (_) {
-          if (!completer.isCompleted) completer.complete();
+        onError: (e) {
+          if (!completer.isCompleted) completer.completeError(e);
         },
         onDone: () {
-          if (!completer.isCompleted) completer.complete();
+          if (!completer.isCompleted) {
+            if (isOverflow) {
+              completer.completeError(
+                const FormatException('Online city search payload exceeded raw byte limit'),
+              );
+            } else {
+              completer.complete();
+            }
+          }
         },
         cancelOnError: true,
       );
 
       await completer.future.timeout(deadline);
 
-      final payload = utf8.decode(rawBytes, allowMalformed: true);
+      if (isOverflow) return const [];
+
+      final payload = utf8.decode(rawBytes, allowMalformed: false);
       final list = jsonDecode(payload);
       if (list is! List) return const [];
 

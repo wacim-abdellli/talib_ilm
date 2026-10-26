@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## R98 — Enforce Response Byte Limit in Online City Search (26 October 2026)
+- **Scope & Context:**
+  - Implemented Task FIX-01 (AUD-001) from the Independent Audit Report:
+    1. **Strict Response Byte Cap Enforcement (P2):** Remedied response bound handling in `ReverseGeocodeClient.searchCitiesOnline` (`lib/core/services/reverse_geocode_client.dart`). Previously, responses exceeding `AppPolicy.maxGeocodeBytes` (64KB) had their stream cancelled and completer completed normally, but proceeded to decode and parse accumulated/partial bytes into results.
+    2. **Early Socket Abort & Immediate Stream Cutoff:** Added explicit `isOverflow` tracking. When incoming chunks push total bytes past `AppPolicy.maxGeocodeBytes`, `searchCitiesOnline` immediately cancels the stream subscription, aborts the active `HttpClientRequest`, and completes the completer with a `FormatException`.
+    3. **Zero Partial Content Parsing:** Ensured that oversized payloads never call `utf8.decode` or `jsonDecode` and return `const []`. Added strict UTF-8 decoding (`allowMalformed: false`), matching `reverseGeocode`.
+    4. **Comprehensive Network Regression Suite:** Added 5 new deterministic unit tests in `test/network_boundaries_and_security_test.dart` with `FakeHttpHeaders` test doubles, asserting multi-chunk overflow rejection with socket abort, single oversized chunk immediate rejection, valid bounded `VerifiedCity` parsing, query length validation (< 2 characters returns empty with zero network requests), and graceful non-200 HTTP handling.
+- **Files Modified (1 app service + 1 test file + UI_PROGRESS.md):**
+  - `lib/core/services/reverse_geocode_client.dart`: Added overflow tracking, socket abort, error completion, and strict UTF-8 decoding (277 lines, Rule 8 compliant).
+  - `test/network_boundaries_and_security_test.dart`: Added `FakeHttpHeaders` and 5 new unit tests for `searchCitiesOnline` (587 lines, Rule 8 compliant).
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 18.7s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 FontWeight warnings).
+  - `flutter test --no-pub`: 674/674 passed (ran in 3m 00s, +5 new tests).
+  - `flutter build apk --debug --no-pub`: PASSED (ran in 63.0s).
+  - Python readiness suites (49/49 passed across 6 tools).
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+
 ## R97 — Isolate Bundle-Size Analysis Signing Safety Test Fixture (26 October 2026)
 - **Scope & Context:**
   - Implemented Task S01 from the Independent Audit Report:

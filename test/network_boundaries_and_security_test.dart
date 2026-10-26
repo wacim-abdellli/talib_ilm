@@ -8,11 +8,26 @@ import 'package:geolocator/geolocator.dart';
 import 'package:talib_ilm/core/services/location_service.dart';
 import 'package:talib_ilm/core/services/reverse_geocode_client.dart';
 
+class FakeHttpHeaders implements HttpHeaders {
+  final Map<String, List<String>> values = {};
+
+  @override
+  void set(String name, Object value, {bool preserveHeaderCase = false}) {
+    values[name] = [value.toString()];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 /// Test doubles for dart:io HttpClient
 class FakeHttpClientRequest implements HttpClientRequest {
   final HttpClientResponse Function()? onDone;
   final Duration? delay;
   bool isAborted = false;
+
+  @override
+  final HttpHeaders headers = FakeHttpHeaders();
 
   FakeHttpClientRequest({this.onDone, this.delay});
 
@@ -327,6 +342,90 @@ void main() {
       expect(ReverseGeocodeClient.cleanAdministrativeName('State of California'), 'California');
       expect(ReverseGeocodeClient.cleanAdministrativeName('ولاية وهران'), 'وهران');
       expect(ReverseGeocodeClient.cleanAdministrativeName('محافظة القاهرة'), 'القاهرة');
+    });
+
+    test('searchCitiesOnline oversized payload (>64KB) is strictly rejected and returns empty list', () async {
+      final cityJson = jsonEncode([
+        {
+          'lat': '36.75',
+          'lon': '3.05',
+          'display_name': 'Algiers',
+          'address': {'city': 'Algiers', 'country': 'Algeria'},
+        }
+      ]);
+      final chunk1 = utf8.encode(cityJson);
+      final chunk2 = List<int>.filled(70000, 0x20);
+
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            streamChunks: [chunk1, chunk2],
+          );
+
+      final results = await client.searchCitiesOnline('Algiers', clientOverride: fakeHttp);
+
+      expect(results, isEmpty);
+      expect(fakeHttp.lastCreatedRequest?.isAborted, isTrue);
+    });
+
+    test('searchCitiesOnline single oversized chunk (>64KB) is immediately rejected and aborts request', () async {
+      final hugeChunk = utf8.encode('A' * 70000);
+
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            streamChunks: [hugeChunk],
+          );
+
+      final results = await client.searchCitiesOnline('Oran', clientOverride: fakeHttp);
+
+      expect(results, isEmpty);
+      expect(fakeHttp.lastCreatedRequest?.isAborted, isTrue);
+    });
+
+    test('searchCitiesOnline valid bounded response parses VerifiedCity list cleanly', () async {
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 200,
+            body: jsonEncode([
+              {
+                'lat': '36.7525',
+                'lon': '3.042',
+                'display_name': 'Algiers, Wilaya de Alger, Algeria',
+                'address': {
+                  'city': 'Commune de Alger',
+                  'state': 'Wilaya de Alger',
+                  'country': 'Algeria',
+                  'country_code': 'dz',
+                },
+              }
+            ]),
+          );
+
+      final results = await client.searchCitiesOnline('Alger', clientOverride: fakeHttp);
+
+      expect(results.length, 1);
+      final city = results.first;
+      expect(city.name, 'Alger');
+      expect(city.province, 'Alger');
+      expect(city.country, 'Algeria');
+      expect(city.countryCode, 'DZ');
+      expect(city.latitude, closeTo(36.7525, 0.001));
+      expect(city.longitude, closeTo(3.042, 0.001));
+      expect(fakeHttp.lastCreatedRequest?.isAborted ?? false, isFalse);
+    });
+
+    test('searchCitiesOnline query shorter than 2 chars returns empty without dispatching HTTP', () async {
+      final results = await client.searchCitiesOnline('a', clientOverride: fakeHttp);
+      expect(results, isEmpty);
+      expect(fakeHttp.lastRequestedUri, isNull);
+    });
+
+    test('searchCitiesOnline non-200 HTTP response returns empty list gracefully', () async {
+      fakeHttp.responseGenerator = () => FakeHttpClientResponse(
+            statusCode: 503,
+            body: 'Service Unavailable',
+          );
+
+      final results = await client.searchCitiesOnline('Constantine', clientOverride: fakeHttp);
+      expect(results, isEmpty);
     });
   });
 
