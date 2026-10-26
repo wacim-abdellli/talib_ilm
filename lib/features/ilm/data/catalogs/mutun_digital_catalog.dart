@@ -80,6 +80,13 @@ class MutunDigitalCatalog {
       author: 'محمد بن عبد الوهاب',
       totalPages: 147,
     ),
+    'bk_kashf_shubuhat': MutunDigitalEntry(
+      id: 'bk_kashf_shubuhat',
+      shamelaId: 11381,
+      title: 'كشف الشبهات في التوحيد',
+      author: 'محمد بن عبد الوهاب',
+      totalPages: 67,
+    ),
     'bk_manzumah_baiquoni': MutunDigitalEntry(
       id: 'bk_manzumah_baiquoni',
       shamelaId: 8567,
@@ -156,9 +163,27 @@ class MutunDigitalCatalog {
     ),
   };
 
+  static const Map<String, String> _aliases = {
+    'bk_shurut_salah': 'bk_shuroot_salah',
+    'bk_manzooma_bayquniyya': 'bk_manzumah_baiquoni',
+    'bk_manzumah_bayquniyyah': 'bk_manzumah_baiquoni',
+    'bk_ilbiri': 'bk_manzumah_albiri',
+    'bk_ajrumiyya': 'bk_ajrumiyyah',
+    'bk_wasitiyya': 'bk_wasitiyyah',
+    'bk_unwan_alhikam': 'bk_unwan_al_hukm',
+    'bk_rahbiyya': 'bk_rahibiyyah',
+    'bk_tahawiyya': 'bk_aqidah_tahawiyyah',
+  };
+
   /// Lookup digital entry by syllabus book ID
-  static MutunDigitalEntry? getEntry(String bookId) => entries[bookId];
+  static MutunDigitalEntry? getEntry(String bookId) {
+    final entry = entries[bookId];
+    if (entry != null) return entry;
+    final targetId = _aliases[bookId];
+    return targetId != null ? entries[targetId] : null;
+  }
 
   /// Check if digital text is supported
-  static bool hasDigitalText(String bookId) => entries.containsKey(bookId);
+  static bool hasDigitalText(String bookId) =>
+      entries.containsKey(bookId) || _aliases.containsKey(bookId);
 }

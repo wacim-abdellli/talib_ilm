@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_audio_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/catalogs/mutun_curriculum_catalog.dart';
+import 'package:talib_ilm/features/ilm/data/catalogs/mutun_digital_catalog.dart';
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart';
@@ -140,6 +141,10 @@ void main() {
         expect(book.sections.isNotEmpty, isTrue, reason: 'Book $id has no sections');
         expect(book.getParagraph(1), isNotNull, reason: 'Book $id missing paragraph 1');
         expect(book.getParagraph(1)!.text.trim().isNotEmpty, isTrue);
+
+        expect(MutunDigitalCatalog.hasDigitalText(id), isTrue, reason: 'Book $id missing in digital catalog');
+        final digitalEntry = MutunDigitalCatalog.getEntry(id)!;
+        expect(digitalEntry.totalPages, greaterThan(0), reason: 'Book $id has 0 digital pages');
 
         if (syllabusFullAudioBooks.contains(id)) {
           final audioEntry = MutunAudioCatalog.getEntry(id);
