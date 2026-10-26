@@ -361,7 +361,7 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                       // Rewind 5s
                       IconButton(
                         icon: Icon(
-                          Icons.replay_5_rounded,
+                          Icons.forward_5_rounded,
                           color: palette.textMuted,
                           size: AppIcon.md,
                         ),
@@ -422,7 +422,7 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                       // Forward 5s
                       IconButton(
                         icon: Icon(
-                          Icons.forward_5_rounded,
+                          Icons.replay_5_rounded,
                           color: palette.textMuted,
                           size: AppIcon.md,
                         ),
