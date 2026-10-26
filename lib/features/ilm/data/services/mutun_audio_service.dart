@@ -319,32 +319,6 @@ class MutunAudioService {
           durationNotifier.value = loadedDuration;
         }
 
-        // If initialPosition was not provided or was zero, but paragraphIndex > 1:
-        // calculate target and seek BEFORE calling play() so 0:00 never leaks!
-        if ((initialPosition == null || initialPosition == Duration.zero) &&
-            paragraphIndex > 1) {
-          final timestamps = MutunAudioCatalog.getParagraphTimestamps(
-            bookId,
-            reciterId: _selectedReciter.id,
-          );
-          int targetMs = 0;
-          if (timestamps != null &&
-              paragraphIndex >= 1 &&
-              paragraphIndex <= timestamps.length) {
-            targetMs = timestamps[paragraphIndex - 1];
-          } else {
-            final dur = loadedDuration ?? durationNotifier.value;
-            if (dur > Duration.zero && _totalParagraphs > 1) {
-              targetMs =
-                  ((paragraphIndex - 1) / _totalParagraphs * dur.inMilliseconds)
-                      .round();
-            }
-          }
-          if (targetMs > 0) {
-            await _player.seek(_audioPosition(targetMs));
-          }
-        }
-
         await _player.setSpeed(speedNotifier.value);
         await _player.play();
         isLoadingNotifier.value = false;
