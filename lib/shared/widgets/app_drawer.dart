@@ -252,8 +252,7 @@ class _DrawerItem extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: textTheme.body.copyWith(
-                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      style: (isActive ? textTheme.bodyHeavy : textTheme.bodyMedium).copyWith(
                         color: isActive ? palette.primary : palette.text,
                       ),
                     ),

@@ -352,9 +352,8 @@ class FavoriteItemLauncher {
               children: [
                 SelectableText(
                   item.title,
-                  style: textTheme.body.copyWith(
+                  style: textTheme.bodyBold.copyWith(
                     color: palette.text,
-                    fontWeight: FontWeight.w600,
                     height: 1.6,
                   ),
                 ),
@@ -362,9 +361,8 @@ class FavoriteItemLauncher {
                   const SizedBox(height: AppSpace.md),
                   SelectableText(
                     item.subtitle,
-                    style: textTheme.caption.copyWith(
+                    style: textTheme.captionHeavy.copyWith(
                       color: palette.gold,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],

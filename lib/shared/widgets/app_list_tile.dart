@@ -65,8 +65,7 @@ class AppListTile extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: textTheme.body.copyWith(
-                              fontWeight: FontWeight.w600,
+                            style: textTheme.bodyBold.copyWith(
                               color: palette.text,
                             ),
                             maxLines: 1,

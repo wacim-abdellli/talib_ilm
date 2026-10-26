@@ -39,9 +39,8 @@ class ProgressPill extends StatelessWidget {
             const SizedBox(width: AppSpace.xs),
             Text(
               config.label,
-              style: textTheme.caption.copyWith(
+              style: textTheme.captionBold.copyWith(
                 color: config.foreground,
-                fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

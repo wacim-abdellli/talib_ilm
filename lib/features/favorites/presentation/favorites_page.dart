@@ -411,8 +411,7 @@ class _Section extends StatelessWidget {
                       children: [
                         Text(
                           item.title,
-                          style: textTheme.body.copyWith(
-                            fontWeight: FontWeight.w700,
+                          style: textTheme.bodyHeavy.copyWith(
                             color: palette.text,
                           ),
                         ),

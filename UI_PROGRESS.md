@@ -1,5 +1,43 @@
 # UI Progress Log
 
+## R1 Final — Design System Debt Remediation: Typography Weights in Favorites & Shared Families (26 October 2026)
+- **Scope & Context:**
+  - Completed the final font-weight cleanup stage across `lib/features/favorites/` and `lib/shared/` families, eliminating all remaining raw `FontWeight.w[0-9]` literals outside `lib/app/theme/`.
+  - Resolved all 15 remaining warnings across 12 files (Favorites [4 warnings / 3 files], Shared [11 warnings / 9 files]):
+    - Favorites (4 warnings across 3 files):
+      - `favorites_page.dart`: `textTheme.bodyHeavy` (w700).
+      - `favorites_book_entries_view.dart`: `textTheme.bodyHeavy` (w700).
+      - `favorite_item_launcher.dart`: `textTheme.bodyBold` (w600), `textTheme.captionHeavy` (w700).
+    - Shared (11 warnings across 9 files):
+      - `app_drawer.dart`: `(isActive ? textTheme.bodyHeavy : textTheme.bodyMedium)` (w700 / w500).
+      - `app_list_tile.dart`: `textTheme.bodyBold` (w600).
+      - `app_snackbar.dart`: `textTheme.bodySmallBold` (w600), `textTheme.label` (w600).
+      - `app_tag.dart`: `textTheme.captionBold` (w600).
+      - `nav_bar.dart`: `(isSelected ? textTheme.captionHeavy : textTheme.caption)` (w700 / w500).
+      - `notification_badge.dart`: `textTheme.captionHeavy` (w700).
+      - `pdf_viewer_page.dart`: `textTheme.labelBold` (w700).
+      - `progress_pill.dart`: `textTheme.captionBold` (w600).
+      - `video_player_details.dart`: `textTheme.bodySmallBold` (w600), `textTheme.captionBold` (w600).
+  - All 12 modified files remain strictly compliant with line-length constraints (< 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` warnings from 15 down to **0** repo-wide (all 158 original advisory warnings across Adhkar, Prayer, Ilm, Quran, More, Splash, Favorites, and Shared are now 100% resolved).
+- **Files Modified (13 files):**
+  - 3 files in `lib/features/favorites/`
+  - 9 files in `lib/shared/`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 21.7s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 0 WARNs, 8 allow markers / cap 10, advisory FontWeight warnings: 0).
+  - Focused tests: `test/golden/favorites_golden_test.dart`, `test/favorites_page_navigation_test.dart`, `test/app_snackbar_test.dart` PASSED (10/10 passed, Light 1.0 and Dark 1.5, 0 golden diffs).
+  - `flutter test --concurrency=1 --no-pub`: 696/696 passed (serial test run completed in 4m 36s, 100% clean pass with zero failures).
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 41.9s).
+- **Open issues & Release Prerequisites:**
+  - 0 font weight warnings remain across the entire codebase.
+  - Engineering typography cleanup is 100% complete.
+  - Required owner actions prior to Play Store / App Store release:
+    1. Replace placeholder package identifier `com.example.talib_ilm` with production App ID.
+    2. Configure production Android keystore and release signing configuration.
+    3. Host public privacy policy URL and complete Google Play Data Safety declaration.
+
 ## R1 Part 5 — Design System Debt Remediation: Typography Weights in Splash Family (26 October 2026)
 - **Scope & Context:**
   - Remediated design system font weight debt across `lib/features/splash/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`label`, `displayHeavy`, `bodySmallBold`).

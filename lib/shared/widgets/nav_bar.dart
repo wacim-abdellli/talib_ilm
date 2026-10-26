@@ -176,8 +176,7 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   item.label,
-                  style: textTheme.caption.copyWith(
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  style: (isSelected ? textTheme.captionHeavy : textTheme.caption).copyWith(
                     color: isSelected
                         ? palette.primary
                         : palette.textSubtle,

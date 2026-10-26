@@ -270,9 +270,8 @@ class AppSnackbar {
                 Expanded(
                   child: Text(
                     message,
-                    style: textTheme.bodySmall.copyWith(
+                    style: textTheme.bodySmallBold.copyWith(
                       color: palette.text,
-                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -507,7 +506,6 @@ class _ToastWidgetState extends State<_ToastWidget>
                                           key: ValueKey<String>(_message),
                                           style: textTheme.label.copyWith(
                                             color: palette.text,
-                                            fontWeight: FontWeight.w600,
                                           ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,

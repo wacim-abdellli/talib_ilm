@@ -39,9 +39,8 @@ class AppTag extends StatelessWidget {
         heightFactor: 1,
         child: Text(
           label,
-          style: textTheme.caption.copyWith(
+          style: textTheme.captionBold.copyWith(
             color: effectiveFg,
-            fontWeight: FontWeight.w600,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

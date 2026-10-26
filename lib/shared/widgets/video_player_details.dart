@@ -315,9 +315,7 @@ class LessonDetailsSection extends StatelessWidget {
                           children: [
                             Text(
                               nextLesson.title,
-                              style: textTheme.bodySmall.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: textTheme.bodySmallBold,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -417,9 +415,8 @@ class VideoPlayerFallbackView extends StatelessWidget {
                   Text(
                     scholar!,
                     textAlign: TextAlign.center,
-                    style: textTheme.caption.copyWith(
+                    style: textTheme.captionBold.copyWith(
                       color: palette.gold,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

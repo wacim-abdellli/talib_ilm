@@ -338,9 +338,8 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                       ),
                       child: Text(
                         '$_currentPage / $_totalPages',
-                        style: textTheme.label.copyWith(
+                        style: textTheme.labelBold.copyWith(
                           color: palette.text,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

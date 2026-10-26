@@ -92,9 +92,8 @@ class _NotificationBadgeState extends State<NotificationBadge>
                     alignment: Alignment.center,
                     child: Text(
                       widget.count > 99 ? '99+' : '${widget.count}',
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionHeavy.copyWith(
                         color: palette.onPrimary,
-                        fontWeight: FontWeight.w700,
                         height: 1.1,
                       ),
                       textAlign: TextAlign.center,
