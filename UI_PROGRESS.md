@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R1 — Design System Debt Remediation: Typography Weights in Adhkar & Prayer (26 October 2026)
+- **Scope & Context:**
+  - Remediated design system font weight debt across `lib/features/adhkar/` and `lib/features/prayer/` families to eliminate raw `FontWeight.w[0-9]` literals outside `lib/app/theme/`.
+  - Added semantic weight getters to `AppTextTheme` in `lib/app/theme/app_palette.dart` (`displayHeavy`, `titleHeavy`, `titleMedium`, `titleSmallMedium`, `titleSmallHeavy`, `bodyMedium`, `bodyBold`, `bodyHeavy`, `bodySmallMedium`, `bodySmallBold`, `labelMedium`, `labelBold`, `labelHeavy`, `captionRegular`, `captionBold`, `captionHeavy`, `sacredBold`) and canonical `AppFontWeight` constants (`regular`, `medium`, `semiBold`, `bold`, `extraBold`).
+  - Systematically converted raw `FontWeight.w...` calls to semantic `context.text.*` / `textTheme.*` tokens across 27 widget files in Adhkar and Prayer families:
+    - Adhkar: `duas_misc_page.dart`, `adhkar_font_size_sheet.dart`, `adhkar_fahras_sheet.dart`, `rosary_dial.dart`, `dhikr_counter_dial.dart`, `change_dhikr_sheet.dart`, `adhkar_session_card.dart`, `adhkar_session_bottom_dock.dart`, `adhkar_header.dart`, `adhkar_contextual_hero.dart`, `adhkar_session_page.dart`, `adhkar_page.dart`.
+    - Prayer: `next_prayer_card.dart`, `prayer_adhan_section.dart`, `prayer_time_card.dart`, `qibla_page.dart`, `sunnah_fasting_card.dart`, `sunan_rawatib_card.dart`, `prayer_dua_card.dart`, `prayer_calc_section.dart`, `prayer_adjustments_section.dart`, `prayer_header.dart`, `active_location_card.dart`, `prayer_settings_sheet.dart`, `location_settings_sheet.dart`, `prayer_muezzin_selector.dart`, `location_search_results_list.dart`.
+  - All modified files remain strictly compliant with line-length constraints (< 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` literal warnings from 158 down to 94 (64 resolved; adhkar and prayer are now 100% clean of raw font weight literals).
+- **Files Modified (28 files):**
+  - `lib/app/theme/app_palette.dart`
+  - 12 files in `lib/features/adhkar/`
+  - 15 files in `lib/features/prayer/`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 15.5s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, advisory FontWeight warnings dropped from 158 to 94).
+  - `flutter test --no-pub`: 696/696 passed.
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 52.3s).
+- **Open issues & Next steps:**
+  - 94 advisory FontWeight warnings remain in other families (`ilm`, `quran`, `more`, `favorites`), to be audited and cleaned in follow-up bounded stages.
+  - Next roadmap item: Item 2: R2 — Obsidian & Gold branding overhaul / token palette refinements.
+
 ## R6b — First-Run Onboarding, Non-Interactive Location & Pre-Permission Explainer Flow (26 October 2026)
 - **Scope & Context:**
   - Implemented Stage ROUND2 R6b / AUD-P0 addressing the release readiness audit and permission explanation requirements:

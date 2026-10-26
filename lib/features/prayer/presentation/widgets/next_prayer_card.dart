@@ -79,9 +79,8 @@ class NextPrayerCard extends StatelessWidget {
                           const SizedBox(width: AppSpace.sm),
                           Text(
                             AppStrings.prayerNext,
-                            style: context.text.label.copyWith(
+                            style: context.text.labelBold.copyWith(
                               color: palette.textMuted,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -116,9 +115,8 @@ class NextPrayerCard extends StatelessWidget {
                         const SizedBox(width: AppSpace.xs),
                         Text(
                           formatPrayerTime12h(prayer.time),
-                          style: context.text.label.copyWith(
+                          style: context.text.labelHeavy.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.w800,
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
@@ -159,10 +157,9 @@ class NextPrayerCard extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   countdown,
-                  style: context.text.display.copyWith(
+                  style: context.text.displayHeavy.copyWith(
                     color: palette.text,
                     letterSpacing: 2.0,
-                    fontWeight: FontWeight.w800,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -269,7 +266,6 @@ class _HeroActionButton extends StatelessWidget {
                   label,
                   style: context.text.label.copyWith(
                     color: palette.text,
-                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

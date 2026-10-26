@@ -195,9 +195,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
                                   if (res.item.countDescription.isNotEmpty)
                                     Text(
                                       res.item.countDescription,
-                                      style: context.text.caption.copyWith(
+                                      style: context.text.captionBold.copyWith(
                                         color: palette.textMuted,
-                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                 ],

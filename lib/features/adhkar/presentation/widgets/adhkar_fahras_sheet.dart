@@ -177,8 +177,7 @@ class _AdhkarFahrasSheetState extends State<AdhkarFahrasSheet> {
                       Expanded(
                         child: Text(
                           widget.categoryTitle,
-                          style: textTheme.label.copyWith(
-                            fontWeight: FontWeight.w800,
+                          style: textTheme.labelBold.copyWith(
                             color: palette.text,
                           ),
                           maxLines: 1,
@@ -417,8 +416,7 @@ class _FahrasDhikrTile extends StatelessWidget {
                           )
                         : Text(
                             '${origIndex + 1}',
-                            style: textTheme.caption.copyWith(
-                              fontWeight: FontWeight.w800,
+                            style: textTheme.captionHeavy.copyWith(
                               color: isCurrent ? palette.gold : palette.textMuted,
                             ),
                           ),
@@ -447,8 +445,7 @@ class _FahrasDhikrTile extends StatelessWidget {
                               ),
                               child: Text(
                                 item.countDescription,
-                                style: textTheme.caption.copyWith(
-                                  fontWeight: FontWeight.w800,
+                                style: textTheme.captionHeavy.copyWith(
                                   color: palette.gold,
                                 ),
                                 maxLines: 1,
@@ -568,8 +565,7 @@ class _FahrasDhikrTile extends StatelessWidget {
                       ),
                       child: Text(
                         '$currentCount / $targetRepeat',
-                        style: textTheme.caption.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: textTheme.captionHeavy.copyWith(
                           color: isDone ? palette.success : palette.textMuted,
                         ),
                       ),

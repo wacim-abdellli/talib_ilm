@@ -221,9 +221,8 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
                   textDirection: TextDirection.ltr,
                   child: Text(
                     '$total / 3',
-                    style: context.text.caption.copyWith(
+                    style: context.text.captionHeavy.copyWith(
                       color: isAllDone ? palette.gold : palette.text,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -385,13 +384,13 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
                         : _sunnahFastInfo.isTomorrowSunnah
                             ? 'غداً ${_sunnahFastInfo.nextDayName}: صيام مسنون — يُستحب تبييت النية'
                             : 'صيام السنن القادم: ${_sunnahFastInfo.nextDayName} (بعد ${_sunnahFastInfo.daysToNext} أيام)',
-                    style: context.text.caption.copyWith(
+                    style: (_sunnahFastInfo.isTodaySunnah
+                            ? context.text.captionHeavy
+                            : context.text.caption)
+                        .copyWith(
                       color: _sunnahFastInfo.isTodaySunnah
                           ? palette.gold
                           : palette.text,
-                      fontWeight: _sunnahFastInfo.isTodaySunnah
-                          ? FontWeight.bold
-                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -449,9 +448,8 @@ class _SunnahFastingCardState extends State<SunnahFastingCard> {
                 children: [
                   Text(
                     '«صِيَامُ ثَلاثَةِ أَيَّامٍ مِنْ كُلِّ شَهْرٍ صِيَامُ الدَّهْرِ، وَأَيَّامُ الْبِيضِ: صَبِيحَةُ ثَلاثَ عَشْرَةَ وَأَرْبَعَ عَشْرَةَ وَخَمْسَ عَشْرَةَ»',
-                    style: context.text.caption.copyWith(
+                    style: context.text.captionBold.copyWith(
                       color: palette.text,
-                      fontWeight: FontWeight.w600,
                       height: 1.5,
                     ),
                   ),

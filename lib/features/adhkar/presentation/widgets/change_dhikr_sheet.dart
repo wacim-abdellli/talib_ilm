@@ -96,8 +96,7 @@ Future<int?> showChangeDhikrSheet({
                         ),
                         child: Text(
                           '${item.target}x',
-                          style: context.text.caption.copyWith(
-                            fontWeight: FontWeight.w600,
+                          style: context.text.captionBold.copyWith(
                             color: palette.textMuted,
                           ),
                         ),

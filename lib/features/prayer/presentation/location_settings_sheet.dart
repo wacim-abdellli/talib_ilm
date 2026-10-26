@@ -481,9 +481,8 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
           _triggerOnlineSearch(val.trim());
         }
       },
-      style: context.text.body.copyWith(
+      style: context.text.bodyBold.copyWith(
         color: palette.text,
-        fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: 'اكتب اسم مدينتك أو عاصمتك...',

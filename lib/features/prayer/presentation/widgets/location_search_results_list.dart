@@ -228,10 +228,10 @@ class LocationSearchResultsList extends StatelessWidget {
                         Flexible(
                           child: Text(
                             city.name,
-                            style: context.text.body.copyWith(
-                              fontWeight: isCurrent
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
+                            style: (isCurrent
+                                    ? context.text.bodyHeavy
+                                    : context.text.bodyBold)
+                                .copyWith(
                               color: isCurrent ? palette.primary : palette.text,
                             ),
                           ),

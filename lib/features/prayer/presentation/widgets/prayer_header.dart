@@ -125,9 +125,8 @@ class PrayerHeader extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 city,
-                                style: context.text.label.copyWith(
+                                style: context.text.labelBold.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w700,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,

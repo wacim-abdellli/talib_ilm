@@ -127,9 +127,10 @@ class PrayerCalcSection extends StatelessWidget {
                         Expanded(
                           child: Text(
                             entry.value,
-                            style: context.text.body.copyWith(
-                              fontWeight:
-                                  isSelected ? FontWeight.w700 : FontWeight.w500,
+                            style: (isSelected
+                                    ? context.text.bodyHeavy
+                                    : context.text.bodyMedium)
+                                .copyWith(
                               color: isSelected
                                   ? palette.onPrimarySoft
                                   : palette.text,
@@ -216,9 +217,10 @@ class PrayerCalcSection extends StatelessWidget {
                             children: [
                               Text(
                                 title,
-                                style: context.text.body.copyWith(
-                                  fontWeight:
-                                      isSelected ? FontWeight.w700 : FontWeight.w600,
+                                style: (isSelected
+                                        ? context.text.bodyHeavy
+                                        : context.text.bodyBold)
+                                    .copyWith(
                                   color: isSelected
                                       ? palette.onPrimarySoft
                                       : palette.text,

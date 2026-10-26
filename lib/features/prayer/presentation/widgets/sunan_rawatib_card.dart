@@ -168,9 +168,8 @@ class _SunanRawatibCardState extends State<SunanRawatibCard> {
                   textDirection: TextDirection.ltr,
                   child: Text(
                     '$total / 12',
-                    style: context.text.caption.copyWith(
+                    style: context.text.captionHeavy.copyWith(
                       color: isAllDone ? palette.gold : palette.text,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -270,9 +269,11 @@ class _SunnahPill extends StatelessWidget {
               const SizedBox(width: AppSpace.xs),
               Text(
                 label,
-                style: context.text.caption.copyWith(
+                style: (isDone
+                        ? context.text.captionHeavy
+                        : context.text.caption)
+                    .copyWith(
                   color: isDone ? palette.primary : palette.textMuted,
-                  fontWeight: isDone ? FontWeight.bold : FontWeight.w500,
                 ),
               ),
             ],

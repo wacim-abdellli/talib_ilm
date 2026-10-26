@@ -98,10 +98,11 @@ class PrayerTimeCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         item.name,
-                        style: context.text.titleSmall.copyWith(
+                        style: (isCurrent
+                                ? context.text.titleSmallHeavy
+                                : context.text.titleSmallMedium)
+                            .copyWith(
                           color: palette.text,
-                          fontWeight:
-                              isCurrent ? FontWeight.w800 : FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -146,9 +147,8 @@ class PrayerTimeCard extends StatelessWidget {
             children: [
               Text(
                 item.timeLabel,
-                style: context.text.titleSmall.copyWith(
+                style: context.text.titleSmallHeavy.copyWith(
                   color: palette.text,
-                  fontWeight: FontWeight.w800,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
@@ -307,11 +307,10 @@ class PrayerTimeCard extends StatelessWidget {
                               const SizedBox(width: AppSpace.xxs),
                               Text(
                                 shortLabel,
-                                style: context.text.caption.copyWith(
+                                style: context.text.captionBold.copyWith(
                                   color: isActive
                                       ? (isCurrent ? palette.gold : palette.text)
                                       : palette.textSubtle,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(width: AppSpace.xxs),
@@ -372,10 +371,11 @@ class PrayerTimeCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: context.text.caption.copyWith(
+                    style: (isSelected
+                            ? context.text.captionHeavy
+                            : context.text.caption)
+                        .copyWith(
                       color: activeColor,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
                   ),
                   Text(

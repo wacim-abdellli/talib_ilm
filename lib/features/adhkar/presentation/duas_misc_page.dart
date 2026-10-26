@@ -300,8 +300,7 @@ class _DuaCardState extends State<_DuaCard> {
                   child: Center(
                     child: Text(
                       '${widget.index}',
-                      style: context.text.caption.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: context.text.captionHeavy.copyWith(
                         color: palette.gold,
                       ),
                     ),
@@ -319,8 +318,7 @@ class _DuaCardState extends State<_DuaCard> {
                   ),
                   child: Text(
                     'دعاء نبوي',
-                    style: context.text.caption.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: context.text.captionBold.copyWith(
                       color: palette.onPrimarySoft,
                     ),
                   ),
@@ -360,9 +358,8 @@ class _DuaCardState extends State<_DuaCard> {
             child: Text(
               widget.item.arabic,
               textAlign: TextAlign.right,
-              style: context.text.sacred.copyWith(
+              style: context.text.sacredBold.copyWith(
                 color: palette.text,
-                fontWeight: FontWeight.w700,
                 height: 2.1,
               ),
             ),
@@ -402,9 +399,8 @@ class _DuaCardState extends State<_DuaCard> {
                       child: Text(
                         'المصدر: ${widget.item.source}',
                         textAlign: TextAlign.right,
-                        style: context.text.caption.copyWith(
+                        style: context.text.captionBold.copyWith(
                           color: palette.textMuted,
-                          fontWeight: FontWeight.w600,
                           height: 1.5,
                         ),
                       ),
@@ -441,8 +437,7 @@ class _DuaCardState extends State<_DuaCard> {
                   Expanded(
                     child: Text(
                       widget.item.fadl,
-                      style: context.text.caption.copyWith(
-                        fontWeight: FontWeight.w600,
+                      style: context.text.captionBold.copyWith(
                         color: palette.gold,
                         height: 1.4,
                       ),

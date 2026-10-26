@@ -73,9 +73,8 @@ class AdhkarSessionBottomDock extends StatelessWidget {
                       const SizedBox(width: AppSpace.xs),
                       Text(
                         'إعادة',
-                        style: context.text.caption.copyWith(
+                        style: context.text.captionBold.copyWith(
                           color: palette.textMuted,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

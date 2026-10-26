@@ -478,8 +478,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
                     children: [
                       Text(
                         title,
-                        style: context.text.body.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: context.text.bodyHeavy.copyWith(
                           color: isSelected ? palette.primary : palette.text,
                         ),
                       ),

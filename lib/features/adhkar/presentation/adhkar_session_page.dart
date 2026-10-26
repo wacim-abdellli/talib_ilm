@@ -380,8 +380,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                           ),
                           Text(
                             '${(progressRatio * 100).round()}%',
-                            style: context.text.caption.copyWith(
-                              fontWeight: FontWeight.w600,
+                            style: context.text.captionBold.copyWith(
                               color: palette.textMuted,
                             ),
                           ),

@@ -448,10 +448,10 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
                           Flexible(
                             child: Text(
                               item.title,
-                              style: textTheme.body.copyWith(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
+                              style: (isSelected
+                                      ? textTheme.bodyHeavy
+                                      : textTheme.bodyBold)
+                                  .copyWith(
                                 color: isSelected
                                     ? palette.onPrimarySoft
                                     : palette.text,

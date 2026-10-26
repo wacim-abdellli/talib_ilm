@@ -103,7 +103,7 @@ class _RosaryDialState extends State<RosaryDial>
                                 textAlign: TextAlign.center,
                                 style: context.text.sacredLarge.copyWith(
                                   color: palette.text,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: AppFontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: AppSpace.sm),
@@ -134,8 +134,7 @@ class _RosaryDialState extends State<RosaryDial>
                                       const SizedBox(width: AppSpace.xs),
                                       Text(
                                         AppStrings.changeDhikr,
-                                        style: context.text.caption.copyWith(
-                                          fontWeight: FontWeight.w700,
+                                        style: context.text.captionHeavy.copyWith(
                                           color: palette.onPrimarySoft,
                                         ),
                                       ),
@@ -213,8 +212,7 @@ class _RosaryDialState extends State<RosaryDial>
                                       Text(
                                         widget.count.toString(),
                                         textScaler: const TextScaler.linear(2.0),
-                                        style: context.text.display.copyWith(
-                                          fontWeight: FontWeight.w800,
+                                        style: context.text.displayHeavy.copyWith(
                                           height: 1.1,
                                           color: isCompleted
                                               ? palette.gold
@@ -226,8 +224,7 @@ class _RosaryDialState extends State<RosaryDial>
                                         widget.target != null
                                             ? 'الهدف: ${widget.target}'
                                             : 'عدّ حر',
-                                        style: context.text.caption.copyWith(
-                                          fontWeight: FontWeight.w600,
+                                        style: context.text.captionBold.copyWith(
                                           color: isCompleted
                                               ? palette.gold
                                               : palette.textMuted,

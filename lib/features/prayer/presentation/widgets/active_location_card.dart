@@ -76,9 +76,8 @@ class ActiveLocationCard extends StatelessWidget {
                       ),
                       child: Text(
                         'العودة للـ GPS',
-                        style: context.text.caption.copyWith(
+                        style: context.text.captionBold.copyWith(
                           color: palette.primary,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

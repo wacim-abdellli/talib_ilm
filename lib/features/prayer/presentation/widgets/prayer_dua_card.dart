@@ -116,10 +116,9 @@ class PrayerDuaCard extends StatelessWidget {
             ),
             child: Text(
               duaText,
-              style: context.text.body.copyWith(
+              style: context.text.bodyMedium.copyWith(
                 color: palette.text,
                 height: 1.8,
-                fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
@@ -127,9 +126,8 @@ class PrayerDuaCard extends StatelessWidget {
           const SizedBox(height: AppSpace.sm),
           Text(
             '«حَلَّتْ لَهُ شَفَاعَتِي يَوْمَ الْقِيَامَةِ» — صحيح البخاري',
-            style: context.text.caption.copyWith(
+            style: context.text.captionBold.copyWith(
               color: palette.gold,
-              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),

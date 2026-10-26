@@ -397,8 +397,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                     Expanded(
                       child: Text(
                         'التنبيه قبل دخول الوقت',
-                        style: textTheme.body.copyWith(
-                          fontWeight: FontWeight.w600,
+                        style: textTheme.bodyBold.copyWith(
                           color: palette.text,
                         ),
                       ),
@@ -406,8 +405,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                     const SizedBox(width: AppSpace.xs),
                     Text(
                       '${settings.notifyBeforeMinutes.toInt()} دقيقة',
-                      style: textTheme.label.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: textTheme.labelBold.copyWith(
                         color: palette.primary,
                       ),
                     ),
@@ -449,8 +447,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                           children: [
                             Text(
                               'تذكير الإقامة',
-                              style: textTheme.body.copyWith(
-                                fontWeight: FontWeight.w600,
+                              style: textTheme.bodyBold.copyWith(
                                 color: palette.text,
                               ),
                             ),
@@ -493,8 +490,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                           children: [
                             Text(
                               'قلب الهاتف لكتم الصوت والأذان',
-                              style: textTheme.body.copyWith(
-                                fontWeight: FontWeight.w600,
+                              style: textTheme.bodyBold.copyWith(
                                 color: palette.text,
                               ),
                             ),

@@ -173,9 +173,8 @@ class _QiblaPageState extends State<QiblaPage>
                         const SizedBox(width: AppSpace.xs),
                         Text(
                           _currentPosition?.city ?? 'موقعك الحالي',
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: isFacingQibla ? gold : palette.textMuted,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -231,8 +230,7 @@ class _QiblaPageState extends State<QiblaPage>
                               : isFacingQibla
                                   ? 'أنت في اتجاه القبلة تماماً'
                                   : 'وجّه هاتفك نحو الكعبة المشرفة',
-                          style: textTheme.label.copyWith(
-                            fontWeight: FontWeight.w700,
+                          style: textTheme.labelBold.copyWith(
                             color: isFacingQibla && isSensorAvailable ? gold : palette.text,
                           ),
                         ),
@@ -250,8 +248,7 @@ class _QiblaPageState extends State<QiblaPage>
                         children: [
                           Text(
                             '${_qiblaDirection?.toStringAsFixed(0) ?? "--"}°',
-                            style: textTheme.display.copyWith(
-                              fontWeight: FontWeight.w800,
+                            style: textTheme.displayHeavy.copyWith(
                               color: gold,
                               height: 1,
                             ),
@@ -278,8 +275,7 @@ class _QiblaPageState extends State<QiblaPage>
                             _distanceToMakkah != null
                                 ? '${_distanceToMakkah!.toStringAsFixed(0)} كم'
                                 : '--',
-                            style: textTheme.title.copyWith(
-                              fontWeight: FontWeight.w800,
+                            style: textTheme.titleHeavy.copyWith(
                               color: palette.text,
                               height: 1,
                             ),

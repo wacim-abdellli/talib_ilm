@@ -279,9 +279,8 @@ class AdhkarSessionCard extends StatelessWidget {
                             item.fadl,
                             textAlign: TextAlign.center,
                             textScaler: TextScaler.linear(fontScale.clamp(0.85, 1.5)),
-                            style: textTheme.caption.copyWith(
+                            style: textTheme.captionBold.copyWith(
                               color: palette.gold,
-                              fontWeight: FontWeight.w600,
                               height: 1.45,
                             ),
                           ),
@@ -308,9 +307,8 @@ class AdhkarSessionCard extends StatelessWidget {
                           item.source,
                           textAlign: TextAlign.center,
                           textScaler: TextScaler.linear(fontScale.clamp(0.85, 1.4)),
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: palette.textMuted,
-                            fontWeight: FontWeight.w600,
                             height: 1.4,
                           ),
                         ),
@@ -439,9 +437,8 @@ class NavigationPillButton extends StatelessWidget {
               ],
               Text(
                 label,
-                style: context.text.label.copyWith(
+                style: (isHighlighted ? context.text.labelBold : context.text.label).copyWith(
                   color: fgColor,
-                  fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
                 ),
               ),
               if (!isLeadingIcon) ...[

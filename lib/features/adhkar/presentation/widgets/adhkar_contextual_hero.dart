@@ -85,9 +85,8 @@ class AdhkarContextualHero extends StatelessWidget {
                       ),
                       child: Text(
                         'أذكار الوقت الحالي',
-                        style: context.text.caption.copyWith(
+                        style: context.text.captionHeavy.copyWith(
                           color: catColors.fg,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

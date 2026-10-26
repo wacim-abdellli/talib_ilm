@@ -91,9 +91,8 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
               const SizedBox(width: AppSpace.xs),
               Text(
                 label,
-                style: context.text.label.copyWith(
+                style: (isActive ? context.text.labelBold : context.text.labelMedium).copyWith(
                   color: isActive ? activeText : inactiveText,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ],
@@ -274,9 +273,8 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                         const SizedBox(width: AppSpace.xs),
                         Text(
                           '${widget.streak}',
-                          style: context.text.label.copyWith(
+                          style: context.text.labelBold.copyWith(
                             color: palette.gold,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],

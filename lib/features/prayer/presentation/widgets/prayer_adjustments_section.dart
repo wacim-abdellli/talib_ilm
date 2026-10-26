@@ -48,8 +48,7 @@ class PrayerAdjustmentsSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       name,
-                      style: context.text.body.copyWith(
-                        fontWeight: FontWeight.w600,
+                      style: context.text.bodyBold.copyWith(
                         color: palette.text,
                       ),
                     ),
@@ -85,8 +84,7 @@ class PrayerAdjustmentsSection extends StatelessWidget {
                           alignment: Alignment.center,
                           child: Text(
                             adj > 0 ? '+$adj' : '$adj',
-                            style: context.text.label.copyWith(
-                              fontWeight: FontWeight.w700,
+                            style: context.text.labelBold.copyWith(
                               color: adj == 0
                                   ? palette.textMuted
                                   : palette.primary,

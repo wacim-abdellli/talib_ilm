@@ -195,9 +195,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                               const SizedBox(width: AppSpace.xs),
                               Text(
                                 'الافتراضي (100%)',
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.captionBold.copyWith(
                                   color: palette.textMuted,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -269,9 +268,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                       ),
                       child: Text(
                         label,
-                        style: textTheme.caption.copyWith(
+                        style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
                           color: isSelected ? palette.onGold : palette.text,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                         ),
                       ),
                     ),
@@ -307,9 +305,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                       const SizedBox(width: AppSpace.sm),
                       Text(
                         'عرض التشكيل والحركات',
-                        style: textTheme.body.copyWith(
+                        style: textTheme.bodyBold.copyWith(
                           color: palette.text,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -377,9 +374,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                       'كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ، ثَقِيلَتَانِ فِي الْمِيزَانِ',
                       textAlign: TextAlign.center,
                       textScaler: TextScaler.linear(_scale.clamp(0.85, 1.5)),
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionBold.copyWith(
                         color: palette.gold,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -391,9 +387,8 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                     'رواه البخاري ومسلم',
                     textAlign: TextAlign.center,
                     textScaler: TextScaler.linear(_scale.clamp(0.85, 1.4)),
-                    style: textTheme.caption.copyWith(
+                    style: textTheme.captionBold.copyWith(
                       color: palette.textMuted,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

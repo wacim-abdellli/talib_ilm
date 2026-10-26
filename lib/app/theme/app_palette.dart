@@ -949,6 +949,36 @@ class AppTextTheme {
       ),
     );
   }
+
+  /// Semantic weight variants for fine-grained typography
+  TextStyle get displayHeavy => display.copyWith(fontWeight: FontWeight.w800);
+  TextStyle get titleHeavy => title.copyWith(fontWeight: FontWeight.w800);
+  TextStyle get titleMedium => title.copyWith(fontWeight: FontWeight.w600);
+  TextStyle get titleSmallMedium => titleSmall.copyWith(fontWeight: FontWeight.w600);
+  TextStyle get titleSmallHeavy => titleSmall.copyWith(fontWeight: FontWeight.w800);
+  TextStyle get bodyMedium => body.copyWith(fontWeight: FontWeight.w500);
+  TextStyle get bodyBold => body.copyWith(fontWeight: FontWeight.w600);
+  TextStyle get bodyHeavy => body.copyWith(fontWeight: FontWeight.w700);
+  TextStyle get bodySmallMedium => bodySmall.copyWith(fontWeight: FontWeight.w500);
+  TextStyle get bodySmallBold => bodySmall.copyWith(fontWeight: FontWeight.w600);
+  TextStyle get labelMedium => label.copyWith(fontWeight: FontWeight.w500);
+  TextStyle get labelBold => label.copyWith(fontWeight: FontWeight.w700);
+  TextStyle get labelHeavy => label.copyWith(fontWeight: FontWeight.w800);
+  TextStyle get captionRegular => caption.copyWith(fontWeight: FontWeight.w400);
+  TextStyle get captionBold => caption.copyWith(fontWeight: FontWeight.w600);
+  TextStyle get captionHeavy => caption.copyWith(fontWeight: FontWeight.w700);
+  TextStyle get sacredBold => sacred.copyWith(fontWeight: FontWeight.w700);
+}
+
+/// Font weight tokens to prevent raw FontWeight literals outside theme
+class AppFontWeight {
+  AppFontWeight._();
+
+  static const FontWeight regular = FontWeight.w400;
+  static const FontWeight medium = FontWeight.w500;
+  static const FontWeight semiBold = FontWeight.w600;
+  static const FontWeight bold = FontWeight.w700;
+  static const FontWeight extraBold = FontWeight.w800;
 }
 
 /// Spacing tokens

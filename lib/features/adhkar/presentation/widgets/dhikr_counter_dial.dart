@@ -118,8 +118,7 @@ class _DhikrCounterDialState extends State<DhikrCounterDial>
                       child: Text(
                         '${widget.count}',
                         key: ValueKey(widget.count),
-                        style: context.text.display.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: context.text.displayHeavy.copyWith(
                           color: widget.isComplete ? palette.gold : palette.text,
                           height: 1,
                         ),
@@ -131,7 +130,6 @@ class _DhikrCounterDialState extends State<DhikrCounterDial>
                         'من ${widget.total}',
                         style: context.text.label.copyWith(
                           color: palette.textMuted,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -179,9 +177,8 @@ class _DhikrCounterDialState extends State<DhikrCounterDial>
                             const SizedBox(width: AppSpace.xs),
                             Text(
                               'المس للعد',
-                              style: context.text.caption.copyWith(
+                              style: context.text.captionBold.copyWith(
                                 color: palette.textMuted,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
