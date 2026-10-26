@@ -3551,3 +3551,16 @@ FAILED (54 violations)
 
 
 
+## R18 — Prayer Timing and Notification Reliability (2026-10-26)
+- Removed the unsupported blanket 18° Fajr/Isha override for DZ/MA/TN; the app now labels its Algeria option as an estimate, not an official ministry timetable.
+- Hardened prayer and Adhkar scheduling: permission/exact-alarm capability is part of freshness, schedule failures are surfaced, and failed Adhkar schedules retry independently without rebuilding healthy prayer alarms.
+- Added retry-safe foreground alert deduplication and iOS CAF notification resources (13 sounds, each under the platform 30-second limit); full Adhan playback remains available in-app.
+- Compared Algiers against the Ministry’s 1444 calendar for 2022-08-12: estimate is within 3 minutes for all prayers and 1 minute for Isha. This is one-date calibration, not proof of exact government times across cities/dates.
+- Verification on current `main`: `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py` OK (8/10 allow markers); `flutter test --concurrency=1 --no-pub` 702/702 passed. Android debug APK built successfully in 951.2s using a task-specific C: Gradle cache after the configured D: cache ran out of space; native iOS build/device checks were not run on this Windows host.
+### Open issues
+- Exact government timing needs an authorized official per-city/date dataset or service, coverage confirmation for all supported locations, and multi-city/multi-season comparison; do not market the current astronomical estimate as exact.
+- Validate prayer, Friday/Jumua (Friday Dhuhr plus separate Al-Kahf reminder), Iqama, Adhkar, and Adhan audio on real Android 12–15 devices under denied/revoked notification and exact-alarm permissions, Doze, reboot, timezone/DST changes, and app foreground/background/terminated states.
+- Build and run iOS on macOS/device; confirm CAF bundle registration and sound playback in foreground/background/terminated states. iOS notification sounds are intentionally limited to 28 seconds; full-length audio needs foreground playback.
+- Review Android `USE_EXACT_ALARM` eligibility against current Play policy before store configuration; app-level exact-alarm permission availability differs by install/device and must be reflected in user-facing status.
+- Check whether the foreground timer’s in-app audio/instant alert duplicates the OS-scheduled alert when the app is open; choose and test one deliberate foreground/background audio policy.
+
