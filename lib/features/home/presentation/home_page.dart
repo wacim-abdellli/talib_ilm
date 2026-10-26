@@ -40,7 +40,8 @@ import '../data/home_state_controller.dart';
 
 class HomePage extends StatefulWidget {
   final bool isActive;
-  const HomePage({super.key, this.isActive = true});
+  final DateTime? currentTime;
+  const HomePage({super.key, this.isActive = true, this.currentTime});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -48,7 +49,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final LastActivityService _lastActivityService = LastActivityService();
   final LastSharhService _lastSharhService = LastSharhService();
-  final PrayerTimeService _prayerTimeService = PrayerTimeService();
+  late final PrayerTimeService _prayerTimeService;
 
   final ProgressService _progressService = ProgressService();
   bool _isLoading = false;
@@ -57,7 +58,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   DailyDhikrPayload? _dailyDhikr;
 
   // Emotional state controller
-  final HomeStateController _stateController = HomeStateController();
+  late final HomeStateController _stateController;
   Timer? _stateRefreshTimer;
   Key _hadithKey = UniqueKey();
 
@@ -66,14 +67,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     LocationService.onLocationChanged.addListener(_onLocationChanged);
+    _prayerTimeService = PrayerTimeService(
+      now: widget.currentTime != null ? () => widget.currentTime! : null,
+    );
+    _stateController = HomeStateController(prayerService: _prayerTimeService);
     _prayerDay = _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
     _loadAllData();
 
-    // Refresh state and prayer times every minute
-    _stateRefreshTimer = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => _refreshPeriodicData(),
-    );
+    // Refresh state and prayer times periodically in real runtime
+    if (widget.currentTime == null) {
+      _stateRefreshTimer = Timer.periodic(
+        const Duration(minutes: 1),
+        (_) => _refreshPeriodicData(),
+      );
+    }
   }
 
   void _onLocationChanged() {
@@ -311,6 +318,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         city: _prayerDay?.city ?? 'مكة المكرمة',
                         greeting: _getGreeting(),
                         greetingSubtitle: _getGreetingSubtitle(),
+                        currentDate: widget.currentTime,
                         onLocationTap: () => _openLocationSettings(context),
                         onSearchTap: () => _openIlm(context),
                       ),
@@ -487,8 +495,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  DateTime get _effectiveNow => widget.currentTime ?? DateTime.now();
+
   String _getGreeting() {
-    final hour = DateTime.now().hour;
+    final hour = _effectiveNow.hour;
     if (hour >= 5 && hour < 12) return 'أصبحنا وأصبح الملك لله';
     if (hour >= 12 && hour < 17) return 'حيّاك الله يا طالب العلم';
     if (hour >= 17 && hour < 22) return 'أمسينا وأمسى الملك لله';
@@ -496,7 +506,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   String _getGreetingSubtitle() {
-    final hour = DateTime.now().hour;
+    final hour = _effectiveNow.hour;
     if (hour >= 5 && hour < 12) return 'طاب مسعاك في طلب العلم والخير';
     if (hour >= 12 && hour < 17) return 'بارك الله في وقتك وثبّت خطاك';
     if (hour >= 17 && hour < 22) return 'أنار الله دربك بنور العلم والهدى';
@@ -509,11 +519,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     String nextPrayerName;
     DateTime nextPrayerTime;
+    final now = _effectiveNow;
 
     if (day != null) {
       nextPrayerName = day.nextPrayer;
-      nextPrayerTime = day.nextPrayerTime ?? day.prayers[nextPrayerName] ?? DateTime.now();
-      if (nextPrayerTime.isBefore(DateTime.now())) {
+      nextPrayerTime = day.nextPrayerTime ?? day.prayers[nextPrayerName] ?? now;
+      if (nextPrayerTime.isBefore(now)) {
         if (nextPrayerName == AppStrings.prayerFajr) {
           nextPrayerTime = nextPrayerTime.add(const Duration(days: 1));
         }
@@ -521,7 +532,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       isEstimated = false;
     } else {
       isEstimated = true;
-      final now = DateTime.now();
       final (pName, pHour, dayOffset) = switch (now.hour) {
         < 5 => (AppStrings.prayerFajr, 5, 0),
         < 12 => (AppStrings.prayerDhuhr, 12, 0),
@@ -537,6 +547,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return HomeHeroCard(
       nextPrayerName: nextPrayerName,
       nextPrayerTime: nextPrayerTime,
+      currentTime: widget.currentTime,
       isEstimated: isEstimated,
       allPrayers: day?.prayers,
       onTap: () => _openPrayerDetails(context),

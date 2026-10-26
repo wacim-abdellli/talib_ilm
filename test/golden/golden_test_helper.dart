@@ -27,6 +27,10 @@ Future<void> _loadBundledFonts() async {
   }
 }
 
+Future<void> ensureBundledFontsLoaded() async {
+  return _fontsLoaded ??= _loadBundledFonts();
+}
+
 /// Golden test runner helper
 Future<void> testGoldenWidget({
   required WidgetTester tester,
@@ -36,6 +40,7 @@ Future<void> testGoldenWidget({
   double textScale = 1.0,
   Size surfaceSize = const Size(390, 844),
   Finder? finder,
+  bool fullScreen = false,
 }) async {
   // Font/asset I/O must finish outside the widget test's fake clock.
   await tester.runAsync(() => _fontsLoaded ??= _loadBundledFonts());
@@ -63,17 +68,19 @@ Future<void> testGoldenWidget({
         ),
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: Scaffold(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            body: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: widget,
+          child: fullScreen
+              ? widget
+              : Scaffold(
+                  backgroundColor: theme.scaffoldBackgroundColor,
+                  body: SafeArea(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: widget,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     ),
@@ -87,9 +94,11 @@ Future<void> testGoldenWidget({
 
   await expectLater(
     finder ??
-        (find.byType(Scaffold).evaluate().length > 1
-            ? find.byType(Scaffold).last
-            : find.byType(Scaffold)),
+        (fullScreen
+            ? find.byType(widget.runtimeType)
+            : (find.byType(Scaffold).evaluate().length > 1
+                ? find.byType(Scaffold).last
+                : find.byType(Scaffold))),
     matchesGoldenFile('$fileName.png'),
   );
 }

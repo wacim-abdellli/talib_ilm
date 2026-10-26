@@ -1,5 +1,41 @@
 # UI Progress Log
 
+## R6a Follow-Up — Real HomePage Integration & Above-The-Fold Layout Verification (26 October 2026)
+- **Scope & Context:**
+  - Implemented Stage R6a Follow-Up closing the verification/evidence gap identified in audit:
+    1. **Real-Screen Determinism Wiring:** Added optional `currentTime` parameter to `HomePage` (`lib/features/home/presentation/home_page.dart`) passed through to `PrayerTimeService(now: ...)`, `HomeHeroCard(currentTime: ...)`, and `HomeHeader(currentDate: ...)`. Guaranteed deterministic greeting, prayer times, countdown, and timeline calculations without altering models, services, routes, or Arabic strings. Disabled runtime periodic state refresh timer when `currentTime` is supplied to ensure zero async timer leaks during widget tests.
+    2. **Real HomePage Golden Test Suite:** Replaced standalone sample Column in `test/golden/home_golden_test.dart` with true integrated `HomePage` golden tests:
+       - `home_above_the_fold_light_1_0.png` (Light mode @ 1.0x text scale, full screen 390x844)
+       - `home_above_the_fold_dark_1_5.png` (Dark mode @ 1.5x text scale, full screen 390x844)
+       - Visually inspected rendered reference images; confirmed Cairo/Amiri font typography, RTL layout, contrast, and clean fit of all four modules.
+    3. **Bounded Integrated Hierarchy Test Suite:** Added `test/home_page_hierarchy_test.dart` programmatically asserting:
+       - Module 1 (`HomeHeroCard`) is below `HomeHeader`.
+       - Modules 2 & 3 (`LearningPulseCard` / `ContinueData`) are below `HomeHeroCard`.
+       - Module 4 (`HomeQuickActions`) is below `LearningPulseCard`.
+       - Mathematical above-the-fold fit: at text scale 1.0, Module 4 bottom boundary is measured at 780.6px, strictly <= 844.0px viewport height (63.4px clearance before fold).
+       - Resilience across text scales 1.0, 1.5, and 2.0 with 0 layout overflows in above-the-fold modules.
+    4. **Audit Test Ledger Correction:** Corrected earlier R6a test total in `UI_PROGRESS.md` from 679/679 to 682/682 to match retained test logs.
+- **Files Modified (1 app page + 2 test helper/golden files + 1 new integration test file + 2 updated golden images + UI_PROGRESS.md):**
+  - `lib/features/home/presentation/home_page.dart`: Added deterministic `currentTime` wiring (594 lines, Rule 8 compliant).
+  - `test/golden/golden_test_helper.dart`: Added optional `fullScreen` parameter and `ensureBundledFontsLoaded` helper (104 lines, Rule 8 compliant).
+  - `test/golden/home_golden_test.dart`: Updated to pump real `HomePage` and seed deterministic data (297 lines, Rule 8 compliant).
+  - `test/home_page_hierarchy_test.dart`: New integration test asserting module hierarchy order and layout bounds (178 lines, Rule 8 compliant).
+  - `test/golden/goldens/home_above_the_fold_light_1_0.png`: Updated with real `HomePage` rendering.
+  - `test/golden/goldens/home_above_the_fold_dark_1_5.png`: Updated with real `HomePage` rendering.
+  - `UI_PROGRESS.md`: Recorded follow-up stage and corrected R6a test count.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 7.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/golden/home_golden_test.dart --no-pub`: 10/10 passed.
+  - `flutter test test/golden --no-pub`: 47/47 passed.
+  - `flutter test test/home_page_hierarchy_test.dart --no-pub`: 3/3 passed.
+  - `flutter test --no-pub`: 686/686 passed.
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 82.4s).
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+  - Next stage: Check requirements and scope for ROUND2 R6b (first-run onboarding & pre-permission sheets), then proceed in a separate bounded session.
+
 ## R6a / FIX-02 — Home First-Screen Above-The-Fold Hierarchy Alignment (26 October 2026)
 - **Scope & Context:**
   - Implemented Stage FIX-02 / ROUND2 R6a:
@@ -25,7 +61,7 @@
   - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
   - `flutter test test/golden/home_golden_test.dart --no-pub`: 10/10 passed.
   - `flutter test test/golden --no-pub`: 47/47 passed.
-  - `flutter test --no-pub`: 679/679 passed.
+  - `flutter test --no-pub`: 682/682 passed.
   - `flutter build apk --debug --no-pub`: PASSED.
 - **Open issues & Next steps:**
   - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.

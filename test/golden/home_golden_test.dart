@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:talib_ilm/app/theme/app_palette.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:talib_ilm/core/services/asset_service.dart';
+import 'package:talib_ilm/features/adhkar/data/adhkar_service.dart';
+import 'package:talib_ilm/features/hadith/data/services/hadith_service.dart';
+import 'package:talib_ilm/features/home/presentation/home_page.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/home_hero_card.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/home_header.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/home_quick_actions.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/quick_action_button.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/continue_learning_card.dart';
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
-import 'package:talib_ilm/shared/widgets/section_header.dart';
 import 'golden_test_helper.dart';
 
 void main() {
@@ -223,59 +227,42 @@ void main() {
       );
     });
 
-    testWidgets('HomeAboveTheFold hierarchy - light 1.0 and dark 1.5', (tester) async {
-      final baseTime = DateTime(2026, 10, 24, 11, 5);
-      final book = IlmBook(
-        id: '1',
-        title: 'الأصول الثلاثة وأدلتها',
-        author: 'محمد بن عبد الوهاب',
-        subject: 'العقيدة',
-        level: '1',
-        description: 'متن في بيان الأصول الثلاثة',
-        totalPages: 42,
-        shuruh: const [],
-      );
+    void seedDeterministicData() {
+      SharedPreferences.setMockInitialValues({
+        'last_activity_book': 'bk_adhkar_adab',
+        'last_activity_tab': 'mutn',
+        'pdf_page:bk_adhkar_adab:mutn:page': 14,
+        'pdf_page:bk_adhkar_adab:mutn:total': 60,
+        'book_progress': jsonEncode({
+          'bk_adhkar_adab': {
+            'bookId': 'bk_adhkar_adab',
+            'bookTitle': 'الآداب والأذكار',
+            'currentPage': 14,
+            'totalPages': 60,
+            'percent': 23.3,
+            'totalLessons': 10,
+            'completedLessons': 2,
+          }
+        }),
+        'manual_location_enabled': true,
+        'manual_city': 'مكة المكرمة',
+        'manual_province': 'مكة المكرمة',
+        'manual_country': 'المملكة العربية السعودية',
+        'manual_country_code': 'SA',
+        'manual_lat': 21.4225,
+        'manual_lon': 39.8262,
+      });
+    }
 
-      final continueData = ContinueData(
-        book: book,
-        tab: 'mutn',
-        page: 14,
-        total: 42,
-        progressPercent: 33,
-      );
+    testWidgets('Real HomePage above-the-fold hierarchy - light 1.0', (tester) async {
+      seedDeterministicData();
+      await tester.runAsync(() async {
+        await HadithService().getAllHadiths();
+        await AthkarService().loadCatalog();
+        await AssetService.loadMutunProgram();
+      });
 
-      final widget = SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            HomeHeroCard(
-              currentTime: baseTime,
-              nextPrayerName: 'الظهر',
-              nextPrayerTime: baseTime.add(const Duration(hours: 1, minutes: 25)),
-              allPrayers: {
-                'الفجر': baseTime.subtract(const Duration(hours: 6)),
-                'الظهر': baseTime.add(const Duration(hours: 1, minutes: 25)),
-                'العصر': baseTime.add(const Duration(hours: 4)),
-                'المغرب': baseTime.add(const Duration(hours: 7)),
-                'العشاء': baseTime.add(const Duration(hours: 8, minutes: 30)),
-              },
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const SectionHeader(
-              title: 'زاد طالب العلم',
-              padding: EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-            ),
-            LearningPulseCard(data: continueData),
-            const SizedBox(height: AppSpace.xl),
-            HomeQuickActions(
-              onOpenQuran: () {},
-              onOpenIlm: () {},
-              onOpenAdhkar: () {},
-              onOpenQibla: () {},
-            ),
-          ],
-        ),
-      );
+      final widget = HomePage(currentTime: DateTime(2026, 10, 24, 11, 5));
 
       await testGoldenWidget(
         tester: tester,
@@ -283,7 +270,19 @@ void main() {
         fileName: 'goldens/home_above_the_fold_light_1_0',
         isDark: false,
         textScale: 1.0,
+        fullScreen: true,
       );
+    });
+
+    testWidgets('Real HomePage above-the-fold hierarchy - dark 1.5', (tester) async {
+      seedDeterministicData();
+      await tester.runAsync(() async {
+        await HadithService().getAllHadiths();
+        await AthkarService().loadCatalog();
+        await AssetService.loadMutunProgram();
+      });
+
+      final widget = HomePage(currentTime: DateTime(2026, 10, 24, 11, 5));
 
       await testGoldenWidget(
         tester: tester,
@@ -291,6 +290,7 @@ void main() {
         fileName: 'goldens/home_above_the_fold_dark_1_5',
         isDark: true,
         textScale: 1.5,
+        fullScreen: true,
       );
     });
   });
