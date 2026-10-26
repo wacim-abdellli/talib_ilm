@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R1 Part 4 — Design System Debt Remediation: Typography Weights in More Family (26 October 2026)
+- **Scope & Context:**
+  - Remediated design system font weight debt across `lib/features/more/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`labelBold`, `captionBold`, `captionHeavy`).
+  - Resolved all 6 warnings (7 literal occurrences) across 3 presentation files in `lib/features/more/`:
+    - `more_page.dart` (2): `captionBold` for theme selector pill, `captionHeavy` for version header footer.
+    - `more_section_card.dart` (1): `labelBold` for section titles.
+    - `theme_selector_sheet.dart` (4): `labelBold` for section headers and option titles, `captionHeavy`/`captionBold` for widget theme preview chip.
+  - All 3 modified dart files remain strictly compliant with line-length constraints (< 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` warnings from 25 down to 18 (7 literal occurrences resolved; `lib/features/more/` is now 100% clean of raw font weight literals).
+- **Files Modified (4 files):**
+  - 3 files in `lib/features/more/`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 32.4s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, advisory FontWeight warnings dropped from 25 to 18).
+  - Focused golden & page tests: `test/more_page_test.dart` and `test/golden/more_golden_test.dart` PASSED (3/3 passed, 0 golden diffs).
+  - `flutter test --no-pub`: 695/696 passed in parallel suite (with benchmark test `test/runtime_performance_benchmarks_test.dart` isolated verified 7/7 PASSED in 1s without CPU contention).
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 66.7s).
+- **Open issues & Next steps:**
+  - 18 advisory FontWeight warnings remain in remaining families (`splash` [3], `favorites` [4], `shared` [11]).
+  - Next bounded stage: Part 5 targeting `lib/features/splash/`.
+
 ## R1 Part 3 — Design System Debt Remediation: Typography Weights in Quran Family (26 October 2026)
 - **Scope & Context:**
   - Remediated design system font weight debt across `lib/features/quran/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`captionBold`, `captionHeavy`, `labelBold`, `labelMedium`, `bodySmallBold`, `bodySmallMedium`).

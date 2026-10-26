@@ -69,8 +69,7 @@ class MoreSectionCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         section.title,
-                        style: textTheme.label.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: textTheme.labelBold.copyWith(
                           color: palette.text,
                         ),
                       ),

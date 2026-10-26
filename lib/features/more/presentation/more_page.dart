@@ -373,9 +373,8 @@ class _MorePageState extends State<MorePage> {
                               ),
                               child: Text(
                                 themeService.themeDisplayName,
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.captionBold.copyWith(
                                   color: palette.textMuted,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -420,8 +419,7 @@ class _MorePageState extends State<MorePage> {
                                   const SizedBox(width: AppSpace.sm),
                                   Text(
                                     'طالب علم • الإصدار 2.0.0',
-                                    style: textTheme.caption.copyWith(
-                                      fontWeight: FontWeight.w700,
+                                    style: textTheme.captionHeavy.copyWith(
                                       color: palette.textMuted,
                                     ),
                                   ),

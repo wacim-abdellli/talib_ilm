@@ -60,8 +60,7 @@ class ThemeOption extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: textTheme.label.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: textTheme.labelBold.copyWith(
                     color: palette.text,
                   ),
                 ),
@@ -132,8 +131,7 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
             // ── Section 1: App Theme ──
             Text(
               'مظهر التطبيق',
-              style: textTheme.label.copyWith(
-                fontWeight: FontWeight.w700,
+              style: textTheme.labelBold.copyWith(
                 color: palette.textMuted,
               ),
             ),
@@ -179,8 +177,7 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
             // ── Section 2: Home Screen Widget Theme ──
             Text(
               'مظهر أداة الشاشة الرئيسية',
-              style: textTheme.label.copyWith(
-                fontWeight: FontWeight.w700,
+              style: textTheme.labelBold.copyWith(
                 color: palette.textMuted,
               ),
             ),
@@ -266,8 +263,7 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   label,
-                  style: textTheme.caption.copyWith(
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
                     color: isSelected ? palette.primary : palette.text,
                   ),
                   maxLines: 1,
