@@ -8,6 +8,7 @@ import '../../core/services/prayer_schedule_service.dart';
 import 'app_button.dart';
 import 'app_dialog.dart';
 import 'app_snackbar.dart';
+import 'notification_pre_permission_sheet.dart';
 
 /// Dignified Calm Scholar onboarding dialog prompting the user
 /// on first app launch to authorize prayer notifications, adhan alarms, and athkar reminders.
@@ -18,16 +19,7 @@ class NotificationOnboardingDialog extends StatelessWidget {
 
   /// Checks if the onboarding has been shown before, and displays it if not.
   static Future<void> checkAndShow(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasShown = prefs.getBool(prefKey) ?? false;
-    if (hasShown) return;
-
-    if (!context.mounted) return;
-    await AppDialog.show(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) => const NotificationOnboardingDialog(),
-    );
+    await NotificationPrePermissionSheet.checkAndShow(context);
   }
 
   @override

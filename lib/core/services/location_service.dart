@@ -18,9 +18,7 @@ class LocationService {
   static const _defaultCity = AppStrings.locationDefaultCity;
   static const _defaultLat = 21.3891;
   static const _defaultLon = 39.8579;
-
   static const _keyAllowRemoteGeocoding = 'allow_remote_geocoding';
-
   static const _keyCity = 'last_city';
   static const _keyProvince = 'last_province';
   static const _keyCountry = 'last_country';
@@ -28,7 +26,6 @@ class LocationService {
   static const _keyLat = 'last_lat';
   static const _keyLon = 'last_lon';
   static const _keyIsVerifiedGps = 'last_is_verified_gps';
-
   static const _keyManualEnabled = 'manual_location_enabled';
   static const _keyManualCity = 'manual_city';
   static const _keyManualProvince = 'manual_province';
@@ -69,13 +66,13 @@ class LocationService {
     _lastGpsRefreshTime = null;
   }
 
-  /// Retrieves the location strictly prioritizing phone hardware GPS automatically:
+  /// Retrieves the location strictly non-interactively by default (autoPrompt = false).
   /// 1. In-memory fast cache (zero allocation)
   /// 2. Manual user override (if user explicitly selected a city/coordinates)
-  /// 3. Cached verified GPS fix from previous satellite acquisition (instant 0ms startup)
-  /// 4. Phone hardware GPS satellites (with background refresh)
+  /// 3. Cached verified GPS fix from previous satellite acquisition
+  /// 4. Phone hardware GPS (if permission already granted)
   /// 5. Default fallback (Makkah)
-  Future<LocationResult> getLocation({bool autoPrompt = true}) async {
+  Future<LocationResult> getLocation({bool autoPrompt = false}) async {
     final prefs = await SharedPreferences.getInstance();
 
     // Clean up any stale unverified IP estimates from previous app sessions
@@ -107,7 +104,7 @@ class LocationService {
       return saved;
     }
 
-    // 3. Hardware GPS: automatically requested & acquired if no verified fix exists yet
+    // 3. Hardware GPS: acquired if permission is granted, never prompted unless autoPrompt is true
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied && autoPrompt) {
@@ -184,6 +181,11 @@ class LocationService {
     _isGpsRefreshing = true;
     _lastGpsRefreshTime = DateTime.now();
     try {
+      final permission = await Geolocator.checkPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
       final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!isServiceEnabled) return;
       final position = await Geolocator.getCurrentPosition(

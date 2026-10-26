@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
+import '../../onboarding/presentation/onboarding_page.dart';
 
 /// Luxury Islamic landing splash screen with illuminated Basmalah,
 /// sacred 12-point rosette emblem, fluid breathing animation,
@@ -91,11 +93,20 @@ class _SplashPageState extends State<SplashPage>
     _navigated = true;
     _timer?.cancel();
     _timer = null;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      final hasCompletedOnboarding =
+          prefs.getBool(OnboardingPage.prefKey) ?? false;
+      if (!mounted) return;
+
+      final targetPage = hasCompletedOnboarding
+          ? const AppShell()
+          : const OnboardingPage();
+
       Navigator.of(context).pushReplacement(
         buildFadeRoute(
-          page: const AppShell(),
+          page: targetPage,
           duration: AppMotion.debounce,
         ),
       );

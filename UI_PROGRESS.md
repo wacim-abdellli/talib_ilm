@@ -1,5 +1,68 @@
 # UI Progress Log
 
+## R6b — First-Run Onboarding, Non-Interactive Location & Pre-Permission Explainer Flow (26 October 2026)
+- **Scope & Context:**
+  - Implemented Stage ROUND2 R6b / AUD-P0 addressing the release readiness audit and permission explanation requirements:
+    1. **Non-Interactive Location & Zero-Prompt Cold Boot:** Changed `LocationService.getLocation({bool autoPrompt = false})` to non-interactive by default. Cold starts, background prayer notifications scheduling, and home widget updates now run without triggering OS permission dialogs. When permissions are denied, calculations gracefully fall back to the saved city or default (Makkah Al-Mukarramah).
+    2. **Background GPS Refresh Safeguard:** Added an explicit `Geolocator.checkPermission()` guard in `LocationService._backgroundGpsRefresh` to ensure background workers abort silently if permissions are revoked, never invoking hardware sensors or prompting.
+    3. **Location Pre-Permission Explainer Sheet (`LocationPrePermissionSheet`):** Built a dedicated `AppSheet` explaining the astronomical and Qibla utility of location and its 100% on-device local privacy model before the system permission dialog is displayed. Provides an affirmative action ("السماح بالوصول للموقع"), a manual catalog selection option ("اختيار المدينة يدوياً من القائمة"), and a graceful deferral path ("لاحقاً (الاعتماد على مكة المكرمة)") leaving all prayer and app functions completely usable.
+    4. **Notification Pre-Permission Explainer Sheet (`NotificationPrePermissionSheet`):** Created a unified `AppSheet` presenting Adhan, pre-prayer alerts, and daily Athkar benefits before requesting notification permissions. Delegated `NotificationOnboardingDialog.checkAndShow` to this sheet for design consistency while maintaining backward compatibility with `NotificationOnboardingDialog.prefKey`.
+    5. **Qibla Non-Interactive Entry & Fallback:** In `QiblaPage`, replaced the unprompted `Permission.location.request()` in `initState` with a non-interactive status query. When permission is denied, it renders an explanatory screen with options to grant permission or calculate Qibla direction from the user's manual/saved city without requiring GPS.
+    6. **First-Run Onboarding (`OnboardingPage`):** Implemented an accessible, luxury 3-page onboarding flow:
+       - Page 1: "القرآن الكريم والمتون العلمية" (Sacred text, Mutun, scholarly reading).
+       - Page 2: "مواقيت الصلاة والأذان الشريف" (Astronomical calculations, Adhan, Qibla compass).
+       - Page 3: "حصن المسلم والورد اليومي" (Authentic Athkar, interactive Tasbeeh, Khatma progress).
+       - Includes skip ("تخطي") on all pages and completion button ("ابدأ الاستخدام") persisted once in `SharedPreferences` (`has_completed_first_run_onboarding`).
+    7. **Splash Route Resolution (`SplashPage`):** In `_proceedToHome()`, queries `has_completed_first_run_onboarding` to route new users to `OnboardingPage` and returning users to `AppShell`.
+    8. **Owner Review of New Arabic Strings:**
+       - Location Explainer:
+         - 'تحديد الموقع لمواقيت الصلاة والقبلة'
+         - 'لحساب مواقيت الصلاة بدقة تامة وتحديد اتجاه القبلة، نلتمس إذن الوصول إلى موقع هاتفك الجغرافي:'
+         - 'حساب مواقيت الصلاة بدقة' / 'حساب أوقات الصلوات الخمس بدقة فلكية تامة وفق إحداثيات موقعك الفعلي'
+         - 'توجيه بوصلة القبلة' / 'تحديد اتجاه الكعبة المشرفة وحساب المسافة بدقة نحو مكة المكرمة'
+         - 'خصوصية تامة وأمان' / 'تُجرى الحسابات محلياً 100% على هاتفك، ولا يتم إرسال أو تتبع موقعك'
+         - 'السماح بالوصول للموقع'
+         - 'اختيار المدينة يدوياً من القائمة'
+         - 'لاحقاً (الاعتماد على مكة المكرمة)'
+       - Onboarding:
+         - 'القرآن والعلم' / 'القرآن الكريم والمتون العلمية'
+         - 'المصحف الشريف بالرسم العثماني بروايتين' / 'متون العقيدة والفقه والحديث واللغة' / 'شروح صوتية ومقروءة للمتون المعتمدة'
+         - 'المواقيت والقبلة' / 'مواقيت الصلاة والأذان الشريف'
+         - 'حساب فلكي دقيق لمواقيت الصلوات الخمس' / 'تنبيهات الأذان والتذكير المسبق والإقامة' / 'بوصلة القبلة الدقيقة مع المسافة إلى مكة'
+         - 'الأذكار والورد' / 'حصن المسلم والورد اليومي'
+         - 'أذكار اليوم والليلة من صحيح السنة المطهرة' / 'مسبحة إلكترونية تفاعلية مع عداد الإنجاز' / 'متابعة الورد اليومي وختمات القرآن الكريم'
+         - 'التالي' / 'ابدأ الاستخدام' / 'تخطي'
+       - Qibla Fallback:
+         - 'استخدام المدينة المحددة في التطبيق'
+    9. **Golden Test Suite Expansion:** Generated reference goldens for `OnboardingPage` (`onboarding_page_light_1_0.png` and `onboarding_page_dark_1_5.png`); inspected and confirmed typography, contrast, RTL alignment, and layout resilience.
+- **Files Modified / Created (3 new UI files + 5 modified app/widget files + 2 test files + 2 new golden images + UI_PROGRESS.md):**
+  - `lib/core/services/location_service.dart`: Non-interactive default `autoPrompt = false`, background GPS refresh permission check, 598 lines (Rule 8 compliant).
+  - `lib/shared/widgets/location_pre_permission_sheet.dart`: New pre-permission explainer sheet for location (168 lines, Rule 8 compliant).
+  - `lib/shared/widgets/notification_pre_permission_sheet.dart`: New pre-permission explainer sheet for notifications (175 lines, Rule 8 compliant).
+  - `lib/shared/widgets/notification_onboarding_dialog.dart`: Delegated `checkAndShow` to `NotificationPrePermissionSheet` (165 lines, Rule 8 compliant).
+  - `lib/features/onboarding/presentation/onboarding_page.dart`: New 3-page first-run onboarding screen (334 lines, Rule 8 compliant).
+  - `lib/features/splash/presentation/splash_page.dart`: First-run routing to `OnboardingPage` vs `AppShell` (421 lines, Rule 8 compliant).
+  - `lib/features/prayer/presentation/location_settings_sheet.dart`: Shows `LocationPrePermissionSheet` before requesting GPS permissions (555 lines, Rule 8 compliant).
+  - `lib/features/prayer/presentation/qibla_page.dart`: Non-interactive status check on entry, explainer view before requesting permission, manual city fallback (481 lines, Rule 8 compliant).
+  - `test/first_run_permission_flow_test.dart`: 8 unit and widget tests for cold start, deferral, pre-permission explainers, Qibla fallback, and onboarding persistence.
+  - `test/golden/onboarding_golden_test.dart`: 2 golden tests for light 1.0 and dark 1.5.
+  - `test/golden/goldens/onboarding_page_light_1_0.png`: Reference golden.
+  - `test/golden/goldens/onboarding_page_dark_1_5.png`: Reference golden.
+  - `UI_PROGRESS.md`: Recorded stage documentation and owner string registry.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 7.6s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/first_run_permission_flow_test.dart --no-pub`: 8/8 passed.
+  - `flutter test test/golden/onboarding_golden_test.dart --no-pub`: 2/2 passed.
+  - `flutter test test/golden --no-pub`: 49/49 passed.
+  - `flutter test --no-pub`: 696/696 passed.
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 80.2s).
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Review and approve new Arabic onboarding and pre-permission strings listed above.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+  - Next stage: Proceed with remaining release remediation tasks (e.g., release documentation reconciliation and audit status tracking).
+
 ## R6a Follow-Up — Real HomePage Integration & Above-The-Fold Layout Verification (26 October 2026)
 - **Scope & Context:**
   - Implemented Stage R6a Follow-Up closing the verification/evidence gap identified in audit:

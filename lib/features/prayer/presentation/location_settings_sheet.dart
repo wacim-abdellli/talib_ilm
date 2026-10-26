@@ -14,6 +14,7 @@ import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
+import '../../../shared/widgets/location_pre_permission_sheet.dart';
 import 'widgets/active_location_card.dart';
 import 'widgets/location_search_results_list.dart';
 import 'widgets/remote_geocoding_consent_tile.dart';
@@ -108,9 +109,12 @@ class _LocationSettingsSheetState extends State<LocationSettingsSheet> {
   Future<void> _refreshGps() async {
     HapticFeedback.mediumImpact();
 
-    // 1. Native permission check — prompts the Android system dialog if not yet decided
+    // 1. Native permission check with pre-permission explainer
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      final allowed = await LocationPrePermissionSheet.show(context);
+      if (allowed != true) return;
       permission = await Geolocator.requestPermission();
     }
 

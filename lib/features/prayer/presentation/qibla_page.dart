@@ -49,6 +49,14 @@ class _QiblaPageState extends State<QiblaPage>
   }
 
   Future<void> _checkPermissionsAndStart() async {
+    final status = await Permission.location.status;
+    if (status.isGranted) {
+      if (mounted) setState(() => _hasPermission = true);
+      _initLocation();
+    }
+  }
+
+  Future<void> _requestPermissions() async {
     final status = await Permission.location.request();
     if (status.isGranted) {
       if (mounted) setState(() => _hasPermission = true);
@@ -449,10 +457,20 @@ class _QiblaPageState extends State<QiblaPage>
                   height: 1.6,
                 ),
               ),
-              const SizedBox(height: AppSpace.xxxl),
+              const SizedBox(height: AppSpace.xxl),
               AppButton(
                 label: 'منح إذن الموقع',
-                onPressed: _checkPermissionsAndStart,
+                icon: Icons.check_circle_rounded,
+                onPressed: _requestPermissions,
+              ),
+              const SizedBox(height: AppSpace.md),
+              AppButton.text(
+                label: 'استخدام المدينة المحددة في التطبيق',
+                icon: Icons.location_city_rounded,
+                onPressed: () {
+                  setState(() => _hasPermission = true);
+                  _initLocation();
+                },
               ),
             ],
           ),
