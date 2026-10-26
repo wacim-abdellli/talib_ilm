@@ -1,5 +1,27 @@
 # UI Progress Log
 
+## R1 Part 5 — Design System Debt Remediation: Typography Weights in Splash Family (26 October 2026)
+- **Scope & Context:**
+  - Remediated design system font weight debt across `lib/features/splash/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`label`, `displayHeavy`, `bodySmallBold`).
+  - Resolved all 3 warnings in `lib/features/splash/presentation/splash_page.dart`:
+    - Line 158: `textTheme.label.copyWith` (using canonical w600 without redundant literal) for greeting banner.
+    - Line 262: `textTheme.displayHeavy.copyWith` (w800) for app title 'طَالِبُ العِلْمِ'.
+    - Line 272: `textTheme.bodySmallBold.copyWith` (w600) for sacred tagline 'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ الشَّرْعِيِّ'.
+  - `splash_page.dart` remains strictly compliant with line-length constraints (421 lines < 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` warnings from 18 down to 15 (3 resolved; `lib/features/splash/` is now 100% clean of raw font weight literals).
+- **Files Modified (2 files):**
+  - `lib/features/splash/presentation/splash_page.dart`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 36.4s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, advisory FontWeight warnings dropped from 18 to 15).
+  - Focused golden tests: `test/golden/splash_golden_test.dart` PASSED (2/2 passed, Light 1.0 and Dark 1.5, 0 golden diffs).
+  - `flutter test --no-pub`: 696/696 passed (ran in 2m 55s, 100% clean pass across entire test suite).
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 51.9s).
+- **Open issues & Next steps:**
+  - 15 advisory FontWeight warnings remain in remaining families (`favorites` [4], `shared` [11]).
+  - Next bounded stage: Part 6 targeting `lib/features/favorites/`.
+
 ## R1 Part 4 — Design System Debt Remediation: Typography Weights in More Family (26 October 2026)
 - **Scope & Context:**
   - Remediated design system font weight debt across `lib/features/more/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`labelBold`, `captionBold`, `captionHeavy`).

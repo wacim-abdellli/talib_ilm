@@ -157,7 +157,6 @@ class _SplashPageState extends State<SplashPage>
                             textAlign: TextAlign.center,
                             style: textTheme.label.copyWith(
                               color: palette.gold,
-                              fontWeight: FontWeight.w600,
                               letterSpacing: 0.3,
                             ),
                           ),
@@ -259,9 +258,8 @@ class _SplashPageState extends State<SplashPage>
                         Text(
                           'طَالِبُ العِلْمِ',
                           textAlign: TextAlign.center,
-                          style: textTheme.display.copyWith(
+                          style: textTheme.displayHeavy.copyWith(
                             color: palette.text,
-                            fontWeight: FontWeight.w800,
                             letterSpacing: 0.6,
                           ),
                         ),
@@ -269,9 +267,8 @@ class _SplashPageState extends State<SplashPage>
                         Text(
                           'زَادُ الْمُسْلِمِ فِي طَلَبِ الْعِلْمِ الشَّرْعِيِّ',
                           textAlign: TextAlign.center,
-                          style: textTheme.bodySmall.copyWith(
+                          style: textTheme.bodySmallBold.copyWith(
                             color: palette.textMuted,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: AppSpace.sm),
