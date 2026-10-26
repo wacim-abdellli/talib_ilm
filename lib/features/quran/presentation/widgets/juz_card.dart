@@ -121,9 +121,8 @@ class JuzCard extends StatelessWidget {
                           ),
                           child: Text(
                             'ص $pageNumber',
-                            style: context.text.caption.copyWith(
+                            style: context.text.captionHeavy.copyWith(
                               color: palette.gold,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -144,7 +143,6 @@ class JuzCard extends StatelessWidget {
                       'بداية سورة $surahName • آية $firstVerse',
                       style: context.text.caption.copyWith(
                         color: palette.textMuted,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

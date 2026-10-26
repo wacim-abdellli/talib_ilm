@@ -183,9 +183,8 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
                             ),
                             child: Text(
                               item.transliteration!,
-                              style: textTheme.caption.copyWith(
+                              style: textTheme.captionBold.copyWith(
                                 color: palette.gold,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -199,9 +198,8 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
                     child: Text(
                       item.meaning,
                       textAlign: TextAlign.end,
-                      style: textTheme.bodySmall.copyWith(
+                      style: textTheme.bodySmallMedium.copyWith(
                         color: palette.text,
-                        fontWeight: FontWeight.w500,
                         height: 1.4,
                       ),
                     ),

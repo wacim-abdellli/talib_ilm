@@ -174,9 +174,8 @@ class MushafThemeCard extends StatelessWidget {
                 Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: textTheme.caption.copyWith(
+                  style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
                     color: textColor,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                   ),
                 ),
                 if (isSelected)
@@ -306,9 +305,8 @@ class MushafReciterDropdownCard extends StatelessWidget {
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   selectedReciter.name,
-                  style: textTheme.caption.copyWith(
+                  style: textTheme.captionBold.copyWith(
                     color: palette.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -433,9 +431,8 @@ class MushafTafsirDropdownCard extends StatelessWidget {
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   QuranTafsirService.getScholarName(selectedTafsir),
-                  style: textTheme.caption.copyWith(
+                  style: textTheme.captionBold.copyWith(
                     color: palette.gold,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

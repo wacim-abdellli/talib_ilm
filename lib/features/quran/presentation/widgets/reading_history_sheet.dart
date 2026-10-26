@@ -204,9 +204,8 @@ class _ReadingHistorySheetState extends State<ReadingHistorySheet> {
                                 ),
                                 child: Text(
                                   '${_items.length} مواضع',
-                                  style: textTheme.caption.copyWith(
+                                  style: textTheme.captionBold.copyWith(
                                     color: palette.gold,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -306,9 +305,8 @@ class _ReadingHistorySheetState extends State<ReadingHistorySheet> {
                                       children: [
                                         Text(
                                           'ص',
-                                          style: textTheme.caption.copyWith(
+                                          style: textTheme.captionBold.copyWith(
                                             color: palette.gold,
-                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                         Text(
@@ -362,9 +360,8 @@ class _ReadingHistorySheetState extends State<ReadingHistorySheet> {
                                         const SizedBox(height: AppSpace.xxs),
                                         Text(
                                           'الآية ${item.ayah} • الجزء $juzNum',
-                                          style: textTheme.caption.copyWith(
+                                          style: textTheme.captionBold.copyWith(
                                             color: palette.primary,
-                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                         const SizedBox(height: AppSpace.xs),

@@ -76,9 +76,8 @@ class _AyahTafsirTabViewState extends State<AyahTafsirTabView> {
                       child: ChoiceChip(
                         label: Text(
                           QuranTafsirService.getScholarName(scholar),
-                          style: textTheme.caption.copyWith(
+                          style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
                             color: isSelected ? palette.onPrimary : palette.text,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                           ),
                         ),
                         selected: isSelected,

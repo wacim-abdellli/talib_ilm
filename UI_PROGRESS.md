@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## R1 Part 3 — Design System Debt Remediation: Typography Weights in Quran Family (26 October 2026)
+- **Scope & Context:**
+  - Remediated design system font weight debt across `lib/features/quran/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens (`captionBold`, `captionHeavy`, `labelBold`, `labelMedium`, `bodySmallBold`, `bodySmallMedium`).
+  - Resolved all 33 occurrences across 16 presentation widget and page files in `lib/features/quran/`:
+    - `bookmarks_page.dart` (2), `ayah_details_tabs.dart` (1), `ayah_tafsir_tab_view.dart` (1), `ayah_words_tab_view.dart` (2), `hizb_card.dart` (4), `juz_card.dart` (2), `mushaf_reader_overlays.dart` (1), `mushaf_settings_widgets.dart` (3), `mushaf_single_page.dart` (1), `quick_jump_sheet.dart` (1), `quran_ayah_search_card.dart` (1), `quran_bookmarks_tab_view.dart` (3), `quran_sliver_header.dart` (1), `quran_stats_banner.dart` (4), `reading_history_sheet.dart` (3), `surah_card.dart` (3).
+  - All 16 modified dart files remain strictly compliant with line-length constraints (< 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` warnings from 58 down to 25 (33 resolved; `lib/features/quran/` is now 100% clean of raw font weight literals).
+- **Files Modified (17 files):**
+  - 16 files in `lib/features/quran/`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 19.8s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, advisory FontWeight warnings dropped from 58 to 25).
+  - Focused golden & page tests: `test/golden/quran_golden_test.dart` and `test/quran_page_test.dart` PASSED (5/5 passed, 0 golden diffs).
+  - `flutter test --no-pub`: 696/696 passed (ran in 3m 4s).
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 54.9s).
+- **Open issues & Next steps:**
+  - 25 advisory FontWeight warnings remain in remaining families (`more` [6], `splash` [3], `favorites` [3], `shared` [13]).
+  - Next bounded stage: Part 4 targeting `lib/features/more/`, `lib/features/splash/`, and `lib/features/favorites/`.
+
 ## R1 Part 2 — Design System Debt Remediation: Typography Weights in Ilm Family (26 October 2026)
 - **Scope & Context:**
   - Remediated design system font weight debt across `lib/features/ilm/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens and canonical `AppFontWeight` constants.

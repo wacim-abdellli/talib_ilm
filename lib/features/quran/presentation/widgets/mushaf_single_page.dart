@@ -177,9 +177,8 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
                                 const SizedBox(width: AppSpace.xxs),
                                 Text(
                                   'فاصل القراءة • آية ${widget.lastReadAyah}',
-                                  style: textTheme.caption.copyWith(
+                                  style: textTheme.captionHeavy.copyWith(
                                     color: palette.success,
-                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],

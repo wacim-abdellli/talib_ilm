@@ -122,9 +122,8 @@ class QuranAyahSearchCard extends StatelessWidget {
                     children: [
                       Text(
                         'انتقال',
-                        style: textTheme.caption.copyWith(
+                        style: textTheme.captionBold.copyWith(
                           color: palette.gold,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(width: AppSpace.xxs),

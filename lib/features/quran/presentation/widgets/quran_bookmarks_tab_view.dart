@@ -189,9 +189,8 @@ class _QuranBookmarksTabViewState extends State<QuranBookmarksTabView> {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: textTheme.caption.copyWith(
+            style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
               color: isSelected ? palette.brandDark : palette.text,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             ),
           ),
         ),
@@ -268,9 +267,8 @@ class _QuranBookmarksTabViewState extends State<QuranBookmarksTabView> {
                       ),
                       child: Text(
                         'سورة محفوظة',
-                        style: textTheme.caption.copyWith(
+                        style: textTheme.captionBold.copyWith(
                           color: palette.gold,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -365,9 +363,8 @@ class _QuranBookmarksTabViewState extends State<QuranBookmarksTabView> {
                 ),
                 child: Text(
                   hasNote ? 'تدبر وملاحظة' : 'آية محفوظة',
-                  style: textTheme.caption.copyWith(
+                  style: textTheme.captionBold.copyWith(
                     color: hasNote ? palette.gold : palette.textMuted,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

@@ -552,9 +552,8 @@ class MushafReaderBottomBar extends StatelessWidget {
         const SizedBox(width: AppSpace.xxs),
         Text(
           label,
-          style: textTheme.caption.copyWith(
+          style: textTheme.captionBold.copyWith(
             color: textColor,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ],

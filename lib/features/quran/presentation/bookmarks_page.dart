@@ -91,9 +91,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
                   padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
                   child: Text(
                     '${_bookmarks.length} علامة وملاحظة محفوظة',
-                    style: textTheme.caption.copyWith(
+                    style: textTheme.captionBold.copyWith(
                       color: palette.gold,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -199,9 +198,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
                                                     ),
                                                     child: Text(
                                                       'سورة محفوظة',
-                                                      style: textTheme.caption.copyWith(
+                                                      style: textTheme.captionBold.copyWith(
                                                         color: palette.gold,
-                                                        fontWeight: FontWeight.w600,
                                                       ),
                                                     ),
                                                   ),

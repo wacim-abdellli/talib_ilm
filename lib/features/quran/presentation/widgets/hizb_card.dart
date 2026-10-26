@@ -83,18 +83,16 @@ class HizbCard extends StatelessWidget {
                               ),
                               child: Text(
                                 'ص ${hizb.startPage}',
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.captionHeavy.copyWith(
                                   color: palette.gold,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                             const Spacer(),
                             Text(
                               'الجزء ${hizb.juzNumber}',
-                              style: textTheme.caption.copyWith(
+                              style: textTheme.captionBold.copyWith(
                                 color: palette.textMuted,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -114,7 +112,6 @@ class HizbCard extends StatelessWidget {
                           'سورة ${hizb.surahNameArabic} • آية ${hizb.startAyah}',
                           style: textTheme.caption.copyWith(
                             color: palette.textMuted,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -168,9 +165,8 @@ class HizbCard extends StatelessWidget {
                         alignment: Alignment.center,
                         child: Text(
                           shortQuarterLabel,
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: palette.primary,
-                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

@@ -73,9 +73,8 @@ class AyahAudioTabView extends StatelessWidget {
                           value: r,
                           child: Text(
                             r.name,
-                            style: textTheme.bodySmall.copyWith(
+                            style: textTheme.bodySmallBold.copyWith(
                               color: palette.text,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         );

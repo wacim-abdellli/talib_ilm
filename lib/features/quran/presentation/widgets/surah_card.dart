@@ -49,8 +49,7 @@ class SurahNumberMedallion extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               '$number',
-              style: context.text.label.copyWith(
-                fontWeight: FontWeight.w800,
+              style: context.text.labelHeavy.copyWith(
                 color: palette.gold,
               ),
             ),
@@ -97,8 +96,7 @@ class _RevelationBadge extends StatelessWidget {
           const SizedBox(width: AppSpace.xxs),
           Text(
             isMakki ? 'مكية' : 'مدنية',
-            style: context.text.caption.copyWith(
-              fontWeight: FontWeight.w700,
+            style: context.text.captionHeavy.copyWith(
               color: color,
             ),
           ),
@@ -187,7 +185,6 @@ class SurahCard extends StatelessWidget {
                           quran.getSurahName(surahNumber),
                           style: context.text.caption.copyWith(
                             color: palette.textMuted,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

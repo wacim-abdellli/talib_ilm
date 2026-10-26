@@ -262,9 +262,8 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
           child: Center(
             child: Text(
               title,
-              style: context.text.label.copyWith(
+              style: (isSelected ? context.text.labelBold : context.text.labelMedium).copyWith(
                 color: isSelected ? palette.gold : palette.textMuted,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

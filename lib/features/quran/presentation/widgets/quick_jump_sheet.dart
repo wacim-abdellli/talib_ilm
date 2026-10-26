@@ -218,9 +218,8 @@ class _QuickJumpSheetState extends State<QuickJumpSheet> {
                         const SizedBox(width: AppSpace.xs),
                         Text(
                           preset.subtitle,
-                          style: context.text.caption.copyWith(
+                          style: context.text.captionBold.copyWith(
                             color: palette.gold,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],

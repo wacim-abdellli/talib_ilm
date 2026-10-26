@@ -70,18 +70,16 @@ class QuranLastReadBanner extends StatelessWidget {
                       ),
                       child: Text(
                         'آخر قراءة',
-                        style: textTheme.caption.copyWith(
+                        style: textTheme.captionHeavy.copyWith(
                           color: palette.onPrimarySoft,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),
                     Text(
                       'صفحة ${lastRead.page} • آية ${lastRead.ayah}',
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionBold.copyWith(
                         color: palette.gold,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -114,8 +112,7 @@ class QuranLastReadBanner extends StatelessWidget {
               children: [
                 Text(
                   'تابع القراءة',
-                  style: textTheme.caption.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: textTheme.captionHeavy.copyWith(
                     color: palette.gold,
                   ),
                 ),
@@ -196,9 +193,8 @@ class QuranStatCard extends StatelessWidget {
             const SizedBox(height: AppSpace.xs),
             Text(
               subtitle!,
-              style: textTheme.caption.copyWith(
+              style: textTheme.captionBold.copyWith(
                 color: iconColor,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
