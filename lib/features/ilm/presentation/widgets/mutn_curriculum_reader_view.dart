@@ -91,6 +91,8 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
             MutunAudioCatalog.hasAudio(widget.book.id));
     widget.audioService.activeParagraphNotifier
         .addListener(_onActiveParagraphChanged);
+    widget.audioService.isPlayingNotifier
+        .addListener(_onAudioPlayingChanged);
     _loadPreferences();
 
     // Prepare global keys for each paragraph
@@ -114,8 +116,17 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     });
   }
 
+  void _onAudioPlayingChanged() {
+    if (widget.audioService.isPlayingNotifier.value) {
+      final active = widget.audioService.activeParagraphNotifier.value;
+      if (active != null) {
+        _lastAutoScrolledParagraph = active;
+        _scrollToParagraph(active);
+      }
+    }
+  }
+
   void _onActiveParagraphChanged() {
-    if (!_showAudioBar) return;
     final active = widget.audioService.activeParagraphNotifier.value;
     if (active == null || active == _lastAutoScrolledParagraph) return;
     if (!widget.audioService.isPlayingNotifier.value) return;
@@ -145,6 +156,8 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
     themeService.removeListener(_onThemeChanged);
     widget.audioService.activeParagraphNotifier
         .removeListener(_onActiveParagraphChanged);
+    widget.audioService.isPlayingNotifier
+        .removeListener(_onAudioPlayingChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();

@@ -1,8 +1,16 @@
+import 'texts/mutun_texts_advanced.dart';
+import 'texts/mutun_texts_ajrumiyyah.dart';
+import 'texts/mutun_texts_arbaeen.dart';
 import 'texts/mutun_texts_level0.dart';
 import 'texts/mutun_texts_level1.dart';
 import 'texts/mutun_texts_level2.dart';
+import 'texts/mutun_texts_level2_extended.dart';
 import 'texts/mutun_texts_level3.dart';
+import 'texts/mutun_texts_manzumah.dart';
+import 'texts/mutun_texts_tahawiyyah.dart';
 import 'texts/mutun_texts_usul_thalatha.dart';
+import 'texts/mutun_texts_waraqat.dart';
+import 'texts/mutun_texts_wasitiyyah.dart';
 
 /// Single scholarly paragraph in the authentic mutun syllabus.
 class MutunParagraph {
@@ -68,15 +76,38 @@ class MutunCurriculumCatalog {
     'bk_nawaqid_islam': MutunTextsLevel1.nawaqidIslam,
     'bk_qawaid_arba': MutunTextsLevel1.qawaidArba,
     'bk_usul_thalatha': MutunTextsUsulThalatha.usulThalatha,
+    'bk_arbaeen_nawawi': MutunTextsArbaeen.arbaeenNawawi,
 
     // ── المستوى الثاني ──
     'bk_shuroot_salah': MutunTextsLevel2.shurootSalah,
     'bk_shurut_salah': MutunTextsLevel2.shurootSalah,
     'bk_tuhfat_atfal': MutunTextsLevel2.tuhfatAtfal,
+    'bk_kitab_tawheed': MutunTextsLevel2Extended.kitabTawheed,
+    'bk_kashf_shubuhat': MutunTextsLevel2Extended.kashfShubuhat,
 
     // ── المستوى الثالث ──
     'bk_manzumah_baiquoni': MutunTextsLevel3.baiquoni,
     'bk_manzooma_bayquniyya': MutunTextsLevel3.baiquoni,
+    'bk_manzumah_bayquniyyah': MutunTextsLevel3.baiquoni,
+    'bk_manzumah_albiri': MutunTextsManzumah.albiri,
+    'bk_ilbiri': MutunTextsManzumah.albiri,
+    'bk_ajrumiyyah': MutunTextsAjrumiyyah.ajrumiyyah,
+    'bk_ajrumiyya': MutunTextsAjrumiyyah.ajrumiyyah,
+    'bk_wasitiyyah': MutunTextsWasitiyyah.wasitiyyah,
+    'bk_wasitiyya': MutunTextsWasitiyyah.wasitiyyah,
+
+    // ── المستوى الرابع ──
+    'bk_waraqat': MutunTextsWaraqat.waraqat,
+    'bk_unwan_al_hukm': MutunTextsManzumah.unwanAlHukm,
+    'bk_unwan_alhikam': MutunTextsManzumah.unwanAlHukm,
+    'bk_rahibiyyah': MutunTextsManzumah.rahibiyyah,
+    'bk_rahbiyya': MutunTextsManzumah.rahibiyyah,
+    'bk_aqidah_tahawiyyah': MutunTextsTahawiyyah.tahawiyyah,
+    'bk_tahawiyya': MutunTextsTahawiyyah.tahawiyyah,
+
+    // ── المطولات المتقدمة ──
+    'bk_bulugh_maram': MutunTextsAdvanced.bulughMaram,
+    'bk_zad_mustaqni': MutunTextsAdvanced.zadMustaqni,
   };
 
   /// Check if authentic digitized matn text is available for a book
