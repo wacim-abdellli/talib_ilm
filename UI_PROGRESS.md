@@ -3564,3 +3564,12 @@ FAILED (54 violations)
 - Review Android `USE_EXACT_ALARM` eligibility against current Play policy before store configuration; app-level exact-alarm permission availability differs by install/device and must be reflected in user-facing status.
 - Check whether the foreground timer’s in-app audio/instant alert duplicates the OS-scheduled alert when the app is open; choose and test one deliberate foreground/background audio policy.
 
+## R19 — Prayer Timing & Notification Delivery Ownership (2026-10-27)
+- **Stage:** Complete · branch `ui/r19-official-times-notification-closure` · R18 baseline `19855fa`.
+- Added per-date ownership and foreground recovery for Adhan, pre-prayer, Iqama, and daily Adhkar; serialized startup/resume refresh before foreground polling; respected the master prayer-alert switch and checked iOS/macOS alert permission.
+- Unified Iqama offsets across the home countdown and reminders; these remain app estimates, not mosque timetables. R18's estimate labeling and removal of unsupported regional 18° overrides remain in force.
+- Verification: `flutter analyze --no-pub` 0 issues (91.8s); `python tool/ui_lint_v2.py` 0 FAILs / 8 of 10 allow markers; `flutter test --concurrency=1 --no-pub` 705/705 passed (12m39s); `flutter build apk --debug --no-pub` passed (70.1s).
+- APK: `build\app\outputs\flutter-apk\app-debug.apk`, SHA-256 `A1BB83E11A050800A4DC78DBBC8528AD53BC99282F92B868F35CB9B9311F11E1`, 330,520,102 bytes. Existing non-fatal hit-test warning remains in `mushaf_page_viewer_test.dart`.
+- **Open issues:** no authorized official city/date timetable is integrated; obtain data reuse rights and verify multiple cities/seasons before claiming government-exact times. Iqama offsets are estimates.
+- **Device validation still required:** Android permission/channel/Doze/reboot/timezone/audio matrix and iOS build/device tests; OS scheduling acceptance is not a guarantee of delivery. No physical-device validation was run in this session.
+

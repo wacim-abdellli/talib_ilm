@@ -85,7 +85,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     themeService.addListener(_onThemeChanged);
     _currentIndex = widget.initialIndex.clamp(0, 4);
     _loadedTabs.add(_currentIndex);
-    ForegroundPrayerService().start();
     unawaited(_initPrayerNotifications());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -102,8 +101,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      ForegroundPrayerService().start();
-      unawaited(PrayerScheduleService().refreshSchedulesIfNeeded());
+      unawaited(_refreshPrayerScheduleBeforePolling());
       unawaited(HomeWidgetService.updateAllWidgets(force: true));
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
@@ -118,11 +116,34 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       final notif = NotificationService();
       await notif.init();
       await PrayerScheduleService().refreshSchedulesIfNeeded();
+      _startForegroundIfAppIsActive();
       unawaited(HomeWidgetService.updateAllWidgets());
-      unawaited(FastingReminderService(notificationService: notif).syncSchedules());
+      unawaited(
+        FastingReminderService(notificationService: notif).syncSchedules(),
+      );
       await FlipToStopService().init();
     } catch (e) {
       debugPrint('AppShell prayer notifications init error: $e');
+      _startForegroundIfAppIsActive();
+    }
+  }
+
+  Future<void> _refreshPrayerScheduleBeforePolling() async {
+    try {
+      await PrayerScheduleService().refreshSchedulesIfNeeded();
+    } catch (e) {
+      debugPrint('Prayer schedule refresh on resume failed: $e');
+    } finally {
+      _startForegroundIfAppIsActive();
+    }
+  }
+
+  void _startForegroundIfAppIsActive() {
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (mounted &&
+        (lifecycleState == null ||
+            lifecycleState == AppLifecycleState.resumed)) {
+      ForegroundPrayerService().start();
     }
   }
 

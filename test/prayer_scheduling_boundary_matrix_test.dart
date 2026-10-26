@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/app/constants/app_strings.dart';
 import 'package:talib_ilm/core/services/adhan_settings_service.dart';
+import 'package:talib_ilm/core/services/adhkar_reminder_service.dart';
 import 'package:talib_ilm/core/services/notification_service.dart';
 import 'package:talib_ilm/core/services/prayer_schedule_service.dart';
 import 'package:talib_ilm/core/services/prayer_time_service.dart';
@@ -13,6 +14,9 @@ class MockableNotificationService extends NotificationService {
   bool simulateFailure = false;
   bool simulateAdhkarFailure = false;
   bool exactAlarmsAllowed = true;
+  bool notificationsEnabled = true;
+  ScheduleOutcomeStatus successStatus = ScheduleOutcomeStatus.exact;
+  Set<int> lastPreservedIds = <int>{};
   int adhkarScheduleCalls = 0;
   ScheduleOutcomeStatus failureType = ScheduleOutcomeStatus.failed;
 
@@ -20,10 +24,12 @@ class MockableNotificationService extends NotificationService {
   Future<void> init() async {}
 
   @override
-  Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) async {}
+  Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) async {
+    lastPreservedIds = Set<int>.of(preserveIds ?? <int>{});
+  }
 
   @override
-  Future<bool> arePermissionsGranted() async => true;
+  Future<bool> arePermissionsGranted() async => notificationsEnabled;
 
   @override
   Future<bool?> canScheduleExactNotifications() async => exactAlarmsAllowed;
@@ -77,10 +83,7 @@ class MockableNotificationService extends NotificationService {
       'time': scheduledTime,
       'mode': mode,
     });
-    return ScheduleOutcome(
-      status: ScheduleOutcomeStatus.exact,
-      notificationId: id,
-    );
+    return ScheduleOutcome(status: successStatus, notificationId: id);
   }
 
   @override
@@ -104,10 +107,7 @@ class MockableNotificationService extends NotificationService {
       'prayerName': prayerName,
       'time': scheduledTime,
     });
-    return ScheduleOutcome(
-      status: ScheduleOutcomeStatus.exact,
-      notificationId: id,
-    );
+    return ScheduleOutcome(status: successStatus, notificationId: id);
   }
 
   @override
@@ -129,6 +129,7 @@ class MockableNotificationService extends NotificationService {
       'id': id,
       'prayerName': prayerName,
       'time': scheduledTime,
+      'isJumua': isJumua,
     });
     return ScheduleOutcome(
       status: ScheduleOutcomeStatus.exact,
@@ -206,6 +207,7 @@ void main() {
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      AdhanSettingsService.resetCacheForTesting();
       PrayerScheduleService.resetSharedStateForTesting();
       fixedNow = DateTime(2026, 10, 23, 4, 0); // Friday 04:00 AM before Fajr
       notificationService = MockableNotificationService();
@@ -218,6 +220,184 @@ void main() {
         now: () => fixedNow,
       );
     });
+
+    test(
+      'per-occurrence state assigns one delivery owner and falls back safely',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final date = fixedNow;
+
+        expect(PrayerScheduleService.shouldUseForegroundFallback(null), isTrue);
+        expect(
+          PrayerScheduleService.shouldUseForegroundFallback(false),
+          isTrue,
+        );
+        expect(
+          PrayerScheduleService.shouldUseForegroundFallback(true),
+          isFalse,
+        );
+
+        notificationService.successStatus =
+            ScheduleOutcomeStatus.inexactFallback;
+        final scheduled = await scheduleService.refreshSchedulesIfNeeded(
+          force: true,
+        );
+        expect(scheduled.inexactFallbackScheduled, greaterThan(0));
+        expect(
+          prefs.getBool(
+            PrayerScheduleService.eventStateKey(
+              date: date,
+              prayerName: AppStrings.prayerFajr,
+              event: PrayerScheduleEvent.adhan,
+            ),
+          ),
+          isTrue,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.prePrayer,
+          ),
+          isTrue,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.iqama,
+          ),
+          isTrue,
+        );
+        final fajrIqama = notificationService.scheduledCalls.firstWhere(
+          (call) =>
+              call['type'] == 'iqama' &&
+              call['prayerName'] == AppStrings.prayerFajr,
+        );
+        expect(fajrIqama['time'], DateTime(2026, 10, 23, 5, 35));
+        final jumuaIqama = notificationService.scheduledCalls.firstWhere(
+          (call) => call['type'] == 'iqama' && call['isJumua'] == true,
+        );
+        expect(jumuaIqama['time'], DateTime(2026, 10, 23, 13, 10));
+
+        notificationService.simulateFailure = true;
+        await scheduleService.refreshSchedulesIfNeeded(force: true);
+        expect(
+          prefs.getBool(
+            PrayerScheduleService.eventStateKey(
+              date: date,
+              prayerName: AppStrings.prayerFajr,
+              event: PrayerScheduleEvent.adhan,
+            ),
+          ),
+          isFalse,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.prePrayer,
+          ),
+          isFalse,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.iqama,
+          ),
+          isFalse,
+        );
+
+        notificationService.simulateFailure = false;
+        notificationService.notificationsEnabled = false;
+        await scheduleService.refreshSchedulesIfNeeded(force: true);
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.adhan,
+          ),
+          isFalse,
+          reason:
+              'permission-denied schedules must not suppress foreground recovery',
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: date,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.iqama,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'master prayer-alert switch disables prayer schedules and foreground recovery',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        fixedNow = DateTime(2026, 10, 23, 5, 10);
+        final settings = await adhanSettingsService.getSettings();
+        await adhanSettingsService.saveSettings(
+          settings.copyWith(enabled: false),
+        );
+
+        final result = await scheduleService.refreshSchedulesIfNeeded(
+          force: true,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(
+          notificationService.lastPreservedIds,
+          isEmpty,
+          reason: 'disabling the master switch must cancel active alarms too',
+        );
+        expect(
+          notificationService.scheduledCalls
+              .where(
+                (call) =>
+                    call['type'] == 'prayer' ||
+                    call['type'] == 'pre_prayer' ||
+                    call['type'] == 'iqama',
+              )
+              .toList(),
+          isEmpty,
+        );
+        expect(
+          notificationService.scheduledCalls
+              .where((call) => call['type'] == 'surah_kahf')
+              .length,
+          1,
+          reason: 'the independent Friday reminder remains enabled',
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: fixedNow,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.adhan,
+          ),
+          isFalse,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: fixedNow,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.prePrayer,
+          ),
+          isFalse,
+        );
+        expect(
+          await PrayerScheduleService.wasEventScheduled(
+            date: fixedNow,
+            prayerName: AppStrings.prayerFajr,
+            event: PrayerScheduleEvent.iqama,
+          ),
+          isFalse,
+        );
+        expect(prefs.getString('prayer_schedule_fingerprint'), isNotNull);
+      },
+    );
 
     test(
       'C11: Failed schedule returns typed failure and DOES NOT persist success fingerprint, enabling retry',
@@ -262,6 +442,13 @@ void main() {
         );
         expect(first.isSuccess, isFalse);
         expect(first.failed, equals(3));
+        expect(
+          await AdhkarReminderService.wasReminderScheduled(
+            date: fixedNow,
+            reminder: AdhkarReminderType.morning,
+          ),
+          isFalse,
+        );
         expect(prefs.getString('prayer_schedule_fingerprint'), isNotNull);
         expect(prefs.getString('adhkar_schedule_fingerprint'), isNull);
         final prayerCallCount = notificationService.scheduledCalls.length;
@@ -274,9 +461,49 @@ void main() {
         expect(retry.totalAttempted, equals(3));
         expect(retry.exactScheduled, equals(3));
         expect(notificationService.adhkarScheduleCalls, equals(6));
+        expect(
+          await AdhkarReminderService.wasReminderScheduled(
+            date: fixedNow,
+            reminder: AdhkarReminderType.morning,
+          ),
+          isTrue,
+        );
         expect(notificationService.scheduledCalls.length, prayerCallCount);
         expect(prefs.getInt('prayer_schedule_timestamp'), prayerTimestamp);
         expect(prefs.getString('adhkar_schedule_fingerprint'), isNotNull);
+      },
+    );
+
+    test(
+      'a repeating Adhkar alarm scheduled after its time leaves today eligible for foreground recovery',
+      () async {
+        fixedNow = DateTime(2026, 10, 23, 6, 30, 30);
+        final adhkar = AdhkarReminderService(
+          notificationService: notificationService,
+          now: () => fixedNow,
+        );
+
+        final outcomes = await adhkar.applySchedules(
+          await adhkar.getSettings(),
+        );
+
+        expect(outcomes.length, 3);
+        expect(
+          await AdhkarReminderService.wasReminderScheduled(
+            date: fixedNow,
+            reminder: AdhkarReminderType.morning,
+          ),
+          isFalse,
+          reason:
+              'daily scheduling advances a passed 06:30 occurrence to tomorrow',
+        );
+        expect(
+          await AdhkarReminderService.wasReminderScheduled(
+            date: fixedNow.add(const Duration(days: 1)),
+            reminder: AdhkarReminderType.morning,
+          ),
+          isTrue,
+        );
       },
     );
 

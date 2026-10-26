@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notification_service.dart';
 
+enum AdhkarReminderType { morning, evening, sleep }
+
 class AdhkarReminderSettings {
   final bool morningEnabled;
   final int morningHour;
@@ -71,15 +73,84 @@ class AdhkarReminderService {
   static const _keySleepEnabled = 'adhkar_rem_sleep_enabled';
   static const _keySleepHour = 'adhkar_rem_sleep_hour';
   static const _keySleepMinute = 'adhkar_rem_sleep_min';
+  static const _scheduleStatePrefix = 'adhkar_schedule_event_';
 
   static const int idMorning = 301;
   static const int idEvening = 302;
   static const int idSleep = 303;
 
   final NotificationService _notificationService;
+  final DateTime Function() _now;
 
-  AdhkarReminderService({NotificationService? notificationService})
-    : _notificationService = notificationService ?? NotificationService();
+  AdhkarReminderService({
+    NotificationService? notificationService,
+    DateTime Function()? now,
+  }) : _notificationService = notificationService ?? NotificationService(),
+       _now = now ?? DateTime.now;
+
+  @visibleForTesting
+  static String scheduleStateKey({
+    required DateTime date,
+    required AdhkarReminderType reminder,
+  }) => '$_scheduleStatePrefix${_formatDate(date)}_${reminder.name}';
+
+  static Future<bool?> wasReminderScheduled({
+    required DateTime date,
+    required AdhkarReminderType reminder,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(scheduleStateKey(date: date, reminder: reminder));
+  }
+
+  static String _formatDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  Future<void> _recordScheduleState({
+    required AdhkarReminderType reminder,
+    required bool scheduled,
+    required int hour,
+    required int minute,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = _now();
+    final firstDateToKeep = DateTime(today.year, today.month, today.day - 1);
+    final lastDateToKeep = DateTime(today.year, today.month, today.day + 7);
+    for (final key in prefs.getKeys()) {
+      if (!key.startsWith(_scheduleStatePrefix)) continue;
+      if (key.length < _scheduleStatePrefix.length + 10) {
+        await prefs.remove(key);
+        continue;
+      }
+      final dateText = key.substring(
+        _scheduleStatePrefix.length,
+        _scheduleStatePrefix.length + 10,
+      );
+      final date = DateTime.tryParse(dateText);
+      if (date == null ||
+          date.isBefore(firstDateToKeep) ||
+          date.isAfter(lastDateToKeep)) {
+        await prefs.remove(key);
+      }
+    }
+    for (var dayOffset = 0; dayOffset <= 7; dayOffset++) {
+      final date = DateTime(today.year, today.month, today.day + dayOffset);
+      final occurrenceTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        hour,
+        minute,
+      );
+      final hasAlarmForOccurrence =
+          scheduled && (dayOffset > 0 || !occurrenceTime.isBefore(today));
+      await prefs.setBool(
+        scheduleStateKey(date: date, reminder: reminder),
+        hasAlarmForOccurrence,
+      );
+    }
+  }
 
   Future<AdhkarReminderSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -120,6 +191,7 @@ class AdhkarReminderService {
 
     Future<void> applyOne({
       required bool enabled,
+      required AdhkarReminderType reminder,
       required int id,
       required String title,
       required String body,
@@ -127,18 +199,22 @@ class AdhkarReminderService {
       required int minute,
       required String payload,
     }) async {
+      var scheduled = false;
       try {
         if (enabled) {
-          outcomes.add(
-            await _notificationService.scheduleDailyAdhkarNotification(
-              id: id,
-              title: title,
-              body: body,
-              hour: hour,
-              minute: minute,
-              payload: payload,
-            ),
-          );
+          final outcome = await _notificationService
+              .scheduleDailyAdhkarNotification(
+                id: id,
+                title: title,
+                body: body,
+                hour: hour,
+                minute: minute,
+                payload: payload,
+              );
+          outcomes.add(outcome);
+          scheduled =
+              outcome.status == ScheduleOutcomeStatus.exact ||
+              outcome.status == ScheduleOutcomeStatus.inexactFallback;
         } else {
           final canceled = await _notificationService.tryCancelNotification(id);
           if (!canceled) {
@@ -159,12 +235,20 @@ class AdhkarReminderService {
             errorMessage: error.toString(),
           ),
         );
+      } finally {
+        await _recordScheduleState(
+          reminder: reminder,
+          scheduled: enabled && scheduled,
+          hour: hour,
+          minute: minute,
+        );
       }
     }
 
     // 1. Morning Adhkar
     await applyOne(
       enabled: settings.morningEnabled,
+      reminder: AdhkarReminderType.morning,
       id: idMorning,
       title: 'أذكار الصباح',
       body: 'أصبحنا وأصبح الملك لله.. ابدأ يومك بحفظ الله وذكره',
@@ -176,6 +260,7 @@ class AdhkarReminderService {
     // 2. Evening Adhkar
     await applyOne(
       enabled: settings.eveningEnabled,
+      reminder: AdhkarReminderType.evening,
       id: idEvening,
       title: 'أذكار المساء',
       body: 'أمسينا وأمسى الملك لله.. حصّن نفسك بحفظ الله وذكره',
@@ -187,6 +272,7 @@ class AdhkarReminderService {
     // 3. Sleep Adhkar
     await applyOne(
       enabled: settings.sleepEnabled,
+      reminder: AdhkarReminderType.sleep,
       id: idSleep,
       title: 'أذكار النوم',
       body: 'باسمك ربي وضعت جنبي وبك أرفعه.. لا تنسَ أذكار النوم وسورة الملك',

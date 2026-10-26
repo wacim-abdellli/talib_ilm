@@ -22,10 +22,10 @@ class PrayerNotificationScheduler {
     required Future<void> Function() ensureInitialized,
     required Future<void> Function() requestPermissions,
     required SafeZonedScheduleCallback safeZonedSchedule,
-  })  : _plugin = plugin,
-        _ensureInitialized = ensureInitialized,
-        _requestPermissions = requestPermissions,
-        _safeZonedSchedule = safeZonedSchedule;
+  }) : _plugin = plugin,
+       _ensureInitialized = ensureInitialized,
+       _requestPermissions = requestPermissions,
+       _safeZonedSchedule = safeZonedSchedule;
 
   /// Schedules a prayer notification according to the chosen mode (Adhan, Takbeer, Tone, Silent)
   /// using Android AlarmClock mode for guaranteed execution even during deep Doze.
@@ -37,11 +37,15 @@ class PrayerNotificationScheduler {
     AdhanSound sound = AdhanSound.qatami,
     bool isJumua = false,
   }) async {
-    if (mode == PrayerNotificationMode.off) return ScheduleOutcome.skippedPast;
+    if (mode == PrayerNotificationMode.off) {
+      return ScheduleOutcome.skippedPast;
+    }
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
+    if (scheduledTime.isBefore(DateTime.now())) {
+      return ScheduleOutcome.skippedPast;
+    }
     await _ensureInitialized();
 
     final details = PrayerNotificationDetailsBuilder.buildPrayerDetails(
@@ -51,15 +55,17 @@ class PrayerNotificationScheduler {
     );
     final cleanPrayerName = prayerName.replaceAll('صلاة ', '').trim();
     final isEffectiveJumua =
-        isJumua || cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
+        isJumua ||
+        cleanPrayerName == 'الجمعة' ||
+        cleanPrayerName.contains('جمعة');
     final title = isEffectiveJumua
         ? 'حان الآن موعد أذان صلاة الجمعة'
         : 'حان الآن موعد أذان صلاة $cleanPrayerName';
     final body = isEffectiveJumua
         ? 'حي على الصلاة · حي على الفلاح · يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ'
         : (cleanPrayerName.contains('فجر')
-            ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
-            : 'حي على الصلاة · حي على الفلاح');
+              ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
+              : 'حي على الصلاة · حي على الفلاح');
 
     return await _safeZonedSchedule(
       id: id,
@@ -85,7 +91,9 @@ class PrayerNotificationScheduler {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
+    if (scheduledTime.isBefore(DateTime.now())) {
+      return ScheduleOutcome.skippedPast;
+    }
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
@@ -200,7 +208,9 @@ class PrayerNotificationScheduler {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
+    if (scheduledTime.isBefore(DateTime.now())) {
+      return ScheduleOutcome.skippedPast;
+    }
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
@@ -248,6 +258,59 @@ class PrayerNotificationScheduler {
     );
   }
 
+  /// Shows the same Iqama reminder immediately when its scheduled occurrence
+  /// has no confirmed platform alarm and the app is in the foreground.
+  Future<void> showInstantIqamaNotification({
+    required int id,
+    required String prayerName,
+    bool isJumua = false,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    await _ensureInitialized();
+
+    const androidDetails = AndroidNotificationDetails(
+      'talib_prayer_iqama_v3',
+      'تنبيهات إقامة الصلاة',
+      channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      category: AndroidNotificationCategory.reminder,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'موعد إقامة الصلاة',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final title = isJumua
+        ? 'موعد خطبة وصلاة الجمعة'
+        : 'موعد إقامة صلاة $prayerName';
+    final body = isJumua
+        ? 'حان الآن موعد خطبة وصلاة الجمعة المباركة.. استمع وأنصت للخطبة بخشوع'
+        : 'حان الآن موعد إقامة صلاة $prayerName.. أقيمت الصلاة';
+
+    await _plugin.show(
+      id,
+      title,
+      body,
+      details,
+      payload: 'iqama_${prayerName.trim()}',
+    );
+  }
+
   /// Schedules a dedicated reminder to recite Surat Al-Kahf on Friday
   Future<ScheduleOutcome> scheduleSurahAlKahfNotification({
     required int id,
@@ -256,13 +319,16 @@ class PrayerNotificationScheduler {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return ScheduleOutcome.skippedPast;
     }
-    if (scheduledTime.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
+    if (scheduledTime.isBefore(DateTime.now())) {
+      return ScheduleOutcome.skippedPast;
+    }
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
       'talib_adhkar_reminders',
       'تذكير سورة الكهف يوم الجمعة',
-      channelDescription: 'تذكير بقراءة سورة الكهف والصلاة على النبي ﷺ يوم الجمعة',
+      channelDescription:
+          'تذكير بقراءة سورة الكهف والصلاة على النبي ﷺ يوم الجمعة',
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
@@ -316,7 +382,8 @@ class PrayerNotificationScheduler {
       prayerName: prayerName,
     );
     final cleanPrayerName = prayerName.replaceAll('صلاة ', '').trim();
-    final isJumua = cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
+    final isJumua =
+        cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
     final title = isJumua
         ? 'حان الآن موعد أذان صلاة الجمعة'
         : 'حان الآن موعد أذان صلاة $cleanPrayerName';
@@ -378,8 +445,9 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
     await _requestPermissions();
 
-    final scheduledTime =
-        DateTime.now().add(Duration(seconds: seconds)); // ui-lint: allow
+    final scheduledTime = DateTime.now().add(
+      Duration(seconds: seconds), // ui-lint: allow test notification delay
+    );
     final details = PrayerNotificationDetailsBuilder.buildPrayerDetails(
       mode: mode,
       sound: sound,
@@ -405,15 +473,18 @@ class PrayerNotificationScheduler {
     } catch (e) {
       debugPrint('Error scheduling test notification with exact alarm: $e');
       // Direct timer fallback if exact alarms are restricted
-      Future.delayed(Duration(seconds: seconds), () { // ui-lint: allow
-        _plugin.show(
-          8888,
-          title,
-          body,
-          details,
-          payload: 'prayer_test_${prayerName.trim()}',
-        );
-      });
+      Future.delayed(
+        Duration(seconds: seconds), // ui-lint: allow test notification fallback
+        () {
+          _plugin.show(
+            8888,
+            title,
+            body,
+            details,
+            payload: 'prayer_test_${prayerName.trim()}',
+          );
+        },
+      );
     }
   }
 
@@ -433,7 +504,9 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
 
     final mode = playSound
-        ? (sound == AdhanSound.takbeer ? PrayerNotificationMode.takbeer : PrayerNotificationMode.adhan)
+        ? (sound == AdhanSound.takbeer
+              ? PrayerNotificationMode.takbeer
+              : PrayerNotificationMode.adhan)
         : PrayerNotificationMode.silent;
 
     final details = PrayerNotificationDetailsBuilder.buildPrayerDetails(

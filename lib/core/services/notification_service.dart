@@ -157,6 +157,24 @@ class NotificationService {
       if (android != null) {
         return await android.areNotificationsEnabled() ?? false;
       }
+      if (Platform.isIOS) {
+        final ios = _plugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+        final permissions = await ios?.checkPermissions();
+        return permissions?.isEnabled == true &&
+            permissions?.isAlertEnabled == true;
+      }
+      if (Platform.isMacOS) {
+        final mac = _plugin
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >();
+        final permissions = await mac?.checkPermissions();
+        return permissions?.isEnabled == true &&
+            permissions?.isAlertEnabled == true;
+      }
       return true;
     } catch (_) {
       return false;
@@ -363,6 +381,17 @@ class NotificationService {
     isJumua: isJumua,
   );
 
+  /// Displays an Iqama reminder immediately as foreground recovery.
+  Future<void> showInstantIqamaNotification({
+    required int id,
+    required String prayerName,
+    bool isJumua = false,
+  }) => _prayerScheduler.showInstantIqamaNotification(
+    id: id,
+    prayerName: prayerName,
+    isJumua: isJumua,
+  );
+
   /// Schedules a dedicated reminder to recite Surat Al-Kahf on Friday
   Future<ScheduleOutcome> scheduleSurahAlKahfNotification({
     required int id,
@@ -528,6 +557,48 @@ class NotificationService {
     minute: minute,
     payload: payload,
   );
+
+  /// Displays a one-off Adhkar reminder when the daily platform alarm could
+  /// not be confirmed and the app is currently foregrounded.
+  Future<void> showInstantAdhkarNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return;
+    }
+    await init();
+    const androidDetails = AndroidNotificationDetails(
+      'talib_adhkar_reminders',
+      'تنبيهات الأذكار اليومية',
+      channelDescription:
+          'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      ticker: 'أذكار المسلم',
+    );
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+    await _plugin.show(id, title, body, details, payload: payload);
+  }
 
   /// Schedules a notification for Sunnah Fasting (White Days / Monday / Thursday).
   Future<ScheduleOutcome> scheduleFastingReminder({

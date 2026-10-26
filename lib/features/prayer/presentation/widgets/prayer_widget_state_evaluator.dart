@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/iqama_timing_policy.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../home/presentation/widgets/home_hero_timeline_station.dart';
 import '../../data/models/prayer_models.dart';
@@ -78,25 +79,15 @@ class EvaluatedPrayerWidgetState {
 class PrayerWidgetStateEvaluator {
   PrayerWidgetStateEvaluator._();
 
-  /// Canonical authentic Iqama durations in minutes for each prayer:
-  /// - Fajr (الفجر): 25 minutes
-  /// - Dhuhr (الظهر): 20 minutes (Jumua صلاة الجمعة: 25 minutes)
-  /// - Asr (العصر): 20 minutes
-  /// - Maghrib (المغرب): 10 minutes
-  /// - Isha (العشاء): 15 minutes
-  static int getIqamaMinutes(String prayerName, {bool isJumua = false}) {
-    if (isJumua) return 25;
-    final p = prayerName.toLowerCase().trim();
-    if (p.contains('فجر') || p.contains('fajr')) return 25;
-    if (p.contains('ظهر') || p.contains('dhuhr')) return 20;
-    if (p.contains('عصر') || p.contains('asr')) return 20;
-    if (p.contains('مغرب') || p.contains('maghrib')) return 10;
-    if (p.contains('عشاء') || p.contains('isha')) return 15;
-    return 15;
-  }
+  /// App-default estimate. Actual congregation times vary by mosque.
+  static int getIqamaMinutes(String prayerName, {bool isJumua = false}) =>
+      IqamaTimingPolicy.minutesAfterAdhan(prayerName, isJumua: isJumua);
 
   /// Estimated duration of congregational prayer in minutes.
-  static int getSalahDurationMinutes(String prayerName, {bool isJumua = false}) {
+  static int getSalahDurationMinutes(
+    String prayerName, {
+    bool isJumua = false,
+  }) {
     if (isJumua) return 15;
     final p = prayerName.toLowerCase().trim();
     if (p.contains('فجر') || p.contains('fajr')) return 15;
@@ -115,7 +106,8 @@ class PrayerWidgetStateEvaluator {
 
     final isFriday = now.weekday == DateTime.friday;
 
-    final fajrToday = all[AppStrings.prayerFajr] ??
+    final fajrToday =
+        all[AppStrings.prayerFajr] ??
         DateTime(now.year, now.month, now.day, 5, 0);
     final fajrTomorrow = fajrToday.add(const Duration(days: 1));
 
@@ -136,13 +128,18 @@ class PrayerWidgetStateEvaluator {
         final elapsed = now.difference(pTime);
         final isJumua = isFriday && pName == AppStrings.prayerDhuhr;
         final int iqamaMinutes = getIqamaMinutes(pName, isJumua: isJumua);
-        final int salahMinutes = getSalahDurationMinutes(pName, isJumua: isJumua);
+        final int salahMinutes = getSalahDurationMinutes(
+          pName,
+          isJumua: isJumua,
+        );
         final iqamaDuration = Duration(minutes: iqamaMinutes);
         final salahDuration = Duration(minutes: iqamaMinutes + salahMinutes);
 
         final completed = entries.take(i).map((e) => e.key).toSet();
         final displayTitle = isJumua ? 'صلاة الجمعة' : 'صلاة $pName';
-        final prayerIcon = isJumua ? Icons.mosque_rounded : iconForPrayer(pName);
+        final prayerIcon = isJumua
+            ? Icons.mosque_rounded
+            : iconForPrayer(pName);
         final upcoming = resolveUpcoming(i);
 
         // Phase A: Right at Adhan (first 1 minute)
@@ -256,12 +253,18 @@ class PrayerWidgetStateEvaluator {
           : 'أذكار النوم والاستعداد لصلاة الفجر',
       timePillLabel: formatPrayerTime12h(fajrTomorrow),
       timePillIcon: Icons.nightlight_round,
-      statusIcon: isLateNight ? Icons.nights_stay_rounded : Icons.schedule_rounded,
+      statusIcon: isLateNight
+          ? Icons.nights_stay_rounded
+          : Icons.schedule_rounded,
       prayerIcon: iconForPrayer(AppStrings.prayerFajr),
       countdownFormatted: formatDuration(diff),
       completedPrayerNames: completed,
-      nextPrayerName: entries.length > 1 ? entries[1].key : AppStrings.prayerDhuhr,
-      nextPrayerTime: entries.length > 1 ? entries[1].value.add(const Duration(days: 1)) : null,
+      nextPrayerName: entries.length > 1
+          ? entries[1].key
+          : AppStrings.prayerDhuhr,
+      nextPrayerTime: entries.length > 1
+          ? entries[1].value.add(const Duration(days: 1))
+          : null,
     );
   }
 
