@@ -19,6 +19,11 @@ export 'home_widget_snapshot.dart';
 /// Top-level background callback invoked when the Android widget is resized or interacted with.
 @pragma('vm:entry-point')
 Future<void> prayerWidgetBackgroundCallback(Uri? uri) async {
+  if (uri?.host == 'refresh' || uri?.host == 'rollover') {
+    HomeWidgetService.invalidateCache();
+    await HomeWidgetService.updateAllWidgets(force: true);
+    return;
+  }
   if (uri?.host == 'resize') {
     final wStr = uri?.queryParameters['minWidth'];
     final hStr = uri?.queryParameters['minHeight'];
@@ -72,6 +77,7 @@ class HomeWidgetService {
     _lastLargeRenderKey = null;
     _lastCompactRenderKey = null;
     _cachedPrayerDay = null;
+    HomeWidgetSnapshot.invalidateDailyCache();
   }
 
   static Future<PrayerTimesDay> _resolvePrayerDay(PrayerTimesDay? explicit) async {
@@ -291,6 +297,13 @@ class HomeWidgetService {
         pixelRatio: 2.5,
       );
 
+      await HomeWidgetSnapshot.preRenderDailyRibbonSnapshots(
+        day: day,
+        useDark: useDark,
+        hijriDate: hijri,
+        force: force,
+      );
+
       await HomeWidget.updateWidget(
         name: 'RibbonWidgetProvider',
         androidName: 'RibbonWidgetProvider',
@@ -419,6 +432,13 @@ class HomeWidgetService {
         key: 'prayer_large_widget',
         logicalSize: resolvedSize,
         pixelRatio: 2.0,
+      );
+
+      await HomeWidgetSnapshot.preRenderDailyLargeSnapshots(
+        day: day,
+        useDark: useDark,
+        hijriDate: hijri,
+        force: force,
       );
 
       await HomeWidget.updateWidget(

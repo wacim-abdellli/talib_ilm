@@ -1,5 +1,33 @@
 # UI Progress Log
 
+## Round 17 — Android Home Screen Widget Autonomous Auto-Refresh & Daily Pre-Rendered Snapshots (26 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported critical home screen widget bug where the 5-prayer strip and active prayer pill remained frozen on an earlier prayer (e.g. Dhuhr) while the native Chronometer showed the next prayer (e.g. Maghrib), requiring explicit app launch to refresh.
+  - Root Cause: Flutter rendered the widget into a single static PNG (`prayer_ribbon_widget`). While Android native `AlarmManager` fired at exact prayer transitions, `RibbonWidgetProvider.onUpdate()` reloaded the stale PNG from disk because Flutter was not running in the background.
+  - Architectural Remediation:
+    1. **Autonomous Daily Pre-Rendered Snapshots:** In `HomeWidgetSnapshot`, pre-render distinct daily on-disk PNGs for each prayer lifecycle phase (`prayer_ribbon_widget_fajr`, `dhuhr`, `asr`, `maghrib`, `isha`, and corresponding large widget keys).
+    2. **Native Dynamic Image Selection:** In `WidgetChronometerHelper.kt`, determine the active prayer phase dynamically at runtime and load `"${baseKey}_$slug"`, falling back gracefully to `${baseKey}`.
+    3. **Native 24-Hour Rollover & Background Refresh:** If device stays offline or app is not launched for > 24 hours, `WidgetChronometerHelper` rolls timestamps forward by 24 hours to prevent negative/frozen chronometer, and triggers `HomeWidgetBackgroundIntent` (`talibilm://refresh`) to wake headless Flutter for schedule refresh when permitted.
+    4. **Unified Provider Delegation:** Cleaned duplicate decoding in `RibbonWidgetProvider`, `LargeWidgetProvider`, `StandardWidgetProvider`, `CompactWidgetProvider`, and `PrayerWidgetProvider` to single-source through `WidgetChronometerHelper`.
+- **Files Modified (10 files):**
+  - `android/app/src/main/kotlin/com/example/talib_ilm/WidgetChronometerHelper.kt`
+  - `android/app/src/main/kotlin/com/example/talib_ilm/RibbonWidgetProvider.kt`
+  - `android/app/src/main/kotlin/com/example/talib_ilm/LargeWidgetProvider.kt`
+  - `android/app/src/main/kotlin/com/example/talib_ilm/StandardWidgetProvider.kt`
+  - `android/app/src/main/kotlin/com/example/talib_ilm/CompactWidgetProvider.kt`
+  - `android/app/src/main/kotlin/com/example/talib_ilm/PrayerWidgetProvider.kt`
+  - `lib/core/services/home_widget_service.dart`
+  - `lib/core/services/home_widget_snapshot.dart`
+  - `test/native_widget_snapshot_test.dart`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 10.2s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, 0 advisory warnings).
+  - Focused tests: `test/native_widget_snapshot_test.dart` (7/7 passed), `test/prayer_home_screen_widget_test.dart` (17/17 passed).
+  - Full serial suite: `flutter test --concurrency=1 --no-pub`: 698/698 passed (100% clean pass).
+  - `flutter build apk --debug --no-pub`: Built `app-debug.apk` successfully (in 238.1s).
+- **Open issues:** None.
+
 ## R1 Final — Design System Debt Remediation: Typography Weights in Favorites & Shared Families (26 October 2026)
 - **Scope & Context:**
   - Completed the final font-weight cleanup stage across `lib/features/favorites/` and `lib/shared/` families, eliminating all remaining raw `FontWeight.w[0-9]` literals outside `lib/app/theme/`.
