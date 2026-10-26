@@ -153,10 +153,13 @@ class ForegroundPrayerService {
     final now = DateTime.now();
     _prayerTimeService
         .getPrayerTimesDay()
-        .then((day) {
+        .then((day) async {
+          final iqamaOverrides = (await _adhanSettingsService.getSettings())
+              .iqamaMinutesAfterAdhan;
           final eval = PrayerWidgetStateEvaluator.evaluate(
             now: now,
             all: day.prayers,
+            iqamaOverrides: iqamaOverrides,
           );
           final key =
               '${eval.activePrayerName}_${eval.phase.name}_${now.hour}:${now.minute}';
@@ -261,6 +264,7 @@ class ForegroundPrayerService {
           final iqamaMinutes = IqamaTimingPolicy.minutesAfterAdhan(
             name,
             isJumua: isJumua,
+            configuredMinutes: settings.iqamaMinutesAfterAdhan,
           );
           final iqamaTime = time.add(Duration(minutes: iqamaMinutes));
           final iqamaDiff = now.difference(iqamaTime).inSeconds;

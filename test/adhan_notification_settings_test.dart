@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/core/services/adhan_settings_service.dart';
+import 'package:talib_ilm/core/services/iqama_timing_policy.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -8,6 +9,7 @@ void main() {
   group('PrayerNotificationMode & AdhanSettings Tests', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
+      AdhanSettingsService.resetCacheForTesting();
     });
 
     test('PrayerNotificationMode enum has all required options', () {
@@ -86,6 +88,51 @@ void main() {
       expect(loaded.modeForPrayer('الفجر'), PrayerNotificationMode.adhan);
       expect(loaded.modeForPrayer('الظهر'), PrayerNotificationMode.silent);
       expect(loaded.modeForPrayer('العصر'), PrayerNotificationMode.tone);
+    });
+
+    test('AdhanSettingsService persists per-prayer and Jumua Iqama offsets', () async {
+      final service = AdhanSettingsService();
+      final initial = await service.getSettings();
+      expect(initial.iqamaMinutesAfterAdhan, isEmpty);
+
+      await service.saveSettings(initial.copyWith(
+        iqamaMinutesAfterAdhan: {
+          'الفجر': 22,
+          'الظهر': 18,
+          'jumua': 32,
+        },
+      ));
+      AdhanSettingsService.resetCacheForTesting();
+
+      final loaded = await service.getSettings();
+      expect(loaded.iqamaMinutesAfterAdhan, {
+        'الفجر': 22,
+        'الظهر': 18,
+        'jumua': 32,
+      });
+
+      await service.saveSettings(
+        loaded.copyWith(iqamaMinutesAfterAdhan: const {}),
+      );
+      AdhanSettingsService.resetCacheForTesting();
+      expect((await service.getSettings()).iqamaMinutesAfterAdhan, isEmpty);
+    });
+
+    test('invalid persisted Iqama offsets use the built-in estimate', () async {
+      SharedPreferences.setMockInitialValues({
+        'adhan_iqama_minutes_الفجر': 181,
+      });
+      AdhanSettingsService.resetCacheForTesting();
+
+      final settings = await AdhanSettingsService().getSettings();
+      expect(settings.iqamaMinutesAfterAdhan, isEmpty);
+      expect(
+        IqamaTimingPolicy.minutesAfterAdhan(
+          'الفجر',
+          configuredMinutes: settings.iqamaMinutesAfterAdhan,
+        ),
+        25,
+      );
     });
   });
 }

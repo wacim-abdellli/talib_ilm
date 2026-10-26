@@ -8,6 +8,7 @@ import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import 'iqama_interval_settings.dart';
 import 'prayer_notification_mode_pill.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
@@ -452,7 +453,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                               ),
                             ),
                             Text(
-                              'إشعار تذكيري بعد الأذان بـ 15 دقيقة للاستعداد للصلاة',
+                              'إشعار تذكيري عند موعد الإقامة الذي تضبطه لكل صلاة',
                               style: textTheme.caption.copyWith(
                                 color: palette.textMuted,
                               ),
@@ -473,6 +474,12 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                       ),
                     ],
                   ),
+                ),
+
+                const SizedBox(height: AppSpace.sm),
+                IqamaIntervalSettings(
+                  settings: settings,
+                  onSettingsChanged: onSettingsChanged,
                 ),
 
                 const SizedBox(height: AppSpace.md),

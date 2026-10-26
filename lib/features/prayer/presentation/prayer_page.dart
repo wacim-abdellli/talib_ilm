@@ -78,6 +78,9 @@ class _PrayerPageState extends State<PrayerPage> {
     setState(() {
       _adhanSettings = settings;
     });
+    _countdownController?.updateIqamaOverrides(
+      settings.iqamaMinutesAfterAdhan,
+    );
   }
 
   @override
@@ -527,6 +530,7 @@ class _PrayerPageState extends State<PrayerPage> {
     _countdownController = PrayerCountdownController(
       day: day,
       prayerTimeService: _prayerTimeService,
+      iqamaOverrides: _adhanSettings?.iqamaMinutesAfterAdhan ?? const {},
     )..start();
   }
 

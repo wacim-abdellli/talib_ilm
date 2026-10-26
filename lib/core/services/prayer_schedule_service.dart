@@ -269,6 +269,7 @@ class PrayerScheduleService {
                 minutes: IqamaTimingPolicy.minutesAfterAdhan(
                   entry.key,
                   isJumua: isJumua,
+                  configuredMinutes: settings.iqamaMinutesAfterAdhan,
                 ),
               ),
             );
@@ -491,11 +492,12 @@ class PrayerScheduleService {
           );
         }
 
-        // 3. Iqama reminder (e.g. 25 min for Friday Khutbah + prayer, 20 min for Fajr, 15 min for others)
+        // 3. Iqama reminder at the configured local-mosque interval or app estimate.
         if (settings.iqamaReminders) {
           final iqamaMinutes = IqamaTimingPolicy.minutesAfterAdhan(
             prayerName,
             isJumua: isJumua,
+            configuredMinutes: settings.iqamaMinutesAfterAdhan,
           );
           final iqamaTime = prayerTime.add(Duration(minutes: iqamaMinutes));
           final iqamaDiff = now.difference(iqamaTime).inSeconds;
@@ -585,9 +587,8 @@ class PrayerScheduleService {
     final setKey = _settingsKey(settings);
     final permissionKey =
         'notifications:$notificationPermissionGranted|exact:$exactAlarmsAllowed';
-    // Version the schedule policy so the first launch after R19 rebuilds the
-    // rolling window and persists per-occurrence delivery ownership.
-    return 'r19|$dateKey|$locKey|$tzKey|$calcKey|$setKey|$permissionKey';
+    // Rebuild the rolling window after schedule ownership or Iqama offsets change.
+    return 'r20|$dateKey|$locKey|$tzKey|$calcKey|$setKey|$permissionKey';
   }
 
   String _buildAdhkarFingerprint(
@@ -605,8 +606,11 @@ class PrayerScheduleService {
     final modes = AdhanSettingsService.prayerNames
         .map((name) => settings.modeForPrayer(name).index.toString())
         .join();
+    final iqamaOffsets = settings.iqamaMinutesAfterAdhan.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
     return '${settings.enabled}|${settings.sound.index}|'
         '${settings.defaultMode.index}|$modes|${settings.silentNotifications}|'
-        '${settings.notifyBeforeMinutes}|${settings.iqamaReminders}';
+        '${settings.notifyBeforeMinutes}|${settings.iqamaReminders}|'
+        '${iqamaOffsets.map((entry) => '${entry.key}:${entry.value}').join(',')}';
   }
 }

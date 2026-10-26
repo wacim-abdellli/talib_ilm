@@ -80,8 +80,16 @@ class PrayerWidgetStateEvaluator {
   PrayerWidgetStateEvaluator._();
 
   /// App-default estimate. Actual congregation times vary by mosque.
-  static int getIqamaMinutes(String prayerName, {bool isJumua = false}) =>
-      IqamaTimingPolicy.minutesAfterAdhan(prayerName, isJumua: isJumua);
+  static int getIqamaMinutes(
+    String prayerName, {
+    bool isJumua = false,
+    Map<String, int> iqamaOverrides = const {},
+  }) =>
+      IqamaTimingPolicy.minutesAfterAdhan(
+        prayerName,
+        isJumua: isJumua,
+        configuredMinutes: iqamaOverrides,
+      );
 
   /// Estimated duration of congregational prayer in minutes.
   static int getSalahDurationMinutes(
@@ -98,6 +106,7 @@ class PrayerWidgetStateEvaluator {
   static EvaluatedPrayerWidgetState evaluate({
     required DateTime now,
     required Map<String, DateTime> all,
+    Map<String, int> iqamaOverrides = const {},
   }) {
     final entries = AppStrings.prayerOrder
         .where((p) => all.containsKey(p))
@@ -127,7 +136,11 @@ class PrayerWidgetStateEvaluator {
       if (!now.isBefore(pTime)) {
         final elapsed = now.difference(pTime);
         final isJumua = isFriday && pName == AppStrings.prayerDhuhr;
-        final int iqamaMinutes = getIqamaMinutes(pName, isJumua: isJumua);
+        final int iqamaMinutes = getIqamaMinutes(
+          pName,
+          isJumua: isJumua,
+          iqamaOverrides: iqamaOverrides,
+        );
         final int salahMinutes = getSalahDurationMinutes(
           pName,
           isJumua: isJumua,

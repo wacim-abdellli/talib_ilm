@@ -22,6 +22,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
   final DateTime? referenceTime;
   final String? nextPrayerName;
   final DateTime? nextPrayerTime;
+  final Map<String, int> iqamaOverrides;
   final double width;
   final double height;
 
@@ -31,6 +32,7 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     this.referenceTime,
     this.nextPrayerName,
     this.nextPrayerTime,
+    this.iqamaOverrides = const {},
     this.width = 380,
     this.height = 120,
   });
@@ -42,7 +44,11 @@ class PrayerHomeScreenWidget extends StatelessWidget {
     final now = referenceTime ?? DateTime.now();
 
     final all = prayerDay?.prayers ?? _fallbackPrayers(now);
-    final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+    final eval = PrayerWidgetStateEvaluator.evaluate(
+      now: now,
+      all: all,
+      iqamaOverrides: iqamaOverrides,
+    );
     final prayerColor = palette.prayer(eval.activePrayerName);
 
     // Resolve banner styling from liturgical phase

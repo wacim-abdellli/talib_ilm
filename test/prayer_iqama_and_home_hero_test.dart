@@ -26,7 +26,7 @@ void main() {
     );
 
     test(
-      'PrayerCountdownController detects active Iqama period within 15 minutes of Adhan',
+      'PrayerCountdownController detects the default Iqama interval after Adhan',
       () async {
         // Current time is 3:20 PM (5 minutes after Asr at 3:15 PM)
         final testNow = DateTime(2026, 10, 14, 15, 20);
@@ -48,10 +48,10 @@ void main() {
     );
 
     test(
-      'PrayerCountdownController automatically advances to next prayer after 15 minutes',
+      'PrayerCountdownController advances after the configured default interval',
       () async {
-        // Current time is 3:31 PM (16 minutes after Asr at 3:15 PM)
-        final testNow = DateTime(2026, 10, 14, 15, 31);
+        // Asr defaults to a 20-minute interval; this is 21 minutes after adhan.
+        final testNow = DateTime(2026, 10, 14, 15, 36);
 
         final controller = PrayerCountdownController(
           day: testDay,
@@ -74,6 +74,20 @@ void main() {
         );
       },
     );
+
+    test('PrayerCountdownController honors a custom local-mosque interval', () async {
+      final controller = PrayerCountdownController(
+        day: testDay,
+        now: () => DateTime(2026, 10, 14, 15, 26),
+        iqamaOverrides: {AppStrings.prayerAsr: 10},
+      );
+
+      controller.start();
+      addTearDown(controller.dispose);
+
+      expect(controller.state.value.isInPrayerTime, isFalse);
+      expect(controller.state.value.nextPrayerName, AppStrings.prayerMaghrib);
+    });
 
     testWidgets(
       'HomeHeroCard displays Iqama countdown before the congregation',

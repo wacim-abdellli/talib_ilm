@@ -8,6 +8,7 @@ import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
 import '../../features/prayer/presentation/widgets/widget_large.dart';
 import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
+import 'adhan_settings_service.dart';
 
 /// Supported visual themes for the Android Home Screen AppWidget.
 enum WidgetThemeMode {
@@ -52,6 +53,7 @@ class HomeWidgetSnapshot {
     bool? preResolvedDark,
   }) async {
     try {
+      final adhanSettings = await AdhanSettingsService().getSettings();
       final int epochMs;
       final String countdownPrefix;
       switch (eval.phase) {
@@ -63,6 +65,9 @@ class HomeWidgetSnapshot {
         case PrayerWidgetPhase.betweenAdhanAndIqama:
           final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(
             eval.activePrayerName,
+            isJumua: eval.targetPrayerTime.weekday == DateTime.friday &&
+                eval.activePrayerName == AppStrings.prayerDhuhr,
+            iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
           );
           final iqamaTime = eval.targetPrayerTime.add(Duration(minutes: iqamaMinutes));
           epochMs = iqamaTime.millisecondsSinceEpoch;
@@ -130,11 +135,27 @@ class HomeWidgetSnapshot {
         final refTime = dhuhrTime ?? DateTime.now();
         final isFriday = refTime.weekday == DateTime.friday;
 
-        final iqamaFajr = PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerFajr);
-        final iqamaDhuhr = PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerDhuhr, isJumua: isFriday);
-        final iqamaAsr = PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerAsr);
-        final iqamaMaghrib = PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerMaghrib);
-        final iqamaIsha = PrayerWidgetStateEvaluator.getIqamaMinutes(AppStrings.prayerIsha);
+        final iqamaFajr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+          AppStrings.prayerFajr,
+          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+        );
+        final iqamaDhuhr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+          AppStrings.prayerDhuhr,
+          isJumua: isFriday,
+          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+        );
+        final iqamaAsr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+          AppStrings.prayerAsr,
+          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+        );
+        final iqamaMaghrib = PrayerWidgetStateEvaluator.getIqamaMinutes(
+          AppStrings.prayerMaghrib,
+          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+        );
+        final iqamaIsha = PrayerWidgetStateEvaluator.getIqamaMinutes(
+          AppStrings.prayerIsha,
+          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+        );
 
         final fajrColor = palette.prayer(AppStrings.prayerFajr).toARGB32();
         final dhuhrColor = (isFriday ? palette.success : palette.prayer(AppStrings.prayerDhuhr)).toARGB32();
@@ -211,6 +232,8 @@ class HomeWidgetSnapshot {
 
     const resolvedSize = Size(kRibbonW, kRibbonH);
     final all = day.prayers;
+    final iqamaOverrides = (await AdhanSettingsService().getSettings())
+        .iqamaMinutesAfterAdhan;
 
     const slugs = {
       AppStrings.prayerFajr: 'fajr',
@@ -229,6 +252,7 @@ class HomeWidgetSnapshot {
       final pEval = PrayerWidgetStateEvaluator.evaluate(
         now: pTime.add(const Duration(minutes: 2)),
         all: all,
+        iqamaOverrides: iqamaOverrides,
       );
 
       try {
@@ -275,6 +299,8 @@ class HomeWidgetSnapshot {
 
     const resolvedSize = Size(kLargeW, kLargeH);
     final all = day.prayers;
+    final iqamaOverrides = (await AdhanSettingsService().getSettings())
+        .iqamaMinutesAfterAdhan;
 
     const slugs = {
       AppStrings.prayerFajr: 'fajr',
@@ -293,6 +319,7 @@ class HomeWidgetSnapshot {
       final pEval = PrayerWidgetStateEvaluator.evaluate(
         now: pTime.add(const Duration(minutes: 2)),
         all: all,
+        iqamaOverrides: iqamaOverrides,
       );
 
       try {

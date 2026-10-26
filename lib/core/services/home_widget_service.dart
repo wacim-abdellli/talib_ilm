@@ -10,6 +10,7 @@ import '../../features/prayer/presentation/widgets/widget_compact.dart';
 import '../../features/prayer/presentation/widgets/widget_large.dart';
 import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
 import '../../features/prayer/presentation/widgets/widget_standard.dart';
+import 'adhan_settings_service.dart';
 import 'home_widget_snapshot.dart';
 import 'prayer_time_service.dart';
 import '../utils/async_lock.dart';
@@ -161,6 +162,8 @@ class HomeWidgetService {
     try {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
+      final iqamaOverrides = (await AdhanSettingsService().getSettings())
+          .iqamaMinutesAfterAdhan;
       final mode = await getThemeMode();
 
       // Resolve theme according to user choice: Dark (AMOLED black), Light (crisp white), or Auto
@@ -183,7 +186,11 @@ class HomeWidgetService {
       } catch (_) {}
 
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
+        now: now,
+        all: all,
+        iqamaOverrides: iqamaOverrides,
+      );
       if (preResolvedEval == null) {
         await _saveNextPrayerEpoch(eval, allPrayers: all);
       }
@@ -212,6 +219,7 @@ class HomeWidgetService {
               child: PrayerHomeScreenWidget(
                 prayerDay: day,
                 referenceTime: now,
+                iqamaOverrides: iqamaOverrides,
                 width: resolvedSize.width,
                 height: resolvedSize.height,
               ),
@@ -255,7 +263,13 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final iqamaOverrides = (await AdhanSettingsService().getSettings())
+          .iqamaMinutesAfterAdhan;
+      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
+        now: now,
+        all: all,
+        iqamaOverrides: iqamaOverrides,
+      );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
         await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
@@ -328,7 +342,13 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final iqamaOverrides = (await AdhanSettingsService().getSettings())
+          .iqamaMinutesAfterAdhan;
+      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
+        now: now,
+        all: all,
+        iqamaOverrides: iqamaOverrides,
+      );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
         await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
@@ -389,7 +409,13 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final iqamaOverrides = (await AdhanSettingsService().getSettings())
+          .iqamaMinutesAfterAdhan;
+      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
+        now: now,
+        all: all,
+        iqamaOverrides: iqamaOverrides,
+      );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
         await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
@@ -462,7 +488,13 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(now: now, all: all);
+      final iqamaOverrides = (await AdhanSettingsService().getSettings())
+          .iqamaMinutesAfterAdhan;
+      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
+        now: now,
+        all: all,
+        iqamaOverrides: iqamaOverrides,
+      );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
         await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
@@ -526,7 +558,13 @@ class HomeWidgetService {
       try {
         final now = referenceTime ?? DateTime.now();
         final day = await _resolvePrayerDay(prayerDay);
-        final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: day.prayers);
+        final iqamaOverrides = (await AdhanSettingsService().getSettings())
+            .iqamaMinutesAfterAdhan;
+        final eval = PrayerWidgetStateEvaluator.evaluate(
+          now: now,
+          all: day.prayers,
+          iqamaOverrides: iqamaOverrides,
+        );
         final useDark = await _resolveWidgetIsDark();
         if (op < _latestOperation && !force) return;
 

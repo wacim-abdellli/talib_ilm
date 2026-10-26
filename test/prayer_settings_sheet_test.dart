@@ -5,6 +5,7 @@ import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/core/services/adhan_service.dart';
 import 'package:talib_ilm/core/services/adhan_settings_service.dart';
 import 'package:talib_ilm/features/prayer/presentation/prayer_settings_sheet.dart';
+import 'package:talib_ilm/features/prayer/presentation/widgets/iqama_interval_settings.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/prayer_muezzin_selector.dart';
 
 void main() {
@@ -39,6 +40,43 @@ void main() {
   }
 
   group('PrayerSettingsSheet & Muezzin Voices UI Tests', () {
+    testWidgets('Iqama interval selector emits the chosen exact minute', (
+      tester,
+    ) async {
+      const settings = AdhanSettings(
+        enabled: true,
+        sound: AdhanSound.qatami,
+        silentNotifications: false,
+        prayerToggles: {},
+        calculationMethod: 'auto',
+        volume: 80.0,
+        notifyBeforeMinutes: 15.0,
+        iqamaReminders: true,
+        adjustments: {},
+      );
+      AdhanSettings? updatedSettings;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          child: SingleChildScrollView(
+            child: IqamaIntervalSettings(
+              settings: settings,
+              onSettingsChanged: (value) => updatedSettings = value,
+            ),
+          ),
+        ),
+      );
+
+      final fajrDropdown = find.byType(DropdownButton<int>).first;
+      await tester.ensureVisible(fajrDropdown);
+      await tester.tap(fajrDropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('26 دقيقة'));
+      await tester.pumpAndSettle();
+
+      expect(updatedSettings?.iqamaMinutesAfterAdhan['الفجر'], 26);
+    });
+
     testWidgets('PrayerMuezzinSelector renders all 6 grand muezzins and 2 alternative voices',
         (tester) async {
       const settings = AdhanSettings(
@@ -113,6 +151,9 @@ void main() {
         // Switch to Tab 1 (Notifications)
         await tester.tap(find.text('التنبيهات والأذان'), warnIfMissed: false);
         await tester.pumpAndSettle();
+        expect(find.text('الفاصل من الأذان إلى الإقامة حسب مسجدك'), findsOneWidget);
+        expect(find.text('الجمعة'), findsOneWidget);
+        expect(find.byType(DropdownButton<int>), findsNWidgets(6));
 
         // Switch to Tab 2 (Calculation)
         await tester.tap(find.text('الحساب والضبط'), warnIfMissed: false);

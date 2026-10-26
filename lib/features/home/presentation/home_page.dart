@@ -7,6 +7,7 @@ import '../../../core/services/last_activity_service.dart';
 import '../../../core/services/last_sharh_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
+import '../../../core/services/adhan_settings_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
@@ -54,6 +55,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final ProgressService _progressService = ProgressService();
   bool _isLoading = false;
   PrayerTimesDay? _prayerDay;
+  Map<String, int> _iqamaOverrides = const {};
   ContinueData? _continueData;
   DailyDhikrPayload? _dailyDhikr;
 
@@ -72,6 +74,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
     _stateController = HomeStateController(prayerService: _prayerTimeService);
     _prayerDay = _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
+    _loadIqamaSettings();
     _loadAllData();
 
     // Refresh state and prayer times periodically in real runtime
@@ -139,11 +142,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _refreshPeriodicData() async {
     _stateController.refresh();
     try {
-      final day = await _prayerTimeService.getPrayerTimesDay();
+      final dayFuture = _prayerTimeService.getPrayerTimesDay();
+      final settingsFuture = AdhanSettingsService().getSettings();
+      final day = await dayFuture;
+      final settings = await settingsFuture;
       if (mounted) {
-        setState(() => _prayerDay = day);
+        setState(() {
+          _prayerDay = day;
+          _iqamaOverrides = settings.iqamaMinutesAfterAdhan;
+        });
       }
     } catch (_) {}
+  }
+
+  Future<void> _loadIqamaSettings() async {
+    final settings = await AdhanSettingsService().getSettings();
+    if (!mounted) return;
+    setState(() => _iqamaOverrides = settings.iqamaMinutesAfterAdhan);
   }
 
   @override
@@ -550,6 +565,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       currentTime: widget.currentTime,
       isEstimated: isEstimated,
       allPrayers: day?.prayers,
+      iqamaOverrides: _iqamaOverrides,
       onTap: () => _openPrayerDetails(context),
     );
   }

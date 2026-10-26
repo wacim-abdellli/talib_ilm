@@ -15,6 +15,7 @@ class HomeHeroCard extends StatefulWidget {
   final DateTime nextPrayerTime;
   final bool isEstimated;
   final Map<String, DateTime>? allPrayers;
+  final Map<String, int> iqamaOverrides;
   final VoidCallback? onTap;
   final DateTime? currentTime;
 
@@ -24,6 +25,7 @@ class HomeHeroCard extends StatefulWidget {
     required this.nextPrayerTime,
     this.isEstimated = false,
     this.allPrayers,
+    this.iqamaOverrides = const {},
     this.onTap,
     this.currentTime,
   });
@@ -75,6 +77,7 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
     if (oldWidget.nextPrayerTime != widget.nextPrayerTime ||
         oldWidget.nextPrayerName != widget.nextPrayerName ||
         oldWidget.allPrayers != widget.allPrayers ||
+        oldWidget.iqamaOverrides != widget.iqamaOverrides ||
         oldWidget.currentTime != widget.currentTime) {
       _updateEvaluation();
     }
@@ -110,7 +113,11 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
         if (!now.isBefore(pTime)) {
           final elapsed = now.difference(pTime);
           final isJumua = now.weekday == DateTime.friday && pName == AppStrings.prayerDhuhr;
-          final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(pName, isJumua: isJumua);
+          final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(
+            pName,
+            isJumua: isJumua,
+            iqamaOverrides: widget.iqamaOverrides,
+          );
           final salahMinutes = PrayerWidgetStateEvaluator.getSalahDurationMinutes(pName, isJumua: isJumua);
           final iqamaDuration = Duration(minutes: iqamaMinutes);
           final salahDuration = Duration(minutes: iqamaMinutes + salahMinutes);
@@ -175,7 +182,11 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
     final diff = widget.nextPrayerTime.difference(now);
     final isJumua = now.weekday == DateTime.friday && widget.nextPrayerName == AppStrings.prayerDhuhr;
-    final fallbackIqamaMin = PrayerWidgetStateEvaluator.getIqamaMinutes(widget.nextPrayerName, isJumua: isJumua);
+    final fallbackIqamaMin = PrayerWidgetStateEvaluator.getIqamaMinutes(
+      widget.nextPrayerName,
+      isJumua: isJumua,
+      iqamaOverrides: widget.iqamaOverrides,
+    );
     final fallbackSalahMin = PrayerWidgetStateEvaluator.getSalahDurationMinutes(widget.nextPrayerName, isJumua: isJumua);
     final fallbackIqamaDur = Duration(minutes: fallbackIqamaMin);
     final fallbackSalahDur = Duration(minutes: fallbackIqamaMin + fallbackSalahMin);

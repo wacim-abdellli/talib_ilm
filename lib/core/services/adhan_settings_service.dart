@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
+import 'iqama_timing_policy.dart';
 
 enum AdhanSound {
   qatami,
@@ -32,6 +33,9 @@ class AdhanSettings {
   final double volume;
   final double notifyBeforeMinutes;
   final bool iqamaReminders;
+  /// User-entered minutes from Adhan to local congregation. The `jumua` key
+  /// overrides Friday Dhuhr. Missing values retain the app's estimates.
+  final Map<String, int> iqamaMinutesAfterAdhan;
   final Map<String, int> adjustments;
   final PrayerNotificationMode defaultMode;
   final Map<String, PrayerNotificationMode> prayerModes;
@@ -47,6 +51,7 @@ class AdhanSettings {
     required this.notifyBeforeMinutes,
     required this.iqamaReminders,
     required this.adjustments,
+    this.iqamaMinutesAfterAdhan = const {},
     this.defaultMode = PrayerNotificationMode.adhan,
     this.prayerModes = const {},
   });
@@ -61,6 +66,7 @@ class AdhanSettings {
     double? volume,
     double? notifyBeforeMinutes,
     bool? iqamaReminders,
+    Map<String, int>? iqamaMinutesAfterAdhan,
     Map<String, int>? adjustments,
     PrayerNotificationMode? defaultMode,
     Map<String, PrayerNotificationMode>? prayerModes,
@@ -75,6 +81,8 @@ class AdhanSettings {
       volume: volume ?? this.volume,
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       iqamaReminders: iqamaReminders ?? this.iqamaReminders,
+      iqamaMinutesAfterAdhan:
+          iqamaMinutesAfterAdhan ?? this.iqamaMinutesAfterAdhan,
       adjustments: adjustments ?? this.adjustments,
       defaultMode: defaultMode ?? this.defaultMode,
       prayerModes: prayerModes ?? this.prayerModes,
@@ -134,6 +142,7 @@ class AdhanSettingsService {
   static const _keyVolume = 'adhan_volume';
   static const _keyNotifyBefore = 'adhan_notify_before';
   static const _keyIqama = 'adhan_iqama';
+  static const _keyIqamaMinutesPrefix = 'adhan_iqama_minutes_';
   static const _keyAdjPrefix = 'adhan_adj_';
 
   static const List<String> prayerNames = AppStrings.prayerOrder;
@@ -179,6 +188,19 @@ class AdhanSettingsService {
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
     final iqama = prefs.getBool(_keyIqama) ?? true;
+    final iqamaMinutes = <String, int>{};
+    for (final prayer in prayerNames) {
+      final value = prefs.getInt('$_keyIqamaMinutesPrefix$prayer');
+      if (value != null && value >= 0 && value <= 180) {
+        iqamaMinutes[prayer] = value;
+      }
+    }
+    final jumuaMinutes = prefs.getInt(
+      '$_keyIqamaMinutesPrefix${IqamaTimingPolicy.jumuaKey}',
+    );
+    if (jumuaMinutes != null && jumuaMinutes >= 0 && jumuaMinutes <= 180) {
+      iqamaMinutes[IqamaTimingPolicy.jumuaKey] = jumuaMinutes;
+    }
 
     final defaultModeIndex = prefs.getInt(_keyDefaultMode);
     final PrayerNotificationMode defaultMode;
@@ -215,6 +237,7 @@ class AdhanSettingsService {
       volume: volume,
       notifyBeforeMinutes: notifyBefore,
       iqamaReminders: iqama,
+      iqamaMinutesAfterAdhan: iqamaMinutes,
       adjustments: adjustments,
       defaultMode: defaultMode,
       prayerModes: prayerModes,
@@ -235,6 +258,15 @@ class AdhanSettingsService {
     await prefs.setDouble(_keyVolume, settings.volume);
     await prefs.setDouble(_keyNotifyBefore, settings.notifyBeforeMinutes);
     await prefs.setBool(_keyIqama, settings.iqamaReminders);
+    for (final key in [...prayerNames, IqamaTimingPolicy.jumuaKey]) {
+      final value = settings.iqamaMinutesAfterAdhan[key];
+      final preferenceKey = '$_keyIqamaMinutesPrefix$key';
+      if (value != null && value >= 0 && value <= 180) {
+        await prefs.setInt(preferenceKey, value);
+      } else {
+        await prefs.remove(preferenceKey);
+      }
+    }
     await prefs.setInt(_keyDefaultMode, settings.defaultMode.index);
 
     for (final entry in settings.prayerToggles.entries) {

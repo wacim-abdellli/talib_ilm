@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/app/constants/app_strings.dart';
+import 'package:talib_ilm/core/services/adhan_settings_service.dart';
 import 'package:talib_ilm/core/services/home_widget_service.dart';
 import 'package:talib_ilm/features/prayer/data/models/prayer_models.dart';
 import 'package:talib_ilm/features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
@@ -53,6 +54,7 @@ void main() {
 
     test('savePrayerSnapshot writes full 24-hour prayer schedule when allPrayers is provided', () async {
       SharedPreferences.setMockInitialValues({});
+      AdhanSettingsService.resetCacheForTesting();
       final prefs = await SharedPreferences.getInstance();
 
       final eval = PrayerWidgetStateEvaluator.evaluate(
@@ -83,6 +85,42 @@ void main() {
       expect(prefs.getInt('prayer_color_asr'), isNotNull);
       expect(prefs.getInt('prayer_color_maghrib'), isNotNull);
       expect(prefs.getInt('prayer_color_isha'), isNotNull);
+    });
+
+    test('savePrayerSnapshot shares custom mosque intervals with native widgets', () async {
+      SharedPreferences.setMockInitialValues({
+        'adhan_iqama_minutes_الفجر': 19,
+        'adhan_iqama_minutes_الظهر': 17,
+        'adhan_iqama_minutes_العصر': 21,
+        'adhan_iqama_minutes_المغرب': 8,
+        'adhan_iqama_minutes_العشاء': 14,
+        'adhan_iqama_minutes_jumua': 34,
+      });
+      AdhanSettingsService.resetCacheForTesting();
+      final prefs = await SharedPreferences.getInstance();
+      final eval = PrayerWidgetStateEvaluator.evaluate(
+        now: DateTime(2026, 10, 23, 17, 0),
+        all: testPrayerDay.prayers,
+        iqamaOverrides: {
+          'الفجر': 19,
+          'الظهر': 17,
+          'العصر': 21,
+          'المغرب': 8,
+          'العشاء': 14,
+          'jumua': 34,
+        },
+      );
+
+      await HomeWidgetSnapshot.savePrayerSnapshot(
+        eval,
+        allPrayers: testPrayerDay.prayers,
+      );
+
+      expect(prefs.getInt('iqama_fajr_min'), 19);
+      expect(prefs.getInt('iqama_dhuhr_min'), 34);
+      expect(prefs.getInt('iqama_asr_min'), 21);
+      expect(prefs.getInt('iqama_maghrib_min'), 8);
+      expect(prefs.getInt('iqama_isha_min'), 14);
     });
 
     test('resolveWidgetIsDark respects explicit widget mode and app theme fallback', () async {

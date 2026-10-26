@@ -538,6 +538,40 @@ void main() {
     expect(evalPostSalah.headerCountdownLabel, 'بعد 59:00');
   });
 
+  test('PrayerWidgetStateEvaluator applies custom weekday and Jumua intervals', () {
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 10, 23, 5, 3),
+      AppStrings.prayerDhuhr: DateTime(2026, 10, 23, 12, 3),
+      AppStrings.prayerAsr: DateTime(2026, 10, 23, 15, 9),
+      AppStrings.prayerMaghrib: DateTime(2026, 10, 23, 17, 35),
+      AppStrings.prayerIsha: DateTime(2026, 10, 23, 18, 59),
+    };
+
+    expect(
+      PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerDhuhr,
+        iqamaOverrides: {AppStrings.prayerDhuhr: 18, 'jumua': 32},
+      ),
+      18,
+    );
+    expect(
+      PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerDhuhr,
+        isJumua: true,
+        iqamaOverrides: {AppStrings.prayerDhuhr: 18, 'jumua': 32},
+      ),
+      32,
+    );
+
+    final jumua = PrayerWidgetStateEvaluator.evaluate(
+      now: DateTime(2026, 10, 23, 12, 23),
+      all: prayers,
+      iqamaOverrides: {'jumua': 32},
+    );
+    expect(jumua.phase, PrayerWidgetPhase.betweenAdhanAndIqama);
+    expect(jumua.countdownFormatted, '12:00');
+  });
+
   test('HomeWidgetService setThemeMode persists light mode and triggers updates', () async {
     SharedPreferences.setMockInitialValues({});
     await HomeWidgetService.setThemeMode(WidgetThemeMode.light);

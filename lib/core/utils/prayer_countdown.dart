@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import '../../app/constants/app_strings.dart';
 import '../services/prayer_time_service.dart';
+import '../services/iqama_timing_policy.dart';
 import '../constants/app_policy.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 
@@ -24,6 +26,7 @@ class PrayerCountdownState {
 class PrayerCountdownController {
   final PrayerTimeService _prayerTimeService;
   final DateTime Function() now;
+  Map<String, int> _iqamaOverrides;
 
   PrayerTimesDay _day;
   Timer? _timer;
@@ -35,8 +38,10 @@ class PrayerCountdownController {
     required PrayerTimesDay day,
     PrayerTimeService? prayerTimeService,
     DateTime Function()? now,
+    Map<String, int> iqamaOverrides = const {},
   })  : _day = day,
         _prayerTimeService = prayerTimeService ?? PrayerTimeService(),
+        _iqamaOverrides = iqamaOverrides,
         now = now ?? DateTime.now,
         state = ValueNotifier<PrayerCountdownState>(
           PrayerCountdownState(
@@ -51,6 +56,11 @@ class PrayerCountdownController {
     _timer = Timer.periodic(AppPolicy.oneSecond, (_) => _tick());
   }
 
+  void updateIqamaOverrides(Map<String, int> overrides) {
+    _iqamaOverrides = overrides;
+    unawaited(_tick());
+  }
+
   void dispose() {
     _timer?.cancel();
     state.dispose();
@@ -58,9 +68,7 @@ class PrayerCountdownController {
 
   Future<void> _tick() async {
     final current = now();
-    const iqamaDuration = Duration(minutes: 15);
-
-    // 1. Check if any prayer is currently within its 15-minute Iqama/Prayer window
+    // 1. Check whether the current prayer is before its configured Iqama time.
     final entries = _day.prayers.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
 
@@ -69,6 +77,14 @@ class PrayerCountdownController {
       if (entry.key.contains('الشروق')) continue;
       if (!current.isBefore(entry.value)) {
         final elapsed = current.difference(entry.value);
+        final isJumua = current.weekday == DateTime.friday &&
+            entry.key == AppStrings.prayerDhuhr;
+        final iqamaMinutes = IqamaTimingPolicy.minutesAfterAdhan(
+          entry.key,
+          isJumua: isJumua,
+          configuredMinutes: _iqamaOverrides,
+        );
+        final iqamaDuration = Duration(minutes: iqamaMinutes);
         if (elapsed < iqamaDuration) {
           state.value = PrayerCountdownState(
             nextPrayerName: entry.key,
