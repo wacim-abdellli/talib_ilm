@@ -148,5 +148,40 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('next_prayer_name'), AppStrings.prayerMaghrib);
     });
+
+    test('preRenderDailyRibbonSnapshots and preRenderDailyLargeSnapshots execute cleanly', () async {
+      SharedPreferences.setMockInitialValues({});
+      HomeWidgetSnapshot.invalidateDailyCache();
+
+      await expectLater(
+        HomeWidgetSnapshot.preRenderDailyRibbonSnapshots(
+          day: testPrayerDay,
+          useDark: true,
+          hijriDate: '15 جمادى الأول',
+        ),
+        completes,
+      );
+
+      await expectLater(
+        HomeWidgetSnapshot.preRenderDailyLargeSnapshots(
+          day: testPrayerDay,
+          useDark: false,
+          hijriDate: '15 جمادى الأول',
+        ),
+        completes,
+      );
+    });
+
+    test('prayerWidgetBackgroundCallback handles refresh and rollover URIs gracefully', () async {
+      SharedPreferences.setMockInitialValues({});
+      await expectLater(
+        prayerWidgetBackgroundCallback(Uri.parse('talibilm://refresh')),
+        completes,
+      );
+      await expectLater(
+        prayerWidgetBackgroundCallback(Uri.parse('talibilm://rollover')),
+        completes,
+      );
+    });
   });
 }

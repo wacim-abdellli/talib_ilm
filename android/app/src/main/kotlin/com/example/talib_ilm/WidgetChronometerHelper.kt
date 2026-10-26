@@ -7,10 +7,14 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import java.io.File
 
 object WidgetChronometerHelper {
 
@@ -48,6 +52,20 @@ object WidgetChronometerHelper {
             val isRibbonOrLarge = providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Large")
 
             if (fajrMs > 0L && dhuhrMs > 0L && asrMs > 0L && maghribMs > 0L && ishaMs > 0L) {
+                val dayMs = 86_400_000L
+                val daysBehind = if (now > fajrMs + dayMs) (now - fajrMs) / dayMs else 0L
+                val offsetMs = daysBehind * dayMs
+
+                if (daysBehind > 0L) {
+                    try {
+                        val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
+                            context,
+                            android.net.Uri.parse("talibilm://refresh")
+                        )
+                        backgroundIntent.send()
+                    } catch (_: Exception) {}
+                }
+
                 // Full autonomous native schedule evaluation
                 evaluateAndApplySchedule(
                     context = context,
@@ -58,11 +76,11 @@ object WidgetChronometerHelper {
                     isRibbonOrLarge = isRibbonOrLarge,
                     textColor = textColor,
                     bgRes = bgRes,
-                    fajrMs = fajrMs,
-                    dhuhrMs = dhuhrMs,
-                    asrMs = asrMs,
-                    maghribMs = maghribMs,
-                    ishaMs = ishaMs
+                    fajrMs = fajrMs + offsetMs,
+                    dhuhrMs = dhuhrMs + offsetMs,
+                    asrMs = asrMs + offsetMs,
+                    maghribMs = maghribMs + offsetMs,
+                    ishaMs = ishaMs + offsetMs
                 )
             } else {
                 // Fallback to single snapshot values with strict negative chronometer prevention
@@ -247,6 +265,8 @@ object WidgetChronometerHelper {
             }
         }
 
+        applyWidgetImage(views, widgetData, providerClass, activeItem.name)
+
         // Schedule exact alarm for next milestone
         if (nextAlarmMs > now) {
             schedulePrayerAlarm(context, nextAlarmMs, providerClass)
@@ -327,6 +347,8 @@ object WidgetChronometerHelper {
             }
         }
 
+        applyWidgetImage(views, widgetData, providerClass, prayerName)
+
         if (epochMs > now) {
             schedulePrayerAlarm(context, epochMs, providerClass)
         }
@@ -358,6 +380,74 @@ object WidgetChronometerHelper {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerEpochMs, pendingIntent)
             }
         } catch (_: Exception) {}
+    }
+
+    fun getPrayerSlug(name: String): String {
+        val lower = name.lowercase()
+        return when {
+            lower.contains("فجر") || lower.contains("fajr") -> "fajr"
+            lower.contains("ظهر") || lower.contains("dhuhr") || lower.contains("جمعة") || lower.contains("jumu") -> "dhuhr"
+            lower.contains("عصر") || lower.contains("asr") -> "asr"
+            lower.contains("مغرب") || lower.contains("maghrib") -> "maghrib"
+            lower.contains("عشاء") || lower.contains("isha") -> "isha"
+            else -> "fajr"
+        }
+    }
+
+    fun applyWidgetImage(
+        views: RemoteViews,
+        widgetData: SharedPreferences,
+        providerClass: Class<*>,
+        prayerName: String?
+    ) {
+        try {
+            val baseKey = when {
+                providerClass.simpleName.contains("Ribbon") -> "prayer_ribbon_widget"
+                providerClass.simpleName.contains("Large") -> "prayer_large_widget"
+                providerClass.simpleName.contains("Standard") -> "prayer_standard_widget"
+                providerClass.simpleName.contains("Compact") -> "prayer_compact_widget"
+                else -> "prayer_widget_image"
+            }
+
+            val slug = prayerName?.let { getPrayerSlug(it) }
+            val specificKey = if (slug != null) "${baseKey}_$slug" else null
+            val specificPath = specificKey?.let { getSafeString(widgetData, it, "") }?.takeIf { it.isNotEmpty() }
+            val basePath = getSafeString(widgetData, baseKey, "").takeIf { it.isNotEmpty() }
+
+            val resolvedPath = if (specificPath != null && File(specificPath).let { it.exists() && it.length() > 0 }) {
+                specificPath
+            } else if (basePath != null && File(basePath).let { it.exists() && it.length() > 0 }) {
+                basePath
+            } else {
+                null
+            }
+
+            if (resolvedPath != null) {
+                val boundsOptions = BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                BitmapFactory.decodeFile(resolvedPath, boundsOptions)
+
+                var sampleSize = 1
+                val maxBytes = if (providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Compact")) {
+                    2_000_000
+                } else {
+                    750_000
+                }
+                while ((boundsOptions.outWidth / sampleSize) * (boundsOptions.outHeight / sampleSize) * 4 > maxBytes) {
+                    sampleSize *= 2
+                }
+
+                val decodeOptions = BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }
+                val bitmap = BitmapFactory.decodeFile(resolvedPath, decodeOptions)
+                if (bitmap != null) {
+                    views.setImageViewBitmap(R.id.widget_image, bitmap)
+                }
+            }
+        } catch (_: Throwable) {}
     }
 
     fun resolvePrayerIconRes(prayerName: String, title: String): Int {

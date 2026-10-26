@@ -50,31 +50,6 @@ class StandardWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
 
             val widgetData = HomeWidgetPlugin.getData(context)
-            val imagePath = widgetData.getString("prayer_standard_widget", null)
-            if (imagePath != null) {
-                val file = File(imagePath)
-                if (file.exists() && file.length() > 0) {
-                    val boundsOptions = BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
-                    BitmapFactory.decodeFile(imagePath, boundsOptions)
-
-                    var sampleSize = 1
-                    while ((boundsOptions.outWidth / sampleSize) * (boundsOptions.outHeight / sampleSize) * 4 > 750_000) {
-                        sampleSize *= 2
-                    }
-
-                    val decodeOptions = BitmapFactory.Options().apply {
-                        inSampleSize = sampleSize
-                        inPreferredConfig = Bitmap.Config.ARGB_8888
-                    }
-                    val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
-                    if (bitmap != null) {
-                        views.setImageViewBitmap(R.id.widget_image, bitmap)
-                    }
-                }
-            }
-
             WidgetChronometerHelper.setupChronometer(context, views, widgetData, this::class.java)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (_: Throwable) {}
