@@ -20,7 +20,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Prayer Calculation Calibration Tests', () {
-    test('Algeria (DZ) calculates Isha with 18° twilight matching official ministry calendar', () async {
+    test('Algeria calculation uses the selected MWL Isha angle without a regional override', () async {
       SharedPreferences.setMockInitialValues({});
       // Algiers coordinates
       final mockLocation = MockLocationService(
@@ -42,9 +42,10 @@ void main() {
       final day = await service.getPrayerTimesDay(date: DateTime(2026, 10, 14));
       final isha = day.prayers[AppStrings.prayerIsha]!;
 
-      // At 18.0° twilight on Oct 14 in Algiers (GMT+1), Isha is at 19:39 (rather than 19:34 at 17.0°)
+      // The former unsupported 18° regional override returned 19:39 here.
+      // Selected MWL parameters use 17° for Isha and return 19:34.
       expect(isha.hour, 19);
-      expect(isha.minute, 39);
+      expect(isha.minute, 34);
     });
 
     test('AdhanSettings defaults to enabled with algeria calculation method option', () async {

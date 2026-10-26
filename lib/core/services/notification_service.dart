@@ -30,7 +30,7 @@ class NotificationService {
   late final AthkarNotificationScheduler _athkarScheduler;
 
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
-      : _plugin = plugin ?? FlutterLocalNotificationsPlugin() {
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin() {
     _prayerScheduler = PrayerNotificationScheduler(
       plugin: _plugin,
       ensureInitialized: init,
@@ -138,8 +138,10 @@ class NotificationService {
       debugPrint('Notification launch details error: $e');
     }
 
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin != null) {
       await NotificationChannelManager.registerChannels(androidPlugin);
     }
@@ -150,7 +152,8 @@ class NotificationService {
     try {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (android != null) {
         return await android.areNotificationsEnabled() ?? false;
       }
@@ -160,25 +163,60 @@ class NotificationService {
     }
   }
 
-  /// Requests notification and alarm permissions explicitly with user intent.
-  Future<void> requestPermissions() async {
+  /// Returns whether Android currently allows exact alarms. A null result means
+  /// the platform does not expose this capability (for example iOS/macOS).
+  /// Callers include this value in schedule fingerprints so granting the
+  /// permission causes previously inexact alarms to be replaced with exact ones.
+  Future<bool?> canScheduleExactNotifications() async {
+    if (kIsWeb || !Platform.isAndroid) return null;
     try {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      return await android?.canScheduleExactNotifications();
+    } catch (e) {
+      debugPrint('Unable to query exact-alarm capability: $e');
+      return null;
+    }
+  }
+
+  /// Requests notification and alarm permissions explicitly with user intent.
+  Future<void> requestPermissions() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    try {
       await android?.requestNotificationsPermission();
+    } catch (e) {
+      debugPrint('Notification permission request failed: $e');
+    }
+    try {
       await android?.requestExactAlarmsPermission();
+    } catch (e) {
+      debugPrint('Exact-alarm permission request failed: $e');
+    }
 
-      final ios = _plugin
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    try {
       await ios?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (e) {
+      debugPrint('iOS notification permission request failed: $e');
+    }
 
-      final mac = _plugin
-          .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin>();
+    final mac = _plugin
+        .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin
+        >();
+    try {
       await mac?.requestPermissions(alert: true, badge: true, sound: true);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('macOS notification permission request failed: $e');
+    }
   }
 
   Future<ScheduleOutcome> _safeZonedSchedule({
@@ -188,7 +226,7 @@ class NotificationService {
     required tz.TZDateTime scheduledDate,
     required NotificationDetails notificationDetails,
     required UILocalNotificationDateInterpretation
-        uiLocalNotificationDateInterpretation,
+    uiLocalNotificationDateInterpretation,
     DateTimeComponents? matchDateTimeComponents,
     String? payload,
     AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle,
@@ -253,7 +291,9 @@ class NotificationService {
             notificationId: id,
           );
         } catch (inexactError) {
-          debugPrint('Final fallback inexact scheduling error ($id): $inexactError');
+          debugPrint(
+            'Final fallback inexact scheduling error ($id): $inexactError',
+          );
           return ScheduleOutcome(
             status: ScheduleOutcomeStatus.failed,
             errorMessage: inexactError.toString(),
@@ -273,15 +313,14 @@ class NotificationService {
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
     bool isJumua = false,
-  }) =>
-      _prayerScheduler.schedulePrayerNotification(
-        id: id,
-        prayerName: prayerName,
-        scheduledTime: scheduledTime,
-        mode: mode,
-        sound: sound,
-        isJumua: isJumua,
-      );
+  }) => _prayerScheduler.schedulePrayerNotification(
+    id: id,
+    prayerName: prayerName,
+    scheduledTime: scheduledTime,
+    mode: mode,
+    sound: sound,
+    isJumua: isJumua,
+  );
 
   /// Schedules an advance reminder (e.g. 15 minutes before) so the user can make wudhu and prepare.
   Future<ScheduleOutcome> schedulePrePrayerNotification({
@@ -290,14 +329,13 @@ class NotificationService {
     required DateTime scheduledTime,
     required int minutesBefore,
     bool isJumua = false,
-  }) =>
-      _prayerScheduler.schedulePrePrayerNotification(
-        id: id,
-        prayerName: prayerName,
-        scheduledTime: scheduledTime,
-        minutesBefore: minutesBefore,
-        isJumua: isJumua,
-      );
+  }) => _prayerScheduler.schedulePrePrayerNotification(
+    id: id,
+    prayerName: prayerName,
+    scheduledTime: scheduledTime,
+    minutesBefore: minutesBefore,
+    isJumua: isJumua,
+  );
 
   /// Displays an instant heads-up advance reminder for foreground prayer detection.
   Future<void> showInstantPrePrayerNotification({
@@ -305,13 +343,12 @@ class NotificationService {
     required String prayerName,
     required int minutesBefore,
     bool isJumua = false,
-  }) =>
-      _prayerScheduler.showInstantPrePrayerNotification(
-        id: id,
-        prayerName: prayerName,
-        minutesBefore: minutesBefore,
-        isJumua: isJumua,
-      );
+  }) => _prayerScheduler.showInstantPrePrayerNotification(
+    id: id,
+    prayerName: prayerName,
+    minutesBefore: minutesBefore,
+    isJumua: isJumua,
+  );
 
   /// Schedules an Iqama notification after prayer time
   Future<ScheduleOutcome> scheduleIqamaNotification({
@@ -319,23 +356,21 @@ class NotificationService {
     required String prayerName,
     required DateTime scheduledTime,
     bool isJumua = false,
-  }) =>
-      _prayerScheduler.scheduleIqamaNotification(
-        id: id,
-        prayerName: prayerName,
-        scheduledTime: scheduledTime,
-        isJumua: isJumua,
-      );
+  }) => _prayerScheduler.scheduleIqamaNotification(
+    id: id,
+    prayerName: prayerName,
+    scheduledTime: scheduledTime,
+    isJumua: isJumua,
+  );
 
   /// Schedules a dedicated reminder to recite Surat Al-Kahf on Friday
   Future<ScheduleOutcome> scheduleSurahAlKahfNotification({
     required int id,
     required DateTime scheduledTime,
-  }) =>
-      _prayerScheduler.scheduleSurahAlKahfNotification(
-        id: id,
-        scheduledTime: scheduledTime,
-      );
+  }) => _prayerScheduler.scheduleSurahAlKahfNotification(
+    id: id,
+    scheduledTime: scheduledTime,
+  );
 
   /// Shows an instant prayer alert notification with heads-up alarm presentation
   Future<void> showInstantPrayerAlert({
@@ -343,25 +378,23 @@ class NotificationService {
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
-  }) =>
-      _prayerScheduler.showInstantPrayerAlert(
-        id: id,
-        prayerName: prayerName,
-        mode: mode,
-        sound: sound,
-      );
+  }) => _prayerScheduler.showInstantPrayerAlert(
+    id: id,
+    prayerName: prayerName,
+    mode: mode,
+    sound: sound,
+  );
 
   /// Triggers an immediate test notification right now so the user can verify sound and alerts.
   Future<void> showInstantTestNotification({
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
-  }) =>
-      _prayerScheduler.showInstantTestNotification(
-        prayerName: prayerName,
-        mode: mode,
-        sound: sound,
-      );
+  }) => _prayerScheduler.showInstantTestNotification(
+    prayerName: prayerName,
+    mode: mode,
+    sound: sound,
+  );
 
   /// Schedules a test notification after [seconds] (e.g. 5 seconds)
   /// allowing the user to minimize the app or lock the screen to test outside the app.
@@ -370,13 +403,12 @@ class NotificationService {
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
-  }) =>
-      _prayerScheduler.scheduleTestNotificationAfter(
-        seconds: seconds,
-        prayerName: prayerName,
-        mode: mode,
-        sound: sound,
-      );
+  }) => _prayerScheduler.scheduleTestNotificationAfter(
+    seconds: seconds,
+    prayerName: prayerName,
+    mode: mode,
+    sound: sound,
+  );
 
   /// Legacy support
   Future<void> scheduleNotification({
@@ -386,15 +418,14 @@ class NotificationService {
     required DateTime scheduledTime,
     required bool playSound,
     AdhanSound? sound,
-  }) =>
-      _prayerScheduler.scheduleNotification(
-        id: id,
-        title: title,
-        body: body,
-        scheduledTime: scheduledTime,
-        playSound: playSound,
-        sound: sound,
-      );
+  }) => _prayerScheduler.scheduleNotification(
+    id: id,
+    title: title,
+    body: body,
+    scheduledTime: scheduledTime,
+    playSound: playSound,
+    sound: sound,
+  );
 
   Future<void> cancelAll() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
@@ -489,15 +520,14 @@ class NotificationService {
     required int hour,
     required int minute,
     String? payload,
-  }) =>
-      _athkarScheduler.scheduleDailyAdhkarNotification(
-        id: id,
-        title: title,
-        body: body,
-        hour: hour,
-        minute: minute,
-        payload: payload,
-      );
+  }) => _athkarScheduler.scheduleDailyAdhkarNotification(
+    id: id,
+    title: title,
+    body: body,
+    hour: hour,
+    minute: minute,
+    payload: payload,
+  );
 
   /// Schedules a notification for Sunnah Fasting (White Days / Monday / Thursday).
   Future<ScheduleOutcome> scheduleFastingReminder({
@@ -506,14 +536,13 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
     String? payload,
-  }) =>
-      _athkarScheduler.scheduleFastingReminder(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: scheduledDate,
-        payload: payload,
-      );
+  }) => _athkarScheduler.scheduleFastingReminder(
+    id: id,
+    title: title,
+    body: body,
+    scheduledDate: scheduledDate,
+    payload: payload,
+  );
 
   /// Cancels a specific notification by ID
   Future<void> cancelNotification(int id) async {
@@ -521,6 +550,17 @@ class NotificationService {
       await _plugin.cancel(id);
     } catch (e) {
       debugPrint('Error cancelling notification $id: $e');
+    }
+  }
+
+  /// Cancels one notification and reports whether the platform call completed.
+  Future<bool> tryCancelNotification(int id) async {
+    try {
+      await _plugin.cancel(id);
+      return true;
+    } catch (e) {
+      debugPrint('Error cancelling notification $id: $e');
+      return false;
     }
   }
 }

@@ -158,7 +158,11 @@ class PrayerTimeService {
       }
       return result;
     } catch (_) {
-      final method = _resolveMethod(savedMethodStr, countryCode: null, latitude: _defaultLat);
+      final method = _resolveMethod(
+        savedMethodStr,
+        countryCode: null,
+        latitude: _defaultLat,
+      );
       final result = _buildDay(
         current,
         city: AppStrings.locationDefaultCity,
@@ -257,7 +261,8 @@ class PrayerTimeService {
       case 'ES': // Spain
       case 'IT': // Italy
       default:
-        // Muslim World League (18° Fajr, 17° Isha) is the official standard in Algeria & international
+        // Muslim World League is the general astronomical fallback. It is not
+        // an official government timetable for any country.
         return CalculationMethod.muslim_world_league;
     }
   }
@@ -283,14 +288,12 @@ class PrayerTimeService {
       params.highLatitudeRule = HighLatitudeRule.twilight_angle;
     }
 
-    // Calibrate official Ministry of Religious Affairs standard for Algeria & North Africa:
-    // Official ministry timetables (Algeria, Morocco, Tunisia) calculate Isha at complete 18.0° twilight.
-    // Default MWL in adhan library uses 17.0°, resulting in an astronomical ~5-minute early disparity.
-    final country = (countryCode ?? '').toUpperCase().trim();
-    if (country == 'DZ' || country == 'MA' || country == 'TN' || savedMethod == 'algeria') {
-      params.fajrAngle = 18.0;
-      params.ishaAngle = 18.0;
-    }
+    // Keep the selected calculation method's published parameters intact.
+    // In particular, the former North-African 18°/18° override shifted Isha
+    // roughly five minutes later than an official Algerian calendar sample.
+    // Government tables are city/date specific and must be integrated as a
+    // separate verified data source instead of being represented by a guessed
+    // universal twilight-angle override.
 
     // Apply Adjustments to params
     final adjFajr = adjustments[AppStrings.prayerFajr] ?? 0;
@@ -333,7 +336,9 @@ class PrayerTimeService {
     final sortedEntries = prayers.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
 
-    final upcoming = sortedEntries.where((e) => e.value.isAfter(reference)).toList();
+    final upcoming = sortedEntries
+        .where((e) => e.value.isAfter(reference))
+        .toList();
     if (upcoming.isNotEmpty) {
       nextPrayer = upcoming.first.key;
       nextPrayerTime = upcoming.first.value;
@@ -342,7 +347,11 @@ class PrayerTimeService {
       nextPrayer = AppStrings.prayerFajr;
       final tomorrow = DateTime(current.year, current.month, current.day + 1);
       final tomorrowComponents = DateComponents.from(tomorrow);
-      final tomorrowTimes = PrayerTimes(coordinates, tomorrowComponents, params);
+      final tomorrowTimes = PrayerTimes(
+        coordinates,
+        tomorrowComponents,
+        params,
+      );
       nextPrayerTime = tomorrowTimes.fajr;
     }
 

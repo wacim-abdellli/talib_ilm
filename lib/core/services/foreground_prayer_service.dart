@@ -50,6 +50,7 @@ class ForegroundPrayerService {
   final ValueNotifier<ActivePrayerAlert?> activeAlert =
       ValueNotifier<ActivePrayerAlert?>(null);
   final Set<String> _alertedKeys = <String>{};
+  final Set<String> _inFlightAlertKeys = <String>{};
   bool _initialized = false;
 
   bool get isPolling => _timer != null && _timer!.isActive;
@@ -84,10 +85,7 @@ class ForegroundPrayerService {
     _timer?.cancel();
     _widgetTimer?.cancel();
     _initialTimer = Timer(AppPolicy.oneSecond, _check);
-    _timer = Timer.periodic(
-      AppPolicy.pollingStandard,
-      (_) => _check(),
-    );
+    _timer = Timer.periodic(AppPolicy.pollingStandard, (_) => _check());
     _widgetTimer = Timer.periodic(
       AppPolicy.pollingActive,
       (_) => _checkAndUpdateWidgetsIfNeeded(),
@@ -118,6 +116,7 @@ class ForegroundPrayerService {
   void resetForTesting() {
     stop();
     _alertedKeys.clear();
+    _inFlightAlertKeys.clear();
     _initialized = false;
     _lastWidgetPhaseKey = null;
     activeAlert.value = null;
@@ -137,18 +136,37 @@ class ForegroundPrayerService {
     }
   }
 
+  Future<void> _markAlerted(String key) async {
+    _alertedKeys.add(key);
+    _trimAlertedKeys();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('adhan_alerted_keys', _alertedKeys.toList());
+  }
+
   String? _lastWidgetPhaseKey;
 
   void _checkAndUpdateWidgetsIfNeeded() {
     final now = DateTime.now();
-    _prayerTimeService.getPrayerTimesDay().then((day) {
-      final eval = PrayerWidgetStateEvaluator.evaluate(now: now, all: day.prayers);
-      final key = '${eval.activePrayerName}_${eval.phase.name}_${now.hour}:${now.minute}';
-      if (key != _lastWidgetPhaseKey) {
-        _lastWidgetPhaseKey = key;
-        unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day, referenceTime: now));
-      }
-    }).catchError((_) {});
+    _prayerTimeService
+        .getPrayerTimesDay()
+        .then((day) {
+          final eval = PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: day.prayers,
+          );
+          final key =
+              '${eval.activePrayerName}_${eval.phase.name}_${now.hour}:${now.minute}';
+          if (key != _lastWidgetPhaseKey) {
+            _lastWidgetPhaseKey = key;
+            unawaited(
+              HomeWidgetService.updateAllWidgets(
+                prayerDay: day,
+                referenceTime: now,
+              ),
+            );
+          }
+        })
+        .catchError((_) {});
   }
 
   Future<void> dismissAlert() async {
@@ -179,7 +197,8 @@ class ForegroundPrayerService {
         final mode = settings.modeForPrayer(name);
         if (mode == PrayerNotificationMode.off) continue;
 
-        final isJumua = day.date.weekday == DateTime.friday &&
+        final isJumua =
+            day.date.weekday == DateTime.friday &&
             (name.contains('الظهر') || name == 'الظهر');
         final effectiveName = isJumua ? 'صلاة الجمعة' : name;
 
@@ -190,21 +209,21 @@ class ForegroundPrayerService {
           final preDiff = now.difference(preTime);
           if (preDiff.inSeconds >= 0 && preDiff.inSeconds <= 60) {
             final preAlertKey = '${todayStr}_pre_$name';
-            if (!_alertedKeys.contains(preAlertKey)) {
-              _alertedKeys.add(preAlertKey);
-              _trimAlertedKeys();
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setStringList(
-                  'adhan_alerted_keys', _alertedKeys.toList());
-
-              final orderIndex = AppStrings.prayerOrder.indexOf(name);
-              final preNotifId = 750 + (orderIndex >= 0 ? orderIndex : 0);
-              await _notificationService.showInstantPrePrayerNotification(
-                id: preNotifId,
-                prayerName: effectiveName,
-                minutesBefore: notifyBefore,
-                isJumua: isJumua,
-              );
+            if (!_alertedKeys.contains(preAlertKey) &&
+                _inFlightAlertKeys.add(preAlertKey)) {
+              try {
+                final orderIndex = AppStrings.prayerOrder.indexOf(name);
+                final preNotifId = 750 + (orderIndex >= 0 ? orderIndex : 0);
+                await _notificationService.showInstantPrePrayerNotification(
+                  id: preNotifId,
+                  prayerName: effectiveName,
+                  minutesBefore: notifyBefore,
+                  isJumua: isJumua,
+                );
+                await _markAlerted(preAlertKey);
+              } finally {
+                _inFlightAlertKeys.remove(preAlertKey);
+              }
             }
           }
         }
@@ -213,52 +232,57 @@ class ForegroundPrayerService {
         final diff = now.difference(time);
         if (diff.inSeconds >= 0 && diff.inSeconds <= 90) {
           final alertKey = '${todayStr}_$name';
-          if (!_alertedKeys.contains(alertKey)) {
-            _alertedKeys.add(alertKey);
-            _trimAlertedKeys();
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setStringList('adhan_alerted_keys', _alertedKeys.toList());
+          if (!_alertedKeys.contains(alertKey) &&
+              _inFlightAlertKeys.add(alertKey)) {
+            try {
+              final effectiveSound = settings.effectiveMuezzinSound;
 
-            final effectiveSound = settings.effectiveMuezzinSound;
-
-            // 1. Play audio via AdhanService foreground media session if not already playing
-            if (mode != PrayerNotificationMode.silent &&
-                mode != PrayerNotificationMode.off) {
-              if (!_adhanService.isPlaying) {
-                unawaited(_adhanService.play(
-                  sound: effectiveSound,
-                  mode: mode,
-                  volume: settings.volume,
-                  prayerName: effectiveName,
-                ));
+              // 1. Play audio via AdhanService foreground media session if not already playing
+              if (mode != PrayerNotificationMode.silent &&
+                  mode != PrayerNotificationMode.off) {
+                if (!_adhanService.isPlaying) {
+                  unawaited(
+                    _adhanService.play(
+                      sound: effectiveSound,
+                      mode: mode,
+                      volume: settings.volume,
+                      prayerName: effectiveName,
+                    ),
+                  );
+                }
               }
+
+              // 2. Trigger instant system notification with heads-up alarm presentation
+              final orderIndex = AppStrings.prayerOrder.indexOf(name);
+              final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
+              await _notificationService.showInstantPrayerAlert(
+                id: notifId,
+                prayerName: effectiveName,
+                mode: mode,
+                sound: effectiveSound,
+              );
+
+              // 3. Post in-app alert banner with stop controls
+              activeAlert.value = ActivePrayerAlert(
+                prayerName: effectiveName,
+                prayerTime: time,
+                mode: mode,
+                sound: effectiveSound,
+              );
+              await _markAlerted(alertKey);
+
+              unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day));
+            } finally {
+              _inFlightAlertKeys.remove(alertKey);
             }
-
-            // 2. Trigger instant system notification with heads-up alarm presentation
-            final orderIndex = AppStrings.prayerOrder.indexOf(name);
-            final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
-            await _notificationService.showInstantPrayerAlert(
-              id: notifId,
-              prayerName: effectiveName,
-              mode: mode,
-              sound: effectiveSound,
-            );
-
-            // 3. Post in-app alert banner with stop controls
-            activeAlert.value = ActivePrayerAlert(
-              prayerName: effectiveName,
-              prayerTime: time,
-              mode: mode,
-              sound: effectiveSound,
-            );
-
-            unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day));
           }
         }
       }
 
       // Periodically refresh the Home Screen Widget so time and prayer states stay active
-      unawaited(HomeWidgetService.updateAllWidgets(prayerDay: day, referenceTime: now));
+      unawaited(
+        HomeWidgetService.updateAllWidgets(prayerDay: day, referenceTime: now),
+      );
     } catch (e) {
       debugPrint('ForegroundPrayerService._check error: $e');
     }

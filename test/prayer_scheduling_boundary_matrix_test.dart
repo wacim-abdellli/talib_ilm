@@ -11,6 +11,9 @@ import 'package:timezone/data/latest_all.dart' as tz;
 class MockableNotificationService extends NotificationService {
   final List<Map<String, dynamic>> scheduledCalls = [];
   bool simulateFailure = false;
+  bool simulateAdhkarFailure = false;
+  bool exactAlarmsAllowed = true;
+  int adhkarScheduleCalls = 0;
   ScheduleOutcomeStatus failureType = ScheduleOutcomeStatus.failed;
 
   @override
@@ -18,6 +21,38 @@ class MockableNotificationService extends NotificationService {
 
   @override
   Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) async {}
+
+  @override
+  Future<bool> arePermissionsGranted() async => true;
+
+  @override
+  Future<bool?> canScheduleExactNotifications() async => exactAlarmsAllowed;
+
+  @override
+  Future<bool> tryCancelNotification(int id) async => true;
+
+  @override
+  Future<ScheduleOutcome> scheduleDailyAdhkarNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+    String? payload,
+  }) async {
+    adhkarScheduleCalls++;
+    if (simulateAdhkarFailure) {
+      return ScheduleOutcome(
+        status: ScheduleOutcomeStatus.failed,
+        errorMessage: 'Simulated Adhkar failure for id $id',
+        notificationId: id,
+      );
+    }
+    return ScheduleOutcome(
+      status: ScheduleOutcomeStatus.exact,
+      notificationId: id,
+    );
+  }
 
   @override
   Future<ScheduleOutcome> schedulePrayerNotification({
@@ -113,11 +148,7 @@ class MockableNotificationService extends NotificationService {
         notificationId: id,
       );
     }
-    scheduledCalls.add({
-      'type': 'surah_kahf',
-      'id': id,
-      'time': scheduledTime,
-    });
+    scheduledCalls.add({'type': 'surah_kahf', 'id': id, 'time': scheduledTime});
     return ScheduleOutcome(
       status: ScheduleOutcomeStatus.exact,
       notificationId: id,
@@ -139,8 +170,13 @@ class ControllablePrayerTimeService extends PrayerTimeService {
   }) async {
     final d = date ?? _mockNow();
     final prayers = <String, DateTime>{
-      AppStrings.prayerFajr:
-          DateTime(d.year, d.month, d.day, 5, 10 + fajrOffsetMinutes),
+      AppStrings.prayerFajr: DateTime(
+        d.year,
+        d.month,
+        d.day,
+        5,
+        10 + fajrOffsetMinutes,
+      ),
       'الشروق': DateTime(d.year, d.month, d.day, 6, 40),
       AppStrings.prayerDhuhr: DateTime(d.year, d.month, d.day, 12, 45),
       AppStrings.prayerAsr: DateTime(d.year, d.month, d.day, 15, 55),
@@ -170,6 +206,7 @@ void main() {
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      PrayerScheduleService.resetSharedStateForTesting();
       fixedNow = DateTime(2026, 10, 23, 4, 0); // Friday 04:00 AM before Fajr
       notificationService = MockableNotificationService();
       prayerTimeService = ControllablePrayerTimeService(() => fixedNow);
@@ -188,7 +225,9 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
         notificationService.simulateFailure = true;
 
-        final result = await scheduleService.refreshSchedulesIfNeeded(force: true);
+        final result = await scheduleService.refreshSchedulesIfNeeded(
+          force: true,
+        );
 
         // Batch result correctly captures failures
         expect(result.isSuccess, isFalse);
@@ -201,12 +240,70 @@ void main() {
 
         // Now simulate recovery: failure resolves and retry runs without early-return
         notificationService.simulateFailure = false;
-        final retryResult = await scheduleService.refreshSchedulesIfNeeded(force: false);
+        final retryResult = await scheduleService.refreshSchedulesIfNeeded(
+          force: false,
+        );
 
         expect(retryResult.isSuccess, isTrue);
         expect(retryResult.exactScheduled, greaterThan(0));
         expect(prefs.getString('prayer_schedule_fingerprint'), isNotNull);
         expect(prefs.getInt('prayer_schedule_timestamp'), isNotNull);
+      },
+    );
+
+    test(
+      'Adhkar failures retry independently without rebuilding a healthy prayer schedule',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        notificationService.simulateAdhkarFailure = true;
+
+        final first = await scheduleService.refreshSchedulesIfNeeded(
+          force: true,
+        );
+        expect(first.isSuccess, isFalse);
+        expect(first.failed, equals(3));
+        expect(prefs.getString('prayer_schedule_fingerprint'), isNotNull);
+        expect(prefs.getString('adhkar_schedule_fingerprint'), isNull);
+        final prayerCallCount = notificationService.scheduledCalls.length;
+        final prayerTimestamp = prefs.getInt('prayer_schedule_timestamp');
+
+        notificationService.simulateAdhkarFailure = false;
+        final retry = await scheduleService.refreshSchedulesIfNeeded();
+
+        expect(retry.isSuccess, isTrue);
+        expect(retry.totalAttempted, equals(3));
+        expect(retry.exactScheduled, equals(3));
+        expect(notificationService.adhkarScheduleCalls, equals(6));
+        expect(notificationService.scheduledCalls.length, prayerCallCount);
+        expect(prefs.getInt('prayer_schedule_timestamp'), prayerTimestamp);
+        expect(prefs.getString('adhkar_schedule_fingerprint'), isNotNull);
+      },
+    );
+
+    test(
+      'granting exact-alarm permission invalidates the schedule fingerprint immediately',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        notificationService.exactAlarmsAllowed = false;
+
+        await scheduleService.refreshSchedulesIfNeeded(force: true);
+        final fingerprintWithoutExactAccess = prefs.getString(
+          'prayer_schedule_fingerprint',
+        );
+        final scheduledBeforeGrant = notificationService.scheduledCalls.length;
+
+        notificationService.exactAlarmsAllowed = true;
+        final afterGrant = await scheduleService.refreshSchedulesIfNeeded();
+
+        expect(afterGrant.totalAttempted, greaterThan(0));
+        expect(
+          prefs.getString('prayer_schedule_fingerprint'),
+          isNot(equals(fingerprintWithoutExactAccess)),
+        );
+        expect(
+          notificationService.scheduledCalls.length,
+          greaterThan(scheduledBeforeGrant),
+        );
       },
     );
 
@@ -218,7 +315,9 @@ void main() {
         // Initial schedule
         final firstResult = await scheduleService.refreshSchedulesIfNeeded();
         expect(firstResult.isSuccess, isTrue);
-        final initialFingerprint = prefs.getString('prayer_schedule_fingerprint');
+        final initialFingerprint = prefs.getString(
+          'prayer_schedule_fingerprint',
+        );
         expect(initialFingerprint, isNotNull);
 
         // Immediate subsequent call with unchanged settings returns early (0 attempted)
@@ -232,7 +331,8 @@ void main() {
         );
 
         // Schedule service must detect fingerprint invalidation and reschedule
-        final adjustmentResult = await scheduleService.refreshSchedulesIfNeeded();
+        final adjustmentResult = await scheduleService
+            .refreshSchedulesIfNeeded();
         expect(adjustmentResult.totalAttempted, greaterThan(0));
         expect(adjustmentResult.isSuccess, isTrue);
         expect(
@@ -241,7 +341,9 @@ void main() {
         );
 
         // Change calculation method
-        final afterAdjFingerprint = prefs.getString('prayer_schedule_fingerprint');
+        final afterAdjFingerprint = prefs.getString(
+          'prayer_schedule_fingerprint',
+        );
         final currentSettings2 = await adhanSettingsService.getSettings();
         await adhanSettingsService.saveSettings(
           currentSettings2.copyWith(calculationMethod: 'umm_al_qura'),
@@ -282,7 +384,9 @@ void main() {
         // Start on October 30 (month boundary + DST season)
         fixedNow = DateTime(2026, 10, 30, 8, 0);
 
-        final result = await scheduleService.refreshSchedulesIfNeeded(force: true);
+        final result = await scheduleService.refreshSchedulesIfNeeded(
+          force: true,
+        );
         expect(result.isSuccess, isTrue);
 
         // Ensure notifications span across 7 days properly without calendar day collapse

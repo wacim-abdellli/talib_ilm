@@ -16,6 +16,8 @@ class PrayerScheduleService {
   static const _keyLocation = 'prayer_schedule_location';
   static const _keySettings = 'prayer_schedule_settings';
   static const _keyTimestamp = 'prayer_schedule_timestamp';
+  static const _keyAdhkarFingerprint = 'adhkar_schedule_fingerprint';
+  static const _keyAdhkarTimestamp = 'adhkar_schedule_timestamp';
 
   static AsyncLock _sharedLock = AsyncLock();
 
@@ -31,12 +33,11 @@ class PrayerScheduleService {
     AdhanSettingsService? adhanSettingsService,
     DateTime Function()? now,
     AsyncLock? lock,
-  })  : _prayerTimeService = prayerTimeService ?? PrayerTimeService(),
-        _notificationService = notificationService ?? NotificationService(),
-        _adhanSettingsService =
-            adhanSettingsService ?? AdhanSettingsService(),
-        _now = now ?? (prayerTimeService?.now ?? DateTime.now),
-        _refreshLock = lock ?? _sharedLock;
+  }) : _prayerTimeService = prayerTimeService ?? PrayerTimeService(),
+       _notificationService = notificationService ?? NotificationService(),
+       _adhanSettingsService = adhanSettingsService ?? AdhanSettingsService(),
+       _now = now ?? (prayerTimeService?.now ?? DateTime.now),
+       _refreshLock = lock ?? _sharedLock;
 
   @visibleForTesting
   static void resetSharedStateForTesting() {
@@ -55,11 +56,17 @@ class PrayerScheduleService {
       final today = day ?? await _prayerTimeService.getPrayerTimesDay();
       final settings = await _adhanSettingsService.getSettings();
       final now = _now();
+      final notificationPermissionGranted = await _notificationService
+          .arePermissionsGranted();
+      final exactAlarmsAllowed = await _notificationService
+          .canScheduleExactNotifications();
 
       final fingerprint = _buildFingerprint(
         today: today,
         settings: settings,
         now: now,
+        notificationPermissionGranted: notificationPermissionGranted,
+        exactAlarmsAllowed: exactAlarmsAllowed,
       );
 
       final lastFingerprint = prefs.getString(_keyFingerprint);
@@ -75,89 +82,126 @@ class PrayerScheduleService {
       final isUpToDate = lastFingerprint != null
           ? (lastFingerprint == fingerprint)
           : (lastDate == _formatDate(today.date) &&
-              lastLocation == today.city &&
-              lastSettings == _settingsKey(settings));
+                lastLocation == today.city &&
+                lastSettings == _settingsKey(settings));
 
-      if (!force && isUpToDate && hoursSinceLastRefresh < 12) {
+      final prayerScheduleIsFresh = isUpToDate && hoursSinceLastRefresh < 12;
+
+      final adhkarService = AdhkarReminderService(
+        notificationService: _notificationService,
+      );
+      final adhkarSettings = await adhkarService.getSettings();
+      final adhkarFingerprint = _buildAdhkarFingerprint(
+        adhkarSettings,
+        notificationPermissionGranted: notificationPermissionGranted,
+        exactAlarmsAllowed: exactAlarmsAllowed,
+      );
+      final lastAdhkarFingerprint = prefs.getString(_keyAdhkarFingerprint);
+      final lastAdhkarRefreshTimeMs = prefs.getInt(_keyAdhkarTimestamp) ?? 0;
+      final hoursSinceAdhkarRefresh =
+          (now.millisecondsSinceEpoch - lastAdhkarRefreshTimeMs) /
+          (1000 * 60 * 60);
+      final adhkarScheduleIsFresh =
+          lastAdhkarFingerprint == adhkarFingerprint &&
+          hoursSinceAdhkarRefresh < 12;
+      final refreshPrayerSchedule = force || !prayerScheduleIsFresh;
+      final refreshAdhkarSchedule = force || !adhkarScheduleIsFresh;
+
+      if (!refreshPrayerSchedule && !refreshAdhkarSchedule) {
         return const ScheduleBatchResult();
       }
-
-      // Preserve notification IDs for any prayer currently sounding / active
-      // within an active window of [-60s, +360s]
-      final sortedTodayPrayers = today.prayers.entries.toList()
-        ..sort((a, b) => a.value.compareTo(b.value));
-      final preserveIds = <int>{};
-      var prayerIdx = 0;
-      for (final entry in sortedTodayPrayers) {
-        if (!entry.key.contains('الشروق')) {
-          final diff = now.difference(entry.value).inSeconds;
-          if (diff >= -60 && diff <= 360) {
-            preserveIds.add(1000 + prayerIdx); // Scheduled notification ID (day 0)
-            preserveIds.add(100 + prayerIdx);  // Legacy scheduled notification ID
-            preserveIds.add(700 + prayerIdx);  // Instant alert ID
-            preserveIds.add(750 + prayerIdx);  // Instant pre-prayer ID
-          }
-        }
-        prayerIdx++;
-      }
-
-      await _notificationService.init();
-      await _notificationService.cancelPrayerNotificationsOnly(
-        preserveIds: preserveIds,
-      );
 
       var totalAttempted = 0;
       var exactScheduled = 0;
       var inexactFallback = 0;
       var skippedPast = 0;
       var failed = 0;
+      var prayerFailures = 0;
+      var adhkarFailures = 0;
       final errors = <String>[];
 
-      // Schedule 7 rolling days using civil calendar date arithmetic
-      // (DateTime(year, month, day + dayOffset) correctly handles DST transition days)
-      for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
-        final targetDate = DateTime(now.year, now.month, now.day + dayOffset);
-        final dayPrayerTimes = (dayOffset == 0 && day != null)
-            ? day
-            : await _prayerTimeService.getPrayerTimesDay(date: targetDate);
+      void recordOutcome(ScheduleOutcome outcome, {required bool adhkar}) {
+        totalAttempted++;
+        switch (outcome.status) {
+          case ScheduleOutcomeStatus.exact:
+            exactScheduled++;
+            break;
+          case ScheduleOutcomeStatus.inexactFallback:
+            inexactFallback++;
+            break;
+          case ScheduleOutcomeStatus.skippedPast:
+            skippedPast++;
+            break;
+          case ScheduleOutcomeStatus.permissionDenied:
+          case ScheduleOutcomeStatus.failed:
+            failed++;
+            if (adhkar) {
+              adhkarFailures++;
+            } else {
+              prayerFailures++;
+            }
+            if (outcome.errorMessage != null) {
+              errors.add(outcome.errorMessage!);
+            }
+            break;
+        }
+      }
 
-        final dayOutcomes = await _scheduleDay(
-          dayPrayerTimes,
-          settings,
-          dayOffset: dayOffset,
+      if (refreshPrayerSchedule) {
+        // Preserve notification IDs for any prayer currently sounding / active
+        // within an active window of [-60s, +360s].
+        final sortedTodayPrayers = today.prayers.entries.toList()
+          ..sort((a, b) => a.value.compareTo(b.value));
+        final preserveIds = <int>{};
+        var prayerIdx = 0;
+        for (final entry in sortedTodayPrayers) {
+          if (!entry.key.contains('الشروق')) {
+            final diff = now.difference(entry.value).inSeconds;
+            if (diff >= -60 && diff <= 360) {
+              preserveIds.add(
+                1000 + prayerIdx,
+              ); // Scheduled notification ID (day 0)
+              preserveIds.add(
+                100 + prayerIdx,
+              ); // Legacy scheduled notification ID
+              preserveIds.add(700 + prayerIdx); // Instant alert ID
+              preserveIds.add(750 + prayerIdx); // Instant pre-prayer ID
+            }
+          }
+          prayerIdx++;
+        }
+
+        await _notificationService.init();
+        await _notificationService.cancelPrayerNotificationsOnly(
+          preserveIds: preserveIds,
         );
 
-        for (final outcome in dayOutcomes) {
-          totalAttempted++;
-          switch (outcome.status) {
-            case ScheduleOutcomeStatus.exact:
-              exactScheduled++;
-              break;
-            case ScheduleOutcomeStatus.inexactFallback:
-              inexactFallback++;
-              break;
-            case ScheduleOutcomeStatus.skippedPast:
-              skippedPast++;
-              break;
-            case ScheduleOutcomeStatus.permissionDenied:
-            case ScheduleOutcomeStatus.failed:
-              failed++;
-              if (outcome.errorMessage != null) {
-                errors.add(outcome.errorMessage!);
-              }
-              break;
+        // Schedule 7 rolling days using civil calendar date arithmetic
+        // (DateTime(year, month, day + dayOffset) handles DST transition days).
+        for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+          final targetDate = DateTime(now.year, now.month, now.day + dayOffset);
+          final dayPrayerTimes = (dayOffset == 0 && day != null)
+              ? day
+              : await _prayerTimeService.getPrayerTimesDay(date: targetDate);
+
+          final dayOutcomes = await _scheduleDay(
+            dayPrayerTimes,
+            settings,
+            dayOffset: dayOffset,
+          );
+
+          for (final outcome in dayOutcomes) {
+            recordOutcome(outcome, adhkar: false);
           }
         }
       }
 
-      // Ensure daily Adhkar reminders are also scheduled and preserved
-      try {
-        final adhkarService =
-            AdhkarReminderService(notificationService: _notificationService);
-        final adhkarSettings = await adhkarService.getSettings();
-        await adhkarService.applySchedules(adhkarSettings);
-      } catch (e) {
-        debugPrint('PrayerScheduleService: Adhkar scheduling warning: $e');
+      if (refreshAdhkarSchedule) {
+        await _notificationService.init();
+        final outcomes = await adhkarService.applySchedules(adhkarSettings);
+        for (final outcome in outcomes) {
+          recordOutcome(outcome, adhkar: true);
+        }
       }
 
       final batchResult = ScheduleBatchResult(
@@ -169,22 +213,35 @@ class PrayerScheduleService {
         errors: errors,
       );
 
-      // C11 Data Safety: Only persist success fingerprint if the batch completed without failure!
-      if (batchResult.isSuccess) {
+      // Keep prayer and Adhkar freshness independent: an Adhkar failure must
+      // retry Adhkar without needlessly canceling/recreating the seven-day
+      // prayer alarm window on every app resume.
+      if (refreshPrayerSchedule && prayerFailures == 0) {
         await prefs.setString(_keyFingerprint, fingerprint);
         await prefs.setString(_keyDate, _formatDate(today.date));
         await prefs.setString(_keyLocation, today.city);
         await prefs.setString(_keySettings, _settingsKey(settings));
         await prefs.setInt(_keyTimestamp, now.millisecondsSinceEpoch);
-      } else {
+      } else if (prayerFailures > 0) {
         debugPrint(
-          'PrayerScheduleService: Batch had $failed failures. Omitting success fingerprint so next refresh retries.',
+          'PrayerScheduleService: Prayer schedule had $prayerFailures failures. Omitting success fingerprint so next refresh retries.',
         );
       }
 
-      try {
-        await HomeWidgetService.updateAllWidgets(prayerDay: today);
-      } catch (_) {}
+      if (refreshAdhkarSchedule && adhkarFailures == 0) {
+        await prefs.setString(_keyAdhkarFingerprint, adhkarFingerprint);
+        await prefs.setInt(_keyAdhkarTimestamp, now.millisecondsSinceEpoch);
+      } else if (adhkarFailures > 0) {
+        debugPrint(
+          'PrayerScheduleService: Adhkar schedule had $adhkarFailures failures. Omitting its success fingerprint so next refresh retries.',
+        );
+      }
+
+      if (refreshPrayerSchedule) {
+        try {
+          await HomeWidgetService.updateAllWidgets(prayerDay: today);
+        } catch (_) {}
+      }
 
       return batchResult;
     });
@@ -216,10 +273,11 @@ class PrayerScheduleService {
         0,
       );
       if (kahfTime.isAfter(now)) {
-        final outcome = await _notificationService.scheduleSurahAlKahfNotification(
-          id: kahfId,
-          scheduledTime: kahfTime,
-        );
+        final outcome = await _notificationService
+            .scheduleSurahAlKahfNotification(
+              id: kahfId,
+              scheduledTime: kahfTime,
+            );
         outcomes.add(outcome);
       }
     }
@@ -235,8 +293,8 @@ class PrayerScheduleService {
         continue;
       }
 
-      final isJumua = isFriday &&
-          (prayerName.contains('الظهر') || prayerName == 'الظهر');
+      final isJumua =
+          isFriday && (prayerName.contains('الظهر') || prayerName == 'الظهر');
       final effectivePrayerName = isJumua ? 'صلاة الجمعة' : prayerName;
 
       final mode = settings.modeForPrayer(prayerName);
@@ -244,16 +302,18 @@ class PrayerScheduleService {
         // 1. Advance notification (e.g. 15 minutes before)
         final notifyBefore = settings.notifyBeforeMinutes.toInt();
         if (notifyBefore > 0) {
-          final prePrayerTime =
-              prayerTime.subtract(Duration(minutes: notifyBefore));
+          final prePrayerTime = prayerTime.subtract(
+            Duration(minutes: notifyBefore),
+          );
           if (prePrayerTime.isAfter(now)) {
-            final outcome = await _notificationService.schedulePrePrayerNotification(
-              id: basePrePrayerId + index,
-              prayerName: effectivePrayerName,
-              scheduledTime: prePrayerTime,
-              minutesBefore: notifyBefore,
-              isJumua: isJumua,
-            );
+            final outcome = await _notificationService
+                .schedulePrePrayerNotification(
+                  id: basePrePrayerId + index,
+                  prayerName: effectivePrayerName,
+                  scheduledTime: prePrayerTime,
+                  minutesBefore: notifyBefore,
+                  isJumua: isJumua,
+                );
             outcomes.add(outcome);
           }
         }
@@ -278,12 +338,13 @@ class PrayerScheduleService {
               : (prayerName.contains('الفجر') ? 20 : 15);
           final iqamaTime = prayerTime.add(Duration(minutes: iqamaMinutes));
           if (iqamaTime.isAfter(now)) {
-            final outcome = await _notificationService.scheduleIqamaNotification(
-              id: baseIqamaId + index,
-              prayerName: effectivePrayerName,
-              scheduledTime: iqamaTime,
-              isJumua: isJumua,
-            );
+            final outcome = await _notificationService
+                .scheduleIqamaNotification(
+                  id: baseIqamaId + index,
+                  prayerName: effectivePrayerName,
+                  scheduledTime: iqamaTime,
+                  isJumua: isJumua,
+                );
             outcomes.add(outcome);
           }
         }
@@ -304,6 +365,8 @@ class PrayerScheduleService {
     required PrayerTimesDay today,
     required AdhanSettings settings,
     required DateTime now,
+    required bool notificationPermissionGranted,
+    required bool? exactAlarmsAllowed,
   }) {
     final dateKey = _formatDate(today.date);
     final locKey =
@@ -312,7 +375,20 @@ class PrayerScheduleService {
     final calcKey =
         '${settings.calculationMethod}|${settings.madhab}|${settings.adjustments.entries.map((e) => "${e.key}:${e.value}").join(",")}';
     final setKey = _settingsKey(settings);
-    return '$dateKey|$locKey|$tzKey|$calcKey|$setKey';
+    final permissionKey =
+        'notifications:$notificationPermissionGranted|exact:$exactAlarmsAllowed';
+    return '$dateKey|$locKey|$tzKey|$calcKey|$setKey|$permissionKey';
+  }
+
+  String _buildAdhkarFingerprint(
+    AdhkarReminderSettings settings, {
+    required bool notificationPermissionGranted,
+    required bool? exactAlarmsAllowed,
+  }) {
+    return '${settings.morningEnabled}:${settings.morningHour}:${settings.morningMinute}|'
+        '${settings.eveningEnabled}:${settings.eveningHour}:${settings.eveningMinute}|'
+        '${settings.sleepEnabled}:${settings.sleepHour}:${settings.sleepMinute}|'
+        'notifications:$notificationPermissionGranted|exact:$exactAlarmsAllowed';
   }
 
   String _settingsKey(AdhanSettings settings) {

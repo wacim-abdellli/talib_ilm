@@ -139,7 +139,7 @@ class AdhanSettingsService {
   static const List<String> prayerNames = AppStrings.prayerOrder;
   static const Map<String, String> calculationMethods = {
     'auto': 'تلقائي (حسب الدولة الحالية)',
-    'algeria': 'وزارة الشؤون الدينية (الجزائر والمغرب العربي)',
+    'algeria': 'تقريب حسابي للجزائر (ليس جدولاً رسمياً)',
     'mwl': 'رابطة العالم الإسلامي (دولي - 18°/17°)',
     'umm_al_qura': 'جامعة أم القرى (مكة المكرمة)',
     'egyptian': 'الهيئة المصرية العامة للمساحة',

@@ -56,8 +56,9 @@ class PrayerNotificationDetailsBuilder {
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
-        final effectiveSound =
-            (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+        final effectiveSound = (sound == AdhanSound.takbeer)
+            ? AdhanSound.qatami
+            : sound;
         final soundNameStr = soundName(effectiveSound);
         final channelId = channelIdForAdhan(effectiveSound);
         final channelName = channelNameForAdhan(effectiveSound);
@@ -192,10 +193,11 @@ class PrayerNotificationDetailsBuilder {
   }) {
     switch (mode) {
       case PrayerNotificationMode.adhan:
-        final effectiveSound =
-            (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+        final effectiveSound = (sound == AdhanSound.takbeer)
+            ? AdhanSound.qatami
+            : sound;
         return DarwinNotificationDetails(
-          sound: '${soundName(effectiveSound)}.mp3',
+          sound: '${soundName(effectiveSound)}.caf',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,
@@ -203,7 +205,7 @@ class PrayerNotificationDetailsBuilder {
         );
       case PrayerNotificationMode.takbeer:
         return const DarwinNotificationDetails(
-          sound: 'adhan_takbeer.mp3',
+          sound: 'adhan_takbeer.caf',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,
@@ -212,7 +214,7 @@ class PrayerNotificationDetailsBuilder {
       case PrayerNotificationMode.announcement:
         final raw = announcementRawSoundFor(prayerName);
         return DarwinNotificationDetails(
-          sound: '$raw.mp3',
+          sound: '$raw.caf',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,
@@ -259,8 +261,9 @@ class PrayerNotificationDetailsBuilder {
 
   /// Maps [AdhanSound] to its dedicated Android channel identifier.
   static String channelIdForAdhan(AdhanSound sound) {
-    final effectiveSound =
-        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+    final effectiveSound = (sound == AdhanSound.takbeer)
+        ? AdhanSound.qatami
+        : sound;
     switch (effectiveSound) {
       case AdhanSound.madinah:
         return 'talib_prayer_madinah_v3';
@@ -281,8 +284,9 @@ class PrayerNotificationDetailsBuilder {
 
   /// Maps [AdhanSound] to its human-readable Arabic channel name.
   static String channelNameForAdhan(AdhanSound sound) {
-    final effectiveSound =
-        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+    final effectiveSound = (sound == AdhanSound.takbeer)
+        ? AdhanSound.qatami
+        : sound;
     switch (effectiveSound) {
       case AdhanSound.madinah:
         return 'أذان المسجد النبوي الشريف';
@@ -314,12 +318,24 @@ class PrayerNotificationDetailsBuilder {
 
   /// Resolves Android channel ID for voice announcements by prayer name.
   static String announcementChannelIdFor(String? prayerName) {
-    if (prayerName == null) return 'talib_prayer_announcement_general_v3';
-    if (prayerName.contains('فجر')) return 'talib_prayer_announcement_fajr_v3';
-    if (prayerName.contains('ظهر')) return 'talib_prayer_announcement_dhuhr_v3';
-    if (prayerName.contains('عصر')) return 'talib_prayer_announcement_asr_v3';
-    if (prayerName.contains('مغرب')) return 'talib_prayer_announcement_maghrib_v3';
-    if (prayerName.contains('عشاء')) return 'talib_prayer_announcement_isha_v3';
+    if (prayerName == null) {
+      return 'talib_prayer_announcement_general_v3';
+    }
+    if (prayerName.contains('فجر')) {
+      return 'talib_prayer_announcement_fajr_v3';
+    }
+    if (prayerName.contains('ظهر')) {
+      return 'talib_prayer_announcement_dhuhr_v3';
+    }
+    if (prayerName.contains('عصر')) {
+      return 'talib_prayer_announcement_asr_v3';
+    }
+    if (prayerName.contains('مغرب')) {
+      return 'talib_prayer_announcement_maghrib_v3';
+    }
+    if (prayerName.contains('عشاء')) {
+      return 'talib_prayer_announcement_isha_v3';
+    }
     return 'talib_prayer_announcement_general_v3';
   }
 }

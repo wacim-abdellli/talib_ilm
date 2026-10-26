@@ -52,8 +52,10 @@ class AdhkarReminderSettings {
     );
   }
 
-  TimeOfDay get morningTime => TimeOfDay(hour: morningHour, minute: morningMinute);
-  TimeOfDay get eveningTime => TimeOfDay(hour: eveningHour, minute: eveningMinute);
+  TimeOfDay get morningTime =>
+      TimeOfDay(hour: morningHour, minute: morningMinute);
+  TimeOfDay get eveningTime =>
+      TimeOfDay(hour: eveningHour, minute: eveningMinute);
   TimeOfDay get sleepTime => TimeOfDay(hour: sleepHour, minute: sleepMinute);
 }
 
@@ -77,7 +79,7 @@ class AdhkarReminderService {
   final NotificationService _notificationService;
 
   AdhkarReminderService({NotificationService? notificationService})
-      : _notificationService = notificationService ?? NotificationService();
+    : _notificationService = notificationService ?? NotificationService();
 
   Future<AdhkarReminderSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -111,47 +113,88 @@ class AdhkarReminderService {
     await applySchedules(settings);
   }
 
-  Future<void> applySchedules(AdhkarReminderSettings settings) async {
-    // 1. Morning Adhkar
-    if (settings.morningEnabled) {
-      await _notificationService.scheduleDailyAdhkarNotification(
-        id: idMorning,
-        title: 'أذكار الصباح',
-        body: 'أصبحنا وأصبح الملك لله.. ابدأ يومك بحفظ الله وذكره',
-        hour: settings.morningHour,
-        minute: settings.morningMinute,
-        payload: 'morning',
-      );
-    } else {
-      await _notificationService.cancelNotification(idMorning);
+  Future<List<ScheduleOutcome>> applySchedules(
+    AdhkarReminderSettings settings,
+  ) async {
+    final outcomes = <ScheduleOutcome>[];
+
+    Future<void> applyOne({
+      required bool enabled,
+      required int id,
+      required String title,
+      required String body,
+      required int hour,
+      required int minute,
+      required String payload,
+    }) async {
+      try {
+        if (enabled) {
+          outcomes.add(
+            await _notificationService.scheduleDailyAdhkarNotification(
+              id: id,
+              title: title,
+              body: body,
+              hour: hour,
+              minute: minute,
+              payload: payload,
+            ),
+          );
+        } else {
+          final canceled = await _notificationService.tryCancelNotification(id);
+          if (!canceled) {
+            outcomes.add(
+              ScheduleOutcome(
+                status: ScheduleOutcomeStatus.failed,
+                notificationId: id,
+                errorMessage: 'Failed to cancel disabled Adhkar reminder $id',
+              ),
+            );
+          }
+        }
+      } catch (error) {
+        outcomes.add(
+          ScheduleOutcome(
+            status: ScheduleOutcomeStatus.failed,
+            notificationId: id,
+            errorMessage: error.toString(),
+          ),
+        );
+      }
     }
+
+    // 1. Morning Adhkar
+    await applyOne(
+      enabled: settings.morningEnabled,
+      id: idMorning,
+      title: 'أذكار الصباح',
+      body: 'أصبحنا وأصبح الملك لله.. ابدأ يومك بحفظ الله وذكره',
+      hour: settings.morningHour,
+      minute: settings.morningMinute,
+      payload: 'morning',
+    );
 
     // 2. Evening Adhkar
-    if (settings.eveningEnabled) {
-      await _notificationService.scheduleDailyAdhkarNotification(
-        id: idEvening,
-        title: 'أذكار المساء',
-        body: 'أمسينا وأمسى الملك لله.. حصّن نفسك بحفظ الله وذكره',
-        hour: settings.eveningHour,
-        minute: settings.eveningMinute,
-        payload: 'evening',
-      );
-    } else {
-      await _notificationService.cancelNotification(idEvening);
-    }
+    await applyOne(
+      enabled: settings.eveningEnabled,
+      id: idEvening,
+      title: 'أذكار المساء',
+      body: 'أمسينا وأمسى الملك لله.. حصّن نفسك بحفظ الله وذكره',
+      hour: settings.eveningHour,
+      minute: settings.eveningMinute,
+      payload: 'evening',
+    );
 
     // 3. Sleep Adhkar
-    if (settings.sleepEnabled) {
-      await _notificationService.scheduleDailyAdhkarNotification(
-        id: idSleep,
-        title: 'أذكار النوم',
-        body: 'باسمك ربي وضعت جنبي وبك أرفعه.. لا تنسَ أذكار النوم وسورة الملك',
-        hour: settings.sleepHour,
-        minute: settings.sleepMinute,
-        payload: 'sleeping',
-      );
-    } else {
-      await _notificationService.cancelNotification(idSleep);
-    }
+    await applyOne(
+      enabled: settings.sleepEnabled,
+      id: idSleep,
+      title: 'أذكار النوم',
+      body: 'باسمك ربي وضعت جنبي وبك أرفعه.. لا تنسَ أذكار النوم وسورة الملك',
+      hour: settings.sleepHour,
+      minute: settings.sleepMinute,
+      payload: 'sleeping',
+    );
+
+    return outcomes;
   }
 }
