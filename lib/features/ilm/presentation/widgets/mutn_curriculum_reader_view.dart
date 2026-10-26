@@ -75,7 +75,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   double _lineHeight = 1.95;
   ShamelaReaderSurface _surface = ShamelaReaderSurface.normal;
   ShamelaAccentColor _accentColor = ShamelaAccentColor.emerald;
-  int? _lastAutoScrolledParagraph;
   int _currentCalculatedPage = 1;
   int _totalCalculatedPages = 1;
   int? _lastVisibleParagraph;
@@ -117,22 +116,12 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
   }
 
   void _onAudioPlayingChanged() {
-    if (widget.audioService.isPlayingNotifier.value) {
-      final active = widget.audioService.activeParagraphNotifier.value;
-      if (active != null) {
-        _lastAutoScrolledParagraph = active;
-        _scrollToParagraph(active);
-      }
-    }
+    // Audio playback state changes do not hijack user viewport scroll.
   }
 
   void _onActiveParagraphChanged() {
     final active = widget.audioService.activeParagraphNotifier.value;
-    if (active == null || active == _lastAutoScrolledParagraph) return;
-    if (!widget.audioService.isPlayingNotifier.value) return;
-
-    _lastAutoScrolledParagraph = active;
-    _scrollToParagraph(active);
+    if (active == null) return;
     _recordParagraphProgress(active);
   }
 

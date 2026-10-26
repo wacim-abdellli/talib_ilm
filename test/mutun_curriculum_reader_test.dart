@@ -116,7 +116,7 @@ void main() {
         'bk_zad_mustaqni',
       ];
 
-      final syllabusAudioBooks = [
+      final syllabusFullAudioBooks = [
         'bk_adhkar_adab',
         'bk_nawaqid_islam',
         'bk_qawaid_arba',
@@ -131,9 +131,6 @@ void main() {
         'bk_ajrumiyyah',
         'bk_waraqat',
         'bk_arbaeen_nawawi',
-        'bk_unwan_al_hukm',
-        'bk_manzumah_albiri',
-        'bk_rahibiyyah',
       ];
 
       for (final id in bookIds) {
@@ -144,7 +141,7 @@ void main() {
         expect(book.getParagraph(1), isNotNull, reason: 'Book $id missing paragraph 1');
         expect(book.getParagraph(1)!.text.trim().isNotEmpty, isTrue);
 
-        if (syllabusAudioBooks.contains(id)) {
+        if (syllabusFullAudioBooks.contains(id)) {
           final audioEntry = MutunAudioCatalog.getEntry(id);
           expect(audioEntry, isNotNull, reason: 'Audio entry missing for $id');
           expect(
@@ -154,6 +151,11 @@ void main() {
           );
         }
       }
+
+      // Explicitly assert full complete editions for the poetic mutun
+      expect(MutunCurriculumCatalog.getBook('bk_manzumah_albiri')!.totalParagraphs, 110);
+      expect(MutunCurriculumCatalog.getBook('bk_unwan_al_hukm')!.totalParagraphs, 63);
+      expect(MutunCurriculumCatalog.getBook('bk_rahibiyyah')!.totalParagraphs, 183);
     });
   });
 

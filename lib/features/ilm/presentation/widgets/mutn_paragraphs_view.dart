@@ -5,9 +5,9 @@ import '../../../../app/theme/app_ui.dart';
 import '../../data/services/mutun_audio_service.dart';
 import 'shamela_text_highlighter.dart';
 
-/// Renders classical text split into numbered paragraphs with active audio highlight
-/// and autonomous auto-scrolling that follows the reciter during playback.
-class MutnParagraphsView extends StatefulWidget {
+/// Renders classical text split into numbered paragraphs with active audio highlight.
+/// Viewport scrolling remains manual so the user retains full scroll control.
+class MutnParagraphsView extends StatelessWidget {
   final String content;
   final String fontFamily;
   final double fontSizeDelta;
@@ -28,73 +28,6 @@ class MutnParagraphsView extends StatefulWidget {
     this.audioService,
     this.startingIndex = 1,
   });
-
-  @override
-  State<MutnParagraphsView> createState() => _MutnParagraphsViewState();
-}
-
-class _MutnParagraphsViewState extends State<MutnParagraphsView> {
-  late final MutunAudioService _service;
-  final Map<int, GlobalKey> _paragraphKeys = {};
-  int? _lastScrolledIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _service = widget.audioService ?? MutunAudioService();
-    _service.activeParagraphNotifier.addListener(_onAudioChanged);
-    _service.isPlayingNotifier.addListener(_onAudioChanged);
-    if (_service.isPlayingNotifier.value) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _onAudioChanged());
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant MutnParagraphsView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.audioService != oldWidget.audioService) {
-      _service.activeParagraphNotifier.removeListener(_onAudioChanged);
-      _service.isPlayingNotifier.removeListener(_onAudioChanged);
-      _service = widget.audioService ?? MutunAudioService();
-      _service.activeParagraphNotifier.addListener(_onAudioChanged);
-      _service.isPlayingNotifier.addListener(_onAudioChanged);
-    }
-  }
-
-  @override
-  void dispose() {
-    _service.activeParagraphNotifier.removeListener(_onAudioChanged);
-    _service.isPlayingNotifier.removeListener(_onAudioChanged);
-    super.dispose();
-  }
-
-  void _onAudioChanged() {
-    if (!mounted) return;
-    if (!_service.isPlayingNotifier.value) return;
-    final active = _service.activeParagraphNotifier.value;
-    if (active == null || active == _lastScrolledIndex) return;
-
-    if (_paragraphKeys.containsKey(active)) {
-      _lastScrolledIndex = active;
-      _scrollToParagraph(active);
-    }
-  }
-
-  void _scrollToParagraph(int index) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final key = _paragraphKeys[index];
-      final currentCtx = key?.currentContext;
-      if (currentCtx != null && currentCtx.mounted) {
-        Scrollable.ensureVisible(
-          currentCtx,
-          duration: AppMotion.slow,
-          curve: Curves.easeInOutCubic,
-          alignment: 0.22,
-        );
-      }
-    });
-  }
 
   List<String> _extractParagraphs(String raw) {
     final lines = raw.split('\n');
@@ -125,40 +58,29 @@ class _MutnParagraphsViewState extends State<MutnParagraphsView> {
     final palette = context.palette;
     final textTheme = context.text;
     final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
-    final paragraphs = _extractParagraphs(widget.content);
+    final paragraphs = _extractParagraphs(content);
+    final service = audioService ?? MutunAudioService();
 
     return ValueListenableBuilder<bool>(
-      valueListenable: _service.isPlayingNotifier,
+      valueListenable: service.isPlayingNotifier,
       builder: (context, isPlaying, _) {
         return ValueListenableBuilder<int?>(
-          valueListenable: _service.activeParagraphNotifier,
+          valueListenable: service.activeParagraphNotifier,
           builder: (context, activeIndex, _) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (int i = 0; i < paragraphs.length; i++) ...[
-                  Builder(
-                    builder: (context) {
-                      final pIndex = widget.startingIndex + i;
-                      final key = _paragraphKeys.putIfAbsent(
-                        pIndex,
-                        () => GlobalKey(),
-                      );
-                      return Container(
-                        key: key,
-                        child: _buildParagraphBlock(
-                          context: context,
-                          index: pIndex,
-                          text: paragraphs[i],
-                          isActive: activeIndex == pIndex,
-                          isPlaying: isPlaying,
-                          palette: palette,
-                          textTheme: textTheme,
-                          tokens: tokens,
-                          service: _service,
-                        ),
-                      );
-                    },
+                  _buildParagraphBlock(
+                    context: context,
+                    index: startingIndex + i,
+                    text: paragraphs[i],
+                    isActive: activeIndex == (startingIndex + i),
+                    isPlaying: isPlaying,
+                    palette: palette,
+                    textTheme: textTheme,
+                    tokens: tokens,
+                    service: service,
                   ),
                   const SizedBox(height: AppSpace.md),
                 ],
@@ -225,11 +147,11 @@ class _MutnParagraphsViewState extends State<MutnParagraphsView> {
                 text: text,
                 palette: palette,
                 textTheme: textTheme,
-                fontFamily: widget.fontFamily,
-                fontSizeDelta: widget.fontSizeDelta,
-                lineHeight: widget.lineHeight,
-                accentColor: widget.accentColor,
-                surface: widget.surface,
+                fontFamily: fontFamily,
+                fontSizeDelta: fontSizeDelta,
+                lineHeight: lineHeight,
+                accentColor: accentColor,
+                surface: surface,
               ),
               textAlign: TextAlign.start,
             ),
@@ -253,7 +175,6 @@ class _MutnParagraphsViewState extends State<MutnParagraphsView> {
                       color: showHighlight
                           ? tokens.rosetteGold
                           : palette.border.withValues(alpha: 0.6),
-                      width: 0.8,
                     ),
                   ),
                   child: Text(

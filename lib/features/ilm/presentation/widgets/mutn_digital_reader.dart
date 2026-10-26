@@ -101,13 +101,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   }
 
   void _onActiveParagraphChanged() {
-    final active = _audioService.activeParagraphNotifier.value;
-    if (active == null || !_audioService.isPlayingNotifier.value) return;
-
-    final targetPage = _getPageForParagraph(widget.book.id, active, _totalPages);
-    if (targetPage != _currentPage && targetPage >= 1 && targetPage <= _totalPages) {
-      _goToPage(targetPage, animate: true);
-    }
+    // Keep page position under user control; do not flip pages automatically.
   }
 
   void _onAudioPlayingChanged() {
@@ -115,40 +109,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
       if (!_showAudioBar && mounted) {
         setState(() => _showAudioBar = true);
       }
-      _onActiveParagraphChanged();
     }
-  }
-
-  int _getPageForParagraph(String bookId, int paragraphIndex, int totalPages) {
-    if (bookId == 'bk_nawaqid_islam') {
-      return paragraphIndex <= 5 ? 1 : 2;
-    }
-    if (bookId == 'bk_qawaid_arba') {
-      if (paragraphIndex <= 2) return 1;
-      if (paragraphIndex <= 3) return 2;
-      if (paragraphIndex <= 6) return 3;
-      return 4;
-    }
-    if (bookId == 'bk_ajrumiyyah' ||
-        bookId == 'bk_ajrumiyya' ||
-        bookId == 'bk_waraqat' ||
-        bookId == 'bk_arbaeen_nawawi') {
-      return paragraphIndex.clamp(1, totalPages);
-    }
-    if (bookId == 'bk_aqidah_tahawiyyah' || bookId == 'bk_tahawiyya') {
-      return paragraphIndex.clamp(1, totalPages);
-    }
-    if (bookId == 'bk_wasitiyyah' || bookId == 'bk_wasitiyya') {
-      final p = ((paragraphIndex + 1) / 2).floor() + 1;
-      return p.clamp(1, totalPages);
-    }
-    final startPage = widget.digitalEntry.startPage;
-    final usablePages = totalPages - startPage + 1;
-    final totalParas = MutunAudioCatalog.getTotalParagraphs(bookId);
-    if (totalParas <= 1 || usablePages <= 1) return startPage;
-    final ratio = (paragraphIndex - 1) / totalParas;
-    final page = (ratio * usablePages).floor() + startPage;
-    return page.clamp(startPage, totalPages);
   }
 
   int _getStartingParagraphForPage(String bookId, int pageNum, int totalPages) {

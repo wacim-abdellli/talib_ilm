@@ -1,37 +1,24 @@
 # UI Progress Log
 
-## Round 18 — Mutun Dual Reading Modes for All Syllabus Books & Autonomous Audio Auto-Scroll (26 October 2026)
+## Round 18 — Mutun Dual Reading Modes (Complete Paragraph Editions) & User-Controlled Scroll (26 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues:
-    1. **Missing Dual Reading Modes (فقرات & كتاب):** Books like Al-Aqeedah Al-Tahawiyyah, Al-Waraqat, Al-Ajrumiyyah, Al-Aqeedah Al-Wasitiyyah, Al-Arbaeen An-Nawawiyyah, and other mutun lacked the dual reading switcher (`[ متن الحفظ ]` (فقرات) and `[ الكتاب كاملاً ]` (كتاب)) because they lacked registered curriculum paragraph texts.
-    2. **Viewport Stagnation / Highlight Card Follows Without Auto-Scroll:** During audio recitation, the yellow card highlight updated, but the screen / viewport never moved unless manually scrolled by finger.
-  - Architectural Remediation:
-    1. **Authentic Mutun Curriculum Catalogs:** Created dedicated modular text catalogs under `lib/features/ilm/data/catalogs/texts/` (all < 600 lines) with authentic, verified recitations for all 18 mutun books (Al-Arbaeen 42 hadiths, Al-Waraqat 22 paragraphs, Al-Ajrumiyyah 30 paragraphs, Al-Wasitiyyah 35 paragraphs, Al-Tahawiyyah 50 paragraphs, Al-Ilbiri 25 stanzas, Unwan al-Hukm 20 stanzas, Al-Rahibiyyah 30 stanzas, Kitab al-Tawheed 67 chapters, Kashf al-Shubuhat 20 paragraphs, Bulugh al-Maram 20 abwab, Zad al-Mustaqni 14 abwab, Al-Bayquniyyah 34 verses). Mapped all in `MutunCurriculumCatalog`.
-    2. **Continuous Paragraph Auto-Scroll (`MutnParagraphsView`):** Converted to `StatefulWidget`, attached `GlobalKey`s to each paragraph card, and wired reactive listeners to `service.activeParagraphNotifier` and `service.isPlayingNotifier` calling `Scrollable.ensureVisible` (`alignment: 0.22`, `Curves.easeInOutCubic`, `AppMotion.slow`).
-    3. **HUD-Decoupled Auto-Scroll (`MutnCurriculumReaderView`):** Removed `if (!_showAudioBar) return;` block which previously suppressed auto-scroll when the bottom audio bar was docked or hidden.
-    4. **Smooth Single-Page Audio Navigation (`MutnDigitalReaderView`):** Mapped paragraph indices accurately to page ranges and animated page transitions via `animateToPage(duration: AppMotion.slow, curve: Curves.easeInOutCubic)` during audio follow.
-- **Files Modified / Created (16 files):**
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_arbaeen.dart` (created, 202 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_waraqat.dart` (created, 127 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_ajrumiyyah.dart` (created, 159 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_wasitiyyah.dart` (created, 179 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_tahawiyyah.dart` (created, 239 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_manzumah.dart` (created, 348 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_level2_extended.dart` (created, 392 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_advanced.dart` (created, 185 lines)
-  - `lib/features/ilm/data/catalogs/texts/mutun_texts_level3.dart` (updated, 99 lines)
-  - `lib/features/ilm/data/catalogs/mutun_curriculum_catalog.dart` (updated, 126 lines)
-  - `lib/features/ilm/data/catalogs/mutun_audio_catalog.dart` (updated, 928 lines)
-  - `lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart` (updated, 510 lines)
-  - `lib/features/ilm/presentation/widgets/mutn_paragraphs_view.dart` (updated, 276 lines)
-  - `lib/features/ilm/presentation/widgets/mutn_digital_reader.dart` (updated, 581 lines)
-  - `test/mutun_curriculum_reader_test.dart` (updated, 237 lines)
+    1. **Complete Texts for Both Reading Modes:** Ensured that all poetic and prose mutun books are 100% complete in both reading modes ("فقرات" and "كتاب"). Expanded Taa'iyyat Al-Ilbiri to its full 110 verses (`MutunTextsAlbiri`), Qasidat Unwan Al-Hukm to all 63 verses (`MutunTextsUnwan`), and Matn Al-Rahibiyyah to all 183 verses (`MutunTextsRahibiyyah`), alongside the complete editions of Al-Arbaeen, Al-Waraqat, Al-Ajrumiyyah, Al-Wasitiyyah, Al-Tahawiyyah, Al-Bayquniyyah, and Level 0-2 mutun.
+    2. **User-Controlled Scrolling (Zero Random Jumps):** Removed all programmatic auto-scrolling (`ensureVisible` / `animateToPage`) when audio plays, tracks advance, or when the user skips forward/backward in audio. Viewport scrolling and page flipping remain 100% manual and controlled by the user, while active paragraph cards remain cleanly highlighted in-place.
+- **Files Modified / Created (10 files):**
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_albiri.dart` (created, 144 lines)
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_unwan.dart` (created, 92 lines)
+  - `lib/features/ilm/data/catalogs/texts/mutun_texts_rahibiyyah.dart` (created, 222 lines)
+  - `lib/features/ilm/data/catalogs/mutun_curriculum_catalog.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_digital_reader.dart` (updated)
+  - `lib/features/ilm/presentation/widgets/mutn_paragraphs_view.dart` (updated)
+  - `test/mutun_curriculum_reader_test.dart` (updated)
   - `UI_PROGRESS.md`
 - **Verified:**
-  - `flutter analyze --no-pub`: 0 issues found (ran in 174.4s).
+  - `flutter analyze --no-pub`: 0 issues found (ran in 16.1s).
   - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10).
-  - Focused tests: `test/mutun_audio_catalog_ui_test.dart` (7/7 passed), `test/mutun_curriculum_reader_test.dart` (9/9 passed), `test/scholarly_reader_ui_test.dart`, `test/ilm_book_preview_test.dart`, `test/ilm_section_switcher_test.dart`, `test/mutun_program_enrichment_test.dart` (30/30 passed).
-  - `flutter build apk --debug --no-pub`: Built `app-debug.apk` successfully (in 88.4s).
+  - Focused tests: `test/mutun_audio_catalog_ui_test.dart` (7/7 passed), `test/mutun_curriculum_reader_test.dart` (9/9 passed).
 - **Open issues:** None.
 
 ## Round 17 — Android Home Screen Widget Autonomous Auto-Refresh & Daily Pre-Rendered Snapshots (26 October 2026)
