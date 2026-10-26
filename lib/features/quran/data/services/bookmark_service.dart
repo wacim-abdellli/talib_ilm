@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,6 +21,16 @@ class BookmarkService {
   static const String _legacyBookmarksKey = 'bookmarks';
 
   static final AsyncLock _lock = AsyncLock();
+
+  // In-memory cache guarded by raw JSON string comparison
+  static String? _cachedRawString;
+  static List<Bookmark>? _cachedBookmarks;
+
+  @visibleForTesting
+  static void resetCacheForTesting() {
+    _cachedRawString = null;
+    _cachedBookmarks = null;
+  }
 
   /// Executes a read-modify-write repository transaction under [_lock].
   ///
@@ -300,6 +311,10 @@ class BookmarkService {
     // If active storage key exists, trust its contents (even if empty list)
     if (prefs.containsKey(_bookmarksKey)) {
       final jsonString = prefs.getString(_bookmarksKey);
+      if (jsonString == _cachedRawString && _cachedBookmarks != null) {
+        return List<Bookmark>.of(_cachedBookmarks!);
+      }
+
       if (jsonString != null && jsonString.isNotEmpty) {
         try {
           final decoded = jsonDecode(jsonString);
@@ -315,10 +330,14 @@ class BookmarkService {
                 }
               }
             }
-            return list;
+            _cachedRawString = jsonString;
+            _cachedBookmarks = list;
+            return List<Bookmark>.of(list);
           }
         } catch (_) {}
       }
+      _cachedRawString = jsonString;
+      _cachedBookmarks = [];
       return [];
     }
 
@@ -372,13 +391,18 @@ class BookmarkService {
       }
     }
 
+    _cachedRawString = null;
+    _cachedBookmarks = [];
     return [];
   }
 
   static Future<void> _saveBookmarks(List<Bookmark> bookmarks) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = bookmarks.map((b) => b.toJson()).toList();
-    final success = await prefs.setString(_bookmarksKey, jsonEncode(jsonList));
+    final encoded = jsonEncode(jsonList);
+    _cachedRawString = encoded;
+    _cachedBookmarks = List<Bookmark>.of(bookmarks);
+    final success = await prefs.setString(_bookmarksKey, encoded);
     if (!success) {
       throw StateError('Failed to persist bookmarks to storage');
     }

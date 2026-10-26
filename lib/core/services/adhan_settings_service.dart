@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
 
@@ -149,7 +150,19 @@ class AdhanSettingsService {
     'hanafi': 'المذهب الحنفي • مثلا الظل',
   };
 
-  Future<AdhanSettings> getSettings() async {
+  // In-memory memoized settings cache
+  static AdhanSettings? _cachedSettings;
+
+  @visibleForTesting
+  static void resetCacheForTesting() {
+    _cachedSettings = null;
+  }
+
+  Future<AdhanSettings> getSettings({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedSettings != null) {
+      return _cachedSettings!;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_keyEnabled) ?? true;
     final soundIndex = prefs.getInt(_keySound);
@@ -192,7 +205,7 @@ class AdhanSettingsService {
       }
     }
 
-    return AdhanSettings(
+    final settings = AdhanSettings(
       enabled: enabled,
       sound: sound,
       silentNotifications: silent,
@@ -206,9 +219,13 @@ class AdhanSettingsService {
       defaultMode: defaultMode,
       prayerModes: prayerModes,
     );
+
+    _cachedSettings = settings;
+    return settings;
   }
 
   Future<void> saveSettings(AdhanSettings settings) async {
+    _cachedSettings = settings;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnabled, settings.enabled);
     await prefs.setInt(_keySound, settings.sound.index);
@@ -231,3 +248,4 @@ class AdhanSettingsService {
     }
   }
 }
+

@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## R94 — SharedPreferences I/O Batching & In-Memory Memoization (26 October 2026)
+- **Scope & Context:**
+  - Resolved performance bottlenecks, redundant disk I/O, unmemoized JSON parsing, and lack of retention pruning across high-frequency persistent state services (Area F):
+    1. **ReadingStatsService In-Memory Memoization:** Added `_cachedRawSessions` and `_cachedDecodedSessions` with raw list equality verification. Subsequent calls to `getDailyStats()` and `getStreak()` execute synchronously in < 1ms over cached data rather than decoding 500 JSON strings from disk. Fixed DST boundary streak calculation to use civil calendar rollover `DateTime(year, month, day - 1)`.
+    2. **BookmarkService Raw String Comparison Guard:** In `_loadBookmarksRaw()`, cached decoded bookmarks alongside `_cachedRawString`. When the disk payload is identical, skips JSON deserialization and 200 model allocations entirely, speeding up ayah bookmark checks across reader pages. Synchronously updates cache on mutations.
+    3. **ProgressService O(1) In-Memory Lookup:** Added `_cachedRawData` and `_cachedProgress` in-memory memoization. `getProgress(bookId)` and `getAllProgress()` execute in O(1) time without reading disk or parsing JSON.
+    4. **FavoritesService Memoization:** Added `_cachedRawList` and `_cachedFavorites` in-memory caching. `isFavorite(type, id)` and `getIdsByType(type)` bypass disk I/O and JSON parsing on repeated list rendering.
+    5. **AdhanSettingsService In-Memory Cache:** Cached `_cachedSettings` to eliminate ~25 individual SharedPreferences key lookups per frame/evaluation. Added `forceRefresh` option for testing and disk re-sync.
+    6. **UserDayTracker Today-State Caching & Stale Key Pruning:** Memoized today's tracking flags (`hasActedToday`, `openedQuranToday`, `continuedLearningToday`, `openedAdhkarToday`). Added `pruneStaleKeys(prefs, retentionDays: 30)` to delete daily tracking keys older than 30 days, eliminating permanent flash storage bloat.
+    7. **QuranReaderPreferences Snapshot Caching:** Added `_cachedSnapshot` with `copyWith` synchronization across mutators (`saveReadingMode`, `saveTajweedEnabled`, `saveFontSize`, etc.), providing instant reader state lookups.
+    8. **Automated Regression Test Suite:** Authored `test/performance_and_io_batching_test.dart` (7 tests) verifying memoization, cache updates, civil streak rollover, stale key pruning, and test seam reset across all 7 services.
+- **Files Modified (7 app files + 1 new test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/reading_stats_service.dart`: In-memory memoization, raw list equality, civil streak rollover (185 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/bookmark_service.dart`: Raw string equality check, instant cache hit (496 lines, Rule 8 compliant).
+  - `lib/core/services/progress_service.dart`: In-memory cache, O(1) book lookup (82 lines, Rule 8 compliant).
+  - `lib/core/services/favorites_service.dart`: In-memory cache, instant isFavorite check (110 lines, Rule 8 compliant).
+  - `lib/core/services/adhan_settings_service.dart`: Settings memoization, eliminate 25 key queries per frame (250 lines, Rule 8 compliant).
+  - `lib/core/services/user_day_tracker.dart`: Today-state cache, 30-day stale key pruning (184 lines, Rule 8 compliant).
+  - `lib/features/quran/data/services/quran_reader_preferences.dart`: Snapshot cache, copyWith mutators (169 lines, Rule 8 compliant).
+  - `test/performance_and_io_batching_test.dart`: Added 7 regression tests.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze`: 0 issues found (20.9s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10).
+  - Focused tests (`test/performance_and_io_batching_test.dart`, `test/prayer_alarms_lifecycle_test.dart`, `test/quran_audio_download_ui_test.dart`, `test/database_storage_reliability_test.dart`, `test/quran_audio_download_hardening_test.dart`): 34/34 passed.
+  - Related suites (`test/book_favorite_sync_test.dart`, `test/bookmark_separation_test.dart`, `test/bookmark_backup_test.dart`, `test/bookmark_atomicity_test.dart`, `test/database_storage_reliability_test.dart`, `test/adhan_notification_settings_test.dart`, `test/runtime_performance_benchmarks_test.dart`): 55/55 passed.
+  - `flutter build apk --debug`: PASSED.
+- **Open issues & Next steps:**
+  - Area F (Performance Profiling & SharedPreferences I/O Batching) complete.
+
 ## R93 — Fix Quran Audio Download Item Overflow & Eliminate Page Reload Flicker (26 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues on the Quran Audio Downloads ("التنزيلات الصوتية") screen:
