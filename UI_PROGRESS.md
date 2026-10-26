@@ -1,5 +1,32 @@
 # UI Progress Log
 
+## R101 — Reader Backup Recovery on Corrupt Primary Quran Edition (26 October 2026)
+- **Scope & Context:**
+  - Implemented Stage R101 addressing the remaining AUD-101 edge case:
+    1. **Corrupt / Unreadable Primary Edition Recovery:** In `EditionService.loadSurahFromEdition` (`lib/features/quran/data/services/edition_service.dart`), previous recovery logic only fell back to `$editionId.json.bak` when the primary file `$editionId.json` was missing. If a mid-write crash, partial restoration, or disk corruption left an unparseable or incomplete primary file on disk alongside a valid backup, `loadSurahFromEdition` attempted to parse the corrupt primary file, threw a `FormatException`, and returned `null`.
+    2. **Defensive Parse-and-Fallback Flow:** Updated `loadSurahFromEdition` to validate primary file integrity via `_parseSurahFromJson`. If the primary file exists but cannot be read or parsed, it logs a warning and falls back to `$editionId.json.bak`.
+    3. **Primary File Self-Healing via Copy:** When reading from backup, the service restores/heals the primary file using `backupFile.copy(file.path)` rather than moving it, keeping the `.bak` file intact on disk until a subsequent call confirms the primary file parses cleanly.
+    4. **Intact Backup Invariant:** The backup file remains untouched during the fallback read and is only deleted once a subsequent successful primary file read is verified.
+    5. **Regression Test Suite:** Added a unit test in `test/edition_service_test.dart` (`AUD-101 Corrupt Primary Recovery`) simulating a failed restoration leaving a truncated/malformed primary file alongside a valid backup, proving that:
+       - The reader recovers and loads the requested Surah from the backup edition.
+       - The backup file remains intact after the first read.
+       - A second read cleanly verifies the healed primary file and disposes the redundant backup file.
+- **Files Modified (1 app service + 1 test file + UI_PROGRESS.md):**
+  - `lib/features/quran/data/services/edition_service.dart`: Added `_parseSurahFromJson`, corrupt primary fallback, and copy-based healing (543 lines, Rule 8 compliant).
+  - `test/edition_service_test.dart`: Added `_sampleData` helper and corrupt primary recovery test (413 lines, Rule 8 compliant).
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/edition_service_test.dart --no-pub`: 9/9 passed.
+  - `flutter test --no-pub`: 679/679 passed.
+  - `flutter test test/golden --no-pub`: 43/43 passed.
+  - `flutter build apk --debug --no-pub`: PASSED.
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+  - Next stage: Proceed to FIX-02 / ROUND2 R6a (audit the current Home order against the specified first-four-module hierarchy, then implement and verify that stage separately).
+
 ## R100 — Edition Rollback Resilience & Emergency Backup Reader Fallback (26 October 2026)
 - **Scope & Context:**
   - Implemented Stage R100 addressing AUD-101 follow-up findings:

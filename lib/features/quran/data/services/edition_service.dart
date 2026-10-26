@@ -337,7 +337,29 @@ class EditionService {
   // LOAD EDITION DATA
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Load a surah from a specific edition
+  static Surah? _parseSurahFromJson(String jsonString, int surahNumber) {
+    try {
+      final jsonData = jsonDecode(jsonString);
+      if (jsonData is! Map<String, dynamic>) return null;
+      final data = jsonData['data'];
+      if (data == null || data is! Map<String, dynamic>) return null;
+
+      final dynamic surahs = data['surahs'];
+      if (surahs is! List) return null;
+
+      final surahJson = surahs.firstWhere(
+        (s) => s is Map<String, dynamic> && s['number'] == surahNumber,
+        orElse: () => null,
+      );
+
+      if (surahJson == null) return null;
+      return Surah.fromJson(surahJson as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Load a surah from a specific edition with fallback to backup if primary is missing or corrupt
   static Future<Surah?> loadSurahFromEdition(
     String editionId,
     int surahNumber,
@@ -353,37 +375,58 @@ class EditionService {
       final file = File('${directory.path}/$editionId.json');
       final backupFile = File('${directory.path}/$editionId.json.bak');
 
-      // Crash-recovery: if primary file was midway through replacement when crash occurred
+      // 1. Crash-recovery: if primary file is missing but backup exists, attempt recovery
       if (!await file.exists() && await backupFile.exists()) {
         try {
           await _restoreFile(backupFile, file);
         } catch (_) {}
       }
 
-      // Read from primary file, or fall back to reading backupFile if primary cannot be restored
-      final activeFile = await file.exists()
-          ? file
-          : (await backupFile.exists() ? backupFile : null);
-
-      if (activeFile == null) {
-        return null;
+      // 2. Try loading from primary file if it exists
+      if (await file.exists()) {
+        try {
+          final jsonString = await file.readAsString();
+          final surah = _parseSurahFromJson(jsonString, surahNumber);
+          if (surah != null) {
+            // Primary file confirmed valid! Clean up any leftover backup from previous recovery
+            if (await backupFile.exists()) {
+              try {
+                await backupFile.delete();
+              } catch (_) {}
+            }
+            return surah;
+          }
+          debugPrint('Primary edition file is corrupt/invalid ($editionId)');
+        } catch (e) {
+          debugPrint('Failed to read primary edition file ($editionId): $e');
+        }
       }
 
-      final jsonString = await activeFile.readAsString();
-      final jsonData = jsonDecode(jsonString);
+      // 3. Fallback: if primary file was missing, unreadable, or corrupt,
+      // and backup exists, read from backup and heal primary!
+      if (await backupFile.exists()) {
+        try {
+          final backupString = await backupFile.readAsString();
+          final surah = _parseSurahFromJson(backupString, surahNumber);
+          if (surah != null) {
+            debugPrint('Successfully recovered and loaded surah from backup edition ($editionId)');
+            // Restore primary from backup via copy so backup remains intact until valid primary is confirmed
+            try {
+              if (await file.exists()) {
+                try {
+                  await file.delete();
+                } catch (_) {}
+              }
+              await backupFile.copy(file.path);
+            } catch (_) {}
+            return surah;
+          }
+        } catch (e) {
+          debugPrint('Backup edition file is also unreadable ($editionId): $e');
+        }
+      }
 
-      final data = jsonData['data'];
-      if (data == null) return null;
-
-      final List<dynamic> surahs = data['surahs'] ?? [];
-      final surahJson = surahs.firstWhere(
-        (s) => s['number'] == surahNumber,
-        orElse: () => null,
-      );
-
-      if (surahJson == null) return null;
-
-      return Surah.fromJson(surahJson);
+      return null;
     } catch (e) {
       debugPrint('Error loading surah from edition: $e');
       return null;

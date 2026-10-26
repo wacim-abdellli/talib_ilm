@@ -7,6 +7,36 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/features/quran/data/services/edition_service.dart';
 
+Map<String, dynamic> _sampleData(String surahName, {String englishName = 'Al-Faatiha'}) => {
+  'code': 200,
+  'status': 'OK',
+  'data': {
+    'surahs': [
+      {
+        'number': 1,
+        'name': surahName,
+        'englishName': englishName,
+        'englishNameTranslation': 'The Opening',
+        'revelationType': 'Meccan',
+        'numberOfAyahs': 7,
+        'ayahs': [
+          {
+            'number': 1,
+            'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+            'numberInSurah': 1,
+            'juz': 1,
+            'manzil': 1,
+            'page': 1,
+            'ruku': 1,
+            'hizbQuarter': 1,
+            'sajda': false,
+          }
+        ]
+      }
+    ]
+  }
+};
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -52,35 +82,7 @@ void main() {
 
   group('EditionService HTTP Seam, Streaming & Atomic Write (R85)', () {
     test('Downloads edition stream, atomically saves file, and updates preferences', () async {
-      final mockData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ',
-              'englishName': 'Al-Faatiha',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final mockData = _sampleData('سُورَةُ ٱلْفَاتِحَةِ');
 
       final mockClient = MockClient((request) async {
         expect(request.url.toString(), contains('api.alquran.cloud'));
@@ -171,65 +173,11 @@ void main() {
     });
 
     test('AUD-101: Failed edition replacement preserves existing offline file and download state', () async {
-      final initialData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة الأصلية',
-              'englishName': 'Al-Faatiha',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
-
-      final replacementData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة البديلة',
-              'englishName': 'Al-Faatiha Updated',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final initialData = _sampleData('سُورَةُ ٱلْفَاتِحَةِ - النسخة الأصلية');
+      final replacementData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - النسخة البديلة',
+        englishName: 'Al-Faatiha Updated',
+      );
 
       // 1. Seed existing valid offline edition
       final finalFile = File('${tempDir.path}/warsh.json');
@@ -291,65 +239,14 @@ void main() {
     });
 
     test('AUD-101: Successful edition replacement safely installs new edition and cleans up backup', () async {
-      final initialData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - الإصدار القديم',
-              'englishName': 'Al-Faatiha Old',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
-
-      final updatedData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - الإصدار الجديد',
-              'englishName': 'Al-Faatiha New',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final initialData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - الإصدار القديم',
+        englishName: 'Al-Faatiha Old',
+      );
+      final updatedData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - الإصدار الجديد',
+        englishName: 'Al-Faatiha New',
+      );
 
       final finalFile = File('${tempDir.path}/warsh.json');
       final tmpFile = File('${tempDir.path}/warsh.json.tmp');
@@ -383,35 +280,10 @@ void main() {
     });
 
     test('AUD-101 Crash Recovery: loadSurahFromEdition recovers orphan backup if primary file is missing', () async {
-      final seedData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - نسخة مسترجعة',
-              'englishName': 'Al-Faatiha Recovered',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final seedData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - نسخة مسترجعة',
+        englishName: 'Al-Faatiha Recovered',
+      );
 
       final finalFile = File('${tempDir.path}/warsh.json');
       final backupFile = File('${tempDir.path}/warsh.json.bak');
@@ -434,65 +306,15 @@ void main() {
     });
 
     test('AUD-101 Rollback Resilience: rollback failure is explicitly surfaced and backup remains accessible', () async {
-      final seedData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - النسخة الموثوقة',
-              'englishName': 'Al-Faatiha Protected',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final seedData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - النسخة الموثوقة',
+        englishName: 'Al-Faatiha Protected',
+      );
 
-      final replacementData = {
-        'code': 200,
-        'status': 'OK',
-        'data': {
-          'surahs': [
-            {
-              'number': 1,
-              'name': 'سُورَةُ ٱلْفَاتِحَةِ - نسخة جديدة فاشلة',
-              'englishName': 'Al-Faatiha Broken',
-              'englishNameTranslation': 'The Opening',
-              'revelationType': 'Meccan',
-              'numberOfAyahs': 7,
-              'ayahs': [
-                {
-                  'number': 1,
-                  'text': 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                  'numberInSurah': 1,
-                  'juz': 1,
-                  'manzil': 1,
-                  'page': 1,
-                  'ruku': 1,
-                  'hizbQuarter': 1,
-                  'sajda': false,
-                }
-              ]
-            }
-          ]
-        }
-      };
+      final replacementData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - نسخة جديدة فاشلة',
+        englishName: 'Al-Faatiha Broken',
+      );
 
       final finalFile = File('${tempDir.path}/warsh.json');
       final backupFile = File('${tempDir.path}/warsh.json.bak');
@@ -542,6 +364,50 @@ void main() {
       final surah = await EditionService.loadSurahFromEdition('warsh', 1);
       expect(surah, isNotNull, reason: 'Reader must fall back to readable backup if primary is un-restorable');
       expect(surah!.name, contains('النسخة الموثوقة'));
+    });
+
+    test('AUD-101 Corrupt Primary Recovery: loadSurahFromEdition falls back to .bak when primary file exists but is corrupt', () async {
+      final validBackupData = _sampleData(
+        'سُورَةُ ٱلْفَاتِحَةِ - النسخة الاحتياطية السليمة',
+        englishName: 'Al-Faatiha Valid Backup',
+      );
+
+      final finalFile = File('${tempDir.path}/warsh.json');
+      final backupFile = File('${tempDir.path}/warsh.json.bak');
+
+      // 1. Write valid Quran edition data to backup file
+      await backupFile.writeAsString(jsonEncode(validBackupData));
+
+      // 2. Simulate failed write/restoration leaving a partial/corrupt primary file on disk
+      await finalFile.writeAsString('{"code": 200, "data": {"surahs": [{"number": 1, "name": "truncated... ');
+
+      expect(await finalFile.exists(), isTrue, reason: 'Primary file exists on disk');
+      expect(await backupFile.exists(), isTrue, reason: 'Backup file exists on disk');
+
+      // 3. Attempt loading surah from edition
+      final surah = await EditionService.loadSurahFromEdition('warsh', 1);
+
+      // 4. Assert that reader falls back to reading the valid backup file
+      expect(
+        surah,
+        isNotNull,
+        reason: 'Reader must fall back to valid backup edition when primary file is corrupt',
+      );
+      expect(surah!.name, contains('النسخة الاحتياطية السليمة'));
+
+      // 5. Invariant: Backup file must remain intact until a valid primary is confirmed
+      expect(
+        await backupFile.exists(),
+        isTrue,
+        reason: 'Backup file must remain intact during initial fallback read',
+      );
+
+      // 6. Calling again after healing should confirm valid primary and safely clean up backup
+      final secondRead = await EditionService.loadSurahFromEdition('warsh', 1);
+      expect(secondRead, isNotNull);
+      expect(secondRead!.name, contains('النسخة الاحتياطية السليمة'));
+      expect(await finalFile.exists(), isTrue);
+      expect(await backupFile.exists(), isFalse, reason: 'Backup file safely removed after primary confirmed valid');
     });
   });
 }
