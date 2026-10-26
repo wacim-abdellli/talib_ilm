@@ -358,17 +358,17 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                         },
                       ),
 
-                      // Forward 5s
+                      // Rewind 5s
                       IconButton(
                         icon: Icon(
-                          Icons.forward_5_rounded,
+                          Icons.replay_5_rounded,
                           color: palette.textMuted,
                           size: AppIcon.md,
                         ),
-                        tooltip: 'تقديم 5 ثوانٍ',
+                        tooltip: 'رجوع 5 ثوانٍ',
                         onPressed: () {
                           HapticFeedback.lightImpact();
-                          widget.audioService.seekForward5s();
+                          widget.audioService.seekBackward5s();
                         },
                       ),
 
@@ -419,17 +419,17 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                         },
                       ),
 
-                      // Rewind 5s
+                      // Forward 5s
                       IconButton(
                         icon: Icon(
-                          Icons.replay_5_rounded,
+                          Icons.forward_5_rounded,
                           color: palette.textMuted,
                           size: AppIcon.md,
                         ),
-                        tooltip: 'رجوع 5 ثوانٍ',
+                        tooltip: 'تقديم 5 ثوانٍ',
                         onPressed: () {
                           HapticFeedback.lightImpact();
-                          widget.audioService.seekBackward5s();
+                          widget.audioService.seekForward5s();
                         },
                       ),
                     ],
