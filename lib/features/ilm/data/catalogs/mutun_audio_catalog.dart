@@ -433,6 +433,25 @@ class MutunAudioCatalog {
         ),
       ],
     ),
+    'bk_manzumah_bayquniyyah': MutunAudioEntry(
+      bookId: 'bk_manzumah_bayquniyyah',
+      title: 'المنظومة البيقونية',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sini,
+          audioUrl: '$siniBaseUrl/0401AlBayqooni_AbdulAzizAsSini.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
+          totalParagraphs: 34,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl:
+              'https://archive.org/download/Mutun_elm_al-Hadeeth/albaykoneya.mp3',
+          fallbackUrl: '$archiveBaseUrl/11.mp3',
+          totalParagraphs: 34,
+        ),
+      ],
+    ),
     'bk_manzumah_albiri': MutunAudioEntry(
       bookId: 'bk_manzumah_albiri',
       title: 'منظومة أبي إسحاق الإلبيري',

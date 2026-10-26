@@ -92,6 +92,69 @@ void main() {
       expect(audioEntry, isNotNull);
       expect(audioEntry!.totalParagraphs, book.totalParagraphs);
     });
+
+    test('All curriculum mutun books have authentic text and dual reading support', () {
+      final bookIds = [
+        'bk_adhkar_adab',
+        'bk_nawaqid_islam',
+        'bk_qawaid_arba',
+        'bk_usul_thalatha',
+        'bk_shuroot_salah',
+        'bk_kitab_tawheed',
+        'bk_kashf_shubuhat',
+        'bk_wasitiyyah',
+        'bk_aqidah_tahawiyyah',
+        'bk_tuhfat_atfal',
+        'bk_manzumah_bayquniyyah',
+        'bk_ajrumiyyah',
+        'bk_waraqat',
+        'bk_arbaeen_nawawi',
+        'bk_unwan_al_hukm',
+        'bk_manzumah_albiri',
+        'bk_rahibiyyah',
+        'bk_bulugh_maram',
+        'bk_zad_mustaqni',
+      ];
+
+      final syllabusAudioBooks = [
+        'bk_adhkar_adab',
+        'bk_nawaqid_islam',
+        'bk_qawaid_arba',
+        'bk_usul_thalatha',
+        'bk_shuroot_salah',
+        'bk_kitab_tawheed',
+        'bk_kashf_shubuhat',
+        'bk_wasitiyyah',
+        'bk_aqidah_tahawiyyah',
+        'bk_tuhfat_atfal',
+        'bk_manzumah_bayquniyyah',
+        'bk_ajrumiyyah',
+        'bk_waraqat',
+        'bk_arbaeen_nawawi',
+        'bk_unwan_al_hukm',
+        'bk_manzumah_albiri',
+        'bk_rahibiyyah',
+      ];
+
+      for (final id in bookIds) {
+        expect(MutunCurriculumCatalog.hasBook(id), isTrue, reason: 'Book $id missing in curriculum');
+        final book = MutunCurriculumCatalog.getBook(id)!;
+        expect(book.totalParagraphs, greaterThan(0), reason: 'Book $id has 0 paragraphs');
+        expect(book.sections.isNotEmpty, isTrue, reason: 'Book $id has no sections');
+        expect(book.getParagraph(1), isNotNull, reason: 'Book $id missing paragraph 1');
+        expect(book.getParagraph(1)!.text.trim().isNotEmpty, isTrue);
+
+        if (syllabusAudioBooks.contains(id)) {
+          final audioEntry = MutunAudioCatalog.getEntry(id);
+          expect(audioEntry, isNotNull, reason: 'Audio entry missing for $id');
+          expect(
+            book.totalParagraphs,
+            equals(audioEntry!.totalParagraphs),
+            reason: 'Book $id paragraph count does not match audio timestamps',
+          );
+        }
+      }
+    });
   });
 
   group('MutnCurriculumReaderView Widget Tests', () {
