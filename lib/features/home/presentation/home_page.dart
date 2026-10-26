@@ -321,7 +321,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.sm),
                   ),
 
-                  // Hero card (Prayer Time)
+                  // Hero card (Prayer Time) — Module 1
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsetsDirectional.symmetric(
@@ -335,38 +335,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.lg),
                   ),
 
-                  // Daily Graded Hadith & Prophetic Remembrances
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.xl,
-                      ),
-                      child: HomeDailyHadithCard(key: _hadithKey),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AppSpace.xl),
-                  ),
-
-                  // Daily Dhikr
-                  if (_dailyDhikr != null) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.xl,
-                        ),
-                        child: HomeDailyDhikrCard(
-                          payload: _dailyDhikr!,
-                          onOpenSession: () => _openAdhkarSession(_dailyDhikr!.category),
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AppSpace.xl),
-                    ),
-                  ],
-
-                  // Continue Learning
+                  // Continue Learning & Progress — Modules 2 & 3
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsetsDirectional.symmetric(
@@ -395,7 +364,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.xl),
                   ),
 
-                  // Quick actions (أبواب الخير)
+                  // Quick actions (أبواب الخير) — Module 4
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsetsDirectional.symmetric(
@@ -411,8 +380,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
 
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: AppSpace.md),
+                    child: SizedBox(height: AppSpace.xl),
                   ),
+
+                  // Below-the-fold: Daily Graded Hadith & Prophetic Remembrances
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: HomeDailyHadithCard(key: _hadithKey),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
+
+                  // Below-the-fold: Daily Dhikr / Motivation
+                  if (_dailyDhikr != null) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xl,
+                        ),
+                        child: HomeDailyDhikrCard(
+                          payload: _dailyDhikr!,
+                          onOpenSession: () => _openAdhkarSession(_dailyDhikr!.category),
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: AppSpace.xl),
+                    ),
+                  ],
 
                   // Live Quran Radio Card (إذاعة القرآن الكريم)
                   SliverToBoxAdapter(

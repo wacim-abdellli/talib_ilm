@@ -1,5 +1,37 @@
 # UI Progress Log
 
+## R6a / FIX-02 — Home First-Screen Above-The-Fold Hierarchy Alignment (26 October 2026)
+- **Scope & Context:**
+  - Implemented Stage FIX-02 / ROUND2 R6a:
+    1. **Audited Current Home Module Order:** Compared current `HomePage` sliver sequence against the required four-module hierarchy in `ROUND2.md` line 113. Previously, `HomeDailyHadithCard` and `HomeDailyDhikrCard` were placed directly below `HomeHeroCard`, occupying ~420dp and pushing core study continuation (`LearningPulseCard`) and quick actions (`HomeQuickActions`) completely off-screen below the fold.
+    2. **Reordered Above-the-Fold Sequence:** Restructured the `CustomScrollView` in `lib/features/home/presentation/home_page.dart` to strictly follow the specification:
+       - (1) Next-prayer hero (`HomeHeroCard` via `_buildHeroGreetingCard()`)
+       - (2) Continue where you left off & (3) Today's progress (`SectionHeader('زاد طالب العلم')` + `_buildPresenceMessage(context)` + `LearningPulseCard` with book progress)
+       - (4) Quick actions (`HomeQuickActions` with 'القرآن', 'العلم', 'الأذكار', 'القبلة')
+    3. **Relocated Contemplative Enrichment Below-the-Fold:** Placed `HomeDailyHadithCard` (Graded Hadith), `HomeDailyDhikrCard` (Daily Dhikr with target counter), and `HomeQuranRadioCard` (Live Radio) below Quick Actions, ensuring clean scrolling without competing with the primary daily actions.
+    4. **Zero Semantic / Logic Changes:** Preserved all existing services (`LastActivityService`, `PrayerTimeService`, `ProgressService`, `LocationService`, `AthkarService`, `HomeStateController`), navigation callbacks, routes, and Arabic strings unchanged. No new Arabic strings added.
+    5. **Golden Test Suite Expansion:** Added golden tests in `test/golden/home_golden_test.dart` for:
+       - `HomeAboveTheFold hierarchy - light 1.0 and dark 1.5`
+       - `HomeQuickActions - light 1.0 and dark 1.5`
+       - `LearningPulseCard - dark 1.5`
+       - Visually inspected rendered PNGs; verified RTL alignment, contrast, spacing, and text scale resilience up to 1.5x.
+- **Files Modified (1 app page + 1 test file + 5 golden images + UI_PROGRESS.md):**
+  - `lib/features/home/presentation/home_page.dart`: Reordered slivers into 4-module above-the-fold sequence (583 lines, Rule 8 compliant).
+  - `test/golden/home_golden_test.dart`: Added above-the-fold composite and dark/light golden tests (297 lines, Rule 8 compliant).
+  - `test/golden/goldens/`: Added 5 new golden reference PNGs.
+  - `UI_PROGRESS.md`: Recorded stage documentation.
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers used / cap 10, 158 advisory FontWeight warnings).
+  - `flutter test test/golden/home_golden_test.dart --no-pub`: 10/10 passed.
+  - `flutter test test/golden --no-pub`: 47/47 passed.
+  - `flutter test --no-pub`: 679/679 passed.
+  - `flutter build apk --debug --no-pub`: PASSED.
+- **Open issues & Next steps:**
+  - Owner action: Choose permanent Android `applicationId` (currently placeholder `com.example.talib_ilm` in `android/app/build.gradle.kts`) prior to Google Play Store upload.
+  - Owner action: Perform real physical device acceptance on target Android OEMs / iOS before store publication.
+  - Next stage: Proceed with remaining ROUND2 remediation tasks (e.g. R6b first-run onboarding / pre-permission sheets, or subsequent audit tasks).
+
 ## R101 — Reader Backup Recovery on Corrupt Primary Quran Edition (26 October 2026)
 - **Scope & Context:**
   - Implemented Stage R101 addressing the remaining AUD-101 edge case:
