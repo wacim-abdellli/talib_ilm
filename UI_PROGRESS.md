@@ -1,5 +1,24 @@
 # UI Progress Log
 
+## R1 Part 2 — Design System Debt Remediation: Typography Weights in Ilm Family (26 October 2026)
+- **Scope & Context:**
+  - Remediated design system font weight debt across `lib/features/ilm/` family, systematically replacing raw `FontWeight.w[0-9]` literals with semantic `AppTextTheme` tokens and canonical `AppFontWeight` constants.
+  - Resolved all 36 occurrences across 24 presentation widget and page files in `lib/features/ilm/`:
+    - `study_resume_pill.dart`, `sharh_card.dart`, `shamela_text_highlighter.dart`, `shamela_shuruh_sheet.dart`, `shamela_shelf_card.dart`, `shamela_reader_top_bar.dart`, `shamela_fihris_sheet.dart`, `shamela_book_card.dart`, `scholarly_book_card.dart`, `quiz_option_tile.dart`, `mutun_shelf_card.dart`, `ilm_search_filter_bar.dart`, `ilm_reading_tracker_sheet.dart`, `ilm_reading_tracker_in_progress_tab.dart`, `ilm_reading_tracker_completed_tab.dart`, `ilm_mutun_section_view.dart`, `ilm_enhanced_book_card.dart`, `ilm_discipline_section.dart`, `ilm_daily_progress_card.dart`, `fan_quiz_level_card.dart`, `book_view_controls.dart`, `shamela_reader_page.dart`, `lessons_list_page.dart`, `islamic_quiz_hub_page.dart`.
+  - All 24 modified dart files remain strictly compliant with line-length constraints (< 600 lines, Rule 8).
+  - Reduced advisory `FontWeight` warnings from 94 down to 58 (36 resolved; `lib/features/ilm/` is now 100% clean of raw font weight literals).
+- **Files Modified (25 files):**
+  - 24 files in `lib/features/ilm/`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 43.2s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 8 allow markers / cap 10, advisory FontWeight warnings dropped from 94 to 58).
+  - `flutter test --no-pub`: 696/696 passed.
+  - `flutter build apk --debug --no-pub`: PASSED (built `app-debug.apk` in 54.3s).
+- **Open issues & Next steps:**
+  - 58 advisory FontWeight warnings remain in remaining families (`quran` [33], `more` [6], `splash` [3], `favorites` [3], `shared` [13]).
+  - Next bounded stage: Part 3 targeting `lib/features/quran/` family.
+
 ## R1 — Design System Debt Remediation: Typography Weights in Adhkar & Prayer (26 October 2026)
 - **Scope & Context:**
   - Remediated design system font weight debt across `lib/features/adhkar/` and `lib/features/prayer/` families to eliminate raw `FontWeight.w[0-9]` literals outside `lib/app/theme/`.

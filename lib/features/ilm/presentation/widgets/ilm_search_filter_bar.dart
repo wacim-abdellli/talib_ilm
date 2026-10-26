@@ -63,11 +63,11 @@ class IlmFilterBar extends StatelessWidget {
                     children: [
                       Text(
                         level.label.isNotEmpty ? level.label : level.title,
-                        style: context.text.label.copyWith(
+                        style: (isSelected
+                                ? context.text.labelBold
+                                : context.text.labelMedium)
+                            .copyWith(
                           color: isSelected ? palette.primary : palette.text,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w500,
                         ),
                       ),
                       if (isComplete) ...[

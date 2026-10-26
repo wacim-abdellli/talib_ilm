@@ -171,9 +171,8 @@ class ShamelaShelfCard extends StatelessWidget {
                           book.authorDeath != null
                               ? '${book.author} (${book.authorDeath})'
                               : book.author,
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: palette.primary,
-                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -196,7 +195,6 @@ class ShamelaShelfCard extends StatelessWidget {
                                   : 'قراءة',
                               style: textTheme.caption.copyWith(
                                 color: palette.textMuted,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             const Spacer(),

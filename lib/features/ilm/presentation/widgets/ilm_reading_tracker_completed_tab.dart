@@ -123,9 +123,8 @@ class IlmReadingTrackerCompletedTab extends StatelessWidget {
                         const SizedBox(height: AppSpace.xs),
                         Text(
                           'تمت قراءة كامل المتن ($total صفحة)',
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: palette.gold,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],

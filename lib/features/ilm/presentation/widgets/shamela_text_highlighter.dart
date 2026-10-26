@@ -193,7 +193,7 @@ class ShamelaTextHighlighter {
           text: matchedText,
           style: baseStyle.copyWith(
             color: surfaceTokens.hadithGreen,
-            fontWeight: FontWeight.w700,
+            fontWeight: AppFontWeight.bold,
           ),
         ));
       } else if (match.group(3) != null) {
@@ -223,7 +223,7 @@ class ShamelaTextHighlighter {
           text: matchedText,
           style: baseStyle.copyWith(
             color: surfaceTokens.citationBlue,
-            fontWeight: FontWeight.w800,
+            fontWeight: AppFontWeight.extraBold,
             decoration: TextDecoration.underline,
             decorationColor: surfaceTokens.citationBlue.withValues(alpha: 0.45),
             decorationThickness: 1.5,
@@ -244,7 +244,7 @@ class ShamelaTextHighlighter {
           text: matchedText,
           style: baseStyle.copyWith(
             color: surfaceTokens.textMuted,
-            fontWeight: FontWeight.w600,
+            fontWeight: AppFontWeight.semiBold,
           ),
         ));
       } else if (match.group(8) != null) {
@@ -254,7 +254,7 @@ class ShamelaTextHighlighter {
           style: baseStyle.copyWith(
             color: accent.primary,
             fontSize: baseFontSize * 0.9,
-            fontWeight: FontWeight.w600,
+            fontWeight: AppFontWeight.semiBold,
           ),
         ));
       } else if (match.group(9) != null) {

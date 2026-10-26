@@ -96,9 +96,8 @@ class IlmEnhancedBookCard extends StatelessWidget {
             const SizedBox(height: AppSpace.xs),
             Text(
               '${(progressValue * 100).round()}% مكتمل',
-              style: context.text.caption.copyWith(
+              style: context.text.captionBold.copyWith(
                 color: palette.primary,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ] else if (isCompleted) ...[
@@ -106,9 +105,8 @@ class IlmEnhancedBookCard extends StatelessWidget {
             const SizedBox(height: AppSpace.xs),
             Text(
               '100% مكتمل',
-              style: context.text.caption.copyWith(
+              style: context.text.captionBold.copyWith(
                 color: palette.primary,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ] else ...[

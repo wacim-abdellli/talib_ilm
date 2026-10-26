@@ -223,17 +223,15 @@ class FanQuizLevelCard extends StatelessWidget {
                   if (isCompleted && highScore > 0)
                     Text(
                       'أفضل نتيجة: $highScore / ${level.totalQuestions}',
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionBold.copyWith(
                         color: fanTheme.primary,
-                        fontWeight: FontWeight.w600,
                       ),
                     )
                   else if (hasActiveSession)
                     Text(
                       'جلسة غير مكتملة',
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionBold.copyWith(
                         color: fanTheme.primary,
-                        fontWeight: FontWeight.w600,
                       ),
                     )
                   else

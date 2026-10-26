@@ -151,7 +151,7 @@ class _ShamelaFihrisSheetState extends State<ShamelaFihrisSheet> {
                                 ch.title,
                                 style: textTheme.bodySmall.copyWith(
                                   color: isCurrent ? palette.gold : palette.text,
-                                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+                                  fontWeight: isCurrent ? AppFontWeight.bold : AppFontWeight.semiBold,
                                 ),
                               ),
                               trailing: Container(

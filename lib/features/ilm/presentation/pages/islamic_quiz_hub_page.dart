@@ -468,9 +468,8 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                       Expanded(
                         child: Text(
                           'متابعة: المستوى ${fanActiveLevel.levelNumber} (السؤال ${fanActiveSession.currentIndex + 1} من ${fanActiveLevel.totalQuestions})',
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: fanTheme.primary,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -525,9 +524,8 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                     ),
                     child: Text(
                       '$totalQuestionsInFan سؤالاً',
-                      style: textTheme.caption.copyWith(
+                      style: textTheme.captionBold.copyWith(
                         color: fanTheme.primary,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

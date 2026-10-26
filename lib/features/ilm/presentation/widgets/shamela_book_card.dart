@@ -125,9 +125,8 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                               ),
                               child: Text(
                                 ShamelaBookCard.levelLabel(book.level),
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.captionBold.copyWith(
                                   color: palette.textMuted,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -185,9 +184,8 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                         Text.rich(
                           TextSpan(
                             text: book.author,
-                            style: textTheme.caption.copyWith(
+                            style: textTheme.captionBold.copyWith(
                               color: palette.primary,
-                              fontWeight: FontWeight.w600,
                             ),
                             children: [
                               if (book.authorDeath != null) ...[
@@ -225,9 +223,8 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
               ),
               child: Text(
                 'شرح لمتن: ${parentBook.title}',
-                style: textTheme.caption.copyWith(
+                style: textTheme.captionBold.copyWith(
                   color: palette.primary,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

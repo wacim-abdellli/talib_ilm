@@ -141,9 +141,8 @@ class StudyResumePill extends StatelessWidget {
                           if (currentStreak > 0)
                             Text(
                               '🔥 $currentStreak أيام متتالية',
-                              style: context.text.caption.copyWith(
+                              style: context.text.captionBold.copyWith(
                                 color: palette.gold,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                         ],
@@ -188,9 +187,8 @@ class StudyResumePill extends StatelessWidget {
                 ),
                 Text(
                   '${(progressRatio * 100).round()}% أُنجز',
-                  style: context.text.caption.copyWith(
+                  style: context.text.captionBold.copyWith(
                     color: palette.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

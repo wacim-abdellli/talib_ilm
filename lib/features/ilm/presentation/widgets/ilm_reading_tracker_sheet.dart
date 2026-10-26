@@ -328,9 +328,8 @@ class _IlmReadingTrackerSheetState extends State<IlmReadingTrackerSheet>
               Expanded(
                 child: Text(
                   label,
-                  style: context.text.caption.copyWith(
+                  style: context.text.captionBold.copyWith(
                     color: palette.textMuted,
-                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

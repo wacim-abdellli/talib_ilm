@@ -157,9 +157,8 @@ class MutunShelfCard extends StatelessWidget {
                         // Author Attribution
                         Text(
                           book.author,
-                          style: textTheme.caption.copyWith(
+                          style: textTheme.captionBold.copyWith(
                             color: palette.primary,
-                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -202,9 +201,8 @@ class MutunShelfCard extends StatelessWidget {
                             else if (hasStarted)
                               Text(
                                 'ص $currentPage من $totalPages',
-                                style: textTheme.caption.copyWith(
+                                style: textTheme.captionBold.copyWith(
                                   color: palette.primary,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               )
                             else

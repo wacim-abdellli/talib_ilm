@@ -223,9 +223,8 @@ class ShamelaShuruhSheet extends StatelessWidget {
                                 Text.rich(
                                   TextSpan(
                                     text: 'الشارح: ${sharh.author}',
-                                    style: textTheme.caption.copyWith(
+                                    style: textTheme.captionBold.copyWith(
                                       color: palette.text,
-                                      fontWeight: FontWeight.w600,
                                     ),
                                     children: [
                                       if (sharh.authorDeath != null) ...[

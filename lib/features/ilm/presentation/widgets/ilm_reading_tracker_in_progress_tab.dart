@@ -192,9 +192,8 @@ class IlmReadingTrackerInProgressTab extends StatelessWidget {
                           const SizedBox(width: AppSpace.xs),
                           Text(
                             'صفحة $current من $total',
-                            style: textTheme.caption.copyWith(
+                            style: textTheme.captionBold.copyWith(
                               color: palette.textMuted,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: AppSpace.sm),

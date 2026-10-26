@@ -227,9 +227,8 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                             ),
                             Text(
                               widget.author,
-                              style: textTheme.caption.copyWith(
+                              style: textTheme.captionBold.copyWith(
                                 color: accent.primary,
-                                fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

@@ -486,11 +486,8 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
                             const SizedBox(height: AppSpace.md),
                             Text(
                               error,
-                              style: textTheme.body.copyWith(
+                              style: (isEnd ? textTheme.bodyBold : textTheme.body).copyWith(
                                 color: isEnd ? palette.text : palette.textMuted,
-                                fontWeight: isEnd
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
                               ),
                               textAlign: TextAlign.center,
                             ),

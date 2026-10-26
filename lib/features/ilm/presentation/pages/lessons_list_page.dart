@@ -179,9 +179,7 @@ class _LessonsListPageState extends State<LessonsListPage> {
                       const SizedBox(height: AppSpace.xs),
                       Text(
                         lesson.title,
-                        style: context.text.body.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: context.text.bodyHeavy,
                       ),
                       const SizedBox(height: AppSpace.xs),
                       Row(
@@ -216,8 +214,7 @@ class _LessonsListPageState extends State<LessonsListPage> {
                     ),
                     child: Text(
                       AppStrings.lessonNext,
-                      style: context.text.caption.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: context.text.captionHeavy.copyWith(
                         color: palette.gold,
                       ),
                     ),

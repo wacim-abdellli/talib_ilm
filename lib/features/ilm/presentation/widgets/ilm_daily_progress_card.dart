@@ -81,8 +81,7 @@ class IlmDailyProgressCard extends StatelessWidget {
                     children: [
                       Text(
                         '$pagesReadToday',
-                        style: context.text.label.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: context.text.labelHeavy.copyWith(
                           color: isCompleted ? palette.success : palette.text,
                         ),
                       ),

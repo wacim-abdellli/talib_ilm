@@ -138,9 +138,8 @@ class SharhCard extends StatelessWidget {
                   const SizedBox(height: AppSpace.xs),
                   Text(
                     progressText,
-                    style: context.text.caption.copyWith(
+                    style: context.text.captionBold.copyWith(
                       color: palette.primary,
-                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

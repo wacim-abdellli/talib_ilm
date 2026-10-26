@@ -150,9 +150,8 @@ class BookNoteDialog extends StatelessWidget {
                       const SizedBox(width: AppSpace.xxs),
                       Text(
                         'عرض جميع الملاحظات والإشارات',
-                        style: textTheme.caption.copyWith(
+                        style: textTheme.captionBold.copyWith(
                           color: palette.gold,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

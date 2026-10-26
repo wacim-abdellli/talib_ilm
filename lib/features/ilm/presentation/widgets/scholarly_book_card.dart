@@ -283,7 +283,6 @@ class ScholarlyBookCard extends StatelessWidget {
                     'لم يبدأ بعد',
                     style: context.text.caption.copyWith(
                       color: palette.textMuted,
-                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

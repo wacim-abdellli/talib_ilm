@@ -155,9 +155,8 @@ class QuizOptionTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       text,
-                      style: textTheme.body.copyWith(
+                      style: textTheme.bodyBold.copyWith(
                         color: textColor,
-                        fontWeight: FontWeight.w600,
                         height: 1.45,
                         decoration: isEliminated
                             ? TextDecoration.lineThrough

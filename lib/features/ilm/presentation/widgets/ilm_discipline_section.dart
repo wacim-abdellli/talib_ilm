@@ -543,9 +543,8 @@ class IlmDisciplineSection {
                   ],
                   Text(
                     label,
-                    style: context.text.caption.copyWith(
+                    style: (isSelected ? context.text.captionHeavy : context.text.captionBold).copyWith(
                       color: fgColor,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     ),
                   ),
                 ],
