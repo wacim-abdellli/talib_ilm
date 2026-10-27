@@ -3595,11 +3595,11 @@ FAILED (54 violations)
 - **Device validation still required:** Android permission/channel/Doze/reboot/timezone/audio matrix and iOS build/device tests; OS scheduling acceptance is not a guarantee of delivery. No physical-device validation was run in this session.
 
 ## R20 — User-Configurable Local Iqama Intervals (2026-10-27)
-- **Status:** Complete with one unrelated existing golden-test failure recorded below · branch `ui/r20-iqama-custom-intervals`.
+- **Status:** Complete with one unrelated Shamela golden-test failure recorded below · branch `ui/r20-iqama-custom-intervals`.
 - Added persistent 0–180 minute local Iqama intervals for Fajr, Dhuhr, Asr, Maghrib, Isha, and separate Friday Jumua. Existing defaults remain for unset values; settings disclose that values are personal estimates, not official mosque schedules.
 - Unified scheduled reminders, foreground recovery, prayer-tab live countdown, home hero, Flutter-rendered widget state, and native Android widget snapshots on the same configured values. Interval changes are included in the schedule fingerprint to rebuild notifications.
 - Official-source research: no universal API key establishes government authority for every country. AlAdhan explicitly warns that calculated times can differ from government/mosque timetables. Diyanet offers its own globally calculated timetable, not each country's government timetable. An authoritative all-country rollout still requires per-jurisdiction sources and reuse authorization.
 - Verification on the final merged tree: `flutter analyze --no-pub` 0 issues (9.2s); `python tool/ui_lint_v2.py` OK (0 FAILs, 8/10 allow markers); focused Iqama/settings/widget tests passed; debug APK built successfully (45.7s; SHA-256 `A06A3D1D12DAC02457E57B2FD7ECC76DBCCD539D53029A81D9B4B9DF2BAA314A`, 330,664,011 bytes).
-- Full suite: `flutter test --concurrency=1 --no-pub` reported 711 passing and 1 failing test case. `test/golden/shamela_reader_golden_test.dart` has four Amiri text pixel diffs (1.20% / 2.12%); reproduced when run alone. It is outside the changed prayer feature, and no golden image was refreshed.
+- Full suite: `flutter test --concurrency=1 --no-pub` reported 711 passing and 1 failing test case. `test/golden/shamela_reader_golden_test.dart` has four Amiri text pixel diffs (1.20% / 2.12%); reproduced when run alone. It is outside the changed prayer feature; its baseline status was not re-tested in this stage, and no golden image was refreshed.
 - **Open issues:** integrate only authorized official timetable feeds with verified city/date coverage; run Android 12–15 physical-device notification/audio acceptance matrix and iOS build/device validation; investigate the unrelated Shamela Amiri golden raster diff separately.
 
