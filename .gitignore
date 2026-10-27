@@ -61,3 +61,5 @@ test/**/failures/
 
 # Temporary scratch and investigation artifacts
 scratch/
+key.properties
+*.jks
