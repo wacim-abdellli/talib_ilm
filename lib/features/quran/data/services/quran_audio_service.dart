@@ -151,6 +151,9 @@ class QuranAudioService {
     }
     final r = reciter ?? _selectedReciter;
     final sStr = _formatNumber(surah);
+    if (r.isSurahBased) {
+      return '${r.surahBaseUrl}$sStr.mp3';
+    }
     final aStr = _formatNumber(ayah);
     return 'https://everyayah.com/data/${r.subfolder}/$sStr$aStr.mp3';
   }
@@ -163,11 +166,16 @@ class QuranAudioService {
     bool singleVerse = false,
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, ayah)) return;
+    final r = reciter ?? _selectedReciter;
+    if (r.isSurahBased) {
+      await playFullSurah(surah: surah, reciter: r);
+      return;
+    }
     _ayahRepeatCount = 0;
     _isContinuous = false;
     _isSingleVerseOnly = singleVerse;
     isFullSurahModeNotifier.value = false;
-    await _startPlay(surah, ayah, reciter: reciter ?? _selectedReciter);
+    await _startPlay(surah, ayah, reciter: r);
   }
 
   /// Plays full surah recorded audio as a single continuous track if downloaded,
@@ -195,6 +203,21 @@ class QuranAudioService {
       await _startPlaySource(surah, 1, source, reciter: r);
       return;
     }
+    if (r.isSurahBased) {
+      _ayahRepeatCount = 0;
+      _isContinuous = true;
+      _isSingleVerseOnly = false;
+      _hasExplicitEnd = true;
+      _endAyah = quran.getVerseCount(surah);
+      isFullSurahModeNotifier.value = true;
+      final surahName = quran.getSurahNameArabic(surah);
+      final tag = _buildSurahMediaItem(surah, r, surahName);
+      final sStr = _formatNumber(surah);
+      final url = '${r.surahBaseUrl}$sStr.mp3';
+      final source = AudioSource.uri(Uri.parse(url), tag: tag);
+      await _startPlaySource(surah, 1, source, reciter: r);
+      return;
+    }
     await playContinuous(surah: surah, startAyah: 1, reciter: r);
   }
 
@@ -207,6 +230,10 @@ class QuranAudioService {
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, startAyah)) return;
     final r = reciter ?? _selectedReciter;
+    if (r.isSurahBased) {
+      await playFullSurah(surah: surah, reciter: r);
+      return;
+    }
     final totalVerses = quran.getVerseCount(surah);
     // If starting from verse 1 for full surah and offline recording exists,
     // play the full recording directly for a single, unbroken listening experience.
@@ -269,6 +296,18 @@ class QuranAudioService {
     if (_sourceResolver != null) return _sourceResolver!(surah, ayah, r);
     final surahName = quran.getSurahNameArabic(surah);
     final tag = _buildAyahMediaItem(surah, ayah, r, surahName);
+
+    if (r.isSurahBased) {
+      final fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(
+        surah,
+        reciter: r,
+      );
+      if (fullFile != null && fullFile.existsSync()) {
+        return AudioSource.file(fullFile.path, tag: tag);
+      }
+      final url = getAudioUrl(surah, ayah, reciter: r);
+      return AudioSource.uri(Uri.parse(url), tag: tag);
+    }
 
     try {
       final localPath = await QuranAudioDownloader.getLocalAyahPath(

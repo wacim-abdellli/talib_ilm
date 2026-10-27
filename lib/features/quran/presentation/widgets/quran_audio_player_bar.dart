@@ -95,7 +95,7 @@ class QuranAudioPlayerBar extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              isFullSurah
+                              isFullSurah || reciter.isSurahBased
                                   ? 'تلاوة كاملة • ${reciter.name}'
                                   : 'الآية $currentAyah من $totalAyahs • ${reciter.name}',
                               style: textTheme.caption.copyWith(

@@ -83,6 +83,11 @@ class QuranAudioStorage {
     final dir = await getSurahDir(surah, r.id);
     if (!await dir.exists()) return false;
 
+    if (r.isSurahBased) {
+      final file = File('${dir.path}/full_surah.mp3');
+      return file.existsSync() && file.lengthSync() > 1000;
+    }
+
     final totalVerses = quran.getVerseCount(surah);
     for (int a = 1; a <= totalVerses; a++) {
       final sStr = formatNumber(surah);
@@ -103,6 +108,11 @@ class QuranAudioStorage {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final dir = await getSurahDir(surah, r.id);
     if (!await dir.exists()) return 0;
+
+    if (r.isSurahBased) {
+      final file = File('${dir.path}/full_surah.mp3');
+      return file.existsSync() ? file.lengthSync() : 0;
+    }
 
     int total = 0;
     try {
@@ -128,13 +138,16 @@ class QuranAudioStorage {
     try {
       final entities = base.listSync(recursive: true);
       for (final e in entities) {
-        if (e is File &&
-            e.path.endsWith('.mp3') &&
-            !e.path.contains('full_surah')) {
+        if (e is File && e.path.endsWith('.mp3')) {
+          final normalized = e.path.replaceAll('\\', '/');
           if (reciterId != null) {
-            final normalized = e.path.replaceAll('\\', '/');
             if (!normalized.contains('/$reciterId/')) continue;
           }
+          final isFullSurah = normalized.contains('full_surah');
+          final isSurahReciter = normalized.contains('/luhaidan/');
+          if (isFullSurah && !isSurahReciter) continue;
+          if (!isFullSurah && isSurahReciter) continue;
+
           totalBytes += e.lengthSync();
         }
       }
@@ -150,8 +163,10 @@ class QuranAudioStorage {
     int kbPerVerse = 85;
     if (r.subfolder.contains('64kbps')) {
       kbPerVerse = 45;
-    } else if (r.subfolder.contains('40kbps')) {
+    } else if (r.subfolder.contains('40kbps') || r.subfolder.contains('32kbps')) {
       kbPerVerse = 28;
+    } else if (r.subfolder.contains('192kbps')) {
+      kbPerVerse = 130;
     }
 
     final totalKb = totalVerses * kbPerVerse;

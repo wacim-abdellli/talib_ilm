@@ -83,10 +83,15 @@ class QuranAudioFrameMerger {
 
   /// Checks whether an existing full_surah.mp3 is valid and complete, or if
   /// it suffers from legacy truncation or Info-header poisoning.
-  static bool isFullSurahFileHealthy(File file, int surah) {
+  static bool isFullSurahFileHealthy(File file, int surah, {QuranReciter? reciter}) {
     if (!file.existsSync()) return false;
     final length = file.lengthSync();
     if (length < 1024) return false;
+
+    // Surah-based direct downloads (e.g. Luhaidan) are standalone full MP3s
+    if (reciter?.isSurahBased == true) {
+      return true;
+    }
 
     final totalVerses = quran.getVerseCount(surah);
     // 1. Check if the file still has the legacy 'Info' or 'Xing' header in the first 250 bytes
@@ -122,7 +127,7 @@ class QuranAudioFrameMerger {
   /// Checks if a valid, assembled full-surah MP3 recording exists on disk
   static Future<bool> isFullSurahAssembled(int surah, {QuranReciter? reciter}) async {
     final file = await getFullSurahFile(surah, reciter: reciter);
-    return isFullSurahFileHealthy(file, surah);
+    return isFullSurahFileHealthy(file, surah, reciter: reciter);
   }
 
   /// Returns the full-surah audio file if available or all verses exist.
@@ -131,12 +136,16 @@ class QuranAudioFrameMerger {
   static Future<File?> getFullSurahAudioFile(int surah, {QuranReciter? reciter}) async {
     final file = await getFullSurahFile(surah, reciter: reciter);
     if (file.existsSync()) {
-      if (isFullSurahFileHealthy(file, surah)) {
+      if (isFullSurahFileHealthy(file, surah, reciter: reciter)) {
         return file;
       }
       try {
         file.deleteSync();
       } catch (_) {}
+    }
+
+    if (reciter?.isSurahBased == true) {
+      return null;
     }
 
     final isDownloaded = await QuranAudioDownloader.isSurahDownloaded(
@@ -161,7 +170,7 @@ class QuranAudioFrameMerger {
     final targetFile = File('${dir.path}/full_surah.mp3');
 
     if (!forceRebuild && targetFile.existsSync()) {
-      if (isFullSurahFileHealthy(targetFile, surah)) {
+      if (isFullSurahFileHealthy(targetFile, surah, reciter: r)) {
         return targetFile;
       }
       try {

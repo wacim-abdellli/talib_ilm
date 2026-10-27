@@ -161,6 +161,27 @@ class QuranAudioDownloader {
     final httpClient = effectiveClient ?? http.Client();
     _activeHttpClients[key] = httpClient;
 
+    if (reciter.isSurahBased) {
+      try {
+        await _downloadSurahTrack(
+          surah: surah,
+          reciter: reciter,
+          surahDir: surahDir,
+          key: key,
+          gen: gen,
+          httpClient: httpClient,
+          totalVerses: totalVerses,
+        );
+      } finally {
+        _inFlightDownloads.remove(key);
+        _activeHttpClients.remove(key);
+        if (ownsClient) {
+          httpClient.close();
+        }
+      }
+      return;
+    }
+
     try {
       // Check already downloaded and verified verses for resume
       int existingCount = 0;
@@ -445,6 +466,190 @@ class QuranAudioDownloader {
       if (ownsClient) {
         httpClient.close();
       }
+    }
+  }
+
+  Future<void> _downloadSurahTrack({
+    required int surah,
+    required QuranReciter reciter,
+    required Directory surahDir,
+    required String key,
+    required int gen,
+    required http.Client httpClient,
+    required int totalVerses,
+  }) async {
+    final targetFile = File('${surahDir.path}/full_surah.mp3');
+    if (targetFile.existsSync() && targetFile.lengthSync() > 1000) {
+      _setProg(
+        key,
+        surah,
+        reciter.id,
+        totalVerses,
+        totalVerses,
+        targetFile.lengthSync(),
+        SurahDownloadStatus.completed,
+      );
+      return;
+    }
+
+    _setProg(
+      key,
+      surah,
+      reciter.id,
+      0,
+      totalVerses,
+      0,
+      SurahDownloadStatus.downloading,
+    );
+
+    final sStr = _formatNumber(surah);
+    final remoteUrl = '${reciter.surahBaseUrl}$sStr.mp3';
+    final tempFile = File('${surahDir.path}/full_surah_g$gen.tmp');
+
+    IOSink? sink;
+    try {
+      final request = http.Request('GET', Uri.parse(remoteUrl));
+      final http.StreamedResponse response = await httpClient
+          .send(request)
+          .timeout(AppPolicy.networkTimeout);
+
+      if (response.statusCode != 200) {
+        throw HttpException('Server returned ${response.statusCode}');
+      }
+
+      final contentType =
+          response.headers['content-type']?.toLowerCase() ?? '';
+      if (contentType.contains('text/html') ||
+          contentType.contains('text/plain') ||
+          contentType.contains('application/json')) {
+        throw const HttpException('Server returned invalid content type');
+      }
+
+      final totalBytesExpected =
+          response.contentLength ?? (totalVerses * 85 * 1024);
+      sink = tempFile.openWrite();
+      int receivedBytes = 0;
+      int lastReportedVerses = 0;
+
+      await for (final chunk in response.stream) {
+        if (_operationGenerations[key] != gen) {
+          await sink.close();
+          try {
+            if (tempFile.existsSync()) tempFile.deleteSync();
+          } catch (_) {}
+          return;
+        }
+
+        if (_pauseFlags[key] == true) {
+          await sink.close();
+          _setProg(
+            key,
+            surah,
+            reciter.id,
+            lastReportedVerses,
+            totalVerses,
+            receivedBytes,
+            SurahDownloadStatus.paused,
+          );
+          return;
+        }
+
+        if (_cancelFlags[key] == true) {
+          await sink.close();
+          try {
+            if (tempFile.existsSync()) tempFile.deleteSync();
+          } catch (_) {}
+          _removeProgress(key);
+          return;
+        }
+
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+
+        final double ratio =
+            (receivedBytes / totalBytesExpected).clamp(0.0, 1.0);
+        final currentVerses =
+            (ratio * totalVerses).toInt().clamp(0, totalVerses);
+        lastReportedVerses = currentVerses;
+
+        _setProg(
+          key,
+          surah,
+          reciter.id,
+          currentVerses,
+          totalVerses,
+          receivedBytes,
+          SurahDownloadStatus.downloading,
+        );
+      }
+
+      await sink.flush();
+      await sink.close();
+      sink = null;
+
+      if (_operationGenerations[key] != gen || _cancelFlags[key] == true) {
+        try {
+          if (tempFile.existsSync()) tempFile.deleteSync();
+        } catch (_) {}
+        return;
+      }
+
+      if (tempFile.existsSync() && tempFile.lengthSync() > 1000) {
+        if (targetFile.existsSync()) {
+          try {
+            targetFile.deleteSync();
+          } catch (_) {}
+        }
+        await tempFile.rename(targetFile.path);
+        _setProg(
+          key,
+          surah,
+          reciter.id,
+          totalVerses,
+          totalVerses,
+          targetFile.lengthSync(),
+          SurahDownloadStatus.completed,
+        );
+      } else {
+        throw const HttpException('الملف الصوتي المستلم تالف أو غير صالح');
+      }
+    } catch (e) {
+      try {
+        await sink?.close();
+      } catch (_) {}
+      try {
+        if (tempFile.existsSync()) tempFile.deleteSync();
+      } catch (_) {}
+
+      if (_operationGenerations[key] != gen) return;
+      if (_cancelFlags[key] == true) {
+        _removeProgress(key);
+        return;
+      }
+      if (_pauseFlags[key] == true) return;
+
+      final isDiskError = e is FileSystemException;
+      final String errorMsg;
+      if (isDiskError) {
+        errorMsg = 'المساحة التخزينية غير كافية لإكمال التنزيل';
+      } else if (e is TimeoutException) {
+        errorMsg = 'انتهت مهلة الاتصال بالخادم، يرجى المحاولة لاحقاً';
+      } else if (e is HttpException) {
+        errorMsg = e.message;
+      } else {
+        errorMsg = 'تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت';
+      }
+
+      _setProg(
+        key,
+        surah,
+        reciter.id,
+        0,
+        totalVerses,
+        0,
+        SurahDownloadStatus.failed,
+        errorMsg,
+      );
     }
   }
 

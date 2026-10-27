@@ -215,6 +215,55 @@ void main() {
       );
       expect(isStillDownloaded, isFalse);
     });
+
+    test('Muhammad Al-Luhaidan and expanded reciters are available with surah-based capabilities', () async {
+      final reciters = QuranReciter.defaultReciters;
+      expect(reciters.length, greaterThanOrEqualTo(30));
+
+      final luhaidan = reciters.firstWhere((r) => r.id == 'luhaidan');
+      expect(luhaidan.name, 'محمد اللحيدان');
+      expect(luhaidan.isSurahBased, isTrue);
+      expect(luhaidan.surahBaseUrl, contains('muhammad-luhaidan'));
+
+      // Value equality
+      final luhaidanClone = const QuranReciter(
+        id: 'luhaidan',
+        name: 'محمد اللحيدان',
+      );
+      expect(luhaidan, equals(luhaidanClone));
+
+      // Audio URL construction
+      final service = QuranAudioService();
+      final url = service.getAudioUrl(1, 1, reciter: luhaidan);
+      expect(url, equals('https://cdn.mp3quran.net/audio/muhammad-luhaidan/r1/001.mp3'));
+
+      // Direct surah-based mock download
+      final dummyMp3Bytes = Uint8List.fromList(List<int>.filled(2048, 0xFF));
+      QuranAudioDownloader.setHttpClient(
+        _MockHttpClient((request) async {
+          return http.StreamedResponse(
+            Stream.value(dummyMp3Bytes),
+            200,
+            contentLength: dummyMp3Bytes.length,
+            headers: {'content-type': 'audio/mpeg'},
+          );
+        }),
+      );
+
+      final downloader = QuranAudioDownloader();
+      await downloader.downloadSurah(surah: 1, reciter: luhaidan);
+
+      final isDownloaded = await QuranAudioStorage.isSurahDownloaded(1, reciter: luhaidan);
+      expect(isDownloaded, isTrue);
+
+      final bytes = await QuranAudioStorage.getSurahDownloadedBytes(1, reciter: luhaidan);
+      expect(bytes, equals(dummyMp3Bytes.length));
+
+      // Clean deletion
+      await QuranAudioStorage.deleteSurahAudio(1, reciter: luhaidan);
+      final isStillDownloaded = await QuranAudioStorage.isSurahDownloaded(1, reciter: luhaidan);
+      expect(isStillDownloaded, isFalse);
+    });
   });
 }
 
