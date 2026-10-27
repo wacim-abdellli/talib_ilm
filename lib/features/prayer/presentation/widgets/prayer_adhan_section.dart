@@ -9,7 +9,6 @@ import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
 import 'iqama_interval_settings.dart';
-import 'notification_delivery_card.dart';
 import 'prayer_notification_mode_pill.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
@@ -80,8 +79,6 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: AppSpace.md),
-        NotificationDeliveryCard(settings: settings),
         const SizedBox(height: AppSpace.md),
 
         // ── 1. Master Enable Card ─────────────────────────────────────
