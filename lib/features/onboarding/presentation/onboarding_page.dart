@@ -94,12 +94,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   children: [
                     Row(
                       children: [
-                        const AppLogo(size: AppLogoSize.sm),
+                        const AppLogo(size: AppLogoSize.md),
                         const SizedBox(width: AppSpace.sm),
                         Text(
                           'طالب العلم',
-                          style: textTheme.titleSmall.copyWith(
+                          style: textTheme.titleMedium.copyWith(
                             color: palette.text,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],

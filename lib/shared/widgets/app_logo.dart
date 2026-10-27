@@ -3,9 +3,10 @@ import '../../app/theme/app_palette.dart';
 
 /// Available sizes for the canonical [AppLogo]
 enum AppLogoSize {
-  sm(24.0),
-  md(32.0),
-  lg(64.0);
+  sm(28.0),
+  md(38.0),
+  lg(64.0),
+  xl(96.0);
 
   final double dimension;
   const AppLogoSize(this.dimension);
