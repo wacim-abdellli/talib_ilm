@@ -433,14 +433,14 @@ class PrayerNotificationScheduler {
 
   /// Schedules a test notification after [seconds] (e.g. 5 seconds)
   /// allowing the user to minimize the app or lock the screen to test outside the app.
-  Future<void> scheduleTestNotificationAfter({
+  Future<ScheduleOutcome> scheduleTestNotificationAfter({
     required int seconds,
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
   }) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
+      return ScheduleOutcome.skippedPast;
     }
     await _ensureInitialized();
     await _requestPermissions();
@@ -458,34 +458,17 @@ class PrayerNotificationScheduler {
         ? 'الصلاة خير من النوم (النمط: ${PrayerNotificationDetailsBuilder.modeLabel(mode)})'
         : 'حي على الصلاة.. حي على الفلاح (النمط: ${PrayerNotificationDetailsBuilder.modeLabel(mode)})';
 
-    try {
-      await _plugin.zonedSchedule(
-        8888,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledTime, tz.local),
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: 'prayer_test_${prayerName.trim()}',
-      );
-    } catch (e) {
-      debugPrint('Error scheduling test notification with exact alarm: $e');
-      // Direct timer fallback if exact alarms are restricted
-      Future.delayed(
-        Duration(seconds: seconds), // ui-lint: allow test notification fallback
-        () {
-          _plugin.show(
-            8888,
-            title,
-            body,
-            details,
-            payload: 'prayer_test_${prayerName.trim()}',
-          );
-        },
-      );
-    }
+    return _safeZonedSchedule(
+      id: 8888,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
+      notificationDetails: details,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'prayer_test_${prayerName.trim()}',
+      scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
   }
 
   /// Legacy support
@@ -525,8 +508,7 @@ class PrayerNotificationScheduler {
     );
   }
 
-  /// Dismisses only the active in-progress heads-up prayer alerts and tone notifications (700..710, 750..760)
-  /// without clearing any of the 7-day scheduled future prayer alarms.
+  /// Dismisses active prayer alerts without canceling future scheduled alarms.
   Future<void> cancelActivePrayerAlertsOnly() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return;
@@ -537,12 +519,46 @@ class PrayerNotificationScheduler {
     for (int i = 750; i <= 760; i++) {
       await _plugin.cancel(i);
     }
-    for (int i = 1000; i <= 1005; i++) {
-      await _plugin.cancel(i);
+
+    // Scheduled alerts use IDs in the seven-day schedule namespace. Cancel
+    // only IDs Android reports as already active, never pending alarms.
+    try {
+      final activeNotifications = await _plugin.getActiveNotifications();
+      final activeAdhanIds =
+          activeNotifications
+              .where(isActiveAdhanNotification)
+              .map((notification) => notification.id)
+              .whereType<int>()
+              .toSet()
+            ..removeWhere((id) => id >= 700 && id <= 710);
+      for (final id in activeAdhanIds) {
+        await _plugin.cancel(id);
+      }
+    } catch (error) {
+      debugPrint('Unable to inspect active prayer notifications: $error');
     }
-    for (int i = 100; i <= 105; i++) {
-      await _plugin.cancel(i);
+  }
+
+  @visibleForTesting
+  static bool isActiveAdhanNotification(ActiveNotification notification) {
+    final id = notification.id;
+    final payload = notification.payload;
+    if (id == null || payload == null || !payload.startsWith('prayer_')) {
+      return false;
     }
+    if (payload.startsWith('prayer_pre_') ||
+        payload.startsWith('prayer_test_')) {
+      return false;
+    }
+
+    final isInstantAlert = id >= 700 && id <= 710;
+    final isLegacyAlert = id >= 100 && id <= 105;
+    final scheduleOffset = id - 1000;
+    final isScheduledAlert =
+        scheduleOffset >= 0 &&
+        scheduleOffset < 700 &&
+        scheduleOffset % 100 <= 5;
+    return isInstantAlert || isLegacyAlert || isScheduledAlert;
   }
 
   /// Cancels all scheduled prayer-related notification slots across the 7-day rolling schedule,

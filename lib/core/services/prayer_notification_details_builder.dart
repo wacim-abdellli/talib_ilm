@@ -4,6 +4,10 @@ import 'adhan_settings_service.dart';
 
 /// Helper to build and resolve platform-specific [NotificationDetails] for prayer alarms and reminders.
 class PrayerNotificationDetailsBuilder {
+  /// Allows the longest bundled Adhan recording to finish before Android
+  /// removes its prayer alert from the notification shade.
+  static const int prayerNotificationTimeoutMs = 300000;
+
   const PrayerNotificationDetailsBuilder._();
 
   /// Resolves the user-facing localized mode label.
@@ -80,6 +84,7 @@ class PrayerNotificationDetailsBuilder {
           icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
             AndroidNotificationAction(
               'stop_adhan',
@@ -108,6 +113,7 @@ class PrayerNotificationDetailsBuilder {
           icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
             AndroidNotificationAction(
               'stop_adhan',
@@ -141,6 +147,7 @@ class PrayerNotificationDetailsBuilder {
           icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ticker: 'صلاة $prayerName',
+          timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
             AndroidNotificationAction(
               'stop_adhan',
@@ -167,6 +174,7 @@ class PrayerNotificationDetailsBuilder {
           enableLights: true,
           icon: '@mipmap/ic_launcher',
           largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          timeoutAfter: prayerNotificationTimeoutMs,
         );
       case PrayerNotificationMode.silent:
       case PrayerNotificationMode.off:
@@ -181,6 +189,7 @@ class PrayerNotificationDetailsBuilder {
           visibility: NotificationVisibility.public,
           icon: '@mipmap/ic_launcher',
           largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          timeoutAfter: prayerNotificationTimeoutMs,
         );
     }
   }

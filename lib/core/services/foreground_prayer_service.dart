@@ -14,6 +14,7 @@ import 'adhkar_reminder_service.dart';
 import 'home_widget_service.dart';
 import 'iqama_timing_policy.dart';
 import 'notification_service.dart';
+import 'prayer_notification_details_builder.dart';
 import 'prayer_schedule_service.dart';
 import 'prayer_time_service.dart';
 
@@ -45,6 +46,7 @@ class ForegroundPrayerService {
   Timer? _initialTimer;
   Timer? _timer;
   Timer? _widgetTimer;
+  Timer? _activeAlertExpiryTimer;
   StreamSubscription<PlayerState>? _playerSub;
   final PrayerTimeService _prayerTimeService = PrayerTimeService();
   final AdhanSettingsService _adhanSettingsService = AdhanSettingsService();
@@ -75,9 +77,12 @@ class ForegroundPrayerService {
     _playerSub?.cancel();
     _playerSub = _adhanService.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
+        _activeAlertExpiryTimer?.cancel();
+        _activeAlertExpiryTimer = null;
         if (activeAlert.value != null) {
           activeAlert.value = null;
         }
+        unawaited(_notificationService.cancelActivePrayerAlertsOnly());
       }
     });
   }
@@ -111,6 +116,8 @@ class ForegroundPrayerService {
 
   void stop() {
     pausePolling();
+    _activeAlertExpiryTimer?.cancel();
+    _activeAlertExpiryTimer = null;
     _playerSub?.cancel();
     _playerSub = null;
     activeAlert.value = null;
@@ -177,8 +184,36 @@ class ForegroundPrayerService {
   }
 
   Future<void> dismissAlert() async {
+    _activeAlertExpiryTimer?.cancel();
+    _activeAlertExpiryTimer = null;
     await _adhanService.stop();
+    await _notificationService.cancelActivePrayerAlertsOnly();
     activeAlert.value = null;
+  }
+
+  void _showActiveAlert(ActivePrayerAlert alert) {
+    _activeAlertExpiryTimer?.cancel();
+    activeAlert.value = alert;
+    _activeAlertExpiryTimer = Timer(
+      const Duration(
+        milliseconds:
+            PrayerNotificationDetailsBuilder.prayerNotificationTimeoutMs,
+      ),
+      () => unawaited(_expireActiveAlert(alert)),
+    );
+  }
+
+  Future<void> _expireActiveAlert(ActivePrayerAlert expected) async {
+    final current = activeAlert.value;
+    if (current == null ||
+        current.prayerName != expected.prayerName ||
+        current.prayerTime != expected.prayerTime) {
+      return;
+    }
+    _activeAlertExpiryTimer = null;
+    activeAlert.value = null;
+    await _adhanService.stop();
+    await _notificationService.cancelActivePrayerAlertsOnly();
   }
 
   Future<void> _check() async {
@@ -352,11 +387,13 @@ class ForegroundPrayerService {
               }
 
               // 3. Post in-app alert banner with stop controls
-              activeAlert.value = ActivePrayerAlert(
-                prayerName: effectiveName,
-                prayerTime: time,
-                mode: mode,
-                sound: effectiveSound,
+              _showActiveAlert(
+                ActivePrayerAlert(
+                  prayerName: effectiveName,
+                  prayerTime: time,
+                  mode: mode,
+                  sound: effectiveSound,
+                ),
               );
               await _markAlerted(alertKey);
 

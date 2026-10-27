@@ -3603,3 +3603,12 @@ FAILED (54 violations)
 - Full suite: `flutter test --concurrency=1 --no-pub` reported 711 passing and 1 failing test case. `test/golden/shamela_reader_golden_test.dart` has four Amiri text pixel diffs (1.20% / 2.12%); reproduced when run alone. It is outside the changed prayer feature; its baseline status was not re-tested in this stage, and no golden image was refreshed.
 - **Open issues:** integrate only authorized official timetable feeds with verified city/date coverage; run Android 12–15 physical-device notification/audio acceptance matrix and iOS build/device validation; investigate the unrelated Shamela Amiri golden raster diff separately.
 
+## R103 — Prayer Alert Lifecycle & Delivery Diagnostics (2026-10-27)
+- **Stage:** Complete · branch `ui/r103-notification-delivery-reliability` · based on `8a4daf7`.
+- Fixed the false “no MediaItem” Adhan comment: the background-audio package requires a tagged source; Adhan completion now stops the media session, releases audio focus, and removes active prayer alerts.
+- Android prayer notifications and in-app alerts expire after five minutes; active-only cleanup inspects posted notifications and no longer cancels future scheduled prayer alarms.
+- Added Android delivery checks for notification/exact-alarm permissions and alert channels, plus permission repair, forced schedule refresh, app settings, and a 10-second test alert.
+- Corrected calculation-method copy: Auto is a country-configured astronomical estimate, not a live government timetable; users can compare local times and apply minute adjustments.
+- Verification: analyzer 0 issues; UI lint OK (7/10 allow markers); focused prayer/notification tests 6/6 passed; full suite 717 passed / 1 unrelated Shamela golden failure (1.20% pixel diff); final debug APK build passed in 133.2s.
+- **Open issues:** no authorized global government timetable feed or physical-device validation; silent/DND/OEM battery rules can still delay or mute alerts. iOS dismissal and delivery need device validation.
+

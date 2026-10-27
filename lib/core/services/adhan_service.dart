@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -18,18 +20,34 @@ class AdhanService {
   }
   AdhanService._internal() : _player = AudioPlayer() {
     AudioCoordinator.onPauseAdhan = stop;
+    _watchForCompletion();
   }
   AdhanService._withPlayer(this._player) {
     AudioCoordinator.onPauseAdhan = stop;
+    _watchForCompletion();
   }
 
   AudioPlayer _player;
+  StreamSubscription<PlayerState>? _completionSubscription;
+
+  void _watchForCompletion() {
+    final previous = _completionSubscription;
+    if (previous != null) unawaited(previous.cancel());
+    _completionSubscription = _player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        // just_audio_background leaves its media session active at completed.
+        // Stopping moves it to idle, which removes Android's media-player card.
+        unawaited(stop());
+      }
+    });
+  }
 
   void _ensurePlayerActive() {
     try {
       final _ = _player.processingState;
     } catch (_) {
       _player = AudioPlayer();
+      _watchForCompletion();
     }
   }
 
@@ -49,8 +67,8 @@ class AdhanService {
   }
 
   /// Play adhan, takbeer, or voice announcement with volume control.
-  /// AudioSource is loaded directly without a MediaItem tag to guarantee it
-  /// never appears as a music/media player notification.
+  /// just_audio_background requires a MediaItem tag on every source. The
+  /// completion watcher stops the session so its media card is dismissed.
   Future<void> play({
     AdhanSound sound = AdhanSound.qatami,
     PrayerNotificationMode mode = PrayerNotificationMode.adhan,
@@ -66,11 +84,14 @@ class AdhanService {
       // Ensure Full Adhan mode strictly plays a full muezzin sound
       final effectiveSound =
           (mode == PrayerNotificationMode.adhan && sound == AdhanSound.takbeer)
-              ? AdhanSound.qatami
-              : sound;
+          ? AdhanSound.qatami
+          : sound;
 
-      final assetPath =
-          _assetFor(sound: effectiveSound, mode: mode, prayerName: prayerName);
+      final assetPath = _assetFor(
+        sound: effectiveSound,
+        mode: mode,
+        prayerName: prayerName,
+      );
 
       final source = AudioSource.asset(
         assetPath,
@@ -80,7 +101,8 @@ class AdhanService {
           title: prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة',
           artist: 'طالب العلم',
           artUri: Uri.parse(
-              'android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+            'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
+          ),
         ),
       );
 
@@ -111,9 +133,10 @@ class AdhanService {
     _ensurePlayerActive();
     try {
       await _player.stop();
-      AudioCoordinator.releaseFocus(AudioStreamType.adhan);
     } catch (e) {
       debugPrint('AdhanService.stop error: $e');
+    } finally {
+      AudioCoordinator.releaseFocus(AudioStreamType.adhan);
     }
   }
 
@@ -139,11 +162,14 @@ class AdhanService {
 
   Future<void> dispose() async {
     try {
+      await _completionSubscription?.cancel();
+      _completionSubscription = null;
       await _player.stop();
       await _player.dispose();
     } catch (_) {}
     // Re-initialize so singleton is never left in a broken disposed state
     _player = AudioPlayer();
+    _watchForCompletion();
   }
 
   String _assetFor({
@@ -159,8 +185,9 @@ class AdhanService {
     }
 
     // For Full Adhan mode, strictly ensure a full muezzin asset is used
-    final effectiveSound =
-        (sound == AdhanSound.takbeer) ? AdhanSound.qatami : sound;
+    final effectiveSound = (sound == AdhanSound.takbeer)
+        ? AdhanSound.qatami
+        : sound;
 
     switch (effectiveSound) {
       case AdhanSound.makkah:

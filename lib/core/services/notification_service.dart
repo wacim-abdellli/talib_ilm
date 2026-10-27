@@ -12,11 +12,14 @@ import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'athkar_notification_scheduler.dart';
 import 'foreground_prayer_service.dart';
+import 'notification_delivery_health.dart';
 import 'notification_channel_manager.dart';
 import 'notification_router.dart';
+import 'prayer_notification_details_builder.dart';
 import 'prayer_notification_scheduler.dart';
 import 'schedule_outcome.dart';
 export 'schedule_outcome.dart';
+export 'notification_delivery_health.dart';
 
 class NotificationService {
   static Future<void>? _sharedInFlightInit;
@@ -197,6 +200,93 @@ class NotificationService {
       debugPrint('Unable to query exact-alarm capability: $e');
       return null;
     }
+  }
+
+  /// Reads Android's current app permission, exact-alarm access, and channel
+  /// settings for every alert family currently enabled in [settings].
+  Future<NotificationDeliveryHealth> getDeliveryHealth(
+    AdhanSettings settings,
+  ) async {
+    if (kIsWeb || !Platform.isAndroid) {
+      return const NotificationDeliveryHealth(
+        notificationsAllowed: null,
+        exactAlarmsAllowed: null,
+      );
+    }
+
+    await init();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      return const NotificationDeliveryHealth(
+        notificationsAllowed: null,
+        exactAlarmsAllowed: null,
+      );
+    }
+
+    final notificationsAllowed = await arePermissionsGranted();
+    final exactAlarmsAllowed = await canScheduleExactNotifications();
+    final channels = await android.getNotificationChannels() ?? const [];
+    final requiredChannels = <String>{
+      'talib_adhkar_reminders',
+    };
+    final soundChannels = <String>{
+      'talib_adhkar_reminders',
+    };
+
+    if (settings.enabled) {
+      for (final prayerName in AdhanSettingsService.prayerNames) {
+        if (prayerName.contains('الشروق')) continue;
+        final mode = settings.modeForPrayer(prayerName);
+        final channelId = switch (mode) {
+          PrayerNotificationMode.adhan =>
+            PrayerNotificationDetailsBuilder.channelIdForAdhan(
+              settings.effectiveMuezzinSound,
+            ),
+          PrayerNotificationMode.takbeer => 'talib_prayer_takbeer_v3',
+          PrayerNotificationMode.announcement =>
+            PrayerNotificationDetailsBuilder.announcementChannelIdFor(
+              prayerName,
+            ),
+          PrayerNotificationMode.tone => 'talib_prayer_tone_v3',
+          PrayerNotificationMode.silent => 'talib_prayer_silent_v3',
+          PrayerNotificationMode.off => null,
+        };
+        if (channelId == null) continue;
+        requiredChannels.add(channelId);
+        if (mode != PrayerNotificationMode.silent) {
+          soundChannels.add(channelId);
+        }
+      }
+      if (settings.notifyBeforeMinutes > 0) {
+        requiredChannels.add('talib_prayer_pre_reminder_v3');
+        soundChannels.add('talib_prayer_pre_reminder_v3');
+      }
+      if (settings.iqamaReminders) {
+        requiredChannels.add('talib_prayer_iqama_v3');
+        soundChannels.add('talib_prayer_iqama_v3');
+      }
+      if (settings.modeForPrayer(AppStrings.prayerDhuhr) ==
+          PrayerNotificationMode.announcement) {
+        // Friday Dhuhr is announced through the general Jumua channel.
+        requiredChannels.add(
+          PrayerNotificationDetailsBuilder.announcementChannelIdFor(null),
+        );
+        soundChannels.add(
+          PrayerNotificationDetailsBuilder.announcementChannelIdFor(null),
+        );
+      }
+    }
+
+    return NotificationDeliveryHealth.fromAndroid(
+      notificationsAllowed: notificationsAllowed,
+      exactAlarmsAllowed: exactAlarmsAllowed,
+      channels: channels,
+      requiredChannelIds: requiredChannels,
+      soundRequiredChannelIds: soundChannels,
+    );
   }
 
   /// Requests notification and alarm permissions explicitly with user intent.
@@ -427,7 +517,7 @@ class NotificationService {
 
   /// Schedules a test notification after [seconds] (e.g. 5 seconds)
   /// allowing the user to minimize the app or lock the screen to test outside the app.
-  Future<void> scheduleTestNotificationAfter({
+  Future<ScheduleOutcome> scheduleTestNotificationAfter({
     required int seconds,
     required String prayerName,
     required PrayerNotificationMode mode,

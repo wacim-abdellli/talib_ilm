@@ -33,7 +33,7 @@ class PrayerCalcSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.xs),
           Text(
-            'تحدد الزوايا الفلكية لحساب صلاتي الفجر والعشاء وفق الهيئات الإسلامية الرسمية',
+            'تنتج الطرق الفلكية تقديرات تختلف باختلاف الإحداثيات والمنطقة الزمنية وطريقة الحساب، وقد لا تطابق جدولاً حكومياً محلياً.',
             style: context.text.caption.copyWith(color: palette.textMuted),
           ),
           const SizedBox(height: AppSpace.md),
@@ -68,12 +68,10 @@ class PrayerCalcSection extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpace.xs),
                 Text(
-                  'أوقات الظهر والعصر والمغرب ثابتة فلكياً بحركة الشمس وظلها في كل العالم، بينما يختلف حساب الفجر والعشاء حسب زاوية انخفاض ضوء الشفق تحت الأفق لكل منطقة.\n\n'
-                  '• التلقائي (الموصى به): يحدد التطبيق الهيئة الرسمية المعتمدة لدولتك تلقائياً عبر GPS.\n'
-                  '• رابطة العالم الإسلامي: المعتمدة رسمياً في الجزائر والمغرب العربي وأوروبا (فجر 18° / عشاء 17°).\n'
-                  '• أم القرى: المعتمدة في المملكة العربية السعودية والخليج.\n'
-                  '• الهيئة المصرية: المعتمدة في مصر وإفريقيا وبلاد الشام.\n\n'
-                  'جميع الحسابات تعمل بدقة عبر خوارزميات Batoul Apps (Adhan) الرسمية.',
+                  'تُحسب المواقيت من الموقع والتاريخ والمنطقة الزمنية. وتختلف النتائج حسب زوايا الفجر والعشاء، وطريقة حساب العصر، والتعديلات المحلية. لا يوجد جدول حكومي موحّد يخدم جميع دول العالم.\n\n'
+                  '• التلقائي: يختار إعداداً فلكياً وفق قواعد التطبيق ورمز الدولة؛ لا يجلب جدول وزارة الشؤون الدينية أو جهة حكومية مباشرة.\n'
+                  '• رابطة العالم الإسلامي، أم القرى، والهيئة المصرية: مجموعات إعدادات حساب فلكي، ولا يعني اختيارها أن التطبيق يزامن جدولاً حكومياً محلياً.\n\n'
+                  'للمطابقة مع جدول رسمي لمدينة بعينها، قارن المدينة والتاريخ والمنطقة الزمنية والطريقة، ثم استخدم تعديلات الدقائق المتاحة عند الحاجة. قد تظل فروق محلية أو موسمية.',
                   style: context.text.caption.copyWith(
                     color: palette.text,
                     height: 1.5,
@@ -100,9 +98,7 @@ class PrayerCalcSection extends StatelessWidget {
                   borderRadius: AppRadius.mdRadius,
                   child: Container(
                     padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                    constraints: const BoxConstraints(
-                      minHeight: AppSize.tap,
-                    ),
+                    constraints: const BoxConstraints(minHeight: AppSize.tap),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? palette.primarySoft
@@ -127,14 +123,15 @@ class PrayerCalcSection extends StatelessWidget {
                         Expanded(
                           child: Text(
                             entry.value,
-                            style: (isSelected
-                                    ? context.text.bodyHeavy
-                                    : context.text.bodyMedium)
-                                .copyWith(
-                              color: isSelected
-                                  ? palette.onPrimarySoft
-                                  : palette.text,
-                            ),
+                            style:
+                                (isSelected
+                                        ? context.text.bodyHeavy
+                                        : context.text.bodyMedium)
+                                    .copyWith(
+                                      color: isSelected
+                                          ? palette.onPrimarySoft
+                                          : palette.text,
+                                    ),
                           ),
                         ),
                       ],
@@ -176,16 +173,12 @@ class PrayerCalcSection extends StatelessWidget {
                 child: InkWell(
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    onSettingsChanged(
-                      settings.copyWith(madhab: entry.key),
-                    );
+                    onSettingsChanged(settings.copyWith(madhab: entry.key));
                   },
                   borderRadius: AppRadius.mdRadius,
                   child: Container(
                     padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                    constraints: const BoxConstraints(
-                      minHeight: AppSize.tap,
-                    ),
+                    constraints: const BoxConstraints(minHeight: AppSize.tap),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? palette.primarySoft
@@ -199,7 +192,9 @@ class PrayerCalcSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsetsDirectional.only(top: AppSpace.xxs),
+                          padding: const EdgeInsetsDirectional.only(
+                            top: AppSpace.xxs,
+                          ),
                           child: Icon(
                             isSelected
                                 ? Icons.radio_button_checked_rounded
@@ -217,21 +212,24 @@ class PrayerCalcSection extends StatelessWidget {
                             children: [
                               Text(
                                 title,
-                                style: (isSelected
-                                        ? context.text.bodyHeavy
-                                        : context.text.bodyBold)
-                                    .copyWith(
-                                  color: isSelected
-                                      ? palette.onPrimarySoft
-                                      : palette.text,
-                                ),
+                                style:
+                                    (isSelected
+                                            ? context.text.bodyHeavy
+                                            : context.text.bodyBold)
+                                        .copyWith(
+                                          color: isSelected
+                                              ? palette.onPrimarySoft
+                                              : palette.text,
+                                        ),
                               ),
                               const SizedBox(height: AppSpace.xxs),
                               Text(
                                 desc,
                                 style: context.text.caption.copyWith(
                                   color: isSelected
-                                      ? palette.onPrimarySoft.withValues(alpha: 0.85)
+                                      ? palette.onPrimarySoft.withValues(
+                                          alpha: 0.85,
+                                        )
                                       : palette.textMuted,
                                 ),
                               ),
