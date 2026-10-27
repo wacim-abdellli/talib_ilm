@@ -50,7 +50,6 @@ class ProgressPill extends StatelessWidget {
       ),
     );
   }
-
   _Config _map(BuildContext context, BookProgressStatus status) {
     final palette = context.palette;
 
