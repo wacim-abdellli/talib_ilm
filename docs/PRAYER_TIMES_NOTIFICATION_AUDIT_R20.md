@@ -22,11 +22,11 @@ There is no single API key that makes prayer times authoritative for every count
 
 ## Verification
 
-- `flutter analyze --no-pub`: passed, 0 issues (185.3s).
+- `flutter analyze --no-pub`: passed on the final merged tree, 0 issues (9.2s).
 - `python tool/ui_lint_v2.py`: passed, 0 FAILs (8/10 allow markers).
 - Focused settings persistence, invalid-value fallback, countdown, widget snapshot, settings interaction, and text-scale tests: passed.
 - `flutter test --concurrency=1 --no-pub`: 711 tests passed; the existing `test/golden/shamela_reader_golden_test.dart` case failed on four Amiri text golden pixel comparisons (1.20% and 2.12%). Re-running that test alone reproduced the same diff; the actual and expected screenshots are visually equivalent, and no golden was updated.
-- `flutter build apk --debug --no-pub`: passed (187.9s).
+- `flutter build apk --debug --no-pub`: passed on the final merged tree (45.7s). APK SHA-256: `A06A3D1D12DAC02457E57B2FD7ECC76DBCCD539D53029A81D9B4B9DF2BAA314A` (330,664,011 bytes).
 
 ## Remaining External Validation
 
