@@ -20,6 +20,9 @@ class IlmSearchResultsView extends StatelessWidget {
   final ValueChanged<String> onToggleFavorite;
   final ValueChanged<ShamelaBook> onOpenShamelaReader;
   final void Function(ShamelaBook, List<ShamelaBook>) onOpenShuruhSheet;
+  final Map<int, bool>? downloadedMap;
+  final Map<int, double>? downloadProgress;
+  final ValueChanged<ShamelaBook>? onDownloadBook;
 
   const IlmSearchResultsView({
     super.key,
@@ -32,6 +35,9 @@ class IlmSearchResultsView extends StatelessWidget {
     required this.onToggleFavorite,
     required this.onOpenShamelaReader,
     required this.onOpenShuruhSheet,
+    this.downloadedMap,
+    this.downloadProgress,
+    this.onDownloadBook,
   });
 
   @override
@@ -138,10 +144,10 @@ class IlmSearchResultsView extends StatelessWidget {
                     ),
                     child: ShamelaBookCard(
                       book: book,
-                      isDownloaded: true,
-                      downloadProgress: null,
+                      isDownloaded: downloadedMap?[book.id] ?? false,
+                      downloadProgress: downloadProgress?[book.id],
                       onOpen: () => onOpenShamelaReader(book),
-                      onDownload: () {},
+                      onDownload: () => onDownloadBook?.call(book),
                       onOpenShuruh: onOpenShuruhSheet,
                     ),
                   );

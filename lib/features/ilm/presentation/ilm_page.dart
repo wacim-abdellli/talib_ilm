@@ -19,6 +19,7 @@ import '../data/services/book_progress_service.dart';
 import '../data/services/daily_reading_service.dart';
 import '../data/services/motivation_service.dart';
 import '../data/services/quiz_dump_service.dart';
+import '../data/services/shamela_service.dart';
 import 'pages/book_view_page.dart';
 import 'pages/fan_quiz_levels_page.dart';
 import 'pages/islamic_quiz_hub_page.dart';
@@ -63,6 +64,8 @@ class _IlmPageState extends State<IlmPage> {
   Map<String, IlmBook> _bookCatalog = {};
   Map<String, BookProgress> _progressById = {};
   Set<String> _favoriteBookIds = {};
+  final Map<int, bool> _downloadedMap = {};
+  final Map<int, double> _downloadProgress = {};
   List<IlmLevel> _sortedLevels = [];
   BookProgress? _continueReadingBook;
 
@@ -221,6 +224,13 @@ class _IlmPageState extends State<IlmPage> {
           });
         }
       }
+
+      try {
+        final downloaded = await ShamelaService.getDownloadedBooksMap();
+        _downloadedMap.addAll(downloaded);
+      } catch (e) {
+        debugPrint('Error loading downloaded books map: $e');
+      }
     } catch (e) {
       debugPrint('Error loading mutun program: $e');
     } finally {
@@ -315,16 +325,49 @@ class _IlmPageState extends State<IlmPage> {
     await _loadData();
   }
 
+  void _downloadShamelaBook(ShamelaBook book) async {
+    HapticFeedback.selectionClick();
+    setState(() => _downloadProgress[book.id] = 0.0);
+
+    try {
+      await ShamelaService.downloadBook(
+        book,
+        onProgress: (current, total) {
+          if (mounted) {
+            setState(() {
+              _downloadProgress[book.id] = total > 0 ? (current / total) : 0.0;
+            });
+          }
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _downloadProgress.remove(book.id);
+          _downloadedMap[book.id] = true;
+        });
+        AppSnackbar.success(
+          context,
+          'تم تحميل كتاب "${book.title}" بنجاح للقراءة بدون إنترنت',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _downloadProgress.remove(book.id));
+        AppSnackbar.error(context, 'تعذر إكمال تحميل الكتاب: $e');
+      }
+    }
+  }
+
   void _openShuruhSheet(ShamelaBook parentBook, List<ShamelaBook> shuruh) {
     HapticFeedback.selectionClick();
     ShamelaShuruhSheet.show(
       context: context,
       parentBook: parentBook,
       shuruh: shuruh,
-      downloadedMap: const {},
-      downloadProgress: const {},
+      downloadedMap: _downloadedMap,
+      downloadProgress: _downloadProgress,
       onOpenSharh: _openShamelaReader,
-      onDownloadSharh: (_) {},
+      onDownloadSharh: _downloadShamelaBook,
     );
   }
 
@@ -561,6 +604,9 @@ class _IlmPageState extends State<IlmPage> {
                   setState(() => _selectedDisciplineLevel = lvl),
               onOpenBook: _openShamelaReader,
               onOpenShuruh: _openShuruhSheet,
+              downloadedMap: _downloadedMap,
+              downloadProgress: _downloadProgress,
+              onDownloadBook: _downloadShamelaBook,
               onViewAll: () => setState(() {
                 _selectedCategory = d.key;
                 _selectedDisciplineLevel = null;
@@ -587,11 +633,14 @@ class _IlmPageState extends State<IlmPage> {
       allBooks: _allBooks,
       progressById: _progressById,
       favoriteBookIds: _favoriteBookIds,
+      downloadedMap: _downloadedMap,
+      downloadProgress: _downloadProgress,
       onClearSearch: _onClearSearch,
       onNavigateToBook: _navigateToBook,
       onToggleFavorite: _toggleFavorite,
       onOpenShamelaReader: _openShamelaReader,
       onOpenShuruhSheet: _openShuruhSheet,
+      onDownloadBook: _downloadShamelaBook,
     );
   }
 }

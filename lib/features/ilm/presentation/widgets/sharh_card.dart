@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 
@@ -35,13 +36,7 @@ class SharhCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-
-    final metaParts = <String>[
-      scholar,
-      if (totalPages != null && totalPages! > 0) '$totalPages صفحة',
-      if (difficulty != null) difficulty!,
-    ];
-    final subtitleText = metaParts.join(' • ');
+    final textTheme = context.text;
 
     String? progressText;
     if (currentPage != null && currentPage! > 0) {
@@ -50,15 +45,14 @@ class SharhCard extends StatelessWidget {
       } else {
         progressText = 'وصلت إلى صفحة $currentPage';
       }
-    } else if (isLastRead) {
-      progressText = 'آخر قراءة';
     }
 
     return AppCard(
       onTap: onTap,
       onLongPress: onLongPress,
-      padding: const EdgeInsets.all(AppSpace.lg),
+      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           IconBadge(
             icon: isDigital ? Icons.auto_stories_rounded : Icons.person_outline,
@@ -71,18 +65,59 @@ class SharhCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
+                // Full title without ellipsis truncation
+                Text(
+                  title,
+                  style: textTheme.titleSmall.copyWith(
+                    fontWeight: FontWeight.bold,
+                    height: 1.35,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpace.xs),
+
+                // Metadata: Scholar, Level, and Reader Badges
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpace.xs,
+                  runSpacing: AppSpace.xxs,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: context.text.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      scholar,
+                      style: textTheme.bodySmall.copyWith(
+                        color: palette.textMuted,
                       ),
                     ),
+                    if (difficulty != null) ...[
+                      Text(
+                        '•',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textSubtle,
+                        ),
+                      ),
+                      Text(
+                        difficulty!,
+                        style: textTheme.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
+                    if (totalPages != null && totalPages! > 0) ...[
+                      Text(
+                        '•',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textSubtle,
+                        ),
+                      ),
+                      Text(
+                        '$totalPages صفحة',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
                     if (isDigital) ...[
-                      const SizedBox(width: AppSpace.xs),
                       Container(
                         padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: AppSpace.xs,
@@ -91,54 +126,87 @@ class SharhCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: palette.primarySoft,
                           borderRadius: AppRadius.pillRadius,
-                        ),
-                        child: Text(
-                          'قراءة رقمية',
-                          style: context.text.caption.copyWith(
-                            color: palette.primary,
-                            fontWeight: FontWeight.bold,
+                          border: Border.all(
+                            color: palette.primary.withAlpha(60),
+                            width: 0.8,
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.menu_book_rounded,
+                              size: AppIcon.xs,
+                              color: palette.primary,
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Text(
+                              'قراءة رقمية',
+                              style: textTheme.captionBold.copyWith(
+                                color: palette.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                     if (isLastRead) ...[
-                      const SizedBox(width: AppSpace.xs),
                       Container(
-                        width: 8,
-                        height: 8,
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xs,
+                          vertical: AppSpace.xxs,
+                        ),
                         decoration: BoxDecoration(
-                          color: palette.gold,
-                          shape: BoxShape.circle,
+                          color: palette.goldSoft,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: palette.gold.withAlpha(80),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: palette.gold,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.xxs),
+                            Text(
+                              'آخر قراءة',
+                              style: textTheme.captionBold.copyWith(
+                                color: palette.gold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  subtitleText,
-                  style: context.text.bodySmall.copyWith(
-                    color: palette.textMuted,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+
                 if (description != null && description!.isNotEmpty) ...[
                   const SizedBox(height: AppSpace.xs),
                   Text(
                     description!,
-                    style: context.text.caption.copyWith(
+                    style: textTheme.caption.copyWith(
                       color: palette.textSubtle,
+                      height: 1.35,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+
                 if (progressText != null) ...[
                   const SizedBox(height: AppSpace.xs),
                   Text(
                     progressText,
-                    style: context.text.captionBold.copyWith(
+                    style: textTheme.captionBold.copyWith(
                       color: palette.primary,
                     ),
                     maxLines: 1,
@@ -149,10 +217,13 @@ class SharhCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpace.sm),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: AppIcon.md,
-            color: palette.textSubtle,
+          Padding(
+            padding: const EdgeInsetsDirectional.only(top: AppSpace.xs),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: AppIcon.xs,
+              color: palette.textSubtle,
+            ),
           ),
         ],
       ),

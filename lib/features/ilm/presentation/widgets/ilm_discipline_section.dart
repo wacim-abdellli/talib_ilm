@@ -107,6 +107,9 @@ class IlmDisciplineSection {
     required ValueChanged<FanQuiz> onOpenQuiz,
     int? selectedLevel,
     ValueChanged<int?>? onSelectLevel,
+    Map<int, bool>? downloadedMap,
+    Map<int, double>? downloadProgress,
+    ValueChanged<ShamelaBook>? onDownloadBook,
   }) {
     final catColors = palette.category(categoryKey);
 
@@ -478,10 +481,10 @@ class IlmDisciplineSection {
                   padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
                   child: ShamelaBookCard(
                     book: book,
-                    isDownloaded: true,
-                    downloadProgress: null,
+                    isDownloaded: downloadedMap?[book.id] ?? false,
+                    downloadProgress: downloadProgress?[book.id],
                     onOpen: () => onOpenBook(book),
-                    onDownload: () {},
+                    onDownload: () => onDownloadBook?.call(book),
                     onOpenShuruh: onOpenShuruh,
                   ),
                 );
