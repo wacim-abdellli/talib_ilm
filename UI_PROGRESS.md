@@ -3619,3 +3619,8 @@ FAILED (54 violations)
 - **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py` OK (0 failures, 7/10 allow markers); existing More-page test expectations updated but tests not run. Debug APK build was stopped after >10 minutes waiting for the shared Gradle daemon while another Flutter build was active; no APK was produced by this run.
 - **Open issues:** run the focused More-page test and build the debug APK after the concurrent Gradle task finishes; verify the More-page entry and notification tab on the connected Android device.
 
+## R105 — Open Prayer Settings on Notifications by Default (2026-10-27)
+- Set the prayer settings sheet’s default tab to `التنبيهات والأذان` so generic prayer-settings entry points land on notification status and repair controls; the muezzin/voices tab remains accessible.
+- Verification: `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py` OK (0 failures, 7/10 allow markers); arm64 debug APK built successfully (261,847,349 bytes; SHA-256 `D608F30F2529A8AE5BFCDB1D58BBC89747D56892398211057B64DF9FD78E05DA`). Tests and device install were not run; `adb devices` returned no attached device.
+- Open issue: install on the user’s device/emulator and visually verify the settings sheet.
+

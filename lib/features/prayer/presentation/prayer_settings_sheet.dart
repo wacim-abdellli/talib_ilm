@@ -29,13 +29,13 @@ class PrayerSettingsSheet extends StatefulWidget {
   const PrayerSettingsSheet({
     super.key,
     this.onSettingsChanged,
-    this.initialTabIndex = 0,
+    this.initialTabIndex = 1,
   });
 
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onSettingsChanged,
-    int initialTabIndex = 0,
+    int initialTabIndex = 1,
   }) {
     AppSnackbar.dismiss();
     return AppSheet.show<void>(
