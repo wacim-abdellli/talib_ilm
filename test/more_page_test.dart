@@ -21,14 +21,14 @@ void main() {
 
       // Category Headers
       expect(find.text('المحتوى والمحفوظات'), findsOneWidget);
-      expect(find.text('الصلاة والمواقيت'), findsOneWidget);
-      expect(find.text('التفضيلات والمظهر'), findsOneWidget);
+      expect(find.text('الصلاة والتنبيهات'), findsOneWidget);
+      expect(find.text('تفضيلات التطبيق'), findsOneWidget);
 
       // Essential Core Features
       expect(find.text('المفضلة والمحفوظات'), findsOneWidget);
       expect(find.text('التنزيلات الصوتية'), findsOneWidget);
-      expect(find.text('إعدادات الصلاة والأذان'), findsOneWidget);
-      expect(find.text('الموقع وطرق الحساب'), findsOneWidget);
+      expect(find.text('تنبيهات الصلاة والأذان'), findsOneWidget);
+      expect(find.text('موقع الصلاة وطريقة الحساب'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('المظهر والسمة'), 250);
       await tester.pumpAndSettle();
       expect(find.text('المظهر والسمة'), findsOneWidget);

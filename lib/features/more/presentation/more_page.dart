@@ -40,7 +40,11 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
-  Widget _buildCategoryHeader(BuildContext context, String title) {
+  Widget _buildCategoryHeader(
+    BuildContext context,
+    String title,
+    String subtitle,
+  ) {
     final palette = context.palette;
     final textTheme = context.text;
     return Padding(
@@ -49,13 +53,23 @@ class _MorePageState extends State<MorePage> {
         top: AppSpace.md,
         bottom: AppSpace.xs,
       ),
-      child: Text(
-        title,
-        style: textTheme.caption.copyWith(
-          color: palette.gold,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.2,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: textTheme.caption.copyWith(
+              color: palette.gold,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: AppSpace.xxs),
+          Text(
+            subtitle,
+            style: textTheme.caption.copyWith(color: palette.textMuted),
+          ),
+        ],
       ),
     );
   }
@@ -268,8 +282,61 @@ class _MorePageState extends State<MorePage> {
                       parent: AlwaysScrollableScrollPhysics(),
                     ),
                     children: [
-                      // Group 1: المحتوى والمحفوظات
-                      _buildCategoryHeader(context, 'المحتوى والمحفوظات'),
+                      // Group 1: الصلاة والتنبيهات
+                      _buildCategoryHeader(
+                        context,
+                        'الصلاة والتنبيهات',
+                        'إعداد موقعك ومواقيت الصلاة والأذان وتنبيهات الأذكار',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'تنبيهات الصلاة والأذان',
+                            subtitle:
+                                'اعرض حالة الإشعارات واضبط الأذان والإقامة',
+                            icon: Icons.notifications_active_rounded,
+                            color: palette.gold,
+                            onTap: () => _openPrayerSettings(
+                              context,
+                              initialTabIndex: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'موقع الصلاة وطريقة الحساب',
+                            subtitle:
+                                'حدّد مدينتك وطريقة حساب مواقيت الصلاة',
+                            icon: Icons.explore_rounded,
+                            color: palette.success,
+                            onTap: () => _openLocationSettings(context),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'تنبيهات الأذكار اليومية',
+                            subtitle:
+                                'تذكير بأذكار الصباح، المساء، والنوم في أوقاتها المسنونة',
+                            icon: Icons.notifications_active_rounded,
+                            color: palette.gold,
+                            onTap: () => AdhkarNotificationSheet.show(context),
+                          ),
+                        ),
+                      ),
+
+                      // Group 2: المحتوى والمحفوظات
+                      _buildCategoryHeader(
+                        context,
+                        'المحتوى والمحفوظات',
+                        'العناصر التي حفظتها والتلاوات التي نزّلتها',
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpace.sm),
                         child: MoreSectionCard(
@@ -305,50 +372,12 @@ class _MorePageState extends State<MorePage> {
                         ),
                       ),
 
-                      // Group 2: الصلاة والمواقيت
-                      _buildCategoryHeader(context, 'الصلاة والمواقيت'),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'إعدادات الصلاة والأذان',
-                            subtitle:
-                                'أصوات الأذان والتكبير، التنبيه المسبق، والإقامة',
-                            icon: Icons.mosque_rounded,
-                            color: palette.gold,
-                            onTap: () => _openPrayerSettings(context),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'الموقع وطرق الحساب',
-                            subtitle:
-                                'تحديد الولاية/المدينة وضبط الزوايا الفلكية للصلوات',
-                            icon: Icons.explore_rounded,
-                            color: palette.success,
-                            onTap: () => _openLocationSettings(context),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'تنبيهات الأذكار اليومية',
-                            subtitle:
-                                'تذكير بأذكار الصباح، المساء، والنوم في أوقاتها المسنونة',
-                            icon: Icons.notifications_active_rounded,
-                            color: palette.gold,
-                            onTap: () => AdhkarNotificationSheet.show(context),
-                          ),
-                        ),
-                      ),
-
                       // Group 3: التفضيلات والمظهر
-                      _buildCategoryHeader(context, 'التفضيلات والمظهر'),
+                      _buildCategoryHeader(
+                        context,
+                        'تفضيلات التطبيق',
+                        'خصّص مظهر التطبيق لراحتك',
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpace.sm),
                         child: MoreSectionCard(
@@ -491,8 +520,8 @@ class _MorePageState extends State<MorePage> {
     ThemeSelectorSheet.show(context);
   }
 
-  void _openPrayerSettings(BuildContext context) {
-    PrayerSettingsSheet.show(context);
+  void _openPrayerSettings(BuildContext context, {int initialTabIndex = 0}) {
+    PrayerSettingsSheet.show(context, initialTabIndex: initialTabIndex);
   }
 
   void _openLocationSettings(BuildContext context) {

@@ -3612,3 +3612,10 @@ FAILED (54 violations)
 - Verification: analyzer 0 issues; UI lint OK (7/10 allow markers); focused prayer/notification tests 6/6 passed; full suite 717 passed / 1 unrelated Shamela golden failure (1.20% pixel diff); final debug APK build passed in 133.2s.
 - **Open issues:** no authorized global government timetable feed or physical-device validation; silent/DND/OEM battery rules can still delay or mute alerts. iOS dismissal and delivery need device validation.
 
+## R104 — Notification Access from More & Section Clarity (2026-10-27)
+- **Status:** Implementation complete; verification partial · branch `ui/r104-notification-access-more`.
+- Moved the persistent prayer-notification entry to the first More section; it opens the notification/Adhan settings tab directly. Clarified group descriptions and the prayer-location label.
+- Removed the user-facing 10-second test action and renamed the diagnostics heading to “حالة وصول التنبيهات”; permission repair, app settings, and delivery status remain available.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py` OK (0 failures, 7/10 allow markers); existing More-page test expectations updated but tests not run. Debug APK build was stopped after >10 minutes waiting for the shared Gradle daemon while another Flutter build was active; no APK was produced by this run.
+- **Open issues:** run the focused More-page test and build the debug APK after the concurrent Gradle task finishes; verify the More-page entry and notification tab on the connected Android device.
+

@@ -24,18 +24,27 @@ import 'widgets/prayer_muezzin_selector.dart';
 
 class PrayerSettingsSheet extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
+  final int initialTabIndex;
 
-  const PrayerSettingsSheet({super.key, this.onSettingsChanged});
+  const PrayerSettingsSheet({
+    super.key,
+    this.onSettingsChanged,
+    this.initialTabIndex = 0,
+  });
 
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onSettingsChanged,
+    int initialTabIndex = 0,
   }) {
     AppSnackbar.dismiss();
     return AppSheet.show<void>(
       context: context,
       maxHeightFactor: 0.92,
-      builder: (_) => PrayerSettingsSheet(onSettingsChanged: onSettingsChanged),
+      builder: (_) => PrayerSettingsSheet(
+        onSettingsChanged: onSettingsChanged,
+        initialTabIndex: initialTabIndex,
+      ),
     );
   }
 
@@ -57,7 +66,11 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      initialIndex: widget.initialTabIndex.clamp(0, 3).toInt(),
+      vsync: this,
+    );
     _load();
     _adhanService.preload();
   }

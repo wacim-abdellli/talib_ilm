@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/services/adhan_settings_service.dart';
@@ -10,8 +9,8 @@ import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/prayer_schedule_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 
-/// Shows the Android notification and exact-alarm state, with repair and test
-/// actions so people can verify device-level delivery settings themselves.
+/// Shows the Android notification and exact-alarm state, with repair actions
+/// so people can restore device-level delivery settings themselves.
 class NotificationDeliveryCard extends StatefulWidget {
   final AdhanSettings settings;
 
@@ -109,48 +108,6 @@ class _NotificationDeliveryCardState extends State<NotificationDeliveryCard>
     await openAppSettings();
   }
 
-  Future<void> _scheduleTest() async {
-    if (_working) return;
-    setState(() {
-      _working = true;
-      _message = null;
-    });
-    try {
-      final prayerName = AppStrings.prayerFajr;
-      final configuredMode = widget.settings.modeForPrayer(prayerName);
-      final mode = configuredMode == PrayerNotificationMode.off
-          ? PrayerNotificationMode.silent
-          : configuredMode;
-      final outcome = await _notifications.scheduleTestNotificationAfter(
-        seconds: 10,
-        prayerName: prayerName,
-        mode: mode,
-        sound: widget.settings.effectiveMuezzinSound,
-      );
-      if (mounted) {
-        setState(() => _message = _testOutcomeMessage(outcome));
-      }
-    } catch (error) {
-      if (mounted) setState(() => _message = 'تعذر جدولة الاختبار: $error');
-    } finally {
-      if (mounted) setState(() => _working = false);
-    }
-  }
-
-  String _testOutcomeMessage(ScheduleOutcome outcome) {
-    return switch (outcome.status) {
-      ScheduleOutcomeStatus.exact =>
-        'تمت جدولة إشعار اختبار بعد 10 ثوانٍ. اقفل الشاشة للتحقق من ظهوره وصوته.',
-      ScheduleOutcomeStatus.inexactFallback =>
-        'تمت جدولة الاختبار دون ضمان الدقة؛ قد يتأخر بسبب إعدادات Android.',
-      ScheduleOutcomeStatus.permissionDenied =>
-        'لم يسمح Android بجدولة الاختبار. راجع الأذونات وإعدادات التطبيق.',
-      ScheduleOutcomeStatus.skippedPast => 'لم تتم جدولة إشعار الاختبار.',
-      ScheduleOutcomeStatus.failed =>
-        'فشلت جدولة الاختبار: ${outcome.errorMessage ?? 'خطأ غير محدد'}',
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -174,7 +131,7 @@ class _NotificationDeliveryCardState extends State<NotificationDeliveryCard>
               const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Text(
-                  'فحص وصول التنبيهات',
+                  'حالة وصول التنبيهات',
                   style: text.bodyBold.copyWith(color: palette.text),
                 ),
               ),
@@ -249,12 +206,6 @@ class _NotificationDeliveryCardState extends State<NotificationDeliveryCard>
                 onPressed: _working || !_isAndroid ? null : _openSettings,
                 icon: const Icon(Icons.settings_outlined),
                 label: const Text('إعدادات التطبيق'),
-              ),
-              OutlinedButton.icon(
-                style: actionStyle,
-                onPressed: _working || !_isAndroid ? null : _scheduleTest,
-                icon: const Icon(Icons.notifications_none_rounded),
-                label: const Text('اختبار بعد 10 ثوانٍ'),
               ),
             ],
           ),
