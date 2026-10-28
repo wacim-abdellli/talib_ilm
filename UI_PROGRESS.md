@@ -1,5 +1,37 @@
 # UI Progress Log
 
+## Round 19 — Notification Deferral Fix, Symmetrical Master Off Contract & 24h Re-prompt Banner (28 October 2026)
+- **Scope & Context:**
+  - Resolved user-reported bug where first-time users clicking "لاحقاً" (Later) on the pre-permission onboarding sheet (`NotificationPrePermissionSheet`) still found the master notifications switch enabled in the prayer settings sheet, and alarms scheduled in parallel by `AppShell`.
+  - Root Cause: `AdhanSettingsService.getSettings()` defaulted `_keyEnabled` to `true` when null. The onboarding sheet previously only set `has_shown_notification_onboarding = true` without setting `adhan_enabled: false` or purging scheduled alarms. Concurrently, `AppShell._initPrayerNotifications()` scheduled alarms at startup before the user interacted with the dialog.
+  - Architectural & UX Remediation:
+    1. **Strict Symmetrical Off Contract:**
+       - Tapping "لاحقاً" explicitly writes `adhan_enabled = false` to SharedPreferences, disables Adhkar reminder flags, cancels prayer notifications via `cancelPrayerNotificationsOnly()`, and invalidates settings cache.
+       - Tapping "تفعيل التنبيهات الآن" explicitly writes `adhan_enabled = true`, enables Adhkar reminders, requests permissions, and force-refreshes prayer schedules.
+       - `ForegroundPrayerService._check()` early exits and dismisses active alerts immediately if `!settings.enabled`.
+       - `AppShell._initPrayerNotifications()` skips premature alarm scheduling on clean cold starts until user interaction completes.
+    2. **Smart 24-Hour Cooldown Re-prompt:**
+       - Added `prefLastPromptKey` tracking the timestamp of the last prompt. If notifications are disabled, `NotificationPrePermissionSheet.checkAndShow(context)` only re-prompts after 24 hours have elapsed.
+    3. **Persistent Dignified Home Screen Alert Banner:**
+       - Created `PrayerNotificationBanner` (`lib/features/home/presentation/widgets/prayer_notification_banner.dart`), placed directly beneath the hero prayer greeting card when notifications are disabled.
+       - Complies strictly with the 14 core design rules: RTL directional layout, `Icons.notifications_paused_rounded`, `AppRadius.mdRadius`, `palette.warningSoft`/`palette.warning`, tap target >= 48dp with ripple, triggering the onboarding sheet on tap.
+- **Files Modified / Created (9 files):**
+  - `lib/features/home/presentation/widgets/prayer_notification_banner.dart` (created, 87 lines)
+  - `lib/core/services/adhan_settings_service.dart` (updated)
+  - `lib/core/services/foreground_prayer_service.dart` (updated)
+  - `lib/features/home/presentation/home_page.dart` (updated)
+  - `lib/features/prayer/presentation/prayer_settings_sheet.dart` (updated)
+  - `lib/shared/navigation/app_shell.dart` (updated)
+  - `lib/shared/widgets/notification_pre_permission_sheet.dart` (updated)
+  - `test/first_run_permission_flow_test.dart` (updated)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (ran in 5.0s).
+  - `python tool/ui_lint_v2.py`: OK (0 FAILs, 7 allow markers / cap 10).
+  - Test suites: `test/first_run_permission_flow_test.dart` (8/8 passed), `test/prayer_settings_sheet_test.dart` (3/3 passed), `test/prayer_scheduling_boundary_matrix_test.dart` (10/10 passed) — 21/21 clean pass.
+- **Open issues:** None.
+
+
 ## Round 18 — Mutun Dual Reading Modes (Complete Paragraph Editions) & User-Controlled Scroll (26 October 2026)
 - **Scope & Context:**
   - Resolved user-reported issues:
