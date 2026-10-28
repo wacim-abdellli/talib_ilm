@@ -162,9 +162,14 @@ class AdhanSettingsService {
   // In-memory memoized settings cache
   static AdhanSettings? _cachedSettings;
 
+  /// Invalidates the memoized settings cache so the next read refreshes from storage.
+  static void invalidateCache() {
+    _cachedSettings = null;
+  }
+
   @visibleForTesting
   static void resetCacheForTesting() {
-    _cachedSettings = null;
+    invalidateCache();
   }
 
   Future<AdhanSettings> getSettings({bool forceRefresh = false}) async {

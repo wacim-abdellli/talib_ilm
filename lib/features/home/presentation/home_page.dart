@@ -17,6 +17,7 @@ import 'widgets/continue_learning_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_quick_actions.dart';
 import 'widgets/home_quran_radio_card.dart';
+import 'widgets/prayer_notification_banner.dart';
 
 import '../../ilm/data/catalogs/mutun_digital_catalog.dart';
 import '../../ilm/data/models/mutun_models.dart';
@@ -56,6 +57,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isLoading = false;
   PrayerTimesDay? _prayerDay;
   Map<String, int> _iqamaOverrides = const {};
+  bool _isNotificationDisabled = false;
   ContinueData? _continueData;
   DailyDhikrPayload? _dailyDhikr;
 
@@ -74,7 +76,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
     _stateController = HomeStateController(prayerService: _prayerTimeService);
     _prayerDay = _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
-    _loadIqamaSettings();
+    _loadNotificationAndIqamaSettings();
     _loadAllData();
 
     // Refresh state and prayer times periodically in real runtime
@@ -155,10 +157,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  Future<void> _loadIqamaSettings() async {
+  Future<void> _loadNotificationAndIqamaSettings() async {
     final settings = await AdhanSettingsService().getSettings();
     if (!mounted) return;
-    setState(() => _iqamaOverrides = settings.iqamaMinutesAfterAdhan);
+    setState(() {
+      _iqamaOverrides = settings.iqamaMinutesAfterAdhan;
+      _isNotificationDisabled = !settings.enabled;
+    });
   }
 
   @override
@@ -167,6 +172,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (!oldWidget.isActive && widget.isActive) {
       _refreshStats();
       _refreshPeriodicData();
+      _loadNotificationAndIqamaSettings();
     }
   }
 
@@ -174,6 +180,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _refreshPeriodicData();
+      _loadNotificationAndIqamaSettings();
     }
   }
 
@@ -353,6 +360,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       child: _buildHeroGreetingCard(),
                     ),
                   ),
+
+                  if (_isNotificationDisabled) ...[
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: AppSpace.md),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.xl,
+                        ),
+                        child: PrayerNotificationBanner(
+                          onEnabled: () {
+                            _loadNotificationAndIqamaSettings();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SliverToBoxAdapter(
                     child: SizedBox(height: AppSpace.lg),

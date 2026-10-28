@@ -149,6 +149,7 @@ void main() {
       expect(declined, isTrue);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool(NotificationPrePermissionSheet.prefKey), isTrue);
+      expect(prefs.getBool('adhan_enabled'), isFalse);
     });
 
     testWidgets('6. QiblaPage: shows permission explanation view with manual city fallback', (tester) async {

@@ -8,6 +8,7 @@ import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
 import '../../../core/services/home_widget_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -103,6 +104,14 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
       PrayerTimeService.clearCache();
       widget.onSettingsChanged?.call();
 
+      final notif = NotificationService();
+      await notif.init();
+      if (_settings!.enabled) {
+        await notif.requestPermissions();
+      } else {
+        await notif.cancelPrayerNotificationsOnly();
+      }
+
       // Refresh schedule in background without blocking sheet dismissal
       unawaited(
         PrayerScheduleService()
@@ -117,7 +126,9 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
         Navigator.pop(context);
         AppSnackbar.success(
           context,
-          'تم حفظ إعدادات الصلاة والأذان بنجاح',
+          _settings!.enabled
+              ? 'تم حفظ إعدادات الصلاة وتفعيل التنبيهات بنجاح'
+              : 'تم إيقاف جميع تنبيهات الصلاة والأذان',
           duration: AppMotion.toastShort,
           hasNavBar: true,
         );

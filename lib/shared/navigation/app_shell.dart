@@ -12,10 +12,13 @@ import '../../core/services/notification_router.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_schedule_service.dart';
 import '../../features/adhkar/presentation/after_prayer_athkar_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/icon_badge.dart';
 import '../../shared/widgets/nav_bar.dart';
 import '../../shared/widgets/notification_onboarding_dialog.dart';
+import '../../shared/widgets/notification_pre_permission_sheet.dart';
 
 import '../../features/home/presentation/home_page.dart';
 import '../../features/prayer/presentation/prayer_page.dart';
@@ -115,6 +118,15 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     try {
       final notif = NotificationService();
       await notif.init();
+      final prefs = await SharedPreferences.getInstance();
+      final hasShown =
+          prefs.getBool(NotificationPrePermissionSheet.prefKey) ?? false;
+      if (!hasShown && !prefs.containsKey('adhan_enabled')) {
+        // Cold start on fresh install: don't schedule background alarms before user is prompted
+        unawaited(HomeWidgetService.updateAllWidgets());
+        await FlipToStopService().init();
+        return;
+      }
       await PrayerScheduleService().refreshSchedulesIfNeeded();
       _startForegroundIfAppIsActive();
       unawaited(HomeWidgetService.updateAllWidgets());

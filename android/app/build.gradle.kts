@@ -47,22 +47,18 @@ val isReleaseSigningConfigured = !storeFileProp.isNullOrBlank() &&
     !storePasswordProp.isNullOrBlank() &&
     !keyAliasProp.isNullOrBlank() &&
     !keyPasswordProp.isNullOrBlank()
-
 android {
     namespace = "com.talibilm.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
-
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-
     signingConfigs {
         getByName("debug") {
             enableV1Signing = true

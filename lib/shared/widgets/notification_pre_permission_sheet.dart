@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/theme/app_palette.dart';
 import '../../app/theme/app_ui.dart';
+import '../../core/services/adhan_settings_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_schedule_service.dart';
 import 'app_button.dart';
@@ -24,14 +25,29 @@ class NotificationPrePermissionSheet extends StatelessWidget {
   });
 
   static const String prefKey = 'has_shown_notification_onboarding';
+  static const String prefLastPromptKey = 'last_notification_prompt_timestamp';
 
-  /// Checks if the notification pre-permission sheet has been shown before,
-  /// and displays it if not yet completed.
+  /// Checks if the notification pre-permission sheet should be shown based on:
+  /// 1. If notifications are already enabled -> do not show
+  /// 2. If first run (hasShown == false) -> show
+  /// 3. If notifications disabled and 24 hours elapsed since last prompt -> show (smart cooldown)
   static Future<void> checkAndShow(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    final hasShown = prefs.getBool(prefKey) ?? false;
-    if (hasShown) return;
+    final settingsService = AdhanSettingsService();
+    final settings = await settingsService.getSettings();
 
+    // If user has notifications explicitly enabled, do not prompt
+    if (settings.enabled) return;
+
+    final hasShown = prefs.getBool(prefKey) ?? false;
+    final lastPromptMs = prefs.getInt(prefLastPromptKey) ?? 0;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final hoursSinceLastPrompt = (nowMs - lastPromptMs) / (1000 * 60 * 60);
+
+    // If never shown, show immediately. If previously declined/deferred, wait at least 24 hours.
+    if (hasShown && hoursSinceLastPrompt < 24) return;
+
+    await prefs.setInt(prefLastPromptKey, nowMs);
     if (!context.mounted) return;
     await show(context);
   }
@@ -99,13 +115,23 @@ class NotificationPrePermissionSheet extends StatelessWidget {
               onPressed: () async {
                 HapticFeedback.mediumImpact();
                 final prefs = await SharedPreferences.getInstance();
+                final nowMs = DateTime.now().millisecondsSinceEpoch;
                 await prefs.setBool(prefKey, true);
+                await prefs.setInt(prefLastPromptKey, nowMs);
+                await prefs.setBool('adhan_enabled', true);
+                await prefs.setBool('adhkar_rem_morning_enabled', true);
+                await prefs.setBool('adhkar_rem_evening_enabled', true);
+                await prefs.setBool('adhkar_rem_sleep_enabled', true);
+                AdhanSettingsService.invalidateCache();
+
                 onAllow?.call();
 
-                final notif = NotificationService();
-                await notif.init();
-                await notif.requestPermissions();
-                await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
+                try {
+                  final notif = NotificationService();
+                  await notif.init();
+                  await notif.requestPermissions();
+                  await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
+                } catch (_) {}
 
                 if (context.mounted) {
                   AppSnackbar.success(
@@ -123,8 +149,24 @@ class NotificationPrePermissionSheet extends StatelessWidget {
               onPressed: () async {
                 HapticFeedback.lightImpact();
                 final prefs = await SharedPreferences.getInstance();
+                final nowMs = DateTime.now().millisecondsSinceEpoch;
                 await prefs.setBool(prefKey, true);
+                await prefs.setInt(prefLastPromptKey, nowMs);
+                await prefs.setBool('adhan_enabled', false);
+                await prefs.setBool('adhkar_rem_morning_enabled', false);
+                await prefs.setBool('adhkar_rem_evening_enabled', false);
+                await prefs.setBool('adhkar_rem_sleep_enabled', false);
+                AdhanSettingsService.invalidateCache();
+
                 onDecline?.call();
+
+                // Cancel all prayer notifications & alarms immediately
+                try {
+                  final notif = NotificationService();
+                  await notif.init();
+                  await notif.cancelPrayerNotificationsOnly();
+                  await PrayerScheduleService().refreshSchedulesIfNeeded(force: true);
+                } catch (_) {}
               },
             ),
           ],

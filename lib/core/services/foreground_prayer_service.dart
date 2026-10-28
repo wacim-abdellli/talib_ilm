@@ -220,16 +220,16 @@ class ForegroundPrayerService {
     try {
       final now = DateTime.now();
       final settings = await _adhanSettingsService.getSettings();
-      try {
-        await _checkAdhkarReminders(now);
-      } catch (e) {
-        debugPrint('Foreground Adhkar check failed: $e');
-      }
       if (!settings.enabled) {
         if (activeAlert.value != null || _adhanService.isPlaying) {
           await dismissAlert();
         }
         return;
+      }
+      try {
+        await _checkAdhkarReminders(now);
+      } catch (e) {
+        debugPrint('Foreground Adhkar check failed: $e');
       }
 
       final day = await _prayerTimeService.getPrayerTimesDay();
