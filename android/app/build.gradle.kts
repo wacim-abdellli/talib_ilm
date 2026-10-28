@@ -43,10 +43,14 @@ val storePasswordProp = getKeystoreProperty("storePassword") ?: envStorePassword
 val keyAliasProp = getKeystoreProperty("keyAlias") ?: envKeyAlias
 val keyPasswordProp = getKeystoreProperty("keyPassword") ?: envKeyPassword
 
-val isReleaseSigningConfigured = !storeFileProp.isNullOrBlank() &&
+val isRealReleaseSigningConfigured = !storeFileProp.isNullOrBlank() &&
     !storePasswordProp.isNullOrBlank() &&
+    !storePasswordProp!!.contains("PUT_YOUR_KEYSTORE_PASSWORD") &&
     !keyAliasProp.isNullOrBlank() &&
-    !keyPasswordProp.isNullOrBlank()
+    !keyPasswordProp.isNullOrBlank() &&
+    !keyPasswordProp!!.contains("PUT_YOUR_KEYSTORE_PASSWORD")
+
+val isReleaseSigningConfigured = isRealReleaseSigningConfigured
 android {
     namespace = "com.talibilm.app"
     compileSdk = flutter.compileSdkVersion
@@ -97,29 +101,24 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            if (isReleaseSigningConfigured) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (isReleaseSigningConfigured) {
+                signingConfigs.getByName("release")
             } else {
-                // Refuse silent fallback to debug signing in release mode
-                signingConfig = null
+                signingConfigs.getByName("debug")
             }
         }
     }
 }
 
 gradle.taskGraph.whenReady {
-    val isReleaseTaskRequested = allTasks.any { task ->
-        val name = task.name.lowercase()
-        (name.contains("release") || name.contains("bundle") || name.contains("assemble")) &&
-            !name.contains("debug") &&
-            !name.contains("test") &&
-            !name.contains("lint")
+    val isAppBundleRequested = allTasks.any { task ->
+        task.name.equals("bundleRelease", ignoreCase = true)
     }
-    if (isReleaseTaskRequested && !isReleaseSigningConfigured) {
+    if (isAppBundleRequested && !isReleaseSigningConfigured) {
         throw GradleException(
-            "Release build rejected: release signing is not configured.\n" +
-            "Release builds must NOT be signed with the Android debug certificate for Google Play submission.\n" +
-            "Please configure android/key.properties or set KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD.\n" +
+            "Release bundle rejected: release signing is not configured.\n" +
+            "Google Play App Bundles (.aab) must NOT be signed with the Android debug certificate.\n" +
+            "Please configure android/key.properties with your real keystore password.\n" +
             "See android/key.properties.example for setup instructions."
         )
     }
