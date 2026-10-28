@@ -25,7 +25,9 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>نستخدم موقعك لعرض مواقيت الصلاة بدقة.</string>
+		<string>نستخدم موقعك لحساب مواقيت الصلاة واتجاه القبلة بدقة.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>نستخدم موقعك لحساب مواقيت الصلاة واتجاه القبلة بدقة.</string>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>

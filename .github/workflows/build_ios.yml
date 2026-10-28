@@ -1,0 +1,72 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'codex/**'
+      - 'ui/**'
+    paths:
+      - 'lib/**'
+      - 'ios/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/build_ios.yml'
+
+jobs:
+  build-ios:
+    name: Build iOS IPA & Runner.app
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify CocoaPods & Flutter preflight
+        run: |
+          flutter doctor -v
+          cd ios
+          pod repo update || true
+          cd ..
+
+      - name: Build iOS App (Release, No CodeSign)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Package into IPA for Sideloadly / AltStore
+        run: |
+          mkdir -p build/ios/ipa_payload/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa_payload/Payload/
+          cd build/ios/ipa_payload
+          zip -yr ../talib_ilm_ios.ipa Payload
+          cd ../../..
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: talib-ilm-ios-ipa
+          path: build/ios/talib_ilm_ios.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Compress Runner.app for Simulator / Direct Testing
+        run: |
+          cd build/ios/iphoneos
+          zip -yr ../Runner.app.zip Runner.app
+          cd ../../..
+
+      - name: Upload Runner.app.zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: talib-ilm-runner-app
+          path: build/ios/Runner.app.zip
+          if-no-files-found: error
+          retention-days: 14
