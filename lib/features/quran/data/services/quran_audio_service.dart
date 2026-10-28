@@ -254,7 +254,7 @@ class QuranAudioService {
   }
 
   static final Uri _appIconUri = Uri.parse(
-    'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
+    'android.resource://com.talibilm.app/mipmap/ic_launcher',
   );
 
   MediaItem _buildSurahMediaItem(int surah, QuranReciter r, String surahName) =>

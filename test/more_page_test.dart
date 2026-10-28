@@ -19,18 +19,22 @@ void main() {
       expect(find.text('الإعدادات والمزيد'), findsOneWidget);
       expect(find.text('طالب علم • سائر في الطلب 🌿'), findsOneWidget);
 
-      // Category Headers
-      expect(find.text('المحتوى والمحفوظات'), findsOneWidget);
+      // Initial visible section: الصلاة والتنبيهات
       expect(find.text('الصلاة والتنبيهات'), findsOneWidget);
-      expect(find.text('تفضيلات التطبيق'), findsOneWidget);
-
-      // Essential Core Features
-      expect(find.text('المفضلة والمحفوظات'), findsOneWidget);
-      expect(find.text('التنزيلات الصوتية'), findsOneWidget);
       expect(find.text('تنبيهات الصلاة والأذان'), findsOneWidget);
       expect(find.text('موقع الصلاة وطريقة الحساب'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('المظهر والسمة'), 250);
+
+      // Scroll to second section: المحتوى والمحفوظات
+      await tester.scrollUntilVisible(find.text('المحتوى والمحفوظات'), 250);
       await tester.pumpAndSettle();
+      expect(find.text('المحتوى والمحفوظات'), findsOneWidget);
+      expect(find.text('المفضلة والمحفوظات'), findsOneWidget);
+      expect(find.text('التنزيلات الصوتية'), findsOneWidget);
+
+      // Scroll to third section: تفضيلات التطبيق
+      await tester.scrollUntilVisible(find.text('تفضيلات التطبيق'), 250);
+      await tester.pumpAndSettle();
+      expect(find.text('تفضيلات التطبيق'), findsOneWidget);
       expect(find.text('المظهر والسمة'), findsOneWidget);
 
       // Verify purged items are NOT present in the settings list

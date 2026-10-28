@@ -8,7 +8,7 @@ void main() {
     final service = QuranAudioService();
 
     test('reciters list contains official reciters including Nasser Al-Qatami', () {
-      expect(QuranAudioService.reciters.length, 10);
+      expect(QuranAudioService.reciters.length, 32);
       expect(service.selectedReciter.id, 'alafasy');
       expect(QuranAudioService.reciters.any((r) => r.id == 'qatami'), isTrue);
     });

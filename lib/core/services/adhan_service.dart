@@ -101,7 +101,7 @@ class AdhanService {
           title: prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة',
           artist: 'طالب العلم',
           artUri: Uri.parse(
-            'android.resource://com.example.talib_ilm/mipmap/ic_launcher',
+            'android.resource://com.talibilm.app/mipmap/ic_launcher',
           ),
         ),
       );

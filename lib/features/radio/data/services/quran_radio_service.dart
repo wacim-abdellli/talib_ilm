@@ -77,7 +77,7 @@ class QuranRadioService extends ChangeNotifier {
         artist: 'إذاعة القرآن الكريم - بث مباشر',
         album: station.category,
         duration: Duration(hours: 24, seconds: station.id),
-        artUri: Uri.parse('android.resource://com.example.talib_ilm/mipmap/ic_launcher'),
+        artUri: Uri.parse('android.resource://com.talibilm.app/mipmap/ic_launcher'),
         displayTitle: station.name,
         displaySubtitle: 'إذاعة القرآن الكريم - بث مباشر',
         displayDescription: station.category,

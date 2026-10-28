@@ -2,7 +2,7 @@
 
 **Last Updated / Effective Date:** 24 October 2026  
 **Application Name:** طالب العلم (talib_ilm)  
-**Package Identifier:** `com.example.talib_ilm` *(Note: to be updated to confirmed publisher domain prior to production Play Store release)*  
+**Package Identifier:** `com.talibilm.app`  
 **Contact / Publisher:** Talib Ilm Development Team (Community Islamic Knowledge Project)  
 **Public Policy URL:** *To be hosted at publisher website / repository URL by owner*
 
@@ -38,7 +38,7 @@ We operate under a **local-first, transparent privacy model**:
   - No user identifiers, device IDs, or personal information are sent. The user can disable this toggle at any moment, immediately halting all external geocoding requests.
 
 ### B. User Content & Local Storage
-- **Storage Technology:** Local SQLite databases (`sqflite`) and key-value preferences (`shared_preferences`) stored in app-private sandbox directories on device storage (`/data/data/com.example.talib_ilm/`).
+- **Storage Technology:** Local SQLite databases (`sqflite`) and key-value preferences (`shared_preferences`) stored in app-private sandbox directories on device storage (`/data/data/com.talibilm.app/`).
 - **Data Held:**
   - Quran reading progress, bookmarks, and last-read ayah.
   - Personal spiritual notes, reflection journals, and Khatma targets.

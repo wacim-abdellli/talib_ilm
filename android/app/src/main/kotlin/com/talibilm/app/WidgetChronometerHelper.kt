@@ -1,4 +1,4 @@
-package com.example.talib_ilm
+package com.talibilm.app
 
 import android.app.AlarmManager
 import android.app.PendingIntent

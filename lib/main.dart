@@ -24,6 +24,14 @@ Future<void> main() async {
     return true; // Prevents app crash
   };
 
+  if (!kDebugMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return const SizedBox.shrink();
+  };
+
   unawaited(SharedPreferences.getInstance());
   unawaited(HomeWidgetService.initBackground());
   unawaited(NotificationService().init());
@@ -33,7 +41,7 @@ Future<void> main() async {
   }
   try {
     await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.example.talib_ilm.channel.audio',
+      androidNotificationChannelId: 'com.talibilm.app.channel.audio',
       androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
       androidNotificationOngoing: false,
       androidNotificationIcon: 'mipmap/ic_launcher',

@@ -49,7 +49,7 @@ val isReleaseSigningConfigured = !storeFileProp.isNullOrBlank() &&
     !keyPasswordProp.isNullOrBlank()
 
 android {
-    namespace = "com.example.talib_ilm"
+    namespace = "com.talibilm.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -88,8 +88,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Update to permanent domain-owned Application ID upon Play Store listing setup.
-        applicationId = "com.example.talib_ilm"
+        applicationId = "com.talibilm.app"
         minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
