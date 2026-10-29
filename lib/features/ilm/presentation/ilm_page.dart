@@ -29,11 +29,13 @@ import 'widgets/ilm_discipline_section.dart';
 import 'widgets/ilm_header.dart';
 import 'widgets/ilm_loading_view.dart';
 import 'widgets/ilm_mutun_section_view.dart';
-import 'widgets/ilm_reading_tracker_sheet.dart';
 import 'widgets/ilm_search_bar.dart';
 import 'widgets/ilm_search_results_view.dart';
 import 'widgets/maktaba_shamela_view.dart';
+import 'services/ilm_navigation_coordinator.dart';
 import 'widgets/motivation_widgets.dart';
+import 'widgets/offline_downloads_hub_sheet.dart';
+import 'widgets/offline_status_banner.dart';
 import 'widgets/shamela_shuruh_sheet.dart';
 import 'widgets/study_resume_pill.dart';
 
@@ -157,39 +159,12 @@ class _IlmPageState extends State<IlmPage> {
 
       _favoriteBookIds = await favoritesFuture;
 
-      // Automatically reconcile and sync favorites concurrently
-      final syncTasks = <Future>[];
-      for (final bookId in _favoriteBookIds) {
-        if (_progressById.containsKey(bookId)) {
-          final p = _progressById[bookId]!;
-          if (!p.isFavorite) {
-            _progressById[bookId] = p.copyWith(isFavorite: true);
-            final t = _progressService?.setFavorite(bookId, true);
-            if (t != null) syncTasks.add(t);
-          }
-        }
-      }
-      for (final p in _progressById.values) {
-        if (p.isFavorite && !_favoriteBookIds.contains(p.bookId)) {
-          final book = _bookCatalog[p.bookId];
-          if (book != null) {
-            _favoriteBookIds.add(p.bookId);
-            syncTasks.add(
-              FavoritesService().add(
-                FavoriteItem(
-                  id: book.id,
-                  title: book.title,
-                  type: FavoriteType.book,
-                  subtitle: book.author,
-                ),
-              ),
-            );
-          }
-        }
-      }
-      if (syncTasks.isNotEmpty) {
-        await Future.wait(syncTasks);
-      }
+      await IlmNavigationCoordinator.reconcileFavorites(
+        favoriteBookIds: _favoriteBookIds,
+        progressById: _progressById,
+        bookCatalog: _bookCatalog,
+        setProgressFavorite: _progressService?.setFavorite,
+      );
 
       final lastActivity = await lastActivityFuture;
       if (lastActivity != null && _bookCatalog.containsKey(lastActivity.bookId)) {
@@ -283,30 +258,12 @@ class _IlmPageState extends State<IlmPage> {
 
     await _loadData();
 
-    final progressNow = _progressById[book.id];
-    final isCompletedNow = progressNow?.isCompleted ?? false;
-    final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
-    final expectedTotal = digitalEntry != null && digitalEntry.totalPages > 0
-        ? digitalEntry.totalPages
-        : (book.totalPages > 0
-              ? book.totalPages
-              : (progressNow?.totalPages ?? 0));
-    final isGenuinelyFinished =
-        isCompletedNow &&
-        expectedTotal > 1 &&
-        (progressNow?.currentPage ?? 0) >= expectedTotal;
-
-    if (!wasCompleted && isGenuinelyFinished && mounted) {
-      MilestoneCelebrationDialog.show(
-        context,
-        MilestoneTrigger(
-          type: MilestoneType.booksCount,
-          title: 'أحسنت!',
-          message: 'أتممت كتاب "${book.title}" بفضل الله.',
-          icon: '🌿',
-          verse: 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
-          verseRef: 'سورة طه: 114',
-        ),
+    if (mounted) {
+      IlmNavigationCoordinator.checkAndCelebrateBookFinish(
+        context: context,
+        book: book,
+        wasCompleted: wasCompleted,
+        progressNow: _progressById[book.id],
       );
     }
   }
@@ -383,24 +340,10 @@ class _IlmPageState extends State<IlmPage> {
     );
   }
 
-  void _showReadingProgressSheet() async {
-    final inProgress = _progressById.values
-        .where((p) =>
-            (!p.isCompleted || p.currentPage < p.totalPages) &&
-            p.currentPage > 1)
-        .toList()
-      ..sort((a, b) => b.lastReadDate.compareTo(a.lastReadDate));
-
-    final completed = _progressById.values
-        .where((p) => p.isCompleted)
-        .toList()
-      ..sort((a, b) => (b.completedDate ?? b.lastReadDate)
-          .compareTo(a.completedDate ?? a.lastReadDate));
-
-    await IlmReadingTrackerSheet.show(
+  void _showReadingProgressSheet() {
+    IlmNavigationCoordinator.showReadingProgressSheet(
       context: context,
-      inProgressBooks: inProgress,
-      completedBooks: completed,
+      progressById: _progressById,
       totalLibraryBooks: _totalLibraryBooksCount,
       bookCatalog: _bookCatalog,
       onOpenBook: _openBookFromTracker,
@@ -408,38 +351,23 @@ class _IlmPageState extends State<IlmPage> {
   }
 
   void _openBookFromTracker(String bookId) {
-    if (bookId.startsWith('shamela_')) {
-      final shamelaId = int.tryParse(bookId.replaceFirst('shamela_', ''));
-      if (shamelaId != null) {
-        final match = TurathCatalog.books.cast<ShamelaBook?>().firstWhere(
-              (b) => b?.id == shamelaId,
-              orElse: () => null,
-            );
-        if (match != null) {
-          _openShamelaReader(match);
-          return;
-        }
-        final p = _progressById[bookId];
-        if (p != null) {
-          _openShamelaReader(
-            ShamelaBook(
-              id: shamelaId,
-              title: p.bookTitle,
-              author: 'علم شرعي',
-              category: p.level,
-              categoryId: 0,
-              totalPages: p.totalPages,
-            ),
-          );
-          return;
-        }
-      }
-    }
+    IlmNavigationCoordinator.openBookFromTracker(
+      context: context,
+      bookId: bookId,
+      bookCatalog: _bookCatalog,
+      progressById: _progressById,
+      onOpenShamelaReader: _openShamelaReader,
+      onNavigateToBook: _navigateToBook,
+    );
+  }
 
-    final book = _bookCatalog[bookId];
-    if (book != null) {
-      _navigateToBook(book);
-    }
+  void _showOfflineDownloadsHub() {
+    OfflineDownloadsHubSheet.show(
+      context: context,
+      onOpenShamelaBook: _openShamelaReader,
+      onOpenMutunBook: _navigateToBook,
+      onRefresh: _loadData,
+    );
   }
 
   void _toggleFavorite(String bookId) async {
@@ -506,11 +434,17 @@ class _IlmPageState extends State<IlmPage> {
               totalBooksCount: _totalLibraryBooksCount,
               completedBooksCount: _completedBooksCount,
               onStatsTap: _showReadingProgressSheet,
+              onDownloadsTap: _showOfflineDownloadsHub,
+            ),
+
+            // ── 2. Offline Status Banner (Auto-detects) ─────────────
+            OfflineStatusBanner(
+              onOpenDownloadsHub: _showOfflineDownloadsHub,
             ),
 
             const SizedBox(height: AppSpace.sm),
 
-            // ── 2. Unified Minimalist Search Bar ────────────────────
+            // ── 3. Unified Minimalist Search Bar ────────────────────
             IlmSearchBar(
               controller: _searchController,
               onSearchChanged: _onSearchChanged,
@@ -519,10 +453,14 @@ class _IlmPageState extends State<IlmPage> {
 
             const SizedBox(height: AppSpace.sm),
 
-            // ── 3. Categorized Partition Chips ──────────────────────
+            // ── 4. Categorized Partition Chips ──────────────────────
             IlmCategoryChips(
               selectedCategoryId: _selectedCategory,
               onCategorySelected: (catId) {
+                if (catId == 'downloaded') {
+                  _showOfflineDownloadsHub();
+                  return;
+                }
                 setState(() {
                   _selectedCategory = catId;
                   if (catId != 'mutun') _selectedMutunLevel = null;

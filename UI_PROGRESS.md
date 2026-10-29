@@ -1,5 +1,36 @@
 # UI Progress Log
 
+## Round 24 — Offline Downloads Hub & Seamless In-Context Filters (29 October 2026)
+- **Scope & Context:**
+  - Resolved user request to seamlessly display all downloaded content (downloaded Shamela books, Holy Quran audio surahs, and bundled syllabus mutun) when offline, eliminating book-by-book searching:
+    1. **Audio ID Audit & Shamela 6969/6970 Nahw Resolution:** Deep audited all audio catalog IDs against actual books. Resolved Nahw commentary entries by creating clean dedicated entry for shamela_6970 (شرح قطر الندى وبل الصدى لابن هشام — Sheikh Fawzan 29 majalis & Shaydzmi recitation) and purifying shamela_6969 (شرح شذور الذهب لابن هشام — Sheikh Bashir Marrakushi 22 majalis).
+    2. **Real-Time Offline Connectivity Monitoring (OfflineConnectivityService):** Lightweight service listening to connectivity_plus, maintaining ValueNotifier<bool> isOfflineNotifier with mock override for unit testing.
+    3. **Gentle Calm Scholar Offline Banner (OfflineStatusBanner):** Non-intrusive banner automatically appearing in IlmPage when internet disconnects, offering 1-tap jump to downloaded content.
+    4. **Unified Offline Downloads Hub Sheet (OfflineDownloadsHubSheet):** Central bottom sheet accessible from Ilm header, More page, and Offline banner. Features dual tabs for Downloaded Books & Mutun (OfflineBooksTabView) and Downloaded Quran Audio Surahs (OfflineQuranAudioTabView), with total storage metrics, 1-tap reading launch, and live audio playback.
+    5. **In-Context محمّل (X) Filter in Maktaba Shamela & Ilm:** Added a toggle filter pill in MaktabaShamelaView and IlmCategoryChips that instantly filters the catalog down to downloaded books only, with dedicated empty state guidance.
+- **Files Modified / Created (13 files total; all Dart files strictly <= 597 lines):**
+  - lib/core/services/offline_connectivity_service.dart (created, 77 lines)
+  - lib/features/ilm/presentation/services/ilm_navigation_coordinator.dart (created, 163 lines)
+  - lib/features/ilm/presentation/widgets/offline_books_tab_view.dart (created, 355 lines)
+  - lib/features/ilm/presentation/widgets/offline_quran_audio_tab_view.dart (created, 315 lines)
+  - lib/features/ilm/presentation/widgets/offline_downloads_hub_sheet.dart (created, 265 lines)
+  - lib/features/ilm/presentation/widgets/offline_status_banner.dart (created, 162 lines)
+  - lib/features/ilm/presentation/widgets/maktaba_shamela_view.dart (489 lines)
+  - lib/features/ilm/presentation/widgets/ilm_category_chips.dart (167 lines)
+  - lib/features/ilm/presentation/widgets/ilm_header.dart (165 lines)
+  - lib/features/ilm/presentation/ilm_page.dart (597 lines)
+  - lib/features/more/presentation/more_page.dart (560 lines)
+  - lib/features/ilm/data/catalogs/audio/turath_fiqh_nahw_seerah_audio_entries.dart (478 lines)
+  - 	est/offline_downloads_hub_ui_test.dart (created, 168 lines)
+  - UI_PROGRESS.md
+- **Verified:**
+  - lutter analyze --no-pub: 0 issues found (5.3s).
+  - python tool/ui_lint_v2.py --strict: OK (0 FAILs, 0 WARNs, 7 allow markers / cap 10).
+  - lutter test test/offline_downloads_hub_ui_test.dart test/mutun_audio_catalog_ui_test.dart --no-pub: 23/23 passed (survives 1.0x, 1.5x, 2.0x scaling with zero overflow).
+  - lutter build apk --debug --no-pub: Built uildpp\outputslutter-apkpp-debug.apk (83.7s).
+- **Open issues:**
+  - None in R24 scope.
+
 ## Round 23 — Ilm Audio Expansion & Perfection: 100% Haliba Audiobooks, 85 Shamela Classics, Khalid Al-Shulaimi Primary, and Dual Reading/Sharh Modes (29 October 2026)
 - **Scope & Context:**
   - Expanded and perfected audio recitations and scholarly commentaries across both **متون طالب العلم** and **خزانة التراث الإسلامي** (MaktabaShamelaView & ShamelaReaderPage), strictly adhering to Rule 8 with all Dart files <= 597 lines:

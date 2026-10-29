@@ -9,6 +9,7 @@ class IlmHeader extends StatelessWidget {
   final int totalBooksCount;
   final int completedBooksCount;
   final VoidCallback? onStatsTap;
+  final VoidCallback? onDownloadsTap;
 
   const IlmHeader({
     super.key,
@@ -16,6 +17,7 @@ class IlmHeader extends StatelessWidget {
     this.totalBooksCount = 0,
     this.completedBooksCount = 0,
     this.onStatsTap,
+    this.onDownloadsTap,
   });
 
   @override
@@ -66,6 +68,40 @@ class IlmHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onDownloadsTap != null)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
+                  child: Semantics(
+                    button: true,
+                    label: 'عرض المحتوى المحمّل بدون إنترنت',
+                    child: Material(
+                      color: palette.goldSoft,
+                      borderRadius: AppRadius.pillRadius,
+                      child: InkWell(
+                        borderRadius: AppRadius.pillRadius,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          onDownloadsTap?.call();
+                        },
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: palette.gold.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.offline_pin_rounded,
+                            size: AppIcon.sm,
+                            color: palette.gold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (totalBooksCount > 0)
                 Semantics(
                   button: true,

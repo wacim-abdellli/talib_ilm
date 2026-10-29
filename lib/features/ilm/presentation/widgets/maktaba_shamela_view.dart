@@ -23,6 +23,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   int _selectedCategoryId = 0;
   int _selectedLevel = 0; // 0 = الكل, 1 = مبتدئ, 2 = متوسط, 3 = متقدم
   bool _audioOnly = false;
+  bool _downloadedOnly = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
@@ -125,6 +126,11 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
       level: _selectedLevel,
       rootOnly: _searchQuery.isEmpty,
     );
+    if (_downloadedOnly) {
+      return base
+          .where((b) => _downloadedMap[b.id] == true)
+          .toList(growable: false);
+    }
     if (_audioOnly) {
       return base
           .where((b) => MutunAudioCatalog.hasShamelaAudio(b.id))
@@ -261,9 +267,71 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-                  itemCount: _levels.length + 1,
+                  itemCount: _levels.length + 2,
                   separatorBuilder: (_, index) => const SizedBox(width: AppSpace.xs),
                   itemBuilder: (context, index) {
+                    if (index == _levels.length + 1) {
+                      final downloadedCount = ShamelaService.curatedClassics
+                          .where((b) => _downloadedMap[b.id] == true)
+                          .length;
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: AppSize.tap),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: AppRadius.pillRadius,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _downloadedOnly = !_downloadedOnly);
+                            },
+                            child: AnimatedContainer(
+                              duration: AppMotion.fast,
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _downloadedOnly
+                                    ? palette.primarySoft
+                                    : palette.surfaceMuted,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: _downloadedOnly
+                                      ? palette.primary
+                                      : palette.border,
+                                  width: _downloadedOnly ? 1.5 : 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.download_done_rounded,
+                                    size: AppIcon.sm,
+                                    color: _downloadedOnly
+                                        ? palette.primary
+                                        : palette.textMuted,
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Text(
+                                    'محمّل ($downloadedCount)',
+                                    style: textTheme.caption.copyWith(
+                                      color: _downloadedOnly
+                                          ? palette.primary
+                                          : palette.textMuted,
+                                      fontWeight: _downloadedOnly
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
                     if (index == _levels.length) {
                       final audioCount = ShamelaService.curatedClassics
                           .where((b) => MutunAudioCatalog.hasShamelaAudio(b.id))
@@ -376,13 +444,19 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
 
         // ── Books Results List (Virtualized SliverList) ──────────────
         if (books.isEmpty)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsetsDirectional.all(AppSpace.xl),
+              padding: const EdgeInsetsDirectional.all(AppSpace.xl),
               child: EmptyState(
-                icon: Icons.search_off_rounded,
-                title: 'لا توجد نتائج في المكتبة',
-                subtitle: 'جرب البحث باسم كتاب آخر أو تغيير الفن والمستوى.',
+                icon: _downloadedOnly
+                    ? Icons.offline_pin_rounded
+                    : Icons.search_off_rounded,
+                title: _downloadedOnly
+                    ? 'لا توجد كتب محملة بعد'
+                    : 'لا توجد نتائج في المكتبة',
+                subtitle: _downloadedOnly
+                    ? 'يمكنك تنزيل أي كتاب للقراءة بدون إنترنت بنقرة واحدة من بطاقة الكتاب.'
+                    : 'جرب البحث باسم كتاب آخر أو تغيير الفن والمستوى.',
               ),
             ),
           )

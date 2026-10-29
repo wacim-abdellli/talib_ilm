@@ -6,6 +6,9 @@ import '../../adhkar/presentation/widgets/adhkar_notification_sheet.dart';
 import '../../favorites/presentation/favorites_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../prayer/presentation/prayer_settings_sheet.dart';
+import '../../ilm/presentation/pages/book_view_page.dart';
+import '../../ilm/presentation/pages/shamela_reader_page.dart';
+import '../../ilm/presentation/widgets/offline_downloads_hub_sheet.dart';
 import '../../quran/data/services/reading_stats_service.dart';
 import '../../quran/presentation/quran_audio_downloads_page.dart';
 import 'credits_and_licenses_page.dart';
@@ -357,11 +360,38 @@ class _MorePageState extends State<MorePage> {
                         padding: const EdgeInsets.only(bottom: AppSpace.sm),
                         child: MoreSectionCard(
                           section: MoreSection(
-                            title: 'التنزيلات الصوتية',
+                            title: 'حقيبة المحتوى بدون إنترنت',
                             subtitle:
-                                'إدارة التلاوات المحملة للاستماع دون اتصال بالإنترنت',
-                            icon: Icons.download_for_offline_rounded,
+                                'تصفح الكتب التراثية المحملة، متون العلم، وتلاوات القرآن',
+                            icon: Icons.offline_pin_rounded,
                             color: palette.primary,
+                            onTap: () => OfflineDownloadsHubSheet.show(
+                              context: context,
+                              onOpenShamelaBook: (book) => Navigator.push(
+                                context,
+                                buildFadeRoute(
+                                  page: ShamelaReaderPage(book: book),
+                                ),
+                              ),
+                              onOpenMutunBook: (book) => Navigator.push(
+                                context,
+                                buildFadeRoute(
+                                  page: BookViewPage(book: book),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                        child: MoreSectionCard(
+                          section: MoreSection(
+                            title: 'تنزيل تلاوات القرآن',
+                            subtitle:
+                                'إدارة تحميل تلاوات القرآن الكريم والاستماع دون اتصال',
+                            icon: Icons.download_for_offline_rounded,
+                            color: palette.gold,
                             onTap: () => Navigator.push(
                               context,
                               buildFadeRoute(
