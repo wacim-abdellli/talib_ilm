@@ -208,9 +208,12 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   }
 
   Future<void> _reloadLastReadAndBookmarks() async {
-    final hasSaved = await BookmarkService.hasSavedLastRead();
+    // hasSavedLastRead and getBookmarks are independent — fire both at once.
+    final hasSavedFuture = BookmarkService.hasSavedLastRead();
+    final bookmarksFuture = BookmarkService.getBookmarks();
+    final hasSaved = await hasSavedFuture;
     final lastRead = hasSaved ? await BookmarkService.getLastRead() : null;
-    final bookmarks = await BookmarkService.getBookmarks();
+    final bookmarks = await bookmarksFuture;
     if (!mounted) return;
     setState(() {
       _lastReadSurah = lastRead?.surah;

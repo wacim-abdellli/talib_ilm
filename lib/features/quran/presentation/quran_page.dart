@@ -93,10 +93,16 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _loadData() async {
     try {
-      final daily = await _statsService.getDailyStats();
-      final streak = await _statsService.getStreak();
-      final lastRead = await BookmarkService.getLastRead();
-      final bookmarks = await BookmarkService.getBookmarks();
+      // Fire all independent I/O concurrently — total wait = slowest, not sum.
+      final dailyFuture = _statsService.getDailyStats();
+      final streakFuture = _statsService.getStreak();
+      final lastReadFuture = BookmarkService.getLastRead();
+      final bookmarksFuture = BookmarkService.getBookmarks();
+
+      final daily = await dailyFuture;
+      final streak = await streakFuture;
+      final lastRead = await lastReadFuture;
+      final bookmarks = await bookmarksFuture;
 
       if (mounted) {
         setState(() {

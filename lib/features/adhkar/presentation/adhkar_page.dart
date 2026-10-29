@@ -27,6 +27,17 @@ class _DhikrSearchResult {
   const _DhikrSearchResult({required this.item, required this.category});
 }
 
+class _CachedSearchEntry {
+  final AthkarItem item;
+  final AthkarCategoryData category;
+  final String normalizedText;
+  const _CachedSearchEntry({
+    required this.item,
+    required this.category,
+    required this.normalizedText,
+  });
+}
+
 class AdhkarPage extends StatefulWidget {
   final bool showBack;
   const AdhkarPage({super.key, this.showBack = false});
@@ -44,6 +55,9 @@ class _AdhkarPageState extends State<AdhkarPage> {
   String _selectedCategory = 'all';
   String _searchQuery = '';
   int _streak = 1;
+
+  List<_CachedSearchEntry>? _cachedSearchEntries;
+  AthkarCatalog? _lastCachedCatalog;
 
   @override
   void initState() {
@@ -68,27 +82,46 @@ class _AdhkarPageState extends State<AdhkarPage> {
   }
 
   Future<void> _reload() async {
+    _cachedSearchEntries = null;
+    _lastCachedCatalog = null;
     _service.resetCache();
     setState(() {
       _future = _service.loadCatalog();
     });
   }
 
+  void _ensureSearchCache(AthkarCatalog catalog) {
+    if (identical(_lastCachedCatalog, catalog) && _cachedSearchEntries != null) {
+      return;
+    }
+    _lastCachedCatalog = catalog;
+    final entries = <_CachedSearchEntry>[];
+    for (final cat in catalog.categories) {
+      final cleanCat = cat.title.toLowerCase().replaceAll(_tashkeelRegex, '');
+      for (final item in cat.items) {
+        final cleanArabic = item.arabic.toLowerCase().replaceAll(_tashkeelRegex, '');
+        final cleanFadl = item.fadl.toLowerCase().replaceAll(_tashkeelRegex, '');
+        entries.add(
+          _CachedSearchEntry(
+            item: item,
+            category: cat,
+            normalizedText: '$cleanArabic $cleanFadl $cleanCat',
+          ),
+        );
+      }
+    }
+    _cachedSearchEntries = entries;
+  }
+
   List<_DhikrSearchResult> _searchCatalog(AthkarCatalog catalog, String query) {
     final cleanQuery = query.toLowerCase().replaceAll(_tashkeelRegex, '').trim();
     if (cleanQuery.isEmpty) return const [];
 
+    _ensureSearchCache(catalog);
     final results = <_DhikrSearchResult>[];
-    for (final cat in catalog.categories) {
-      for (final item in cat.items) {
-        final cleanArabic = item.arabic.toLowerCase().replaceAll(_tashkeelRegex, '');
-        final cleanFadl = item.fadl.toLowerCase().replaceAll(_tashkeelRegex, '');
-        final cleanCat = cat.title.toLowerCase().replaceAll(_tashkeelRegex, '');
-        if (cleanArabic.contains(cleanQuery) ||
-            cleanFadl.contains(cleanQuery) ||
-            cleanCat.contains(cleanQuery)) {
-          results.add(_DhikrSearchResult(item: item, category: cat));
-        }
+    for (final entry in _cachedSearchEntries!) {
+      if (entry.normalizedText.contains(cleanQuery)) {
+        results.add(_DhikrSearchResult(item: entry.item, category: entry.category));
       }
     }
     return results;

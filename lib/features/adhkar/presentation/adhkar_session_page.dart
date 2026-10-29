@@ -139,10 +139,12 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
   }
 
+  SharedPreferences? _prefs;
+
   Future<void> _loadSavedFontScale() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getDouble(_fontScalePrefKey);
+      _prefs ??= await SharedPreferences.getInstance();
+      final saved = _prefs?.getDouble(_fontScalePrefKey);
       if (saved != null && mounted) {
         setState(() {
           _fontScale = saved.clamp(_minFontScale, _maxFontScale);
@@ -153,8 +155,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   Future<void> _saveFontScale(double scale) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble(_fontScalePrefKey, scale);
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs?.setDouble(_fontScalePrefKey, scale);
     } catch (_) {}
   }
 
@@ -425,36 +427,38 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  // PageView
-                                  PageView.builder(
-                                    controller: _pageController,
-                                    itemCount: totalItems,
-                                    onPageChanged: _onPageChanged,
-                                    physics: const PageScrollPhysics(
-                                      parent: BouncingScrollPhysics(),
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final item = _items[index];
-                                      final itemRepeat = _repeatFor(_items, index);
-                                      final itemKey = _favoriteIdFor(item);
-                                      final itemCount = _counts[itemKey] ?? 0;
-                                      final isDone = itemRepeat > 0 && itemCount >= itemRepeat;
+                                  // PageView isolated into its own render layer
+                                  RepaintBoundary(
+                                    child: PageView.builder(
+                                      controller: _pageController,
+                                      itemCount: totalItems,
+                                      onPageChanged: _onPageChanged,
+                                      physics: const PageScrollPhysics(
+                                        parent: BouncingScrollPhysics(),
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        final item = _items[index];
+                                        final itemRepeat = _repeatFor(_items, index);
+                                        final itemKey = _favoriteIdFor(item);
+                                        final itemCount = _counts[itemKey] ?? 0;
+                                        final isDone = itemRepeat > 0 && itemCount >= itemRepeat;
 
-                                      return AdhkarSessionCard(
-                                        item: item,
-                                        repeat: itemRepeat,
-                                        isDone: isDone,
-                                        onTap: _handleTap,
-                                        fontScale: _fontScale,
-                                        showTashkeel: _showTashkeel,
-                                        onShare: _shareCurrentDhikr,
-                                        onToggleTashkeel: _toggleTashkeel,
-                                        onCycleFontSize: _cycleFontSize,
-                                        onIncreaseFontSize: _fontScale < _maxFontScale - 0.01 ? _increaseFontSize : null,
-                                        onDecreaseFontSize: _fontScale > _minFontScale + 0.01 ? _decreaseFontSize : null,
-                                        onResetFontSize: _resetFontSize,
-                                      );
-                                    },
+                                        return AdhkarSessionCard(
+                                          item: item,
+                                          repeat: itemRepeat,
+                                          isDone: isDone,
+                                          onTap: _handleTap,
+                                          fontScale: _fontScale,
+                                          showTashkeel: _showTashkeel,
+                                          onShare: _shareCurrentDhikr,
+                                          onToggleTashkeel: _toggleTashkeel,
+                                          onCycleFontSize: _cycleFontSize,
+                                          onIncreaseFontSize: _fontScale < _maxFontScale - 0.01 ? _increaseFontSize : null,
+                                          onDecreaseFontSize: _fontScale > _minFontScale + 0.01 ? _decreaseFontSize : null,
+                                          onResetFontSize: _resetFontSize,
+                                        );
+                                      },
+                                    ),
                                   ),
 
                                 // Floating Previous Arrow (Right side in RTL)
@@ -486,11 +490,13 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                           const SizedBox(height: AppSpace.xs),
 
                           // ── 2. Tactile Counter Dial ────────────────────────
-                          DhikrCounterDial(
-                            count: _count,
-                            total: repeat,
-                            isComplete: isCurrentComplete,
-                            onTap: _handleTap,
+                          RepaintBoundary(
+                            child: DhikrCounterDial(
+                              count: _count,
+                              total: repeat,
+                              isComplete: isCurrentComplete,
+                              onTap: _handleTap,
+                            ),
                           ),
 
                           const SizedBox(height: AppSpace.md),

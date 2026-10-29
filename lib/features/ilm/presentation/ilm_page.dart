@@ -117,8 +117,15 @@ class _IlmPageState extends State<IlmPage> {
     setState(() => _isLoading = true);
 
     try {
-      await QuizDumpService.instance.loadDump();
-      final program = await AssetService.loadMutunProgram();
+      // Fire all non-dependent async I/O concurrently
+      final dumpFuture = QuizDumpService.instance.loadDump();
+      final programFuture = AssetService.loadMutunProgram();
+      final favoritesFuture = FavoritesService().getIdsByType(FavoriteType.book);
+      final lastActivityFuture = LastActivityService().getLastActivity();
+      final downloadedFuture = ShamelaService.getDownloadedBooksMap();
+
+      await dumpFuture;
+      final program = await programFuture;
       final levels = program.levels..sort((a, b) => a.order.compareTo(b.order));
       final visibleLevels = levels.where((level) => !level.hidden).toList();
 
@@ -148,17 +155,17 @@ class _IlmPageState extends State<IlmPage> {
         for (final progress in allProgress) progress.bookId: progress,
       };
 
-      _favoriteBookIds = await FavoritesService().getIdsByType(
-        FavoriteType.book,
-      );
+      _favoriteBookIds = await favoritesFuture;
 
-      // Automatically reconcile and sync favorites bidirectionally
+      // Automatically reconcile and sync favorites concurrently
+      final syncTasks = <Future>[];
       for (final bookId in _favoriteBookIds) {
         if (_progressById.containsKey(bookId)) {
           final p = _progressById[bookId]!;
           if (!p.isFavorite) {
             _progressById[bookId] = p.copyWith(isFavorite: true);
-            await _progressService?.setFavorite(bookId, true);
+            final t = _progressService?.setFavorite(bookId, true);
+            if (t != null) syncTasks.add(t);
           }
         }
       }
@@ -167,19 +174,24 @@ class _IlmPageState extends State<IlmPage> {
           final book = _bookCatalog[p.bookId];
           if (book != null) {
             _favoriteBookIds.add(p.bookId);
-            await FavoritesService().add(
-              FavoriteItem(
-                id: book.id,
-                title: book.title,
-                type: FavoriteType.book,
-                subtitle: book.author,
+            syncTasks.add(
+              FavoritesService().add(
+                FavoriteItem(
+                  id: book.id,
+                  title: book.title,
+                  type: FavoriteType.book,
+                  subtitle: book.author,
+                ),
               ),
             );
           }
         }
       }
+      if (syncTasks.isNotEmpty) {
+        await Future.wait(syncTasks);
+      }
 
-      final lastActivity = await LastActivityService().getLastActivity();
+      final lastActivity = await lastActivityFuture;
       if (lastActivity != null && _bookCatalog.containsKey(lastActivity.bookId)) {
         final existingProgress = _progressById[lastActivity.bookId];
         if (existingProgress != null) {
@@ -226,7 +238,7 @@ class _IlmPageState extends State<IlmPage> {
       }
 
       try {
-        final downloaded = await ShamelaService.getDownloadedBooksMap();
+        final downloaded = await downloadedFuture;
         _downloadedMap.addAll(downloaded);
       } catch (e) {
         debugPrint('Error loading downloaded books map: $e');
