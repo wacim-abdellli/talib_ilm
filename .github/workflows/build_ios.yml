@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Flutter
+        id: flutter-action
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -36,7 +37,10 @@ jobs:
       - name: Build iOS App (Release, No CodeSign)
         run: |
           flutter precache --ios
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM=V3N9W8G24A
+          export FLUTTER_ROOT="$(dirname $(dirname $(which flutter)))"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
+          echo "FLUTTER_ROOT is: $FLUTTER_ROOT"
+          
           echo "=== 1. Preparing Flutter Configuration and CocoaPods ==="
           flutter build ios --config-only --no-codesign
           
@@ -48,12 +52,14 @@ jobs:
                        -configuration Release \
                        -sdk iphoneos \
                        -destination 'generic/platform=iOS' \
+                       FLUTTER_ROOT="$FLUTTER_ROOT" \
                        DEVELOPMENT_TEAM=V3N9W8G24A \
                        CODE_SIGN_STYLE=Manual \
                        CODE_SIGNING_ALLOWED=NO \
                        CODE_SIGNING_REQUIRED=NO \
                        CODE_SIGN_IDENTITY="" \
-                       clean build
+                       ENABLE_USER_SCRIPT_SANDBOXING=NO \
+                       build
           }
 
           echo "=== 3. Locating built Runner.app ==="
