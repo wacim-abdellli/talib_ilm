@@ -33,12 +33,11 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Setup CocoaPods
+      - name: Prepare Flutter iOS & CocoaPods Configuration
         run: |
           flutter doctor -v
-          cd ios
-          pod install || pod install --repo-update
-          cd ..
+          flutter precache --ios
+          flutter build ios --config-only
 
       - name: Build iOS App (Release, No CodeSign)
         run: |
@@ -77,5 +76,6 @@ jobs:
       - name: Dump Build Failure Diagnostics
         if: failure()
         run: |
-          echo "=== Xcode Build Diagnostic Logs ==="
+          echo "=== Xcode & Flutter Diagnostic Logs ==="
           find ~/Library/Developer/Xcode/DerivedData -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
+          find build/ios -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
