@@ -144,7 +144,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     onPrimary: Color(0xFFFFFFFF),
     primarySoft: Color(0xFFFEF3C7),
     onPrimarySoft: Color(0xFF713F08),
-    gold: Color(0xFF9E640B),
+    gold: Color(0xFFB45309),
     goldFill: Color(0xFFB45309),
     onGold: Color(0xFFFFFFFF),
     goldSoft: Color(0xFFFEF3C7),

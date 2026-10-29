@@ -115,9 +115,144 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     });
   }
 
+  void _openCollectionPicker() {
+    HapticFeedback.lightImpact();
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Bottom Sheet Header
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  AppSpace.lg,
+                  AppSpace.md,
+                  AppSpace.sm,
+                  AppSpace.xs,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_stories_rounded,
+                      color: palette.primary,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: Text(
+                        'اختر كتاب الحديث أو المجموعة',
+                        style: textTheme.titleSmall.copyWith(
+                          color: palette.text,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      color: palette.textMuted,
+                      tooltip: 'إغلاق',
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Collection List
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  itemCount: _collections.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: AppSpace.xs),
+                  itemBuilder: (context, index) {
+                    final col = _collections[index];
+                    final isSelected = col == _selectedCollection;
+                    final isAll = col == 'الكل';
+
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: AppRadius.mdRadius,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _onCollectionSelected(col);
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? palette.primarySoft
+                                : palette.surfaceRaised,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                              color: isSelected
+                                  ? palette.primary
+                                  : palette.border,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isAll
+                                    ? Icons.all_inclusive_rounded
+                                    : Icons.menu_book_rounded,
+                                color: isSelected
+                                    ? palette.primary
+                                    : palette.textMuted,
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: Text(
+                                  isAll
+                                      ? 'الكل (جميع الصحاح والسنن والمصادر)'
+                                      : col,
+                                  style: textTheme.body.copyWith(
+                                    color: isSelected
+                                        ? palette.primary
+                                        : palette.text,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: palette.primary,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final hasCollectionFilter = _selectedCollection != 'الكل';
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -220,86 +355,26 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                   ),
                 ),
 
-                // Canonical Collections Sleek Pills
-                if (_collections.length > 2) ...[
-                  Container(
-                    color: palette.surface,
-                    padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xs),
-                    height: AppSize.tap,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.md,
-                      ),
-                      itemCount: _collections.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: AppSpace.xs),
-                      itemBuilder: (context, index) {
-                        final col = _collections[index];
-                        final isSelected = col == _selectedCollection;
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: AppRadius.pillRadius,
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              _onCollectionSelected(col);
-                            },
-                            child: Container(
-                              alignment: AlignmentDirectional.center,
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.md,
-                                vertical: AppSpace.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected ? palette.primarySoft : palette.surfaceRaised,
-                                borderRadius: AppRadius.pillRadius,
-                                border: Border.all(
-                                  color: isSelected ? palette.primary : palette.border,
-                                ),
-                              ),
-                              child: Text(
-                                col,
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: isSelected
-                                      ? palette.primary
-                                      : palette.textMuted,
-                                  fontFamily: AppTextStyles.cairo,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-
-                // Chapter / Category Sleek Pills
+                // UNIFIED SINGLE-LINE FILTER BAR (Book Collection Dropdown + Category Pills)
                 Container(
                   color: palette.surface,
-                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                    0,
+                    AppSpace.xxs,
+                    0,
+                    AppSpace.sm,
+                  ),
                   height: AppSize.tap,
-                  child: ListView.separated(
+                  child: ListView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                    ),
-                    itemCount: _categories.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: AppSpace.xs),
-                    itemBuilder: (context, index) {
-                      final cat = _categories[index];
-                      final isSelected = cat == _selectedCategory;
-                      return Material(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
+                    children: [
+                      // Book / Collection Picker Capsule Pill
+                      Material(
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: AppRadius.pillRadius,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat);
-                            _applyFilter();
-                          },
+                          onTap: _openCollectionPicker,
                           child: Container(
                             alignment: AlignmentDirectional.center,
                             padding: const EdgeInsetsDirectional.symmetric(
@@ -307,25 +382,103 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                               vertical: AppSpace.xs,
                             ),
                             decoration: BoxDecoration(
-                              color: isSelected ? palette.goldSoft : palette.surfaceRaised,
+                              color: hasCollectionFilter
+                                  ? palette.primarySoft
+                                  : palette.surfaceRaised,
                               borderRadius: AppRadius.pillRadius,
                               border: Border.all(
-                                color: isSelected ? palette.gold : palette.border,
+                                color: hasCollectionFilter
+                                    ? palette.primary
+                                    : palette.border,
                               ),
                             ),
-                            child: Text(
-                              cat,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: isSelected
-                                    ? palette.gold
-                                    : palette.textMuted,
-                                fontFamily: AppTextStyles.cairo,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  size: AppIcon.sm,
+                                  color: hasCollectionFilter
+                                      ? palette.primary
+                                      : palette.textMuted,
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  _selectedCollection == 'الكل'
+                                      ? 'المصدر: الكل ▾'
+                                      : '$_selectedCollection ▾',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: hasCollectionFilter
+                                        ? palette.primary
+                                        : palette.text,
+                                    fontFamily: AppTextStyles.cairo,
+                                    fontWeight: hasCollectionFilter
+                                        ? AppFontWeight.bold
+                                        : AppFontWeight.medium,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+
+                      // Category Pills
+                      ..._categories.map((cat) {
+                        final isSelected = cat == _selectedCategory;
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(
+                            start: AppSpace.xs,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(() => _selectedCategory =
+                                    isSelected && cat != 'الكل'
+                                        ? 'الكل'
+                                        : cat);
+                                _applyFilter();
+                              },
+                              child: Container(
+                                alignment: AlignmentDirectional.center,
+                                padding:
+                                    const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.md,
+                                  vertical: AppSpace.xs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? palette.goldSoft
+                                      : palette.surfaceRaised,
+                                  borderRadius: AppRadius.pillRadius,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? palette.gold
+                                        : palette.border,
+                                  ),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: isSelected
+                                        ? palette.gold
+                                        : palette.textMuted,
+                                    fontFamily: AppTextStyles.cairo,
+                                    fontWeight: isSelected
+                                        ? AppFontWeight.bold
+                                        : AppFontWeight.medium,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
 

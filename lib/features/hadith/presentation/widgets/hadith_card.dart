@@ -145,7 +145,7 @@ class _HadithCardState extends State<HadithCard> {
               Container(
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.sm,
-                  vertical: AppSpace.xs,
+                  vertical: AppSpace.xxs,
                 ),
                 decoration: BoxDecoration(
                   color: widget.hadith.isSahih
@@ -161,6 +161,7 @@ class _HadithCardState extends State<HadithCard> {
                   children: [
                     Icon(
                       Icons.verified_rounded,
+                      size: AppIcon.sm,
                       color: widget.hadith.isSahih ? palette.gold : palette.primary,
                     ),
                     const SizedBox(width: AppSpace.xxs),
@@ -171,6 +172,7 @@ class _HadithCardState extends State<HadithCard> {
                             ? palette.gold
                             : palette.primary,
                         fontFamily: AppTextStyles.cairo,
+                        fontWeight: AppFontWeight.bold,
                       ),
                     ),
                   ],

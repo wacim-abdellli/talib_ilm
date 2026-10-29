@@ -1,5 +1,20 @@
 # UI Progress Log
 
+## Round 32 — Hadith Section UX Alignment: Unified Filter Option List & Compact Authenticity Badge (30 October 2026)
+- **Scope & Context:**
+  - Extended the beloved Durar Al-Salaf filter pattern to Prophetic Hadith and refined the authenticity seal:
+    1. **Unified Single-Line Filter Bar:** Replaced the two stacked filter rows in [`HadithExplorerPage`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/pages/hadith_explorer_page.dart) with a unified single-line scrollable bar. Added a leading `[ 📚 المصدر ▾ ]` picker pill opening an interactive modal bottom sheet to pick canonical Hadith collections (`صحيح البخاري`, `صحيح مسلم`, etc.) with iconography and checkmarks, followed by category pills.
+    2. **Compact Hadith Authenticity / Se77a Badge:** Minimized verification badge sizing in [`HadithCard`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/widgets/hadith_card.dart) with `size: AppIcon.sm` (16dp icon), compact pill padding (`AppSpace.xxs`), bold text styling, and upgraded light-mode `gold` to warm royal amber (`Color(0xFFB45309)` with 5.02:1 contrast) eliminating muddy olive tones.
+- **Files Changed:**
+  - `lib/app/theme/app_palette.dart`
+  - `lib/features/hadith/presentation/pages/hadith_explorer_page.dart` (569 lines <= 600)
+  - `lib/features/hadith/presentation/widgets/hadith_card.dart` (357 lines <= 600)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (0 FAILS, 0 WARNS, 7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test ... --no-pub`: 29/29 tests passed cleanly across textScale 1.0, 1.5, 2.0.
+
 ## Round 31 — Durar Typography Scale: Sacred Small Token for Compact Quote Body (30 October 2026)
 - **Scope & Context:**
   - Resolved user feedback on Durar font size being overly large on devices:
