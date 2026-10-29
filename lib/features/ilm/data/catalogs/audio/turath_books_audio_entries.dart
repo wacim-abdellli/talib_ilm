@@ -87,16 +87,6 @@ class TurathBooksAudioEntries {
       bookId: 'shamela_20854',
       title: 'سلم الوصول إلى علم الأصول (متن معارج القبول)',
       sources: [
-        const MatnAudioSource(
-          reciter: MutunReciterDefaults.fahad,
-          audioUrl: 'https://archive.org/download/Mutun_al-Aqida/sullaam.mp3',
-          edition: BookAudioEdition.nadhm,
-        ),
-        const MatnAudioSource(
-          reciter: MutunReciterDefaults.shaydzmi,
-          audioUrl: '$_sawtiya/080-Sollam_alwossoul_ila_ilm_al-ossoul.mp3',
-          edition: BookAudioEdition.nadhm,
-        ),
         MatnAudioSource(
           reciter: MutunReciterDefaults.shulaimi,
           audioUrl:
@@ -110,6 +100,16 @@ class TurathBooksAudioEntries {
             padWidth: 2,
             fileSuffix: '_uP_bY_mUSLEm.mp3',
           ),
+        ),
+        const MatnAudioSource(
+          reciter: MutunReciterDefaults.fahad,
+          audioUrl: 'https://archive.org/download/Mutun_al-Aqida/sullaam.mp3',
+          edition: BookAudioEdition.nadhm,
+        ),
+        const MatnAudioSource(
+          reciter: MutunReciterDefaults.shaydzmi,
+          audioUrl: '$_sawtiya/080-Sollam_alwossoul_ila_ilm_al-ossoul.mp3',
+          edition: BookAudioEdition.nadhm,
         ),
       ],
     ),
@@ -206,6 +206,28 @@ class TurathBooksAudioEntries {
             padWidth: 2,
           ),
         ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.koutoubMasmouah,
+          audioUrl: 'https://archive.org/download/Koutoub_masmou3a/069.mp3',
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Koutoub_masmou3a',
+            count: 10,
+            titlePrefix: 'جزء صحيح البخاري',
+            startNumber: 69,
+            padWidth: 3,
+          ),
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.usaymi,
+          audioUrl:
+              'https://archive.org/download/islami-240_202504/001.mp3',
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/islami-240_202504',
+            count: 32,
+            titlePrefix: 'مجلس صحيح البخاري',
+            padWidth: 3,
+          ),
+        ),
       ],
     ),
     'shamela_12014': MutunAudioEntry(
@@ -220,6 +242,17 @@ class TurathBooksAudioEntries {
             baseUrl: 'https://archive.org/download/Riad_Alsalheen__AlDuraihim',
             count: 372,
             titlePrefix: 'باب رياض الصالحين',
+            padWidth: 3,
+          ),
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.koutoubMasmouah,
+          audioUrl: 'https://archive.org/download/Koutoub_masmou3a/103.mp3',
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Koutoub_masmou3a',
+            count: 2,
+            titlePrefix: 'جزء رياض الصالحين',
+            startNumber: 103,
             padWidth: 3,
           ),
         ),
@@ -251,6 +284,10 @@ class TurathBooksAudioEntries {
           audioUrl:
               'https://archive.org/download/Mutun_elm_al-Hadeeth/alsewte.mp3',
         ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.koutoubMasmouah,
+          audioUrl: 'https://archive.org/download/Koutoub_masmou3a/065.mp3',
+        ),
       ],
     ),
 
@@ -275,7 +312,20 @@ class TurathBooksAudioEntries {
     'shamela_212': MutunAudioEntry(
       bookId: 'shamela_212',
       title: 'الفوائد لابن قيم الجوزية',
-      sources: [HalibaAudiobooksCatalog.sourceFor('mukhtasar_fawaid')],
+      sources: [
+        HalibaAudiobooksCatalog.sourceFor('mukhtasar_fawaid'),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.koutoubMasmouah,
+          audioUrl: 'https://archive.org/download/Koutoub_masmou3a/234.mp3',
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Koutoub_masmou3a',
+            count: 2,
+            titlePrefix: 'جزء الفوائد',
+            startNumber: 234,
+            padWidth: 3,
+          ),
+        ),
+      ],
     ),
     'shamela_251': MutunAudioEntry(
       bookId: 'shamela_251',
@@ -372,6 +422,17 @@ class TurathBooksAudioEntries {
             padWidth: 2,
           ),
         ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.koutoubMasmouah,
+          audioUrl: 'https://archive.org/download/Koutoub_masmou3a/043.mp3',
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Koutoub_masmou3a',
+            count: 10,
+            titlePrefix: 'جزء زاد المعاد',
+            startNumber: 43,
+            padWidth: 3,
+          ),
+        ),
       ],
     ),
     'shamela_31465': MutunAudioEntry(
@@ -384,6 +445,52 @@ class TurathBooksAudioEntries {
           fallbackUrl: '$_sawtiya/027-Sittat_mawadi_sira.mp3',
         ),
         HalibaAudiobooksCatalog.sourceFor('ishrun_seerah'),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.basati,
+          audioUrl: Uri.encodeFull(
+              'https://archive.org/download/islami-352_202505/مختصر سيرة الرسول 1 من بداية الكتاب إلى المرحلة المكية للدعوة.mp3'),
+          chapters: BookAudioChapter.fromFiles(
+            baseUrl: 'https://archive.org/download/islami-352_202505',
+            items: const [
+              (
+                file: 'مختصر سيرة الرسول 1 من بداية الكتاب إلى المرحلة المكية للدعوة.mp3',
+                title: 'مختصر السيرة: من البداية إلى المرحلة المكية'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 2 من المرحلة المكية للدعوة إلى مقاطعة قريش بني هاشم.mp3',
+                title: 'مختصر السيرة: إلى مقاطعة قريش بني هاشم'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 3 من مقاطعة قريش بني هاشم إلى فصل في الهجرة.mp3',
+                title: 'مختصر السيرة: إلى فصل في الهجرة'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 4  فصل في الهجرة إلى المرحلة المدنية للدعوة الإسلامية.mp3',
+                title: 'مختصر السيرة: فصل في الهجرة إلى المرحلة المدنية'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 5 المرحلة المدنية للدعوة الإسلامية إلى أسارى بدر.mp3',
+                title: 'مختصر السيرة: المرحلة المدنية إلى أسارى بدر'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 6 أسارى بدر إلى حوادث السنة السابعة من الهجرة.mp3',
+                title: 'مختصر السيرة: أسارى بدر إلى السنة السابعة'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 7  حوادث السنة السابعة من الهجرة إلى هدم الأوثان.mp3',
+                title: 'مختصر السيرة: السنة السابعة إلى هدم الأوثان'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 8  هدم الأوثان إلى غزوة تبوك.mp3',
+                title: 'مختصر السيرة: هدم الأوثان إلى غزوة تبوك'
+              ),
+              (
+                file: 'مختصر سيرة الرسول 9  غزوة تبوك إلى نهاية الكتاب.mp3',
+                title: 'مختصر السيرة: غزوة تبوك إلى نهاية الكتاب'
+              ),
+            ],
+          ),
+        ),
       ],
     ),
 
@@ -450,30 +557,11 @@ class TurathBooksAudioEntries {
       bookId: 'shamela_23606',
       title: 'فضائل القرآن ومعالمه وآدابه',
       sources: [
-        MatnAudioSource(
-          reciter: MutunReciterDefaults.haliba,
-          audioUrl: HalibaAudiobooksCatalog
-              .items['fadail_quran_sahihayn']!.cloudFrontUrl,
-          fallbackUrl: HalibaAudiobooksCatalog
-              .items['fadail_quran_sahihayn']!.anchorFallbackUrl,
-          chapters: [
-            BookAudioChapter(
-              index: 1,
-              title: HalibaAudiobooksCatalog
-                  .items['fadail_quran_sahihayn']!.title,
-              audioUrl: HalibaAudiobooksCatalog
-                  .items['fadail_quran_sahihayn']!.cloudFrontUrl,
-              fallbackUrl: HalibaAudiobooksCatalog
-                  .items['fadail_quran_sahihayn']!.anchorFallbackUrl,
-            ),
-            BookAudioChapter(
-              index: 2,
-              title: HalibaAudiobooksCatalog.items['istighna_bil_quran']!.title,
-              audioUrl: HalibaAudiobooksCatalog
-                  .items['istighna_bil_quran']!.cloudFrontUrl,
-              fallbackUrl: HalibaAudiobooksCatalog
-                  .items['istighna_bil_quran']!.anchorFallbackUrl,
-            ),
+        HalibaAudiobooksCatalog.playlistSource(
+          [
+            'fadail_quran_sahihayn',
+            'istighna_bil_quran',
+            'fadail_quran_ibn_abdulwahhab',
           ],
         ),
       ],

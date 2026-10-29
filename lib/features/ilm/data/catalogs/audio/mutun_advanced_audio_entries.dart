@@ -124,6 +124,25 @@ class MutunAdvancedAudioEntries {
             padWidth: 2,
           ),
         ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.khalidNashmi,
+          audioUrl: Uri.encodeFull(
+              'https://archive.org/download/islami-443_202507/نظم ألفية ابن مالك كاملا.mp3'),
+          totalParagraphs: 100,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.shamri,
+          audioUrl:
+              'https://archive.org/download/0003ArAlShamriAlfiatEbnMalek03/0001-ar_AlShamri_Alfiat_Ebn_Malek_01.mp3',
+          totalParagraphs: 100,
+          chapters: BookAudioChapter.dualNumbered(
+            baseUrl:
+                'https://archive.org/download/0003ArAlShamriAlfiatEbnMalek03',
+            count: 50,
+            titlePrefix: 'قسم ألفية ابن مالك',
+            middleToken: 'ar_AlShamri_Alfiat_Ebn_Malek',
+          ),
+        ),
       ],
     ),
     'bk_shatibiyyah': MutunAudioEntry(
@@ -156,6 +175,33 @@ class MutunAdvancedAudioEntries {
             count: 78,
             titlePrefix: 'باب الشاطبية',
             padWidth: 2,
+            fileSuffix: '_uP_bY_mUSLEm.mp3',
+          ),
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.abuNur,
+          audioUrl:
+              'https://archive.org/download/2.Herz_Al_Ameni_uP_bY_mUSLEm/001_uP_bY_mUSLEm.mp3',
+          totalParagraphs: 110,
+          chapters: BookAudioChapter.numbered(
+            baseUrl:
+                'https://archive.org/download/2.Herz_Al_Ameni_uP_bY_mUSLEm',
+            count: 79,
+            titlePrefix: 'باب الشاطبية',
+            padWidth: 3,
+            fileSuffix: '_uP_bY_mUSLEm.mp3',
+          ),
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.sufi,
+          audioUrl:
+              'https://archive.org/download/Herz_Al_Ameni_uP_bY_mUSLEm/001_uP_bY_mUSLEm.mp3',
+          totalParagraphs: 110,
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Herz_Al_Ameni_uP_bY_mUSLEm',
+            count: 77,
+            titlePrefix: 'باب الشاطبية',
+            padWidth: 3,
             fileSuffix: '_uP_bY_mUSLEm.mp3',
           ),
         ),
@@ -199,6 +245,18 @@ class MutunAdvancedAudioEntries {
             baseUrl: 'https://archive.org/download/2.Matn_Jazaria_uP_bY_mUSLEm',
             titles: _jazariyyah17Titles,
             padWidth: 3,
+            fileSuffix: '_uP_bY_mUSLEm.mp3',
+          ),
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.abdulhakimSufi,
+          audioUrl:
+              'https://archive.org/download/3.Matn_Jazaria_uP_bY_mUSLEm/01_uP_bY_mUSLEm.mp3',
+          totalParagraphs: 109,
+          chapters: BookAudioChapter.fromTitles(
+            baseUrl: 'https://archive.org/download/3.Matn_Jazaria_uP_bY_mUSLEm',
+            titles: _jazariyyah17Titles,
+            padWidth: 2,
             fileSuffix: '_uP_bY_mUSLEm.mp3',
           ),
         ),

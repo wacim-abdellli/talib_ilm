@@ -119,14 +119,14 @@ void main() {
         85,
       );
 
-      // Shamela Heritage books coverage (>= 40 books)
+      // Shamela Heritage books coverage (expanded to 50+ books)
       final allShamelaIds = <int>{
         ...TurathBooksAudioEntries.shamelaToSyllabusAliases.keys,
-        ...TurathBooksAudioEntries.entries.keys
+        ...MutunAudioCatalog.entries.keys
             .where((k) => k.startsWith('shamela_'))
             .map((k) => int.parse(k.substring('shamela_'.length))),
       };
-      expect(allShamelaIds.length, greaterThanOrEqualTo(40));
+      expect(allShamelaIds.length, greaterThanOrEqualTo(50));
       for (final id in allShamelaIds) {
         expect(
           MutunAudioCatalog.hasShamelaAudio(id),
@@ -156,6 +156,42 @@ void main() {
             ?.length,
         16,
       );
+      // Khalid Al-Shulaimi promoted to primary reciter on shamela_20854
+      expect(
+        MutunAudioCatalog.getShamelaEntry(20854)?.sources.first.reciter.id,
+        'shulaimi',
+      );
+    });
+
+    test('Dual reading and scholarly sharh commentary editions are supported', () {
+      final usulEntry = MutunAudioCatalog.getEntry('bk_usul_thalatha')!;
+      expect(usulEntry.hasReading, isTrue);
+      expect(usulEntry.hasSharh, isTrue);
+      expect(usulEntry.readingSources.length, greaterThanOrEqualTo(2));
+      expect(usulEntry.sharhSources.length, greaterThanOrEqualTo(2));
+      expect(usulEntry.sharhSources.any((s) => s.reciter.id == 'fawzan'), isTrue);
+      expect(usulEntry.sharhSources.any((s) => s.reciter.id == 'uthaymin'), isTrue);
+
+      final tawheedEntry = MutunAudioCatalog.getEntry('bk_kitab_tawheed')!;
+      expect(tawheedEntry.hasReading, isTrue);
+      expect(tawheedEntry.hasSharh, isTrue);
+      expect(tawheedEntry.sharhSources.any((s) => s.reciter.id == 'uthaymin'), isTrue);
+
+      final arbaeenEntry = MutunAudioCatalog.getEntry('bk_arbaeen_nawawi')!;
+      expect(arbaeenEntry.hasReading, isTrue);
+      expect(arbaeenEntry.hasSharh, isTrue);
+      expect(arbaeenEntry.sharhSources.any((s) => s.reciter.id == 'badr'), isTrue);
+
+      // Sahih Muslim & Muwatta heritage editions
+      final muslimEntry = MutunAudioCatalog.getShamelaEntry(1727)!;
+      expect(muslimEntry.sources.length, greaterThanOrEqualTo(2));
+      expect(muslimEntry.sources.any((s) => s.reciter.id == 'sunnah_masmuah'), isTrue);
+      expect(muslimEntry.sources.any((s) => s.reciter.id == 'basati'), isTrue);
+
+      // Shamail with 4 reciters incl Haliba
+      final shamailEntry = MutunAudioCatalog.getShamelaEntry(13037)!;
+      expect(shamailEntry.sources.length, 4);
+      expect(shamailEntry.sources.any((s) => s.reciter.id == 'haliba'), isTrue);
     });
 
     test('Every entry in MutunAudioCatalog has unique reciter IDs and HTTPS URLs', () {

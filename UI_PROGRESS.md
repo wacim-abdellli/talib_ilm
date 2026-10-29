@@ -1,5 +1,41 @@
 # UI Progress Log
 
+## Round 23 — Ilm Audio Expansion & Perfection: 100% Haliba Audiobooks, 85 Shamela Classics, Khalid Al-Shulaimi Primary, and Dual Reading/Sharh Modes (29 October 2026)
+- **Scope & Context:**
+  - Expanded and perfected audio recitations and scholarly commentaries across both **متون طالب العلم** and **خزانة التراث الإسلامي** (MaktabaShamelaView & ShamelaReaderPage), strictly adhering to Rule 8 with all Dart files <= 597 lines:
+    1. **100% Coverage of Dr. Rashid bin Fahd Al-Haliba Studio Audiobooks:** Mapped all 36 studio CloudFront audiobooks in HalibaAudiobooksCatalog with playlist support and Anchor fallbacks.
+    2. **Promotion of Khalid Al-Shulaimi to Primary Reciter:** Promoted Sheikh Khalid Al-Shulaimi to the first reciter slot on Ma'arij Al-Qabul / Sullam Al-Wusul (shamela_20854, 16 chapters).
+    3. **85 Shamela Heritage Books with Audio:** Expanded verified audio coverage across Maktaba Shamela to 85 unique classics across Hadith (Sahihain, Sunan 4, Musnad Ahmad [10 parts verified], Sunan Al-Darimi), Tafsir (Ibn Kathir, Al-Tabari, Al-Qurtubi, Al-Baghawi, Al-Sa'di), Fiqh (Al-Rawd Al-Murbi', Bidayat Al-Mujtahid, Al-Fiqh Al-Muyassar, Al-Uddah), Nahw (Alfiyyah Ibn Malik 85 ch dual-numbered with Shamri & Khalid Nashmi, Qatr Al-Nada), Seerah (Al-Rahiq Al-Makhtum, Zad Al-Ma'ad, Mukhtasar Sirat Al-Rasul 9 parts), and Raqaiq (Al-Tadhkirah 3 parts, Al-Wabil Al-Sayyib).
+    4. **Dual Mode Reading & Scholarly Commentary (Sharh) UX:** Extended ook_audio_models.dart with BookAudioEdition.sharh and BookReciterPickerSheet with segmented filter tabs (الكل, قراءة, شرح), introducing audio commentary series by Grand Scholars (Ibn Baz, Ibn Uthaymin, Dr. Salih Al-Fawzan, Dr. Abdurrazzaq Al-Badr, Sheikh Salih Al-Al-Shaykh, Muhammad bin Ali Al-Shanqiti).
+    5. **Maktaba Shamela Audio Filter & Badges:** Added صوتي () filter toggle pill in maktaba_shamela_view.dart and صوتي ·  badge in shamela_book_card.dart.
+    6. **100.0% Verified Live HTTPS Audio Streams:** Ran 	ool/verify_ilm_audio_urls.py, proving 341/341 unique HTTPS CDN audio URLs returned HTTP 200/206 across 284 book-reciter sources.
+- **Files Modified / Created (16 files total; all Dart files strictly <= 597 lines):**
+  - lib/features/ilm/data/models/book_audio_models.dart (239 lines)
+  - lib/features/ilm/data/catalogs/mutun_audio_catalog.dart (135 lines)
+  - lib/features/ilm/data/catalogs/audio/ilm_audio_reciters.dart (367 lines)
+  - lib/features/ilm/data/catalogs/audio/haliba_audiobooks_catalog.dart (500 lines)
+  - lib/features/ilm/data/catalogs/audio/mutun_syllabus_audio_entries.dart (522 lines)
+  - lib/features/ilm/data/catalogs/audio/mutun_advanced_audio_entries.dart (317 lines)
+  - lib/features/ilm/data/catalogs/audio/turath_books_audio_entries.dart (582 lines)
+  - lib/features/ilm/data/catalogs/audio/turath_sunnah_tafsir_audio_entries.dart (created, 590 lines)
+  - lib/features/ilm/data/catalogs/audio/turath_fiqh_nahw_seerah_audio_entries.dart (created, 468 lines)
+  - lib/features/ilm/data/catalogs/audio/turath_raqaiq_audio_entries.dart (created, 218 lines)
+  - lib/features/ilm/data/catalogs/audio/mutun_sharh_audio_entries.dart (created, 238 lines)
+  - lib/features/ilm/presentation/widgets/book_audio_sheets.dart (528 lines)
+  - lib/features/ilm/presentation/widgets/maktaba_shamela_view.dart (415 lines)
+  - lib/features/ilm/presentation/widgets/shamela_book_card.dart (427 lines)
+  - 	est/mutun_audio_catalog_ui_test.dart (437 lines)
+  - 	ool/verify_ilm_audio_urls.py (170 lines)
+  - UI_PROGRESS.md
+- **Verified:**
+  - lutter analyze --no-pub: 0 issues found (5.1s).
+  - python tool/ui_lint_v2.py --strict: OK (0 FAILs, 0 WARNs, 7 allow markers / cap 10).
+  - lutter test test/mutun_audio_catalog_ui_test.dart --no-pub: 17/17 passed (incl. 1.0x/1.5x/2.0x scaling tests).
+  - python tool/verify_ilm_audio_urls.py: 341/341 unique HTTPS CDN URLs returned HTTP 200/206 across 284 book-reciter sources.
+  - lutter build apk --debug --no-pub: Built uild\app\outputs\flutter-apk\app-debug.apk (67.2s).
+- **Open issues:**
+  - None in R23 scope.
+
 ## Round 22 — Multi-Reciter & Multi-Chapter Ilm Mutun & Shamela Heritage Audio Expansion (29 October 2026)
 - **Scope & Context:**
   - Executed a comprehensive multi-reciter and multi-chapter audio expansion across both **متون طالب العلم** (syllabus & advanced mutun) and **خزانة التراث الإسلامي** (`ShamelaReaderPage`), split first in Commit 1 (`ba1a2a6`) per Rule 8 so every Dart file stays strictly <= 600 lines:

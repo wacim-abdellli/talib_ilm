@@ -153,32 +153,44 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                             ],
                             if (hasAudio) ...[
                               const SizedBox(width: AppSpace.xs),
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: palette.goldSoft,
-                                  borderRadius: AppRadius.pillRadius,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.graphic_eq_rounded,
-                                      size: AppIcon.sm,
-                                      color: palette.onPrimarySoft,
+                              Builder(
+                                builder: (_) {
+                                  final entry =
+                                      MutunAudioCatalog.getShamelaEntry(book.id);
+                                  final voiceCount = entry?.sources.length ?? 1;
+                                  final badgeText = voiceCount > 1
+                                      ? 'صوتي · $voiceCount'
+                                      : 'صوتي';
+                                  return Container(
+                                    padding:
+                                        const EdgeInsetsDirectional.symmetric(
+                                      horizontal: AppSpace.sm,
+                                      vertical: AppSpace.xxs,
                                     ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Text(
-                                      'صوتي',
-                                      style: textTheme.captionBold.copyWith(
-                                        color: palette.onPrimarySoft,
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: palette.goldSoft,
+                                      borderRadius: AppRadius.pillRadius,
                                     ),
-                                  ],
-                                ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.graphic_eq_rounded,
+                                          size: AppIcon.sm,
+                                          color: palette.onPrimarySoft,
+                                        ),
+                                        const SizedBox(width: AppSpace.xxs),
+                                        Text(
+                                          badgeText,
+                                          style:
+                                              textTheme.captionBold.copyWith(
+                                            color: palette.onPrimarySoft,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                             const SizedBox(width: AppSpace.xs),

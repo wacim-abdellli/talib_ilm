@@ -353,29 +353,42 @@ class MutunSyllabusAudioEntries {
         ),
       ],
     ),
-    'bk_ajrumiyyah': const MutunAudioEntry(
+    'bk_ajrumiyyah': MutunAudioEntry(
       bookId: 'bk_ajrumiyyah',
       title: 'الآجرومية',
       sources: [
-        MatnAudioSource(
+        const MatnAudioSource(
           reciter: MutunReciterDefaults.sini,
           audioUrl: '$siniBaseUrl/0403AlAajurrumiyyah_AbdulAzizAsSini.mp3',
           fallbackUrl: '$archiveBaseUrl/13.mp3',
           totalParagraphs: 30,
           paragraphTimestamps: MutunTimestampsData.ajrumiyyahSini,
         ),
-        MatnAudioSource(
+        const MatnAudioSource(
           reciter: MutunReciterDefaults.shaydzmi,
           audioUrl: '$shaydzmiSawtiyaUrl/085-Ajroumiah.mp3',
           fallbackUrl: '$archiveBaseUrl/13.mp3',
           totalParagraphs: 30,
         ),
-        MatnAudioSource(
+        const MatnAudioSource(
           reciter: MutunReciterDefaults.fahad,
           audioUrl: 'https://archive.org/download/Mutun_al-Arabiya/ajromyah.mp3',
           fallbackUrl: 'https://archive.org/download/Mutun_al-Arabiya/abb.mp3',
           edition: BookAudioEdition.nadhm,
           totalParagraphs: 30,
+        ),
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.nashmi,
+          audioUrl:
+              'https://archive.org/download/Al_Ajromia_uP_bY_mUSLEm/01_uP_bY_mUSLEm.mp3',
+          totalParagraphs: 30,
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/Al_Ajromia_uP_bY_mUSLEm',
+            count: 33,
+            titlePrefix: 'باب الآجرومية',
+            padWidth: 2,
+            fileSuffix: '_uP_bY_mUSLEm.mp3',
+          ),
         ),
       ],
     ),

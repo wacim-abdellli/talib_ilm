@@ -1,7 +1,10 @@
 import '../models/book_audio_models.dart';
 import 'audio/ilm_audio_reciters.dart';
+import 'audio/mutun_sharh_audio_entries.dart';
 import 'audio/mutun_syllabus_audio_entries.dart';
 import 'audio/turath_books_audio_entries.dart';
+import 'audio/turath_fiqh_nahw_seerah_audio_entries.dart';
+import 'audio/turath_sunnah_tafsir_audio_entries.dart';
 
 export '../models/book_audio_models.dart';
 export 'audio/haliba_audiobooks_catalog.dart'
@@ -20,9 +23,17 @@ class MutunAudioCatalog {
     final map = <String, MutunAudioEntry>{
       ...MutunSyllabusAudioEntries.canonicalEntries,
       ...TurathBooksAudioEntries.entries,
+      ...TurathSunnahTafsirAudioEntries.entries,
+      ...TurathFiqhNahwSeerahAudioEntries.entries,
     };
+    MutunSharhAudioEntries.extraSharhSources.forEach((bookId, extraSources) {
+      final existing = map[bookId];
+      if (existing != null) {
+        map[bookId] = existing.withExtraSources(extraSources);
+      }
+    });
     MutunSyllabusAudioEntries.aliases.forEach((aliasId, canonicalId) {
-      final canonical = MutunSyllabusAudioEntries.canonicalEntries[canonicalId];
+      final canonical = map[canonicalId];
       if (canonical != null) {
         map[aliasId] = canonical.withBookId(aliasId);
       }

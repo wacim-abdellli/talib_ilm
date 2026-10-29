@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_sheet.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/services/mutun_audio_service.dart';
 
 /// Shared Calm Scholar bottom sheet for choosing a verified reciter / audio edition
@@ -41,23 +42,74 @@ class BookReciterPickerSheet extends StatelessWidget {
     final textTheme = context.text;
     final reciters = audioService.getAvailableRecitersForBook(bookId);
     final activeReciter = audioService.effectiveReciterForBook(bookId);
+    final entry = bookId != null ? MutunAudioCatalog.getEntry(bookId!) : null;
+    final hasDual = entry != null && entry.hasReading && entry.hasSharh;
 
-    return AppSheet(
-      titleText: 'اختيار القارئ والإصدار الصوتي',
-      icon: Icons.record_voice_over_rounded,
-      showCloseButton: true,
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpace.lg,
-        AppSpace.xs,
-        AppSpace.lg,
-        AppSpace.lg,
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: reciters.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpace.xs),
-          itemBuilder: (sheetContext, index) {
-            final reciter = reciters[index];
+    int filterMode = 0; // 0 = الكل, 1 = قراءة, 2 = شروح
+
+    return StatefulBuilder(
+      builder: (context, setSheetState) {
+        final List<MutunReciter> displayedReciters;
+        if (!hasDual || filterMode == 0) {
+          displayedReciters = reciters;
+        } else if (filterMode == 1) {
+          displayedReciters =
+              entry.readingSources.map((s) => s.reciter).toList();
+        } else {
+          displayedReciters =
+              entry.sharhSources.map((s) => s.reciter).toList();
+        }
+
+        return AppSheet(
+          titleText: 'اختيار القارئ والإصدار الصوتي',
+          icon: Icons.record_voice_over_rounded,
+          showCloseButton: true,
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpace.lg,
+            AppSpace.xs,
+            AppSpace.lg,
+            AppSpace.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hasDual) ...[
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+                  child: Row(
+                    children: [
+                      _buildModeChip(
+                        context: context,
+                        label: 'الكل (${entry.sources.length})',
+                        isSelected: filterMode == 0,
+                        onTap: () => setSheetState(() => filterMode = 0),
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      _buildModeChip(
+                        context: context,
+                        label: 'قراءة (${entry.readingSources.length})',
+                        isSelected: filterMode == 1,
+                        onTap: () => setSheetState(() => filterMode = 1),
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      _buildModeChip(
+                        context: context,
+                        label: 'شرح (${entry.sharhSources.length})',
+                        isSelected: filterMode == 2,
+                        onTap: () => setSheetState(() => filterMode = 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: displayedReciters.length,
+                separatorBuilder: (_, _) => const SizedBox(height: AppSpace.xs),
+                itemBuilder: (sheetContext, index) {
+            final reciter = displayedReciters[index];
             final isSelected = activeReciter.id == reciter.id;
             final source = audioService.getSourceForBook(
               bookId,
@@ -175,6 +227,53 @@ class BookReciterPickerSheet extends StatelessWidget {
             );
           },
         ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _buildModeChip({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: AppRadius.pillRadius,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: AnimatedContainer(
+            duration: AppMotion.fast,
+            padding: const EdgeInsetsDirectional.symmetric(
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? palette.primarySoft : palette.surfaceMuted,
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(
+                color: isSelected ? palette.primary : palette.border,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: textTheme.captionBold.copyWith(
+                color: isSelected ? palette.primary : palette.textMuted,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -465,28 +465,36 @@ class HalibaAudiobooksCatalog {
   static MatnAudioSource sourceFor(String id, {int totalParagraphs = 1}) =>
       items[id]!.toSource(totalParagraphs: totalParagraphs);
 
-  static MatnAudioSource get sahihTargheebSelectionsSource {
-    final p1 = items['ahwal_qiyamah_targheeb']!;
-    final p2 = items['sifat_jannah_targheeb']!;
+  /// Builds a multi-chapter studio audiobook playlist from verified Haliba IDs.
+  static MatnAudioSource playlistSource(
+    List<String> itemIds, {
+    BookAudioEdition edition = BookAudioEdition.mukhtasar,
+    int totalParagraphs = 1,
+  }) {
+    assert(itemIds.isNotEmpty, 'Haliba playlist itemIds must not be empty');
+    final resolved = itemIds.map((id) => items[id]!).toList(growable: false);
+    if (resolved.length == 1) {
+      return resolved.first.toSource(totalParagraphs: totalParagraphs);
+    }
     return MatnAudioSource(
       reciter: MutunReciterDefaults.haliba,
-      audioUrl: p1.cloudFrontUrl,
-      fallbackUrl: p1.anchorFallbackUrl,
-      edition: BookAudioEdition.mukhtasar,
-      chapters: [
-        BookAudioChapter(
-          index: 1,
-          title: p1.title,
-          audioUrl: p1.cloudFrontUrl,
-          fallbackUrl: p1.anchorFallbackUrl,
-        ),
-        BookAudioChapter(
-          index: 2,
-          title: p2.title,
-          audioUrl: p2.cloudFrontUrl,
-          fallbackUrl: p2.anchorFallbackUrl,
-        ),
-      ],
+      audioUrl: resolved.first.cloudFrontUrl,
+      fallbackUrl: resolved.first.anchorFallbackUrl,
+      totalParagraphs: totalParagraphs,
+      edition: edition,
+      chapters: List<BookAudioChapter>.unmodifiable([
+        for (int i = 0; i < resolved.length; i++)
+          BookAudioChapter(
+            index: i + 1,
+            title: resolved[i].title,
+            audioUrl: resolved[i].cloudFrontUrl,
+            fallbackUrl: resolved[i].anchorFallbackUrl,
+          ),
+      ]),
     );
   }
+
+  static MatnAudioSource get sahihTargheebSelectionsSource =>
+      playlistSource(const ['ahwal_qiyamah_targheeb', 'sifat_jannah_targheeb']);
 }
+

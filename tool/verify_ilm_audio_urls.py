@@ -91,8 +91,8 @@ def dump_catalog():
 
 
 def probe_url(url: str) -> tuple[str, int, str]:
-    # Encode only raw non-ASCII characters so existing %3A%2F%2F escapes stay intact.
-    safe_url = "".join(urllib.parse.quote(ch) if ord(ch) > 127 else ch for ch in url)
+    # Encode raw non-ASCII characters and spaces so existing % escapes stay intact and curl doesn't split args.
+    safe_url = "".join(urllib.parse.quote(ch) if (ord(ch) > 127 or ch == " ") else ch for ch in url)
     cmd = [
         "curl.exe",
         "-sIL",

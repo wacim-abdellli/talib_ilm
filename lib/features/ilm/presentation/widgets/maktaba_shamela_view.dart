@@ -5,6 +5,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import '../pages/shamela_reader_page.dart';
@@ -21,6 +22,7 @@ class MaktabaShamelaView extends StatefulWidget {
 class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   int _selectedCategoryId = 0;
   int _selectedLevel = 0; // 0 = الكل, 1 = مبتدئ, 2 = متوسط, 3 = متقدم
+  bool _audioOnly = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
@@ -117,12 +119,18 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   }
 
   List<ShamelaBook> get _filteredBooks {
-    return ShamelaService.searchCatalog(
+    final base = ShamelaService.searchCatalog(
       query: _searchQuery,
       categoryId: _selectedCategoryId,
       level: _selectedLevel,
       rootOnly: _searchQuery.isEmpty,
     );
+    if (_audioOnly) {
+      return base
+          .where((b) => MutunAudioCatalog.hasShamelaAudio(b.id))
+          .toList(growable: false);
+    }
+    return base;
   }
 
   @override
@@ -253,9 +261,71 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-                  itemCount: _levels.length,
+                  itemCount: _levels.length + 1,
                   separatorBuilder: (_, index) => const SizedBox(width: AppSpace.xs),
                   itemBuilder: (context, index) {
+                    if (index == _levels.length) {
+                      final audioCount = ShamelaService.curatedClassics
+                          .where((b) => MutunAudioCatalog.hasShamelaAudio(b.id))
+                          .length;
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: AppSize.tap),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: AppRadius.pillRadius,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _audioOnly = !_audioOnly);
+                            },
+                            child: AnimatedContainer(
+                              duration: AppMotion.fast,
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _audioOnly
+                                    ? palette.goldSoft
+                                    : palette.surfaceMuted,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: _audioOnly
+                                      ? palette.primary
+                                      : palette.border,
+                                  width: _audioOnly ? 1.5 : 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.graphic_eq_rounded,
+                                    size: AppIcon.sm,
+                                    color: _audioOnly
+                                        ? palette.primary
+                                        : palette.textMuted,
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Text(
+                                    'صوتي ($audioCount)',
+                                    style: textTheme.caption.copyWith(
+                                      color: _audioOnly
+                                          ? palette.primary
+                                          : palette.textMuted,
+                                      fontWeight: _audioOnly
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
                     final lvl = _levels[index];
                     final isSelected = _selectedLevel == lvl.id;
 
