@@ -10,6 +10,8 @@ on:
     paths:
       - 'lib/**'
       - 'ios/**'
+      - 'assets/**'
+      - 'test/**'
       - 'pubspec.yaml'
       - '.github/workflows/build_ios.yml'
 
