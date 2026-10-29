@@ -74,7 +74,7 @@ class OfflineBooksTabView extends StatelessWidget {
               title: 'متون طالب العلم المضمنة',
               badge: '${bundledMutun.length} متون أساسية',
               icon: Icons.menu_book_rounded,
-              color: palette.gold,
+              color: palette.primary,
             ),
             const SizedBox(height: AppSpace.sm),
             ...bundledMutun.map((mutn) => _buildMutnCard(context, mutn)),
@@ -278,91 +278,88 @@ class OfflineBooksTabView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-      child: Container(
-        decoration: BoxDecoration(
+      child: Semantics(
+        button: true,
+        label: 'فتح المتن: ${mutn.title}',
+        child: Material(
           color: palette.surfaceRaised,
-          borderRadius: AppRadius.mdRadius,
-          border: Border.all(color: palette.border),
-        ),
-        padding: const EdgeInsetsDirectional.all(AppSpace.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: AppSize.tap,
-                  height: AppSize.tap,
-                  decoration: BoxDecoration(
-                    color: palette.goldSoft,
-                    borderRadius: AppRadius.smRadius,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.bookmark_added_rounded,
-                    color: palette.gold,
-                    size: AppIcon.md,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        mutn.title,
-                        style: textTheme.body.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpace.xxs),
-                      Text(
-                        '${mutn.author} · ${mutn.level}',
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.sm),
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: palette.surfaceMuted,
-                borderRadius: AppRadius.smRadius,
-                child: InkWell(
-                  borderRadius: AppRadius.smRadius,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onOpenMutunBook(mutn);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.sm,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.mdRadius,
+            side: BorderSide(color: palette.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            borderRadius: AppRadius.mdRadius,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onOpenMutunBook(mutn);
+            },
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpace.md),
+              child: Row(
+                children: [
+                  Container(
+                    width: AppSize.tap,
+                    height: AppSize.tap,
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.smRadius,
                     ),
-                    child: Center(
-                      child: Text(
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.menu_book_rounded,
+                      color: palette.onPrimarySoft,
+                      size: AppIcon.md,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          mutn.title,
+                          style: textTheme.body.copyWith(
+                            color: palette.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpace.xxs),
+                        Text(
+                          '${mutn.author} · ${mutn.level}',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.chevron_left_rounded,
+                        color: palette.primary,
+                        size: AppIcon.sm,
+                      ),
+                      Text(
                         'فتح المتن',
                         style: textTheme.caption.copyWith(
                           color: palette.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

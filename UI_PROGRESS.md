@@ -1,5 +1,12 @@
 # UI Progress Log
 
+## Round 26 — Offline Library Inventory & Ilm Entry UX (29 October 2026)
+- Reworked the Ilm offline entry into a labeled action beside reading progress; the books/mutun tab count now includes downloaded heritage books plus bundled mutun.
+- Clarified the offline hub inventory with separate heritage-book, bundled-mutun, and Quran-audio metrics; bundled mutun rows are compact, full-row tappable items.
+- Files changed: `ilm_header.dart`, `offline_downloads_hub_sheet.dart`, `offline_books_tab_view.dart`, and this log.
+- Verified: `dart format`, scoped `flutter analyze` (3 files, 0 issues), `python tool/ui_lint_v2.py`, `git diff --check`, and GitHub iOS workflow (build and artifacts succeeded). Widget tests, screenshots, and Android build were not run.
+- Open issues: none identified in this UI scope.
+
 ## Round 25 — Salaf Gems Encyclopedia & Daily Wisdom Hero Integration (29 October 2026)
 - **Scope & Context:**
   - Implemented the comprehensive "درر السلف والآثار" (Gems of the Salaf & Prophetic Admonitions) encyclopedia in talib_ilm, enriching the app with 3,287 curated, verified quotes, athar, and hadiths with full scholarly citations (takhrij):
@@ -29,7 +36,6 @@
   - flutter build apk --debug --no-pub: Built build/app/outputs/flutter-apk/app-debug.apk (81.1s).
 - **Open issues:**
   - None in R25 scope.
-
 ## Production Release v1.0.0 & Repository Hygiene (29 October 2026)
 - **Scope & Context:**
   - Standardized repository hygiene to pristine production state:

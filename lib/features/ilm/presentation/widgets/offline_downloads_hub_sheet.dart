@@ -62,6 +62,9 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
   int _quranStorageBytes = 0;
   bool _isLoading = true;
 
+  int get _offlineStudyContentCount =>
+      _downloadedBooks.length + _bundledMutun.length;
+
   @override
   void initState() {
     super.initState();
@@ -177,19 +180,8 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                       children: [
                         Text(
                           'حقيبة المحتوى بدون إنترنت',
-                          style: textTheme.title.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${_downloadedBooks.length} كتب تراثية · صوتيات القرآن: ${QuranAudioDownloader.formatBytes(_quranStorageBytes)}',
-                          style: textTheme.caption.copyWith(
-                            color: palette.textMuted,
-                          ),
-                          maxLines: 1,
+                          style: textTheme.title.copyWith(color: palette.text),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -203,6 +195,39 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                     ),
                     tooltip: 'إغلاق',
                     onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpace.sm),
+
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.xl,
+              ),
+              child: Wrap(
+                spacing: AppSpace.xs,
+                runSpacing: AppSpace.xs,
+                children: [
+                  _buildSummaryMetric(
+                    context,
+                    icon: Icons.auto_stories_rounded,
+                    label: 'الكتب التراثية: ${_downloadedBooks.length}',
+                    color: palette.primary,
+                  ),
+                  _buildSummaryMetric(
+                    context,
+                    icon: Icons.menu_book_rounded,
+                    label: 'المتون المضمنة: ${_bundledMutun.length}',
+                    color: palette.primary,
+                  ),
+                  _buildSummaryMetric(
+                    context,
+                    icon: Icons.headphones_rounded,
+                    label:
+                        'صوتيات القرآن: ${QuranAudioDownloader.formatBytes(_quranStorageBytes)}',
+                    color: palette.textMuted,
                   ),
                 ],
               ),
@@ -229,14 +254,12 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                 ),
                 labelColor: palette.bg,
                 unselectedLabelColor: palette.textMuted,
-                labelStyle: textTheme.caption.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                labelStyle: textTheme.caption.copyWith(),
                 unselectedLabelStyle: textTheme.caption,
                 tabs: [
                   Tab(
                     icon: const Icon(Icons.menu_book_rounded, size: AppIcon.sm),
-                    text: 'الكتب والمتون (${_downloadedBooks.length})',
+                    text: 'الكتب والمتون ($_offlineStudyContentCount)',
                   ),
                   const Tab(
                     icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
@@ -254,8 +277,9 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                   ? Center(
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(palette.primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          palette.primary,
+                        ),
                       ),
                     )
                   : TabBarView(
@@ -285,6 +309,36 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryMetric(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return Container(
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.xs,
+      ),
+      decoration: BoxDecoration(
+        color: palette.surfaceMuted,
+        borderRadius: AppRadius.pillRadius,
+        border: Border.all(color: palette.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: AppIcon.xs),
+          const SizedBox(width: AppSpace.xxs),
+          Text(label, style: textTheme.label.copyWith(color: palette.text)),
+        ],
       ),
     );
   }

@@ -32,132 +32,149 @@ class IlmHeader extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: palette.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: palette.border,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: palette.border, width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'المكتبة العلمية',
-                      style: context.text.title.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.xs),
-                    Text(
-                      dailyMicrocopy,
-                      style: context.text.bodySmall.copyWith(
-                        color: palette.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+              Text(
+                'المكتبة العلمية',
+                style: context.text.title.copyWith(
+                  color: palette.text,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
                 ),
               ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                dailyMicrocopy,
+                style: context.text.bodySmall.copyWith(
+                  color: palette.textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.sm),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.xs,
+            children: [
               if (onDownloadsTap != null)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: AppSpace.xs),
-                  child: Semantics(
-                    button: true,
-                    label: 'عرض المحتوى المحمّل بدون إنترنت',
-                    child: Material(
-                      color: palette.goldSoft,
-                      borderRadius: AppRadius.pillRadius,
-                      child: InkWell(
-                        borderRadius: AppRadius.pillRadius,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          onDownloadsTap?.call();
-                        },
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                          decoration: BoxDecoration(
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: palette.gold.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.offline_pin_rounded,
-                            size: AppIcon.sm,
-                            color: palette.gold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (totalBooksCount > 0)
-                Semantics(
-                  button: true,
-                  label: 'عرض الكتب المنجزة وقيد المتابعة',
-                  child: Material(
-                    color: palette.surfaceMuted,
-                    borderRadius: AppRadius.pillRadius,
-                    child: InkWell(
-                      borderRadius: AppRadius.pillRadius,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        onStatsTap?.call();
-                      },
-                      child: Container(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.md,
-                          vertical: AppSpace.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadius.pillRadius,
-                          border: Border.all(
-                            color: palette.border,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.collections_bookmark_rounded,
-                              size: AppIcon.sm,
-                              color: palette.primary,
-                            ),
-                            const SizedBox(width: AppSpace.xs),
-                            Text(
-                              '$completedBooksCount/$totalBooksCount مُنجز',
-                              style: context.text.caption.copyWith(
-                                color: palette.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.xxs),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: AppIcon.sm,
-                              color: palette.primary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildDownloadsButton(context, palette),
+              if (totalBooksCount > 0) _buildStatsButton(context, palette),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadsButton(BuildContext context, AppPalette palette) {
+    return Tooltip(
+      message: 'عرض المحتوى المحمّل بدون إنترنت',
+      child: Semantics(
+        button: true,
+        label: 'عرض المحتوى المحمّل بدون إنترنت',
+        child: Material(
+          color: palette.primarySoft,
+          borderRadius: AppRadius.pillRadius,
+          child: InkWell(
+            borderRadius: AppRadius.pillRadius,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onDownloadsTap?.call();
+            },
+            child: Container(
+              constraints: const BoxConstraints(minHeight: AppSize.tap),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(color: palette.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.offline_pin_rounded,
+                    size: AppIcon.sm,
+                    color: palette.onPrimarySoft,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Text(
+                    'بدون إنترنت',
+                    style: context.text.label.copyWith(
+                      color: palette.onPrimarySoft,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsButton(BuildContext context, AppPalette palette) {
+    return Semantics(
+      button: true,
+      label: 'عرض الكتب المنجزة وقيد المتابعة',
+      child: Material(
+        color: palette.surfaceMuted,
+        borderRadius: AppRadius.pillRadius,
+        child: InkWell(
+          borderRadius: AppRadius.pillRadius,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onStatsTap?.call();
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSize.tap),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.md,
+              vertical: AppSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(color: palette.border, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.collections_bookmark_rounded,
+                  size: AppIcon.sm,
+                  color: palette.primary,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                Text(
+                  '$completedBooksCount/$totalBooksCount مُنجز',
+                  style: context.text.caption.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: AppSpace.xxs),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: AppIcon.sm,
+                  color: palette.primary,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
