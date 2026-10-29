@@ -33,14 +33,9 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Prepare Flutter iOS & CocoaPods Configuration
-        run: |
-          flutter doctor -v
-          flutter precache --ios
-          flutter build ios --config-only
-
       - name: Build iOS App (Release, No CodeSign)
         run: |
+          flutter precache --ios
           flutter build ios --release --no-codesign
 
       - name: Package into IPA for Sideloadly / AltStore
