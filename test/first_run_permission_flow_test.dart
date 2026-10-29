@@ -239,5 +239,49 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool(OnboardingPage.prefKey), isTrue);
     });
+
+    testWidgets('9. OnboardingPage: survives text scales 1.0, 1.5, and 2.0 across all 3 pages without overflow', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      for (final scale in [1.0, 1.5, 2.0]) {
+        for (final isDark in [false, true]) {
+          await tester.pumpWidget(
+            _wrapWithApp(
+              Builder(
+                builder: (ctx) => MediaQuery(
+                  data: MediaQuery.of(ctx).copyWith(
+                    textScaler: TextScaler.linear(scale),
+                  ),
+                  child: OnboardingPage(
+                    key: ValueKey('onboarding_${scale}_$isDark'),
+                    onCompleted: () {},
+                  ),
+                ),
+              ),
+              isDark: isDark,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+
+          // Advance to Page 2
+          await tester.tap(
+            find.widgetWithText(AppButton, 'التالي'),
+            warnIfMissed: false,
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+
+          // Advance to Page 3
+          await tester.tap(
+            find.widgetWithText(AppButton, 'التالي'),
+            warnIfMissed: false,
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
+      }
+    });
   });
 }

@@ -3,13 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
-import '../../../app/theme/app_ui.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_logo.dart';
-import '../../../shared/widgets/app_tag.dart';
+import 'widgets/onboarding_hero_header_card.dart';
 
 /// Luxury Calm Scholar first-run onboarding screen.
 /// Exactly 3 pages, skippable from every screen, shown once via SharedPreferences.
@@ -33,6 +32,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _currentPage = 0;
 
   static const int _totalPages = 3;
+  static const double _dividerHairlineHeight = AppSpace.xxs / 2;
 
   @override
   void dispose() {
@@ -64,7 +64,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
         duration: AppMotion.base,
-        curve: Curves.easeOutCubic,
+        curve: AppMotion.easeOut,
       );
     } else {
       _finishOnboarding();
@@ -83,44 +83,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
           textDirection: TextDirection.rtl,
           child: Column(
             children: [
-              // Top Bar: Logo lockup and Skip action
-              Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.xl,
-                  vertical: AppSpace.md,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const AppLogo(size: AppLogoSize.md),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          'طالب العلم',
-                          style: textTheme.titleMedium.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Semantics(
-                      button: true,
-                      label: 'تخطي الشرح والبدء فوراً',
-                      child: AppButton.text(
-                        label: 'تخطي',
-                        onPressed: _finishOnboarding,
-                      ),
-                    ),
-                  ],
-                ),
+              // 1. Grounded Editorial Top Brand Header
+              _buildTopHeader(
+                palette: palette,
+                textTheme: textTheme,
               ),
 
-              // Page Content
+              // 2. Page Content Carousel
               Expanded(
                 child: PageView(
                   controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() => _currentPage = index);
                   },
@@ -171,52 +144,139 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
 
-              // Bottom Navigation: Indicator Dots & Action Button
-              Padding(
-                padding: const EdgeInsetsDirectional.all(AppSpace.xl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Dot indicators
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_totalPages, (index) {
-                        final isSelected = _currentPage == index;
-                        return AnimatedContainer(
-                          duration: AppMotion.base,
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
-                          ),
-                          width: isSelected ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isSelected ? palette.primary : palette.border,
-                            borderRadius: AppRadius.pillRadius,
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: AppSpace.xl),
+              // 3. Grounded Bottom Navigation Dock
+              _buildBottomDock(palette: palette),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                    // Primary Action Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        label: _currentPage == _totalPages - 1
-                            ? 'ابدأ الاستخدام'
-                            : 'التالي',
-                        icon: _currentPage == _totalPages - 1
-                            ? Icons.check_circle_rounded
-                            : Icons.arrow_back_rounded,
-                        onPressed: _nextPage,
-                      ),
-                    ),
-                  ],
+  Widget _buildTopHeader({
+    required AppPalette palette,
+    required AppTextTheme textTheme,
+  }) {
+    return Container(
+      padding: const EdgeInsetsDirectional.only(
+        start: AppSpace.xl,
+        end: AppSpace.xl,
+        top: AppSpace.md,
+        bottom: AppSpace.md,
+      ),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border(
+          bottom: BorderSide(color: palette.border),
+        ),
+        boxShadow: palette.shadow,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Framed Sacred Emblem Badge
+              Container(
+                width: AppSize.tap,
+                height: AppSize.tap,
+                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                decoration: BoxDecoration(
+                  color: palette.splashCardBg,
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: palette.splashCardBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: palette.shadow,
+                ),
+                child: ClipRRect(
+                  borderRadius: AppRadius.smRadius,
+                  child: const AppLogo(size: AppLogoSize.md),
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
+
+              // Brand Title
+              Expanded(
+                child: Text(
+                  'طالب العلم',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium.copyWith(
+                    color: palette.text,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+
+              // Tactile Outlined Skip Capsule
+              Semantics(
+                button: true,
+                label: 'تخطي الشرح والبدء فوراً',
+                child: AppButton.outline(
+                  label: 'تخطي',
+                  size: AppButtonSize.sm,
+                  onPressed: _finishOnboarding,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpace.md),
+
+          // Full-Width 3-Segment Editorial Chapter Progress Track
+          Row(
+            children: List.generate(_totalPages, (index) {
+              final isCurrent = index == _currentPage;
+              final isPast = index < _currentPage;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    end: index < _totalPages - 1 ? AppSpace.sm : 0.0,
+                  ),
+                  child: AnimatedContainer(
+                    duration: AppMotion.base,
+                    curve: AppMotion.easeOut,
+                    height: AppSpace.xs,
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? palette.primary
+                          : (isPast ? palette.gold : palette.border),
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomDock({required AppPalette palette}) {
+    return Container(
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.xl,
+        vertical: AppSpace.md,
+      ),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border(
+          top: BorderSide(color: palette.border),
+        ),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: AppButton(
+          label: _currentPage == _totalPages - 1
+              ? 'ابدأ الاستخدام'
+              : 'التالي',
+          icon: _currentPage == _totalPages - 1
+              ? Icons.check_circle_rounded
+              : Icons.arrow_back_rounded,
+          onPressed: _nextPage,
         ),
       ),
     );
@@ -231,94 +291,91 @@ class _OnboardingPageState extends State<OnboardingPage> {
     required String description,
     required List<String> highlights,
   }) {
-    return SingleChildScrollView(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.xl,
-        vertical: AppSpace.md,
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: AppSpace.md),
-          // Large Hero Emblem
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: palette.primarySoft,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: palette.border,
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: palette.primary,
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minViewportHeight = (constraints.maxHeight - (AppSpace.md * 2))
+            .clamp(0.0, double.infinity);
 
-          // Tag
-          AppTag(
-            label: tag,
-            fg: palette.primary,
-            bg: palette.primarySoft,
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: AppSpace.xl,
+            vertical: AppSpace.md,
           ),
-          const SizedBox(height: AppSpace.md),
-
-          // Title
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: textTheme.title.copyWith(
-              color: palette.text,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-
-          // Description
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: textTheme.body.copyWith(
-              color: palette.textMuted,
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-
-          // Feature highlights card
-          AppCard(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minViewportHeight),
             child: Column(
-              children: highlights.map((text) {
-                return Padding(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Illuminated Two-Tone Manuscript Hero Header Card
+                OnboardingHeroHeaderCard(
+                  tag: tag,
+                  icon: icon,
+                  title: title,
+                  description: description,
+                ),
+                const SizedBox(height: AppSpace.md),
+
+                // Structured Editorial Feature Highlights Card
+                AppCard(
                   padding: const EdgeInsetsDirectional.symmetric(
-                    vertical: AppSpace.xs,
+                    horizontal: AppSpace.lg,
+                    vertical: AppSpace.md,
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.check_circle_outline_rounded,
-                        color: palette.primary,
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Expanded(
-                        child: Text(
-                          text,
-                          style: textTheme.bodySmall.copyWith(
-                            color: palette.text,
+                      for (var i = 0; i < highlights.length; i++) ...[
+                        if (i > 0)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              vertical: AppSpace.sm,
+                            ),
+                            child: Divider(
+                              height: _dividerHairlineHeight,
+                              thickness: _dividerHairlineHeight,
+                              color: palette.border,
+                            ),
                           ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: AppSize.tagMinHeight,
+                              height: AppSize.tagMinHeight,
+                              decoration: BoxDecoration(
+                                color: palette.primarySoft,
+                                borderRadius: AppRadius.smRadius,
+                                border: Border.all(
+                                  color: palette.splashCardBorder,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                size: AppIcon.sm,
+                                color: palette.onPrimarySoft,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Text(
+                                highlights[i],
+                                style: textTheme.bodySmallBold.copyWith(
+                                  color: palette.text,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

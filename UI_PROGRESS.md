@@ -1,5 +1,26 @@
 # UI Progress Log
 
+## Round 21 — Onboarding Header Bar & Two-Tone Illuminated Manuscript Hero Overhaul (29 October 2026)
+- **Scope & Context:**
+  - Elevated the UI/UX of `OnboardingPage` (`lib/features/onboarding/presentation/onboarding_page.dart`, 381 lines) and extracted `OnboardingHeroHeaderCard` (`lib/features/onboarding/presentation/widgets/onboarding_hero_header_card.dart`, 284 lines) across all 3 onboarding pages strictly within the visual layer (0 Arabic strings modified, both files <= 600 lines per Rule 8):
+    1. **Grounded Editorial Top Header Bar:** Replaced the unframed logo and bare text button with a structured `palette.surface` header bar featuring a framed 48x48dp sacred emblem badge (`palette.splashCardBg` + `palette.splashCardBorder`), vertically aligned brand title, tactile outlined `تخطي` capsule (`AppButton.outline` with 48dp hit target), and a full-width 3-segment animated RTL chapter progress track.
+    2. **Two-Tone Illuminated Manuscript Hero Header Card:** Replaced the bare 88dp circle (with undersized 24dp icon) and full-width stretched `AppTag` banner with an architectural two-tone hero card (`OnboardingHeroHeaderCard`): upper warm-parchment / raised-obsidian crown band housing a 12-point Islamic rosette halo (`_OnboardingRosettePainter`), concentric soft-gold ring, raised jewel core disc with `AppIcon.hero` (40dp) sacred icon, and a tightly fitted intrinsic-width rounded capsule category badge (7.80:1 light / 14.26:1 dark contrast); lower pure-surface body housing `titleHeavy` heading, centered manuscript diamond rule, and readable muted description.
+    3. **Structured Feature Highlights & Grounded Bottom Dock:** Styled highlight items with 28x28dp rounded-square check badges and inset 1px hairline dividers; streamlined bottom CTA dock without duplicate progress dots; centered content harmoniously in tall viewports via `LayoutBuilder` + `SingleChildScrollView` + `ConstrainedBox`.
+- **Files Modified / Created (6 files):**
+  - `lib/features/onboarding/presentation/onboarding_page.dart` (381 lines)
+  - `lib/features/onboarding/presentation/widgets/onboarding_hero_header_card.dart` (created, 284 lines)
+  - `test/first_run_permission_flow_test.dart`
+  - `test/golden/goldens/onboarding_page_light_1_0.png`
+  - `test/golden/goldens/onboarding_page_dark_1_5.png`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (9.2s).
+  - `python tool/ui_lint_v2.py --strict`: OK (0 FAILs, 0 WARNs, 7 allow markers / cap 10).
+  - `python tool/contrast.py`: All pairs AA/AAA (5.36:1 to 18.08:1).
+  - `flutter test test/first_run_permission_flow_test.dart test/golden/onboarding_golden_test.dart --no-pub`: 11/11 passed; golden PNGs visually inspected.
+  - `flutter build apk --debug --no-pub`: Built `build\app\outputs\flutter-apk\app-debug.apk`.
+- **Open issues:** None.
+
 ## Round 19 — Notification Deferral Fix, Symmetrical Master Off Contract & 24h Re-prompt Banner (28 October 2026)
 - **Scope & Context:**
   - Resolved user-reported bug where first-time users clicking "لاحقاً" (Later) on the pre-permission onboarding sheet (`NotificationPrePermissionSheet`) still found the master notifications switch enabled in the prayer settings sheet, and alarms scheduled in parallel by `AppShell`.
