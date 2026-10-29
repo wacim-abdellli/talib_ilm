@@ -39,6 +39,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
   }
 
   Future<void> _loadRandomGem() async {
+    HapticFeedback.lightImpact();
     final next = await _repository.getRandomGem(excludingId: _currentGem?.id);
     final isFav = await _repository.isFavorite(next.id);
     if (!mounted) return;
@@ -50,6 +51,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
 
   Future<void> _toggleFavorite() async {
     if (_currentGem == null) return;
+    HapticFeedback.lightImpact();
     final isFav = await _repository.toggleFavorite(_currentGem!.id);
     if (!mounted) return;
     setState(() {
@@ -59,6 +61,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
 
   void _copyGem() {
     if (_currentGem == null) return;
+    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: _currentGem!.shareableText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -80,6 +83,19 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
         builder: (_) => const SalafGemsExplorerPage(),
       ),
     );
+  }
+
+  String _getScholarInitial(String author) {
+    final clean = author
+        .replaceAll('قال', '')
+        .replaceAll('بن', ' ')
+        .replaceAll('أبي', ' ')
+        .replaceAll('ابن', ' ')
+        .replaceAll('رحمه الله', '')
+        .replaceAll('رضي الله عنه', '')
+        .trim();
+    if (clean.isEmpty) return 'س';
+    return clean.characters.first;
   }
 
   @override
@@ -107,6 +123,8 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
     final gem = _currentGem;
     if (gem == null) return const SizedBox.shrink();
 
+    final initial = _getScholarInitial(gem.author);
+
     return Container(
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
@@ -132,7 +150,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                     Container(
                       padding: const EdgeInsetsDirectional.all(AppSpace.xs),
                       decoration: BoxDecoration(
-                        color: palette.primarySoft,
+                        color: palette.goldSoft,
                         borderRadius: AppRadius.mdRadius,
                       ),
                       child: Icon(
@@ -157,10 +175,10 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                           Container(
                             padding: const EdgeInsetsDirectional.symmetric(
                               horizontal: AppSpace.sm,
-                              vertical: AppSpace.xs,
+                              vertical: AppSpace.xxs,
                             ),
                             decoration: BoxDecoration(
-                              color: palette.surface,
+                              color: palette.surfaceMuted,
                               borderRadius: AppRadius.pillRadius,
                               border: Border.all(
                                 color: palette.border,
@@ -186,79 +204,140 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                 ),
                 const SizedBox(height: AppSpace.md),
 
-                // Main Quote
-                Text(
-                  gem.text,
-                  style: textTheme.sacred.copyWith(
-                    color: palette.text,
-                    height: 1.75,
-                  ),
-                  textAlign: TextAlign.justify,
-                ),
-                const SizedBox(height: AppSpace.md),
-
-                // Author & Attribution
+                // Author Row with Monogram
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      width: AppSpace.xs,
-                      height: AppSpace.md,
+                      width: AppSpace.xl,
+                      height: AppSpace.xl,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: palette.gold,
-                        borderRadius: AppRadius.pillRadius,
+                        color: palette.primarySoft,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: palette.primary,
+                        ),
+                      ),
+                      child: Text(
+                        initial,
+                        style: textTheme.caption.copyWith(
+                          color: palette.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),
                     Expanded(
-                      child: Text(
-                        gem.role.isNotEmpty
-                            ? '${gem.author} · ${gem.role}'
-                            : gem.author,
-                        style: textTheme.label.copyWith(
-                          color: palette.textMuted,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            gem.author,
+                            style: textTheme.label.copyWith(
+                              color: palette.text,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (gem.role.isNotEmpty)
+                            Text(
+                              gem.role,
+                              style: textTheme.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpace.sm),
 
-                if (gem.sourceRef.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Text(
-                    'المصدر: ${gem.sourceRef}',
-                    style: textTheme.caption.copyWith(
-                      color: palette.textSubtle,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                // Main Quote Container
+                Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceMuted,
+                    borderRadius: AppRadius.mdRadius,
                   ),
+                  child: Text(
+                    gem.text,
+                    style: textTheme.sacred.copyWith(
+                      color: palette.text,
+                      height: 1.85,
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.sm),
+
+                // Scholarly Source Citation
+                if (gem.sourceRef.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.menu_book_rounded,
+                        color: palette.textSubtle,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Expanded(
+                        child: Text(
+                          gem.sourceRef,
+                          style: textTheme.caption.copyWith(
+                            color: palette.textSubtle,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
                 ],
-                const SizedBox(height: AppSpace.md),
 
                 // Footer Actions & Full Explorer Link
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.xs,
                   children: [
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.sm,
-                          vertical: AppSpace.xs,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: palette.primarySoft,
+                        borderRadius: AppRadius.pillRadius,
+                        border: Border.all(
+                          color: palette.primary,
                         ),
                       ),
-                      onPressed: () => _openExplorer(context),
-                      icon: Icon(
-                        Icons.auto_stories_rounded,
-                        color: palette.primary,
-                      ),
-                      label: Text(
-                        'تصفح الموسوعة ←',
-                        style: textTheme.label.copyWith(
-                          color: palette.primary,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: AppRadius.pillRadius,
+                          onTap: () => _openExplorer(context),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_stories_rounded,
+                                  color: palette.primary,
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  'تصفح الموسوعة ←',
+                                  style: textTheme.label.copyWith(
+                                    color: palette.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -280,7 +359,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                         IconButton(
                           icon: Icon(
                             _isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                            color: _isFavorite ? palette.primary : palette.textMuted,
+                            color: _isFavorite ? palette.gold : palette.textMuted,
                           ),
                           tooltip: _isFavorite ? 'إزالة من المفضلة' : 'حفظ في المفضلة',
                           onPressed: _toggleFavorite,

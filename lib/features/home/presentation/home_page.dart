@@ -28,10 +28,7 @@ import '../../prayer/presentation/qibla_page.dart';
 import '../../prayer/presentation/prayer_page.dart';
 import '../../prayer/presentation/location_settings_sheet.dart';
 import '../../quran/presentation/quran_page.dart';
-import '../../adhkar/data/adhkar_models.dart';
-import '../../adhkar/data/adhkar_service.dart';
-import '../../adhkar/presentation/adhkar_session_page.dart';
-import 'widgets/home_daily_dhikr_card.dart';
+import 'widgets/home_daily_ayah_dua_card.dart';
 import 'widgets/home_daily_hadith_card.dart';
 import 'widgets/home_hero_greeting_helper.dart';
 import '../../salaf_gems/presentation/widgets/home_salaf_gem_card.dart';
@@ -59,7 +56,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Map<String, int> _iqamaOverrides = const {};
   bool _isNotificationDisabled = false;
   ContinueData? _continueData;
-  DailyDhikrPayload? _dailyDhikr;
 
   // Emotional state controller
   late final HomeStateController _stateController;
@@ -106,8 +102,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       final prayerFuture = _prayerTimeService.getPrayerTimesDay();
       final continueFuture = _loadContinueData();
-      final dhikrFuture = AthkarService().getDailyDhikr();
-
       final prayerDay = await prayerFuture.catchError((_) {
         return _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
       });
@@ -122,13 +116,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       final results = await Future.wait([
         continueFuture.catchError((_) => null),
         stateFuture.catchError((_) {}),
-        dhikrFuture.catchError((_) => null),
       ]);
 
       if (!mounted) return;
       setState(() {
         _continueData = results[0] as ContinueData?;
-        _dailyDhikr = results[2] as DailyDhikrPayload?;
       });
     } catch (_) {
       // Graceful fallback: never leave UI in a broken state
@@ -463,23 +455,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.xl),
                   ),
 
-                  // Below-the-fold: Daily Dhikr / Motivation
-                  if (_dailyDhikr != null) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpace.xl,
-                        ),
-                        child: HomeDailyDhikrCard(
-                          payload: _dailyDhikr!,
-                          onOpenSession: () => _openAdhkarSession(_dailyDhikr!.category),
-                        ),
+                  // Below-the-fold: Daily Ayah / Short Du'a (Compact)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
                       ),
+                      child: HomeDailyAyahDuaCard(),
                     ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AppSpace.xl),
-                    ),
-                  ],
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
 
                   // Live Quran Radio Card (إذاعة القرآن الكريم)
                   SliverToBoxAdapter(
@@ -526,14 +513,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _openAdhkar(BuildContext context) {
     AppShell.switchToTab(context, 3);
-  }
-
-  void _openAdhkarSession(AdhkarCategory category) {
-    _stateController.recordAdhkarOpened();
-    Navigator.push(
-      context,
-      buildFadeRoute(page: AdhkarSessionPage(category: category)),
-    );
   }
 
   void _openLocationSettings(BuildContext context) {

@@ -1,5 +1,34 @@
 # UI Progress Log
 
+## Round 28 — Luxury UI/UX Overhaul: Salaf Gems, Prophetic Hadith, & Compact Ayah/Du'a (29 October 2026)
+- **Scope & Context:**
+  - Complete modern UI/UX overhaul based on real-device review:
+    1. **Salaf Gems Encyclopedia & Explorer (`SalafGemsExplorerPage` & `SalafGemCard`):** Replaced repetitive stacked boxes with a high-end Islamic library layout. Added frosted capsule search bar with clear button, custom segmented filter pills (without clunky checkmarks), dedicated scholar monogram avatar bar with initial letter badges, framed sacred quote text with 1.85 line-height, book citation box, and tactile action buttons.
+    2. **Home Salaf Gem Card (`HomeSalafGemCard`):** Upgraded to sacred card language with gold quote badge, scholar monogram avatar and role, framed quote, and sleek `تصفح الموسوعة ←` capsule button.
+    3. **Prophetic Hadith Card & Explorer (`HadithCard`, `HomeDailyHadithCard`, `HadithExplorerPage`):** Upgraded `HomeDailyHadithCard` with `ﷺ` honorific pill, refresh action, and see-more capsule button. Redesigned `HadithCard` with authenticity verification badge (`صحيح` / `حسن صحيح`), classical framed matn, and expandable scholarly benefits panel. Upgraded `HadithExplorerPage` with capsule search bar, sleek collection/category pills, and count/reset strip.
+    4. **Compact Daily Ayah & Short Du'a Card (`HomeDailyAyahDuaCard`):** Replaced the excessively tall daily dhikr card on Home with a concise, beautiful Ayah and short Prophetic Du'a card (~110dp height), eliminating overflow above the floating navigation bar. Created `DailyAyahDua` catalog and repository with 20+ short profound ayat and prayers.
+    5. **Strict Rule Compliance:** All files kept <= 600 lines (Rule 8), 0 UI lint violations (Rule 2), 0 analyze issues, all 35 unit/widget tests passing at 1.0x, 1.5x, 2.0x text scale (Rule 7).
+- **Files Changed / Created:**
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (469 lines)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart` (created, 204 lines)
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart` (378 lines)
+  - `lib/features/hadith/presentation/widgets/hadith_card.dart` (355 lines)
+  - `lib/features/hadith/presentation/pages/hadith_explorer_page.dart` (416 lines)
+  - `lib/features/home/presentation/widgets/home_daily_hadith_card.dart` (195 lines)
+  - `lib/features/home/presentation/home_page.dart` (567 lines)
+  - `lib/features/home/data/models/daily_ayah_dua.dart` (created, 28 lines)
+  - `lib/features/home/data/repositories/daily_ayah_dua_repository.dart` (created, 168 lines)
+  - `lib/features/home/presentation/widgets/home_daily_ayah_dua_card.dart` (created, 159 lines)
+  - `test/salaf_gems_test.dart`
+  - `test/home_daily_ayah_dua_card_test.dart` (created)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (17.7s).
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter test ... --no-pub`: 35/35 tests passed (survives 1.0x, 1.5x, 2.0x text scaling).
+- **Open issues:**
+  - Android APK build not run per user explicit constraint `(do not generate apk for now)`.
+
 ## Round 27 — Compact Ilm Header & Offline Hub Cleanup (29 October 2026)
 - Restored the Ilm title, progress count, and offline shortcut to one compact header row; removed the duplicate `المحمّلة` category chip.
 - Removed the offline hub’s wrapped metric badges; the combined tab count and concise section counts identify the 19 study items. Simplified book/matn rows into full-row actions without repeated buttons or offline labels.

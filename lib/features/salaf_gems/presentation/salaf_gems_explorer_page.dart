@@ -4,6 +4,7 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../data/models/salaf_gem.dart';
 import '../data/repositories/salaf_gems_repository.dart';
+import 'widgets/salaf_gem_card.dart';
 import 'widgets/salaf_gem_share_sheet.dart';
 
 class SalafGemsExplorerPage extends StatefulWidget {
@@ -97,6 +98,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   }
 
   Future<void> _toggleFavorite(SalafGem gem) async {
+    HapticFeedback.lightImpact();
     final isFav = await _repository.toggleFavorite(gem.id);
     final updated = Set<String>.from(_favoriteIds);
     if (isFav) {
@@ -113,6 +115,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   }
 
   void _copyGem(SalafGem gem) {
+    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: gem.shareableText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -126,6 +129,19 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  String _getScholarInitial(String author) {
+    final clean = author
+        .replaceAll('قال', '')
+        .replaceAll('بن', ' ')
+        .replaceAll('أبي', ' ')
+        .replaceAll('ابن', ' ')
+        .replaceAll('رحمه الله', '')
+        .replaceAll('رضي الله عنه', '')
+        .trim();
+    if (clean.isEmpty) return 'س';
+    return clean.characters.first;
   }
 
   @override
@@ -149,7 +165,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
               ),
             ),
             Text(
-              '${_allGems.length} فائدة وأثر موثق',
+              '${_allGems.length} درة وأثر مسند وموثق',
               style: textTheme.caption.copyWith(
                 color: palette.textMuted,
               ),
@@ -180,61 +196,73 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
             )
           : Column(
               children: [
-                // Search Field
+                // Modern Capsule Search Header
                 Container(
                   color: palette.surface,
                   padding: const EdgeInsetsDirectional.fromSTEB(
                     AppSpace.md,
                     AppSpace.xs,
                     AppSpace.md,
-                    AppSpace.sm,
+                    AppSpace.xs,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (_) => _applyFilters(),
-                    style: textTheme.body.copyWith(
-                      color: palette.text,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: palette.border,
+                      ),
                     ),
-                    decoration: InputDecoration(
-                      hintText: 'ابحث في نصوص الأحاديث وأقوال الصحابة والسلف...',
-                      hintStyle: textTheme.body.copyWith(
-                        color: palette.textSubtle,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: palette.textMuted,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear_rounded,
-                                color: palette.textMuted,
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          color: palette.primary,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (_) => _applyFilters(),
+                            style: textTheme.body.copyWith(
+                              color: palette.text,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'ابحث في نصوص الأحاديث وأقوال الصحابة والسلف...',
+                              hintStyle: textTheme.body.copyWith(
+                                color: palette.textSubtle,
                               ),
-                              tooltip: 'مسح البحث',
-                              onPressed: () {
-                                _searchController.clear();
-                                _applyFilters();
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: palette.surfaceRaised,
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.mdRadius,
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.sm,
-                      ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsetsDirectional.symmetric(
+                                vertical: AppSpace.sm,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_searchController.text.isNotEmpty)
+                          IconButton(
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              color: palette.textMuted,
+                            ),
+                            tooltip: 'مسح البحث',
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFilters();
+                            },
+                          ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Category Chips Bar
+                // Category Selector Pill Row
                 Container(
                   color: palette.surface,
-                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
+                  padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xs),
                   height: AppSize.tap,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
@@ -244,32 +272,43 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                     itemBuilder: (ctx, i) {
                       final cat = _categories[i];
                       final isSelected = _selectedCategory == cat;
-                      return ChoiceChip(
-                        label: Text(cat),
-                        selected: isSelected,
-                        onSelected: (val) {
-                          setState(() {
-                            _selectedCategory = val ? cat : 'الكل';
-                          });
-                          _applyFilters();
-                        },
-                        selectedColor: palette.primarySoft,
-                        backgroundColor: palette.surfaceRaised,
-                        labelStyle: textTheme.label.copyWith(
-                          color: isSelected ? palette.primary : palette.textMuted,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? palette.primary : palette.border,
-                        ),
-                        shape: RoundedRectangleBorder(
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
                           borderRadius: AppRadius.pillRadius,
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat;
+                            });
+                            _applyFilters();
+                          },
+                          child: Container(
+                            alignment: AlignmentDirectional.center,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isSelected ? palette.primary : palette.border,
+                              ),
+                            ),
+                            child: Text(
+                              cat,
+                              style: textTheme.label.copyWith(
+                                color: isSelected ? palette.primary : palette.textMuted,
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },
                   ),
                 ),
 
-                // Author Chips Bar
+                // Scholar / Author Monogram Bar
                 Container(
                   color: palette.surface,
                   padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
@@ -282,28 +321,104 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                     itemBuilder: (ctx, i) {
                       final auth = _topAuthors[i];
                       final isSelected = _selectedAuthor == auth;
-                      return ChoiceChip(
-                        label: Text(auth),
-                        selected: isSelected,
-                        onSelected: (val) {
-                          setState(() {
-                            _selectedAuthor = val ? auth : 'الكل';
-                          });
-                          _applyFilters();
-                        },
-                        selectedColor: palette.primarySoft,
-                        backgroundColor: palette.surfaceRaised,
-                        labelStyle: textTheme.caption.copyWith(
-                          color: isSelected ? palette.primary : palette.textMuted,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? palette.primary : palette.border,
-                        ),
-                        shape: RoundedRectangleBorder(
+                      final isAll = auth == 'الكل';
+                      final initial = isAll ? '✦' : _getScholarInitial(auth);
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
                           borderRadius: AppRadius.pillRadius,
+                          onTap: () {
+                            setState(() {
+                              _selectedAuthor = isSelected && !isAll ? 'الكل' : auth;
+                            });
+                            _applyFilters();
+                          },
+                          child: Container(
+                            alignment: AlignmentDirectional.center,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? palette.goldSoft : palette.surfaceRaised,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isSelected ? palette.gold : palette.border,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: AppSpace.xl,
+                                  height: AppSpace.xl,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? palette.gold : palette.surface,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected ? palette.gold : palette.border,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    initial,
+                                    style: textTheme.caption.copyWith(
+                                      color: isSelected ? palette.onGold : palette.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  auth,
+                                  style: textTheme.caption.copyWith(
+                                    color: isSelected ? palette.gold : palette.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },
+                  ),
+                ),
+
+                // Results Count Strip
+                Container(
+                  color: palette.surfaceMuted,
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'نتائج البحث: ${_filteredGems.length} درة',
+                        style: textTheme.caption.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                      if (_selectedCategory != 'الكل' || _selectedAuthor != 'الكل' || _onlyFavorites)
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = 'الكل';
+                              _selectedAuthor = 'الكل';
+                              _onlyFavorites = false;
+                              _searchController.clear();
+                            });
+                            _applyFilters();
+                          },
+                          child: Text(
+                            'إعادة ضبط المرشحات',
+                            style: textTheme.caption.copyWith(
+                              color: palette.primary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
 
@@ -337,7 +452,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                           itemBuilder: (ctx, i) {
                             final gem = _filteredGems[i];
                             final isFav = _favoriteIds.contains(gem.id);
-                            return _GemListCard(
+                            return SalafGemCard(
                               gem: gem,
                               isFavorite: isFav,
                               onToggleFavorite: () => _toggleFavorite(gem),
@@ -349,126 +464,6 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                 ),
               ],
             ),
-    );
-  }
-}
-
-class _GemListCard extends StatelessWidget {
-  final SalafGem gem;
-  final bool isFavorite;
-  final VoidCallback onToggleFavorite;
-  final VoidCallback onCopy;
-  final VoidCallback onShare;
-
-  const _GemListCard({
-    required this.gem,
-    required this.isFavorite,
-    required this.onToggleFavorite,
-    required this.onCopy,
-    required this.onShare,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        borderRadius: AppRadius.lgRadius,
-        border: Border.all(
-          color: palette.border,
-        ),
-      ),
-      padding: const EdgeInsetsDirectional.all(AppSpace.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header with category badge & author
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: AppSpace.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: palette.primarySoft,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-                child: Text(
-                  gem.category,
-                  style: textTheme.caption.copyWith(
-                    color: palette.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Expanded(
-                child: Text(
-                  gem.author,
-                  style: textTheme.titleSmall.copyWith(
-                    color: palette.text,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.sm),
-
-          // Quote text
-          Text(
-            gem.text,
-            style: textTheme.sacred.copyWith(
-              color: palette.text,
-              height: 1.7,
-            ),
-            textAlign: TextAlign.justify,
-          ),
-          const SizedBox(height: AppSpace.sm),
-
-          // Source Reference
-          if (gem.sourceRef.isNotEmpty) ...[
-            Text(
-              'المصدر: ${gem.sourceRef}',
-              style: textTheme.caption.copyWith(
-                color: palette.textSubtle,
-              ),
-            ),
-            const SizedBox(height: AppSpace.xs),
-          ],
-
-          // Action row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.copy_rounded),
-                color: palette.textMuted,
-                tooltip: 'نسخ النص',
-                onPressed: onCopy,
-              ),
-              IconButton(
-                icon: const Icon(Icons.share_rounded),
-                color: palette.textMuted,
-                tooltip: 'مشاركة كبطاقة',
-                onPressed: onShare,
-              ),
-              IconButton(
-                icon: Icon(
-                  isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                  color: isFavorite ? palette.gold : palette.textMuted,
-                ),
-                tooltip: isFavorite ? 'إزالة من المفضلة' : 'حفظ في المفضلة',
-                onPressed: onToggleFavorite,
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

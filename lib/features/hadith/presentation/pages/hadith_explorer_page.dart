@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
@@ -147,55 +147,89 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
         leading: const AppBackButton(),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: palette.primary,
+              ),
+            )
           : Column(
               children: [
-                // Search Input
-                Padding(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                // Modern Capsule Search Bar
+                Container(
+                  color: palette.surface,
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                    AppSpace.md,
+                    AppSpace.xs,
+                    AppSpace.md,
+                    AppSpace.xs,
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: palette.surface,
-                      borderRadius: AppRadius.mdRadius,
+                      color: palette.surfaceRaised,
+                      borderRadius: AppRadius.pillRadius,
                       border: Border.all(color: palette.border),
                     ),
                     padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
+                      horizontal: AppSpace.sm,
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) {
-                        _searchDebounce?.cancel();
-                        _searchDebounce = Timer(AppMotion.searchDebounce, _applyFilter);
-                      },
-                      decoration: InputDecoration(
-                        icon: Icon(
+                    child: Row(
+                      children: [
+                        Icon(
                           Icons.search_rounded,
-                          color: palette.textMuted,
+                          color: palette.primary,
                         ),
-                        hintText: 'ابحث في الأحاديث، الرواة، أو الفوائد...',
-                        hintStyle: AppTextStyles.bodyMedium.copyWith(
-                          color: palette.textSubtle,
-                          fontFamily: AppTextStyles.cairo,
+                        const SizedBox(width: AppSpace.xs),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (_) {
+                              _searchDebounce?.cancel();
+                              _searchDebounce = Timer(AppMotion.searchDebounce, _applyFilter);
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'ابحث في الأحاديث، الرواة، أو الفوائد...',
+                              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                                color: palette.textSubtle,
+                                fontFamily: AppTextStyles.cairo,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsetsDirectional.symmetric(
+                                vertical: AppSpace.sm,
+                              ),
+                            ),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: palette.text,
+                              fontFamily: AppTextStyles.cairo,
+                            ),
+                          ),
                         ),
-                        border: InputBorder.none,
-                      ),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: palette.text,
-                        fontFamily: AppTextStyles.cairo,
-                      ),
+                        if (_searchController.text.isNotEmpty)
+                          IconButton(
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              color: palette.textMuted,
+                            ),
+                            tooltip: 'مسح البحث',
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFilter();
+                            },
+                          ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Canonical Collections Chips
+                // Canonical Collections Sleek Pills
                 if (_collections.length > 2) ...[
-                  SizedBox(
-                    height: 38,
+                  Container(
+                    color: palette.surface,
+                    padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xs),
+                    height: AppSize.tap,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.lg,
+                        horizontal: AppSpace.md,
                       ),
                       itemCount: _collections.length,
                       separatorBuilder: (context, index) =>
@@ -203,41 +237,53 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                       itemBuilder: (context, index) {
                         final col = _collections[index];
                         final isSelected = col == _selectedCollection;
-                        return ChoiceChip(
-                          label: Text(
-                            col,
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: isSelected
-                                  ? palette.onPrimary
-                                  : palette.text,
-                              fontFamily: AppTextStyles.cairo,
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: AppRadius.pillRadius,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _onCollectionSelected(col);
+                            },
+                            child: Container(
+                              alignment: AlignmentDirectional.center,
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(
+                                  color: isSelected ? palette.primary : palette.border,
+                                ),
+                              ),
+                              child: Text(
+                                col,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: isSelected
+                                      ? palette.primary
+                                      : palette.textMuted,
+                                  fontFamily: AppTextStyles.cairo,
+                                ),
+                              ),
                             ),
                           ),
-                          selected: isSelected,
-                          selectedColor: palette.primary,
-                          backgroundColor: palette.surfaceRaised,
-                          side: BorderSide(
-                            color: isSelected
-                                ? palette.primary
-                                : palette.border,
-                          ),
-                          onSelected: (val) {
-                            if (val) _onCollectionSelected(col);
-                          },
                         );
                       },
                     ),
                   ),
-                  const SizedBox(height: AppSpace.xs),
                 ],
 
-                // Chapter / Category Chips
-                SizedBox(
-                  height: 40,
+                // Chapter / Category Sleek Pills
+                Container(
+                  color: palette.surface,
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
+                  height: AppSize.tap,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.lg,
+                      horizontal: AppSpace.md,
                     ),
                     itemCount: _categories.length,
                     separatorBuilder: (context, index) =>
@@ -245,36 +291,82 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                     itemBuilder: (context, index) {
                       final cat = _categories[index];
                       final isSelected = cat == _selectedCategory;
-                      return ChoiceChip(
-                        label: Text(
-                          cat,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: isSelected
-                                ? palette.onPrimary
-                                : palette.textMuted,
-                            fontFamily: AppTextStyles.cairo,
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: AppRadius.pillRadius,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat);
+                            _applyFilter();
+                          },
+                          child: Container(
+                            alignment: AlignmentDirectional.center,
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.md,
+                              vertical: AppSpace.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? palette.goldSoft : palette.surfaceRaised,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isSelected ? palette.gold : palette.border,
+                              ),
+                            ),
+                            child: Text(
+                              cat,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: isSelected
+                                    ? palette.gold
+                                    : palette.textMuted,
+                                fontFamily: AppTextStyles.cairo,
+                              ),
+                            ),
                           ),
                         ),
-                        selected: isSelected,
-                        selectedColor: palette.gold,
-                        backgroundColor: palette.surface,
-                        side: BorderSide(
-                          color: isSelected
-                              ? palette.gold
-                              : palette.border,
-                        ),
-                        onSelected: (val) {
-                          if (val) {
-                            setState(() => _selectedCategory = cat);
-                            _applyFilter();
-                          }
-                        },
                       );
                     },
                   ),
                 ),
 
-                const SizedBox(height: AppSpace.sm),
+                // Results Count Bar
+                Container(
+                  color: palette.surfaceMuted,
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'نتائج البحث: ${_filteredHadiths.length} حديثاً',
+                        style: AppTextStyles.caption.copyWith(
+                          color: palette.textMuted,
+                          fontFamily: AppTextStyles.cairo,
+                        ),
+                      ),
+                      if (_selectedCollection != 'الكل' || _selectedCategory != 'الكل' || _searchController.text.isNotEmpty)
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedCollection = 'الكل';
+                              _selectedCategory = 'الكل';
+                              _searchController.clear();
+                            });
+                            _applyFilter();
+                          },
+                          child: Text(
+                            'إعادة ضبط المرشحات',
+                            style: AppTextStyles.caption.copyWith(
+                              color: palette.primary,
+                              fontFamily: AppTextStyles.cairo,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
 
                 // Hadith List
                 Expanded(
@@ -300,55 +392,19 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                                     fontFamily: AppTextStyles.cairo,
                                   ),
                                 ),
-                                if (_searchController.text.trim().isNotEmpty) ...[
-                                  const SizedBox(height: AppSpace.md),
-                                  OutlinedButton.icon(
-                                    onPressed: () async {
-                                      final q = _searchController.text.trim();
-                                      final uri = Uri.parse(
-                                        'https://dorar.net/hadith/search?q=${Uri.encodeComponent(q)}',
-                                      );
-                                      if (await canLaunchUrl(uri)) {
-                                        await launchUrl(
-                                          uri,
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      }
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: palette.primary,
-                                      side: BorderSide(color: palette.primary),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: AppRadius.mdRadius,
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.open_in_new_rounded),
-                                    label: Text(
-                                      'البحث في موسوعة الدرر السنية',
-                                      style: AppTextStyles.labelMedium.copyWith(
-                                        color: palette.primary,
-                                        fontFamily: AppTextStyles.cairo,
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
                         )
                       : ListView.separated(
-                          padding: EdgeInsetsDirectional.only(
-                            start: AppSpace.lg,
-                            end: AppSpace.lg,
-                            top: AppSpace.sm,
-                            bottom: AppSize.navClearance(context),
-                          ),
+                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
                           itemCount: _filteredHadiths.length,
                           separatorBuilder: (context, index) =>
-                              const SizedBox(height: AppSpace.lg),
+                              const SizedBox(height: AppSpace.md),
                           itemBuilder: (context, index) {
                             return HadithCard(
                               hadith: _filteredHadiths[index],
+                              initiallyExpanded: false,
                             );
                           },
                         ),

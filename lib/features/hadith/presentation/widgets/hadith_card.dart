@@ -58,6 +58,7 @@ class _HadithCardState extends State<HadithCard> {
   }
 
   Future<void> _toggleFavorite() async {
+    HapticFeedback.lightImpact();
     final next = await _favService.toggleSaved(widget.hadith.toLegacyHadith());
     final hadithId = widget.hadith.id.isNotEmpty
         ? widget.hadith.id
@@ -79,11 +80,13 @@ class _HadithCardState extends State<HadithCard> {
   }
 
   void _copyHadith() {
+    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: widget.hadith.toShareText()));
     AppSnackbar.success(context, 'تم نسخ الحديث الشريف بنجاح');
   }
 
   void _shareHadith() {
+    HapticFeedback.lightImpact();
     Share.share(widget.hadith.toShareText());
   }
 
@@ -93,7 +96,7 @@ class _HadithCardState extends State<HadithCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: palette.surface,
+        color: palette.surfaceRaised,
         borderRadius: AppRadius.lgRadius,
         border: Border.all(color: palette.border),
       ),
@@ -101,7 +104,7 @@ class _HadithCardState extends State<HadithCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header: Category & Grade Badges
+          // Header: Category, Number & Authenticity Grade Badges
           Row(
             children: [
               // Hadith number badge
@@ -112,17 +115,20 @@ class _HadithCardState extends State<HadithCard> {
                 ),
                 decoration: BoxDecoration(
                   color: palette.primarySoft,
-                  borderRadius: AppRadius.smRadius,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: palette.primary,
+                  ),
                 ),
                 child: Text(
                   '#${widget.hadith.number}',
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: palette.onPrimarySoft,
+                    color: palette.primary,
                     fontFamily: AppTextStyles.cairo,
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpace.sm),
+              const SizedBox(width: AppSpace.xs),
               // Category tag
               Expanded(
                 child: Text(
@@ -145,16 +151,29 @@ class _HadithCardState extends State<HadithCard> {
                   color: widget.hadith.isSahih
                       ? palette.goldSoft
                       : palette.primarySoft,
-                  borderRadius: AppRadius.smRadius,
-                ),
-                child: Text(
-                  widget.hadith.grade,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: widget.hadith.isSahih
-                        ? palette.gold
-                        : palette.primary,
-                    fontFamily: AppTextStyles.cairo,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(
+                    color: widget.hadith.isSahih ? palette.gold : palette.primary,
                   ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_rounded,
+                      color: widget.hadith.isSahih ? palette.gold : palette.primary,
+                    ),
+                    const SizedBox(width: AppSpace.xxs),
+                    Text(
+                      widget.hadith.grade,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: widget.hadith.isSahih
+                            ? palette.gold
+                            : palette.primary,
+                        fontFamily: AppTextStyles.cairo,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -162,7 +181,7 @@ class _HadithCardState extends State<HadithCard> {
 
           const SizedBox(height: AppSpace.md),
 
-          // Title (authentic shortest saying, full text with no dots)
+          // Title (authentic shortest saying)
           Text(
             widget.hadith.cleanTitle,
             style: AppTextStyles.titleMedium.copyWith(
@@ -173,43 +192,46 @@ class _HadithCardState extends State<HadithCard> {
 
           const SizedBox(height: AppSpace.sm),
 
-          // Matn in classical Amiri typography
-          Text(
-            widget.hadith.matn,
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: palette.text,
-              fontFamily: AppTextStyles.amiri,
-              height: 1.8,
+          // Matn in classical typography within framed container
+          Container(
+            padding: const EdgeInsetsDirectional.all(AppSpace.md),
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: AppRadius.mdRadius,
+            ),
+            child: Text(
+              '«${widget.hadith.matn}»',
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: palette.text,
+                fontFamily: AppTextStyles.amiri,
+                height: 1.85,
+              ),
+              textAlign: TextAlign.justify,
             ),
           ),
 
-          const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.sm),
 
           // Source and Narrator citation
-          Container(
-            padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-            decoration: BoxDecoration(
-              color: palette.surfaceMuted,
-              borderRadius: AppRadius.smRadius,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.menu_book_rounded,
-                  color: palette.textSubtle,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Expanded(
-                  child: Text(
-                    widget.hadith.source,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: palette.textMuted,
-                      fontFamily: AppTextStyles.cairo,
-                    ),
+          Row(
+            children: [
+              Icon(
+                Icons.menu_book_rounded,
+                color: palette.textSubtle,
+              ),
+              const SizedBox(width: AppSpace.xs),
+              Expanded(
+                child: Text(
+                  widget.hadith.source,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: palette.textSubtle,
+                    fontFamily: AppTextStyles.cairo,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
           // Expandable explanation / benefits section
@@ -264,7 +286,10 @@ class _HadithCardState extends State<HadithCard> {
             children: [
               if (widget.hadith.benefits.isNotEmpty)
                 InkWell(
-                  onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _isExpanded = !_isExpanded);
+                  },
                   borderRadius: AppRadius.smRadius,
                   child: Container(
                     constraints: const BoxConstraints(minHeight: AppSize.tap),
@@ -307,7 +332,7 @@ class _HadithCardState extends State<HadithCard> {
               IconButton(
                 onPressed: _shareHadith,
                 icon: Icon(
-                  Icons.share_outlined,
+                  Icons.share_rounded,
                   color: palette.textMuted,
                 ),
                 tooltip: 'مشاركة الحديث',

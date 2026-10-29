@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
@@ -37,6 +38,7 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
   }
 
   Future<void> _cycleHadith() async {
+    HapticFeedback.lightImpact();
     setState(() {
       _isLoading = true;
     });
@@ -63,7 +65,7 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
       return Container(
         height: 180,
         decoration: BoxDecoration(
-          color: palette.surface,
+          color: palette.surfaceRaised,
           borderRadius: AppRadius.lgRadius,
           border: Border.all(color: palette.border),
         ),
@@ -86,9 +88,16 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.format_quote_rounded,
-                  color: palette.primary,
+                Container(
+                  padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                  decoration: BoxDecoration(
+                    color: palette.primarySoft,
+                    borderRadius: AppRadius.mdRadius,
+                  ),
+                  child: Icon(
+                    Icons.format_quote_rounded,
+                    color: palette.primary,
+                  ),
                 ),
                 const SizedBox(width: AppSpace.xs),
                 Text(
@@ -96,6 +105,24 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
                   style: AppTextStyles.titleMedium.copyWith(
                     color: palette.text,
                     fontFamily: AppTextStyles.cairo,
+                  ),
+                ),
+                const SizedBox(width: AppSpace.xs),
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.primarySoft,
+                    borderRadius: AppRadius.pillRadius,
+                  ),
+                  child: Text(
+                    'ﷺ',
+                    style: AppTextStyles.caption.copyWith(
+                      color: palette.primary,
+                      fontFamily: AppTextStyles.amiri,
+                    ),
                   ),
                 ),
               ],
@@ -111,31 +138,42 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
                   ),
                   tooltip: 'حديث آخر',
                 ),
-                // Open Explorer
-                InkWell(
-                  onTap: () => _openExplorer(context),
-                  borderRadius: AppRadius.smRadius,
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: AppSize.tap),
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.sm,
+                // Open Explorer Pill Button
+                Container(
+                  decoration: BoxDecoration(
+                    color: palette.primarySoft,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: palette.primary,
                     ),
-                    alignment: AlignmentDirectional.center,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'المزيد',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: palette.primary,
-                            fontFamily: AppTextStyles.cairo,
-                          ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: AppRadius.pillRadius,
+                      onTap: () => _openExplorer(context),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xs,
                         ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: palette.primary,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'المزيد',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: palette.primary,
+                                fontFamily: AppTextStyles.cairo,
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_left_rounded,
+                              color: palette.primary,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
