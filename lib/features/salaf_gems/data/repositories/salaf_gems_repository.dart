@@ -12,6 +12,23 @@ class SalafGemsRepository {
   static const String _favStorageKey = 'talib_ilm_salaf_gems_favorites_v1';
   static const String _assetPath = 'assets/data/salaf_gems.json';
 
+  static const SalafGem fallbackGem = SalafGem(
+    id: 'gem_default_01',
+    author: 'عمر بن الخطاب رضي الله عنه',
+    role: 'أمير المؤمنين وصحابي جليل',
+    category: 'أقوال الصحابة',
+    topic: 'الصدق والأمانة',
+    text: 'لَا تَنْظُرُوا إِلَى صِيَامِ أَحَدٍ وَلَا صَلَاتِهِ، وَلَكِنِ انْظُرُوا إِلَى صِدْقِ حَدِيثِهِ إِذَا حَدَّثَ، وَأَمَانَتِهِ إِذَا ائْتُمِنَ، وَوَرَعِهِ إِذَا أَشْفَى.',
+    sourceRef: 'حلية الأولياء لأبي نعيم (3/ 27)',
+  );
+
+  SalafGem getFallbackGem() {
+    if (_cachedGems != null && _cachedGems!.isNotEmpty) {
+      return _cachedGems!.first;
+    }
+    return fallbackGem;
+  }
+
   List<SalafGem>? _cachedGems;
   Set<String>? _favoriteIds;
   final Random _random = Random();

@@ -44,15 +44,26 @@ class SalafGem {
     };
   }
 
+  /// Clean quote body stripping redundant leading "قال فلان... :"
+  String get cleanText {
+    var result = text.trim();
+    final prefixRegex = RegExp(r'^(?:قال|كتب|سمع|روي عَن)\s+[^:：\n]{2,60}[:：]\s*');
+    result = result.replaceFirst(prefixRegex, '').trim();
+    if (result.startsWith('(') && result.endsWith(')')) {
+      result = result.substring(1, result.length - 1).trim();
+    }
+    return result.isEmpty ? text : result;
+  }
+
   String get shareableText {
     final buffer = StringBuffer();
     if (topic.isNotEmpty && topic != category) {
       buffer.writeln('[$topic]');
     }
-    buffer.writeln(text);
+    buffer.writeln('«$cleanText»');
     buffer.writeln('— $author');
     if (sourceRef.isNotEmpty) {
-      buffer.writeln('المصدر: $sourceRef');
+      buffer.writeln('المصدر والتخريج: $sourceRef');
     }
     buffer.write('\nمن تطبيق طالب العلم');
     return buffer.toString();

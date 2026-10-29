@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../data/models/salaf_gem.dart';
 import '../data/repositories/salaf_gems_repository.dart';
 import 'widgets/salaf_gem_card.dart';
@@ -115,39 +116,139 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   }
 
   void _copyGem(SalafGem gem) {
-    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: gem.shareableText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تم نسخ الأثر والمصدر إلى الحافظة',
-          style: context.text.body.copyWith(
-            color: context.palette.onPrimary,
-          ),
-        ),
-        backgroundColor: context.palette.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackbar.success(context, 'تم نسخ الأثر والمصدر إلى الحافظة بنجاح');
   }
 
-  String _getScholarInitial(String author) {
-    final clean = author
-        .replaceAll('قال', '')
-        .replaceAll('بن', ' ')
-        .replaceAll('أبي', ' ')
-        .replaceAll('ابن', ' ')
-        .replaceAll('رحمه الله', '')
-        .replaceAll('رضي الله عنه', '')
-        .trim();
-    if (clean.isEmpty) return 'س';
-    return clean.characters.first;
+  void _openScholarPicker() {
+    HapticFeedback.lightImpact();
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Bottom Sheet Header
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  AppSpace.lg,
+                  AppSpace.md,
+                  AppSpace.sm,
+                  AppSpace.xs,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.people_outline_rounded,
+                      color: palette.primary,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: Text(
+                        'تصفية حسب القائل من أئمة السلف',
+                        style: textTheme.titleSmall.copyWith(
+                          color: palette.text,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      color: palette.textMuted,
+                      tooltip: 'إغلاق',
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Scholar List
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                  itemCount: _topAuthors.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: AppSpace.xs),
+                  itemBuilder: (context, index) {
+                    final author = _topAuthors[index];
+                    final isSelected = author == _selectedAuthor;
+                    final isAll = author == 'الكل';
+
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: AppRadius.mdRadius,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _selectedAuthor = author;
+                          });
+                          _applyFilters();
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                              color: isSelected ? palette.primary : palette.border,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isAll ? Icons.all_inclusive_rounded : Icons.person_rounded,
+                                color: isSelected ? palette.primary : palette.textMuted,
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: Text(
+                                  isAll ? 'الكل (جميع الأعلام والأئمة)' : author,
+                                  style: textTheme.body.copyWith(
+                                    color: isSelected ? palette.primary : palette.text,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: palette.primary,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final hasAuthorFilter = _selectedAuthor != 'الكل';
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -162,12 +263,13 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
               'موسوعة درر السلف والآثار',
               style: textTheme.title.copyWith(
                 color: palette.text,
+                letterSpacing: 0.2,
               ),
             ),
             Text(
-              '${_allGems.length} درة وأثر مسند وموثق',
+              '${_allGems.length} أَثَرًا مُوَثَّقًا وَحِكْمَةً مُحَقَّقَة',
               style: textTheme.caption.copyWith(
-                color: palette.textMuted,
+                color: palette.gold,
               ),
             ),
           ],
@@ -259,81 +361,26 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                   ),
                 ),
 
-                // Category Selector Pill Row
+                // UNIFIED SINGLE-LINE FILTER BAR (Scholar Dropdown + Category Pills)
                 Container(
                   color: palette.surface,
-                  padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.xs),
-                  height: AppSize.tap,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
-                    itemCount: _categories.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: AppSpace.xs),
-                    itemBuilder: (ctx, i) {
-                      final cat = _categories[i];
-                      final isSelected = _selectedCategory == cat;
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: AppRadius.pillRadius,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat;
-                            });
-                            _applyFilters();
-                          },
-                          child: Container(
-                            alignment: AlignmentDirectional.center,
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.md,
-                              vertical: AppSpace.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected ? palette.primarySoft : palette.surfaceRaised,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(
-                                color: isSelected ? palette.primary : palette.border,
-                              ),
-                            ),
-                            child: Text(
-                              cat,
-                              style: textTheme.label.copyWith(
-                                color: isSelected ? palette.primary : palette.textMuted,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                    0,
+                    AppSpace.xxs,
+                    0,
+                    AppSpace.sm,
                   ),
-                ),
-
-                // Scholar / Author Monogram Bar
-                Container(
-                  color: palette.surface,
-                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
                   height: AppSize.tap,
-                  child: ListView.separated(
+                  child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
-                    itemCount: _topAuthors.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: AppSpace.xs),
-                    itemBuilder: (ctx, i) {
-                      final auth = _topAuthors[i];
-                      final isSelected = _selectedAuthor == auth;
-                      final isAll = auth == 'الكل';
-                      final initial = isAll ? '✦' : _getScholarInitial(auth);
-
-                      return Material(
+                    children: [
+                      // Scholar Picker Capsule Pill
+                      Material(
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: AppRadius.pillRadius,
-                          onTap: () {
-                            setState(() {
-                              _selectedAuthor = isSelected && !isAll ? 'الكل' : auth;
-                            });
-                            _applyFilters();
-                          },
+                          onTap: _openScholarPicker,
                           child: Container(
                             alignment: AlignmentDirectional.center,
                             padding: const EdgeInsetsDirectional.symmetric(
@@ -341,50 +388,92 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                               vertical: AppSpace.xs,
                             ),
                             decoration: BoxDecoration(
-                              color: isSelected ? palette.goldSoft : palette.surfaceRaised,
+                              color: hasAuthorFilter ? palette.goldSoft : palette.surfaceRaised,
                               borderRadius: AppRadius.pillRadius,
                               border: Border.all(
-                                color: isSelected ? palette.gold : palette.border,
+                                color: hasAuthorFilter ? palette.gold : palette.border,
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  width: AppSpace.xl,
-                                  height: AppSpace.xl,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? palette.gold : palette.surface,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isSelected ? palette.gold : palette.border,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    initial,
-                                    style: textTheme.caption.copyWith(
-                                      color: isSelected ? palette.onGold : palette.textMuted,
-                                    ),
-                                  ),
+                                Icon(
+                                  Icons.person_outline_rounded,
+                                  color: hasAuthorFilter ? palette.gold : palette.textMuted,
                                 ),
-                                const SizedBox(width: AppSpace.xs),
+                                const SizedBox(width: AppSpace.xxs),
                                 Text(
-                                  auth,
-                                  style: textTheme.caption.copyWith(
-                                    color: isSelected ? palette.gold : palette.textMuted,
+                                  hasAuthorFilter ? _selectedAuthor : 'القائل ▾',
+                                  style: textTheme.label.copyWith(
+                                    color: hasAuthorFilter ? palette.gold : palette.textMuted,
                                   ),
                                 ),
+                                if (hasAuthorFilter) ...[
+                                  const SizedBox(width: AppSpace.xxs),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedAuthor = 'الكل';
+                                      });
+                                      _applyFilters();
+                                    },
+                                    child: Icon(
+                                      Icons.cancel_rounded,
+                                      color: palette.gold,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+
+                      // Category Pills in the same single row
+                      ..._categories.map((cat) {
+                        final isSelected = _selectedCategory == cat;
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(start: AppSpace.xs),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: AppRadius.pillRadius,
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat;
+                                });
+                                _applyFilters();
+                              },
+                              child: Container(
+                                alignment: AlignmentDirectional.center,
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.md,
+                                  vertical: AppSpace.xs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+                                  borderRadius: AppRadius.pillRadius,
+                                  border: Border.all(
+                                    color: isSelected ? palette.primary : palette.border,
+                                  ),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: textTheme.label.copyWith(
+                                    color: isSelected ? palette.primary : palette.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
 
-                // Results Count Strip
+                // Results Count Bar
                 Container(
                   color: palette.surfaceMuted,
                   padding: const EdgeInsetsDirectional.symmetric(
@@ -395,12 +484,12 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'نتائج البحث: ${_filteredGems.length} درة',
+                        'عُثِرَ عَلَى ${_filteredGems.length} دُرَّةٍ وَأَثَر',
                         style: textTheme.caption.copyWith(
                           color: palette.textMuted,
                         ),
                       ),
-                      if (_selectedCategory != 'الكل' || _selectedAuthor != 'الكل' || _onlyFavorites)
+                      if (_selectedCategory != 'الكل' || _selectedAuthor != 'الكل' || _onlyFavorites || _searchController.text.isNotEmpty)
                         InkWell(
                           onTap: () {
                             setState(() {
@@ -437,7 +526,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                               Text(
                                 _onlyFavorites
                                     ? 'لا توجد آثار محفوظة في المفضلة'
-                                    : 'لم يتم العثور على نتائج للبحث',
+                                    : 'لم يتم العثور على نتائج مطابقة للبحث',
                                 style: textTheme.body.copyWith(
                                   color: palette.textMuted,
                                 ),

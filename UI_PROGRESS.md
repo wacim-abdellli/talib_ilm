@@ -1,5 +1,25 @@
 # UI Progress Log
 
+## Round 29 — Durar Al-Salaf UX Refinement: Shakl, Single Filter Line, & App HUD Feedback (30 October 2026)
+- **Scope & Context:**
+  - Implemented user feedback on "درر السلف":
+    1. **Single Unified Filter Line:** Eliminated the dual-row filter layout in `SalafGemsExplorerPage`. Implemented a single compact horizontal line with a leading `[ 👤 القائل ▾ ]` picker pill (opening a dedicated modal sheet) followed by clean category pills.
+    2. **Vocabulary & Prefix Cleanup:** Added `cleanText` in `SalafGem` to automatically strip redundant "قال فلان:" prefixes inside quote bodies, leaving pure sacred wisdom framed by `« ... »`. Refined category badges (`مِنْ أَقْوَالِ الصَّحَابَةِ`, `مِنْ نَفَائِسِ السَّلَفِ`) and source citation label (`العَزْوُ وَالتَّخْرِيجُ`).
+    3. **Shakl (Tashkeel) Enrichment:** Enriched top classical quotes in `salaf_gems.json` and `fallbackGem` with full classical diacritics. Applied sacred Amiri typography with `height: 1.9` for perfect tashkeel stacking without clipping.
+    4. **App Design System HUD:** Replaced raw Android SnackBars with luxury floating frosted `AppSnackbar.success` pill HUDs with haptic feedback across all copy actions.
+- **Files Changed:**
+  - `assets/data/salaf_gems.json`
+  - `lib/features/salaf_gems/data/models/salaf_gem.dart` (80 lines)
+  - `lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart` (217 lines)
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (558 lines)
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart` (371 lines)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart` (237 lines)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found (5.5s).
+  - `flutter test ... --no-pub`: 35/35 tests passed.
+
 ## Round 28 — Luxury UI/UX Overhaul: Salaf Gems, Prophetic Hadith, & Compact Ayah/Du'a (29 October 2026)
 - **Scope & Context:**
   - Complete modern UI/UX overhaul based on real-device review:

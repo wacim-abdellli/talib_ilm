@@ -32,11 +32,21 @@ class SalafGemCard extends StatelessWidget {
     return clean.characters.first;
   }
 
+  String _formatCategory(String cat) {
+    if (cat.contains('الصحابة')) return 'مِنْ أَقْوَالِ الصَّحَابَةِ';
+    if (cat.contains('النبوي') || cat.contains('نبوية')) return 'وَصَايَا نَبَوِيَّةٌ شَرِيفَة';
+    if (cat.contains('العلم')) return 'فِي طَلَبِ العِلْمِ وَآدَابِهِ';
+    if (cat.contains('زهد') || cat.contains('رقائق')) return 'رَقَائِقُ القُلُوبِ وَالزُّهْد';
+    if (cat.contains('عقدية')) return 'فَوَائِدُ عَقْدِيَّةٌ سَلَفِيَّة';
+    return 'مِنْ دُرَرِ السَّلَفِ الصَّالِحِ';
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
     final initial = _getScholarInitial(gem.author);
+    final categoryLabel = _formatCategory(gem.category);
 
     return Container(
       decoration: BoxDecoration(
@@ -50,11 +60,11 @@ class SalafGemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Scholar Monogram + Name + Category Pill
+          // Scholar Monogram + Name + Dignified Category Pill
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Circular Monogram
+              // Circular Monogram with Gold/Primary Accent
               Container(
                 width: AppSpace.xl,
                 height: AppSpace.xl,
@@ -112,7 +122,7 @@ class SalafGemCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  gem.category,
+                  categoryLabel,
                   style: textTheme.caption.copyWith(
                     color: palette.primary,
                   ),
@@ -122,7 +132,7 @@ class SalafGemCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
 
-          // Sacred Quote Body with Quotation Accent
+          // Sacred Quote Body with Quotation Frame and Shakl-friendly Line Height
           Container(
             padding: const EdgeInsetsDirectional.all(AppSpace.md),
             decoration: BoxDecoration(
@@ -130,61 +140,84 @@ class SalafGemCard extends StatelessWidget {
               borderRadius: AppRadius.mdRadius,
             ),
             child: Text(
-              gem.text,
+              '«${gem.cleanText}»',
               style: textTheme.sacred.copyWith(
                 color: palette.text,
-                height: 1.85,
+                height: 1.9,
               ),
               textAlign: TextAlign.justify,
             ),
           ),
           const SizedBox(height: AppSpace.sm),
 
-          // Source Citation Box
+          // Source Citation Box (العَزْوُ وَالتَّخْرِيجُ)
           if (gem.sourceRef.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.menu_book_rounded,
-                  color: palette.textSubtle,
+            Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.sm,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: AppRadius.smRadius,
+                border: Border.all(
+                  color: palette.border,
                 ),
-                const SizedBox(width: AppSpace.xs),
-                Expanded(
-                  child: Text(
-                    gem.sourceRef,
-                    style: textTheme.caption.copyWith(
-                      color: palette.textSubtle,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.menu_book_rounded,
+                    color: palette.gold,
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpace.xs),
+                  Expanded(
+                    child: Text(
+                      'العَزْوُ وَالتَّخْرِيجُ: ${gem.sourceRef}',
+                      style: textTheme.caption.copyWith(
+                        color: palette.textSubtle,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpace.xs),
           ],
 
-          // Footer: Topic tag and Action Buttons
+          // Footer: Topic Tag and Tactical Action Buttons
           Row(
             children: [
               if (gem.topic.isNotEmpty)
-                Text(
-                  '#${gem.topic}',
-                  style: textTheme.caption.copyWith(
-                    color: palette.gold,
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.goldSoft,
+                    borderRadius: AppRadius.pillRadius,
+                  ),
+                  child: Text(
+                    '#${gem.topic}',
+                    style: textTheme.caption.copyWith(
+                      color: palette.gold,
+                    ),
                   ),
                 ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.copy_rounded),
                 color: palette.textMuted,
-                tooltip: 'نسخ النص',
+                tooltip: 'نسخ الأثر والتخريج',
                 onPressed: onCopy,
               ),
               IconButton(
                 icon: const Icon(Icons.share_rounded),
                 color: palette.textMuted,
-                tooltip: 'مشاركة كبطاقة',
+                tooltip: 'مشاركة البطاقة الدعوية',
                 onPressed: onShare,
               ),
               IconButton(

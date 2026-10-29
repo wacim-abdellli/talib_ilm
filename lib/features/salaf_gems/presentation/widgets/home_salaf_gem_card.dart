@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/salaf_gem.dart';
 import '../../data/repositories/salaf_gems_repository.dart';
 import '../salaf_gems_explorer_page.dart';
@@ -18,16 +19,16 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
   final SalafGemsRepository _repository = SalafGemsRepository.instance;
   SalafGem? _currentGem;
   bool _isFavorite = false;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _currentGem = _repository.getFallbackGem();
     _loadDailyGem();
   }
 
   Future<void> _loadDailyGem() async {
-    setState(() => _isLoading = true);
     final gem = await _repository.getDailyGem();
     final isFav = await _repository.isFavorite(gem.id);
     if (!mounted) return;
@@ -63,18 +64,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
     if (_currentGem == null) return;
     HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: _currentGem!.shareableText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تم نسخ الأثر والمصدر إلى الحافظة',
-          style: context.text.body.copyWith(
-            color: context.palette.onPrimary,
-          ),
-        ),
-        backgroundColor: context.palette.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackbar.success(context, 'تم نسخ الأثر والمصدر إلى الحافظة بنجاح');
   }
 
   void _openExplorer(BuildContext context) {
@@ -98,6 +88,14 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
     return clean.characters.first;
   }
 
+  String _formatCategory(String cat) {
+    if (cat.contains('الصحابة')) return 'مِنْ أَقْوَالِ الصَّحَابَةِ';
+    if (cat.contains('النبوي') || cat.contains('نبوية')) return 'وَصَايَا نَبَوِيَّةٌ شَرِيفَة';
+    if (cat.contains('العلم')) return 'فِي طَلَبِ العِلْمِ';
+    if (cat.contains('زهد') || cat.contains('رقائق')) return 'رَقَائِقُ القُلُوبِ';
+    return 'دُرَرُ السَّلَفِ';
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -113,17 +111,12 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
             color: palette.border,
           ),
         ),
-        alignment: Alignment.center,
-        child: CircularProgressIndicator(
-          color: palette.primary,
-        ),
       );
     }
 
-    final gem = _currentGem;
-    if (gem == null) return const SizedBox.shrink();
-
+    final gem = _currentGem ?? _repository.getFallbackGem();
     final initial = _getScholarInitial(gem.author);
+    final categoryLabel = _formatCategory(gem.category);
 
     return Container(
       decoration: BoxDecoration(
@@ -185,7 +178,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                               ),
                             ),
                             child: Text(
-                              gem.category,
+                              categoryLabel,
                               style: textTheme.caption.copyWith(
                                 color: palette.primary,
                               ),
@@ -254,7 +247,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                 ),
                 const SizedBox(height: AppSpace.sm),
 
-                // Main Quote Container
+                // Main Quote Container with Shakl-friendly Line Height
                 Container(
                   padding: const EdgeInsetsDirectional.all(AppSpace.md),
                   decoration: BoxDecoration(
@@ -262,10 +255,10 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                     borderRadius: AppRadius.mdRadius,
                   ),
                   child: Text(
-                    gem.text,
+                    '«${gem.cleanText}»',
                     style: textTheme.sacred.copyWith(
                       color: palette.text,
-                      height: 1.85,
+                      height: 1.9,
                     ),
                     textAlign: TextAlign.justify,
                   ),
@@ -278,12 +271,12 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                     children: [
                       Icon(
                         Icons.menu_book_rounded,
-                        color: palette.textSubtle,
+                        color: palette.gold,
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Expanded(
                         child: Text(
-                          gem.sourceRef,
+                          'العَزْوُ وَالتَّخْرِيجُ: ${gem.sourceRef}',
                           style: textTheme.caption.copyWith(
                             color: palette.textSubtle,
                           ),
@@ -347,13 +340,13 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
                         IconButton(
                           icon: const Icon(Icons.copy_rounded),
                           color: palette.textMuted,
-                          tooltip: 'نسخ الأثر',
+                          tooltip: 'نسخ الأثر والتخريج',
                           onPressed: _copyGem,
                         ),
                         IconButton(
                           icon: const Icon(Icons.share_rounded),
                           color: palette.textMuted,
-                          tooltip: 'مشاركة كبطاقة',
+                          tooltip: 'مشاركة البطاقة الدعوية',
                           onPressed: () => SalafGemShareSheet.show(context, gem),
                         ),
                         IconButton(
