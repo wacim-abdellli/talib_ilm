@@ -1,5 +1,18 @@
 # UI Progress Log
 
+## Production Release v1.0.0 & Repository Hygiene (29 October 2026)
+- **Scope & Context:**
+  - Standardized repository hygiene to pristine production state:
+    1. **Branch Pruning:** Pruned all 31 merged development branches (ui/*, codex/*, ci/*) on remote and local, leaving exclusively main.
+    2. **Release Tagging:** Archived and purged 69 intermediate stage checkpoints (ui-r*-done) on remote and local; minted canonical release tag v1.0.0.
+    3. **History Safety:** Full repository backup created and verified in .git/repo_full_backup.bundle with all 482 commits, historical refs, and stashes intact.
+    4. **Verified iOS Cloud Build:** GitHub Actions Run #24 (build_ios.yml) succeeded with talib-ilm-ios-ipa (109.5 MB) packaged for Sideloadly.
+- **Verified:**
+  - git branch -a: * main, remotes/origin/main (0 stale branches).
+  - git tag -l: v1.0.0 (0 clutter tags).
+  - python tool/ui_lint_v2.py: OK (7 allow markers / cap 10).
+  - GitHub Actions Run #24: SUCCESS (https://github.com/wacim-abdellli/talib_ilm/actions/runs/40952365126).
+
 ## Round 24 — Offline Downloads Hub & Seamless In-Context Filters (29 October 2026)
 - **Scope & Context:**
   - Resolved user request to seamlessly display all downloaded content (downloaded Shamela books, Holy Quran audio surahs, and bundled syllabus mutun) when offline, eliminating book-by-book searching:
