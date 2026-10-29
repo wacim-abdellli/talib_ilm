@@ -25,7 +25,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Flutter
-        id: flutter-action
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -37,47 +36,8 @@ jobs:
       - name: Build iOS App (Release, No CodeSign)
         run: |
           flutter precache --ios
-          export FLUTTER_ROOT="$(dirname $(dirname $(which flutter)))"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
-          echo "FLUTTER_ROOT is: $FLUTTER_ROOT"
-          
-          echo "=== 1. Preparing Flutter Configuration and CocoaPods ==="
-          flutter build ios --config-only --no-codesign
-          
-          echo "=== 2. Building Release iOS Bundle without Code Signing ==="
-          flutter build ios --release --no-codesign || {
-            echo "=== Flutter CLI exited; compiling via direct xcodebuild invocation ==="
-            xcodebuild -workspace ios/Runner.xcworkspace \
-                       -scheme Runner \
-                       -configuration Release \
-                       -sdk iphoneos \
-                       -destination 'generic/platform=iOS' \
-                       FLUTTER_ROOT="$FLUTTER_ROOT" \
-                       DEVELOPMENT_TEAM=V3N9W8G24A \
-                       CODE_SIGN_STYLE=Manual \
-                       CODE_SIGNING_ALLOWED=NO \
-                       CODE_SIGNING_REQUIRED=NO \
-                       CODE_SIGN_IDENTITY="" \
-                       ENABLE_USER_SCRIPT_SANDBOXING=NO \
-                       build
-          }
-
-          echo "=== 3. Locating built Runner.app ==="
-          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
-            FOUND_APP=$(find build/ios ~/Library/Developer/Xcode/DerivedData -name "Runner.app" -type d 2>/dev/null | head -n 1)
-            if [ -n "$FOUND_APP" ]; then
-              echo "Found Runner.app at: $FOUND_APP"
-              mkdir -p build/ios/iphoneos
-              cp -R "$FOUND_APP" build/ios/iphoneos/Runner.app
-            fi
-          fi
-          
-          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
-            echo "ERROR: Runner.app not found in build outputs!"
-            find build/ios -maxdepth 4 -ls || true
-            exit 1
-          fi
-          echo "Runner.app successfully ready for packaging!"
+          flutter build ios --release --no-codesign
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |
