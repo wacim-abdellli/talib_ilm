@@ -11,10 +11,13 @@ import '../../../../shared/widgets/achievement_toast.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/book_progress_service.dart';
+import '../../data/services/mutun_audio_service.dart';
 import '../../data/services/shamela_service.dart';
 import '../widgets/book_view_controls.dart' show BookNoteDialog;
+import '../widgets/mutun_audio_player_hud.dart';
 import '../widgets/scholarly_reader_hud.dart';
 import '../widgets/shamela_bookmarks_sheet.dart';
 import '../widgets/shamela_fihris_sheet.dart';
@@ -42,7 +45,12 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   late int _totalPages;
 
   bool _showControls = true;
+  bool _showAudioBar = false;
   bool _memorizationMode = false;
+  final MutunAudioService _audioService = MutunAudioService();
+
+  String? get _shamelaAudioId =>
+      MutunAudioCatalog.resolveShamelaAudioKey(widget.book.id);
   double _fontSizeDelta = 2.0;
   String _fontFamily = 'Amiri';
   double _lineHeight = 1.85;
@@ -165,6 +173,11 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
 
   void _toggleControls() {
     setState(() => _showControls = !_showControls);
+  }
+
+  void _toggleAudioBar() {
+    HapticFeedback.selectionClick();
+    setState(() => _showAudioBar = !_showAudioBar);
   }
 
   void _toggleMemorizationMode() {
@@ -527,6 +540,14 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               ),
             ),
 
+            if (_showControls && _showAudioBar && _shamelaAudioId != null)
+              MutunAudioPlayerHud(
+                audioService: _audioService,
+                bookId: _shamelaAudioId,
+                onOpenQuickJump: _showFihrisSheet,
+                onClose: () => setState(() => _showAudioBar = false),
+              ),
+
             // ── 3. Unified Bottom Scholarly HUD (Exact same as Mutun) ─────────
             ScholarlyReaderHud(
               currentPage: _currentPage,
@@ -546,6 +567,8 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
               onToggleMemorization: _toggleMemorizationMode,
               onOpenTypography: _showTypographySheet,
               onShare: _sharePageContent,
+              onToggleAudio: _shamelaAudioId != null ? _toggleAudioBar : null,
+              isAudioActive: _showAudioBar,
             ),
           ],
         ),

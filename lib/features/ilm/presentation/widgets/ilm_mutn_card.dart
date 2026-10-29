@@ -28,19 +28,17 @@ class IlmMutnCard extends StatelessWidget {
     this.isFavoriteOverride,
   });
 
-  void _startAudioStream(BuildContext context) {
+  Future<void> _startAudioStream(BuildContext context) async {
     HapticFeedback.mediumImpact();
     final audioService = MutunAudioService();
-    final available = MutunAudioCatalog.getRecitersForBook(book.id);
-    final reciter = available.any((r) => r.id == audioService.selectedReciter.id)
-        ? audioService.selectedReciter
-        : (available.isNotEmpty ? available.first : audioService.selectedReciter);
+    await audioService.syncReciterForBook(book.id);
+    final reciter = audioService.effectiveReciterForBook(book.id);
     final audioUrl =
         MutunAudioCatalog.getAudioUrl(book.id, reciterId: reciter.id) ?? '';
     final totalParas =
         MutunAudioCatalog.getTotalParagraphs(book.id, reciterId: reciter.id);
 
-    audioService.setSelectedReciter(reciter);
+    audioService.setSelectedReciter(reciter, forBookId: book.id);
     audioService.playMatnAudio(
       bookId: book.id,
       audioUrl: audioUrl,
@@ -207,22 +205,37 @@ class IlmMutnCard extends StatelessWidget {
           // ── Audio recitation indicator ────────────────────────────
           if (hasAudio) ...[
             const SizedBox(height: AppSpace.sm),
-            Row(
-              children: [
-                Icon(
-                  Icons.graphic_eq_rounded,
-                  size: AppIcon.sm,
-                  color: palette.gold,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  'قراءة صوتية: د. عبد العزيز الصيني',
-                  style: textTheme.caption.copyWith(
-                    color: palette.gold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            Builder(
+              builder: (context) {
+                final reciters = MutunAudioCatalog.getRecitersForBook(book.id);
+                final primaryName = reciters.isNotEmpty
+                    ? reciters.first.name
+                    : 'د. عبد العزيز الصيني';
+                final extraCount = reciters.length - 1;
+                final label = extraCount > 0
+                    ? 'قراءة صوتية: $primaryName (+$extraCount قرّاء)'
+                    : 'قراءة صوتية: $primaryName';
+                return Row(
+                  children: [
+                    Icon(
+                      Icons.graphic_eq_rounded,
+                      size: AppIcon.sm,
+                      color: palette.gold,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: textTheme.captionBold.copyWith(
+                          color: palette.gold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
 

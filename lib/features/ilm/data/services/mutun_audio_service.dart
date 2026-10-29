@@ -1,26 +1,23 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import '../../../../core/constants/app_policy.dart';
 import '../../../../core/services/audio_coordinator.dart';
 import '../catalogs/mutun_audio_catalog.dart';
+import 'mutun_audio_source_loader.dart';
 export '../catalogs/mutun_audio_catalog.dart'
-    show MutunReciter, MutunReciterDefaults, MutunRepeatMode;
+    show BookAudioChapter, BookAudioEdition, MatnAudioSource, MutunReciter, MutunReciterDefaults, MutunRepeatMode;
 
 class MutunAudioService {
   static final MutunAudioService _instance = MutunAudioService._internal();
   factory MutunAudioService() => _instance;
-
   MutunAudioService._internal() {
     _initAudioListener();
   }
 
+  final MutunAudioSourceLoader _loader = MutunAudioSourceLoader();
   AudioPlayer _player = AudioPlayer();
-  StreamSubscription? _playerStateSub;
-  StreamSubscription? _playbackEventSub;
-  StreamSubscription? _positionSub;
-  StreamSubscription? _durationSub;
+  StreamSubscription? _playerStateSub, _playbackEventSub, _positionSub, _durationSub, _currentIndexSub;
 
   void _ensurePlayerActive() {
     try {
@@ -32,44 +29,66 @@ class MutunAudioService {
 
   Future<void> _recreatePlayer() async {
     try {
-      _playerStateSub?.cancel();
-      _playbackEventSub?.cancel();
-      _positionSub?.cancel();
-      _durationSub?.cancel();
+      _cancelSubscriptions();
       await _player.dispose();
     } catch (_) {}
     _player = AudioPlayer();
     _initAudioListener();
   }
 
+  void _cancelSubscriptions() {
+    for (final s in [_playerStateSub, _playbackEventSub, _positionSub, _durationSub, _currentIndexSub]) {
+      s?.cancel();
+    }
+  }
+
   static const List<MutunReciter> defaultReciters = [
-    MutunReciterDefaults.sini, MutunReciterDefaults.fahad, MutunReciterDefaults.faqeeh,
-    MutunReciterDefaults.shaydzmi, MutunReciterDefaults.afasy,
+    MutunReciterDefaults.sini, MutunReciterDefaults.haliba, MutunReciterDefaults.shaydzmi,
+    MutunReciterDefaults.fahad, MutunReciterDefaults.suwaid, MutunReciterDefaults.afasy,
   ];
   static const List<MutunReciter> availableReciters = defaultReciters;
 
   MutunReciter _selectedReciter = MutunReciterDefaults.sini;
   MutunReciter get selectedReciter => _selectedReciter;
 
-  // Reactive state notifiers
   final ValueNotifier<String?> activeBookIdNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<int?> activeParagraphNotifier = ValueNotifier<int?>(null);
+  final ValueNotifier<int> activeChapterIndexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> isPlayingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<double> speedNotifier = ValueNotifier<double>(1.0);
-  final ValueNotifier<MutunRepeatMode> repeatModeNotifier = ValueNotifier<MutunRepeatMode>(MutunRepeatMode.none);
-  final ValueNotifier<MutunReciter> selectedReciterNotifier = ValueNotifier<MutunReciter>(MutunReciterDefaults.sini);
+  final ValueNotifier<MutunRepeatMode> repeatModeNotifier =
+      ValueNotifier<MutunRepeatMode>(MutunRepeatMode.none);
+  final ValueNotifier<MutunReciter> selectedReciterNotifier =
+      ValueNotifier<MutunReciter>(MutunReciterDefaults.sini);
   final ValueNotifier<Duration> positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier<Duration>(Duration.zero);
   final ValueNotifier<String?> playbackErrorNotifier = ValueNotifier<String?>(null);
 
   String? _currentAudioUrl;
   int _totalParagraphs = 1;
+  bool _isMultiChapterActive = false;
 
-  /// Returns the specific verified reciters available for a book.
-  List<MutunReciter> getAvailableRecitersForBook(String? bookId) {
-    return MutunAudioCatalog.getRecitersForBook(bookId);
+  List<MutunReciter> getAvailableRecitersForBook(String? bookId) =>
+      MutunAudioCatalog.getRecitersForBook(bookId);
+
+  MutunReciter effectiveReciterForBook(String? bookId) {
+    if (bookId == null) return _selectedReciter;
+    final available = MutunAudioCatalog.getRecitersForBook(bookId);
+    if (available.isEmpty) return _selectedReciter;
+    if (available.any((r) => r.id == _selectedReciter.id)) return _selectedReciter;
+    return available.first;
   }
+
+  MatnAudioSource? getSourceForBook(String? bookId, {String? reciterId}) {
+    if (bookId == null) return null;
+    final effectiveId = reciterId ?? effectiveReciterForBook(bookId).id;
+    return MutunAudioCatalog.getSource(bookId, reciterId: effectiveId);
+  }
+
+  List<BookAudioChapter> getChaptersForBook(String? bookId, {String? reciterId}) =>
+      getSourceForBook(bookId, reciterId: reciterId)?.chapters ??
+      const <BookAudioChapter>[];
 
   bool get hasAudio =>
       activeBookIdNotifier.value != null &&
@@ -77,10 +96,7 @@ class MutunAudioService {
 
   void _initAudioListener() {
     AudioCoordinator.onPauseMutun = pause;
-    _playerStateSub?.cancel();
-    _playbackEventSub?.cancel();
-    _positionSub?.cancel();
-    _durationSub?.cancel();
+    _cancelSubscriptions();
 
     _playerStateSub = _player.playerStateStream.listen((state) {
       final isPlaying = state.playing &&
@@ -89,7 +105,6 @@ class MutunAudioService {
       final isLoading = (state.processingState == ProcessingState.loading ||
               state.processingState == ProcessingState.buffering) &&
           !state.playing;
-
       if (isPlayingNotifier.value != isPlaying) isPlayingNotifier.value = isPlaying;
       if (isLoadingNotifier.value != isLoading) isLoadingNotifier.value = isLoading;
       if (state.processingState == ProcessingState.completed) _handleTrackCompletion();
@@ -101,81 +116,89 @@ class MutunAudioService {
       playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
     });
 
-    _playbackEventSub = _player.playbackEventStream.listen(
-      (event) {},
-      onError: (Object err) {
-        debugPrint('Audio playback error: $err');
-        final wasPlaying = isPlayingNotifier.value;
-        final bookId = activeBookIdNotifier.value;
-        final pos = positionNotifier.value;
-        final para = activeParagraphNotifier.value ?? 1;
-        _recreatePlayer();
-        if (wasPlaying && bookId != null) {
-          final audioUrl = _currentAudioUrl ??
-              MutunAudioCatalog.getAudioUrl(bookId, reciterId: _selectedReciter.id) ?? '';
-          if (audioUrl.isNotEmpty) {
-            playMatnAudio(
-              bookId: bookId,
-              audioUrl: audioUrl,
-              paragraphIndex: para,
-              totalParagraphs: _totalParagraphs,
-              initialPosition: pos > Duration.zero ? pos : null,
-              isFallbackAttempt: true,
-            );
-            return;
-          }
+    _playbackEventSub = _player.playbackEventStream.listen((_) {}, onError: (Object err) {
+      debugPrint('Audio playback error: $err');
+      final wasPlaying = isPlayingNotifier.value;
+      final bookId = activeBookIdNotifier.value;
+      final pos = positionNotifier.value;
+      final para = activeParagraphNotifier.value ?? 1;
+      _recreatePlayer();
+      if (wasPlaying && bookId != null && !_isMultiChapterActive) {
+        final audioUrl = _currentAudioUrl ?? _urlForBook(bookId);
+        if (audioUrl.isNotEmpty) {
+          playMatnAudio(
+            bookId: bookId,
+            audioUrl: audioUrl,
+            paragraphIndex: para,
+            totalParagraphs: _totalParagraphs,
+            initialPosition: pos > Duration.zero ? pos : null,
+            isFallbackAttempt: true,
+          );
+          return;
         }
-        isLoadingNotifier.value = false;
-        isPlayingNotifier.value = false;
-        playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
-      },
-    );
+      }
+      isLoadingNotifier.value = false;
+      isPlayingNotifier.value = false;
+      playbackErrorNotifier.value = 'تعذر تشغيل الصوت';
+    });
 
     _positionSub = _player.positionStream.listen((pos) {
       positionNotifier.value = pos;
       _updateActiveParagraph(pos);
     });
-
     _durationSub = _player.durationStream.listen((dur) {
       if (dur != null) {
         durationNotifier.value = dur;
         _updateActiveParagraph(_player.position);
       }
     });
+    _currentIndexSub = _player.currentIndexStream.listen((idx) {
+      if (idx != null && activeChapterIndexNotifier.value != idx) {
+        activeChapterIndexNotifier.value = idx;
+        final bookId = activeBookIdNotifier.value;
+        if (bookId != null && _isMultiChapterActive) {
+          _loader.persistBookChapter(bookId, _selectedReciter.id, idx);
+        }
+      }
+    });
+  }
+
+  Future<void> syncReciterForBook(String bookId) async {
+    if ((isPlayingNotifier.value || isLoadingNotifier.value) &&
+        activeBookIdNotifier.value != null &&
+        activeBookIdNotifier.value != bookId) {
+      return;
+    }
+    final available = MutunAudioCatalog.getRecitersForBook(bookId);
+    if (available.isEmpty) return;
+    var chosen = available.any((r) => r.id == _selectedReciter.id)
+        ? _selectedReciter
+        : available.first;
+    final savedId = await _loader.loadSavedReciterId(bookId);
+    if (savedId != null) {
+      final match = available.where((r) => r.id == savedId);
+      if (match.isNotEmpty) chosen = match.first;
+    }
+    if (_selectedReciter.id != chosen.id) {
+      _selectedReciter = chosen;
+      selectedReciterNotifier.value = chosen;
+    }
+    if (activeBookIdNotifier.value != bookId) {
+      final chapters = getChaptersForBook(bookId, reciterId: chosen.id);
+      activeChapterIndexNotifier.value =
+          await _loader.loadSavedChapter(bookId, chosen.id, chapters.length);
+    }
   }
 
   void _updateActiveParagraph(Duration pos) {
-    if (isLoadingNotifier.value) return;
-    final bookId = activeBookIdNotifier.value;
-    final timestamps = bookId != null
-        ? MutunAudioCatalog.getParagraphTimestamps(
-            bookId,
-            reciterId: _selectedReciter.id,
-          )
-        : null;
-
-    int? activeIndex;
-    if (timestamps != null && timestamps.isNotEmpty) {
-      final posMs = pos.inMilliseconds;
-      int idx = 1;
-      for (int i = 0; i < timestamps.length; i++) {
-        if (posMs >= timestamps[i]) {
-          idx = i + 1;
-        } else {
-          break;
-        }
-      }
-      final maxP = _totalParagraphs > 1 ? _totalParagraphs : timestamps.length;
-      activeIndex = idx.clamp(1, maxP);
-    } else {
-      final dur = durationNotifier.value;
-      if (dur > Duration.zero && _totalParagraphs > 1) {
-        final ratio = pos.inMilliseconds / dur.inMilliseconds;
-        final estimatedPara = (ratio * _totalParagraphs).floor() + 1;
-        activeIndex = estimatedPara.clamp(1, _totalParagraphs);
-      }
-    }
-
+    if (isLoadingNotifier.value || _isMultiChapterActive) return;
+    final activeIndex = _loader.computeActiveParagraph(
+      bookId: activeBookIdNotifier.value,
+      reciterId: _selectedReciter.id,
+      pos: pos,
+      duration: durationNotifier.value,
+      totalParagraphs: _totalParagraphs,
+    );
     if (activeIndex != null && activeParagraphNotifier.value != activeIndex) {
       activeParagraphNotifier.value = activeIndex;
     }
@@ -183,83 +206,104 @@ class MutunAudioService {
 
   void _handleTrackCompletion() {
     final mode = repeatModeNotifier.value;
+    if (_isMultiChapterActive) {
+      mode == MutunRepeatMode.entireMatn ? seekToChapter(0) : stop();
+      return;
+    }
     if (mode == MutunRepeatMode.singleParagraph) {
       _player.seek(Duration.zero);
       _player.play();
+    } else if ((activeParagraphNotifier.value ?? 1) < _totalParagraphs) {
+      nextParagraph();
     } else {
-      final currentPara = activeParagraphNotifier.value ?? 1;
-      if (currentPara < _totalParagraphs) {
-        nextParagraph();
-      } else if (mode == MutunRepeatMode.entireMatn) {
-        seekToParagraph(1);
-      } else {
-        stop();
-      }
+      mode == MutunRepeatMode.entireMatn ? seekToParagraph(1) : stop();
     }
   }
 
-  void setSelectedReciter(MutunReciter reciter) {
-    if (_selectedReciter.id != reciter.id) {
-      _selectedReciter = reciter;
-      selectedReciterNotifier.value = reciter;
-      final bookId = activeBookIdNotifier.value;
-      if (bookId != null) {
-        final newUrl =
-            MutunAudioCatalog.getAudioUrl(bookId, reciterId: reciter.id) ?? '';
-        final shouldPlay = isPlayingNotifier.value || isLoadingNotifier.value;
-        if (newUrl.isNotEmpty && shouldPlay) {
-          playMatnAudio(
-            bookId: bookId,
-            audioUrl: newUrl,
-            paragraphIndex: activeParagraphNotifier.value ?? 1,
-            totalParagraphs: _totalParagraphs,
-          );
-        }
+  void setSelectedReciter(MutunReciter reciter, {String? forBookId}) {
+    final targetBookId = forBookId ?? activeBookIdNotifier.value;
+    if (_selectedReciter.id == reciter.id) return;
+    _selectedReciter = reciter;
+    selectedReciterNotifier.value = reciter;
+    activeChapterIndexNotifier.value = 0;
+    if (targetBookId != null) {
+      _loader.persistReciterChoice(targetBookId, reciter.id);
+      final chapters = getChaptersForBook(targetBookId, reciterId: reciter.id);
+      if (chapters.length > 1) {
+        _loader.loadSavedChapter(targetBookId, reciter.id, chapters.length).then((idx) {
+          if (_selectedReciter.id == reciter.id && !isPlayingNotifier.value) {
+            activeChapterIndexNotifier.value = idx;
+          }
+        });
+      }
+    }
+    final activeBook = activeBookIdNotifier.value;
+    if (activeBook != null &&
+        (forBookId == null || forBookId == activeBook) &&
+        (isPlayingNotifier.value || isLoadingNotifier.value)) {
+      final newUrl = MutunAudioCatalog.getAudioUrl(activeBook, reciterId: reciter.id) ?? '';
+      if (newUrl.isNotEmpty) {
+        playMatnAudio(
+          bookId: activeBook,
+          audioUrl: newUrl,
+          paragraphIndex: activeParagraphNotifier.value ?? 1,
+          totalParagraphs: _totalParagraphs,
+        );
       }
     }
   }
 
   void setRepeatMode(MutunRepeatMode mode) {
     repeatModeNotifier.value = mode;
+    _applyLoopMode(mode);
   }
 
   void toggleRepeatMode() {
-    const modes = [MutunRepeatMode.none, MutunRepeatMode.singleParagraph, MutunRepeatMode.entireMatn];
-    final idx = modes.indexOf(repeatModeNotifier.value);
-    repeatModeNotifier.value = modes[(idx + 1) % modes.length];
+    const m = [MutunRepeatMode.none, MutunRepeatMode.singleParagraph, MutunRepeatMode.entireMatn];
+    setRepeatMode(m[(m.indexOf(repeatModeNotifier.value) + 1) % m.length]);
+  }
+
+  void _applyLoopMode(MutunRepeatMode mode) {
+    if (!_isMultiChapterActive) return;
+    try {
+      _player.setLoopMode(switch (mode) {
+        MutunRepeatMode.none => LoopMode.off,
+        MutunRepeatMode.singleParagraph => LoopMode.one,
+        MutunRepeatMode.entireMatn => LoopMode.all,
+      });
+    } catch (_) {}
   }
 
   Future<void> setSpeed(double speed) async {
     speedNotifier.value = speed;
-    await _player.setSpeed(speed);
+    try {
+      await _player.setSpeed(speed);
+    } catch (_) {}
   }
 
   void cycleSpeed() {
-    const speeds = [0.75, 1.0, 1.25, 1.5, 2.0];
-    final idx = speeds.indexOf(speedNotifier.value);
-    final next = speeds[(idx + 1) % speeds.length];
-    setSpeed(next);
+    const s = [0.75, 1.0, 1.25, 1.5, 2.0];
+    setSpeed(s[(s.indexOf(speedNotifier.value) + 1) % s.length]);
   }
-
 
   Future<void> playMatnAudio({
     required String bookId,
     required String audioUrl,
     int paragraphIndex = 1,
     int totalParagraphs = 1,
+    int? initialChapterIndex,
     Duration? initialPosition,
     bool isFallbackAttempt = false,
   }) async {
     if (audioUrl.isEmpty) {
       isLoadingNotifier.value = false;
       isPlayingNotifier.value = false;
-      playbackErrorNotifier.value = 'لا يتوفر تسجيل صوتي لهذا المتن';
+      playbackErrorNotifier.value = 'لا يتوفر تسجيل صوتي لهذا الكتاب';
       return;
     }
 
     activeBookIdNotifier.value = bookId;
     activeParagraphNotifier.value = paragraphIndex;
-    _currentAudioUrl = audioUrl;
     final resolvedTotal = totalParagraphs > 1
         ? totalParagraphs
         : MutunAudioCatalog.getTotalParagraphs(bookId, reciterId: _selectedReciter.id);
@@ -267,85 +311,54 @@ class MutunAudioService {
     isLoadingNotifier.value = true;
     playbackErrorNotifier.value = null;
 
-    final entry = MutunAudioCatalog.getEntry(bookId);
-    final mediaTitle = entry?.title ?? 'متن طالب العلم';
-
-    // Acquire audio focus: automatically pauses Quran recitation and radio
     await AudioCoordinator.acquireFocus(AudioStreamType.mutun);
-
-    // Stop and reset previous playback cleanly
     try {
       await _player.stop();
     } catch (_) {
       await _recreatePlayer();
     }
 
-    bool loaded = false;
-    Duration? loadedDuration;
+    final res = await _loader.loadIntoPlayer(
+      player: _player,
+      bookId: bookId,
+      requestedUrl: audioUrl,
+      reciter: _selectedReciter,
+      initialChapterIndex: initialChapterIndex,
+      initialPosition: initialPosition,
+      isFallbackAttempt: isFallbackAttempt,
+    );
 
-    // Primary Attempt: setAudioSource with background MediaItem and 8s timeout
-    try {
-      final mediaItem = MediaItem(
-        id: '${_selectedReciter.id}_$bookId',
-        title: mediaTitle,
-        artist: _selectedReciter.name,
-        album: 'متون طالب العلم',
-        displayTitle: mediaTitle,
-        displaySubtitle: _selectedReciter.name,
-        displayDescription: 'متون طالب العلم - تحقيق الشيخ د. عبدالمحسن القاسم',
-      );
-      final audioSource = AudioSource.uri(Uri.parse(audioUrl), tag: mediaItem);
-      loadedDuration = await _player
-          .setAudioSource(audioSource, initialPosition: initialPosition)
-          .timeout(AppPolicy.networkRetry);
-      loaded = true;
-    } catch (sourceErr) {
-      debugPrint('AudioSource.uri failed ($audioUrl): $sourceErr, trying direct setUrl...');
-      try {
-        await _player.stop();
-        loadedDuration = await _player
-            .setUrl(audioUrl, initialPosition: initialPosition)
-            .timeout(AppPolicy.networkRetry);
-        loaded = true;
-      } catch (urlErr) {
-        debugPrint('Direct setUrl failed ($audioUrl): $urlErr');
-        loaded = false;
-      }
+    _currentAudioUrl = res.effectiveUrl;
+    _isMultiChapterActive = res.isMultiChapter;
+    if (res.isMultiChapter) {
+      activeChapterIndexNotifier.value = res.startChapter;
+      _applyLoopMode(repeatModeNotifier.value);
     }
 
-    if (loaded) {
+    if (res.loaded) {
       try {
-        if (loadedDuration != null) {
-          durationNotifier.value = loadedDuration;
-        }
-
+        if (res.duration != null) durationNotifier.value = res.duration!;
         await _player.setSpeed(speedNotifier.value);
         await _player.play();
         isLoadingNotifier.value = false;
         isPlayingNotifier.value = true;
         return;
       } catch (playErr) {
-        debugPrint('Player play error ($audioUrl): $playErr');
+        debugPrint('Player play error (${res.effectiveUrl}): $playErr');
       }
     }
 
-    // If primary URL completely failed and we haven't tried fallback yet
-    if (!isFallbackAttempt) {
+    if (!res.usedFallback) {
       final fallbackUrl =
           MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: _selectedReciter.id) ??
-          MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
-      if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != audioUrl) {
-        debugPrint('Retrying with backup audio stream ($fallbackUrl)...');
+              MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
+      if (fallbackUrl != null && fallbackUrl.isNotEmpty && fallbackUrl != res.effectiveUrl) {
         await _recreatePlayer();
-        await playMatnAudio(
-          bookId: bookId,
-          audioUrl: fallbackUrl,
-          paragraphIndex: paragraphIndex,
-          totalParagraphs: totalParagraphs,
-          initialPosition: initialPosition,
+        return playMatnAudio(
+          bookId: bookId, audioUrl: fallbackUrl, paragraphIndex: paragraphIndex,
+          totalParagraphs: totalParagraphs, initialPosition: initialPosition,
           isFallbackAttempt: true,
         );
-        return;
       }
     }
 
@@ -354,52 +367,80 @@ class MutunAudioService {
     isPlayingNotifier.value = false;
   }
 
+  Future<void> seekToChapter(int chapterIndex, {String? bookId}) async {
+    final targetBookId = bookId ?? activeBookIdNotifier.value;
+    if (targetBookId == null) return;
+    await syncReciterForBook(targetBookId);
+    final chapters = getChaptersForBook(targetBookId, reciterId: _selectedReciter.id);
+    if (chapters.isEmpty) return;
+    final clamped = chapterIndex.clamp(0, chapters.length - 1);
+    activeChapterIndexNotifier.value = clamped;
+    _loader.persistBookChapter(targetBookId, _selectedReciter.id, clamped);
+
+    final sameActivePlaylist = activeBookIdNotifier.value == targetBookId &&
+        _isMultiChapterActive &&
+        _player.audioSource != null &&
+        _player.processingState != ProcessingState.idle;
+    if (sameActivePlaylist) {
+      try {
+        await _player.seek(Duration.zero, index: clamped);
+        if (!_player.playing) await _player.play();
+        return;
+      } catch (_) {}
+    }
+
+    final url =
+        MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ??
+            chapters[clamped].audioUrl;
+    await playMatnAudio(
+      bookId: targetBookId,
+      audioUrl: url,
+      initialChapterIndex: clamped,
+    );
+  }
+
+  Future<void> nextChapter({String? bookId}) async {
+    final id = bookId ?? activeBookIdNotifier.value;
+    final chapters = getChaptersForBook(id);
+    if (chapters.length > 1 && activeChapterIndexNotifier.value + 1 < chapters.length) {
+      await seekToChapter(activeChapterIndexNotifier.value + 1, bookId: id);
+    }
+  }
+
+  Future<void> previousChapter({String? bookId}) async {
+    final id = bookId ?? activeBookIdNotifier.value;
+    final chapters = getChaptersForBook(id);
+    if (chapters.length > 1 && activeChapterIndexNotifier.value > 0) {
+      await seekToChapter(activeChapterIndexNotifier.value - 1, bookId: id);
+    }
+  }
+
   Future<void> seekToParagraph(int index, {String? bookId}) async {
     final targetBookId = bookId ?? activeBookIdNotifier.value;
     activeParagraphNotifier.value = index;
-
-    final timestamps = targetBookId != null
-        ? MutunAudioCatalog.getParagraphTimestamps(
-            targetBookId,
-            reciterId: _selectedReciter.id,
-          )
-        : null;
-
-    int targetMs = 0;
-    if (timestamps != null && index >= 1 && index <= timestamps.length) {
-      targetMs = timestamps[index - 1];
-    } else {
-      final dur = durationNotifier.value;
-      if (dur > Duration.zero && _totalParagraphs > 1) {
-        targetMs =
-            ((index - 1) / _totalParagraphs * dur.inMilliseconds).round();
-      }
-    }
-
+    final targetMs = _loader.resolveParagraphTargetMs(
+      bookId: targetBookId,
+      reciterId: _selectedReciter.id,
+      index: index,
+      duration: durationNotifier.value,
+      totalParagraphs: _totalParagraphs,
+    );
     final isNotReady = _player.audioSource == null ||
         _player.processingState == ProcessingState.idle ||
         _currentAudioUrl == null ||
         (targetBookId != null && activeBookIdNotifier.value != targetBookId);
 
     if (targetBookId != null && isNotReady) {
-      final audioUrl = MutunAudioCatalog.getAudioUrl(
-            targetBookId,
-            reciterId: _selectedReciter.id,
-          ) ??
-          MutunAudioCatalog.getAudioUrl(
-            targetBookId,
-            reciterId: 'sini',
-          ) ??
-          '';
-      final totalParas = MutunAudioCatalog.getTotalParagraphs(
-        targetBookId,
-        reciterId: _selectedReciter.id,
-      );
+      final audioUrl =
+          MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ??
+              MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: 'sini') ??
+              '';
       await playMatnAudio(
         bookId: targetBookId,
         audioUrl: audioUrl,
         paragraphIndex: index,
-        totalParagraphs: totalParas,
+        totalParagraphs:
+            MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id),
         initialPosition: targetMs > 0 ? _audioPosition(targetMs) : null,
       );
       return;
@@ -407,13 +448,9 @@ class MutunAudioService {
 
     try {
       await _player.seek(_audioPosition(targetMs));
-      if (!_player.playing) {
-        await _player.play();
-      }
+      if (!_player.playing) await _player.play();
     } catch (_) {
-      if (targetBookId != null) {
-        await togglePlayPause(bookId: targetBookId);
-      }
+      if (targetBookId != null) await togglePlayPause(bookId: targetBookId);
     }
   }
 
@@ -428,46 +465,49 @@ class MutunAudioService {
   Future<void> seekForward5s() async {
     final dur = durationNotifier.value;
     final target = _player.position + AppPolicy.seekStep;
-    final clamped = dur > Duration.zero && target > dur ? dur : target;
-    await _player.seek(clamped);
-    _updateActiveParagraph(clamped);
+    await seek(dur > Duration.zero && target > dur ? dur : target);
   }
 
   Future<void> seekBackward5s() async {
     final target = _player.position - AppPolicy.seekStep;
-    final clamped = target < Duration.zero ? Duration.zero : target;
-    await _player.seek(clamped);
-    _updateActiveParagraph(clamped);
+    await seek(target < Duration.zero ? Duration.zero : target);
   }
 
   void clearActiveParagraph() => activeParagraphNotifier.value = null;
-
   void nextParagraph() {
-    final current = activeParagraphNotifier.value ?? 1;
-    if (current < _totalParagraphs) seekToParagraph(current + 1);
+    if ((activeParagraphNotifier.value ?? 1) < _totalParagraphs) {
+      seekToParagraph((activeParagraphNotifier.value ?? 1) + 1);
+    }
   }
 
   void previousParagraph() {
-    final current = activeParagraphNotifier.value ?? 1;
-    if (current > 1) seekToParagraph(current - 1);
+    if ((activeParagraphNotifier.value ?? 1) > 1) {
+      seekToParagraph((activeParagraphNotifier.value ?? 1) - 1);
+    }
   }
+
+  String _urlForBook(String bookId) =>
+      MutunAudioCatalog.getAudioUrl(bookId, reciterId: _selectedReciter.id) ??
+      MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini') ??
+      '';
 
   Future<void> togglePlayPause({String? bookId}) async {
     try {
       _ensurePlayerActive();
       final targetBookId = bookId ?? activeBookIdNotifier.value;
-
       if (targetBookId == null) {
         isLoadingNotifier.value = false;
         isPlayingNotifier.value = false;
         return;
       }
 
-      final availableReciters = MutunAudioCatalog.getRecitersForBook(targetBookId);
-      final hasSelected = availableReciters.any((r) => r.id == _selectedReciter.id);
-      if (!hasSelected && availableReciters.isNotEmpty) {
-        _selectedReciter = availableReciters.first;
-        selectedReciterNotifier.value = _selectedReciter;
+      final available = MutunAudioCatalog.getRecitersForBook(targetBookId);
+      if (available.isNotEmpty && !available.any((r) => r.id == _selectedReciter.id)) {
+        await syncReciterForBook(targetBookId);
+        if (!available.any((r) => r.id == _selectedReciter.id)) {
+          _selectedReciter = available.first;
+          selectedReciterNotifier.value = _selectedReciter;
+        }
       }
 
       final isDifferentBook = activeBookIdNotifier.value != targetBookId;
@@ -476,20 +516,16 @@ class MutunAudioService {
           _player.audioSource == null;
 
       if (isDifferentBook || isStaleOrIdle || _currentAudioUrl == null) {
-        final audioUrl = MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ??
-            MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: 'sini') ?? '';
-        final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id);
-        final resumePara = !isDifferentBook ? (activeParagraphNotifier.value ?? 1) : 1;
-        final resumePos = !isDifferentBook && positionNotifier.value > Duration.zero
-            ? positionNotifier.value
-            : null;
-
+        if (isDifferentBook) await syncReciterForBook(targetBookId);
         await playMatnAudio(
           bookId: targetBookId,
-          audioUrl: audioUrl,
-          paragraphIndex: resumePara,
-          totalParagraphs: totalParas,
-          initialPosition: resumePos,
+          audioUrl: _urlForBook(targetBookId),
+          paragraphIndex: !isDifferentBook ? (activeParagraphNotifier.value ?? 1) : 1,
+          totalParagraphs:
+              MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id),
+          initialPosition: !isDifferentBook && positionNotifier.value > Duration.zero
+              ? positionNotifier.value
+              : null,
         );
         return;
       }
@@ -501,25 +537,19 @@ class MutunAudioService {
         return;
       }
 
-      if (_player.processingState == ProcessingState.completed) {
-        await _player.seek(Duration.zero);
-      }
+      if (_player.processingState == ProcessingState.completed) await _player.seek(Duration.zero);
 
       try {
         await _player.play();
         isPlayingNotifier.value = true;
         isLoadingNotifier.value = false;
-      } catch (resumeErr) {
-        debugPrint('Resume failed ($resumeErr), re-streaming...');
+      } catch (_) {
         await _recreatePlayer();
-        final audioUrl = _currentAudioUrl ??
-            MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ?? '';
-        final totalParas = MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id);
         await playMatnAudio(
           bookId: targetBookId,
-          audioUrl: audioUrl,
+          audioUrl: _currentAudioUrl ?? _urlForBook(targetBookId),
           paragraphIndex: activeParagraphNotifier.value ?? 1,
-          totalParagraphs: totalParas,
+          totalParagraphs: _totalParagraphs,
           initialPosition: positionNotifier.value > Duration.zero ? positionNotifier.value : null,
         );
       }
@@ -563,9 +593,7 @@ class MutunAudioService {
   }
 
   void dispose() {
-    if (AudioCoordinator.onPauseMutun == pause) {
-      AudioCoordinator.onPauseMutun = null;
-    }
+    if (AudioCoordinator.onPauseMutun == pause) AudioCoordinator.onPauseMutun = null;
     pause();
   }
 }

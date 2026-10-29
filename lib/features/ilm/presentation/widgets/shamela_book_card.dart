@@ -4,6 +4,7 @@ import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 
@@ -68,6 +69,7 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
     final textTheme = context.text;
     final book = widget.book;
     final shuruh = ShamelaService.getShuruh(book.id);
+    final hasAudio = MutunAudioCatalog.hasShamelaAudio(book.id);
     final parentBook = book.parentBookId != null
         ? ShamelaService.getParentBook(book.parentBookId!)
         : null;
@@ -143,28 +145,64 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                                 ),
                                 child: Text(
                                   'محفوظ',
-                                  style: textTheme.caption.copyWith(
+                                  style: textTheme.captionBold.copyWith(
                                     color: palette.onPrimarySoft,
-                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
                             ],
-                            const Spacer(),
+                            if (hasAudio) ...[
+                              const SizedBox(width: AppSpace.xs),
+                              Container(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.xxs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: palette.goldSoft,
+                                  borderRadius: AppRadius.pillRadius,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.graphic_eq_rounded,
+                                      size: AppIcon.sm,
+                                      color: palette.onPrimarySoft,
+                                    ),
+                                    const SizedBox(width: AppSpace.xxs),
+                                    Text(
+                                      'صوتي',
+                                      style: textTheme.captionBold.copyWith(
+                                        color: palette.onPrimarySoft,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(width: AppSpace.xs),
                             // Category Pill
-                            Container(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.sm,
-                                vertical: AppSpace.xxs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: palette.surfaceMuted,
-                                borderRadius: AppRadius.pillRadius,
-                              ),
-                              child: Text(
-                                book.category,
-                                style: textTheme.caption.copyWith(
-                                  color: palette.textMuted,
+                            Expanded(
+                              child: Align(
+                                alignment: AlignmentDirectional.centerEnd,
+                                child: Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.xxs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: palette.surfaceMuted,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    book.category,
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.textMuted,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
                             ),

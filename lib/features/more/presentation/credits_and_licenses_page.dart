@@ -133,6 +133,17 @@ class CreditsAndLicensesPage extends StatelessWidget {
               iconColor: palette.success,
             ),
 
+            const SizedBox(height: AppSpace.sm),
+
+            _SourceCard(
+              title: 'تسجيلات المتون العلمية وخزانة التراث الصوتية',
+              subtitle: 'مشروع متون طالب العلم، مشروع بوح، والمجموعات العلمية المفتوحة',
+              description:
+                  'قراءات المتون والكتب التراثية بأصوات نخبة من القراء والعلماء عبر المستودعات الوقفية المفتوحة (Archive.org) ومشروع بوح للكتب الصوتية (د. راشد بن فهد الحليبة)، وبأصوات د. عبد العزيز الصيني، رشيد الشيظمي، طه الفهد، د. أيمن رشدي سويد، مشاري العفاسي، سعد الغامدي، أحمد النفيس، د. سليمان العيوني، ومؤسسة خزائن الرحمن العلمية.',
+              icon: Icons.graphic_eq_rounded,
+              iconColor: palette.gold,
+            ),
+
             const SizedBox(height: AppSpace.lg),
 
             // ── 3. Open Source Licenses ──────────────────────────────────────

@@ -1,5 +1,43 @@
 # UI Progress Log
 
+## Round 22 — Multi-Reciter & Multi-Chapter Ilm Mutun & Shamela Heritage Audio Expansion (29 October 2026)
+- **Scope & Context:**
+  - Executed a comprehensive multi-reciter and multi-chapter audio expansion across both **متون طالب العلم** (syllabus & advanced mutun) and **خزانة التراث الإسلامي** (`ShamelaReaderPage`), split first in Commit 1 (`ba1a2a6`) per Rule 8 so every Dart file stays strictly <= 600 lines:
+    1. **21 Verified Scholarly Reciters & Narrators (`MutunReciterDefaults`):** Added Dr. Rashid bin Fahd Al-Haliba (all 36 studio CloudFront audiobooks + Anchor HTTPS fallbacks in `HalibaAudiobooksCatalog`), Abu Ahmad Rashid Al-Shaydhmi, Taha Al-Fahd, Dr. Abdulaziz Al-Sini, Dr. Ayman Suwayd, Saad Al-Ghamdi, Mishary Al-Afasy, Ahmad Al-Nafees, Adel Al-Sunaid, Salah Al-Hashim, Omar Al-Wazzan, Khalid Al-Shulaimi, Sulaiman Al-Shuwaiehi, Dr. Sulaiman Al-Uyouni, Amr Al-Bisati, Hamad Al-Duraihim, Khaza'in Al-Rahman Foundation, Dr. Abdurrazzaq Al-Badr (HTTPS Archive.org mirrors), Al-Sunnah Al-Maqru'ah Project, Abdulghani Al-Faqih, and Samir Bahour.
+    2. **Multi-Reciter Syllabus Mutun & 40 Audio-Enabled Shamela Heritage Books:** Expanded 21+ syllabus/advanced mutun to 2–6 reciters per book (added `bk_jazariyyah` with 4 reciters and multi-chapter playlists for `bk_zad_mustaqni` [30 ch], `bk_bulugh_maram` [20 ch], `bk_kitab_tawheed` [67 ch], `bk_alfiyyah_ibn_malik` [85 ch], `bk_shatibiyyah` [78 ch]), and unlocked audio across **40 Shamela heritage books** (`16` syllabus-mapped + `24` dedicated heritage entries incl. `42` Tafsir Al-Sa'di [114 Surahs], `12014` Riyad Al-Salihin [372 Babs], `735` Sahih Al-Bukhari [94 Kitabs], `1679` Al-Rawd Al-Murbi' [103 Babs], `21713` Zad Al-Ma'ad [80 parts], `6848` Al-Kaba'ir [78 parts], `171` Sahih Al-Targhib [74 parts + Haliba], `98087` Mukhtasar Minhaj Al-Qasidin [32 parts], `9820` Al-Rahiq Al-Makhtum [22 majalis], `158` Al-Da' wa Al-Dawa' [12 majalis + Haliba], `20854` Ma'arij Al-Qabul / Sullam Al-Wusul [3 reciters incl. Khalid Al-Shulaimi 16 ch]).
+    3. **Lazy Multi-Chapter `ConcatenatingAudioSource` Engine & Per-Book Persistence:** Extracted `MutunAudioSourceLoader` (`258` lines) and upgraded `MutunAudioService` (`599` lines) with `ConcatenatingAudioSource(useLazyPreparation: true)`, `activeChapterIndexNotifier`, `seekToChapter` / `nextChapter` / `previousChapter`, per-book reciter & chapter `SharedPreferences` persistence (`syncReciterForBook`), and `0ms` TLS-untrusted host failover (`_untrustedTlsHosts`) for `files.a-alqasim.com` primary URLs.
+    4. **Rich Audio HUD, Picker Sheets, Shamela Reader Wiring & Card Badges:** Built `BookReciterPickerSheet` and searchable `BookAudioChaptersSheet` (`book_audio_sheets.dart`, `429` lines), upgraded `MutunAudioPlayerHud` (`569` lines, zero overflow at `1.0x`/`1.5x`/`2.0x` on `360x800`), wired audio playback into `ShamelaReaderPage` (`579` lines), updated `IlmMutnCard` (`318` lines) with dynamic primary reciter + `(+N قرّاء)` badge, added `صوتي` `goldSoft` badge on `ShamelaBookCard` (`415` lines), and documented Archive.org & `مشروع بوح` credits in `CreditsAndLicensesPage` (`382` lines).
+- **Files Modified / Created across Stage R22 (20 files total across 2 commits; all Dart files <= 599 lines):**
+  - `lib/features/ilm/data/models/book_audio_models.dart` (163 lines)
+  - `lib/features/ilm/data/catalogs/mutun_audio_catalog.dart` (124 lines)
+  - `lib/features/ilm/data/catalogs/audio/ilm_audio_reciters.dart` (155 lines)
+  - `lib/features/ilm/data/catalogs/audio/haliba_audiobooks_catalog.dart` (created, 492 lines)
+  - `lib/features/ilm/data/catalogs/audio/mutun_advanced_audio_entries.dart` (created, 259 lines)
+  - `lib/features/ilm/data/catalogs/audio/mutun_syllabus_audio_entries.dart` (509 lines)
+  - `lib/features/ilm/data/catalogs/audio/mutun_paragraphs_part1.dart` (created in Commit 1, 315 lines)
+  - `lib/features/ilm/data/catalogs/audio/mutun_paragraphs_part2.dart` (created in Commit 1, 369 lines)
+  - `lib/features/ilm/data/catalogs/audio/turath_books_audio_entries.dart` (created, 494 lines)
+  - `lib/features/ilm/data/services/mutun_audio_service.dart` (599 lines)
+  - `lib/features/ilm/data/services/mutun_audio_source_loader.dart` (created, 258 lines)
+  - `lib/features/ilm/presentation/widgets/book_audio_sheets.dart` (created, 429 lines)
+  - `lib/features/ilm/presentation/widgets/mutun_audio_player_hud.dart` (569 lines)
+  - `lib/features/ilm/presentation/pages/shamela_reader_page.dart` (579 lines)
+  - `lib/features/ilm/presentation/widgets/ilm_mutn_card.dart` (318 lines)
+  - `lib/features/ilm/presentation/widgets/shamela_book_card.dart` (415 lines)
+  - `lib/features/more/presentation/credits_and_licenses_page.dart` (382 lines)
+  - `tool/verify_ilm_audio_urls.py` (created, 170 lines)
+  - `test/mutun_audio_catalog_ui_test.dart` (401 lines)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `flutter analyze --no-pub`: 0 issues found (5.3s).
+  - `python tool/ui_lint_v2.py --strict`: OK (0 FAILs, 0 WARNs, 7 allow markers / cap 10).
+  - `python tool/contrast.py`: All pairs AA/AAA (4.61:1 to 18.59:1).
+  - `python tool/verify_ilm_audio_urls.py`: 158/158 unique HTTPS CDN URLs returned HTTP 200/206 across 169 book-reciter sources.
+  - Focused Ilm/Audio/Credits/Heritage/Golden suites (10 test files): 87/87 passed (incl. 1.0x/1.5x/2.0x 360x800 RTL scaling tests).
+  - `flutter build apk --debug --no-pub`: Built `build\app\outputs\flutter-apk\app-debug.apk` (49.6s).
+- **Open issues:**
+  - None in R22 scope. Full-repo parallel `flutter test --no-pub` passed 719 tests with 10 pre-existing unrelated failures outside Ilm/R22 scope (`home_golden_test` date drift, `splash_golden_test`, `shamela_page_content` golden drift, `quran_audio_frame_merger_test` expecting 10 vs 32 Quran reciters, `quran_audio_lifecycle_test` missing `path_provider` mock, and `code_acceptance_suite_test` Journey 7 30s parallel timeout).
+
 ## Round 21 — Onboarding Header Bar & Two-Tone Illuminated Manuscript Hero Overhaul (29 October 2026)
 - **Scope & Context:**
   - Elevated the UI/UX of `OnboardingPage` (`lib/features/onboarding/presentation/onboarding_page.dart`, 381 lines) and extracted `OnboardingHeroHeaderCard` (`lib/features/onboarding/presentation/widgets/onboarding_hero_header_card.dart`, 284 lines) across all 3 onboarding pages strictly within the visual layer (0 Arabic strings modified, both files <= 600 lines per Rule 8):
