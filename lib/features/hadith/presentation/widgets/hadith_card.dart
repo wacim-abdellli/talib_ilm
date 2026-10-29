@@ -13,11 +13,13 @@ import '../../data/models/hadith_models.dart';
 class HadithCard extends StatefulWidget {
   final GradedHadith hadith;
   final bool initiallyExpanded;
+  final double fontScale;
 
   const HadithCard({
     super.key,
     required this.hadith,
     this.initiallyExpanded = false,
+    this.fontScale = 1.0,
   });
 
   @override
@@ -208,6 +210,7 @@ class _HadithCardState extends State<HadithCard> {
                 fontFamily: AppTextStyles.amiri,
                 height: 1.85,
               ),
+              textScaler: TextScaler.linear(widget.fontScale),
               textAlign: TextAlign.justify,
             ),
           ),

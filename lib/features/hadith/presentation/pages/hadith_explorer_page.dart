@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/widgets/islamic_typography_sheet.dart';
 import 'package:talib_ilm/shared/widgets/app_back_button.dart';
 import '../widgets/hadith_card.dart';
 import '../../data/models/hadith_models.dart';
@@ -36,10 +37,14 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
   List<String> _categories = ['الكل'];
   String _selectedCategory = 'الكل';
   bool _isLoading = true;
+  double _fontScale = 1.0;
 
   @override
   void initState() {
     super.initState();
+    IslamicTypographySheet.loadSavedScale(IslamicTypographySheet.hadithPrefKey).then((s) {
+      if (mounted) setState(() => _fontScale = s);
+    });
     if (widget.initialSearchQuery != null &&
         widget.initialSearchQuery!.isNotEmpty) {
       _searchController.text = widget.initialSearchQuery!;
@@ -249,6 +254,17 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     );
   }
 
+  void _openTypographySheet() {
+    IslamicTypographySheet.show(
+      context: context,
+      currentScale: _fontScale,
+      prefKey: IslamicTypographySheet.hadithPrefKey,
+      titleText: 'حجم خط الأحاديث النبوية',
+      onFontScaleChanged: (scale) => setState(() => _fontScale = scale),
+      onReset: () => setState(() => _fontScale = 1.0),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -280,6 +296,17 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
           ],
         ),
         leading: const AppBackButton(),
+        actions: [
+          IconButton(
+            tooltip: 'حجم الخط وتنسيق النص',
+            icon: Icon(
+              Icons.format_size_rounded,
+              color: palette.gold,
+              size: AppIcon.md,
+            ),
+            onPressed: _openTypographySheet,
+          ),
+        ],
       ),
       body: _isLoading
           ? Center(
@@ -558,6 +585,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                             return HadithCard(
                               hadith: _filteredHadiths[index],
                               initiallyExpanded: false,
+                              fontScale: _fontScale,
                             );
                           },
                         ),

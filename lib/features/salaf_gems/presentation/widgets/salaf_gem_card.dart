@@ -9,6 +9,7 @@ class SalafGemCard extends StatelessWidget {
   final VoidCallback onToggleFavorite;
   final VoidCallback onCopy;
   final VoidCallback onShare;
+  final double fontScale;
 
   const SalafGemCard({
     super.key,
@@ -17,6 +18,7 @@ class SalafGemCard extends StatelessWidget {
     required this.onToggleFavorite,
     required this.onCopy,
     required this.onShare,
+    this.fontScale = 1.0,
   });
 
   String _formatCategory(String cat) {
@@ -121,6 +123,7 @@ class SalafGemCard extends StatelessWidget {
                 color: palette.text,
                 height: 1.85,
               ),
+              textScaler: TextScaler.linear(fontScale),
               textAlign: TextAlign.justify,
             ),
           ),

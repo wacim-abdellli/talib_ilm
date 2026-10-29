@@ -1,5 +1,24 @@
 # UI Progress Log
 
+## Round 33 — Reader Typography Controls: 'Tt' Font Scale Sheet in Hadith & Durar (30 October 2026)
+- **Scope & Context:**
+  - Implemented reader typography settings in Hadith and Durar sections:
+    1. **Interactive Typography Sheet (`IslamicTypographySheet`):** Built a dedicated modal sheet with Stepper controls (`-`, `%`, `+`), quick preset scale pills (85%, 100%, 115%, 130%, 145%), live text preview with sacred typography, and persistent storage via `SharedPreferences`.
+    2. **Added 'Tt' (`Icons.format_size_rounded`) in AppBar Actions:** Added golden `format_size_rounded` button to both [`HadithExplorerPage`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/pages/hadith_explorer_page.dart) and [`SalafGemsExplorerPage`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart).
+    3. **Dynamic Font Scaling in Cards:** Added `fontScale` parameter and applied `textScaler: TextScaler.linear(fontScale)` to sacred quote matn in [`HadithCard`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/widgets/hadith_card.dart) and [`SalafGemCard`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart).
+    4. **Strict Rule Compliance:** All files strictly under 600 lines (Rule 8), 0 lint violations (Rule 2).
+- **Files Changed / Created:**
+  - `lib/shared/widgets/islamic_typography_sheet.dart` (created, 363 lines <= 600)
+  - `lib/features/hadith/presentation/pages/hadith_explorer_page.dart` (597 lines <= 600)
+  - `lib/features/hadith/presentation/widgets/hadith_card.dart` (360 lines <= 600)
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (588 lines <= 600)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart` (216 lines <= 600)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (0 FAILS, 0 WARNS, 7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test ... --no-pub`: 29/29 tests passed cleanly across textScale 1.0, 1.5, 2.0.
+
 ## Round 32 — Hadith Section UX Alignment: Unified Filter Option List & Compact Authenticity Badge (30 October 2026)
 - **Scope & Context:**
   - Extended the beloved Durar Al-Salaf filter pattern to Prophetic Hadith and refined the authenticity seal:

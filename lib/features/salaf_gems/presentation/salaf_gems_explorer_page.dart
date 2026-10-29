@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../shared/widgets/app_snackbar.dart';
+import '../../../shared/widgets/islamic_typography_sheet.dart';
 import '../data/models/salaf_gem.dart';
 import '../data/repositories/salaf_gems_repository.dart';
 import 'widgets/salaf_gem_card.dart';
@@ -36,10 +37,14 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   String _selectedAuthor = 'الكل';
   bool _onlyFavorites = false;
   bool _isLoading = true;
+  double _fontScale = 1.0;
 
   @override
   void initState() {
     super.initState();
+    IslamicTypographySheet.loadSavedScale(IslamicTypographySheet.durarPrefKey).then((s) {
+      if (mounted) setState(() => _fontScale = s);
+    });
     _selectedCategory = widget.initialCategory ?? 'الكل';
     _selectedAuthor = widget.initialAuthor ?? 'الكل';
     _loadData();
@@ -248,6 +253,17 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
     );
   }
 
+  void _openTypographySheet() {
+    IslamicTypographySheet.show(
+      context: context,
+      currentScale: _fontScale,
+      prefKey: IslamicTypographySheet.durarPrefKey,
+      titleText: 'حجم خط درر السلف',
+      onFontScaleChanged: (scale) => setState(() => _fontScale = scale),
+      onReset: () => setState(() => _fontScale = 1.0),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -279,6 +295,15 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'حجم الخط وتنسيق النص',
+            icon: Icon(
+              Icons.format_size_rounded,
+              color: palette.gold,
+              size: AppIcon.md,
+            ),
+            onPressed: _openTypographySheet,
+          ),
           IconButton(
             tooltip: _onlyFavorites ? 'عرض الكل' : 'المفضلة فقط',
             icon: Icon(
@@ -547,6 +572,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                             final isFav = _favoriteIds.contains(gem.id);
                             return SalafGemCard(
                               gem: gem,
+                              fontScale: _fontScale,
                               isFavorite: isFav,
                               onToggleFavorite: () => _toggleFavorite(gem),
                               onCopy: () => _copyGem(gem),
