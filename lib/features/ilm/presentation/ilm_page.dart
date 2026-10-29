@@ -457,10 +457,6 @@ class _IlmPageState extends State<IlmPage> {
             IlmCategoryChips(
               selectedCategoryId: _selectedCategory,
               onCategorySelected: (catId) {
-                if (catId == 'downloaded') {
-                  _showOfflineDownloadsHub();
-                  return;
-                }
                 setState(() {
                   _selectedCategory = catId;
                   if (catId != 'mutun') _selectedMutunLevel = null;

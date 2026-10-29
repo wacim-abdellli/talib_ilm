@@ -34,43 +34,42 @@ class IlmHeader extends StatelessWidget {
         color: palette.surface,
         border: Border(bottom: BorderSide(color: palette.border, width: 1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'المكتبة العلمية',
-                style: context.text.title.copyWith(
-                  color: palette.text,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'المكتبة العلمية',
+                  style: context.text.title.copyWith(
+                    color: palette.text,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                dailyMicrocopy,
-                style: context.text.bodySmall.copyWith(
-                  color: palette.textMuted,
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  dailyMicrocopy,
+                  style: context.text.bodySmall.copyWith(
+                    color: palette.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpace.sm),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: AppSpace.sm,
-            runSpacing: AppSpace.xs,
-            children: [
-              if (onDownloadsTap != null)
-                _buildDownloadsButton(context, palette),
-              if (totalBooksCount > 0) _buildStatsButton(context, palette),
-            ],
-          ),
+          if (onDownloadsTap != null) ...[
+            const SizedBox(width: AppSpace.xs),
+            _buildDownloadsButton(context, palette),
+          ],
+          if (totalBooksCount > 0) ...[
+            const SizedBox(width: AppSpace.xs),
+            _buildStatsButton(context, palette),
+          ],
         ],
       ),
     );
@@ -92,32 +91,19 @@ class IlmHeader extends StatelessWidget {
               onDownloadsTap?.call();
             },
             child: Container(
-              constraints: const BoxConstraints(minHeight: AppSize.tap),
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.xs,
+              constraints: const BoxConstraints(
+                minWidth: AppSize.tap,
+                minHeight: AppSize.tap,
               ),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: AppRadius.pillRadius,
                 border: Border.all(color: palette.border),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.offline_pin_rounded,
-                    size: AppIcon.sm,
-                    color: palette.onPrimarySoft,
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    'بدون إنترنت',
-                    style: context.text.label.copyWith(
-                      color: palette.onPrimarySoft,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              child: Icon(
+                Icons.offline_pin_rounded,
+                size: AppIcon.sm,
+                color: palette.onPrimarySoft,
               ),
             ),
           ),
@@ -159,17 +145,11 @@ class IlmHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpace.xs),
                 Text(
-                  '$completedBooksCount/$totalBooksCount مُنجز',
+                  '$completedBooksCount/$totalBooksCount',
                   style: context.text.caption.copyWith(
                     color: palette.primary,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(width: AppSpace.xxs),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: AppIcon.sm,
-                  color: palette.primary,
                 ),
               ],
             ),

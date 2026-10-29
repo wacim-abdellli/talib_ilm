@@ -9,7 +9,6 @@ import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
-import '../../../quran/data/services/quran_audio_downloader.dart';
 import 'offline_books_tab_view.dart';
 import 'offline_quran_audio_tab_view.dart';
 
@@ -59,7 +58,6 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
   List<ShamelaBook> _downloadedBooks = [];
   List<IlmBook> _bundledMutun = [];
   Map<String, BookProgress> _progressById = {};
-  int _quranStorageBytes = 0;
   bool _isLoading = true;
 
   int get _offlineStudyContentCount =>
@@ -83,7 +81,6 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
 
     try {
       final downloadedMap = await ShamelaService.getDownloadedBooksMap();
-      final quranBytes = await QuranAudioDownloader.getTotalStorageUsed();
 
       // Find downloaded Shamela books
       final books = <ShamelaBook>[];
@@ -109,7 +106,6 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
         setState(() {
           _downloadedBooks = books;
           _bundledMutun = mutun;
-          _quranStorageBytes = quranBytes;
           _progressById = progressMap;
           _isLoading = false;
         });
@@ -180,8 +176,10 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                       children: [
                         Text(
                           'حقيبة المحتوى بدون إنترنت',
-                          style: textTheme.title.copyWith(color: palette.text),
-                          maxLines: 2,
+                          style: textTheme.titleSmall.copyWith(
+                            color: palette.text,
+                          ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -200,40 +198,7 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
               ),
             ),
 
-            const SizedBox(height: AppSpace.sm),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.xl,
-              ),
-              child: Wrap(
-                spacing: AppSpace.xs,
-                runSpacing: AppSpace.xs,
-                children: [
-                  _buildSummaryMetric(
-                    context,
-                    icon: Icons.auto_stories_rounded,
-                    label: 'الكتب التراثية: ${_downloadedBooks.length}',
-                    color: palette.primary,
-                  ),
-                  _buildSummaryMetric(
-                    context,
-                    icon: Icons.menu_book_rounded,
-                    label: 'المتون المضمنة: ${_bundledMutun.length}',
-                    color: palette.primary,
-                  ),
-                  _buildSummaryMetric(
-                    context,
-                    icon: Icons.headphones_rounded,
-                    label:
-                        'صوتيات القرآن: ${QuranAudioDownloader.formatBytes(_quranStorageBytes)}',
-                    color: palette.textMuted,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSpace.sm),
+            const SizedBox(height: AppSpace.md),
 
             // ── Navigation Tabs ──────────────────────────────────────
             Container(
@@ -309,36 +274,6 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryMetric(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.surfaceMuted,
-        borderRadius: AppRadius.pillRadius,
-        border: Border.all(color: palette.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: AppIcon.xs),
-          const SizedBox(width: AppSpace.xxs),
-          Text(label, style: textTheme.label.copyWith(color: palette.text)),
-        ],
       ),
     );
   }

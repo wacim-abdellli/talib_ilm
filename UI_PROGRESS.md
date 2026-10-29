@@ -1,5 +1,11 @@
 # UI Progress Log
 
+## Round 27 — Compact Ilm Header & Offline Hub Cleanup (29 October 2026)
+- Restored the Ilm title, progress count, and offline shortcut to one compact header row; removed the duplicate `المحمّلة` category chip.
+- Removed the offline hub’s wrapped metric badges; the combined tab count and concise section counts identify the 19 study items. Simplified book/matn rows into full-row actions without repeated buttons or offline labels.
+- Verified: `dart format`, scoped `flutter analyze --no-pub` (5 files, 0 issues), `python tool/ui_lint_v2.py` (OK), and scoped `git diff --check`.
+- Open issues: automated widget tests and screenshot review were not run.
+
 ## Round 26 — Offline Library Inventory & Ilm Entry UX (29 October 2026)
 - Reworked the Ilm offline entry into a labeled action beside reading progress; the books/mutun tab count now includes downloaded heritage books plus bundled mutun.
 - Clarified the offline hub inventory with separate heritage-book, bundled-mutun, and Quran-audio metrics; bundled mutun rows are compact, full-row tappable items.

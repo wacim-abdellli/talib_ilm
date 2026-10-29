@@ -32,11 +32,6 @@ class IlmCategoryChips extends StatelessWidget {
       icon: Icons.dashboard_outlined,
     ),
     IlmCategoryChipItem(
-      id: 'downloaded',
-      label: 'المحمّلة',
-      icon: Icons.download_done_rounded,
-    ),
-    IlmCategoryChipItem(
       id: 'mutun',
       label: 'متون طالب العلم',
       icon: Icons.menu_book_rounded,

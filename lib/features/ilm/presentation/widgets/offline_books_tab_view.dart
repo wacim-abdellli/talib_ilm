@@ -57,8 +57,8 @@ class OfflineBooksTabView extends StatelessWidget {
           if (downloadedBooks.isNotEmpty) ...[
             _buildSectionHeader(
               context,
-              title: 'الكتب التراثية المحفوظة محلياً',
-              badge: '${downloadedBooks.length} كتب',
+              title: 'الكتب التراثية',
+              badge: '${downloadedBooks.length}',
               icon: Icons.check_circle_outline_rounded,
               color: palette.primary,
             ),
@@ -71,8 +71,8 @@ class OfflineBooksTabView extends StatelessWidget {
           if (bundledMutun.isNotEmpty) ...[
             _buildSectionHeader(
               context,
-              title: 'متون طالب العلم المضمنة',
-              badge: '${bundledMutun.length} متون أساسية',
+              title: 'متون طالب العلم',
+              badge: '${bundledMutun.length}',
               icon: Icons.menu_book_rounded,
               color: palette.primary,
             ),
@@ -138,135 +138,76 @@ class OfflineBooksTabView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpace.sm),
-      child: Container(
-        decoration: BoxDecoration(
+      child: Semantics(
+        button: true,
+        label: 'اقرأ كتاب ${book.title}',
+        child: Material(
           color: palette.surfaceRaised,
-          borderRadius: AppRadius.mdRadius,
-          border: Border.all(color: palette.border),
-        ),
-        padding: const EdgeInsetsDirectional.all(AppSpace.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: AppSize.tap,
-                  height: AppSize.tap,
-                  decoration: BoxDecoration(
-                    color: palette.primarySoft,
-                    borderRadius: AppRadius.smRadius,
-                    border: Border.all(
-                      color: palette.primary.withValues(alpha: 0.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.mdRadius,
+            side: BorderSide(color: palette.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            borderRadius: AppRadius.mdRadius,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onOpenShamelaBook(book);
+            },
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpace.md),
+              child: Row(
+                children: [
+                  Container(
+                    width: AppSize.tap,
+                    height: AppSize.tap,
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.auto_stories_rounded,
+                      color: palette.onPrimarySoft,
+                      size: AppIcon.md,
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.auto_stories_rounded,
-                    color: palette.primary,
-                    size: AppIcon.md,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        book.title,
-                        style: textTheme.body.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpace.xxs),
-                      Text(
-                        book.author,
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.xs,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.offline_pin_rounded,
-                      size: AppIcon.xs,
-                      color: palette.primary,
-                    ),
-                    const SizedBox(width: AppSpace.xxs),
-                    Text(
-                      'جاهز للقراءة بدون إنترنت',
-                      style: textTheme.caption.copyWith(
-                        color: palette.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '$currentPage / $total صفحة ($percent%)',
-                  style: textTheme.caption.copyWith(color: palette.textMuted),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.sm),
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: palette.primary,
-                borderRadius: AppRadius.smRadius,
-                child: InkWell(
-                  borderRadius: AppRadius.smRadius,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onOpenShamelaBook(book);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.sm,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.menu_book_rounded,
-                          color: palette.bg,
-                          size: AppIcon.sm,
-                        ),
-                        const SizedBox(width: AppSpace.xs),
                         Text(
-                          'اقرأ الآن',
-                          style: textTheme.caption.copyWith(
-                            color: palette.bg,
+                          book.title,
+                          style: textTheme.body.copyWith(
+                            color: palette.text,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpace.xxs),
+                        Text(
+                          '${book.author} · $currentPage / $total صفحة · $percent%',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: AppSpace.xs),
+                  Icon(
+                    Icons.chevron_left_rounded,
+                    color: palette.primary,
+                    size: AppIcon.md,
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -339,22 +280,10 @@ class OfflineBooksTabView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpace.xs),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.chevron_left_rounded,
-                        color: palette.primary,
-                        size: AppIcon.sm,
-                      ),
-                      Text(
-                        'فتح المتن',
-                        style: textTheme.caption.copyWith(
-                          color: palette.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.chevron_left_rounded,
+                    color: palette.primary,
+                    size: AppIcon.md,
                   ),
                 ],
               ),
