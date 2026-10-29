@@ -20,7 +20,7 @@ class DailyAyahDua {
 
   bool get isAyah => type == AyahDuaType.ayah;
 
-  String get typeLabel => isAyah ? 'آية كريمة' : 'دعاء مأثور';
+  String get typeLabel => isAyah ? 'آية كريمة' : 'دعاء ';
 
   String get formattedText => isAyah ? '﴿ $text ﴾' : '« $text »';
 

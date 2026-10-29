@@ -117,9 +117,9 @@ class SalafGemCard extends StatelessWidget {
             ),
             child: Text(
               '«${gem.cleanText}»',
-              style: textTheme.sacred.copyWith(
+              style: textTheme.sacredSmall.copyWith(
                 color: palette.text,
-                height: 1.9,
+                height: 1.85,
               ),
               textAlign: TextAlign.justify,
             ),

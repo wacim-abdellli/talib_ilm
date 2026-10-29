@@ -158,8 +158,8 @@ class SalafGemShareSheet extends StatelessWidget {
 
                     // Quote Text
                     Text(
-                      gem.text,
-                      style: textTheme.sacred.copyWith(
+                      gem.cleanText,
+                      style: textTheme.sacredSmall.copyWith(
                         color: palette.text,
                         height: 1.8,
                       ),

@@ -830,6 +830,7 @@ class AppTextTheme {
   final TextStyle caption;
   final TextStyle sacred;
   final TextStyle sacredLarge;
+  final TextStyle sacredSmall;
   final TextStyle mushafChrome;
   final TextStyle surahHeaderTitle;
   final TextStyle surahCalligraphy;
@@ -845,6 +846,7 @@ class AppTextTheme {
     required this.caption,
     required this.sacred,
     required this.sacredLarge,
+    required this.sacredSmall,
     required this.mushafChrome,
     required this.surahHeaderTitle,
     required this.surahCalligraphy,
@@ -854,6 +856,7 @@ class AppTextTheme {
   factory AppTextTheme.fromPalette(AppPalette palette) {
     const cairo = 'Cairo';
     const scheherazadeNew = 'ScheherazadeNew';
+    const amiri = 'Amiri';
 
     return AppTextTheme(
       display: TextStyle(
@@ -912,6 +915,13 @@ class AppTextTheme {
         height: 2.0,
         color: palette.text,
       ),
+      sacredSmall: TextStyle(
+        fontFamily: amiri,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.85,
+        color: palette.text,
+      ),
       sacredLarge: TextStyle(
         fontFamily: scheherazadeNew,
         fontSize: 26,
@@ -968,6 +978,7 @@ class AppTextTheme {
   TextStyle get captionBold => caption.copyWith(fontWeight: FontWeight.w600);
   TextStyle get captionHeavy => caption.copyWith(fontWeight: FontWeight.w700);
   TextStyle get sacredBold => sacred.copyWith(fontWeight: FontWeight.w700);
+  TextStyle get sacredSmallBold => sacredSmall.copyWith(fontWeight: FontWeight.w700);
 }
 
 /// Font weight tokens to prevent raw FontWeight literals outside theme

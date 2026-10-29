@@ -1,5 +1,21 @@
 # UI Progress Log
 
+## Round 31 — Durar Typography Scale: Sacred Small Token for Compact Quote Body (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback on Durar font size being overly large on devices:
+    1. **Proposed & Added `sacredSmall` Token:** Introduced `sacredSmall` on `AppTextTheme` in [`lib/app/theme/app_palette.dart`](file:///d:/Projects/talib_ilm-main/lib/app/theme/app_palette.dart) (Amiri font, 16sp, height: 1.85, contrast > 12:1).
+    2. **Updated Durar & Athar Cards:** Switched quote bodies from 22sp `sacred` to 16sp `sacredSmall` in [`SalafGemCard`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart), [`HomeSalafGemCard`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart), and [`SalafGemShareSheet`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/presentation/widgets/salaf_gem_share_sheet.dart). Gives compact, balanced presentation while preserving full classical tashkeel legibility.
+- **Files Changed:**
+  - `lib/app/theme/app_palette.dart`
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart`
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart`
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_share_sheet.dart`
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test ... --no-pub`: 29/29 tests passed cleanly across textScale 1.0, 1.5, 2.0.
+
 ## Round 30 — Complete Shakl Coverage (4,288 Items), Sahaba Hadith Enrichment, & Avatar Monogram Removal (30 October 2026)
 - **Scope & Context:**
   - Resolved user feedback on Durar Al-Salaf and Sahaba encyclopedia:
