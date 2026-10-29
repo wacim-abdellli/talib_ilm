@@ -19,19 +19,6 @@ class SalafGemCard extends StatelessWidget {
     required this.onShare,
   });
 
-  String _getScholarInitial(String author) {
-    final clean = author
-        .replaceAll('قال', '')
-        .replaceAll('بن', ' ')
-        .replaceAll('أبي', ' ')
-        .replaceAll('ابن', ' ')
-        .replaceAll('رحمه الله', '')
-        .replaceAll('رضي الله عنه', '')
-        .trim();
-    if (clean.isEmpty) return 'س';
-    return clean.characters.first;
-  }
-
   String _formatCategory(String cat) {
     if (cat.contains('الصحابة')) return 'مِنْ أَقْوَالِ الصَّحَابَةِ';
     if (cat.contains('النبوي') || cat.contains('نبوية')) return 'وَصَايَا نَبَوِيَّةٌ شَرِيفَة';
@@ -45,7 +32,6 @@ class SalafGemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final initial = _getScholarInitial(gem.author);
     final categoryLabel = _formatCategory(gem.category);
 
     return Container(
@@ -60,27 +46,17 @@ class SalafGemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Scholar Monogram + Name + Dignified Category Pill
+          // Scholar Name + Dignified Category Pill
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Circular Monogram with Gold/Primary Accent
+              // Gold Scholar Accent Marker
               Container(
-                width: AppSpace.xl,
-                height: AppSpace.xl,
-                alignment: Alignment.center,
+                width: AppSpace.xs,
+                height: AppSpace.lg,
                 decoration: BoxDecoration(
-                  color: palette.primarySoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: palette.primary,
-                  ),
-                ),
-                child: Text(
-                  initial,
-                  style: textTheme.caption.copyWith(
-                    color: palette.primary,
-                  ),
+                  color: palette.gold,
+                  borderRadius: AppRadius.pillRadius,
                 ),
               ),
               const SizedBox(width: AppSpace.sm),

@@ -117,7 +117,11 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
 
   void _copyGem(SalafGem gem) {
     Clipboard.setData(ClipboardData(text: gem.shareableText));
-    AppSnackbar.success(context, 'تم نسخ الأثر والمصدر إلى الحافظة بنجاح');
+    AppSnackbar.success(
+      context,
+      'تم نسخ الأثر والمصدر إلى الحافظة بنجاح',
+      hasNavBar: false,
+    );
   }
 
   void _openScholarPicker() {

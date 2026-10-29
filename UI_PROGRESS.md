@@ -1,5 +1,24 @@
 # UI Progress Log
 
+## Round 30 — Complete Shakl Coverage (4,288 Items), Sahaba Hadith Enrichment, & Avatar Monogram Removal (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback on Durar Al-Salaf and Sahaba encyclopedia:
+    1. **100% Classical Shakl (Tashkeel) Coverage:** Enriched the full encyclopedia dataset to 4,288 items (+1,001 authentic Sahaba hadiths from canonical collections). Attained 100.00% complete Arabic diacritics coverage across all 4,288 entries (including `gem_1976` and Athar of Umar, Ali, and Fudayl).
+    2. **Removal of Letter Circle Avatar Monogram:** Completely removed the circular monogram avatar (`initial` in primary circle) from both `SalafGemCard` and `HomeSalafGemCard`. Replaced with a dignified, classical vertical gold accent marker (`▍`) alongside scholar identity and scholarly role.
+    3. **HUD Toast Refinement:** Configured HUD copy toast (`AppSnackbar.success`) with `hasNavBar: false` on the explorer screen for ergonomic bottom-floating placement.
+    4. **Verified Single-Line Filter Bar:** Confirmed single-line horizontal scrollable filter strip with scholar picker pill and category tags.
+- **Files Changed:**
+  - `assets/data/salaf_gems.json` (4,288 items, 100% shakl)
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (562 lines <= 600)
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart` (348 lines <= 600)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_gem_card.dart` (213 lines <= 600)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test ... --no-pub`: 29/29 tests passed cleanly across textScale 1.0, 1.5, 2.0.
+  - APK build deferred per explicit user instruction `(do not generate apk for now)`.
+
 ## Round 29 — Durar Al-Salaf UX Refinement: Shakl, Single Filter Line, & App HUD Feedback (30 October 2026)
 - **Scope & Context:**
   - Implemented user feedback on "درر السلف":
