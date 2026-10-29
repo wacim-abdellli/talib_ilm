@@ -37,7 +37,7 @@ jobs:
         run: |
           flutter precache --ios
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --no-tree-shake-icons
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |
