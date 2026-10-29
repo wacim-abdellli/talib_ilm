@@ -35,8 +35,9 @@ jobs:
 
       - name: Build iOS App (Release, No CodeSign)
         run: |
+          set -o pipefail
           flutter precache --ios
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign 2>&1 | tee flutter_build.log
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |
@@ -68,9 +69,22 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Upload Build Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-build-log
+          path: flutter_build.log
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Dump Build Failure Diagnostics
         if: failure()
         run: |
           echo "=== Xcode & Flutter Diagnostic Logs ==="
+          if [ -f flutter_build.log ]; then
+            echo "--- Last 200 lines of flutter_build.log ---"
+            tail -n 200 flutter_build.log
+          fi
           find ~/Library/Developer/Xcode/DerivedData -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
           find build/ios -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
