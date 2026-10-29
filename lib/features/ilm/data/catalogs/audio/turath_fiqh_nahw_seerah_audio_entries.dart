@@ -342,17 +342,6 @@ class TurathFiqhNahwSeerahAudioEntries {
       title: 'شرح شذور الذهب لابن هشام',
       sources: [
         MatnAudioSource(
-          reciter: MutunReciterDefaults.fawzan,
-          audioUrl: 'https://archive.org/download/fouzan-kater/01.mp3',
-          edition: BookAudioEdition.sharhMajalis,
-          chapters: BookAudioChapter.numbered(
-            baseUrl: 'https://archive.org/download/fouzan-kater',
-            count: 29,
-            titlePrefix: 'شرح شذور الذهب',
-            padWidth: 2,
-          ),
-        ),
-        MatnAudioSource(
           reciter: MutunReciterDefaults.bashir,
           audioUrl: 'https://archive.org/download/bashir-mar-shozor/01.mp3',
           edition: BookAudioEdition.sharhMajalis,
@@ -363,9 +352,29 @@ class TurathFiqhNahwSeerahAudioEntries {
             padWidth: 2,
           ),
         ),
+      ],
+    ),
+
+    /// شرح قطر الندى وبل الصدى لابن هشام
+    'shamela_6970': MutunAudioEntry(
+      bookId: 'shamela_6970',
+      title: 'شرح قطر الندى وبل الصدى لابن هشام',
+      sources: [
+        MatnAudioSource(
+          reciter: MutunReciterDefaults.fawzan,
+          audioUrl: 'https://archive.org/download/fouzan-kater/01.mp3',
+          edition: BookAudioEdition.sharhMajalis,
+          chapters: BookAudioChapter.numbered(
+            baseUrl: 'https://archive.org/download/fouzan-kater',
+            count: 29,
+            titlePrefix: 'شرح قطر الندى',
+            padWidth: 2,
+          ),
+        ),
         const MatnAudioSource(
           reciter: MutunReciterDefaults.shaydzmi,
-          audioUrl: '$_sawtiya/090-Qatr_annada_ibn_hisham.mp3',
+          audioUrl:
+              'https://archive.org/download/Mutun_Sawtiya/090-Qatr_annada_ibn_hisham.mp3',
           edition: BookAudioEdition.nadhm,
         ),
       ],
