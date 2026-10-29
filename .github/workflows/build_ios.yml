@@ -35,9 +35,43 @@ jobs:
 
       - name: Build iOS App (Release, No CodeSign)
         run: |
-          set -o pipefail
           flutter precache --ios
-          flutter build ios --release --no-codesign 2>&1 | tee flutter_build.log
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM=V3N9W8G24A
+          echo "=== 1. Preparing Flutter Configuration and CocoaPods ==="
+          flutter build ios --config-only --no-codesign
+          
+          echo "=== 2. Building Release iOS Bundle without Code Signing ==="
+          flutter build ios --release --no-codesign || {
+            echo "=== Flutter CLI exited; compiling via direct xcodebuild invocation ==="
+            xcodebuild -workspace ios/Runner.xcworkspace \
+                       -scheme Runner \
+                       -configuration Release \
+                       -sdk iphoneos \
+                       -destination 'generic/platform=iOS' \
+                       DEVELOPMENT_TEAM=V3N9W8G24A \
+                       CODE_SIGN_STYLE=Manual \
+                       CODE_SIGNING_ALLOWED=NO \
+                       CODE_SIGNING_REQUIRED=NO \
+                       CODE_SIGN_IDENTITY="" \
+                       clean build
+          }
+
+          echo "=== 3. Locating built Runner.app ==="
+          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
+            FOUND_APP=$(find build/ios ~/Library/Developer/Xcode/DerivedData -name "Runner.app" -type d 2>/dev/null | head -n 1)
+            if [ -n "$FOUND_APP" ]; then
+              echo "Found Runner.app at: $FOUND_APP"
+              mkdir -p build/ios/iphoneos
+              cp -R "$FOUND_APP" build/ios/iphoneos/Runner.app
+            fi
+          fi
+          
+          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
+            echo "ERROR: Runner.app not found in build outputs!"
+            find build/ios -maxdepth 4 -ls || true
+            exit 1
+          fi
+          echo "Runner.app successfully ready for packaging!"
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |
@@ -69,22 +103,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload Build Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-build-log
-          path: flutter_build.log
-          if-no-files-found: ignore
-          retention-days: 14
-
       - name: Dump Build Failure Diagnostics
         if: failure()
         run: |
           echo "=== Xcode & Flutter Diagnostic Logs ==="
-          if [ -f flutter_build.log ]; then
-            echo "--- Last 200 lines of flutter_build.log ---"
-            tail -n 200 flutter_build.log
-          fi
           find ~/Library/Developer/Xcode/DerivedData -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
           find build/ios -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
