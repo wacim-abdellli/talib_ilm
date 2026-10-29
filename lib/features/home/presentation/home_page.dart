@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../../app/constants/app_strings.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/last_activity_service.dart';
 import '../../../core/services/last_sharh_service.dart';
@@ -12,7 +11,6 @@ import '../../../core/services/location_service.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 
-import 'widgets/home_hero_card.dart';
 import 'widgets/continue_learning_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_quick_actions.dart';
@@ -35,6 +33,8 @@ import '../../adhkar/data/adhkar_service.dart';
 import '../../adhkar/presentation/adhkar_session_page.dart';
 import 'widgets/home_daily_dhikr_card.dart';
 import 'widgets/home_daily_hadith_card.dart';
+import 'widgets/home_hero_greeting_helper.dart';
+import '../../salaf_gems/presentation/widgets/home_salaf_gem_card.dart';
 import '../../radio/presentation/widgets/quran_radio_sheet.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../shared/widgets/section_header.dart';
@@ -338,8 +338,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                       child: HomeHeader(
                         city: _prayerDay?.city ?? 'مكة المكرمة',
-                        greeting: _getGreeting(),
-                        greetingSubtitle: _getGreetingSubtitle(),
+                        greeting: HomeHeroGreetingHelper.getGreeting(_effectiveNow),
+                        greetingSubtitle: HomeHeroGreetingHelper.getGreetingSubtitle(_effectiveNow),
                         currentDate: widget.currentTime,
                         onLocationTap: () => _openLocationSettings(context),
                         onSearchTap: () => _openIlm(context),
@@ -405,7 +405,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: SizedBox(height: AppSpace.md),
                   ),
                   SliverToBoxAdapter(
-                    child: _buildContinueSection(context),
+                    child: HomeHeroGreetingHelper.buildContinueSection(
+                      context: context,
+                      isLoading: _isLoading,
+                      data: _continueData,
+                      onOpenIlm: () => _openIlm(context),
+                      onContinue: (d) => _continueLearning(context, d),
+                    ),
                   ),
 
                   const SliverToBoxAdapter(
@@ -438,6 +444,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         horizontal: AppSpace.xl,
                       ),
                       child: HomeDailyHadithCard(key: _hadithKey),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpace.xl),
+                  ),
+
+                  // Durar Al-Salaf (درر السلف والآثار)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xl,
+                      ),
+                      child: HomeSalafGemCard(),
                     ),
                   ),
                   const SliverToBoxAdapter(
@@ -537,61 +556,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   DateTime get _effectiveNow => widget.currentTime ?? DateTime.now();
 
-  String _getGreeting() {
-    final hour = _effectiveNow.hour;
-    if (hour >= 5 && hour < 12) return 'أصبحنا وأصبح الملك لله';
-    if (hour >= 12 && hour < 17) return 'حيّاك الله يا طالب العلم';
-    if (hour >= 17 && hour < 22) return 'أمسينا وأمسى الملك لله';
-    return 'طابت ليلتك بذكر الله';
-  }
-
-  String _getGreetingSubtitle() {
-    final hour = _effectiveNow.hour;
-    if (hour >= 5 && hour < 12) return 'طاب مسعاك في طلب العلم والخير';
-    if (hour >= 12 && hour < 17) return 'بارك الله في وقتك وثبّت خطاك';
-    if (hour >= 17 && hour < 22) return 'أنار الله دربك بنور العلم والهدى';
-    return 'ألا بذكر الله تطمئن القلوب';
-  }
-
   Widget _buildHeroGreetingCard() {
-    final day = _prayerDay;
-    bool isEstimated = false;
-
-    String nextPrayerName;
-    DateTime nextPrayerTime;
-    final now = _effectiveNow;
-
-    if (day != null) {
-      nextPrayerName = day.nextPrayer;
-      nextPrayerTime = day.nextPrayerTime ?? day.prayers[nextPrayerName] ?? now;
-      if (nextPrayerTime.isBefore(now)) {
-        if (nextPrayerName == AppStrings.prayerFajr) {
-          nextPrayerTime = nextPrayerTime.add(const Duration(days: 1));
-        }
-      }
-      isEstimated = false;
-    } else {
-      isEstimated = true;
-      final (pName, pHour, dayOffset) = switch (now.hour) {
-        < 5 => (AppStrings.prayerFajr, 5, 0),
-        < 12 => (AppStrings.prayerDhuhr, 12, 0),
-        < 15 => (AppStrings.prayerAsr, 15, 0),
-        < 18 => (AppStrings.prayerMaghrib, 18, 0),
-        < 20 => (AppStrings.prayerIsha, 20, 0),
-        _ => (AppStrings.prayerFajr, 5, 1),
-      };
-      nextPrayerName = pName;
-      nextPrayerTime = DateTime(now.year, now.month, now.day + dayOffset, pHour, 0);
-    }
-
-    return HomeHeroCard(
-      nextPrayerName: nextPrayerName,
-      nextPrayerTime: nextPrayerTime,
-      currentTime: widget.currentTime,
-      isEstimated: isEstimated,
-      allPrayers: day?.prayers,
+    return HomeHeroGreetingHelper.buildHeroGreetingCard(
+      context: context,
+      effectiveNow: _effectiveNow,
+      prayerDay: _prayerDay,
       iqamaOverrides: _iqamaOverrides,
       onTap: () => _openPrayerDetails(context),
+      currentTime: widget.currentTime,
     );
   }
 
@@ -612,24 +584,5 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildContinueSection(BuildContext context) {
-    if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
-        child: LearningPulseCard(isLoading: true, data: null),
-      );
-    }
 
-    final data = _continueData;
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
-      child: LearningPulseCard(
-        isLoading: false,
-        data: data,
-        onTap: data == null
-            ? () => _openIlm(context)
-            : () => _continueLearning(context, data),
-      ),
-    );
-  }
 }

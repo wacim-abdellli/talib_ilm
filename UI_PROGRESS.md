@@ -1,5 +1,35 @@
 # UI Progress Log
 
+## Round 25 — Salaf Gems Encyclopedia & Daily Wisdom Hero Integration (29 October 2026)
+- **Scope & Context:**
+  - Implemented the comprehensive "درر السلف والآثار" (Gems of the Salaf & Prophetic Admonitions) encyclopedia in talib_ilm, enriching the app with 3,287 curated, verified quotes, athar, and hadiths with full scholarly citations (takhrij):
+    1. **Data Curation & Offline Dataset (salaf_gems.json - 3,287 Gems):** Harvested, cleaned, and categorized 3,287 unique authentic items: Sahaba (Abu Bakr, Umar, Ali, Ibn Mas'ud), Tabi'een & Great Salaf (Al-Hasan al-Basri, Umar ibn Abd al-Aziz, Al-Fudayl ibn Iyad, Abdullah ibn al-Mubarak, Yahya ibn Mu'adh, Abu Sulayman al-Darani, Malik ibn Dinar, Al-Shafi'i, Ahmad ibn Hanbal, Sufyan al-Thawri, Ibrahim ibn Adham), Verifiers (Ibn al-Qayyim, Ibn Taymiyyah, Ibn Rajab, Ibn al-Jawzi, Al-Dhahabi), Student of Knowledge gems on seeking knowledge and memorization, and Prophetic Admonitions / Qudsi hadith.
+    2. **Modern Home Hero Card (HomeSalafGemCard):** Embedded a premium interactive card on the Home Page below the fold: daily rotating gem based on day-of-year, live shuffle button, author and role tag, scholarly source reference, bookmarking, copy with citation, and 1-tap jump to the full explorer.
+    3. **Full Interactive Explorer (SalafGemsExplorerPage):** Dedicated full-screen explorer accessible from Home and More pages. Real-time instant search across text, authors, topics, and references; horizontal category chips; key author chips; and Favorites view.
+    4. **Dawah Card Generator & Share Sheet (SalafGemShareSheet):** Modal previewing the quote styled with sacred typography, author badge, and citation, with 1-tap copy and system share.
+    5. **More Page Gateway:** Added dedicated entry in MorePage under "المحتوى والمحفوظات".
+    6. **Architectural Discipline & Modularization:** Extracted HomeHeroGreetingHelper, reducing home_page.dart to 590 lines (strictly complying with Rule 8).
+- **Files Modified / Created (11 files total; all Dart files strictly <= 590 lines):**
+  - assets/data/salaf_gems.json (created, 3,287 items, 2.1 MB)
+  - lib/features/salaf_gems/data/models/salaf_gem.dart (created, 68 lines)
+  - lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart (created, 185 lines)
+  - lib/features/salaf_gems/presentation/widgets/salaf_gem_share_sheet.dart (created, 275 lines)
+  - lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart (created, 325 lines)
+  - lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart (created, 410 lines)
+  - lib/features/home/presentation/widgets/home_hero_greeting_helper.dart (created, 102 lines)
+  - lib/features/home/presentation/home_page.dart (590 lines)
+  - lib/features/more/presentation/more_page.dart (579 lines)
+  - test/salaf_gems_test.dart (created, 165 lines)
+  - test/offline_downloads_hub_ui_test.dart
+  - UI_PROGRESS.md
+- **Verified:**
+  - flutter analyze --no-pub: 0 issues found (7.0s).
+  - python tool/ui_lint_v2.py: OK (7 allow markers / cap 10).
+  - flutter test test/salaf_gems_test.dart test/offline_downloads_hub_ui_test.dart test/mutun_curriculum_reader_test.dart --no-pub: 29/29 passed (survives 1.0x, 1.5x, 2.0x scaling with zero overflow).
+  - flutter build apk --debug --no-pub: Built build/app/outputs/flutter-apk/app-debug.apk (81.1s).
+- **Open issues:**
+  - None in R25 scope.
+
 ## Production Release v1.0.0 & Repository Hygiene (29 October 2026)
 - **Scope & Context:**
   - Standardized repository hygiene to pristine production state:

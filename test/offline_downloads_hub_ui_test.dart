@@ -159,6 +159,11 @@ void main() {
     });
 
     testWidgets('OfflineDownloadsHubSheet shows title and tabs cleanly', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(
         _wrapRtl(
           OfflineDownloadsHubSheet(
