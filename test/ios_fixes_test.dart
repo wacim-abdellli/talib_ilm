@@ -93,8 +93,8 @@ void main() {
     });
   });
 
-  group('Issue 2: Qibla Page Permission UI', () {
-    testWidgets('QiblaPage displays permission view with both grant and manual options', (tester) async {
+  group('Issue 2: Qibla Page Direct Capital Resolution', () {
+    testWidgets('QiblaPage directly loads without blocking permission view', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: QiblaPage(),
@@ -102,9 +102,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('تحديد اتجاه القبلة'), findsOneWidget);
-      expect(find.text('منح إذن الموقع'), findsOneWidget);
-      expect(find.text('استخدام المدينة المحددة في التطبيق'), findsOneWidget);
+      expect(find.text('منح إذن الموقع'), findsNothing);
+      expect(find.text('استخدام المدينة المحددة في التطبيق'), findsNothing);
     });
   });
 
