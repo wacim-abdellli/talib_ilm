@@ -70,7 +70,16 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
               data: mediaQuery.copyWith(textScaler: scaled),
               child: Directionality(
                 textDirection: TextDirection.rtl,
-                child: child!,
+                child: Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: (_) {
+                    final currentFocus = FocusManager.instance.primaryFocus;
+                    if (currentFocus != null && currentFocus.hasFocus) {
+                      currentFocus.unfocus();
+                    }
+                  },
+                  child: child!,
+                ),
               ),
             );
           },

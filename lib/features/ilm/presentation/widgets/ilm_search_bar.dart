@@ -83,6 +83,7 @@ class _IlmSearchBarState extends State<IlmSearchBar> {
     return Padding(
       padding: AppSpace.screenPadding,
       child: TextField(
+              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         controller: widget.controller,
         focusNode: _focusNode,
         textInputAction: TextInputAction.search,

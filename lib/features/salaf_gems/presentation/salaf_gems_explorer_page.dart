@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../app/theme/app_palette.dart';
@@ -8,8 +9,10 @@ import '../data/models/salaf_filter_models.dart';
 import '../data/models/salaf_gem.dart';
 import '../data/repositories/salaf_gems_repository.dart';
 import 'widgets/salaf_author_filter_sheet.dart';
+import 'widgets/salaf_filter_capsule_bar.dart';
 import 'widgets/salaf_gem_card.dart';
 import 'widgets/salaf_gem_share_sheet.dart';
+import 'widgets/salaf_quick_jump_sheet.dart';
 import 'widgets/salaf_topic_filter_sheet.dart';
 
 class SalafGemsExplorerPage extends StatefulWidget {
@@ -33,6 +36,7 @@ class SalafGemsExplorerPage extends StatefulWidget {
 class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   final SalafGemsRepository _repository = SalafGemsRepository.instance;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   List<SalafGem> _allGems = const [];
   List<SalafGem> _filteredGems = const [];
@@ -47,11 +51,13 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   String _selectedCategory = 'الكل';
   bool _onlyFavorites = false;
   bool _isLoading = true;
+  bool _showBackToTop = false;
   double _fontScale = 1.0;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     IslamicTypographySheet.loadSavedScale(IslamicTypographySheet.durarPrefKey).then((s) {
       if (mounted) setState(() => _fontScale = s);
     });
@@ -77,10 +83,58 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
     _loadData();
   }
 
+  void _onScroll() {
+    final shouldShow = _scrollController.offset > 400;
+    if (shouldShow != _showBackToTop && mounted) {
+      setState(() => _showBackToTop = shouldShow);
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _jumpToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  void _jumpToIndex(int index) {
+    if (!_scrollController.hasClients || _filteredGems.isEmpty) return;
+    final clamped = index.clamp(0, _filteredGems.length - 1);
+    final targetOffset = (clamped * 190.0).clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(
+      targetOffset,
+      duration: AppMotion.base,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _jumpToRandom() {
+    if (_filteredGems.isEmpty) return;
+    final randIndex = Random().nextInt(_filteredGems.length);
+    _jumpToIndex(randIndex);
+    HapticFeedback.lightImpact();
+    AppSnackbar.info(
+      context,
+      'انتقلت إلى الدُّرّة رقم ${randIndex + 1} (${_filteredGems[randIndex].author})',
+      hasNavBar: false,
+    );
+  }
+
+  void _openQuickJumpSheet() {
+    HapticFeedback.lightImpact();
+    SalafQuickJumpSheet.show(
+      context: context,
+      totalCount: _filteredGems.length,
+      gems: _filteredGems,
+      onJumpToIndex: _jumpToIndex,
+    );
   }
 
   Future<void> _loadData() async {
@@ -100,10 +154,10 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
       _topicCounts = topicCounts;
       _isLoading = false;
     });
-    _applyFilters();
+    _applyFilters(resetScroll: false);
   }
 
-  Future<void> _applyFilters() async {
+  Future<void> _applyFilters({bool resetScroll = true}) async {
     final query = _searchController.text.trim();
     final results = await _repository.filterGems(
       query: query.isEmpty ? null : query,
@@ -117,6 +171,9 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
     setState(() {
       _filteredGems = results;
     });
+    if (resetScroll) {
+      _jumpToTop();
+    }
   }
 
   bool get _hasActiveFilters =>
@@ -135,7 +192,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
       _onlyFavorites = false;
       _searchController.clear();
     });
-    _applyFilters();
+    _applyFilters(resetScroll: true);
   }
 
   String _buildDynamicSubtitle() {
@@ -171,7 +228,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
       _favoriteIds = updated;
     });
     if (_onlyFavorites) {
-      _applyFilters();
+      _applyFilters(resetScroll: false);
     }
   }
 
@@ -195,7 +252,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
         setState(() {
           _selectedScholar = scholar;
         });
-        _applyFilters();
+        _applyFilters(resetScroll: true);
       },
     );
   }
@@ -211,7 +268,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
         setState(() {
           _selectedTopic = topic;
         });
-        _applyFilters();
+        _applyFilters(resetScroll: true);
       },
     );
   }
@@ -231,11 +288,26 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final hasScholarFilter = _selectedScholar.id != 'all';
-    final hasTopicFilter = _selectedTopic.id != 'all';
 
     return Scaffold(
       backgroundColor: palette.bg,
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.small(
+              heroTag: 'durar_scroll_to_top',
+              backgroundColor: palette.surfaceRaised,
+              foregroundColor: palette.gold,
+              tooltip: 'العودة للأعلى',
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _scrollController.animateTo(
+                  0,
+                  duration: AppMotion.base,
+                  curve: Curves.easeOutCubic,
+                );
+              },
+              child: const Icon(Icons.arrow_upward_rounded),
+            )
+          : null,
       appBar: AppBar(
         backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
@@ -282,7 +354,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
               setState(() {
                 _onlyFavorites = !_onlyFavorites;
               });
-              _applyFilters();
+              _applyFilters(resetScroll: true);
             },
           ),
         ],
@@ -295,62 +367,44 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
             )
           : Column(
               children: [
-                // Modern Capsule Search Header
+                // Modern Capsule Search Header with tap outside unfocus
                 Container(
                   color: palette.surface,
                   padding: const EdgeInsetsDirectional.fromSTEB(
-                    AppSpace.md,
-                    AppSpace.xs,
-                    AppSpace.md,
-                    AppSpace.xs,
+                    AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.xs,
                   ),
                   child: Container(
                     decoration: BoxDecoration(
                       color: palette.surfaceRaised,
                       borderRadius: AppRadius.pillRadius,
-                      border: Border.all(
-                        color: palette.border,
-                      ),
+                      border: Border.all(color: palette.border),
                     ),
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.sm,
-                    ),
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.sm),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.search_rounded,
-                          color: palette.primary,
-                        ),
+                        Icon(Icons.search_rounded, color: palette.primary),
                         const SizedBox(width: AppSpace.xs),
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            onChanged: (_) => _applyFilters(),
-                            style: textTheme.body.copyWith(
-                              color: palette.text,
-                            ),
+                            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                            onChanged: (_) => _applyFilters(resetScroll: true),
+                            style: textTheme.body.copyWith(color: palette.text),
                             decoration: InputDecoration(
                               hintText: 'ابحث في نصوص الأحاديث وأقوال الصحابة والسلف...',
-                              hintStyle: textTheme.body.copyWith(
-                                color: palette.textSubtle,
-                              ),
+                              hintStyle: textTheme.body.copyWith(color: palette.textSubtle),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsetsDirectional.symmetric(
-                                vertical: AppSpace.sm,
-                              ),
+                              contentPadding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
                             ),
                           ),
                         ),
                         if (_searchController.text.isNotEmpty)
                           IconButton(
-                            icon: Icon(
-                              Icons.clear_rounded,
-                              color: palette.textMuted,
-                            ),
+                            icon: Icon(Icons.clear_rounded, color: palette.textMuted),
                             tooltip: 'مسح البحث',
                             onPressed: () {
                               _searchController.clear();
-                              _applyFilters();
+                              _applyFilters(resetScroll: true);
                             },
                           ),
                       ],
@@ -359,183 +413,29 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                 ),
 
                 // UNIFIED SINGLE-LINE FILTER BAR (Scholar Pill + Topic Pill + Category Chips)
-                Container(
-                  color: palette.surface,
-                  padding: const EdgeInsetsDirectional.fromSTEB(
-                    0,
-                    AppSpace.xxs,
-                    0,
-                    AppSpace.sm,
-                  ),
-                  height: AppSize.tap,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
-                    children: [
-                      // 1. Scholar Filter Capsule Pill
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: AppRadius.pillRadius,
-                          onTap: _openScholarPicker,
-                          child: Container(
-                            alignment: AlignmentDirectional.center,
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.sm,
-                              vertical: AppSpace.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: hasScholarFilter ? palette.goldSoft : palette.surfaceRaised,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(
-                                color: hasScholarFilter ? palette.gold : palette.border,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.person_outline_rounded,
-                                  color: hasScholarFilter ? palette.gold : palette.textMuted,
-                                ),
-                                const SizedBox(width: AppSpace.xxs),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 130),
-                                  child: Text(
-                                    hasScholarFilter ? _selectedScholar.displayName : 'القائل ▾',
-                                    style: textTheme.label.copyWith(
-                                      color: hasScholarFilter ? palette.gold : palette.textMuted,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (hasScholarFilter) ...[
-                                  const SizedBox(width: AppSpace.xxs),
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedScholar = SalafFilterData.scholars.first;
-                                      });
-                                      _applyFilters();
-                                    },
-                                    child: Icon(
-                                      Icons.cancel_rounded,
-                                      color: palette.gold,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-
-                      // 2. Topic Filter Capsule Pill
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: AppRadius.pillRadius,
-                          onTap: _openTopicPicker,
-                          child: Container(
-                            alignment: AlignmentDirectional.center,
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.sm,
-                              vertical: AppSpace.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: hasTopicFilter ? palette.primarySoft : palette.surfaceRaised,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(
-                                color: hasTopicFilter ? palette.primary : palette.border,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  hasTopicFilter ? _selectedTopic.icon : Icons.category_outlined,
-                                  color: hasTopicFilter ? palette.primary : palette.textMuted,
-                                ),
-                                const SizedBox(width: AppSpace.xxs),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 130),
-                                  child: Text(
-                                    hasTopicFilter ? _selectedTopic.title : 'الموضوع ▾',
-                                    style: textTheme.label.copyWith(
-                                      color: hasTopicFilter ? palette.primary : palette.textMuted,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (hasTopicFilter) ...[
-                                  const SizedBox(width: AppSpace.xxs),
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedTopic = SalafFilterData.topics.first;
-                                      });
-                                      _applyFilters();
-                                    },
-                                    child: Icon(
-                                      Icons.cancel_rounded,
-                                      color: palette.primary,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-
-                      // 3. Category Pills
-                      ..._categories.map((cat) {
-                        final isSelected = _selectedCategory == cat;
-                        return Padding(
-                          padding: const EdgeInsetsDirectional.only(start: AppSpace.xs),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: AppRadius.pillRadius,
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat;
-                                });
-                                _applyFilters();
-                              },
-                              child: Container(
-                                alignment: AlignmentDirectional.center,
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.md,
-                                  vertical: AppSpace.xs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? palette.primarySoft : palette.surfaceRaised,
-                                  borderRadius: AppRadius.pillRadius,
-                                  border: Border.all(
-                                    color: isSelected ? palette.primary : palette.border,
-                                  ),
-                                ),
-                                child: Text(
-                                  cat,
-                                  style: textTheme.label.copyWith(
-                                    color: isSelected ? palette.primary : palette.textMuted,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
+                SalafFilterCapsuleBar(
+                  selectedScholar: _selectedScholar,
+                  selectedTopic: _selectedTopic,
+                  categories: _categories,
+                  selectedCategory: _selectedCategory,
+                  onOpenScholarPicker: _openScholarPicker,
+                  onOpenTopicPicker: _openTopicPicker,
+                  onClearScholar: () {
+                    setState(() => _selectedScholar = SalafFilterData.scholars.first);
+                    _applyFilters(resetScroll: true);
+                  },
+                  onClearTopic: () {
+                    setState(() => _selectedTopic = SalafFilterData.topics.first);
+                    _applyFilters(resetScroll: true);
+                  },
+                  onSelectCategory: (cat) {
+                    final isSelected = _selectedCategory == cat;
+                    setState(() => _selectedCategory = isSelected && cat != 'الكل' ? 'الكل' : cat);
+                    _applyFilters(resetScroll: true);
+                  },
                 ),
 
-                // Results Count & Reset Bar
+                // Results Count & Large Collection Navigation Bar
                 Container(
                   color: palette.surfaceMuted,
                   padding: const EdgeInsetsDirectional.symmetric(
@@ -543,7 +443,6 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                     vertical: AppSpace.xs,
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
                         child: Text(
@@ -555,11 +454,76 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const Spacer(),
+
+                      // Fast Jump action for collections > 15
+                      if (_filteredGems.length > 15) ...[
+                        InkWell(
+                          onTap: _openQuickJumpSheet,
+                          borderRadius: AppRadius.pillRadius,
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xs,
+                              vertical: 2,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.directions_run_rounded,
+                                  size: AppIcon.xs,
+                                  color: palette.gold,
+                                ),
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  'انتقال سريع',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.gold,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        InkWell(
+                          onTap: _jumpToRandom,
+                          borderRadius: AppRadius.pillRadius,
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.xs,
+                              vertical: 2,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.casino_outlined,
+                                  size: AppIcon.xs,
+                                  color: palette.primary,
+                                ),
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  'عشوائي',
+                                  style: textTheme.caption.copyWith(
+                                    color: palette.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                      ],
+
+                      // Reset Filters Button
                       if (_hasActiveFilters)
                         InkWell(
                           onTap: _resetAllFilters,
                           child: Text(
-                            'إعادة ضبط المرشحات',
+                            'إعادة ضبط',
                             style: textTheme.caption.copyWith(
                               color: palette.primary,
                             ),
@@ -569,7 +533,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                   ),
                 ),
 
-                // List of Gems
+                // List of Gems with ScrollController
                 Expanded(
                   child: _filteredGems.isEmpty
                       ? Center(
@@ -593,6 +557,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                           ),
                         )
                       : ListView.separated(
+                          controller: _scrollController,
                           padding: const EdgeInsetsDirectional.all(AppSpace.md),
                           itemCount: _filteredGems.length,
                           separatorBuilder: (context, index) =>

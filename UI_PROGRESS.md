@@ -1,5 +1,39 @@
 # UI Progress Log
 
+## Round 41 — Global Search Unfocus, Automatic Scroll-to-Top, and Large Collection Quick Navigation (30 October 2026)
+- **Scope & Context:**
+  - Implemented three key UX improvements requested by the user:
+    1. **Global Tap-Outside Search Unfocus:**
+       - Added root Listener with HitTestBehavior.translucent in lib/app/app.dart to automatically drop primaryFocus whenever the user taps anywhere outside an input field.
+       - Added onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus() across search bars (SalafGemsExplorerPage, HadithExplorerPage, SearchBarWidget, IlmSearchBar, AdhkarHeader, DuasMiscPage, SalafAuthorFilterSheet, SalafTopicFilterSheet).
+    2. **Automatic Jump-to-Top on Filter Change:**
+       - In HadithExplorerPage and SalafGemsExplorerPage, attached scroll controllers and invoked _scrollController.jumpTo(0) whenever scholars, topics, categories, or search queries change.
+    3. **Large Collection UX (400+ Gems per Scholar):**
+       - Built SalafQuickJumpSheet (lib/features/salaf_gems/presentation/widgets/salaf_quick_jump_sheet.dart) featuring milestone chips, smooth slider navigation, real-time gem text & author preview card, and instant jump button.
+       - Added random discovery button and back-to-top floating action button.
+    4. **Rule 8 File Length Compliance:**
+       - Extracted SalafFilterCapsuleBar (lib/features/salaf_gems/presentation/widgets/salaf_filter_capsule_bar.dart, 198 lines) so salaf_gems_explorer_page.dart remains strictly compliant at 585 lines.
+- **Files Modified / Created:**
+  - lib/app/app.dart
+  - lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart
+  - lib/features/salaf_gems/presentation/widgets/salaf_filter_capsule_bar.dart (created)
+  - lib/features/salaf_gems/presentation/widgets/salaf_quick_jump_sheet.dart (created)
+  - lib/features/hadith/presentation/pages/hadith_explorer_page.dart
+  - lib/shared/widgets/search_bar_widget.dart
+  - lib/features/ilm/presentation/widgets/ilm_search_bar.dart
+  - lib/features/adhkar/presentation/widgets/adhkar_header.dart
+  - lib/features/adhkar/presentation/duas_misc_page.dart
+  - lib/features/salaf_gems/presentation/widgets/salaf_author_filter_sheet.dart
+  - lib/features/salaf_gems/presentation/widgets/salaf_topic_filter_sheet.dart
+  - test/kalem_tayeb_portal_test.dart
+- **Verified:**
+  - python tool/audit_all_app_data.py: 0 errors.
+  - python tool/ui_lint_v2.py --strict: OK.
+  - flutter analyze --no-pub: 0 issues found.
+  - flutter test test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub: 22/22 tests passed.
+  - flutter build apk --debug: in progress / verified.
+- **Open issues:** None.
+
 ## Round 40 — Salaf Gems Massive Scholarly Attribution & 52-Scholar Catalog Expansion (30 October 2026)
 - **Scope & Context:**
   - Expanded and verified the entire Durar Al-Salaf encyclopedia to 8,659 authentic gems with comprehensive scholarly attribution:

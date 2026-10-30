@@ -169,6 +169,7 @@ class _SalafTopicFilterSheetState extends State<SalafTopicFilterSheet> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
+                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                         onChanged: (v) =>
                             setState(() => _searchQuery = v.trim().toLowerCase()),
                         style: textTheme.body.copyWith(color: palette.text),

@@ -147,6 +147,7 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                           const SizedBox(width: AppSpace.sm),
                           Expanded(
                             child: TextField(
+              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                               controller: _searchController,
                               autofocus: true,
                               onChanged: _onSearchChanged,

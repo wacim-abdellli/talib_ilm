@@ -6,6 +6,7 @@ import 'package:talib_ilm/features/salaf_gems/data/models/salaf_filter_models.da
 import 'package:talib_ilm/features/salaf_gems/data/models/salaf_gem.dart';
 import 'package:talib_ilm/features/salaf_gems/data/repositories/salaf_gems_repository.dart';
 import 'package:talib_ilm/features/salaf_gems/presentation/salaf_gems_explorer_page.dart';
+import 'package:talib_ilm/features/salaf_gems/presentation/widgets/salaf_quick_jump_sheet.dart';
 
 Widget _wrapExplorer({double textScale = 1.0}) {
   return MaterialApp(
@@ -173,6 +174,35 @@ void main() {
 
       expect(find.text('موسوعة درر السلف والآثار'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SalafQuickJumpSheet renders and survives textScale 1.0, 1.5, 2.0', (tester) async {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Directionality(
+              textDirection: TextDirection.rtl,
+              child: MediaQuery(
+                data: MediaQueryData(
+                  textScaler: TextScaler.linear(scale),
+                  size: const Size(400, 900),
+                ),
+                child: Scaffold(
+                  body: SalafQuickJumpSheet(
+                    totalCount: 463,
+                    gems: const [sampleGem1, sampleGem2, sampleGem3, sampleGem4],
+                    onJumpToIndex: (_) {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('انتقال سريع بين الآثار'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
     });
   });
 }

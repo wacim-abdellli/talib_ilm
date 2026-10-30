@@ -32,6 +32,7 @@ class HadithExplorerPage extends StatefulWidget {
 class _HadithExplorerPageState extends State<HadithExplorerPage> {
   final HadithService _hadithService = HadithService();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _searchDebounce;
 
   List<GradedHadith> _allHadiths = [];
@@ -62,6 +63,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -140,6 +142,9 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
     setState(() {
       _filteredHadiths = list;
     });
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
   }
 
   void _openCollectionPicker() {
@@ -255,6 +260,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
+                            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                             onChanged: (_) {
                               _searchDebounce?.cancel();
                               _searchDebounce = Timer(AppMotion.searchDebounce, _applyFilter);
@@ -488,6 +494,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                           ),
                         )
                       : ListView.separated(
+                          controller: _scrollController,
                           padding: const EdgeInsetsDirectional.all(AppSpace.md),
                           itemCount: _filteredHadiths.length,
                           separatorBuilder: (context, index) =>

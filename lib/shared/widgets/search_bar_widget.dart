@@ -96,6 +96,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             const SizedBox(width: AppSpace.sm),
             Expanded(
               child: TextField(
+              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                 controller: _controller,
                 focusNode: _focusNode,
                 textInputAction: TextInputAction.search,

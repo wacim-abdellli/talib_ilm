@@ -95,6 +95,7 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                     ),
                   ),
                   child: TextField(
+              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val),
                     style: context.text.body.copyWith(
