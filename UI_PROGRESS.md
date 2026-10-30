@@ -1,5 +1,48 @@
 # UI Progress Log
 
+## Round 37 — Kalem Al-Tayyib Grand Encyclopedia Portal & Multi-Section Hierarchy (30 October 2026)
+- **Scope & Context:**
+  - In response to user direction referencing the official app of *الكلم الطيب* (`kalemtayeb.com`), transitioned Durar Al-Salaf from a single flat feed into the **Grand Encyclopedia Portal** (`KalemTayebPortalPage`):
+    1. **Top Noble Ayah Banner:**
+       - Added Surat Fatir: 10 banner with full Uthmani calligraphy: `«مَن كَانَ يُرِيدُ الْعِزَّةَ فَلِلَّهِ الْعِزَّةُ جَمِيعًا ۚ إِلَيْهِ يَصْعَدُ الْكَلِمُ الطَّيِّبُ وَالْعَمَلُ الصَّالِحُ يَرْفَعُهُ»`.
+    2. **2×2 Grand Hubs Grid (`EncyclopediaHubCard`):**
+       - `فوائد وحكم`: Scrolls to wisdom and Salaf sayings panels.
+       - `أدعية وأذكار`: Directly routes to the app's full Adhkar Hub (`AdhkarPage`).
+       - `جوامع الكلم`: Routes to prophetic advices and virtuous deeds in `SalafGemsExplorerPage`.
+       - `مقالات إيمانية`: Scrolls to heart-softening articles and faith breezes.
+    3. **Rotating Daily Wisdom Card (`EncyclopediaDailyCard`):**
+       - Displays `قطوف من الكلم الطيب` with live refresh button, instant bookmark toggle, share sheet, and one-tap clipboard copy.
+    4. **5 Grouped Section Panels (26 Sub-Sections):**
+       - **المجموعة 1: القرآن وأسماء الله الحسنى:** معاني الأسماء الحسنى · خواطر قرآنية · وقفات تدبرية.
+       - **المجموعة 2: أئمة السلف والآثار:** حكم ومواعظ وأقوال مأثورة · درر من أقوال أئمة السلف · حياة السلف بين القول والعمل · درر من أقوال الدعاة المعاصرين · أسطر في العقل والنقل للطريفي.
+       - **المجموعة 3: الزهد والرقائق وتزكية النفوس:** أسباب السعادة والنجاح · الزهد والرقائق · الآداب والفضائل · السمو وعلو الهمة · التربية والتزكية.
+       - **المجموعة 4: خزائن أئمة التحقيق الكبار:** فوائد من كتب ابن تيمية · فوائد من كتب ابن القيم · فوائد من كتب ابن الجوزي · فوائد من كتب ابن رجب · سير أعلام النبلاء.
+       - **المجموعة 5: مقالات ورقائق إيمانية:** مع الله - شرح الأسماء الحسنى · مع كتاب الله · نسائم إيمانية · طب القلوب · موسوعة الأخلاق · فقه الدنيا والآخرة · قبس من السيرة - صور من حياة الصحابة · أصول الوصول إلى الله تعالى.
+    5. **Explorer Page & Navigation Integration:**
+       - `SalafGemsExplorerPage`: Added support for `pageTitle` and `initialSectionId` for instant filtered browsing of any section. Extracted `SalafAuthorFilterSheet` to keep file <= 600 lines.
+       - Connected `MorePage` and `HomeSalafGemCard` to navigate seamlessly into `KalemTayebPortalPage`.
+- **Files Created / Modified:**
+  - `lib/features/salaf_gems/data/models/encyclopedia_section.dart` (created, 61 lines)
+  - `lib/features/salaf_gems/data/repositories/encyclopedia_sections_data.dart` (created, 417 lines)
+  - `lib/features/salaf_gems/presentation/widgets/encyclopedia_hub_card.dart` (created, 94 lines)
+  - `lib/features/salaf_gems/presentation/widgets/encyclopedia_daily_card.dart` (created, 305 lines)
+  - `lib/features/salaf_gems/presentation/widgets/encyclopedia_section_panel.dart` (created, 179 lines)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_author_filter_sheet.dart` (created, 153 lines)
+  - `lib/features/salaf_gems/presentation/kalem_tayeb_portal_page.dart` (created, 436 lines)
+  - `lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart` (modified, 290 lines)
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (modified, 520 lines)
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart` (modified, 348 lines)
+  - `lib/features/more/presentation/more_page.dart` (modified, 579 lines)
+  - `test/kalem_tayeb_portal_test.dart` (created, 186 lines)
+- **Verified:**
+  - `python tool/audit_all_app_data.py`: 0 errors across 8,583 gems and all 12 stores.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found (clean).
+  - `flutter test test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub`: 20/20 tests passed.
+  - Text scales 1.0, 1.5, 2.0 tested without overflow.
+  - `flutter build apk --debug`: built successfully.
+- **Open issues:** None. All rules (1 to 14) fully satisfied.
+
 ## Round 38 — Adhkar Tashkeel Toggle Clarity (30 October 2026)
 - Made the switch thumb contrast with its active gold track, made the full setting row tappable, and applied the explicit value reported by the switch so the preview and recitation card stay in sync.
 - Verified: `flutter analyze --no-pub` (scoped) and `python tool/ui_lint_v2.py`.

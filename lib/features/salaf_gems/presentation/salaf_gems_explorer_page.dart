@@ -4,19 +4,27 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/islamic_typography_sheet.dart';
+import '../data/models/encyclopedia_section.dart';
 import '../data/models/salaf_gem.dart';
 import '../data/repositories/salaf_gems_repository.dart';
+import 'widgets/salaf_author_filter_sheet.dart';
 import 'widgets/salaf_gem_card.dart';
 import 'widgets/salaf_gem_share_sheet.dart';
 
 class SalafGemsExplorerPage extends StatefulWidget {
+  final String? pageTitle;
   final String? initialCategory;
   final String? initialAuthor;
+  final String? initialSectionId;
+  final String? initialTopic;
 
   const SalafGemsExplorerPage({
     super.key,
+    this.pageTitle,
     this.initialCategory,
     this.initialAuthor,
+    this.initialSectionId,
+    this.initialTopic,
   });
 
   @override
@@ -32,6 +40,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
   List<String> _categories = const ['الكل'];
   List<String> _topAuthors = const ['الكل'];
   Set<String> _favoriteIds = const {};
+  EncyclopediaSection? _currentSection;
 
   String _selectedCategory = 'الكل';
   String _selectedAuthor = 'الكل';
@@ -45,6 +54,9 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
     IslamicTypographySheet.loadSavedScale(IslamicTypographySheet.durarPrefKey).then((s) {
       if (mounted) setState(() => _fontScale = s);
     });
+    if (widget.initialSectionId != null) {
+      _currentSection = _repository.getSectionById(widget.initialSectionId!);
+    }
     _selectedCategory = widget.initialCategory ?? 'الكل';
     _selectedAuthor = widget.initialAuthor ?? 'الكل';
     _loadData();
@@ -76,8 +88,33 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
 
   void _applyFilters() {
     final query = _searchController.text.trim().toLowerCase();
+    final sec = _currentSection;
     final results = _allGems.where((gem) {
       if (_onlyFavorites && !_favoriteIds.contains(gem.id)) {
+        return false;
+      }
+      if (sec != null) {
+        bool sectionMatch = false;
+        if (sec.targetAuthor != null && gem.author.contains(sec.targetAuthor!)) {
+          sectionMatch = true;
+        } else if (sec.targetCategory != null && gem.category == sec.targetCategory) {
+          sectionMatch = true;
+        } else {
+          for (final kw in sec.keywords) {
+            if (gem.topic.contains(kw) ||
+                gem.author.contains(kw) ||
+                gem.sourceRef.contains(kw) ||
+                gem.text.contains(kw)) {
+              sectionMatch = true;
+              break;
+            }
+          }
+        }
+        if (!sectionMatch) return false;
+      }
+      if (widget.initialTopic != null &&
+          !gem.topic.contains(widget.initialTopic!) &&
+          !gem.category.contains(widget.initialTopic!)) {
         return false;
       }
       if (_selectedCategory != 'الكل' && gem.category != _selectedCategory) {
@@ -131,124 +168,15 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
 
   void _openScholarPicker() {
     HapticFeedback.lightImpact();
-    final palette = context.palette;
-    final textTheme = context.text;
-
-    showModalBottomSheet<void>(
+    SalafAuthorFilterSheet.show(
       context: context,
-      backgroundColor: palette.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Bottom Sheet Header
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(
-                  AppSpace.lg,
-                  AppSpace.md,
-                  AppSpace.sm,
-                  AppSpace.xs,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.people_outline_rounded,
-                      color: palette.primary,
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Expanded(
-                      child: Text(
-                        'تصفية حسب القائل من أئمة السلف',
-                        style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      color: palette.textMuted,
-                      tooltip: 'إغلاق',
-                      onPressed: () => Navigator.of(ctx).pop(),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-
-              // Scholar List
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsetsDirectional.all(AppSpace.md),
-                  itemCount: _topAuthors.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: AppSpace.xs),
-                  itemBuilder: (context, index) {
-                    final author = _topAuthors[index];
-                    final isSelected = author == _selectedAuthor;
-                    final isAll = author == 'الكل';
-
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: AppRadius.mdRadius,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() {
-                            _selectedAuthor = author;
-                          });
-                          _applyFilters();
-                          Navigator.of(ctx).pop();
-                        },
-                        child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.md,
-                            vertical: AppSpace.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected ? palette.primarySoft : palette.surfaceRaised,
-                            borderRadius: AppRadius.mdRadius,
-                            border: Border.all(
-                              color: isSelected ? palette.primary : palette.border,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                isAll ? Icons.all_inclusive_rounded : Icons.person_rounded,
-                                color: isSelected ? palette.primary : palette.textMuted,
-                              ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(
-                                child: Text(
-                                  isAll ? 'الكل (جميع الأعلام والأئمة)' : author,
-                                  style: textTheme.body.copyWith(
-                                    color: isSelected ? palette.primary : palette.text,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  color: palette.primary,
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
+      authors: _topAuthors,
+      selectedAuthor: _selectedAuthor,
+      onSelectAuthor: (author) {
+        setState(() {
+          _selectedAuthor = author;
+        });
+        _applyFilters();
       },
     );
   }
@@ -280,11 +208,15 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'موسوعة درر السلف والآثار',
+              widget.pageTitle ??
+                  _currentSection?.title ??
+                  'موسوعة درر السلف والآثار',
               style: textTheme.title.copyWith(
                 color: palette.text,
                 letterSpacing: 0.2,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               '${_allGems.length} أَثَرًا مُوَثَّقًا وَحِكْمَةً مُحَقَّقَة',

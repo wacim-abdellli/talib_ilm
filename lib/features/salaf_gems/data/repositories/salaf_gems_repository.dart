@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/encyclopedia_section.dart';
 import '../models/salaf_gem.dart';
+import 'encyclopedia_sections_data.dart';
 
 class SalafGemsRepository {
   SalafGemsRepository._();
@@ -243,5 +245,46 @@ class SalafGemsRepository {
       await prefs.setStringList(_favStorageKey, ids.toList(growable: false));
     } catch (_) {}
     return willFavorite;
+  }
+
+  List<EncyclopediaGroup> getEncyclopediaGroups() {
+    return EncyclopediaSectionsData.groups;
+  }
+
+  EncyclopediaSection? getSectionById(String id) {
+    for (final group in EncyclopediaSectionsData.groups) {
+      for (final sec in group.sections) {
+        if (sec.id == id) return sec;
+      }
+    }
+    return null;
+  }
+
+  Future<List<SalafGem>> getGemsForSection(EncyclopediaSection section) async {
+    final all = await getAllGems();
+    return all.where((gem) {
+      if (section.targetAuthor != null &&
+          gem.author.contains(section.targetAuthor!)) {
+        return true;
+      }
+      if (section.targetCategory != null &&
+          gem.category == section.targetCategory) {
+        return true;
+      }
+      for (final kw in section.keywords) {
+        if (gem.topic.contains(kw) ||
+            gem.author.contains(kw) ||
+            gem.sourceRef.contains(kw) ||
+            gem.text.contains(kw)) {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+  }
+
+  Future<int> getSectionCount(EncyclopediaSection section) async {
+    final list = await getGemsForSection(section);
+    return list.length;
   }
 }

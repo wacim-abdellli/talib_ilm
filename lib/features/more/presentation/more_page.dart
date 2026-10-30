@@ -12,7 +12,7 @@ import '../../ilm/presentation/widgets/offline_downloads_hub_sheet.dart';
 import '../../quran/data/services/reading_stats_service.dart';
 import '../../quran/presentation/quran_audio_downloads_page.dart';
 import 'credits_and_licenses_page.dart';
-import '../../salaf_gems/presentation/salaf_gems_explorer_page.dart';
+import '../../salaf_gems/presentation/kalem_tayeb_portal_page.dart';
 import 'widgets/more_section_card.dart';
 import 'widgets/theme_selector_sheet.dart';
 
@@ -345,15 +345,15 @@ class _MorePageState extends State<MorePage> {
                         padding: const EdgeInsets.only(bottom: AppSpace.sm),
                         child: MoreSectionCard(
                           section: MoreSection(
-                            title: 'موسوعة درر السلف والآثار',
+                            title: 'موسوعة الكلم الطيب والفوائد',
                             subtitle:
-                                'أقوال الصحابة، حكم السلف، وفوائد المحققين (3,280+ أثر)',
+                                'الفوائد والحكم، درر السلف، وجوامع الكلم (8,580+ أثر)',
                             icon: Icons.auto_awesome_rounded,
                             color: palette.gold,
                             onTap: () => Navigator.push(
                               context,
                               buildFadeRoute(
-                                page: const SalafGemsExplorerPage(),
+                                page: const KalemTayebPortalPage(),
                               ),
                             ),
                           ),
