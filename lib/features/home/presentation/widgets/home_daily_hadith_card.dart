@@ -84,50 +84,55 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
       children: [
         // Section Header Row
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                  decoration: BoxDecoration(
-                    color: palette.primarySoft,
-                    borderRadius: AppRadius.mdRadius,
-                  ),
-                  child: Icon(
-                    Icons.format_quote_rounded,
-                    color: palette.primary,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  AppStrings.homeHadithTitle,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: palette.text,
-                    fontFamily: AppTextStyles.cairo,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.xs,
-                    vertical: AppSpace.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.primarySoft,
-                    borderRadius: AppRadius.pillRadius,
-                  ),
-                  child: Text(
-                    'ﷺ',
-                    style: AppTextStyles.caption.copyWith(
-                      color: palette.primary,
-                      fontFamily: AppTextStyles.amiri,
+            Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+              decoration: BoxDecoration(
+                color: palette.primarySoft,
+                borderRadius: AppRadius.mdRadius,
+              ),
+              child: Icon(
+                Icons.format_quote_rounded,
+                color: palette.primary,
+              ),
+            ),
+            const SizedBox(width: AppSpace.xs),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      AppStrings.homeHadithTitle,
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: palette.text,
+                        fontFamily: AppTextStyles.cairo,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpace.xs),
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.primarySoft,
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                    child: Text(
+                      'ﷺ',
+                      style: AppTextStyles.caption.copyWith(
+                        color: palette.primary,
+                        fontFamily: AppTextStyles.amiri,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Shuffle / Next Hadith
                 IconButton(

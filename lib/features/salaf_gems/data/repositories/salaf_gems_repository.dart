@@ -58,9 +58,12 @@ class SalafGemsRepository {
         final list = rawList
             .map((e) => SalafGem.fromJson(e as Map<String, dynamic>))
             .where((g) => g.text.isNotEmpty)
-            .toList(growable: false);
-        _cachedGems = list;
-        return list;
+            .toList();
+        // Deterministically mix gems so that every category and browsing view displays
+        // a rich, diverse mix of sahaba, scholars, and topics instead of sequential blocks.
+        list.shuffle(Random(114));
+        _cachedGems = List.unmodifiable(list);
+        return _cachedGems!;
       }
     } catch (_) {
       // Fallback fallback sample if assets fail
@@ -152,13 +155,35 @@ class SalafGemsRepository {
     }).toList();
   }
 
+  static const List<String> canonicalCategoryOrder = [
+    'الكل',
+    'أقوال الصحابة',
+    'درر السلف',
+    'وصايا نبوية',
+    'فوائد المحققين',
+    'في طلب العلم',
+    'فضائل الأعمال',
+    'أحاديث قدسية',
+  ];
+
   Future<List<String>> getAllCategories() async {
     final gems = await getAllGems();
     final set = <String>{};
     for (final g in gems) {
       if (g.category.isNotEmpty) set.add(g.category);
     }
-    return ['الكل', ...set];
+    final ordered = <String>['الكل'];
+    for (final cat in canonicalCategoryOrder) {
+      if (cat != 'الكل' && set.contains(cat)) {
+        ordered.add(cat);
+      }
+    }
+    for (final cat in set) {
+      if (!ordered.contains(cat)) {
+        ordered.add(cat);
+      }
+    }
+    return ordered;
   }
 
   Future<List<String>> getTopAuthors() async {

@@ -78,7 +78,12 @@ class _HadithCardState extends State<HadithCard> {
     } else {
       await FavoritesService().remove(FavoriteType.hadith, favItem.id);
     }
-    if (mounted) setState(() => _isFavorite = next);
+    if (!mounted) return;
+    setState(() => _isFavorite = next);
+    AppSnackbar.success(
+      context,
+      next ? 'تم حفظ الحديث في المفضلة بنجاح' : 'تمت إزالة الحديث من المفضلة',
+    );
   }
 
   void _copyHadith() {
