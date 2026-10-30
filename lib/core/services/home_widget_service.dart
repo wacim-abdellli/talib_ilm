@@ -15,47 +15,15 @@ import 'home_widget_snapshot.dart';
 import 'prayer_time_service.dart';
 import '../utils/async_lock.dart';
 
+import 'home_widget_background_callback.dart';
+export 'home_widget_background_callback.dart';
 export 'home_widget_snapshot.dart';
-
-/// Top-level background callback invoked when the Android widget is resized or interacted with.
-@pragma('vm:entry-point')
-Future<void> prayerWidgetBackgroundCallback(Uri? uri) async {
-  if (uri?.host == 'refresh' || uri?.host == 'rollover') {
-    HomeWidgetService.invalidateCache();
-    await HomeWidgetService.updateAllWidgets(force: true);
-    return;
-  }
-  if (uri?.host == 'resize') {
-    final wStr = uri?.queryParameters['minWidth'];
-    final hStr = uri?.queryParameters['minHeight'];
-    final provider = uri?.queryParameters['provider'];
-    final w = int.tryParse(wStr ?? '');
-    final h = int.tryParse(hStr ?? '');
-    if (w != null && h != null) {
-      if (provider == 'large') {
-        await HomeWidget.saveWidgetData<int>('widget_large_width', w);
-        await HomeWidget.saveWidgetData<int>('widget_large_height', h);
-        HomeWidgetService.invalidateCache();
-        await HomeWidgetService.updateLarge(force: true);
-      } else if (provider == 'ribbon') {
-        await HomeWidget.saveWidgetData<int>('widget_ribbon_width', w);
-        await HomeWidget.saveWidgetData<int>('widget_ribbon_height', h);
-        HomeWidgetService.invalidateCache();
-        await HomeWidgetService.updateRibbon(force: true);
-      } else {
-        await HomeWidget.saveWidgetData<int>('widget_width', w);
-        await HomeWidget.saveWidgetData<int>('widget_height', h);
-        HomeWidgetService.invalidateCache();
-        await HomeWidgetService.updatePrayerWidget(force: true);
-      }
-    }
-  }
-}
 
 /// HomeWidgetService - Manages synchronization, theme modes (Black/White/Auto),
 /// and lag-free off-screen rendering of the Android Phone Launcher Home Screen AppWidget.
 class HomeWidgetService {
   static const String androidWidgetName = 'PrayerWidgetProvider';
+  static const String iOSWidgetName = 'TalibIlmWidgets';
   static const String widgetImageKey = 'prayer_widget_image';
   static const String themeModeKey = 'prayer_widget_theme_mode';
 
@@ -134,6 +102,9 @@ class HomeWidgetService {
 
   /// Registers background callback for interactive widget resizing
   static Future<void> initBackground() async {
+    try {
+      await HomeWidget.setAppGroupId('group.com.talibilm.app');
+    } catch (_) {}
     try {
       await HomeWidget.registerInteractivityCallback(prayerWidgetBackgroundCallback);
     } catch (_) {}
@@ -235,6 +206,7 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: androidWidgetName,
         androidName: androidWidgetName,
+        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable (e.g. unit tests)
@@ -321,6 +293,7 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'RibbonWidgetProvider',
         androidName: 'RibbonWidgetProvider',
+        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -391,6 +364,7 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'StandardWidgetProvider',
         androidName: 'StandardWidgetProvider',
+        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -470,6 +444,7 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'LargeWidgetProvider',
         androidName: 'LargeWidgetProvider',
+        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -536,6 +511,7 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'CompactWidgetProvider',
         androidName: 'CompactWidgetProvider',
+        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../core/utils/app_share.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
@@ -266,7 +266,7 @@ class _DuaCardState extends State<_DuaCard> {
       text.writeln('\n— ${widget.item.source}');
     }
     text.writeln('\n(من تطبيق طالب العلم)');
-    Share.share(text.toString());
+    AppShare.share(context, text.toString());
   }
 
   @override

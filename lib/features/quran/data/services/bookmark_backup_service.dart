@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 
 import '../../../../core/constants/app_policy.dart';
 import 'bookmark_service.dart';
@@ -132,7 +133,9 @@ class BookmarkBackupService {
     final file = File('${tempDir.path}/talib_ilm_bookmarks_backup.json');
     await file.writeAsString(jsonStr, flush: true);
 
-    await Share.shareXFiles(
+    if (!context.mounted) return;
+    await AppShare.shareXFiles(
+      context,
       [XFile(file.path, mimeType: 'application/json')],
       subject: 'نسخة احتياطية لمحفوظات طالب علم',
       text: 'نسخة احتياطية للآيات المحفوظة والملاحظات الإيمانية من تطبيق طالب علم.',

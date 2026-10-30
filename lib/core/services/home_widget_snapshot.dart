@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hijri/hijri_calendar.dart';
+import 'location_service.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/constants/app_strings.dart';
@@ -119,6 +121,15 @@ class HomeWidgetSnapshot {
         await HomeWidget.saveWidgetData<String>('prayer_status_label', eval.statusLabel);
         await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
         await HomeWidget.saveWidgetData<int>('widget_snapshot_version', version);
+
+        final nowDt = DateTime.now();
+        final hijri = HijriCalendar.fromDate(nowDt);
+        final hijriStr = '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} هـ';
+        await HomeWidget.saveWidgetData<String>('hijri_date', hijriStr);
+        final loc = LocationService.cachedLocation;
+        if (loc != null && loc.city.isNotEmpty) {
+          await HomeWidget.saveWidgetData<String>('location_city', loc.city);
+        }
       } catch (_) {}
 
       // Persist full 24-hour prayer schedule for autonomous native Android widget evaluation

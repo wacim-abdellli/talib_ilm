@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -222,7 +222,8 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
       verseEndSymbol: true,
     );
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
-    await Share.share('﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
+    await AppShare.share(
+      context,'﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
   }
 
   @override

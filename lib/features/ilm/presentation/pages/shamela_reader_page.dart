@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/app.dart';
@@ -328,7 +328,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     HapticFeedback.selectionClick();
 
     final text = '${page.content}\n\n[من كتاب: ${widget.book.title} للمؤلف: ${widget.book.author} - ص: $_currentPage]';
-    Share.share(text);
+    AppShare.share(context, text);
   }
 
   void _showFihrisSheet() {

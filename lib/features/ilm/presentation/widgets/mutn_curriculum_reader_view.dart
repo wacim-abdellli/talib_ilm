@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/app.dart';
@@ -484,7 +484,8 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
             isAudioActive: _showAudioBar,
             onShare: () {
               HapticFeedback.lightImpact();
-              Share.share(
+              AppShare.share(
+                context,
                 '${widget.book.title}\n\n'
                 '${widget.curriculumBook.sections.first.paragraphs.first.text}\n\n'
                 '— تطبيق طالب العلم',

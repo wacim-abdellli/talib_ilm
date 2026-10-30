@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../core/utils/app_share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
@@ -237,7 +237,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     }
     buffer.writeln();
     buffer.writeln('— من تطبيق طالب علم');
-    Share.share(buffer.toString());
+    AppShare.share(context, buffer.toString());
   }
 
   void _resetCount() {

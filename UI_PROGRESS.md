@@ -1,5 +1,62 @@
 # UI Progress Log
 
+## Round 44 — Critical iOS & iPhone 13 Production Hardening (30 October 2026)
+- **Scope & Context:**
+  - Resolved 5 critical blocking issues encountered during physical iPhone 13 testing:
+    1. **Native iOS WidgetKit Extension (TalibIlmWidgets):**
+       - Implemented native Swift App Extension using WidgetKit and SwiftUI supporting .systemSmall, .systemMedium, and .systemLarge.
+       - Designed Arabic RTL layouts with Calm Scholar palette (gold, warm parchment, forest green).
+       - Connected HomeWidgetService and HomeWidgetSnapshot to App Group group.com.talibilm.app (setAppGroupId) and enabled iOSName: 'TalibIlmWidgets' timeline refreshes.
+       - Configured CI pipeline in .github/workflows/build_ios.yml to compile and embed TalibIlmWidgets.appex inside Payload/Runner.app/PlugIns/ for automatic registration in the iOS Widget Gallery.
+    2. **Qibla Location Permission on iOS:**
+       - Fixed permission check in QiblaPage to support PermissionStatus.limited (iOS 14+ Approximate Location).
+       - Added robust detection for isPermanentlyDenied / isDenied and LocationServices disabled with dedicated Arabized dialog directing user to iOS Settings via openAppSettings() / Geolocator.openLocationSettings().
+       - Added WidgetsBindingObserver lifecycle resumption to auto-detect permission upon returning from iOS Settings.
+    3. **Robust System Share Sheet (AppShare):**
+       - Solved silent share failures on iOS by creating AppShare.share(context, ...) calculating non-null sharePositionOrigin bounding box from widget render boxes.
+       - Replaced all raw Share.share and Share.shareXFiles calls app-wide (Durar Salaf gems, Hadith, Quran, Adhkar, and book reader).
+    4. **Adhan Notifications & Audio Session on iOS:**
+       - Updated AppDelegate.swift with UNUserNotificationCenter.current().delegate = self and implemented willPresent to ensure foreground and background notifications display with banner, alert, sound, and badge.
+       - Configured AudioSessionConfiguration.music() in AdhanService.play() to route Adhan audio through AVAudioSessionCategoryPlayback, allowing sound to play through the hardware silent/mute switch.
+       - Configured DarwinInitializationSettings to request alert, badge, and sound permissions on initialization.
+    5. **Native iOS Interactive Edge-Swipe Pop Gesture (FadePageRoute):**
+       - Upgraded buildFadeRoute to return AppFadePageRoute with CupertinoRouteTransitionMixin.
+       - Restored native iOS edge-swipe back gesture (popGestureEnabled: true) across all app navigation in Arabic RTL.
+- **Files Modified / Created:**
+  - ios/TalibIlmWidgets/TalibIlmWidgets.swift (created)
+  - ios/TalibIlmWidgets/Info.plist (created)
+  - ios/Runner/AppDelegate.swift
+  - .github/workflows/build_ios.yml
+  - lib/core/utils/app_share.dart (created)
+  - lib/core/services/home_widget_background_callback.dart (created)
+  - lib/core/services/home_widget_service.dart
+  - lib/core/services/home_widget_snapshot.dart
+  - lib/core/services/adhan_service.dart
+  - lib/core/services/notification_service.dart
+  - lib/features/prayer/presentation/qibla_page.dart
+  - lib/shared/navigation/fade_page_route.dart
+  - lib/features/salaf_gems/presentation/widgets/salaf_gem_share_sheet.dart
+  - lib/features/hadith/presentation/widgets/hadith_card.dart
+  - lib/features/ilm/presentation/pages/shamela_reader_page.dart
+  - lib/features/adhkar/presentation/duas_misc_page.dart
+  - lib/features/adhkar/presentation/adhkar_session_page.dart
+  - lib/features/favorites/presentation/widgets/favorite_item_launcher.dart
+  - lib/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart
+  - lib/features/ilm/presentation/widgets/mutn_digital_reader.dart
+  - lib/features/quran/presentation/widgets/ayah_action_menu_sheet.dart
+  - lib/features/quran/presentation/widgets/ayah_details_sheet.dart
+  - lib/shared/widgets/app_drawer.dart
+  - lib/features/quran/data/services/bookmark_backup_service.dart
+  - pubspec.yaml
+  - test/ios_fixes_test.dart (created)
+- **Verified:**
+  - python tool/audit_all_app_data.py: 0 errors across 8,773 gems and all stores.
+  - python tool/ui_lint_v2.py --strict: OK (7 allows / cap 10).
+  - flutter analyze --no-pub: 0 issues found.
+  - flutter test: 64/64 passed (including ios_fixes_test.dart).
+  - flutter build apk --debug: built successfully (98.0s).
+- **Open issues:** None.
+
 ## Round 43 — Book Audio Shortcut & Persistent Mini Player (30 October 2026)
 - **Scope & Context:**
   - Resolved user feedback regarding returning to an active book audio session after exiting:

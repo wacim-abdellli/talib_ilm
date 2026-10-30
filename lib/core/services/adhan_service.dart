@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
@@ -77,6 +78,13 @@ class AdhanService {
   }) async {
     try {
       _ensurePlayerActive();
+
+      try {
+        final session = await AudioSession.instance;
+        await session.configure(const AudioSessionConfiguration.music());
+      } catch (e) {
+        debugPrint('AdhanService audio_session configure error: $e');
+      }
 
       // Acquire supreme Adhan audio focus: automatically pauses Quran recitation, radio, and mutun
       await AudioCoordinator.acquireFocus(AudioStreamType.adhan);

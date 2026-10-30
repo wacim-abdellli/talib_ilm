@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
@@ -386,7 +386,7 @@ class FavoriteItemLauncher {
               size: AppButtonSize.sm,
               onPressed: () {
                 Navigator.pop(dialogCtx);
-                Share.share(fullShareText);
+                AppShare.share(context, fullShareText);
               },
             ),
             AppButton(

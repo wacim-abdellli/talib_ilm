@@ -20,7 +20,7 @@ class QiblaPage extends StatefulWidget {
 }
 
 class _QiblaPageState extends State<QiblaPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final LocationService _locationService = LocationService();
 
   LocationResult? _currentPosition;
@@ -34,6 +34,7 @@ class _QiblaPageState extends State<QiblaPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _calibrationController = AnimationController(
       vsync: this,
       duration: AppMotion.twoSeconds,
@@ -44,24 +45,119 @@ class _QiblaPageState extends State<QiblaPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _calibrationController.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_hasPermission) {
+      _checkPermissionsAndStart();
+    }
+  }
+
   Future<void> _checkPermissionsAndStart() async {
     final status = await Permission.location.status;
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       if (mounted) setState(() => _hasPermission = true);
       _initLocation();
     }
   }
 
   Future<void> _requestPermissions() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (!mounted) return;
+      _showEnableLocationServiceDialog();
+      return;
+    }
+
     final status = await Permission.location.request();
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       if (mounted) setState(() => _hasPermission = true);
       _initLocation();
+    } else if (status.isPermanentlyDenied || status.isDenied || status.isRestricted) {
+      if (!mounted) return;
+      _showOpenSettingsDialog();
     }
+  }
+
+  void _showOpenSettingsDialog() {
+    _showPermissionDialog(
+      title: 'إذن الموقع مطلوب',
+      message: 'لتحديد اتجاه القبلة بدقة، يرجى تفعيل إذن الموقع لتطبيق طالب العلم من إعدادات الهاتف.',
+      icon: Icons.location_off_rounded,
+      actionLabel: 'فتح الإعدادات',
+      onAction: openAppSettings,
+    );
+  }
+
+  void _showEnableLocationServiceDialog() {
+    _showPermissionDialog(
+      title: 'خدمة الموقع مغلقة',
+      message: 'خدمات تحديد الموقع (GPS) مغلقة على الهاتف. يرجى تفعيلها لحساب اتجاه القبلة بدقة.',
+      icon: Icons.location_disabled_rounded,
+      actionLabel: 'تفعيل الموقع',
+      onAction: Geolocator.openLocationSettings,
+    );
+  }
+
+  void _showPermissionDialog({
+    required String title,
+    required String message,
+    required IconData icon,
+    required String actionLabel,
+    required VoidCallback onAction,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.palette.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lgRadius,
+          side: BorderSide(color: context.palette.border),
+        ),
+        title: Row(
+          children: [
+            Icon(icon, color: context.palette.gold),
+            const SizedBox(width: AppSpace.sm),
+            Text(
+              title,
+              style: context.text.title.copyWith(color: context.palette.text),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: context.text.body.copyWith(color: context.palette.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'إلغاء',
+              style: context.text.label.copyWith(color: context.palette.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.palette.primary,
+              foregroundColor: context.palette.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              onAction();
+            },
+            child: Text(
+              actionLabel,
+              style: context.text.label.copyWith(color: context.palette.onPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _initLocation() async {

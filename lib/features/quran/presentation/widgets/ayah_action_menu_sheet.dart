@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 import 'package:talib_ilm/shared/widgets/app_button.dart';
 
 import '../../../../app/theme/app_palette.dart';
@@ -155,7 +155,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     );
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     Navigator.of(context).pop();
-    await Share.share('﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
+    await AppShare.share(
+      context,'﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
   }
 
   void _openDetailsAtTab(int tabIndex) {

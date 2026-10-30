@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_ui.dart';
@@ -528,7 +528,8 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
               final snippet = currentText.length > 300
                   ? '${currentText.substring(0, 300)}...'
                   : currentText;
-              Share.share(
+              AppShare.share(
+                context,
                 '${widget.book.title} (صفحة $_currentPage من $_totalPages)\n\n'
                 '$snippet\n\n'
                 '— تطبيق طالب العلم',

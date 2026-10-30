@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../../../core/utils/app_share.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../data/models/salaf_gem.dart';
@@ -39,8 +39,9 @@ class SalafGemShareSheet extends StatelessWidget {
     );
   }
 
-  void _shareExternal() {
-    Share.share(
+  void _shareExternal(BuildContext context) {
+    AppShare.share(
+      context,
       gem.shareableText,
       subject: gem.topic.isNotEmpty ? gem.topic : gem.author,
     );
@@ -271,7 +272,7 @@ class SalafGemShareSheet extends StatelessWidget {
                         ),
                         minimumSize: const Size(0, AppSize.tap),
                       ),
-                      onPressed: _shareExternal,
+                      onPressed: () => _shareExternal(context),
                       icon: const Icon(Icons.share_rounded),
                       label: Text(
                         'مشاركة',

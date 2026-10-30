@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../core/utils/app_share.dart';
 
 import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
@@ -172,7 +172,8 @@ class AppDrawer extends StatelessWidget {
                   label: 'مشاركة التطبيق',
                   onTap: () {
                     Navigator.pop(context);
-                    Share.share(
+                    AppShare.share(
+                      context,
                       'تطبيق طالب العلم - رفيقك اليومي في طلب العلم الشرعي والصلاة والأذكار.',
                     );
                   },
