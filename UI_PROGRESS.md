@@ -1,5 +1,31 @@
 # UI Progress Log
 
+## Round 36 — Pure Official Heritage Text: Eradication of Corrupt Tashkeel & Exact Speaker Attribution (Qa'il) (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback on corrupted machine diacritics (tashkeel) and speaker (قائل) attribution accuracy in Durar Al-Salaf:
+    1. **Eradication of Broken Machine Diacritics (التشكيل المشوه):**
+       - Classical Arabic heritage apps (*المكتبة الشاملة*, *الدرر السنية*, *الكلم الطيب*) present Salaf sayings in pure, dignified classical Arabic prose without automated OCR pseudo-tashkeel that introduces glaring grammatical and syntax errors (`قَلَّ` for قال/قلت, `مِنْ` for مَنْ الشرطية, `فِيَّ`/`عَلَىَّ`/`إِلَىَّ` with bogus shaddahs, `عُمِّرَ`, `الِلَّهِ`, and broken case endings like `صيامِ أَحَدٌ`).
+       - Purified all 8,583 gems: stripped broken machine diacritics from non-Quran Salaf texts, while strictly preserving 100% full, magnificent Uthmani Quranic diacritics on all Quranic verses.
+       - Standardized all polite Islamic honorifics (`ﷺ`, `رضي الله عنه`, `رضي الله عنها`, `رضي الله عنهم`, `رحمه الله`).
+    2. **Exact Speaker (القائل) Re-Attribution (426 items corrected):**
+       - Scanned all 8,583 gems for quotes where the text explicitly stated the speaker in its opening (`قال ابن تيمية:`, `قال يحيى بن معاذ:`, `قال الشافعي:`, `قال ابن الجوزي:`, `قال ميمون بن مهران:`, etc.) but the `author` field had inherited a secondary quoting scholar or generic label.
+       - Re-attributed 426 entries directly to their true primary speaker (qa'il) with their authentic role, canonical category (`أقوال الصحابة` / `درر السلف` / `فوائد المحققين`), and authentic source reference.
+    3. **Canonical Sequential IDs Maintained:**
+       - All 8,583 gems re-indexed sequentially from `gem_0001` to `gem_8583` with 100% uniqueness.
+    4. **Extended `cleanText` Prefix Recognition:**
+       - Updated [`SalafGem.cleanText`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/data/models/salaf_gem.dart) prefix regex to handle `يقول`, `كان`, and `عن` prefixes smoothly when sharing or displaying quotes.
+- **Files Changed:**
+  - `assets/data/salaf_gems.json` (purified diacritics & corrected 426 speakers)
+  - `lib/features/salaf_gems/data/models/salaf_gem.dart` (improved cleanText prefix matcher)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/audit_all_app_data.py`: 0 errors across all 12 data stores.
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test ... --no-pub`: all core tests passed (44/44).
+  - `flutter build apk --release --split-per-abi --no-pub`: generated `app-arm64-v8a-release.apk` (136MB).
+  - Pushed commits to GitHub `main` branch.
+
 ## Round 35 — Durar & Hadith Scholarly Audit, Purification, & Massive Enrichment (30 October 2026)
 - **Scope & Context:**
   - Carried out a comprehensive scholarly audit across all Islamic text collections in response to false attributions:

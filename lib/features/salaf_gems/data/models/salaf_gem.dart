@@ -47,7 +47,7 @@ class SalafGem {
   /// Clean quote body stripping redundant leading "قال فلان... :"
   String get cleanText {
     var result = text.trim();
-    final prefixRegex = RegExp(r'^(?:قال|كتب|سمع|روي عَن)\s+[^:：\n]{2,60}[:：]\s*');
+    final prefixRegex = RegExp(r'^(?:قال|يقول|كان|كتب|سمع|روي عن|روي عَن|عن)\s+[^:：\n]{2,60}[:：]\s*');
     result = result.replaceFirst(prefixRegex, '').trim();
     if (result.startsWith('(') && result.endsWith(')')) {
       result = result.substring(1, result.length - 1).trim();
