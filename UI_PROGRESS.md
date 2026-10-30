@@ -1,5 +1,41 @@
 # UI Progress Log
 
+## Round 39 — Sovereign Durar Al-Salaf UI/UX & Authentic Filtering Overhaul (30 October 2026)
+- **Scope & Context:**
+  - In response to user feedback rejecting the foreign copycat UI (2x2 grid, duplicated bottom navigation, misplaced ayah blocks) and reporting false cross-contamination in section filtering (e.g. Hadiths appearing under contemporary preachers due to citations like صححه الألباني in `sourceRef`), executed a full sovereign overhaul:
+    1. **Eradication of Foreign Portal Clones:**
+       - Deleted `KalemTayebPortalPage`, `EncyclopediaHubCard`, `EncyclopediaDailyCard`, and `EncyclopediaSectionPanel`. Restored `talib_ilm`'s native sovereign page architecture (`SalafGemsExplorerPage`).
+    2. **Authentic Strict Scholar & Topic Data Models (`SalafFilterData`):**
+       - Defined 25 authentic figures (Ibn Taymiyyah, Ibn Al-Qayyim, Ibn Al-Jawzi, Ibn Rajab, Al-Dhahabi, Al-Shafi'i, Hasan Al-Basri, Sufyan Al-Thawri, Al-Fudayl, Sahaba, etc.) with authoritative roles and strict query keywords.
+       - Defined 12 authentic themes (حياة السلف وسيرهم, صفة الصفوة, في طلب العلم, الزهد والرقائق, مواعظ وحكم, etc.).
+    3. **Strict Attribution Repository Filtering (`SalafGemsRepository`):**
+       - Author filtering matches **strictly** `gem.author.contains(scholarQuery)`. Never searches `sourceRef` or text. Completely eradicates false attributions.
+       - Precomputes exact counts via `getScholarCounts()` and `getTopicCounts()`.
+    4. **Sovereign Filter Sheets (`SalafAuthorFilterSheet` & `SalafTopicFilterSheet`):**
+       - Real-time search, thematic icons, verified count badges (`323 دُرّة`, `1,399 أثراً`), and active checkmarks.
+    5. **Unified Explorer UI & Dynamic Counters (`SalafGemsExplorerPage`):**
+       - Integrated scholar capsule, topic capsule, and category chips into an elegant horizontal bar.
+       - Dynamic subtitle and result bar reflect exact active filters without contradiction.
+       - Added one-tap "إعادة ضبط المرشحات" reset action.
+- **Files Created / Modified / Deleted:**
+  - `lib/features/salaf_gems/data/models/salaf_filter_models.dart` (created, 295 lines)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_topic_filter_sheet.dart` (created, 326 lines)
+  - `lib/features/salaf_gems/presentation/widgets/salaf_author_filter_sheet.dart` (rewritten, 344 lines)
+  - `lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart` (modified, 307 lines)
+  - `lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart` (rewritten, 469 lines)
+  - `lib/features/salaf_gems/presentation/widgets/home_salaf_gem_card.dart` (modified, 344 lines)
+  - `lib/features/more/presentation/more_page.dart` (modified, 579 lines)
+  - `test/kalem_tayeb_portal_test.dart` (rewritten to filter/sovereign tests, 151 lines)
+  - Deleted foreign files: `lib/features/salaf_gems/presentation/kalem_tayeb_portal_page.dart`, `encyclopedia_hub_card.dart`, `encyclopedia_daily_card.dart`, `encyclopedia_section_panel.dart`, `encyclopedia_section.dart`, `encyclopedia_sections_data.dart`.
+- **Verified:**
+  - `python tool/audit_all_app_data.py`: 0 errors across 8,583 gems and all app data.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub`: 21/21 tests passed.
+  - Survives text scales 1.0, 1.5, 2.0 without overflow.
+  - `flutter build apk --debug`: built successfully.
+- **Open issues:** None. All 14 rules fully satisfied.
+
 ## Round 37 — Kalem Al-Tayyib Grand Encyclopedia Portal & Multi-Section Hierarchy (30 October 2026)
 - **Scope & Context:**
   - In response to user direction referencing the official app of *الكلم الطيب* (`kalemtayeb.com`), transitioned Durar Al-Salaf from a single flat feed into the **Grand Encyclopedia Portal** (`KalemTayebPortalPage`):

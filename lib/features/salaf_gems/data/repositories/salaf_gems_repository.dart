@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/encyclopedia_section.dart';
+import '../models/salaf_filter_models.dart';
 import '../models/salaf_gem.dart';
-import 'encyclopedia_sections_data.dart';
 
 class SalafGemsRepository {
   SalafGemsRepository._();
@@ -33,12 +32,16 @@ class SalafGemsRepository {
 
   List<SalafGem>? _cachedGems;
   Set<String>? _favoriteIds;
+  Map<String, int>? _cachedScholarCounts;
+  Map<String, int>? _cachedTopicCounts;
   final Random _random = Random();
 
   /// For testing overrides
   @visibleForTesting
   void setMockGems(List<SalafGem> gems) {
     _cachedGems = List.unmodifiable(gems);
+    _cachedScholarCounts = null;
+    _cachedTopicCounts = null;
   }
 
   /// For testing overrides
@@ -61,14 +64,13 @@ class SalafGemsRepository {
             .map((e) => SalafGem.fromJson(e as Map<String, dynamic>))
             .where((g) => g.text.isNotEmpty)
             .toList();
-        // Deterministically mix gems so that every category and browsing view displays
-        // a rich, diverse mix of sahaba, scholars, and topics instead of sequential blocks.
+        // Deterministically mix gems so that every browsing view displays
+        // a rich, diverse mix of sahaba, scholars, and topics.
         list.shuffle(Random(114));
         _cachedGems = List.unmodifiable(list);
         return _cachedGems!;
       }
     } catch (_) {
-      // Fallback fallback sample if assets fail
       _cachedGems = const [
         SalafGem(
           id: 'gem_default_01',
@@ -118,53 +120,63 @@ class SalafGemsRepository {
     return candidate;
   }
 
-  Future<List<SalafGem>> searchGems({
-    String? query,
-    String? category,
-    String? author,
-    bool onlyFavorites = false,
-  }) async {
+  List<SalafScholarItem> getScholars() {
+    return SalafFilterData.scholars;
+  }
+
+  List<SalafTopicItem> getTopics() {
+    return SalafFilterData.topics;
+  }
+
+  Future<Map<String, int>> getScholarCounts() async {
+    if (_cachedScholarCounts != null) return _cachedScholarCounts!;
     final gems = await getAllGems();
-    final favIds = await getFavoriteIds();
+    final counts = <String, int>{};
 
-    final cleanQuery = query?.trim().toLowerCase();
-    final hasQuery = cleanQuery != null && cleanQuery.isNotEmpty;
-
-    return gems.where((gem) {
-      if (onlyFavorites && !favIds.contains(gem.id)) {
-        return false;
+    for (final s in SalafFilterData.scholars) {
+      if (s.id == 'all') {
+        counts[s.id] = gems.length;
+      } else {
+        counts[s.id] = gems.where((g) => g.author.contains(s.queryKeyword)).length;
       }
+    }
+    _cachedScholarCounts = counts;
+    return counts;
+  }
 
-      if (category != null && category != 'الكل' && gem.category != category) {
-        return false;
-      }
+  Future<Map<String, int>> getTopicCounts() async {
+    if (_cachedTopicCounts != null) return _cachedTopicCounts!;
+    final gems = await getAllGems();
+    final counts = <String, int>{};
 
-      if (author != null && author != 'الكل' && !gem.author.contains(author)) {
-        return false;
-      }
-
-      if (hasQuery) {
-        final matchesText = gem.text.toLowerCase().contains(cleanQuery);
-        final matchesAuthor = gem.author.toLowerCase().contains(cleanQuery);
-        final matchesTopic = gem.topic.toLowerCase().contains(cleanQuery);
-        final matchesRef = gem.sourceRef.toLowerCase().contains(cleanQuery);
-        if (!matchesText && !matchesAuthor && !matchesTopic && !matchesRef) {
+    for (final t in SalafFilterData.topics) {
+      if (t.id == 'all') {
+        counts[t.id] = gems.length;
+      } else {
+        counts[t.id] = gems.where((g) {
+          for (final kw in t.matchKeywords) {
+            if (g.topic.contains(kw) ||
+                g.category.contains(kw) ||
+                (t.id == 'sifat_al_safwah' && g.sourceRef.contains('صفة الصفوة'))) {
+              return true;
+            }
+          }
           return false;
-        }
+        }).length;
       }
-
-      return true;
-    }).toList();
+    }
+    _cachedTopicCounts = counts;
+    return counts;
   }
 
   static const List<String> canonicalCategoryOrder = [
     'الكل',
     'أقوال الصحابة',
     'درر السلف',
-    'وصايا نبوية',
     'فوائد المحققين',
     'في طلب العلم',
     'فضائل الأعمال',
+    'وصايا نبوية',
     'أحاديث قدسية',
   ];
 
@@ -189,30 +201,76 @@ class SalafGemsRepository {
   }
 
   Future<List<String>> getTopAuthors() async {
-    return const [
-      'الكل',
-      'أبو بكر الصديق',
-      'عمر بن الخطاب',
-      'علي بن أبي طالب',
-      'عبد الله بن مسعود',
-      'أبو هريرة',
-      'أبو الدرداء',
-      'معاذ بن جبل',
-      'الحسن البصري',
-      'عمر بن عبد العزيز',
-      'الفضيل بن عياض',
-      'عبد الله بن المبارك',
-      'مالك بن دينار',
-      'يحيى بن معاذ',
-      'سفيان الثوري',
-      'الإمام الشافعي',
-      'الإمام أحمد بن حنبل',
-      'الإمام ابن القيم',
-      'شيخ الإسلام ابن تيمية',
-      'الإمام ابن رجب',
-      'الإمام الذهبي',
-      'رسول الله ﷺ',
-    ];
+    return SalafFilterData.scholars.map((s) => s.displayName).toList();
+  }
+
+  Future<List<SalafGem>> searchGems({
+    String? query,
+    String? category,
+    String? author,
+  }) {
+    return filterGems(
+      query: query,
+      category: category,
+      scholarQuery: author,
+    );
+  }
+
+  Future<List<SalafGem>> filterGems({
+    String? query,
+    String? category,
+    String? scholarQuery,
+    SalafTopicItem? topic,
+    bool onlyFavorites = false,
+  }) async {
+    final gems = await getAllGems();
+    final favIds = await getFavoriteIds();
+
+    final cleanQuery = query?.trim().toLowerCase();
+    final hasQuery = cleanQuery != null && cleanQuery.isNotEmpty;
+
+    return gems.where((gem) {
+      if (onlyFavorites && !favIds.contains(gem.id)) {
+        return false;
+      }
+
+      if (category != null && category != 'الكل' && gem.category != category) {
+        return false;
+      }
+
+      // STRICT AUTHOR MATCHING: Only check gem.author, never text or sourceRef!
+      if (scholarQuery != null && scholarQuery != 'الكل') {
+        if (!gem.author.contains(scholarQuery)) {
+          return false;
+        }
+      }
+
+      // STRICT TOPIC MATCHING
+      if (topic != null && topic.id != 'all') {
+        bool match = false;
+        for (final kw in topic.matchKeywords) {
+          if (gem.topic.contains(kw) ||
+              gem.category.contains(kw) ||
+              (topic.id == 'sifat_al_safwah' && gem.sourceRef.contains('صفة الصفوة'))) {
+            match = true;
+            break;
+          }
+        }
+        if (!match) return false;
+      }
+
+      if (hasQuery) {
+        final matchesText = gem.text.toLowerCase().contains(cleanQuery);
+        final matchesAuthor = gem.author.toLowerCase().contains(cleanQuery);
+        final matchesTopic = gem.topic.toLowerCase().contains(cleanQuery);
+        final matchesRef = gem.sourceRef.toLowerCase().contains(cleanQuery);
+        if (!matchesText && !matchesAuthor && !matchesTopic && !matchesRef) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
   }
 
   Future<Set<String>> getFavoriteIds() async {
@@ -245,46 +303,5 @@ class SalafGemsRepository {
       await prefs.setStringList(_favStorageKey, ids.toList(growable: false));
     } catch (_) {}
     return willFavorite;
-  }
-
-  List<EncyclopediaGroup> getEncyclopediaGroups() {
-    return EncyclopediaSectionsData.groups;
-  }
-
-  EncyclopediaSection? getSectionById(String id) {
-    for (final group in EncyclopediaSectionsData.groups) {
-      for (final sec in group.sections) {
-        if (sec.id == id) return sec;
-      }
-    }
-    return null;
-  }
-
-  Future<List<SalafGem>> getGemsForSection(EncyclopediaSection section) async {
-    final all = await getAllGems();
-    return all.where((gem) {
-      if (section.targetAuthor != null &&
-          gem.author.contains(section.targetAuthor!)) {
-        return true;
-      }
-      if (section.targetCategory != null &&
-          gem.category == section.targetCategory) {
-        return true;
-      }
-      for (final kw in section.keywords) {
-        if (gem.topic.contains(kw) ||
-            gem.author.contains(kw) ||
-            gem.sourceRef.contains(kw) ||
-            gem.text.contains(kw)) {
-          return true;
-        }
-      }
-      return false;
-    }).toList();
-  }
-
-  Future<int> getSectionCount(EncyclopediaSection section) async {
-    final list = await getGemsForSection(section);
-    return list.length;
   }
 }

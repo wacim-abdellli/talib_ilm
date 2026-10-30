@@ -5,7 +5,7 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/salaf_gem.dart';
 import '../../data/repositories/salaf_gems_repository.dart';
-import '../kalem_tayeb_portal_page.dart';
+import '../salaf_gems_explorer_page.dart';
 import 'salaf_gem_share_sheet.dart';
 
 class HomeSalafGemCard extends StatefulWidget {
@@ -70,7 +70,7 @@ class _HomeSalafGemCardState extends State<HomeSalafGemCard> {
   void _openExplorer(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const KalemTayebPortalPage(),
+        builder: (_) => const SalafGemsExplorerPage(),
       ),
     );
   }
