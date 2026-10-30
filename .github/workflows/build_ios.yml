@@ -42,14 +42,29 @@ jobs:
       - name: Compile and Embed TalibIlmWidgets Extension
         run: |
           echo "=== Compiling native iOS WidgetKit Extension ==="
-          mkdir -p build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex
-          xcrun -sdk iphoneos swiftc -target arm64-apple-ios14.0 \
-            -framework WidgetKit -framework SwiftUI -framework Foundation \
-            -emit-executable -o build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex/TalibIlmWidgets \
-            ios/TalibIlmWidgets/TalibIlmWidgets.swift || echo "Warning: swiftc direct compilation skipped"
-          cp ios/TalibIlmWidgets/Info.plist build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex/Info.plist
-          echo "=== TalibIlmWidgets.appex bundle ready ==="
-          ls -la build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex || true
+          APPEX_DIR="build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex"
+          mkdir -p "$APPEX_DIR"
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          echo "Using iPhoneOS SDK: $SDK_PATH"
+          if xcrun -sdk iphoneos swiftc \
+            -target arm64-apple-ios14.0 \
+            -sdk "$SDK_PATH" \
+            -parse-as-library \
+            -module-name TalibIlmWidgets \
+            -framework WidgetKit \
+            -framework SwiftUI \
+            -framework Foundation \
+            -O \
+            -emit-executable \
+            -o "$APPEX_DIR/TalibIlmWidgets" \
+            ios/TalibIlmWidgets/TalibIlmWidgets.swift; then
+            cp ios/TalibIlmWidgets/Info.plist "$APPEX_DIR/Info.plist"
+            echo "=== TalibIlmWidgets.appex bundle ready ==="
+            ls -la "$APPEX_DIR"
+          else
+            echo "=== Warning: WidgetKit compilation failed. Removing incomplete PlugIns to ensure Sideloadly installs app cleanly ==="
+            rm -rf build/ios/iphoneos/Runner.app/PlugIns
+          fi
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |
