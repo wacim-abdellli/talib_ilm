@@ -1,5 +1,46 @@
 # UI Progress Log
 
+## Round 42 — Contemporary Scholars & Classical Books Authentic Expansion (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback regarding the lack of contemporary scholars and classical books data, eradicating false cross-contamination:
+    1. **Dedicated Dataset Ingestion (114+ pristine gems):**
+       - Sheikh Abdul Aziz Al-Turifi: 20+ gems from «العقل والنقل» and «التفسير والبيان».
+       - Sheikh Abdul Razzaq Al-Badr: 10+ gems from «فقه الأدعية والأذكار» and «عشر قواعد في الاستقامة».
+       - Sheikh Muhammad bin Saleh Al-Uthaymeen: 23+ gems from «الشرح الممتع» and «مجموع الفتاوى».
+       - Sheikh Abdul Aziz bin Baz: 14+ gems from «مجموع الفتاوى والمقالات».
+       - Sheikh Saleh Al-Fawzan: 17+ gems from «الإرشاد» and «الملخص الفقهي».
+       - Sheikh Muhammad Nasir al-Din Al-Albani: 8+ gems.
+       - Sheikh Muhammad Al-Mukhtar Al-Shanqeeti: 5+ gems from «مواعظ القلوب».
+       - Sheikh Bakr Abu Zayd: 5+ gems from «حلية طالب العلم».
+       - Sheikh Uthman Al-Khamis: 5+ gems.
+       - Sheikh Saleh Al-Sheikh: 3+ gems from «المدخل إلى طلب العلم».
+       - Independent book collections for Ibn Taymiyyah and Ibn Al-Qayyim.
+       - Quranic reflections («خواطر قرآنية ووقفات تدبرية»).
+    2. **Database Integrity & Schema:**
+       - Total database expanded to 8,773 gems with 100% sequential unique IDs (gem_0001 to gem_8773).
+    3. **Strict Category & Scholar Filtering (SalafGemsRepository & SalafFilterData):**
+       - Category «درر الدعاة المعاصرين» strictly isolates 140 contemporary gems with 0 false attributions (no Prophet Hadiths or ancient Salaf).
+       - Added dedicated topics: «أسطر في العقل والنقل للطريفي», «فوائد من كتب ابن تيمية», «فوائد من كتب ابن القيم», «خواطر قرآنية ووقفات تدبرية».
+    4. **Explorer Responsive Title & Dynamic Header (SalafGemsExplorerPage):**
+       - Solved title truncation via FittedBox scale-down.
+       - Automatic mapping of initial categories and counts when navigating by section title.
+- **Files Modified / Created:**
+  - assets/data/salaf_gems.json
+  - lib/features/salaf_gems/data/models/salaf_filter_models.dart
+  - lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart
+  - lib/features/salaf_gems/presentation/salaf_gems_explorer_page.dart
+  - tool/curate_contemporary_and_classical_books.py (created)
+  - tool/enrich_contemporary_and_classical_books.py (created)
+  - tool/expand_contemporary_and_books_dataset.py (created)
+  - test/kalem_tayeb_portal_test.dart
+- **Verified:**
+  - python tool/audit_all_app_data.py: 0 errors across 8,773 gems and all app stores.
+  - python tool/ui_lint_v2.py --strict: OK (7 allows / cap 10).
+  - flutter analyze --no-pub: 0 issues found.
+  - flutter test test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub: 24/24 tests passed.
+  - flutter build apk --debug: built successfully.
+- **Open issues:** None.
+
 ## Round 41 — Global Search Unfocus, Automatic Scroll-to-Top, and Large Collection Quick Navigation (30 October 2026)
 - **Scope & Context:**
   - Implemented three key UX improvements requested by the user:

@@ -69,6 +69,16 @@ void main() {
     sourceRef: 'صححه الألباني',
   );
 
+  const sampleGem5 = SalafGem(
+    id: 'gem_sample_05',
+    author: 'الشيخ عبد العزيز الطريفي',
+    role: 'باحث ومحقق معاصر',
+    category: 'درر الدعاة المعاصرين',
+    topic: 'أسطر في العقل والنقل للطريفي',
+    text: 'العقل الصريح لا يعارض النقل الصحيح قط.',
+    sourceRef: 'العقل والنقل للطريفي',
+  );
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     SalafGemsRepository.instance.setMockGems([
@@ -76,6 +86,7 @@ void main() {
       sampleGem2,
       sampleGem3,
       sampleGem4,
+      sampleGem5,
     ]);
     SalafGemsRepository.instance.setMockFavorites({});
   });
@@ -131,6 +142,22 @@ void main() {
       final prophetOnly = await repo.filterGems(scholarQuery: 'رسول الله ﷺ');
       expect(prophetOnly.length, 1);
       expect(prophetOnly.first.id, 'gem_sample_04');
+    });
+
+    test('Filtering by contemporary category strictly returns contemporary figures', () async {
+      final repo = SalafGemsRepository.instance;
+      final contempGems = await repo.filterGems(category: 'درر الدعاة المعاصرين');
+      expect(contempGems.length, 1);
+      expect(contempGems.first.author, contains('الطريفي'));
+      expect(contempGems.first.category, 'درر الدعاة المعاصرين');
+    });
+
+    test('Filtering by Turifi topic strictly returns his gems', () async {
+      final repo = SalafGemsRepository.instance;
+      final turifiTopic = SalafFilterData.topics.firstWhere((t) => t.id == 'turifi_aql_naql');
+      final results = await repo.filterGems(topic: turifiTopic);
+      expect(results.length, 1);
+      expect(results.first.author, contains('الطريفي'));
     });
 
     test('Strict topic filtering returns thematic gems', () async {

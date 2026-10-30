@@ -173,6 +173,10 @@ class SalafGemsRepository {
     'الكل',
     'أقوال الصحابة',
     'درر السلف',
+    'درر الدعاة المعاصرين',
+    'فوائد من كتب ابن تيمية',
+    'فوائد من كتب ابن القيم',
+    'خواطر قرآنية ووقفات تدبرية',
     'فوائد المحققين',
     'في طلب العلم',
     'فضائل الأعمال',
@@ -234,8 +238,26 @@ class SalafGemsRepository {
         return false;
       }
 
-      if (category != null && category != 'الكل' && gem.category != category) {
-        return false;
+      if (category != null && category != 'الكل') {
+        if (category == 'فوائد من كتب ابن تيمية') {
+          if (gem.category != 'فوائد من كتب ابن تيمية' && !gem.author.contains('ابن تيمية')) {
+            return false;
+          }
+        } else if (category == 'فوائد من كتب ابن القيم') {
+          if (gem.category != 'فوائد من كتب ابن القيم' && !gem.author.contains('ابن القيم')) {
+            return false;
+          }
+        } else if (category == 'خواطر قرآنية ووقفات تدبرية') {
+          if (gem.category != 'خواطر قرآنية ووقفات تدبرية' && !gem.topic.contains('تدبر')) {
+            return false;
+          }
+        } else if (category == 'درر الدعاة المعاصرين') {
+          if (gem.category != 'درر الدعاة المعاصرين') {
+            return false;
+          }
+        } else if (gem.category != category) {
+          return false;
+        }
       }
 
       // STRICT AUTHOR MATCHING: Only check gem.author, never text or sourceRef!

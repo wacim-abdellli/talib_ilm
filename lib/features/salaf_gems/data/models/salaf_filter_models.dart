@@ -366,6 +366,42 @@ class SalafFilterData {
       queryKeyword: 'الألباني',
       role: 'محدث العصر وناصر السنة',
     ),
+    SalafScholarItem(
+      id: 'al_turifi',
+      displayName: 'الشيخ عبد العزيز الطريفي',
+      queryKeyword: 'الطريفي',
+      role: 'باحث ومحقق معاصر',
+    ),
+    SalafScholarItem(
+      id: 'al_fawzan',
+      displayName: 'معالي الشيخ صالح الفوزان',
+      queryKeyword: 'الفوزان',
+      role: 'عضو هيئة كبار العلماء',
+    ),
+    SalafScholarItem(
+      id: 'al_badr',
+      displayName: 'الشيخ عبد الرزاق البدر',
+      queryKeyword: 'البدر',
+      role: 'أستاذ العقيدة ومدرس المسجد النبوي',
+    ),
+    SalafScholarItem(
+      id: 'al_shanqeeti',
+      displayName: 'الشيخ محمد المختار الشنقيطي',
+      queryKeyword: 'الشنقيطي',
+      role: 'عضو هيئة كبار العلماء ومدرس الحرمين',
+    ),
+    SalafScholarItem(
+      id: 'al_khamis',
+      displayName: 'الشيخ عثمان الخميس',
+      queryKeyword: 'الخميس',
+      role: 'داعية ومحقق معاصر',
+    ),
+    SalafScholarItem(
+      id: 'al_sheikh',
+      displayName: 'معالي الشيخ صالح آل الشيخ',
+      queryKeyword: 'آل الشيخ',
+      role: 'باحث ومحقق في كتب العقيدة',
+    ),
   ];
 
   static const List<SalafTopicItem> topics = [
@@ -374,6 +410,30 @@ class SalafFilterData {
       title: 'الكل (جميع الموضوعات)',
       icon: Icons.all_inclusive_rounded,
       matchKeywords: [],
+    ),
+    SalafTopicItem(
+      id: 'turifi_aql_naql',
+      title: 'أسطر في العقل والنقل للطريفي',
+      icon: Icons.auto_stories_rounded,
+      matchKeywords: ['العقل والنقل', 'الطريفي'],
+    ),
+    SalafTopicItem(
+      id: 'ibn_taymiyyah_books',
+      title: 'فوائد من كتب ابن تيمية',
+      icon: Icons.menu_book_rounded,
+      matchKeywords: ['ابن تيمية', 'مجموع الفتاوى', 'الاستقامة', 'منهاج السنة', 'درء تعارض'],
+    ),
+    SalafTopicItem(
+      id: 'ibn_al_qayyim_books',
+      title: 'فوائد من كتب ابن القيم',
+      icon: Icons.library_books_rounded,
+      matchKeywords: ['ابن القيم', 'الفوائد', 'مدارج السالكين', 'زاد المعاد', 'الوابل الصيب', 'الداء والدواء'],
+    ),
+    SalafTopicItem(
+      id: 'tadabbur_quran',
+      title: 'خواطر قرآنية ووقفات تدبرية',
+      icon: Icons.chrome_reader_mode_rounded,
+      matchKeywords: ['خواطر قرآنية', 'وقفات تدبرية', 'تدبر', 'القرآن'],
     ),
     SalafTopicItem(
       id: 'sifat_al_safwah',

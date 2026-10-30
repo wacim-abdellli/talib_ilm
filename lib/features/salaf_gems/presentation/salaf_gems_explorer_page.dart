@@ -62,6 +62,18 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
       if (mounted) setState(() => _fontScale = s);
     });
     _selectedCategory = widget.initialCategory ?? 'الكل';
+    if (widget.initialCategory == null && widget.pageTitle != null) {
+      final title = widget.pageTitle!;
+      if (title.contains('معاصر') || title.contains('الدعاة')) {
+        _selectedCategory = 'درر الدعاة المعاصرين';
+      } else if (title.contains('ابن تيمية')) {
+        _selectedCategory = 'فوائد من كتب ابن تيمية';
+      } else if (title.contains('ابن القيم')) {
+        _selectedCategory = 'فوائد من كتب ابن القيم';
+      } else if (title.contains('تدبر') || title.contains('قرآن')) {
+        _selectedCategory = 'خواطر قرآنية ووقفات تدبرية';
+      }
+    }
     if (widget.initialAuthor != null) {
       final match = SalafFilterData.scholars.firstWhere(
         (s) =>
@@ -315,14 +327,17 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.pageTitle ?? 'موسوعة درر السلف والآثار',
-              style: textTheme.title.copyWith(
-                color: palette.text,
-                letterSpacing: 0.2,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                widget.pageTitle ?? 'موسوعة درر السلف والآثار',
+                style: textTheme.title.copyWith(
+                  color: palette.text,
+                  letterSpacing: 0.2,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
             Text(
               _buildDynamicSubtitle(),
