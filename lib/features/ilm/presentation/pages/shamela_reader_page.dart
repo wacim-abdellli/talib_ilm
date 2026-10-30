@@ -28,11 +28,13 @@ import '../widgets/shamela_typography_sheet.dart';
 class ShamelaReaderPage extends StatefulWidget {
   final ShamelaBook book;
   final int initialPage;
+  final bool initialShowAudio;
 
   const ShamelaReaderPage({
     super.key,
     required this.book,
     this.initialPage = 1,
+    this.initialShowAudio = false,
   });
 
   @override
@@ -71,6 +73,11 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     super.initState();
     themeService.addListener(_onThemeChanged);
     _currentPage = widget.initialPage;
+    final activeAudio = _audioService.activeBookIdNotifier.value;
+    if (widget.initialShowAudio ||
+        (activeAudio != null && activeAudio == _shamelaAudioId)) {
+      _showAudioBar = true;
+    }
     final initialTotal = ShamelaService.getEffectiveTotalPages(
       widget.book.id,
       widget.book.totalPages,

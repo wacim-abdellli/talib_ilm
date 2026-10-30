@@ -580,16 +580,16 @@ class MutunAudioService {
   }
 
   Future<void> stop() async {
-    try {
-      _ensurePlayerActive();
-      await _player.stop();
-    } catch (_) {}
-    AudioCoordinator.releaseFocus(AudioStreamType.mutun);
     activeBookIdNotifier.value = null;
     activeParagraphNotifier.value = null;
     positionNotifier.value = Duration.zero;
     isPlayingNotifier.value = false;
     isLoadingNotifier.value = false;
+    AudioCoordinator.releaseFocus(AudioStreamType.mutun);
+    try {
+      _ensurePlayerActive();
+      await _player.stop();
+    } catch (_) {}
   }
 
   void dispose() {
