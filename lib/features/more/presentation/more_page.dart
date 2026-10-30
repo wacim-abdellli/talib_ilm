@@ -347,7 +347,7 @@ class _MorePageState extends State<MorePage> {
                           section: MoreSection(
                             title: 'موسوعة درر السلف والآثار',
                             subtitle:
-                                'أقوال الصحابة، حكم السلف، وفوائد المحققين (8,580+ أثر)',
+                                'أقوال الصحابة، حكم السلف، وفوائد المحققين (8,650+ أثر)',
                             icon: Icons.auto_awesome_rounded,
                             color: palette.gold,
                             onTap: () => Navigator.push(

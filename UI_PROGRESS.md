@@ -1,5 +1,33 @@
 # UI Progress Log
 
+## Round 40 — Salaf Gems Massive Scholarly Attribution & 52-Scholar Catalog Expansion (30 October 2026)
+- **Scope & Context:**
+  - Expanded and verified the entire Durar Al-Salaf encyclopedia to 8,659 authentic gems with comprehensive scholarly attribution:
+    1. **569+ Deep Scholarly Attributions:**
+       - Scanned the general gems pool and resolved 569+ quotes to their explicitly named speakers (e.g. الإمام مالك, الإمام أحمد بن حنبل, النووي, ابن حجر العسقلاني, السعدي, ابن عثيمين, ابن باز, الأوزاعي, الزهري, بشر الحافي, عثمان بن عفان, علي بن أبي طالب, سلمان الفارسي, حذيفة بن اليمان).
+    2. **Canonical Author Unification:**
+       - Consolidated fragmented name variants to unified canonical forms (e.g. عائشة أم المؤمنين, عبد الله بن عمر, عبد الله بن عباس, يحيى بن معاذ الرازي).
+    3. **Ingestion of Verified Primary Classical Works:**
+       - Ingested 76+ curated, pristine classical gems with exact book references from «سير أعلام النبلاء», «حلية الأولياء», «صفة الصفوة», «جامع العلوم والحكم», «الزهد» للإمام أحمد, «الأخلاق والسير» لابن حزم, «جامع بيان العلم وفضله» لابن عبد البر.
+    4. **Comprehensive 52-Scholar Filter Catalog (`SalafFilterData`):**
+       - Expanded from 25 to 52 authoritative figures with unique badges, titles, and verified non-zero counts.
+    5. **Total Gems & Schema Integrity:**
+       - Database expanded to 8,659 gems with 100% sequential unique IDs (`gem_0001` to `gem_8659`).
+- **Files Modified / Created:**
+  - `assets/data/salaf_gems.json` (expanded to 8,659 items)
+  - `lib/features/salaf_gems/data/models/salaf_filter_models.dart` (expanded to 52 scholars, 461 lines)
+  - `lib/features/more/presentation/more_page.dart` (updated count label to 8,650+)
+  - `tool/generate_authentic_heritage_gems.py` (created)
+  - `tool/expand_salaf_gems_database.py` (created)
+  - `tool/append_special_ulama_gems.py` (created)
+- **Verified:**
+  - `python tool/audit_all_app_data.py`: 0 errors across 8,659 gems and all 12 app stores.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allows / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub`: 21/21 tests passed.
+  - `flutter build apk --debug`: built successfully.
+- **Open issues:** None.
+
 ## Round 39 — Sovereign Durar Al-Salaf UI/UX & Authentic Filtering Overhaul (30 October 2026)
 - **Scope & Context:**
   - In response to user feedback rejecting the foreign copycat UI (2x2 grid, duplicated bottom navigation, misplaced ayah blocks) and reporting false cross-contamination in section filtering (e.g. Hadiths appearing under contemporary preachers due to citations like صححه الألباني in `sourceRef`), executed a full sovereign overhaul:
