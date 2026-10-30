@@ -24,6 +24,7 @@ import '../../features/home/presentation/home_page.dart';
 import '../../features/prayer/presentation/prayer_page.dart';
 import '../../features/adhkar/presentation/adhkar_page.dart';
 import '../../features/ilm/presentation/ilm_page.dart';
+import '../../features/ilm/presentation/widgets/book_audio_mini_player.dart';
 import '../../features/more/presentation/more_page.dart';
 import 'fade_page_route.dart';
 
@@ -235,29 +236,35 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ],
       ),
-      bottomNavigationBar: NavBar(
-        currentIndex: _currentIndex,
-        onTap: selectTab,
-        items: const [
-          NavBarItem(
-            icon: Icons.home_rounded,
-            label: AppStrings.navHome,
-          ),
-          NavBarItem(
-            icon: Icons.access_time_rounded,
-            label: AppStrings.navPrayer,
-          ),
-          NavBarItem(
-            icon: Icons.auto_stories_rounded,
-            label: 'العلم',
-          ),
-          NavBarItem(
-            icon: Icons.spa_rounded,
-            label: 'الأذكار',
-          ),
-          NavBarItem(
-            icon: Icons.dashboard_rounded,
-            label: 'المزيد',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const BookAudioMiniPlayer(),
+          NavBar(
+            currentIndex: _currentIndex,
+            onTap: selectTab,
+            items: const [
+              NavBarItem(
+                icon: Icons.home_rounded,
+                label: AppStrings.navHome,
+              ),
+              NavBarItem(
+                icon: Icons.access_time_rounded,
+                label: AppStrings.navPrayer,
+              ),
+              NavBarItem(
+                icon: Icons.auto_stories_rounded,
+                label: 'العلم',
+              ),
+              NavBarItem(
+                icon: Icons.spa_rounded,
+                label: 'الأذكار',
+              ),
+              NavBarItem(
+                icon: Icons.dashboard_rounded,
+                label: 'المزيد',
+              ),
+            ],
           ),
         ],
       ),

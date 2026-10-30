@@ -1,5 +1,38 @@
 # UI Progress Log
 
+## Round 43 — Book Audio Shortcut & Persistent Mini Player (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback regarding returning to an active book audio session after exiting:
+    1. **Persistent Floating Mini Player (BookAudioMiniPlayer):**
+       - Docks seamlessly right above NavBar in AppShell with identical horizontal margins (AppSize.navMargin).
+       - Appears strictly when book audio is active (ctiveBookIdNotifier.value != null), vanishing cleanly when stopped or idle.
+       - Displays clean dynamic track title (combining book and council/chapter title), reciter name, live micro-animated soundwave equalizer, quick Play/Pause button, Stop/Dismiss button ([✕]), and integrated progress bar.
+       - Implements minimum 48dp touch targets, RTL directional insets, and passes text scaling 1.0x, 1.5x, 2.0x without pixel overflow.
+    2. **Instant Exact-Book Navigation Coordinator (BookAudioNavigationHelper):**
+       - Tapping anywhere on the mini player card immediately resolves the active book (Shamela heritage or Mutun syllabus).
+       - Automatically retrieves the student's exact reading position via ShamelaService.getLastReadPage(id).
+       - Navigates directly into ShamelaReaderPage or BookViewPage with initialShowAudio: true.
+       - Playback continues completely uninterrupted, synced to the second.
+    3. **Reader Synchronization & Lifecycle:**
+       - Upgraded ShamelaReaderPage to auto-expand MutunAudioPlayerHud when active audio matches the open book.
+       - Removed premature audio pause on BookViewPage.dispose(), allowing syllabus mutun recitations to play smoothly in the background while browsing other app sections.
+       - Reordered MutunAudioService.stop() to synchronously reset active state immediately before native platform audio shutdown for instant UI responsiveness.
+- **Files Modified / Created:**
+  - lib/features/ilm/presentation/services/book_audio_navigation_helper.dart (created)
+  - lib/features/ilm/presentation/widgets/book_audio_mini_player.dart (created)
+  - lib/features/ilm/presentation/pages/shamela_reader_page.dart
+  - lib/features/ilm/presentation/pages/book_view_page.dart
+  - lib/features/ilm/data/services/mutun_audio_service.dart
+  - lib/shared/navigation/app_shell.dart
+  - test/book_audio_mini_player_test.dart (created)
+- **Verified:**
+  - python tool/audit_all_app_data.py: 0 errors across 8,773 gems and all stores.
+  - python tool/ui_lint_v2.py --strict: OK (7 allows / cap 10).
+  - flutter analyze --no-pub: 0 issues found.
+  - flutter test test/book_audio_mini_player_test.dart test/mutun_audio_catalog_ui_test.dart test/scholarly_reader_ui_test.dart test/audio_timestamp_test.dart test/kalem_tayeb_portal_test.dart test/salaf_gems_test.dart --no-pub: 69/69 passed.
+  - flutter build apk --debug: built successfully (101.4s).
+- **Open issues:** None.
+
 ## Round 42 — Contemporary Scholars & Classical Books Authentic Expansion (30 October 2026)
 - **Scope & Context:**
   - Resolved user feedback regarding the lack of contemporary scholars and classical books data, eradicating false cross-contamination:

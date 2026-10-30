@@ -219,7 +219,6 @@ class _BookViewPageState extends State<BookViewPage>
 
   @override
   void dispose() {
-    MutunAudioService().pause();
     _readingTimer.cancel();
     _persistLastPositionSync();
     _saveProgress();
