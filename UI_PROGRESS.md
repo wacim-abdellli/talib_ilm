@@ -1,5 +1,28 @@
 # UI Progress Log
 
+## Round 34 — Durar Randomized Mix across Sections, Hadith Explorer Saved Filter & Release APK (30 October 2026)
+- **Scope & Context:**
+  - Resolved user feedback on Durar section listing order and Hadith bookmarking parity:
+    1. **Randomized / Interleaved Gem Distribution in Durar:** Deterministically shuffled gems in [`SalafGemsRepository`](file:///d:/Projects/talib_ilm-main/lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart) using a fixed seed (`Random(114)`), ensuring that all categories, browsing views, and daily gems feature a rich, diverse distribution of scholars and Sahaba instead of monotonous blocks sorted by author.
+    2. **Canonical Category Strip Order:** Enforced an intuitive, canonical category sequence (`الكل`, `أقوال الصحابة`, `درر السلف`, `وصايا نبوية`, `فوائد المحققين`, `في طلب العلم`, `فضائل الأعمال`, `أحاديث قدسية`) in `SalafGemsRepository.getAllCategories()`.
+    3. **Hadith Explorer Saved Filter Button (`[🔖]`):** Added bookmark toggle button to [`HadithExplorerPage`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/pages/hadith_explorer_page.dart) AppBar actions, allowing instant filtering of saved hadiths directly from the top bar (mirroring Durar explorer).
+    4. **Extracted `HadithCollectionPickerSheet`:** Extracted the collections picker bottom sheet to [`lib/features/hadith/presentation/widgets/hadith_collection_picker_sheet.dart`](file:///d:/Projects/talib_ilm-main/lib/features/hadith/presentation/widgets/hadith_collection_picker_sheet.dart) (147 lines), keeping `hadith_explorer_page.dart` at 481 lines (Rule 8 strictly preserved).
+    5. **Daily Hadith Header Compact Layout:** Resolved 19px header overflow in [`HomeDailyHadithCard`](file:///d:/Projects/talib_ilm-main/lib/features/home/presentation/widgets/home_daily_hadith_card.dart) with `Expanded`/`Flexible` text constraints, surviving all text scales (1.0, 1.5, 2.0).
+    6. **136MB Release APK Build:** Generated `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (136.8 MB) via `--release --split-per-abi`.
+- **Files Changed / Created:**
+  - `lib/features/salaf_gems/data/repositories/salaf_gems_repository.dart`
+  - `lib/features/hadith/presentation/pages/hadith_explorer_page.dart` (481 lines <= 600)
+  - `lib/features/hadith/presentation/widgets/hadith_collection_picker_sheet.dart` (created, 147 lines <= 600)
+  - `lib/features/hadith/presentation/widgets/hadith_card.dart` (370 lines <= 600)
+  - `lib/features/home/presentation/widgets/home_daily_hadith_card.dart` (200 lines <= 600)
+  - `UI_PROGRESS.md`
+- **Verified:**
+  - `python tool/ui_lint_v2.py`: OK (7 allow markers / cap 10).
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `flutter test test/home_page_hierarchy_test.dart test/hadith_explorer_test.dart test/salaf_gems_test.dart test/home_daily_ayah_dua_card_test.dart --no-pub`: 29/29 tests passed.
+  - `flutter build apk --release --split-per-abi --no-pub`: Success (`app-arm64-v8a-release.apk` 136.8 MB).
+  - Pushed to GitHub `main` branch.
+
 ## Round 33 — Reader Typography Controls: 'Tt' Font Scale Sheet in Hadith & Durar (30 October 2026)
 - **Scope & Context:**
   - Implemented reader typography settings in Hadith and Durar sections:
