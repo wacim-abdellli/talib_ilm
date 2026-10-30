@@ -1,5 +1,10 @@
 # UI Progress Log
 
+## Round 38 — Adhkar Tashkeel Toggle Clarity (30 October 2026)
+- Made the switch thumb contrast with its active gold track, made the full setting row tappable, and applied the explicit value reported by the switch so the preview and recitation card stay in sync.
+- Verified: `flutter analyze --no-pub` (scoped) and `python tool/ui_lint_v2.py`.
+- Open issues: widget tests, APK build, and device screenshot review were not run.
+
 ## Round 36 — Pure Official Heritage Text: Eradication of Corrupt Tashkeel & Exact Speaker Attribution (Qa'il) (30 October 2026)
 - **Scope & Context:**
   - Resolved user feedback on corrupted machine diacritics (tashkeel) and speaker (قائل) attribution accuracy in Durar Al-Salaf:

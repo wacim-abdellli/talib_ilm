@@ -91,11 +91,11 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
     widget.onReset();
   }
 
-  void _toggleTashkeel() {
+  void _setTashkeel(bool showTashkeel) {
+    if (_showTashkeel == showTashkeel) return;
     HapticFeedback.selectionClick();
-    final next = !_showTashkeel;
-    setState(() => _showTashkeel = next);
-    widget.onToggleTashkeel(next);
+    setState(() => _showTashkeel = showTashkeel);
+    widget.onToggleTashkeel(showTashkeel);
   }
 
   String _cleanTashkeel(String text) {
@@ -282,42 +282,40 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
 
             // ── 3. Tashkeel Toggle Switch Row ────────────────────────────
             Container(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.md,
-                vertical: AppSpace.sm,
-              ),
               decoration: BoxDecoration(
                 color: palette.surfaceMuted,
                 borderRadius: AppRadius.mdRadius,
                 border: Border.all(color: palette.border),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.text_fields_rounded,
-                        size: AppIcon.sm,
-                        color: palette.gold,
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Text(
+              child: SwitchListTile.adaptive(
+                value: _showTashkeel,
+                contentPadding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.md,
+                ),
+                controlAffinity: ListTileControlAffinity.trailing,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.text_fields_rounded,
+                      size: AppIcon.sm,
+                      color: palette.gold,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Flexible(
+                      child: Text(
                         'عرض التشكيل والحركات',
                         style: textTheme.bodyBold.copyWith(
                           color: palette.text,
                         ),
                       ),
-                    ],
-                  ),
-                  Switch.adaptive(
-                    value: _showTashkeel,
-                    activeTrackColor: palette.gold,
-                    activeThumbColor: palette.gold,
-                    onChanged: (val) => _toggleTashkeel(),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
+                activeTrackColor: palette.gold,
+                activeThumbColor: palette.onGold,
+                onChanged: _setTashkeel,
               ),
             ),
 
