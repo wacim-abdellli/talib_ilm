@@ -349,29 +349,26 @@ class ForegroundPrayerService {
               final shouldFallback =
                   PrayerScheduleService.shouldUseForegroundFallback(scheduled);
 
+              final orderIndex = AppStrings.prayerOrder.indexOf(name);
+              final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
+              final useNotificationTone = mode == PrayerNotificationMode.tone;
+
+              // When the app is active in foreground, always play the Adhan audio directly
+              if (mode != PrayerNotificationMode.silent &&
+                  !useNotificationTone &&
+                  !_adhanService.isPlaying) {
+                unawaited(
+                  _adhanService.play(
+                    sound: effectiveSound,
+                    mode: mode,
+                    volume: settings.volume,
+                    prayerName: effectiveName,
+                  ),
+                );
+              }
+
+              // Post instant system notification if not confirmed by OS platform alarm
               if (shouldFallback) {
-                // Recover locally only when this occurrence has no confirmed
-                // platform alarm.
-                final orderIndex = AppStrings.prayerOrder.indexOf(name);
-                final notifId = 700 + (orderIndex >= 0 ? orderIndex : 0);
-                final useNotificationTone = mode == PrayerNotificationMode.tone;
-
-                if (mode != PrayerNotificationMode.silent &&
-                    !useNotificationTone &&
-                    !_adhanService.isPlaying) {
-                  unawaited(
-                    _adhanService.play(
-                      sound: effectiveSound,
-                      mode: mode,
-                      volume: settings.volume,
-                      prayerName: effectiveName,
-                    ),
-                  );
-                }
-
-                // For media playback, keep the visible OS alert silent so it
-                // cannot start a second copy of the Adhan. Tone mode uses the
-                // OS notification tone as its configured audio source.
                 try {
                   await _notificationService.showInstantPrayerAlert(
                     id: notifId,

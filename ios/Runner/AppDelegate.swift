@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import UserNotifications
+import AVFoundation
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,6 +12,13 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: self)
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
+    }
+    // Configure AVAudioSession for background prayer audio playback & mute-switch bypass
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+      try AVAudioSession.sharedInstance().setActive(true)
+    } catch {
+      print("TalibIlm: AudioSession setup: \(error.localizedDescription)")
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

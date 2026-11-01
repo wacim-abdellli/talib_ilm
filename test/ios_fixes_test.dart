@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:talib_ilm/core/services/adhan_settings_service.dart';
 import 'package:talib_ilm/core/services/home_widget_snapshot.dart';
+import 'package:talib_ilm/core/services/prayer_notification_details_builder.dart';
+import 'package:talib_ilm/core/services/prayer_schedule_service.dart';
 import 'package:talib_ilm/core/utils/app_share.dart';
 import 'package:talib_ilm/features/prayer/presentation/qibla_page.dart';
 import 'package:talib_ilm/shared/navigation/fade_page_route.dart';
@@ -110,6 +114,38 @@ void main() {
   group('Issue 1: HomeWidgetSnapshot iOS keys', () {
     test('Theme and keys are defined', () {
       expect(HomeWidgetSnapshot.themeModeKey, equals('prayer_widget_theme_mode'));
+    });
+  });
+
+  group('Issue 4: iOS Adhan Notifications & Audio Session', () {
+    test('buildDarwinPrayerDetails builds time-sensitive .caf sound details for Adhan', () {
+      final details = PrayerNotificationDetailsBuilder.buildDarwinPrayerDetails(
+        mode: PrayerNotificationMode.adhan,
+        sound: AdhanSound.qatami,
+        prayerName: 'الفجر',
+      );
+
+      expect(details.sound, equals('adhan_qatami.caf'));
+      expect(details.presentSound, isTrue);
+      expect(details.presentAlert, isTrue);
+      expect(details.presentBadge, isTrue);
+      expect(details.interruptionLevel, equals(InterruptionLevel.timeSensitive));
+    });
+
+    test('PrayerScheduleStateStore formats date key and manages states', () {
+      final date = DateTime(2026, 11, 1);
+      final key = PrayerScheduleStateStore.eventStateKey(
+        date: date,
+        prayerName: 'الظهر',
+        event: PrayerScheduleEvent.adhan,
+      );
+
+      expect(key, equals('prayer_schedule_event_2026-11-01_adhan_الظهر'));
+      expect(PrayerScheduleService.eventStateKey(
+        date: date,
+        prayerName: 'الظهر',
+        event: PrayerScheduleEvent.adhan,
+      ), equals(key));
     });
   });
 }

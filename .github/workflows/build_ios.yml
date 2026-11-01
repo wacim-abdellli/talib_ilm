@@ -39,32 +39,38 @@ jobs:
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
           flutter build ios --release --no-codesign --no-tree-shake-icons
 
-      - name: Compile and Embed TalibIlmWidgets Extension
+      - name: Verify embedded WidgetKit extension
         run: |
-          echo "=== Compiling native iOS WidgetKit Extension ==="
-          APPEX_DIR="build/ios/iphoneos/Runner.app/PlugIns/TalibIlmWidgets.appex"
-          mkdir -p "$APPEX_DIR"
-          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          echo "Using iPhoneOS SDK: $SDK_PATH"
-          if xcrun -sdk iphoneos swiftc \
-            -target arm64-apple-ios14.0 \
-            -sdk "$SDK_PATH" \
-            -parse-as-library \
-            -module-name TalibIlmWidgets \
-            -framework WidgetKit \
-            -framework SwiftUI \
-            -framework Foundation \
-            -O \
-            -emit-executable \
-            -o "$APPEX_DIR/TalibIlmWidgets" \
-            ios/TalibIlmWidgets/TalibIlmWidgets.swift; then
-            cp ios/TalibIlmWidgets/Info.plist "$APPEX_DIR/Info.plist"
-            echo "=== TalibIlmWidgets.appex bundle ready ==="
-            ls -la "$APPEX_DIR"
-          else
-            echo "=== Warning: WidgetKit compilation failed. Removing incomplete PlugIns to ensure Sideloadly installs app cleanly ==="
-            rm -rf build/ios/iphoneos/Runner.app/PlugIns
-          fi
+          set -euo pipefail
+          APP_DIR="build/ios/iphoneos/Runner.app"
+          APPEX_DIR="$APP_DIR/PlugIns/TalibIlmWidgets.appex"
+
+          test -d "$APPEX_DIR"
+          test -s "$APPEX_DIR/TalibIlmWidgets"
+          /usr/bin/plutil -lint "$APPEX_DIR/Info.plist"
+
+          APP_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_DIR/Info.plist")
+          EXTENSION_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APPEX_DIR/Info.plist")
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APPEX_DIR/Info.plist")
+          EXTENSION_POINT=$(/usr/libexec/PlistBuddy -c 'Print :NSExtension:NSExtensionPointIdentifier' "$APPEX_DIR/Info.plist")
+
+          test "$APP_ID" = "com.talibilm.app"
+          test "$EXTENSION_ID" = "$APP_ID.widgets"
+          test "$EXECUTABLE" = "TalibIlmWidgets"
+          test "$EXTENSION_POINT" = "com.apple.widgetkit-extension"
+          echo "Verified WidgetKit extension: $EXTENSION_ID ($EXECUTABLE)"
+
+      - name: Ensure Notification Audio Assets in Runner Bundle
+        run: |
+          echo "=== Copying all notification sounds to Runner.app bundle ==="
+          APP_DIR="build/ios/iphoneos/Runner.app"
+          mkdir -p "$APP_DIR/Library/Sounds"
+          mkdir -p "$APP_DIR/NotificationSounds"
+          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/"
+          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/Library/Sounds/"
+          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/NotificationSounds/"
+          echo "=== Notification sounds in Runner.app root: ==="
+          ls -la "$APP_DIR"/*.caf
 
       - name: Package into IPA for Sideloadly / AltStore
         run: |

@@ -33,7 +33,7 @@ Future<void> main() async {
   };
 
   unawaited(SharedPreferences.getInstance());
-  unawaited(HomeWidgetService.initBackground());
+  await HomeWidgetService.initBackground();
   unawaited(NotificationService().init());
   unawaited(QuizDumpService.instance.loadDump());
   if (kDebugMode) {

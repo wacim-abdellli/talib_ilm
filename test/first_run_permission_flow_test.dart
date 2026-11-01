@@ -152,7 +152,7 @@ void main() {
       expect(prefs.getBool('adhan_enabled'), isFalse);
     });
 
-    testWidgets('6. QiblaPage: shows permission explanation view with manual city fallback', (tester) async {
+    testWidgets('6. QiblaPage: loads directly using capital without blocking permission view', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -163,17 +163,9 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('تحديد اتجاه القبلة'), findsOneWidget);
-      expect(find.text('منح إذن الموقع'), findsOneWidget);
-      expect(find.text('استخدام المدينة المحددة في التطبيق'), findsOneWidget);
-
-      // Tapping manual city allows using Qibla without GPS permission
-      final fallbackBtn = find.text('استخدام المدينة المحددة في التطبيق');
-      await tester.tap(fallbackBtn, warnIfMissed: false);
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Qibla calculation successfully initialized without throwing
-      expect(find.text('تحديد اتجاه القبلة'), findsNothing);
+      // No blocking permission view shown; compass loads immediately
+      expect(find.text('منح إذن الموقع'), findsNothing);
+      expect(find.text('استخدام المدينة المحددة في التطبيق'), findsNothing);
     });
 
     testWidgets('7. OnboardingPage: completes 3-page flow and records completion in prefs', (tester) async {

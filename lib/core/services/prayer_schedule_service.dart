@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,10 +11,10 @@ import 'adhkar_reminder_service.dart';
 import 'home_widget_service.dart';
 import 'iqama_timing_policy.dart';
 import 'notification_service.dart';
+import 'prayer_schedule_state_store.dart';
 import 'prayer_time_service.dart';
+export 'prayer_schedule_state_store.dart';
 export 'schedule_outcome.dart';
-
-enum PrayerScheduleEvent { adhan, prePrayer, iqama }
 
 class PrayerScheduleService {
   static const _keyFingerprint = 'prayer_schedule_fingerprint';
@@ -21,7 +24,6 @@ class PrayerScheduleService {
   static const _keyTimestamp = 'prayer_schedule_timestamp';
   static const _keyAdhkarFingerprint = 'adhkar_schedule_fingerprint';
   static const _keyAdhkarTimestamp = 'adhkar_schedule_timestamp';
-  static const _eventStatePrefix = 'prayer_schedule_event_';
 
   static AsyncLock _sharedLock = AsyncLock();
 
@@ -32,69 +34,25 @@ class PrayerScheduleService {
     required DateTime date,
     required String prayerName,
     required PrayerScheduleEvent event,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(
-      eventStateKey(date: date, prayerName: prayerName, event: event),
-    );
-  }
+  }) => PrayerScheduleStateStore.wasEventScheduled(
+    date: date,
+    prayerName: prayerName,
+    event: event,
+  );
 
   @visibleForTesting
   static String eventStateKey({
     required DateTime date,
     required String prayerName,
     required PrayerScheduleEvent event,
-  }) => '$_eventStatePrefix${_formatDateKey(date)}_${event.name}_$prayerName';
+  }) => PrayerScheduleStateStore.eventStateKey(
+    date: date,
+    prayerName: prayerName,
+    event: event,
+  );
 
   static bool shouldUseForegroundFallback(bool? wasScheduled) =>
-      wasScheduled != true;
-
-  static String _formatDateKey(DateTime date) =>
-      '${date.year.toString().padLeft(4, '0')}-'
-      '${date.month.toString().padLeft(2, '0')}-'
-      '${date.day.toString().padLeft(2, '0')}';
-
-  static Future<void> _recordEventSchedule({
-    required DateTime date,
-    required String prayerName,
-    required PrayerScheduleEvent event,
-    required bool scheduled,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(
-      eventStateKey(date: date, prayerName: prayerName, event: event),
-      scheduled,
-    );
-  }
-
-  static bool _hasPlatformAlarm(ScheduleOutcome outcome) =>
-      outcome.status == ScheduleOutcomeStatus.exact ||
-      outcome.status == ScheduleOutcomeStatus.inexactFallback;
-
-  Future<void> _pruneOldEventStates(
-    SharedPreferences prefs,
-    DateTime today,
-  ) async {
-    final firstDateToKeep = DateTime(today.year, today.month, today.day - 1);
-    final lastDateToKeep = DateTime(today.year, today.month, today.day + 7);
-    for (final key in prefs.getKeys()) {
-      if (!key.startsWith(_eventStatePrefix)) continue;
-      if (key.length < _eventStatePrefix.length + 10) {
-        await prefs.remove(key);
-        continue;
-      }
-      final dateText = key.substring(
-        _eventStatePrefix.length,
-        _eventStatePrefix.length + 10,
-      );
-      final date = DateTime.tryParse(dateText);
-      if (date == null ||
-          date.isBefore(firstDateToKeep) ||
-          date.isAfter(lastDateToKeep)) {
-        await prefs.remove(key);
-      }
-    }
-  }
+      PrayerScheduleStateStore.shouldUseForegroundFallback(wasScheduled);
 
   final PrayerTimeService _prayerTimeService;
   final NotificationService _notificationService;
@@ -119,7 +77,7 @@ class PrayerScheduleService {
     _sharedLock = AsyncLock();
   }
 
-  /// Synchronizes and schedules the 7-day rolling window of prayer notifications.
+  /// Synchronizes and schedules the rolling window of prayer notifications.
   /// Serialized through a shared [AsyncLock] across all instances in the isolate
   /// to eliminate duplicate or competing schedule execution.
   Future<ScheduleBatchResult> refreshSchedulesIfNeeded({
@@ -153,7 +111,6 @@ class PrayerScheduleService {
           (now.millisecondsSinceEpoch - lastRefreshTimeMs) / (1000 * 60 * 60);
 
       // Check whether previous scheduling succeeded and is fresh (< 12 hours).
-      // Fingerprint includes date, location, timezone/DST offset, calculationMethod, madhab, adjustments, and settings.
       final isUpToDate = lastFingerprint != null
           ? (lastFingerprint == fingerprint)
           : (lastDate == _formatDate(today.date) &&
@@ -224,7 +181,7 @@ class PrayerScheduleService {
       }
 
       if (refreshPrayerSchedule) {
-        await _pruneOldEventStates(prefs, today.date);
+        await PrayerScheduleStateStore.pruneOldEventStates(prefs, today.date);
 
         // Preserve notification IDs for any prayer currently sounding / active
         // within an active window of [-60s, +360s].
@@ -290,9 +247,12 @@ class PrayerScheduleService {
           preserveIds: preserveIds,
         );
 
-        // Schedule 7 rolling days using civil calendar date arithmetic
-        // (DateTime(year, month, day + dayOffset) handles DST transition days).
-        for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+        // On iOS: Apple limits pending notifications to 64 per app.
+        // We schedule 4 rolling days with Adhans strictly prioritized to guarantee
+        // that zero Adhans are ever dropped. On Android, schedule full 7 days.
+        final isIos = !kIsWeb && Platform.isIOS;
+        final daysToSchedule = isIos ? 4 : 7;
+        for (var dayOffset = 0; dayOffset < daysToSchedule; dayOffset++) {
           final targetDate = DateTime(now.year, now.month, now.day + dayOffset);
           final dayPrayerTimes = (dayOffset == 0 && day != null)
               ? day
@@ -328,9 +288,6 @@ class PrayerScheduleService {
         errors: errors,
       );
 
-      // Keep prayer and Adhkar freshness independent: an Adhkar failure must
-      // retry Adhkar without needlessly canceling/recreating the seven-day
-      // prayer alarm window on every app resume.
       if (refreshPrayerSchedule && prayerFailures == 0) {
         await prefs.setString(_keyFingerprint, fingerprint);
         await prefs.setString(_keyDate, _formatDate(today.date));
@@ -425,44 +382,9 @@ class PrayerScheduleService {
           prePrayerAgeSeconds >= -60 && prePrayerAgeSeconds <= 60;
 
       if (settings.enabled && mode != PrayerNotificationMode.off) {
-        // 1. Advance notification (e.g. 15 minutes before)
-        final notifyBefore = settings.notifyBeforeMinutes.toInt();
-        if (notifyBefore > 0) {
-          if (prePrayerTime.isAfter(now)) {
-            await _recordEventSchedule(
-              date: day.date,
-              prayerName: prayerName,
-              event: PrayerScheduleEvent.prePrayer,
-              scheduled: false,
-            );
-            final outcome = await _notificationService
-                .schedulePrePrayerNotification(
-                  id: basePrePrayerId + index,
-                  prayerName: effectivePrayerName,
-                  scheduledTime: prePrayerTime,
-                  minutesBefore: notifyBefore,
-                  isJumua: isJumua,
-                );
-            outcomes.add(outcome);
-            await _recordEventSchedule(
-              date: day.date,
-              prayerName: prayerName,
-              event: PrayerScheduleEvent.prePrayer,
-              scheduled: notificationsEnabled && _hasPlatformAlarm(outcome),
-            );
-          } else if (!prePrayerIsInActiveWindow || !notificationsEnabled) {
-            await _recordEventSchedule(
-              date: day.date,
-              prayerName: prayerName,
-              event: PrayerScheduleEvent.prePrayer,
-              scheduled: false,
-            );
-          }
-        }
-
-        // 2. Prayer / Adhan notification at prayer time
+        // 1. PRIMARY: Adhan / prayer notification at exact prayer time (highest priority)
         if (prayerTime.isAfter(now)) {
-          await _recordEventSchedule(
+          await PrayerScheduleStateStore.recordEventSchedule(
             date: day.date,
             prayerName: prayerName,
             event: PrayerScheduleEvent.adhan,
@@ -477,19 +399,56 @@ class PrayerScheduleService {
             isJumua: isJumua,
           );
           outcomes.add(outcome);
-          await _recordEventSchedule(
+          await PrayerScheduleStateStore.recordEventSchedule(
             date: day.date,
             prayerName: prayerName,
             event: PrayerScheduleEvent.adhan,
-            scheduled: notificationsEnabled && _hasPlatformAlarm(outcome),
+            scheduled: notificationsEnabled &&
+                PrayerScheduleStateStore.hasPlatformAlarm(outcome),
           );
         } else if (!prayerIsInActiveWindow || !notificationsEnabled) {
-          await _recordEventSchedule(
+          await PrayerScheduleStateStore.recordEventSchedule(
             date: day.date,
             prayerName: prayerName,
             event: PrayerScheduleEvent.adhan,
             scheduled: false,
           );
+        }
+
+        // 2. Advance notification (e.g. 15 minutes before)
+        final notifyBefore = settings.notifyBeforeMinutes.toInt();
+        if (notifyBefore > 0) {
+          if (prePrayerTime.isAfter(now)) {
+            await PrayerScheduleStateStore.recordEventSchedule(
+              date: day.date,
+              prayerName: prayerName,
+              event: PrayerScheduleEvent.prePrayer,
+              scheduled: false,
+            );
+            final outcome = await _notificationService
+                .schedulePrePrayerNotification(
+                  id: basePrePrayerId + index,
+                  prayerName: effectivePrayerName,
+                  scheduledTime: prePrayerTime,
+                  minutesBefore: notifyBefore,
+                  isJumua: isJumua,
+                );
+            outcomes.add(outcome);
+            await PrayerScheduleStateStore.recordEventSchedule(
+              date: day.date,
+              prayerName: prayerName,
+              event: PrayerScheduleEvent.prePrayer,
+              scheduled: notificationsEnabled &&
+                  PrayerScheduleStateStore.hasPlatformAlarm(outcome),
+            );
+          } else if (!prePrayerIsInActiveWindow || !notificationsEnabled) {
+            await PrayerScheduleStateStore.recordEventSchedule(
+              date: day.date,
+              prayerName: prayerName,
+              event: PrayerScheduleEvent.prePrayer,
+              scheduled: false,
+            );
+          }
         }
 
         // 3. Iqama reminder at the configured local-mosque interval or app estimate.
@@ -503,7 +462,7 @@ class PrayerScheduleService {
           final iqamaDiff = now.difference(iqamaTime).inSeconds;
           final iqamaIsInActiveWindow = iqamaDiff >= -60 && iqamaDiff <= 60;
           if (iqamaTime.isAfter(now)) {
-            await _recordEventSchedule(
+            await PrayerScheduleStateStore.recordEventSchedule(
               date: day.date,
               prayerName: prayerName,
               event: PrayerScheduleEvent.iqama,
@@ -517,14 +476,15 @@ class PrayerScheduleService {
                   isJumua: isJumua,
                 );
             outcomes.add(outcome);
-            await _recordEventSchedule(
+            await PrayerScheduleStateStore.recordEventSchedule(
               date: day.date,
               prayerName: prayerName,
               event: PrayerScheduleEvent.iqama,
-              scheduled: notificationsEnabled && _hasPlatformAlarm(outcome),
+              scheduled: notificationsEnabled &&
+                  PrayerScheduleStateStore.hasPlatformAlarm(outcome),
             );
           } else if (!iqamaIsInActiveWindow || !notificationsEnabled) {
-            await _recordEventSchedule(
+            await PrayerScheduleStateStore.recordEventSchedule(
               date: day.date,
               prayerName: prayerName,
               event: PrayerScheduleEvent.iqama,
@@ -532,7 +492,7 @@ class PrayerScheduleService {
             );
           }
         } else {
-          await _recordEventSchedule(
+          await PrayerScheduleStateStore.recordEventSchedule(
             date: day.date,
             prayerName: prayerName,
             event: PrayerScheduleEvent.iqama,
@@ -540,19 +500,19 @@ class PrayerScheduleService {
           );
         }
       } else {
-        await _recordEventSchedule(
+        await PrayerScheduleStateStore.recordEventSchedule(
           date: day.date,
           prayerName: prayerName,
           event: PrayerScheduleEvent.adhan,
           scheduled: false,
         );
-        await _recordEventSchedule(
+        await PrayerScheduleStateStore.recordEventSchedule(
           date: day.date,
           prayerName: prayerName,
           event: PrayerScheduleEvent.prePrayer,
           scheduled: false,
         );
-        await _recordEventSchedule(
+        await PrayerScheduleStateStore.recordEventSchedule(
           date: day.date,
           prayerName: prayerName,
           event: PrayerScheduleEvent.iqama,
@@ -587,8 +547,7 @@ class PrayerScheduleService {
     final setKey = _settingsKey(settings);
     final permissionKey =
         'notifications:$notificationPermissionGranted|exact:$exactAlarmsAllowed';
-    // Rebuild the rolling window after schedule ownership or Iqama offsets change.
-    return 'r20|$dateKey|$locKey|$tzKey|$calcKey|$setKey|$permissionKey';
+    return 'r21|$dateKey|$locKey|$tzKey|$calcKey|$setKey|$permissionKey';
   }
 
   String _buildAdhkarFingerprint(
@@ -611,6 +570,6 @@ class PrayerScheduleService {
     return '${settings.enabled}|${settings.sound.index}|'
         '${settings.defaultMode.index}|$modes|${settings.silentNotifications}|'
         '${settings.notifyBeforeMinutes}|${settings.iqamaReminders}|'
-        '${iqamaOffsets.map((entry) => '${entry.key}:${entry.value}').join(',')}';
+        '${iqamaOffsets.map((entry) => "${entry.key}:${entry.value}").join(",")}';
   }
 }
