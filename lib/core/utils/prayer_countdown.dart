@@ -44,12 +44,31 @@ class PrayerCountdownController {
         _iqamaOverrides = iqamaOverrides,
         now = now ?? DateTime.now,
         state = ValueNotifier<PrayerCountdownState>(
-          PrayerCountdownState(
-            nextPrayerName: day.nextPrayer,
-            nextPrayerTime: day.prayers[day.nextPrayer] ?? DateTime.now(),
-            remaining: Duration.zero,
-          ),
+          _initialState(day, now ?? DateTime.now),
         );
+
+  static PrayerCountdownState _initialState(
+    PrayerTimesDay day,
+    DateTime Function() nowFn,
+  ) {
+    final current = nowFn();
+    final nextPrayerName = day.nextPrayer;
+    var nextPrayerTime = day.nextPrayerTime ?? day.prayers[nextPrayerName] ?? current;
+    if (nextPrayerTime.isBefore(current) && nextPrayerName == AppStrings.prayerFajr) {
+      nextPrayerTime = nextPrayerTime.add(const Duration(days: 1));
+    }
+    final remaining = nextPrayerTime.difference(current);
+    return PrayerCountdownState(
+      nextPrayerName: nextPrayerName,
+      nextPrayerTime: nextPrayerTime,
+      remaining: remaining.isNegative ? Duration.zero : remaining,
+    );
+  }
+
+  void updateDay(PrayerTimesDay day) {
+    _day = day;
+    unawaited(_tick());
+  }
 
   void start() {
     _tick();
@@ -102,6 +121,21 @@ class PrayerCountdownController {
     final nextEntry = _findNextPrayer(_day.prayers, current);
 
     if (nextEntry == null) {
+      // All of today's prayers have passed (after Isha). Next prayer is tomorrow's Fajr.
+      var nextPrayerTime = _day.nextPrayerTime ??
+          _day.prayers[AppStrings.prayerFajr]?.add(const Duration(days: 1)) ??
+          current.add(const Duration(hours: 8));
+      if (nextPrayerTime.isBefore(current)) {
+        nextPrayerTime = nextPrayerTime.add(const Duration(days: 1));
+      }
+      final remaining = nextPrayerTime.difference(current);
+      state.value = PrayerCountdownState(
+        nextPrayerName: AppStrings.prayerFajr,
+        nextPrayerTime: nextPrayerTime,
+        remaining: remaining.isNegative ? Duration.zero : remaining,
+        isInPrayerTime: false,
+        elapsed: Duration.zero,
+      );
       await _loadNextDay(current);
       return;
     }

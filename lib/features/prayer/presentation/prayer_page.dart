@@ -61,13 +61,10 @@ class _PrayerPageState extends State<PrayerPage> {
 
   void _onLocationChanged() {
     if (!mounted) return;
-    final newLoc = LocationService.onLocationChanged.value;
-    if (newLoc != null && _cachedDay != null && _cachedDay!.city == newLoc.city) {
-      return;
-    }
     PrayerTimeService.clearCache();
     setState(() {
-      _loadPrayer();
+      _cachedDay = null;
+      _loadPrayer(forceRefresh: true);
       _locationFuture = _loadLocation();
     });
   }
@@ -286,7 +283,10 @@ class _PrayerPageState extends State<PrayerPage> {
     final controller = _countdownController;
     if (controller == null) {
       final prayer = PrayerPageHelpers.buildNextPrayer(day);
-      final nextTime = day.prayers[day.nextPrayer] ?? DateTime.now();
+      var nextTime = day.nextPrayerTime ?? day.prayers[day.nextPrayer] ?? DateTime.now();
+      if (nextTime.isBefore(DateTime.now()) && day.nextPrayer == AppStrings.prayerFajr) {
+        nextTime = nextTime.add(const Duration(days: 1));
+      }
       final remaining = nextTime.difference(DateTime.now());
       final progress = PrayerPageHelpers.calculatePrayerProgress(
         day,
@@ -296,7 +296,7 @@ class _PrayerPageState extends State<PrayerPage> {
       );
       return NextPrayerCard(
         prayer: prayer,
-        countdownText: PrayerPageHelpers.formatCountdown(remaining),
+        countdownText: PrayerPageHelpers.formatCountdown(remaining.isNegative ? Duration.zero : remaining),
         progress: progress,
         onTap: () => _openPrayerSettings(context),
         onOpenQibla: () => _openQibla(context),
@@ -521,7 +521,11 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _ensureCountdown(PrayerTimesDay day) {
-    if (_cachedDay?.date == day.date && _countdownController != null) {
+    if (_cachedDay != null &&
+        _cachedDay!.date == day.date &&
+        _cachedDay!.city == day.city &&
+        _countdownController != null) {
+      _countdownController!.updateDay(day);
       return;
     }
 
@@ -539,13 +543,14 @@ class _PrayerPageState extends State<PrayerPage> {
     _prayerFuture.then((day) {
       if (!mounted) return;
       _ensureCountdown(day);
-      unawaited(_prayerScheduleService.refreshSchedulesIfNeeded(day: day));
+      unawaited(_prayerScheduleService.refreshSchedulesIfNeeded(day: day, force: forceRefresh));
     });
   }
 
   void _reloadPrayer() {
     PrayerTimeService.clearCache();
     setState(() {
+      _cachedDay = null;
       _loadPrayer(forceRefresh: true);
       _locationFuture = _loadLocation();
       _loadSettings();

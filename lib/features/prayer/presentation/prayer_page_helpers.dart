@@ -63,7 +63,10 @@ class PrayerPageHelpers {
   }
   static NextPrayer buildNextPrayer(PrayerTimesDay day) {
     final now = DateTime.now();
-    final time = day.prayers[day.nextPrayer] ?? now;
+    var time = day.nextPrayerTime ?? day.prayers[day.nextPrayer] ?? now;
+    if (time.isBefore(now) && day.nextPrayer == AppStrings.prayerFajr) {
+      time = time.add(const Duration(days: 1));
+    }
     final minutes = time.difference(now).inMinutes;
     return NextPrayer(
       prayer: prayerFromLabel(day.nextPrayer) ?? Prayer.fajr,

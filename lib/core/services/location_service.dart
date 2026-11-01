@@ -309,7 +309,11 @@ class LocationService {
     final province = prefs.getString(_keyManualProvince);
     final country = prefs.getString(_keyManualCountry);
     final countryCode = prefs.getString(_keyManualCountryCode);
-    final calcMethod = prefs.getString(_keyManualCalcMethod);
+    var calcMethod = prefs.getString(_keyManualCalcMethod);
+    if ((countryCode == 'TN' || (city.contains('صفاقس') || city.contains('تونس'))) &&
+        (calcMethod == null || calcMethod == 'mwl')) {
+      calcMethod = 'tunisia';
+    }
 
     return LocationResult(
       latitude: lat,
@@ -377,6 +381,10 @@ class LocationService {
 
   /// Sets a verified city selected from the catalog
   Future<void> setVerifiedCity(VerifiedCity city) async {
+    // 1. Update saved calc method in preferences FIRST so listeners pick it up immediately
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('adhan_calc_method', city.calculationMethod);
+
     final location = LocationResult(
       latitude: city.latitude,
       longitude: city.longitude,
@@ -388,10 +396,6 @@ class LocationService {
       calculationMethod: city.calculationMethod,
     );
     await setManualLocation(location);
-
-    // Also update saved calc method in preferences for prayer calculations
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('adhan_calc_method', city.calculationMethod);
   }
 
   Future<void> clearManualLocation() async {

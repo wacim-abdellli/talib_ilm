@@ -124,11 +124,11 @@ class PrayerNotificationScheduler {
     );
 
     final title = isJumua
-        ? 'اقترب موعد صلاة الجمعة'
-        : 'اقترب وقت صلاة $prayerName';
+        ? 'اقترب موعد صلاة الجمعة (بقي $minutesBefore دقيقة)'
+        : 'اقترب وقت صلاة $prayerName (بقي $minutesBefore دقيقة)';
     final body = isJumua
-        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
-        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName.. تهيأ للصلاة وتوضأ';
+        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة · تهيأ للغسل والتطيب وقراءة سورة الكهف'
+        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName · حان وقت الاستعداد والوضوء';
 
     return await _safeZonedSchedule(
       id: id,
@@ -183,11 +183,11 @@ class PrayerNotificationScheduler {
     );
 
     final title = isJumua
-        ? 'اقترب موعد صلاة الجمعة'
-        : 'اقترب وقت صلاة $prayerName';
+        ? 'اقترب موعد صلاة الجمعة (بقي $minutesBefore دقيقة)'
+        : 'اقترب وقت صلاة $prayerName (بقي $minutesBefore دقيقة)';
     final body = isJumua
-        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة.. تهيأ للغسل والتطيب والسواك وقراءة سورة الكهف والتبكير للمسجد'
-        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName.. تهيأ للصلاة وتوضأ';
+        ? 'تبقى $minutesBefore دقيقة على أذان الجمعة · تهيأ للغسل والتطيب وقراءة سورة الكهف'
+        : 'تبقى $minutesBefore دقيقة على دخول وقت صلاة $prayerName · حان وقت الاستعداد والوضوء';
 
     await _plugin.show(
       id,

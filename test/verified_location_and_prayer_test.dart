@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/core/constants/verified_cities.dart';
 import 'package:talib_ilm/core/services/location_service.dart';
 import 'package:talib_ilm/core/services/prayer_time_service.dart';
+import 'package:talib_ilm/core/utils/prayer_countdown.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -236,6 +237,61 @@ void main() {
 
       final day = await service.getPrayerTimesDay();
       expect(day.prayers['الظهر'], isNotNull);
+    });
+    test('Tunisia (Sfax) with legacy mwl in prefs still computes official ministry times', () async {
+      final service = PrayerTimeService(
+        now: () => DateTime(2026, 11, 1, 12, 0, 0),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_city', 'صفاقس');
+      await prefs.setString('last_country_code', 'TN');
+      await prefs.setDouble('last_lat', 34.7406);
+      await prefs.setDouble('last_lon', 10.7603);
+      await prefs.setString('adhan_calc_method', 'mwl');
+
+      final day = await service.getPrayerTimesDay(date: DateTime(2026, 11, 1));
+      expect(day.city, 'صفاقس');
+
+      final dhuhr = day.prayers['الظهر']!;
+      final asr = day.prayers['العصر']!;
+      final maghrib = day.prayers['المغرب']!;
+      final isha = day.prayers['العشاء']!;
+
+      expect(dhuhr.hour, 12);
+      expect(dhuhr.minute, closeTo(8, 1)); // 12:08, not 12:02
+      expect(asr.minute, 1); // 15:01
+      expect(maghrib.minute, closeTo(27, 1)); // 17:27, not 17:23
+      expect(isha.minute, closeTo(50, 1)); // 18:50, not 18:44
+    });
+
+    test('PrayerCountdownController after Isha evaluates next prayer as tomorrow Fajr and syncs cleanly', () async {
+      final service = PrayerTimeService(
+        now: () => DateTime(2026, 11, 1, 20, 23, 0),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_city', 'صفاقس');
+      await prefs.setString('last_country_code', 'TN');
+      await prefs.setDouble('last_lat', 34.7406);
+      await prefs.setDouble('last_lon', 10.7603);
+
+      final day = await service.getPrayerTimesDay();
+      expect(day.nextPrayer, 'الفجر');
+
+      final controller = PrayerCountdownController(
+        day: day,
+        prayerTimeService: service,
+        now: () => DateTime(2026, 11, 1, 20, 23, 0),
+      );
+
+      // Initial state must be tomorrow's Fajr
+      expect(controller.state.value.nextPrayerName, 'الفجر');
+      expect(controller.state.value.nextPrayerTime.day, 2); // tomorrow Nov 2
+      expect(controller.state.value.nextPrayerTime.hour, 5); // 05:12 AM
+      expect(controller.state.value.remaining.inHours, closeTo(8, 1)); // ~8 hours 48 mins
+
+      controller.dispose();
     });
   });
 }

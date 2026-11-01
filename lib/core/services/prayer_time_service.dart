@@ -192,6 +192,13 @@ class PrayerTimeService {
     String? countryCode,
     double? latitude,
   }) {
+    final code = (countryCode ?? '').toUpperCase().trim();
+    // Tunisia special case: Tunisia uses official Ministry parameters (CalculationMethod.other).
+    // Automatically heal legacy 'mwl' saved from older app versions for Tunisia.
+    if (code == 'TN' && (savedMethod == null || savedMethod == 'auto' || savedMethod == 'mwl' || savedMethod == 'tunisia')) {
+      return CalculationMethod.other;
+    }
+
     if (savedMethod != null && savedMethod != 'auto') {
       switch (savedMethod) {
         case 'tunisia':
@@ -221,7 +228,6 @@ class PrayerTimeService {
     }
 
     // Auto-select standard calculation method based on country
-    final code = (countryCode ?? '').toUpperCase().trim();
     switch (code) {
       case 'SA': // Saudi Arabia
       case 'YE': // Yemen
@@ -286,7 +292,9 @@ class PrayerTimeService {
     final coordinates = Coordinates(safeLat, safeLon);
     final country = (countryCode ?? '').toUpperCase().trim();
     final isTunisia = savedMethod == 'tunisia' ||
-        ((savedMethod == null || savedMethod == 'auto') && country == 'TN');
+        city.contains('صفاقس') ||
+        city.contains('تونس') ||
+        country == 'TN';
     final CalculationParameters params;
     if (isTunisia) {
       // Official Tunisian Ministry of Religious Affairs (وزارة الشؤون الدينية بتونس):

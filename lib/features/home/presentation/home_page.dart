@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _onLocationChanged() {
     if (!mounted) return;
     PrayerTimeService.clearCache();
-    _loadAllData();
+    _loadAllData(forceRefresh: true);
   }
 
   @override
@@ -98,9 +98,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     precacheImage(AssetImage(palette.logoLockup), context);
   }
 
-  Future<void> _loadAllData() async {
+  Future<void> _loadAllData({bool forceRefresh = false}) async {
     try {
-      final prayerFuture = _prayerTimeService.getPrayerTimesDay();
+      final prayerFuture = _prayerTimeService.getPrayerTimesDay(forceRefresh: forceRefresh);
       final continueFuture = _loadContinueData();
       final prayerDay = await prayerFuture.catchError((_) {
         return _prayerTimeService.getCachedOrFallbackPrayerTimesDay();
@@ -521,7 +521,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       onSaved: () {
         LocationService.clearCache();
         PrayerTimeService.clearCache();
-        _loadAllData();
+        _loadAllData(forceRefresh: true);
       },
     );
   }

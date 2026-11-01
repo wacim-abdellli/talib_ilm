@@ -1,3 +1,28 @@
+## Round 48 — Home & Prayer Page Synchronization, Countdown Desync Fix, and Notification Clarity (1 November 2026)
+- **Home & Prayer Page Real-Time Synchronization**:
+  - Fixed desynchronization when changing cities or verified countries: PrayerPage._onLocationChanged now resets _cachedDay = null and loads prayer data with orceRefresh: true.
+  - Removed outdated guard that previously skipped updates when city == _cachedDay!.city.
+  - Added location change awareness to HomePage: _loadAllData(forceRefresh: true) is now triggered on _onLocationChanged and location settings sheet dismiss.
+- **Prayer Countdown Controller After-Isha Healing**:
+  - Resolved major bug in PrayerCountdownController: when all prayer times for the current day have elapsed (
+extEntry == null), the controller now immediately advances to tomorrow's Fajr (
+extPrayerName = AppStrings.prayerFajr), displays tomorrow's Fajr time, and starts an accurate countdown (e.g. ~8-9 hours remaining) instead of leaving stale/unassigned state pointing to Dhuhr or 3:38 AM.
+  - Added PrayerCountdownController.updateDay(PrayerTimesDay day) to synchronize instant countdown ticks whenever the city or prayer times change.
+  - Fixed _ensureCountdown in PrayerPage to check city in addition to date, preventing stale controllers from persisting across city switches.
+- **Enforced Official Tunisian Ministry Calculations for All Legacy Installs**:
+  - In PrayerTimeService (_resolveMethod and _buildDay), ensured that any coordinates in Tunisia (countryCode == 'TN' or cities matching Sfax/Tunis) strictly use official Tunisian Ministry parameters (CalculationMethod.other with 18°/18° angles and precaution margins: Dhuhr +6m, Asr +1m, Maghrib +3m, Isha +1m), automatically overriding legacy 'mwl' (Muslim World League) previously stored in user SharedPreferences.
+  - In LocationService, ensured setVerifiedCity writes dhan_calc_method to preferences prior to dispatching location change notifications, eliminating calculation race conditions.
+- **Pre-Prayer Notification Text & Clarity Overhaul**:
+  - Re-worded advance reminder notifications to avoid confusion with the actual Adhan:
+    - Title: اقترب وقت صلاة  (بقي  دقيقة)
+    - Body: تبقى  دقيقة على دخول وقت صلاة  · حان وقت الاستعداد والوضوء
+- **Verification**:
+  - lutter analyze --no-pub: 0 issues.
+  - python tool/ui_lint_v2.py --strict: Passed (7 allows used / cap 10).
+  - Tests: 	est/verified_location_and_prayer_test.dart (11/11 passed including legacy MWL healing test and after-Isha countdown test), 	est/prayer_iqama_and_home_hero_test.dart, prayer_time_card_options_test.dart, and all scoped unit/widget tests passing (769 passing tests).
+  - Built split-per-abi release APKs (pp-arm64-v8a-release.apk ~137MB).
+- **Open issues**: Golden tests require Linux golden environment. Physical device testing of pre-prayer notifications.
+
 ## Round 47 — Tunisia Prayer Calculation Sync, Bulletproof Adhan Channels & Quran Downloads Overhaul (1 November 2026)
 - **Prayer Times Precision (Issue 2)**:
   - Resolved prayer discrepancy for Tunisian cities (e.g., Sfax صفاقس). Added official Ministry of Religious Affairs (وزارة الشؤون الدينية بتونس) calculation method in `PrayerTimeService` and `AdhanSettingsService` with Fajr 18°, Isha 18°, +6m Dhuhr, +1m Asr, +3m Maghrib, +1m Isha. Updated verified Tunisian cities in `verified_cities.dart`. Matches official mosque prayer times exactly (Fajr 05:12, Dhuhr 12:08, Asr 15:01, Maghrib 17:27, Isha 18:50).
