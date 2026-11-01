@@ -1,3 +1,15 @@
+## Release Task 8 — iOS Store Release Readiness (1 November 2026)
+- **Branch**: `release/8-ios-store-readiness`
+- **Base Commit**: `a326141` (`release(7): enforce strict HTTPS boundaries and remove TLS bypass`)
+- **iOS Readiness Hardening**:
+  - Dynamically synchronized `CFBundleShortVersionString` (`$(FLUTTER_BUILD_NAME)`) and `CFBundleVersion` (`$(FLUTTER_BUILD_NUMBER)`) in `ios/TalibIlmWidgets/Info.plist` with the host Flutter app (`ios/Runner/Info.plist`), preventing App Store Connect ITMS-90062 and ITMS-90473 extension version mismatch rejections.
+  - Updated `.github/workflows/build_ios.yml` to trigger on `release/**` branches.
+  - Authored comprehensive documentation `docs/IOS_RELEASE_READINESS.md` detailing bundle identifiers, App Group `group.com.talibilm.app`, background audio modes, and exact owner actions for production App Store provisioning profiles and certificates.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (5.4s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 9 — Device acceptance and QA verification.
+
 ## Release Task 7 — Privacy and Network Boundary Audit (1 November 2026)
 - **Branch**: `release/7-privacy-network-audit`
 - **Base Commit**: `7e3a7f4` (`release(6): configure Android store declarations and purge full screen intent`)
