@@ -8,8 +8,7 @@ import 'app/app.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/ilm/data/services/quiz_dump_service.dart';
-import 'utils/ssl_helper_web.dart'
-    if (dart.library.io) 'utils/ssl_helper_mobile.dart';
+
 
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +35,7 @@ Future<void> main() async {
   await HomeWidgetService.initBackground();
   unawaited(NotificationService().init());
   unawaited(QuizDumpService.instance.loadDump());
-  if (kDebugMode) {
-    enableBadCertificateCatcher();
-  }
+
   try {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.talibilm.app.channel.audio',
