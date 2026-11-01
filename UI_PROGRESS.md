@@ -1,3 +1,16 @@
+## Remediation Task R6 — External Web & Content Trust Boundary Enforcement (2 November 2026)
+- **Branch**: `remediation/r6-web-content-boundaries`
+- **Base Commit**: `886c8ce` (`remediation(r5): integrate Arabic semantic announcements for Tasbeeh and Dhikr counters`)
+- **Outbound Web & Link Security Hardening (P1.8)**:
+  - Built centralized link trust boundary `lib/core/utils/safe_url_launcher.dart` enforcing HTTPS-only endpoints and approved native app schemas (`vnd.youtube`), while strictly rejecting unencrypted HTTP, script injections (`javascript:`, `data:`), and local file/content schemes.
+  - Migrated `book_lessons_tab.dart` and `video_player_page.dart` to use `SafeUrlLauncher.launchSafeUrl`.
+  - Added dedicated unit test suite `test/safe_url_launcher_test.dart` verifying scheme validation and rejection of dangerous URL payloads.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (9.0s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/safe_url_launcher_test.dart --no-pub`: 6/6 PASSED.
+- **Next Task**: Task R7 — Clean exact-commit final release gate and closure.
+
 ## Remediation Task R5 — Tasbeeh & Screen Reader Arabic Accessibility Announcements (2 November 2026)
 - **Branch**: `remediation/r5-accessibility-announcements`
 - **Base Commit**: `ecc9ec5` (`remediation(r4): configure iOS signed IPA workflow and export options`)
