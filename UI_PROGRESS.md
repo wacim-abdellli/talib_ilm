@@ -1,3 +1,17 @@
+## Release Task 7 — Privacy and Network Boundary Audit (1 November 2026)
+- **Branch**: `release/7-privacy-network-audit`
+- **Base Commit**: `7e3a7f4` (`release(6): configure Android store declarations and purge full screen intent`)
+- **Privacy & Network Security Hardening**:
+  - Removed debug global TLS certificate bypass `enableBadCertificateCatcher()` and `MyHttpOverrides` from `lib/main.dart` and neutralized `lib/utils/ssl_helper_mobile.dart`. Strict certificate validation against system trust anchors is now enforced in all build modes.
+  - Eliminated broad cleartext domain exemptions from `android/app/src/main/res/xml/network_security_config.xml`. All network traffic is strictly enforced as HTTPS-only (`cleartextTrafficPermitted="false"` everywhere).
+  - Built audit tool `tool/audit_network_and_privacy.py`: verified 0 cleartext `http://` URLs across all Dart code and JSON assets. Inventoried all 17 external media/API domains accessed over TLS.
+  - Updated `docs/PRIVACY_POLICY.md` with the live public repository HTTPS URL (`https://github.com/wacim-abdellli/talib_ilm/blob/main/docs/PRIVACY_POLICY.md`), verified ephemeral location handling, opt-in reverse geocoding policy, and local-first data storage.
+- **Verification Commands & Results**:
+  - `python tool/audit_network_and_privacy.py`: 0 cleartext URLs, 17 domains verified.
+  - `flutter analyze --no-pub`: 0 issues found (6.2s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 8 — iOS store release readiness.
+
 ## Release Task 6 — Android Store Release Configuration (1 November 2026)
 - **Branch**: `release/6-android-store-release-config`
 - **Base Commit**: `c30e5be` (`release(5): repair CI failure propagation and aggregate gates`)

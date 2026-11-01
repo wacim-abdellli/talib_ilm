@@ -4,7 +4,7 @@
 **Application Name:** طالب العلم (talib_ilm)  
 **Package Identifier:** `com.talibilm.app`  
 **Contact / Publisher:** Talib Ilm Development Team (Community Islamic Knowledge Project)  
-**Public Policy URL:** *To be hosted at publisher website / repository URL by owner*
+**Public Policy URL:** https://github.com/wacim-abdellli/talib_ilm/blob/main/docs/PRIVACY_POLICY.md
 
 ---
 
@@ -108,7 +108,7 @@ Because all personal notes, bookmarks, quiz histories, and settings are stored l
 
 ## 6. Security Practices
 
-- **Encrypted in Transit:** All network requests to API endpoints, Tafsir servers, and reverse-geocoding clients are enforced over **Transport Layer Security (TLS/HTTPS)** via Android Network Security Configuration (`res/xml/network_security_config.xml`). Legacy cleartext HTTP is strictly blocked, except for verified cleartext-only radio/audio stream origins.
+- **Encrypted in Transit:** All network requests to API endpoints, Tafsir servers, audio streams, and reverse-geocoding clients are strictly enforced over **Transport Layer Security (TLS/HTTPS)** via Android Network Security Configuration (`res/xml/network_security_config.xml`). Unencrypted cleartext HTTP traffic is blocked across the entire application.
 - **Sandboxed Storage:** All user notes, bookmarks, and preferences are saved within the private Android application sandbox, inaccessible to other installed applications without root permissions.
 
 ---
