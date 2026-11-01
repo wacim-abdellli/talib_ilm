@@ -1,6 +1,6 @@
 name: Build iOS App
 
-on:
+'on':
   workflow_dispatch:
   push:
     branches:
@@ -8,6 +8,7 @@ on:
       - 'codex/**'
       - 'ui/**'
       - 'ci/**'
+      - 'release/**'
     paths:
       - 'lib/**'
       - 'ios/**'
