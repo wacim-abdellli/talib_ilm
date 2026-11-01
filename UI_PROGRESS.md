@@ -1,3 +1,22 @@
+## Release Task 4 — Make All Android Release Variants Fail Closed (1 November 2026)
+- **Branch**: `release/4-fail-closed-signing`
+- **Base Commit**: `9f34f70` (`release(3): repair golden baseline after visual review`)
+- **Android Signing Security Overhaul**:
+  - Removed debug signing fallback from `buildTypes.release` in `android/app/build.gradle.kts` (was previously assigning `signingConfigs.debug` when production credentials were absent).
+  - Strengthened `gradle.taskGraph.whenReady` guard to intercept all release assembly, packaging, and bundle tasks (`bundleRelease`, `assembleRelease`, and split-per-abi package tasks). Throws explicit `GradleException` if production release credentials are missing.
+  - Added robust property & environment resolution `findPropOrEnv` to support Gradle project properties (`-P...`), `key.properties`, and environment variables seamlessly.
+  - Created automated test harness `tool/verify_android_signing_fail_closed.py`:
+    1. Verified `bundleRelease` fails closed without signing credentials.
+    2. Verified `assembleRelease` fails closed without signing credentials.
+    3. Verified `assembleDebug` builds cleanly without credentials.
+    4. Verified signing acceptance with an isolated temporary keystore outside Git (fingerprint: `SHA256: F8:F1:D2:AE:CC:C6:BC:75:F5:8D:39:28:3B:77:56:86:A8:9D:CA:3F:9B:2B:97:7E:5B:5A:D7:98:82:7A:78:52`).
+    5. Verified repository cleanliness (no keystore or credentials in Git).
+- **Verification Commands & Results**:
+  - `python tool/verify_android_signing_fail_closed.py`: 5/5 PASSED.
+  - `flutter analyze --no-pub`: 0 issues found (8.2s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 5 — Repair CI failure propagation.
+
 ## Release Task 3 — Repair Golden Baseline (1 November 2026)
 - **Branch**: `release/3-repair-golden-baseline`
 - **Base Commit**: `e3daac1` (`release(1): triage all 25 test failures and resolve functional expectations`)
