@@ -9,6 +9,8 @@ import 'package:talib_ilm/features/home/presentation/widgets/continue_learning_c
 import 'package:talib_ilm/features/home/presentation/widgets/home_hero_timeline_station.dart';
 import 'package:talib_ilm/features/home/presentation/widgets/quick_action_button.dart';
 import 'package:talib_ilm/features/more/presentation/widgets/more_section_card.dart';
+import 'package:talib_ilm/features/adhkar/presentation/widgets/rosary_dial.dart';
+import 'package:talib_ilm/features/adhkar/presentation/widgets/dhikr_counter_dial.dart';
 
 Widget wrapWithTheme(Widget child, {bool isDark = false, double textScale = 1.0}) {
   final theme = isDark ? AppTheme.darkTheme : AppTheme.lightTheme;
@@ -354,6 +356,60 @@ void main() {
         expect(tester.takeException(), isNull, reason: 'LearningPulseCard failed at scale $scale');
         expect(find.text('ابدأ رحلة طلب العلم'), findsOneWidget);
       }
+    });
+  });
+
+  group('Task R5 — Tasbeeh & Screen Reader Arabic Accessibility Announcements', () {
+    testWidgets('RosaryDial exposes semantic button, value, and triggers tap with announcement', (tester) async {
+      int count = 33;
+      await tester.pumpWidget(
+        wrapWithTheme(
+          RosaryDial(
+            label: 'سبحان الله',
+            count: count,
+            target: 100,
+            onTap: () => count++,
+            onReset: () {},
+            onChangeDhikr: () {},
+            onSetTarget: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dialFinder = find.byType(RosaryDial);
+      expect(dialFinder, findsOneWidget);
+
+      final semantics = tester.getSemantics(find.byType(InkWell).first);
+      expect(semantics.label, contains('سبحان الله'));
+      expect(semantics.value, equals('33'));
+      expect(semantics.hint, equals('الهدف 100'));
+
+      await tester.tap(dialFinder);
+      await tester.pumpAndSettle();
+      expect(count, equals(34));
+    });
+
+    testWidgets('DhikrCounterDial exposes semantic button and increments', (tester) async {
+      int count = 10;
+      await tester.pumpWidget(
+        wrapWithTheme(
+          DhikrCounterDial(
+            count: count,
+            total: 33,
+            isComplete: false,
+            onTap: () => count++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dialFinder = find.byType(DhikrCounterDial);
+      expect(dialFinder, findsOneWidget);
+
+      await tester.tap(dialFinder);
+      await tester.pumpAndSettle();
+      expect(count, equals(11));
     });
   });
 }
