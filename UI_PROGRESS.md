@@ -1,3 +1,17 @@
+## Remediation Task R3 — Android Exported Components & Intent Security Audit (1 November 2026)
+- **Branch**: `remediation/r3-android-exported-components`
+- **Base Commit**: `3b4fc0a` (`remediation(r2): configure Android backup and data extraction privacy rules`)
+- **Exported Components Security Hardening (P1.4)**:
+  - Audited all 11 Android components declared in `android/app/src/main/AndroidManifest.xml` against Android 12+ explicit export rules and spoofing risks.
+  - Confirmed required exports: `MainActivity` (launcher), `AudioService` (mediaPlayback with foregroundServiceType), `MediaButtonReceiver` (media key events), and 3 AppWidget providers (`RibbonWidgetProvider`, `CompactWidgetProvider`, `LargeWidgetProvider`).
+  - Confirmed system job protection: `HomeWidgetBackgroundService` guarded with `android.permission.BIND_JOB_SERVICE`.
+  - Confirmed internal unexported components: `ScheduledNotificationReceiver`, `ScheduledNotificationBootReceiver`, `ActionBroadcastReceiver` set to `android:exported="false"`.
+  - Produced comprehensive documentation `docs/ANDROID_COMPONENTS_AUDIT.md`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (6.6s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task R4 — iOS production distribution pipeline and signed export template (P0.1 / P0.3).
+
 ## Remediation Task R2 — Android Backup Rules & Ephemeral Coordinate Isolation (1 November 2026)
 - **Branch**: `remediation/r2-android-backup-rules`
 - **Base Commit**: `4075c1f` (`remediation(r1): reconcile re-audit report and update Gemini remediation guide`)
