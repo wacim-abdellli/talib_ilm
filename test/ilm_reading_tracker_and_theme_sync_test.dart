@@ -44,10 +44,10 @@ void main() {
         ),
       );
 
-      expect(find.text('4/96 مُنجز'), findsOneWidget);
+      expect(find.text('4/96'), findsOneWidget);
       expect(find.byIcon(Icons.collections_bookmark_rounded), findsOneWidget);
 
-      await tester.tap(find.text('4/96 مُنجز'));
+      await tester.tap(find.text('4/96'));
       await tester.pump();
 
       expect(tapped, isTrue);

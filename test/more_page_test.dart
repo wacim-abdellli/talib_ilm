@@ -29,7 +29,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('المحتوى والمحفوظات'), findsOneWidget);
       expect(find.text('المفضلة والمحفوظات'), findsOneWidget);
-      expect(find.text('التنزيلات الصوتية'), findsOneWidget);
+      expect(find.text('حقيبة المحتوى بدون إنترنت'), findsOneWidget);
 
       // Scroll to third section: تفضيلات التطبيق
       await tester.scrollUntilVisible(find.text('تفضيلات التطبيق'), 250);

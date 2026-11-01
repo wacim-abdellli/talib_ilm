@@ -119,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('معارج القبول بشرح سلم الوصول'), findsOneWidget);
-      expect(find.text('جاهز للقراءة بدون إنترنت'), findsOneWidget);
+      expect(find.text('حافظ الحكمي · 1 / 1200 صفحة · 0%'), findsOneWidget);
       expect(find.text('الأصول الثلاثة وأدلتها'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

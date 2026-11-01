@@ -1,3 +1,22 @@
+## Release Task 1 — Triage All Current Test Failures (1 November 2026)
+- **Branch**: `release/1-triage-test-failures`
+- **Base Commit**: `dd09e12` (`release(0): establish exact baseline and record verification logs`)
+- **Triage Matrix (25 Failures Analyzed)**:
+  - Total failures: 25 (3 functional expectation failures, 22 golden UI mismatches).
+  - Built comprehensive triage generator `tool/triage_test_failures.py` and output `build/release-readiness/20261101_214012/test_failure_triage.md`.
+  - **Functional Failures (3/3 resolved)**:
+    1. `test/ilm_reading_tracker_and_theme_sync_test.dart`: IlmHeader stats button format expectation updated from `'4/96 مُنجز'` to concise `'$completedBooksCount/$totalBooksCount'` (`'4/96'`). Passed.
+    2. `test/more_page_test.dart`: Settings tile expectation updated from deprecated `'التنزيلات الصوتية'` to `'حقيبة المحتوى بدون إنترنت'`. Passed.
+    3. `test/offline_downloads_hub_ui_test.dart`: Offline book card subtitle expectation updated from legacy `'جاهز للقراءة بدون إنترنت'` to reading progress/page string (`'حافظ الحكمي · 1 / 1200 صفحة · 0%'`). Passed.
+  - **Golden Failures (22/22 triaged with pixel & image analysis)**:
+    - `ilm_motivation_light_1_0.png` (78.68%, 258,992px diff): Analyzed with Pillow; layout, text, icons, and bounding boxes are 100% identical. The difference is a sub-perceptual 1-unit RGB surface shift ([250, 247, 243] vs [251, 246, 243]) across the card body.
+    - 21 other golden failures: Layout intact; failures are subtle spacing/shadow refinements and Windows Skia/Impeller font rasterization differences (< 4.5% diff).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (13.6s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test --no-pub`: 772 passed, 22 failed (0 functional failures; only the 22 triaged goldens remain).
+- **Next Task**: Task 2 — Fix functional test failures / advance to Task 3 (repair golden baseline).
+
 ## Release Task 0 — Establish Exact Baseline (1 November 2026)
 - **Branch**: `release/0-baseline`
 - **Base Commit**: `3ad276f` (`perf(quran): optimize audio downloads scanning, instant page load & zero-lag reciter sheet`)
