@@ -2,8 +2,8 @@
 - Replaced the CI-only `swiftc` bundle hack with a real `TalibIlmWidgets` app-extension target in `Runner.xcodeproj`, added the Runner embed phase and build dependency, and configured the extension bundle ID, iOS 14 deployment target, WidgetKit/SwiftUI frameworks, and extension Info.plist.
 - Added matching `group.com.talibilm.app` entitlements to the host and extension; Flutter now awaits HomeWidget App Group initialization before app startup so first-run widget updates cannot race setup.
 - CI now fails unless `Runner.app/PlugIns/TalibIlmWidgets.appex` contains its executable and valid WidgetKit metadata. Removed the old behavior that deleted the extension and let the IPA build pass after extension compile failure.
-- Verification: Ruby `xcodeproj` parsed the project and confirmed Runner depends on and embeds the app-extension target; local source/metadata checks are in progress. This Windows environment has no Xcode, so the real iOS release build must be confirmed by the macOS GitHub Actions workflow.
-- Open issues: App Group sharing on a provisioned iPhone requires the signing profile to authorize `group.com.talibilm.app`; verify widget discovery and live data on-device after installing the newly built IPA. Flutter tests were not run.
+- Verification: `flutter analyze --no-pub` reported 0 issues; `python tool/ui_lint_v2.py` passed; Ruby `xcodeproj` confirmed the Runner dependency/embed target; plist and workflow YAML parsing plus `git diff --check` passed. GitHub Actions Build iOS App #58 completed successfully: the release build and embedded-extension checks passed, and IPA (117,689,545 bytes) plus Runner.app (117,685,648 bytes) artifacts uploaded.
+- Open issues: physical iPhone widget-gallery/data verification remains. The signing profile must authorize `group.com.talibilm.app` for the app and extension to share live data. Flutter tests were not run.
 
 # UI Progress Log
 
