@@ -146,6 +146,7 @@ void main() {
   group('PrayerTimeService Calculation Accuracy Tests', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
+      PrayerTimeService.clearCache();
     });
 
     test('calculates accurate prayer times for verified Algerian coordinates', () async {
@@ -181,6 +182,43 @@ void main() {
       expect(dhuhr.isBefore(asr!), isTrue);
       expect(asr.isBefore(maghrib!), isTrue);
       expect(maghrib.isBefore(isha!), isTrue);
+    });
+
+    test('calculates accurate prayer times for Tunisia (Sfax) matching official ministry', () async {
+      final service = PrayerTimeService(
+        now: () => DateTime(2026, 11, 1, 12, 0, 0),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_city', 'صفاقس');
+      await prefs.setString('last_country_code', 'TN');
+      await prefs.setDouble('last_lat', 34.7406);
+      await prefs.setDouble('last_lon', 10.7603);
+      await prefs.setBool('last_is_verified_gps', true);
+
+      final day = await service.getPrayerTimesDay(date: DateTime(2026, 11, 1));
+      expect(day.city, 'صفاقس');
+
+      final fajr = day.prayers['الفجر']!;
+      final dhuhr = day.prayers['الظهر']!;
+      final asr = day.prayers['العصر']!;
+      final maghrib = day.prayers['المغرب']!;
+      final isha = day.prayers['العشاء']!;
+
+      expect(fajr.hour, 5);
+      expect(fajr.minute, 12);
+
+      expect(dhuhr.hour, 12);
+      expect(dhuhr.minute, closeTo(8, 1)); // 12:07-12:08
+
+      expect(asr.hour, 15);
+      expect(asr.minute, 1);
+
+      expect(maghrib.hour, 17);
+      expect(maghrib.minute, closeTo(27, 1)); // 17:26-17:27
+
+      expect(isha.hour, 18);
+      expect(isha.minute, closeTo(50, 1)); // 18:49-18:50
     });
 
     test('prayer minute adjustments apply accurately', () async {

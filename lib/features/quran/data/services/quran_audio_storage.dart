@@ -4,6 +4,22 @@ import 'package:quran/quran.dart' as quran;
 
 import 'quran_audio_service.dart';
 
+class DownloadedSurahItem {
+  final int surah;
+  final String surahName;
+  final int verseCount;
+  final int bytes;
+  final QuranReciter reciter;
+
+  const DownloadedSurahItem({
+    required this.surah,
+    required this.surahName,
+    required this.verseCount,
+    required this.bytes,
+    required this.reciter,
+  });
+}
+
 /// Storage, directory layout, file validation, and disk calculation utilities
 /// for Holy Quran audio recitations.
 class QuranAudioStorage {
@@ -210,6 +226,45 @@ class QuranAudioStorage {
           } catch (_) {}
         }
       } catch (_) {}
+     }
+  }
+
+  /// Delete all downloaded audio files for a specific reciter
+  static Future<void> deleteReciterAudio(QuranReciter reciter) async {
+    final base = await getAudioBaseDir();
+    final reciterDir = Directory('${base.path}/${reciter.id}');
+    if (await reciterDir.exists()) {
+      await reciterDir.delete(recursive: true);
     }
+  }
+
+  /// Scans and returns all downloaded surahs grouped by reciter
+  static Future<Map<QuranReciter, List<DownloadedSurahItem>>> getDownloadedSurahsByReciter() async {
+    final results = <QuranReciter, List<DownloadedSurahItem>>{};
+    final allReciters = QuranAudioService.reciters;
+
+    for (final reciter in allReciters) {
+      final downloadedSurahs = <DownloadedSurahItem>[];
+      for (int s = 1; s <= 114; s++) {
+        final downloaded = await isSurahDownloaded(s, reciter: reciter);
+        if (downloaded) {
+          final bytes = await getSurahDownloadedBytes(s, reciter: reciter);
+          downloadedSurahs.add(
+            DownloadedSurahItem(
+              surah: s,
+              surahName: quran.getSurahNameArabic(s),
+              verseCount: quran.getVerseCount(s),
+              bytes: bytes,
+              reciter: reciter,
+            ),
+          );
+        }
+      }
+      if (downloadedSurahs.isNotEmpty) {
+        results[reciter] = downloadedSurahs;
+      }
+    }
+
+    return results;
   }
 }

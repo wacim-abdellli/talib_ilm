@@ -548,7 +548,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.8065,
       longitude: 10.1815,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_sfax',
@@ -558,7 +558,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 34.7406,
       longitude: 10.7603,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_sousse',
@@ -568,7 +568,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 35.8256,
       longitude: 10.6369,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_mahdia',
@@ -578,7 +578,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 35.5047,
       longitude: 11.0622,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_monastir',
@@ -588,7 +588,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 35.7780,
       longitude: 10.8262,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_kairouan',
@@ -598,7 +598,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 35.6781,
       longitude: 10.0963,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_bizerte',
@@ -608,7 +608,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 37.2744,
       longitude: 9.8739,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_nabeul',
@@ -618,7 +618,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.4561,
       longitude: 10.7376,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_gabes',
@@ -628,7 +628,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 33.8815,
       longitude: 10.0982,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_ariana',
@@ -638,7 +638,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.8625,
       longitude: 10.1956,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_ben_arous',
@@ -648,7 +648,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.7531,
       longitude: 10.2189,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_gafsa',
@@ -658,7 +658,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 34.4250,
       longitude: 8.7842,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_medenine',
@@ -668,7 +668,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 33.3549,
       longitude: 10.5055,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_beja',
@@ -678,7 +678,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.7256,
       longitude: 9.1817,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_jendouba',
@@ -688,7 +688,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 36.5011,
       longitude: 8.7803,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
     VerifiedCity(
       id: 'tn_tozeur',
@@ -698,7 +698,7 @@ class VerifiedCitiesCatalog {
       countryCode: 'TN',
       latitude: 33.9197,
       longitude: 8.1335,
-      calculationMethod: 'mwl',
+      calculationMethod: 'tunisia',
     ),
 
     // ==========================================

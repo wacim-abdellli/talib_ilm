@@ -81,6 +81,12 @@ class QuranAudioDownloader {
   static Future<void> deleteAllDownloadedAudio() =>
       QuranAudioStorage.deleteAllDownloadedAudio();
 
+  static Future<void> deleteReciterAudio(QuranReciter reciter) =>
+      QuranAudioStorage.deleteReciterAudio(reciter);
+
+  static Future<Map<QuranReciter, List<DownloadedSurahItem>>> getDownloadedSurahsByReciter() =>
+      QuranAudioStorage.getDownloadedSurahsByReciter();
+
   /// Notifier mapping key `${reciterId}_${surah}` to active download progress.
   final ValueNotifier<Map<String, SurahDownloadProgress>>
       downloadProgressNotifier =

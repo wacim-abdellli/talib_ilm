@@ -8,10 +8,42 @@ class NotificationChannelManager {
   static Future<void> registerChannels(
     AndroidFlutterLocalNotificationsPlugin androidPlugin,
   ) async {
-    // ── Muezzin Full Adhan Channels (v3) ──────────────────────────────────
+        // ── Clean up legacy cached channels from previous versions ───────────
+    final legacyChannels = [
+      'talib_prayer_makkah_v3',
+      'talib_prayer_madinah_v3',
+      'talib_prayer_alafasy_v3',
+      'talib_prayer_abdulbasit_v3',
+      'talib_prayer_qatami_v3',
+      'talib_prayer_aqsa_v3',
+      'talib_prayer_takbeer_v3',
+      'talib_prayer_announcement_fajr_v3',
+      'talib_prayer_announcement_dhuhr_v3',
+      'talib_prayer_announcement_asr_v3',
+      'talib_prayer_announcement_maghrib_v3',
+      'talib_prayer_announcement_isha_v3',
+      'talib_prayer_announcement_general_v3',
+      'talib_prayer_pre_reminder_v3',
+      'talib_prayer_iqama_v3',
+      'talib_prayer_tone_v3',
+      'talib_prayer_silent_v3',
+      'talib_prayer_makkah_v2',
+      'talib_prayer_madinah_v2',
+      'talib_prayer_alafasy_v2',
+      'talib_prayer_abdulbasit_v2',
+      'talib_prayer_qatami_v2',
+      'talib_prayer_aqsa_v2',
+    ];
+    for (final legacyId in legacyChannels) {
+      try {
+        await androidPlugin.deleteNotificationChannel(legacyId);
+      } catch (_) {}
+    }
+
+    // ── Muezzin Full Adhan Channels (v4) ──────────────────────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_makkah_v3',
+        'talib_prayer_makkah_v4',
         'أذان مكة المكرمة (الشيخ علي ملا)',
         description: 'صوت أذان الحرم المكي الشريف عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -24,7 +56,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_madinah_v3',
+        'talib_prayer_madinah_v4',
         'أذان المسجد النبوي الشريف',
         description: 'صوت أذان المدينة المنورة عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -37,7 +69,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_alafasy_v3',
+        'talib_prayer_alafasy_v4',
         'أذان الشيخ مشاري العفاسي',
         description: 'صوت أذان الشيخ مشاري العفاسي عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -50,7 +82,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_abdulbasit_v3',
+        'talib_prayer_abdulbasit_v4',
         'أذان الشيخ عبد الباسط عبد الصمد',
         description: 'صوت أذان الشيخ عبد الباسط عبد الصمد عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -63,7 +95,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_qatami_v3',
+        'talib_prayer_qatami_v4',
         'أذان الشيخ ناصر القطامي',
         description: 'صوت أذان الشيخ ناصر القطامي عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -76,7 +108,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_aqsa_v3',
+        'talib_prayer_aqsa_v4',
         'أذان المسجد الأقصى (القدس الشريف)',
         description: 'صوت أذان المسجد الأقصى المبارك عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -88,10 +120,10 @@ class NotificationChannelManager {
       ),
     );
 
-    // ── Pure Takbeerat Channel (v3) ───────────────────────────────────────
+    // ── Pure Takbeerat Channel (v4) ───────────────────────────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_takbeer_v3',
+        'talib_prayer_takbeer_v4',
         'تكبيرات الأذان المباركة',
         description: 'تكبيرات الأذان فقط عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -103,10 +135,10 @@ class NotificationChannelManager {
       ),
     );
 
-    // ── Prayer-Specific Voice Announcement Channels (v3) ──────────────────
+    // ── Prayer-Specific Voice Announcement Channels (v4) ──────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_fajr_v3',
+        'talib_prayer_announcement_fajr_v4',
         'نداء صلاة الفجر (صوت)',
         description: 'نداء حان الآن وقت صلاة الفجر.. الصلاة خير من النوم',
         importance: Importance.max,
@@ -119,7 +151,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_dhuhr_v3',
+        'talib_prayer_announcement_dhuhr_v4',
         'نداء صلاة الظهر (صوت)',
         description: 'نداء حان الآن وقت صلاة الظهر',
         importance: Importance.max,
@@ -132,7 +164,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_asr_v3',
+        'talib_prayer_announcement_asr_v4',
         'نداء صلاة العصر (صوت)',
         description: 'نداء حان الآن وقت صلاة العصر',
         importance: Importance.max,
@@ -145,7 +177,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_maghrib_v3',
+        'talib_prayer_announcement_maghrib_v4',
         'نداء صلاة المغرب (صوت)',
         description: 'نداء حان الآن وقت صلاة المغرب',
         importance: Importance.max,
@@ -159,7 +191,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_isha_v3',
+        'talib_prayer_announcement_isha_v4',
         'نداء صلاة العشاء (صوت)',
         description: 'نداء حان الآن وقت صلاة العشاء',
         importance: Importance.max,
@@ -172,7 +204,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_announcement_general_v3',
+        'talib_prayer_announcement_general_v4',
         'نداء وقت الصلاة (صوت)',
         description: 'نداء حان الآن وقت الصلاة',
         importance: Importance.max,
@@ -185,10 +217,10 @@ class NotificationChannelManager {
       ),
     );
 
-    // ── Dedicated Pre-Prayer Advance Reminder Channel (v3) ───────────────
+    // ── Dedicated Pre-Prayer Advance Reminder Channel (v4) ───────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_pre_reminder_v3',
+        'talib_prayer_pre_reminder_v4',
         'تنبيهات اقتراب وقت الصلاة',
         description: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
         importance: Importance.max,
@@ -199,10 +231,10 @@ class NotificationChannelManager {
       ),
     );
 
-    // ── Dedicated Iqama Channel (v3) ─────────────────────────────────────
+    // ── Dedicated Iqama Channel (v4) ─────────────────────────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_iqama_v3',
+        'talib_prayer_iqama_v4',
         'تنبيهات إقامة الصلاة',
         description: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
         importance: Importance.high,
@@ -212,10 +244,10 @@ class NotificationChannelManager {
       ),
     );
 
-    // ── Tone & Silent Channels (v3) ───────────────────────────────────────
+    // ── Tone & Silent Channels (v4) ───────────────────────────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_tone_v3',
+        'talib_prayer_tone_v4',
         'نغمة التنبيه الهادئة',
         description: 'نغمة هادئة عند دخول وقت الصلاة',
         importance: Importance.max,
@@ -227,7 +259,7 @@ class NotificationChannelManager {
     );
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_silent_v3',
+        'talib_prayer_silent_v4',
         'تنبيه مرئي صامت',
         description: 'إشعار مرئي بدون صوت لمواقيت الصلاة',
         importance: Importance.high,

@@ -4,6 +4,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../data/services/quran_audio_downloader.dart';
 import '../../data/services/quran_audio_service.dart';
+import 'reciter_selection_sheet.dart';
 
 class QuranAudioStorageHeader extends StatelessWidget {
   final QuranReciter currentReciter;
@@ -73,30 +74,69 @@ class QuranAudioStorageHeader extends StatelessWidget {
                           color: palette.textMuted,
                         ),
                       ),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<QuranReciter>(
-                          value: currentReciter,
-                          isDense: true,
-                          isExpanded: true,
-                          dropdownColor: palette.surface,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: palette.primary,
-                            size: AppIcon.md,
-                          ),
-                          items: reciters.map((r) {
-                            return DropdownMenuItem<QuranReciter>(
-                              value: r,
-                              child: Text(
-                                r.name,
-                                style: textTheme.label.copyWith(
-                                  color: palette.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      const SizedBox(height: AppSpace.xxs),
+                      InkWell(
+                        onTap: () {
+                          ReciterSelectionSheet.show(
+                            context: context,
+                            selectedReciter: currentReciter,
+                            onSelected: onReciterChanged,
+                          );
+                        },
+                        borderRadius: AppRadius.mdRadius,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    currentReciter.name,
+                                    style: textTheme.label.copyWith(
+                                      color: palette.text,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentReciter.isSurahBased
+                                        ? 'المصحف المرتل الكامل'
+                                        : 'تلاوة آية بآية • مرتل',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            );
-                          }).toList(),
-                          onChanged: onReciterChanged,
+                            ),
+                            Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.primarySoft.withValues(alpha: 0.15),
+                                borderRadius: AppRadius.pillRadius,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'تغيير',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: palette.primary,
+                                    size: AppIcon.sm,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

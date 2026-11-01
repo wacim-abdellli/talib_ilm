@@ -76,7 +76,6 @@ class PrayerNotificationDetailsBuilder {
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.alarm,
-          fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           channelShowBadge: true,
           enableVibration: true,
@@ -96,7 +95,7 @@ class PrayerNotificationDetailsBuilder {
         );
       case PrayerNotificationMode.takbeer:
         return AndroidNotificationDetails(
-          'talib_prayer_takbeer_v3',
+          'talib_prayer_takbeer_v4',
           'تكبيرات الأذان المباركة',
           channelDescription: 'تكبيرات الأذان فقط عند دخول وقت الصلاة',
           importance: Importance.max,
@@ -105,7 +104,6 @@ class PrayerNotificationDetailsBuilder {
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.alarm,
-          fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           channelShowBadge: true,
           enableVibration: true,
@@ -139,7 +137,6 @@ class PrayerNotificationDetailsBuilder {
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.alarm,
-          fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           channelShowBadge: true,
           enableVibration: true,
@@ -159,7 +156,7 @@ class PrayerNotificationDetailsBuilder {
         );
       case PrayerNotificationMode.tone:
         return const AndroidNotificationDetails(
-          'talib_prayer_tone_v3',
+          'talib_prayer_tone_v4',
           'نغمة التنبيه الهادئة',
           channelDescription: 'نغمة هادئة عند دخول وقت الصلاة',
           importance: Importance.high,
@@ -167,7 +164,6 @@ class PrayerNotificationDetailsBuilder {
           playSound: true,
           visibility: NotificationVisibility.public,
           audioAttributesUsage: AudioAttributesUsage.notification,
-          fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           channelShowBadge: true,
           enableVibration: true,
@@ -179,7 +175,7 @@ class PrayerNotificationDetailsBuilder {
       case PrayerNotificationMode.silent:
       case PrayerNotificationMode.off:
         return const AndroidNotificationDetails(
-          'talib_prayer_silent_v3',
+          'talib_prayer_silent_v4',
           'تنبيه مرئي صامت',
           channelDescription: 'إشعار مرئي بدون صوت لمواقيت الصلاة',
           importance: Importance.high,
@@ -275,19 +271,19 @@ class PrayerNotificationDetailsBuilder {
         : sound;
     switch (effectiveSound) {
       case AdhanSound.madinah:
-        return 'talib_prayer_madinah_v3';
+        return 'talib_prayer_madinah_v4';
       case AdhanSound.alafasy:
-        return 'talib_prayer_alafasy_v3';
+        return 'talib_prayer_alafasy_v4';
       case AdhanSound.abdulbasit:
-        return 'talib_prayer_abdulbasit_v3';
+        return 'talib_prayer_abdulbasit_v4';
       case AdhanSound.qatami:
-        return 'talib_prayer_qatami_v3';
+        return 'talib_prayer_qatami_v4';
       case AdhanSound.aqsa:
-        return 'talib_prayer_aqsa_v3';
+        return 'talib_prayer_aqsa_v4';
       case AdhanSound.makkah:
-        return 'talib_prayer_makkah_v3';
+        return 'talib_prayer_makkah_v4';
       case AdhanSound.takbeer:
-        return 'talib_prayer_qatami_v3';
+        return 'talib_prayer_qatami_v4';
     }
   }
 
@@ -328,23 +324,23 @@ class PrayerNotificationDetailsBuilder {
   /// Resolves Android channel ID for voice announcements by prayer name.
   static String announcementChannelIdFor(String? prayerName) {
     if (prayerName == null) {
-      return 'talib_prayer_announcement_general_v3';
+      return 'talib_prayer_announcement_general_v4';
     }
     if (prayerName.contains('فجر')) {
-      return 'talib_prayer_announcement_fajr_v3';
+      return 'talib_prayer_announcement_fajr_v4';
     }
     if (prayerName.contains('ظهر')) {
-      return 'talib_prayer_announcement_dhuhr_v3';
+      return 'talib_prayer_announcement_dhuhr_v4';
     }
     if (prayerName.contains('عصر')) {
-      return 'talib_prayer_announcement_asr_v3';
+      return 'talib_prayer_announcement_asr_v4';
     }
     if (prayerName.contains('مغرب')) {
-      return 'talib_prayer_announcement_maghrib_v3';
+      return 'talib_prayer_announcement_maghrib_v4';
     }
     if (prayerName.contains('عشاء')) {
-      return 'talib_prayer_announcement_isha_v3';
+      return 'talib_prayer_announcement_isha_v4';
     }
-    return 'talib_prayer_announcement_general_v3';
+    return 'talib_prayer_announcement_general_v4';
   }
 }

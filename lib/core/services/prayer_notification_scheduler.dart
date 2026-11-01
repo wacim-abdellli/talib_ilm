@@ -97,7 +97,7 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_pre_reminder_v3',
+      'talib_prayer_pre_reminder_v4',
       'تنبيهات اقتراب وقت الصلاة',
       channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
       importance: Importance.max,
@@ -156,7 +156,7 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_pre_reminder_v3',
+      'talib_prayer_pre_reminder_v4',
       'تنبيهات اقتراب وقت الصلاة',
       channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
       importance: Importance.max,
@@ -214,7 +214,7 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_iqama_v3',
+      'talib_prayer_iqama_v4',
       'تنبيهات إقامة الصلاة',
       channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
       importance: Importance.high,
@@ -271,7 +271,7 @@ class PrayerNotificationScheduler {
     await _ensureInitialized();
 
     const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_iqama_v3',
+      'talib_prayer_iqama_v4',
       'تنبيهات إقامة الصلاة',
       channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
       importance: Importance.high,

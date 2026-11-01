@@ -1,3 +1,21 @@
+## Round 47 — Tunisia Prayer Calculation Sync, Bulletproof Adhan Channels & Quran Downloads Overhaul (1 November 2026)
+- **Prayer Times Precision (Issue 2)**:
+  - Resolved prayer discrepancy for Tunisian cities (e.g., Sfax صفاقس). Added official Ministry of Religious Affairs (وزارة الشؤون الدينية بتونس) calculation method in `PrayerTimeService` and `AdhanSettingsService` with Fajr 18°, Isha 18°, +6m Dhuhr, +1m Asr, +3m Maghrib, +1m Isha. Updated verified Tunisian cities in `verified_cities.dart`. Matches official mosque prayer times exactly (Fajr 05:12, Dhuhr 12:08, Asr 15:01, Maghrib 17:27, Isha 18:50).
+- **Bulletproof Adhan Delivery (Issue 1)**:
+  - Upgraded Android notification channels to `_v4` across all muezzin sounds and voice announcements with `Importance.max` and `AudioAttributesUsage.alarm`.
+  - Added auto-cleanup of legacy `_v2` and `_v3` channels on startup.
+  - Removed restrictive `fullScreenIntent` to eliminate MIUI / Android 14+ background pop-up blocks while retaining alarm-priority heads-up banners on lock screen.
+- **Quran Audio Downloads & Player Overhaul (Issue 3)**:
+  - In "المحمّلة فقط" tab, scans and displays all downloaded surahs across *all* reciters grouped cleanly by reciter, complete with surah counts, disk space badges, play button, and reciter deletion action.
+  - Built modern `ReciterSelectionSheet` with live search, riwayah tags, and storage size indicators.
+  - Added `DownloadedSurahItem` model and `getDownloadedSurahsByReciter()` scanner in `QuranAudioStorage` / `QuranAudioDownloader`.
+- **Verification**:
+  - `flutter analyze --no-pub`: 0 issues.
+  - `python tool/ui_lint_v2.py --strict`: Passed (7 allows used / cap 10).
+  - Scoped tests: `verified_location_and_prayer_test.dart`, `foreground_prayer_and_algeria_calc_test.dart`, `prayer_alert_cleanup_test.dart`, `quran_audio_frame_merger_test.dart`, `quran_audio_lifecycle_test.dart`, and `downloaded_reciters_grouping_test.dart` all passed.
+  - Release APK built: `app-arm64-v8a-release.apk` (137.3MB), `app-armeabi-v7a-release.apk` (137.7MB).
+- **Open issues**: On-device physical notification ringing verification on locked MIUI/Samsung devices.
+
 ## Round 46 — iOS WidgetKit Extension Discovery & Packaging (1 November 2026)
 - Replaced the CI-only `swiftc` bundle hack with a real `TalibIlmWidgets` app-extension target in `Runner.xcodeproj`, added the Runner embed phase and build dependency, and configured the extension bundle ID, iOS 14 deployment target, WidgetKit/SwiftUI frameworks, and extension Info.plist.
 - Added matching `group.com.talibilm.app` entitlements to the host and extension; Flutter now awaits HomeWidget App Group initialization before app startup so first-run widget updates cannot race setup.

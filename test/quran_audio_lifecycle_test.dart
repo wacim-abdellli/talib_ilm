@@ -306,11 +306,13 @@ void main() {
         return remote(s, a, r);
       },
     );
-    await service.playVerse(1, 1, reciter: QuranAudioService.reciters[1]);
+    final qatami = QuranAudioService.reciters.firstWhere((r) => r.id == 'qatami');
+    final husary = QuranAudioService.reciters.firstWhere((r) => r.id == 'husary');
+    await service.playVerse(1, 1, reciter: qatami);
     player.complete();
     await flushOperations();
     expect(resolved, ['qatami', 'qatami']);
-    service.setSelectedReciter(QuranAudioService.reciters[4]);
+    service.setSelectedReciter(husary);
     await service.playVerse(1, 3);
     expect(resolved.last, 'husary');
   });

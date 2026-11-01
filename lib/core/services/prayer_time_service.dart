@@ -194,6 +194,8 @@ class PrayerTimeService {
   }) {
     if (savedMethod != null && savedMethod != 'auto') {
       switch (savedMethod) {
+        case 'tunisia':
+          return CalculationMethod.other;
         case 'algeria':
         case 'mwl':
           return CalculationMethod.muslim_world_league;
@@ -282,31 +284,48 @@ class PrayerTimeService {
     final safeLat = latitude.clamp(-90.0, 90.0);
     final safeLon = longitude.clamp(-180.0, 180.0);
     final coordinates = Coordinates(safeLat, safeLon);
-    final params = method.getParameters();
+    final country = (countryCode ?? '').toUpperCase().trim();
+    final isTunisia = savedMethod == 'tunisia' ||
+        ((savedMethod == null || savedMethod == 'auto') && country == 'TN');
+    final CalculationParameters params;
+    if (isTunisia) {
+      // Official Tunisian Ministry of Religious Affairs (وزارة الشؤون الدينية بتونس):
+      // Fajr 18°, Isha 18°, with precaution margins: Dhuhr +6m, Asr +1m, Maghrib +3m, Isha +1m.
+      params = CalculationParameters(
+        fajrAngle: 18.0,
+        ishaAngle: 18.0,
+        method: CalculationMethod.other,
+      )..withMethodAdjustments(
+          PrayerAdjustments(
+            fajr: 0,
+            sunrise: 0,
+            dhuhr: 6,
+            asr: 1,
+            maghrib: 3,
+            isha: 1,
+          ),
+        );
+    } else {
+      params = method.getParameters();
+    }
+
     params.madhab = (savedMadhab == 'hanafi') ? Madhab.hanafi : Madhab.shafi;
     if (safeLat.abs() > 48.0) {
       params.highLatitudeRule = HighLatitudeRule.twilight_angle;
     }
 
-    // Keep the selected calculation method's published parameters intact.
-    // In particular, the former North-African 18°/18° override shifted Isha
-    // roughly five minutes later than an official Algerian calendar sample.
-    // Government tables are city/date specific and must be integrated as a
-    // separate verified data source instead of being represented by a guessed
-    // universal twilight-angle override.
-
-    // Apply Adjustments to params
+    // Apply manual user adjustments on top of base method adjustments
     final adjFajr = adjustments[AppStrings.prayerFajr] ?? 0;
     final adjDhuhr = adjustments[AppStrings.prayerDhuhr] ?? 0;
     final adjAsr = adjustments[AppStrings.prayerAsr] ?? 0;
     final adjMaghrib = adjustments[AppStrings.prayerMaghrib] ?? 0;
     final adjIsha = adjustments[AppStrings.prayerIsha] ?? 0;
 
-    params.adjustments.fajr = adjFajr;
-    params.adjustments.dhuhr = adjDhuhr;
-    params.adjustments.asr = adjAsr;
-    params.adjustments.maghrib = adjMaghrib;
-    params.adjustments.isha = adjIsha;
+    params.adjustments.fajr += adjFajr;
+    params.adjustments.dhuhr += adjDhuhr;
+    params.adjustments.asr += adjAsr;
+    params.adjustments.maghrib += adjMaghrib;
+    params.adjustments.isha += adjIsha;
 
     final dateComponents = DateComponents.from(current);
     final times = PrayerTimes(coordinates, dateComponents, params);

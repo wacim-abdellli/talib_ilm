@@ -7,7 +7,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../data/services/quran_audio_downloader.dart';
 import '../data/services/quran_audio_service.dart';
-import 'widgets/empty_downloaded_audio_state.dart';
+import 'widgets/downloaded_reciters_list_view.dart';
 import 'widgets/quran_audio_download_item.dart';
 import 'widgets/quran_audio_player_bar.dart';
 import 'widgets/quran_audio_storage_header.dart';
@@ -30,6 +30,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   int _totalStorageBytes = 0;
   final Map<int, bool> _surahDownloadedStatus = {};
   final Map<int, int> _surahBytesOnDisk = {};
+  Map<QuranReciter, List<DownloadedSurahItem>> _downloadedByReciter = {};
   bool _isLoading = true;
   bool _showOnlyDownloaded = false;
 
@@ -45,6 +46,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       setState(() => _isLoading = true);
     }
     final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
+    final byReciter = await QuranAudioDownloader.getDownloadedSurahsByReciter();
 
     final statusMap = <int, bool>{};
     final bytesMap = <int, int>{};
@@ -66,6 +68,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
     if (mounted) {
       setState(() {
         _totalStorageBytes = totalBytes;
+        _downloadedByReciter = byReciter;
         _surahDownloadedStatus.clear();
         _surahDownloadedStatus.addAll(statusMap);
         _surahBytesOnDisk.clear();
@@ -87,12 +90,14 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
           )
         : 0;
     final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
+    final byReciter = await QuranAudioDownloader.getDownloadedSurahsByReciter();
 
     if (mounted) {
       setState(() {
         _surahDownloadedStatus[surah] = isDownloaded;
         _surahBytesOnDisk[surah] = bytes;
         _totalStorageBytes = totalBytes;
+        _downloadedByReciter = byReciter;
       });
     }
   }
@@ -107,9 +112,95 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
     });
   }
 
+  Future<void> _handlePlayDownloadedSurah(DownloadedSurahItem item) async {
+    setState(() {
+      _currentReciter = item.reciter;
+      _audioService.setSelectedReciter(item.reciter);
+    });
+    if (_audioService.activeSurahNotifier.value == item.surah &&
+        _audioService.isPlayingNotifier.value) {
+      _audioService.pause();
+    } else {
+      _audioService.playFullSurah(surah: item.surah, reciter: item.reciter);
+    }
+  }
+
   Future<void> _confirmDeleteSurah(int surah) async {
     final surahName = quran.getSurahNameArabic(surah);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showConfirmDialog(
+      title: 'حذف تلاوة سورة $surahName',
+      content:
+          'هل أنت متأكد من حذف الملفات الصوتية الخاصة بسورة $surahName للقارئ ${_currentReciter.name}؟',
+    );
+
+    if (confirmed == true) {
+      await QuranAudioDownloader.deleteSurahAudio(
+        surah,
+        reciter: _currentReciter,
+      );
+      if (mounted) {
+        AppSnackbar.success(context, 'تم حذف تلاوة سورة $surahName');
+        _updateSingleSurahStatus(surah);
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteDownloadedSurah(DownloadedSurahItem item) async {
+    final confirmed = await _showConfirmDialog(
+      title: 'حذف تلاوة سورة ${item.surahName}',
+      content:
+          'هل أنت متأكد من حذف سورة ${item.surahName} للقارئ ${item.reciter.name}؟',
+    );
+
+    if (confirmed == true) {
+      await QuranAudioDownloader.deleteSurahAudio(
+        item.surah,
+        reciter: item.reciter,
+      );
+      if (mounted) {
+        AppSnackbar.success(context, 'تم حذف تلاوة سورة ${item.surahName}');
+        _refreshStorageAndStatus(showLoading: false);
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteReciter(QuranReciter reciter) async {
+    final confirmed = await _showConfirmDialog(
+      title: 'حذف تلاوات ${reciter.name}',
+      content:
+          'هل أنت متأكد من حذف كافة السور المحملة للقارئ ${reciter.name}؟',
+    );
+
+    if (confirmed == true) {
+      await QuranAudioDownloader.deleteReciterAudio(reciter);
+      if (mounted) {
+        AppSnackbar.success(context, 'تم حذف جميع تلاوات ${reciter.name}');
+        _refreshStorageAndStatus(showLoading: false);
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteAll() async {
+    final confirmed = await _showConfirmDialog(
+      title: 'حذف جميع التنزيلات الصوتية',
+      content:
+          'سيتم حذف جميع السور والتلاوات المحملة لكافة القراء وتحرير المساحة التخزينية بالكامل.',
+    );
+
+    if (confirmed == true) {
+      await QuranAudioDownloader.deleteAllDownloadedAudio();
+      if (mounted) {
+        AppSnackbar.success(context, 'تم حذف جميع التنزيلات الصوتية بنجاح');
+        _refreshStorageAndStatus(showLoading: false);
+      }
+    }
+  }
+
+  Future<bool?> _showConfirmDialog({
+    required String title,
+    required String content,
+  }) {
+    return showDialog<bool>(
       context: context,
       builder: (ctx) {
         final palette = ctx.palette;
@@ -117,18 +208,16 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
 
         return AlertDialog(
           backgroundColor: palette.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.xlRadius,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
           title: Text(
-            'حذف تلاوة سورة $surahName',
+            title,
             style: textTheme.titleSmall.copyWith(
               color: palette.text,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
-            'هل أنت متأكد من حذف الملفات الصوتية الخاصة بسورة $surahName للقارئ ${_currentReciter.name}؟',
+            content,
             style: textTheme.body.copyWith(color: palette.textMuted),
           ),
           actions: [
@@ -148,67 +237,6 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
         );
       },
     );
-
-    if (confirmed == true) {
-      await QuranAudioDownloader.deleteSurahAudio(
-        surah,
-        reciter: _currentReciter,
-      );
-      if (mounted) {
-        AppSnackbar.success(context, 'تم حذف تلاوة سورة $surahName');
-        _updateSingleSurahStatus(surah);
-      }
-    }
-  }
-
-  Future<void> _confirmDeleteAll() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final palette = ctx.palette;
-        final textTheme = ctx.text;
-
-        return AlertDialog(
-          backgroundColor: palette.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.xlRadius,
-          ),
-          title: Text(
-            'حذف جميع التنزيلات الصوتية',
-            style: textTheme.titleSmall.copyWith(
-              color: palette.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'سيتم حذف جميع السور والتلاوات المحملة لكافة القراء وتحرير المساحة التخزينية بالكامل.',
-            style: textTheme.body.copyWith(color: palette.textMuted),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'إلغاء',
-                style: textTheme.label.copyWith(color: palette.textMuted),
-              ),
-            ),
-            AppButton(
-              label: 'حذف الكل',
-              variant: AppButtonVariant.primary,
-              onPressed: () => Navigator.pop(ctx, true),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      await QuranAudioDownloader.deleteAllDownloadedAudio();
-      if (mounted) {
-        AppSnackbar.success(context, 'تم حذف جميع التنزيلات الصوتية بنجاح');
-        _refreshStorageAndStatus(showLoading: false);
-      }
-    }
   }
 
   @override
@@ -218,13 +246,12 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
 
     final downloadedCount =
         _surahDownloadedStatus.values.where((v) => v).length;
+    final totalAllDownloadedCount = _downloadedByReciter.values.fold<int>(
+      0,
+      (sum, list) => sum + list.length,
+    );
 
-    // Filter surahs list based on active tab
-    final List<int> displaySurahs = _showOnlyDownloaded
-        ? List.generate(114, (i) => i + 1)
-            .where((s) => _surahDownloadedStatus[s] == true)
-            .toList()
-        : List.generate(114, (i) => i + 1);
+    final List<int> displaySurahs = List.generate(114, (i) => i + 1);
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -335,7 +362,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                   ),
                                   const SizedBox(width: AppSpace.xs),
                                   Container(
-                                    padding: const EdgeInsetsDirectional.symmetric(
+                                    padding:
+                                        const EdgeInsetsDirectional.symmetric(
                                       horizontal: AppSpace.xs,
                                       vertical: AppSpace.xxs,
                                     ),
@@ -363,7 +391,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                       ),
                     ),
 
-                    // Tab 2: Downloaded Only
+                    // Tab 2: Downloaded Only (All Reciters)
                     Expanded(
                       child: InkWell(
                         onTap: () {
@@ -421,7 +449,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                   ),
                                   const SizedBox(width: AppSpace.xs),
                                   Container(
-                                    padding: const EdgeInsetsDirectional.symmetric(
+                                    padding:
+                                        const EdgeInsetsDirectional.symmetric(
                                       horizontal: AppSpace.xs,
                                       vertical: AppSpace.xxs,
                                     ),
@@ -432,7 +461,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                       borderRadius: AppRadius.pillRadius,
                                     ),
                                     child: Text(
-                                      '$downloadedCount',
+                                      '$totalAllDownloadedCount',
                                       style: textTheme.caption.copyWith(
                                         color: _showOnlyDownloaded
                                             ? palette.primary
@@ -453,7 +482,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
               ),
             ),
 
-            // ── Surahs List or Empty State ────────────────────────────────
+            // ── Surahs List or Grouped Downloaded Reciters ────────────────
             Expanded(
               child: _isLoading
                   ? Center(
@@ -462,11 +491,16 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                         strokeWidth: 2,
                       ),
                     )
-                  : _showOnlyDownloaded && displaySurahs.isEmpty
-                      ? EmptyDownloadedAudioState(
-                          onBrowseAll: () {
-                            setState(() => _showOnlyDownloaded = false);
-                          },
+                  : _showOnlyDownloaded
+                      ? DownloadedRecitersListView(
+                          downloadedByReciter: _downloadedByReciter,
+                          onRefresh: () =>
+                              _refreshStorageAndStatus(showLoading: false),
+                          onBrowseAll: () =>
+                              setState(() => _showOnlyDownloaded = false),
+                          onPlaySurah: _handlePlayDownloadedSurah,
+                          onDeleteSurah: _confirmDeleteDownloadedSurah,
+                          onDeleteReciter: _confirmDeleteReciter,
                         )
                       : ValueListenableBuilder<Map<String, SurahDownloadProgress>>(
                           valueListenable: _downloader.downloadProgressNotifier,
@@ -483,8 +517,10 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                   const SizedBox(height: AppSpace.sm),
                               itemBuilder: (context, index) {
                                 final surah = displaySurahs[index];
-                                final surahName = quran.getSurahNameArabic(surah);
-                                final verseCount = quran.getVerseCount(surah);
+                                final surahName =
+                                    quran.getSurahNameArabic(surah);
+                                final verseCount =
+                                    quran.getVerseCount(surah);
                                 final isDownloaded =
                                     _surahDownloadedStatus[surah] ?? false;
                                 final downloadedBytes =
@@ -501,16 +537,20 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                   downloadedBytes: downloadedBytes,
                                   reciter: _currentReciter,
                                   progress: activeProgress,
-                                  onStartDownload: () => _startDownload(surah),
-                                  onPauseDownload: () => _downloader.pauseDownload(
+                                  onStartDownload: () =>
+                                      _startDownload(surah),
+                                  onPauseDownload: () =>
+                                      _downloader.pauseDownload(
                                     surah,
                                     reciter: _currentReciter,
                                   ),
-                                  onCancelDownload: () => _downloader.cancelDownload(
+                                  onCancelDownload: () =>
+                                      _downloader.cancelDownload(
                                     surah,
                                     reciter: _currentReciter,
                                   ),
-                                  onDelete: () => _confirmDeleteSurah(surah),
+                                  onDelete: () =>
+                                      _confirmDeleteSurah(surah),
                                 );
                               },
                             );
@@ -527,4 +567,3 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
     );
   }
 }
-

@@ -245,13 +245,13 @@ class NotificationService {
             PrayerNotificationDetailsBuilder.channelIdForAdhan(
               settings.effectiveMuezzinSound,
             ),
-          PrayerNotificationMode.takbeer => 'talib_prayer_takbeer_v3',
+          PrayerNotificationMode.takbeer => 'talib_prayer_takbeer_v4',
           PrayerNotificationMode.announcement =>
             PrayerNotificationDetailsBuilder.announcementChannelIdFor(
               prayerName,
             ),
-          PrayerNotificationMode.tone => 'talib_prayer_tone_v3',
-          PrayerNotificationMode.silent => 'talib_prayer_silent_v3',
+          PrayerNotificationMode.tone => 'talib_prayer_tone_v4',
+          PrayerNotificationMode.silent => 'talib_prayer_silent_v4',
           PrayerNotificationMode.off => null,
         };
         if (channelId == null) continue;
@@ -261,12 +261,12 @@ class NotificationService {
         }
       }
       if (settings.notifyBeforeMinutes > 0) {
-        requiredChannels.add('talib_prayer_pre_reminder_v3');
-        soundChannels.add('talib_prayer_pre_reminder_v3');
+        requiredChannels.add('talib_prayer_pre_reminder_v4');
+        soundChannels.add('talib_prayer_pre_reminder_v4');
       }
       if (settings.iqamaReminders) {
-        requiredChannels.add('talib_prayer_iqama_v3');
-        soundChannels.add('talib_prayer_iqama_v3');
+        requiredChannels.add('talib_prayer_iqama_v4');
+        soundChannels.add('talib_prayer_iqama_v4');
       }
       if (settings.modeForPrayer(AppStrings.prayerDhuhr) ==
           PrayerNotificationMode.announcement) {
