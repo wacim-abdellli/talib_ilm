@@ -1,3 +1,16 @@
+## Remediation Task R2 — Android Backup Rules & Ephemeral Coordinate Isolation (1 November 2026)
+- **Branch**: `remediation/r2-android-backup-rules`
+- **Base Commit**: `4075c1f` (`remediation(r1): reconcile re-audit report and update Gemini remediation guide`)
+- **Android Backup & Data Privacy Hardening (P1.7)**:
+  - Created Android Full Backup resource `android/app/src/main/res/xml/backup_rules.xml` (API < 31) and Android 12+ Cloud/Device Data Extraction resource `android/app/src/main/res/xml/data_extraction_rules.xml` (API 31+, targetSdk 35).
+  - Explicitly configured backup domains to preserve user settings, bookmarks, reading progress, and khatma state while excluding volatile caches, temporary media, and ephemeral GPS coordinates.
+  - Linked `android:fullBackupContent="@xml/backup_rules"` and `android:dataExtractionRules="@xml/data_extraction_rules"` in `android/app/src/main/AndroidManifest.xml`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (77.1s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter build apk --debug --no-pub`: Built cleanly in 75.5s (`app-debug.apk`).
+- **Next Task**: Task R3 — Android exported components & intent security audit (P1.4).
+
 ## Remediation Task R1 — Reconcile Re-Audit Report & Git History Integrity (1 November 2026)
 - **Branch**: `remediation/r1-reconcile-audit-and-tags`
 - **Base Commit**: `44b902f` (`release(11): complete final exact-commit release gate and author release closure report`)
