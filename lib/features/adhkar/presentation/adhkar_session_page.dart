@@ -9,6 +9,7 @@ import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/adhkar_models.dart';
 import '../data/adhkar_service.dart';
+import 'adhkar_typography_scale.dart';
 import 'widgets/adhkar_fahras_sheet.dart';
 import 'widgets/adhkar_font_size_sheet.dart';
 import 'widgets/adhkar_session_bottom_dock.dart';
@@ -39,9 +40,9 @@ class AdhkarSessionPage extends StatefulWidget {
 
 class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   static const String _fontScalePrefKey = 'adhkar_session_font_scale';
-  static const double _minFontScale = 0.85;
-  static const double _maxFontScale = 1.60;
-  static const double _fontScaleStep = 0.15;
+  static const double _minFontScale = AdhkarTypographyScale.minimum;
+  static const double _maxFontScale = AdhkarTypographyScale.maximum;
+  static const double _fontScaleStep = AdhkarTypographyScale.step;
 
   final AthkarService _athkarService = AthkarService();
   final AdhkarSessionService _sessionService = AdhkarSessionService();
@@ -55,7 +56,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   bool _loading = true;
   bool _showSuccessRipple = false;
 
-  double _fontScale = 1.0;
+  late final double _defaultFontScale = AdhkarTypographyScale.defaultScale;
+  late double _fontScale = _defaultFontScale;
   bool _showTashkeel = true;
 
   @override
@@ -180,8 +182,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
 
   void _resetFontSize() {
     HapticFeedback.selectionClick();
-    setState(() => _fontScale = 1.0);
-    _saveFontScale(1.0);
+    setState(() => _fontScale = _defaultFontScale);
+    _saveFontScale(_defaultFontScale);
   }
 
   void _setFontScale(double scale) {
@@ -206,6 +208,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
       context: context,
       currentScale: _fontScale,
       showTashkeel: _showTashkeel,
+      defaultScale: _defaultFontScale,
       onFontScaleChanged: _setFontScale,
       onToggleTashkeel: (val) {
         setState(() => _showTashkeel = val);
@@ -449,6 +452,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                                           isDone: isDone,
                                           onTap: _handleTap,
                                           fontScale: _fontScale,
+                                          defaultFontScale: _defaultFontScale,
                                           showTashkeel: _showTashkeel,
                                           onShare: _shareCurrentDhikr,
                                           onToggleTashkeel: _toggleTashkeel,

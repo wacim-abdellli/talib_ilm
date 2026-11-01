@@ -1,5 +1,11 @@
 # UI Progress Log
 
+## Round 45 — Smaller Adhkar Reading Sizes (1 November 2026)
+- Added 70%, 75%, 80%, 85%, and 90% presets in the Tt sheet with a 70% minimum; long Arabic dhikr text can now shrink further while virtue/source text keeps its 85% readability floor.
+- New unsaved sessions default to 85% on Android and 70% on iOS; saved user choices are preserved, and Reset returns to the platform default.
+- Verification: scoped `flutter analyze --no-pub`, `python tool/ui_lint_v2.py`, and `git diff --check`.
+- Open issues: widget tests, APK build, and on-device iPhone/Android visual review were not run.
+
 ## Round 44 — Critical iOS & iPhone 13 Production Hardening (30 October 2026)
 - **Scope & Context:**
   - Resolved 5 critical blocking issues encountered during physical iPhone 13 testing:

@@ -13,6 +13,7 @@ class AdhkarSessionCard extends StatelessWidget {
   final bool isDone;
   final VoidCallback? onTap;
   final double fontScale;
+  final double defaultFontScale;
   final bool showTashkeel;
   final VoidCallback? onShare;
   final VoidCallback? onToggleTashkeel;
@@ -28,6 +29,7 @@ class AdhkarSessionCard extends StatelessWidget {
     required this.isDone,
     this.onTap,
     this.fontScale = 1.0,
+    this.defaultFontScale = 1.0,
     this.showTashkeel = true,
     this.onShare,
     this.onToggleTashkeel,
@@ -163,7 +165,8 @@ class AdhkarSessionCard extends StatelessWidget {
                             ),
                             // Current scale percentage indicator
                             Tooltip(
-                              message: 'إعادة ضبط الحجم (100%)',
+                              message:
+                                  'إعادة ضبط الحجم (${(defaultFontScale * 100).round()}%)',
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
@@ -177,7 +180,9 @@ class AdhkarSessionCard extends StatelessWidget {
                                     child: Text(
                                       '${(fontScale * 100).round()}%',
                                       style: textTheme.caption.copyWith(
-                                        color: (fontScale - 1.0).abs() > 0.01
+                                        color:
+                                            (fontScale - defaultFontScale).abs() >
+                                                0.01
                                             ? palette.gold
                                             : palette.textMuted,
                                         fontWeight: FontWeight.bold,

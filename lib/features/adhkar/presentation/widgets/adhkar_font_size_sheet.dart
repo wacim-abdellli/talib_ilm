@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_sheet.dart';
+import '../adhkar_typography_scale.dart';
 
 /// Opens the modal sheet for Adhkar font size and typography controls.
 Future<void> showAdhkarFontSizeSheet({
   required BuildContext context,
   required double currentScale,
   required bool showTashkeel,
+  double? defaultScale,
   required ValueChanged<double> onFontScaleChanged,
   required ValueChanged<bool> onToggleTashkeel,
   required VoidCallback onReset,
@@ -19,6 +21,7 @@ Future<void> showAdhkarFontSizeSheet({
       return AdhkarFontSizeSheet(
         currentScale: currentScale,
         showTashkeel: showTashkeel,
+        defaultScale: defaultScale,
         onFontScaleChanged: onFontScaleChanged,
         onToggleTashkeel: onToggleTashkeel,
         onReset: onReset,
@@ -31,6 +34,7 @@ Future<void> showAdhkarFontSizeSheet({
 class AdhkarFontSizeSheet extends StatefulWidget {
   final double currentScale;
   final bool showTashkeel;
+  final double? defaultScale;
   final ValueChanged<double> onFontScaleChanged;
   final ValueChanged<bool> onToggleTashkeel;
   final VoidCallback onReset;
@@ -39,6 +43,7 @@ class AdhkarFontSizeSheet extends StatefulWidget {
     super.key,
     required this.currentScale,
     required this.showTashkeel,
+    this.defaultScale,
     required this.onFontScaleChanged,
     required this.onToggleTashkeel,
     required this.onReset,
@@ -49,15 +54,18 @@ class AdhkarFontSizeSheet extends StatefulWidget {
 }
 
 class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
-  static const double _minScale = 0.85;
-  static const double _maxScale = 1.60;
-  static const double _step = 0.15;
+  static const double _minScale = AdhkarTypographyScale.minimum;
+  static const double _maxScale = AdhkarTypographyScale.maximum;
+  static const double _step = AdhkarTypographyScale.step;
 
-  static const List<double> _presets = [0.85, 1.0, 1.15, 1.30, 1.45, 1.60];
+  static const List<double> _presets = AdhkarTypographyScale.presets;
   static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u0652\u0670\u0640]');
 
   late double _scale;
   late bool _showTashkeel;
+
+  double get _defaultScale =>
+      widget.defaultScale ?? AdhkarTypographyScale.defaultScale;
 
   @override
   void initState() {
@@ -87,7 +95,7 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
 
   void _reset() {
     HapticFeedback.selectionClick();
-    setState(() => _scale = 1.0);
+    setState(() => _scale = _defaultScale);
     widget.onReset();
   }
 
@@ -109,6 +117,7 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
     final textTheme = context.text;
 
     final previewArabic = _cleanTashkeel('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ ، سُبْحَانَ اللَّهِ الْعَظِيمِ');
+    final defaultPercent = '${(_defaultScale * 100).round()}%';
     final percentLabel = '${(_scale * 100).round()}%';
 
     return AppSheet(
@@ -194,7 +203,7 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
                               ),
                               const SizedBox(width: AppSpace.xs),
                               Text(
-                                'الافتراضي (100%)',
+                                'الافتراضي ($defaultPercent)',
                                 style: textTheme.captionBold.copyWith(
                                   color: palette.textMuted,
                                 ),
@@ -246,7 +255,7 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
               runSpacing: AppSpace.xs,
               alignment: WrapAlignment.center,
               children: _presets.map((preset) {
-                final isSelected = (_scale - preset).abs() < 0.05;
+                final isSelected = (_scale - preset).abs() < 0.025;
                 final label = '${(preset * 100).round()}%';
 
                 return Material(
