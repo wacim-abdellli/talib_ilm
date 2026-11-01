@@ -1,3 +1,20 @@
+## Release Task 0 — Establish Exact Baseline (1 November 2026)
+- **Branch**: `release/0-baseline`
+- **Base Commit**: `3ad276f` (`perf(quran): optimize audio downloads scanning, instant page load & zero-lag reciter sheet`)
+- **Environment**:
+  - Windows 10 x64 (10.0.19045.6466), Flutter 3.38.7, Dart 3.10.7, DevTools 2.51.1, Python 3.14.3.
+  - Connected devices: Infinix X689 (Android 11, API 30), Windows desktop, Chrome, Edge.
+- **Verification Commands & Results**:
+  - `flutter --version`: Exit code 0 (2.5s) — Flutter 3.38.7 / Dart 3.10.7.
+  - `flutter analyze --no-pub`: Exit code 0 (11.5s, 8.4s analysis) — 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: Exit code 0 (2.0s) — OK, 7 allow markers used (cap 10).
+  - `flutter test --no-pub`: Exit code 1 (146.7s) — 769 passed, 25 failed (golden and functional failures).
+  - `python tool/audit_all_app_data.py`: Exit code 0 (1.4s) — 0 errors across 8,773 gems and all stores.
+  - `flutter build apk --debug --no-pub`: Exit code 0 (103.7s, 98.7s gradle) — Built app-debug.apk (331,085,587 bytes).
+- **Evidence Logs**: Raw logs and machine-readable JSON saved in `build/release-readiness/20261101_214012/`.
+- **Verdict**: Baseline established. Full suite is NOT green (25 test failures). No product source files modified.
+- **Next Task**: Task 1 — Triage all current test failures.
+
 ## Round 49 — High-Performance Quran Audio Downloads & Instant Zero-Lag Loading (1 November 2026)
 - **Root Cause of Audio Downloads Lag & Freezing**:
   - QuranAudioStorage.getDownloadedSurahsByReciter() was looping through 40 reciters * 114 surahs = 4,560 disk I/O queries sequentially.
