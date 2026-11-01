@@ -9,6 +9,7 @@ name: Build iOS App
       - 'ui/**'
       - 'ci/**'
       - 'release/**'
+      - 'remediation/**'
     paths:
       - 'lib/**'
       - 'ios/**'
@@ -34,9 +35,59 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Build iOS App (Release, No CodeSign)
+      - name: Precache iOS Artifacts
+        run: flutter precache --ios
+
+      - name: Configure Production Apple Signing (if secrets present)
+        id: apple-signing
+        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' }}
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          BUILD_PROVISION_PROFILE_APP: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+          BUILD_PROVISION_PROFILE_WIDGET: ${{ secrets.PROVISIONING_PROFILE_WIDGET_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'temporary-ci-keychain-pass' }}
         run: |
-          flutter precache --ios
+          set -euo pipefail
+          echo "=== Setting up Apple Distribution Signing Keychain ==="
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH_APP=$RUNNER_TEMP/build_pp_app.mobileprovision
+          PP_PATH_WIDGET=$RUNNER_TEMP/build_pp_widget.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # Import certificate from secret
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          # Install provisioning profiles
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          if [ -n "$BUILD_PROVISION_PROFILE_APP" ]; then
+            echo -n "$BUILD_PROVISION_PROFILE_APP" | base64 --decode -o "$PP_PATH_APP"
+            cp "$PP_PATH_APP" ~/Library/MobileDevice/Provisioning\ Profiles/
+          fi
+          if [ -n "$BUILD_PROVISION_PROFILE_WIDGET" ]; then
+            echo -n "$BUILD_PROVISION_PROFILE_WIDGET" | base64 --decode -o "$PP_PATH_WIDGET"
+            cp "$PP_PATH_WIDGET" ~/Library/MobileDevice/Provisioning\ Profiles/
+          fi
+          echo "SIGNED_BUILD_CONFIGURED=true" >> "$GITHUB_ENV"
+
+      - name: Build Signed iOS IPA (when signing configured)
+        if: env.SIGNED_BUILD_CONFIGURED == 'true'
+        run: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons
+
+      - name: Build Unsigned iOS App (when signing credentials absent)
+        if: env.SIGNED_BUILD_CONFIGURED != 'true'
+        run: |
+          echo "=== Building release bundle with --no-codesign for testing and sideloading ==="
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
           flutter build ios --release --no-codesign --no-tree-shake-icons
 
@@ -73,7 +124,8 @@ jobs:
           echo "=== Notification sounds in Runner.app root: ==="
           ls -la "$APP_DIR"/*.caf
 
-      - name: Package into IPA for Sideloadly / AltStore
+      - name: Package into IPA for Sideloadly / AltStore (Unsigned Mode)
+        if: env.SIGNED_BUILD_CONFIGURED != 'true'
         run: |
           mkdir -p build/ios/ipa_payload/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/ipa_payload/Payload/
@@ -81,11 +133,21 @@ jobs:
           zip -yr ../talib_ilm_ios.ipa Payload
           cd ../../..
 
-      - name: Upload IPA Artifact
+      - name: Upload Unsigned IPA Artifact
+        if: env.SIGNED_BUILD_CONFIGURED != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: talib-ilm-ios-ipa
+          name: talib-ilm-ios-unsigned-ipa
           path: build/ios/talib_ilm_ios.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Signed Production IPA Artifact
+        if: env.SIGNED_BUILD_CONFIGURED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: talib-ilm-ios-signed-ipa
+          path: build/ios/ipa/*.ipa
           if-no-files-found: error
           retention-days: 14
 
@@ -98,14 +160,7 @@ jobs:
       - name: Upload Runner.app.zip Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: talib-ilm-runner-app
+          name: talib-ilm-Runner.app.zip
           path: build/ios/Runner.app.zip
           if-no-files-found: error
           retention-days: 14
-
-      - name: Dump Build Failure Diagnostics
-        if: failure()
-        run: |
-          echo "=== Xcode & Flutter Diagnostic Logs ==="
-          find ~/Library/Developer/Xcode/DerivedData -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true
-          find build/ios -name "*.log" -exec cat {} + 2>/dev/null | tail -n 200 || true

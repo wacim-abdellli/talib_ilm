@@ -1,3 +1,17 @@
+## Remediation Task R4 — iOS Production Distribution Pipeline & Signed Export Template (2 November 2026)
+- **Branch**: `remediation/r4-ios-distribution-pipeline`
+- **Base Commit**: `ff4ff98` (`remediation(r3): audit Android exported components and document intent security`)
+- **iOS CI Distribution Pipeline Architecture (P0.1 / P0.3)**:
+  - Created official App Store & TestFlight export configuration `ios/ExportOptions.plist` configuring manual signing mapping for `com.talibilm.app` and `com.talibilm.app.widgets`.
+  - Overhauled `.github/workflows/build_ios.yml` with dual-mode conditional execution:
+    - **Production Mode**: When secrets are configured (`APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD`, etc.), imports distribution certificate to temporary keychain, installs mobileprovision profiles, compiles signed `.ipa` via `flutter build ipa --release --export-options-plist=ios/ExportOptions.plist`, and uploads the signed production artifact.
+    - **Unsigned Test Mode**: Gracefully packages unsigned `.ipa` for Sideloadly / AltStore / testing and verifies embedded WidgetKit architecture when secrets are absent.
+    - Added trigger support for `remediation/**` branches.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (7.5s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task R5 — Tasbeeh and screen reader Arabic accessibility announcements (P2.5).
+
 ## Remediation Task R3 — Android Exported Components & Intent Security Audit (1 November 2026)
 - **Branch**: `remediation/r3-android-exported-components`
 - **Base Commit**: `3b4fc0a` (`remediation(r2): configure Android backup and data extraction privacy rules`)
