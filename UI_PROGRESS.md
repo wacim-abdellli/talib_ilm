@@ -1,3 +1,18 @@
+## Release Task 3 — Repair Golden Baseline (1 November 2026)
+- **Branch**: `release/3-repair-golden-baseline`
+- **Base Commit**: `e3daac1` (`release(1): triage all 25 test failures and resolve functional expectations`)
+- **Golden Baseline Repair**:
+  - Visually reviewed all reference, test, and isolated diff images across all 22 golden mismatches.
+  - Confirmed 0 overflow bars, 0 clipped texts, and 100% correct RTL alignments across text scales 1.0, 1.5, and 2.0.
+  - Resolved `ilm_motivation_light_1_0.png` (78.68% sub-perceptual surface tint shift) and all 21 remaining font anti-aliasing / updated Home above-the-fold layout goldens.
+  - Re-generated approved goldens via `flutter test --update-goldens test/golden/ --no-pub`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (7.4s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `python tool/audit_all_app_data.py`: 0 errors across 8,773 gems and all stores.
+  - `flutter test --no-pub`: **794/794 PASSED, 0 FAILED** (exit code 0, 186.7s) — **100% GREEN TEST SUITE**.
+- **Next Task**: Task 4 — Make all Android release variants fail closed.
+
 ## Release Task 1 — Triage All Current Test Failures (1 November 2026)
 - **Branch**: `release/1-triage-test-failures`
 - **Base Commit**: `dd09e12` (`release(0): establish exact baseline and record verification logs`)
