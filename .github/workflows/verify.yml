@@ -1,17 +1,22 @@
 name: Verify Release Readiness
 
-on:
+'on':
   push:
     branches:
       - main
       - 'ui/**'
+      - 'release/**'
   pull_request:
     branches:
       - main
+      - 'release/**'
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,7 +44,8 @@ jobs:
 
       - name: Preflight & Environment Record
         run: |
-          mkdir -p build/ci-logs
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
           echo "=== Release Readiness Preflight Record ===" | tee build/ci-logs/preflight.log
           echo "Commit SHA: ${{ github.sha }}" | tee -a build/ci-logs/preflight.log
           echo "Ref:        ${{ github.ref }}" | tee -a build/ci-logs/preflight.log
@@ -58,40 +64,95 @@ jobs:
           echo "==========================================" | tee -a build/ci-logs/preflight.log
 
       - name: Gate 1 - Static Analysis
-        if: success() || failure()
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          flutter analyze 2>&1 | tee build/ci-logs/analyze.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          flutter analyze --no-pub 2>&1 | tee build/ci-logs/analyze.log || status=$?
+          echo "$status" > build/ci-logs/gates/01_analyze.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 1 (Static Analysis) failed with exit code $status"
+            exit "$status"
+          fi
 
-      - name: Gate 2 - UI Lint V2
-        if: success() || failure()
+      - name: Gate 2 - UI Strict Lint V2
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          python tool/ui_lint_v2.py 2>&1 | tee build/ci-logs/ui-lint-v2.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          python tool/ui_lint_v2.py --strict 2>&1 | tee build/ci-logs/ui-lint-v2.log || status=$?
+          echo "$status" > build/ci-logs/gates/02_ui_lint.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 2 (UI Lint V2) failed with exit code $status"
+            exit "$status"
+          fi
 
       - name: Gate 3 - Automated Test Suite
-        if: success() || failure()
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          flutter test 2>&1 | tee build/ci-logs/tests.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          flutter test --no-pub 2>&1 | tee build/ci-logs/tests.log || status=$?
+          echo "$status" > build/ci-logs/gates/03_tests.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 3 (Automated Tests) failed with exit code $status"
+            exit "$status"
+          fi
 
-      - name: Tool Regression Tests
-        if: success() || failure()
+      - name: Gate 4 - Tool Regression Tests
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          python tool/test_release_readiness_checks.py 2>&1 | tee build/ci-logs/readiness-tests.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          python tool/test_release_readiness_checks.py 2>&1 | tee build/ci-logs/readiness-tests.log || status=$?
+          echo "$status" > build/ci-logs/gates/04_readiness_tests.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 4 (Readiness Tool Tests) failed with exit code $status"
+            exit "$status"
+          fi
 
-      - name: Gate 4 - Debug APK Compilation
-        if: success() || failure()
+      - name: Gate 5 - Debug APK Compilation
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          flutter build apk --debug 2>&1 | tee build/ci-logs/build-debug.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          flutter build apk --debug --no-pub 2>&1 | tee build/ci-logs/build-debug.log || status=$?
+          echo "$status" > build/ci-logs/gates/05_build_debug.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 5 (Debug APK Compilation) failed with exit code $status"
+            exit "$status"
+          fi
 
-      - name: Gate 5 - Test-Signed Release AAB & Signer Verification
-        if: success() || failure()
+      - name: Gate 6 - Test-Signed Release AAB & Signer Verification
+        if: always()
         run: |
-          mkdir -p build/ci-logs
-          python tool/run_release_readiness_checks.py --only-bundle 2>&1 | tee build/ci-logs/release-bundle.log
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          python tool/run_release_readiness_checks.py --only-bundle 2>&1 | tee build/ci-logs/release-bundle.log || status=$?
+          echo "$status" > build/ci-logs/gates/06_release_bundle.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 6 (Release AAB & Signer Check) failed with exit code $status"
+            exit "$status"
+          fi
+
+      - name: Gate 7 - Fail-Closed Android Signing Verification
+        if: always()
+        run: |
+          set -o pipefail
+          mkdir -p build/ci-logs/gates
+          status=0
+          python tool/verify_android_signing_fail_closed.py 2>&1 | tee build/ci-logs/signing-fail-closed.log || status=$?
+          echo "$status" > build/ci-logs/gates/07_signing_fail_closed.status
+          if [ "$status" -ne 0 ]; then
+            echo "Gate 7 (Fail-Closed Signing Verification) failed with exit code $status"
+            exit "$status"
+          fi
 
       - name: Generate GitHub Step Summary
         if: always()
@@ -100,17 +161,35 @@ jobs:
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch / Ref:** \`${{ github.ref }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check / Gate | Log Artifact |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Preflight Environment | \`preflight.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Gate 1: Static Analysis (\`flutter analyze\`) | \`analyze.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Gate 2: UI Lint V2 (\`tool/ui_lint_v2.py\`) | \`ui-lint-v2.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Gate 3: Automated Tests (\`flutter test\`) | \`tests.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Readiness Tool Regressions | \`readiness-tests.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Gate 4: Debug APK Compilation | \`build-debug.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Gate 5: Release AAB & Signer Check | \`release-bundle.log\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Artifact archive for this commit: **verification-logs-${{ github.sha }}**" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status | Log Artifact |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          gates=(
+            "01_analyze:Gate 1 - Static Analysis:analyze.log"
+            "02_ui_lint:Gate 2 - UI Strict Lint V2:ui-lint-v2.log"
+            "03_tests:Gate 3 - Automated Test Suite:tests.log"
+            "04_readiness_tests:Gate 4 - Readiness Tool Regressions:readiness-tests.log"
+            "05_build_debug:Gate 5 - Debug APK Compilation:build-debug.log"
+            "06_release_bundle:Gate 6 - Release AAB & Signer Check:release-bundle.log"
+            "07_signing_fail_closed:Gate 7 - Fail-Closed Signing:signing-fail-closed.log"
+          )
+          for entry in "${gates[@]}"; do
+            id=$(echo "$entry" | cut -d':' -f1)
+            name=$(echo "$entry" | cut -d':' -f2)
+            log=$(echo "$entry" | cut -d':' -f3)
+            status_file="build/ci-logs/gates/${id}.status"
+            if [ -f "$status_file" ]; then
+              code=$(cat "$status_file" | tr -d '[:space:]')
+              if [ "$code" -eq 0 ]; then
+                badge="✅ Passed"
+              else
+                badge="❌ Failed (code $code)"
+              fi
+            else
+              badge="⚠️ Not run / missing"
+            fi
+            echo "| $name | $badge | \`$log\` |" >> $GITHUB_STEP_SUMMARY
+          done
 
       - name: Upload Verification Artifacts
         if: always()
@@ -119,3 +198,40 @@ jobs:
           name: verification-logs-${{ github.sha }}
           path: build/ci-logs/
           retention-days: 14
+
+      - name: Aggregate Final Release Gate Verdict
+        if: always()
+        run: |
+          echo "=== Final Release Gate Verification Verdict ==="
+          failed=0
+          required_gates=(
+            "01_analyze"
+            "02_ui_lint"
+            "03_tests"
+            "04_readiness_tests"
+            "05_build_debug"
+            "06_release_bundle"
+            "07_signing_fail_closed"
+          )
+          for gate in "${required_gates[@]}"; do
+            status_file="build/ci-logs/gates/${gate}.status"
+            if [ ! -f "$status_file" ]; then
+              echo "❌ Gate missing: $gate was not executed"
+              failed=1
+            else
+              code=$(cat "$status_file" | tr -d '[:space:]')
+              if [ "$code" -ne 0 ]; then
+                echo "❌ Gate failed: $gate (exit code $code)"
+                failed=1
+              else
+                echo "✅ Gate passed: $gate"
+              fi
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo ""
+            echo "CRITICAL: One or more release gates failed! Rejecting build."
+            exit 1
+          fi
+          echo ""
+          echo "SUCCESS: All release readiness gates passed cleanly!"

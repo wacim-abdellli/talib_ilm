@@ -1,3 +1,26 @@
+## Release Task 5 — Repair CI Failure Propagation (1 November 2026)
+- **Branch**: `release/5-ci-failure-propagation`
+- **Base Commit**: `e1c6f0b` (`release(4): make all Android release variants fail closed`)
+- **CI Failure Propagation Architecture**:
+  - Overhauled `.github/workflows/verify.yml` with strict `set -o pipefail` across all Bash pipelines, ensuring non-zero exit codes are never masked by downstream `tee` utilities.
+  - Implemented per-gate status recording in `build/ci-logs/gates/<gate_id>.status` for all 7 required gates:
+    1. Static Analysis (`flutter analyze --no-pub`)
+    2. UI Strict Lint V2 (`python tool/ui_lint_v2.py --strict`)
+    3. Automated Test Suite (`flutter test --no-pub`)
+    4. Readiness Tool Regressions (`python tool/test_release_readiness_checks.py`)
+    5. Debug APK Compilation (`flutter build apk --debug --no-pub`)
+    6. Test-Signed Release AAB & Signer Verification (`python tool/run_release_readiness_checks.py --only-bundle`)
+    7. Fail-Closed Android Release Signing (`python tool/verify_android_signing_fail_closed.py`)
+  - Added fail-closed `Aggregate Final Release Gate Verdict` step: inspects all 7 gate status files; rejects and fails the workflow if ANY gate produced a non-zero exit code or failed to execute.
+  - Ensured verification log artifacts (`build/ci-logs/`) and GitHub Step Summary status table are uploaded on every run (`if: always()`).
+  - Added push and PR triggers for `release/**` branches.
+  - Created automated probe `tool/test_ci_failure_propagation.py` proving pipeline failure capture, missing gate detection, non-zero gate rejection, and clean-run acceptance.
+- **Verification Commands & Results**:
+  - `python tool/test_ci_failure_propagation.py`: ALL PASS.
+  - `flutter analyze --no-pub`: 0 issues found (5.2s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 6 — Android store release configuration.
+
 ## Release Task 4 — Make All Android Release Variants Fail Closed (1 November 2026)
 - **Branch**: `release/4-fail-closed-signing`
 - **Base Commit**: `9f34f70` (`release(3): repair golden baseline after visual review`)
