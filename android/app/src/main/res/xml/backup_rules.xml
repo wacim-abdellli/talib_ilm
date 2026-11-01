@@ -3,9 +3,4 @@
     <!-- Include user Islamic settings, bookmarks, reading progress, and custom themes -->
     <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
     <include domain="database" path="." />
-
-    <!-- Exclude volatile caches, temporary downloads, and ephemeral media -->
-    <exclude domain="root" path="cache" />
-    <exclude domain="external" path="." />
 </full-backup-content>
-

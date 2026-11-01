@@ -4,16 +4,10 @@
         <!-- Include user Islamic reading progress, bookmarks, and preferences in cloud backup -->
         <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
         <include domain="database" path="." />
-
-        <!-- Exclude temporary caches and volatile media -->
-        <exclude domain="root" path="cache" />
-        <exclude domain="external" path="." />
     </cloud-backup>
     <device-to-device-transfer>
         <!-- Retain full user state during direct device migrations -->
         <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
         <include domain="database" path="." />
-        <exclude domain="root" path="cache" />
     </device-to-device-transfer>
 </data-extraction-rules>
-
