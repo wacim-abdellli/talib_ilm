@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../app/theme/app_palette.dart';
 
@@ -55,6 +56,17 @@ class _DhikrCounterDialState extends State<DhikrCounterDial>
         _springController.reverse();
       }
     });
+    final int nextCount = widget.count + 1;
+    final String announcement = widget.total > 0
+        ? '$nextCount من ${widget.total}'
+        : '$nextCount';
+    if (mounted) {
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        announcement,
+        TextDirection.rtl,
+      );
+    }
     widget.onTap();
   }
 

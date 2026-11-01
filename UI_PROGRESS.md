@@ -1,3 +1,17 @@
+## Remediation Task R5 — Tasbeeh & Screen Reader Arabic Accessibility Announcements (2 November 2026)
+- **Branch**: `remediation/r5-accessibility-announcements`
+- **Base Commit**: `ecc9ec5` (`remediation(r4): configure iOS signed IPA workflow and export options`)
+- **Accessibility & Arabic Screen Reader Vocalization (P2.5)**:
+  - Integrated `SemanticsService.sendAnnouncement(View.of(context), ...)` into `RosaryDial` and `DhikrCounterDial` to vocalize counter increments in Arabic for TalkBack (Android) and VoiceOver (iOS) users (`«سبحان الله: 34 من 100»`).
+  - Added semantic label, value, and hint attributes (`value: '${widget.count}'`, `hint: 'الهدف ...'`).
+  - Added focused automated widget test in `test/accessibility_ui_correctness_test.dart` proving semantic properties and tap increments without exceptions.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (6.9s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/accessibility_ui_correctness_test.dart --no-pub`: ALL 14 PASS.
+  - `flutter test --no-pub`: **796 / 796 tests PASSED, 0 FAILED (100% green)**.
+- **Next Task**: Task R6 — External web and content trust boundary enforcement (P1.8).
+
 ## Remediation Task R4 — iOS Production Distribution Pipeline & Signed Export Template (2 November 2026)
 - **Branch**: `remediation/r4-ios-distribution-pipeline`
 - **Base Commit**: `ff4ff98` (`remediation(r3): audit Android exported components and document intent security`)

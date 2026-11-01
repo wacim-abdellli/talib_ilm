@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -57,6 +58,17 @@ class _RosaryDialState extends State<RosaryDial>
     _pulseController.forward().then((_) {
       if (mounted) _pulseController.reverse();
     });
+    final int nextCount = widget.count + 1;
+    final String announcement = widget.target != null
+        ? '${widget.label} $nextCount من ${widget.target}'
+        : '${widget.label} $nextCount';
+    if (mounted) {
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        announcement,
+        TextDirection.rtl,
+      );
+    }
     widget.onTap();
   }
 
@@ -70,7 +82,9 @@ class _RosaryDialState extends State<RosaryDial>
 
     return Semantics(
       button: true,
-      label: 'عداد التسبيح، اضغط للعد',
+      label: 'عداد التسبيح، ${widget.label}',
+      value: '${widget.count}',
+      hint: widget.target != null ? 'الهدف ${widget.target}' : 'اضغط للعد',
       child: InkWell(
         onTap: _handleTap,
         splashColor: Colors.transparent,
