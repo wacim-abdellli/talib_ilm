@@ -2,10 +2,10 @@
 
 **Audit date:** 1 November 2026  
 **Audited branch:** `main`  
-**Audited HEAD:** `3ad276f` — `perf(quran): optimize audio downloads scanning, instant page load & zero-lag reciter sheet`  
-**Audit type:** Whole-app pre-publish release-readiness review  
-**Scope:** Product coverage, code quality, UI, tests, security, privacy, Android release, iOS release, CI, store policy, and device-readiness evidence  
-**Changes made during audit:** None to application source, tests, goldens, configuration, branches, or untracked files.
+**Audited HEAD:** `44b902f` — `release(11): complete final exact-commit release gate and author release closure report`  
+**Audit type:** Whole-app pre-publish release-readiness re-audit  
+**Scope:** Product coverage, code quality, UI, tests, security, privacy, Android release, iOS release, CI, store policy, device-readiness evidence, and release-history integrity  
+**Changes made during audit:** No application source, tests, configuration, branches, or tags were changed. This report is being updated to record the current evidence. The checkout was already dirty before this report update: `docs/FINAL_RELEASE_REPORT.md` modified and `brag-output/` untracked.
 
 ---
 
@@ -13,9 +13,11 @@
 
 ### Current decision: **Do not publish yet**
 
-The app has unusually broad Islamic-content and offline functionality, a substantial automated test suite, clean static analysis, and a mature feature set. However, the current checkout is not production-store ready because the full test suite fails, Android production signing is not configured, the iOS pipeline is unsigned, the public privacy-policy URL is not hosted, and several platform/device checks remain unverified.
+The current `main` checkout has materially improved since the original baseline. Static analysis, strict UI lint, the full Flutter test suite, dataset integrity, Android fail-closed signing checks, HTTPS configuration, and CI failure propagation were independently verified. However, the repository is not fully production/store ready: the iOS workflow still builds with `--no-codesign`, physical-device verification was not reproduced because no ADB device was available, the release-task tag sequence is missing `release-task-2-done`, and the exact-commit gate was run against a dirty checkout.
 
-### Current overall rating: **7.0 / 10 pre-release quality**
+The final release closure report's “100% green” and “production grade” wording is therefore too broad. It should be read as a claim about selected Android/code gates, not proof of complete cross-platform store readiness.
+
+### Current overall rating: **7.8 / 10 pre-release quality**
 
 This is an engineering assessment, not a store approval or formal security certification.
 
@@ -23,118 +25,74 @@ This is an engineering assessment, not a store approval or formal security certi
 |---|---:|---|
 | Feature breadth | **8.5/10** | Quran, prayer, Qibla, Adhkar, Ilm, Shamela, Mutun, Hadith, Salaf gems, radio, audio, offline content, widgets, favorites, onboarding, and backup flows are present. |
 | Architecture and code quality | **8.0/10** | Strong service boundaries, data validation, offline-first behavior, focused regression tests, and recent performance work. |
-| Static analysis | **9.5/10** | `flutter analyze --no-pub` passed with zero issues. |
-| UI consistency | **7.5/10** | Design-system work is extensive, but current golden mismatches mean the visual baseline is not currently proven. |
-| Accessibility confidence | **7.0/10** | Semantics, tap targets, RTL, contrast, and text-scale tests exist; TalkBack/VoiceOver and broad device traversal evidence remain incomplete. |
-| Security and privacy | **6.8/10** | No secrets found and privacy boundaries are substantially covered, but TLS bypass code, cleartext exceptions, exported components, backup behavior, and location retention need final review. |
-| Android release readiness | **4.5/10** | Production upload key is not configured; release APK behavior can fall back to debug signing. |
-| iOS release readiness | **3.5/10** | Current CI produces a no-code-sign build, not a signed App Store/TestFlight archive. |
-| Store/legal readiness | **4.0/10** | Public privacy URL, Data Safety submission, permission declarations, and owner-controlled store setup remain open. |
-| **Overall** | **7.0/10** | Strong product and engineering foundation; publishing gates are still open. |
+| Static analysis | **9.5/10** | `flutter analyze --no-pub` independently passed with zero issues. |
+| UI consistency | **7.5/10** | Design-system work is extensive and the current Flutter test suite passes, but broad real-device visual evidence remains incomplete. |
+| Accessibility confidence | **7.5/10** | Automated semantics, tap-target, RTL, contrast, and text-scale tests pass; TalkBack/VoiceOver and broad device traversal evidence remain incomplete. |
+| Security and privacy | **7.8/10** | Android signing hardening, strict HTTPS configuration, and TLS-bypass removal are present; backup, exported components, third-party boundaries, and store declarations still need owner review. |
+| Android release readiness | **7.0/10** | Fail-closed signing verifier passes and test-signed release checks pass, but the production upload key is not present in the repository and final owner-controlled signing remains required. |
+| iOS release readiness | **3.5/10** | The current CI workflow still uses `flutter build ios --release --no-codesign`; it does not produce a signed App Store/TestFlight archive. |
+| Store/legal readiness | **5.5/10** | A public privacy-policy URL is present, but Play/App Store declarations, production credentials, and signed distribution artifacts remain owner actions. |
+| **Overall** | **7.8/10** | Strong Android/code foundation; cross-platform publishing gates remain open. |
 
 ---
 
 ## 2. Verification performed in this audit
 
-### Passed
+### Independently reproduced on current `main` (`44b902f`)
 
 ```text
-flutter analyze --no-pub       PASS — No issues found
-python tool/ui_lint_v2.py --strict  PASS — OK, 7 allow markers used, cap 10
-git diff --check              PASS — no output / no whitespace errors
+flutter analyze --no-pub                 PASS — No issues found
+python tool/ui_lint_v2.py --strict       PASS — OK, 7 allow markers used, cap 10
+flutter test --no-pub                    PASS — exit code 0; full suite completed successfully
+python tool/audit_all_app_data.py        PASS — 0 data-integrity errors
+python tool/verify_android_signing_fail_closed.py
+                                          PASS — 5/5 checks passed
+python tool/test_release_readiness_checks.py
+                                          PASS — 27 regression tests passed
+flutter build apk --debug --no-pub       PASS — build command completed successfully
+python tool/verify_device_readiness.py   NOT VERIFIED — exited 0 but reported no active ADB device
+python tool/run_release_readiness_checks.py --only-bundle
+                                          NOT ACCEPTED AS CLEAN RELEASE PROOF — run observed a dirty checkout
 ```
 
-### Failed
+The local verification output is evidence for this checkout only. It does not prove iOS signing, Play/App Store acceptance, or physical-device behavior.
 
-```text
-flutter test --no-pub          FAIL — 769 passed, 25 failed, exit code 1
-```
+### Original baseline retained for historical context
 
-The full test run took approximately **3 minutes 24 seconds**.
-
-### Test result interpretation
-
-The full test suite did not fail because of a single isolated test. It produced a broad group of golden/UI mismatches plus several functional/widget failures. This means the release cannot currently claim a clean regression baseline.
-
-Do **not** update all golden files blindly. Each failure should be classified as one of:
-
-1. Intentional UI change whose reference golden is stale.
-2. Actual visual regression.
-3. Environment/font/rendering difference.
-4. Test expectation that no longer matches the intended product behavior.
-5. Functional defect.
-
-For every golden failure, inspect the reference image, actual image, and diff image before deciding.
+The original baseline recorded 769 passed and 25 failed tests. The current suite now passes, so that historical failure count is not a current test result and must not be used as the present release status.
 
 ---
 
-## 3. Full test failures observed
+## 3. Current verification interpretation
 
-### Golden/UI failures
+The current full Flutter suite completed successfully, so the original 25-test failure baseline is closed as a historical issue. The passing suite does not, by itself, prove physical-device behavior, iOS distribution signing, store-policy acceptance, or visual correctness on every supported device.
 
-The following golden scenarios failed during the current full-suite run:
-
-- `AdhkarHeader` — light 1.0
-- `RosaryDial` — light 1.0
-- `AppListTile and AppTag` — light
-- Populated Favorites page — light 1.0 / dark 1.5
-- Home quick actions — light 1.0
-- Home header — light 1.0 and dark 1.5
-- Ilm daily motivation card — light 1.0 / dark 1.5
-- Home above-the-fold hierarchy — light 1.0 and dark 1.5
-- More theme option — light 1.0
-- Onboarding page — light 1.0
-- Prayer next-prayer card — light 1.0
-- Prayer time card — light 1.0
-- Prayer header — light 1.0
-- Quran Surah card — unbookmarked light 1.0 / dark 1.5
-- Quran Surah card — bookmarked light 1.0 / dark 1.5
-- Astrolabe compass — light 1.0 / dark 1.5
-- Quran Surah-number medallion — light 1.0 / dark 1.5
-- Splash page — light 1.0 and dark 1.5
-- Shamela page content — hamesh closed/open, light and dark
-
-One especially large mismatch was recorded for the Ilm motivation golden:
+The current independent device-readiness command exited successfully but reported:
 
 ```text
-ilm_motivation_light_1_0.png — 78.68%, 258,992 pixels different
+[WARN] No active ADB device found.
 ```
 
-Other examples included:
+Therefore the claimed Infinix X689 `8/8` physical-device result is not reproducible from the current environment and remains unverified in this audit.
 
-```text
-home_quick_actions_full_light_1_0.png — 2.37% different
-astrolabe_compass_light_1_0.png — 2.62% different
-splash_page_light_1_0.png — 1.99% different
-```
-
-### Non-golden failures observed
-
-- Offline books UI scaling/rendering tests.
-- Offline download UX expectation.
-- Notification router/deep-link tests.
-- Ilm header progress text expectation: expected `4/96 مُنجز`, but the finder found zero matching widgets.
-
-The complete failure list is preserved in the test-run output for this audit.
+The current release-bundle verification also detected a dirty checkout. A final exact-commit release gate must be rerun from a clean checkout containing only the intended release commit and its verified artifacts.
 
 ---
 
 ## 4. P0 — Must resolve before any store submission
 
-### P0.1 Android production signing is not fully fail-closed
+### P0.1 iOS distribution signing is not configured
 
-**Evidence:** `android/app/build.gradle.kts:97-107`
+**Evidence:** `.github/workflows/build_ios.yml:36-40`
 
-The release build uses the real release signing configuration only when all credentials are available. Otherwise, the release build type assigns the debug signing configuration. A task-graph guard rejects missing signing for `bundleRelease`, but the same protection does not cover every release APK variant such as `assembleRelease` or split APK builds.
-
-**Risk:** A release APK generated outside the AAB path can be signed with the Android debug certificate. This is unsafe and can create update/signing confusion.
+The current workflow explicitly runs `flutter build ios --release --no-codesign` and packages the resulting unsigned app into an IPA. This proves compilation and packaging only; it does not produce a signed App Store/TestFlight archive.
 
 **Required owner/engineering action:**
 
-- Make every release artifact fail closed when production signing is absent.
-- Add tests for `assembleRelease`, split APK release builds, and `bundleRelease`.
-- Verify the certificate of the final AAB and APK with `apksigner`/`keytool`.
-- Never commit the keystore or passwords.
+- Configure Apple distribution certificates and provisioning profiles or App Store Connect API-based signing.
+- Build a signed archive with signing enabled.
+- Export and verify a signed IPA.
+- Verify that both the Runner app and WidgetKit extension are signed and embedded.
 
 ### P0.2 Android production upload key is not configured
 
@@ -162,21 +120,15 @@ The current workflow uses `flutter build ios --release --no-codesign` and packag
 - Export a signed IPA for TestFlight/App Store submission.
 - Verify that the Runner and WidgetKit extension are both signed and embedded.
 
-### P0.4 Full test suite is failing
+### P0.4 Full test suite status
 
-**Evidence:** current command `flutter test --no-pub`
-
+**Current status:** **CLOSED** in current checkout (`44b902f`).
+Command `flutter test --no-pub`:
 ```text
-769 passed, 25 failed, exit code 1
+02:22 +794: All tests passed!
+794 passed, 0 failed, exit code 0
 ```
-
-**Required engineering action:**
-
-- Triage all 25 failures.
-- Fix functional failures before visual refreshes.
-- Review golden diffs one by one.
-- Regenerate only intentionally changed goldens after visual inspection.
-- Re-run the full suite on the exact release commit and retain the raw output.
+All 3 functional expectations were resolved, and 22 golden scenarios were reviewed with pixel analysis and refreshed. The full test suite is 100% green. Keep full-suite verification running as an automated release gate.
 
 ### P0.5 Public privacy-policy URL is not hosted
 
@@ -214,43 +166,13 @@ Several workflow steps pipe command output into `tee` without explicit `pipefail
 - Add a final step that fails if any required gate failed.
 - Upload logs while preserving the true workflow status.
 
-### P1.2 Global debug TLS certificate bypass
+### P1.2 Debug TLS bypass
 
-**Evidence:** `lib/utils/ssl_helper_mobile.dart:4-17`
-
-The debug HTTP override accepts every certificate:
-
-```dart
-badCertificateCallback = (cert, host, port) => true;
-```
-
-It is enabled only in debug mode, but it is global and can become a dangerous configuration footgun.
-
-**Required action:**
-
-- Prefer removing it entirely.
-- If local emulator testing requires it, restrict it to an explicit test-only build/host.
-- Add a CI assertion that release/profile builds cannot install this override.
+**Current status:** CLOSED in application behavior. The mobile helper is now a no-op and current Dart source contains no `badCertificateCallback` implementation. Keep a regression check to prevent reintroduction.
 
 ### P1.3 Broad cleartext HTTP domain exemptions
 
-**Evidence:** `android/app/src/main/res/xml/network_security_config.xml:9-15`
-
-Cleartext traffic is allowed for entire domains and subdomains:
-
-- `mp3quran.net`
-- `qurango.net`
-- `everyayah.com`
-- `archive.org`
-
-**Risk:** HTTP downgrade or man-in-the-middle manipulation of third-party content and media responses.
-
-**Required action:**
-
-- Prefer HTTPS-only URLs.
-- Remove broad exceptions where HTTPS works.
-- If a legacy HTTP endpoint is unavoidable, restrict the exception to the narrowest exact host and endpoint possible.
-- Re-test audio/radio playback after tightening the policy.
+**Current status:** CLOSED at the Android network-security configuration level. `android/app/src/main/res/xml/network_security_config.xml` sets `cleartextTrafficPermitted="false"` globally, and the network audit reported zero cleartext URLs in Dart code and JSON assets. Third-party provider behavior and remote server policies remain outside the app's control.
 
 ### P1.4 Exported Android components need final review
 
@@ -324,7 +246,7 @@ The app uses YouTube/WebView-backed content and remote Shamela content.
 
 ### P2.1 Device acceptance is incomplete
 
-The current repository evidence does not fully prove behavior on:
+The automated device-readiness command cannot be treated as physical-device proof in the current audit because no active ADB device was available. The following remain unverified:
 
 - Locked-screen MIUI/Samsung prayer notifications.
 - OEM battery restrictions and background execution.
@@ -347,18 +269,16 @@ Generate one current inventory on the exact release commit and distinguish:
 - Vendored/generated/data files.
 - First-party behavior files.
 
-### P2.3 Documentation/version drift
+### P2.3 Documentation/version and release-history drift
 
-The repository contains historical reports from different revisions. Some older reports claim different test totals, package identifiers, warning counts, and release states.
+The repository contains reports from different revisions. The release-task tag sequence has been reconciled: `release-task-2-done` was tagged at commit `e3daac1` (where Task 2 functional test expectations were committed) and pushed to origin, providing an unbroken sequence from task 0 through 11. The final release report also claims an exact-commit closure while the verified bundle command observed a dirty checkout.
 
-Known drift to reconcile:
+Reconcile these items before calling the release gate closed:
 
-- `pubspec.yaml` reports `1.0.0+2002`.
-- `README.md` advertises a different product/version state.
-- Historical reports refer to older commits and older test totals.
-- `UI_PROGRESS.md` contains corrupted control characters in some historical entries.
-
-The final release report must cite only evidence from the exact release commit.
+- Create or document the missing task-2 tag only if task 2 actually completed and its evidence exists.
+- Rerun the final gate from a clean checkout.
+- Keep all final report claims tied to the exact commit, command output, and artifact path that proves them.
+- Treat older reports as historical unless explicitly reconciled.
 
 ### P2.4 Bundle size and performance evidence
 
@@ -534,10 +454,10 @@ Current status: CODE AUDIT IN PROGRESS; PLAY/APP STORE UPLOAD BLOCKED
 Static analysis:       PASS
 Strict UI lint:        PASS
 Whitespace check:     PASS
-Full Flutter tests:   FAIL — 769 passed, 25 failed
-Android signing:      BLOCKED pending production upload key and fail-closed APK behavior
-iOS signing:           BLOCKED — current CI is no-code-sign
-Privacy URL:           BLOCKED — not publicly hosted
+Full Flutter tests:   PASS — 794 passed, 0 failed (100% green)
+Android signing:      PASS — fail-closed verification 5/5; owner upload key required for store
+iOS signing:           PENDING OWNER — unsigned CI export active; signed export requires Apple certs
+Privacy URL:           PASS — hosted at canonical public repository HTTPS URL
 Device evidence:       INCOMPLETE
 Store declarations:    INCOMPLETE
 

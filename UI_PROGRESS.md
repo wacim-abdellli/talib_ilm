@@ -1,3 +1,16 @@
+## Remediation Task R1 — Reconcile Re-Audit Report & Git History Integrity (1 November 2026)
+- **Branch**: `remediation/r1-reconcile-audit-and-tags`
+- **Base Commit**: `44b902f` (`release(11): complete final exact-commit release gate and author release closure report`)
+- **Remediation & History Reconciliation**:
+  - Reconciled copy-paste historical discrepancies in `RELEASE_READINESS_AUDIT_REPORT.md` (updated P0.4 to reflect passing 794/794 test suite, updated Section 10 decision matrix, aligned findings with current verified codebase).
+  - Synchronized `release-task-2-done` tag on commit `e3daac1` (functional test expectation fixes), completing the continuous release tag sequence (`release-task-0-done` through `release-task-11-done`).
+  - Authored authoritative post-audit implementation guide `GEMINI_3_8_FLASH_RELEASE_AUDIT_PROMPT.md` for remaining cross-platform store and hardening tasks (Tasks R1–R7).
+- **Verification Commands & Results**:
+  - `git tag -l "release-task-*"`: Complete 12-tag sequence verified.
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task R2 — Android backup rules and ephemeral coordinate isolation (P1.7).
+
 ## Release Task 11 — Final Exact-Commit Release Gate & Closure (1 November 2026)
 - **Branch**: `release/11-final-release-gate`
 - **Base Commit**: `fc3a165` (`release(10): document runtime performance benchmarks and bundle size metrics`)
