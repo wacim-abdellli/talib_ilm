@@ -1,3 +1,17 @@
+## Release Task 6 — Android Store Release Configuration (1 November 2026)
+- **Branch**: `release/6-android-store-release-config`
+- **Base Commit**: `c30e5be` (`release(5): repair CI failure propagation and aggregate gates`)
+- **Store Configuration & Policy Hardening**:
+  - Purged unused restricted permission `<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>` from `android/app/src/main/AndroidManifest.xml` (eliminated Google Play restricted permission review requirement on Android 14+).
+  - Verified final application ID (`com.talibilm.app`), version name (`1.0.0`), version code (`2002`), target SDK (`35`, Android 15), compile SDK (`35`), min SDK (`21`, Android 5.0).
+  - Verified ProGuard / R8 rules in `android/app/proguard-rules.pro` keeping Gson TypeTokens and SerializedName for persistent alarms across background reboots.
+  - Created complete Play Data Safety & Store Declarations document `docs/PLAY_STORE_DATA_SAFETY.md` detailing precise permission justifications, ephemeral location usage, zero remote personal data collection, zero third-party analytics, and family policy compliance.
+- **Verification Commands & Results**:
+  - `python tool/verify_android_signing_fail_closed.py`: 5/5 PASSED.
+  - `flutter analyze --no-pub`: 0 issues found (5.0s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 7 — Privacy and network boundary audit.
+
 ## Release Task 5 — Repair CI Failure Propagation (1 November 2026)
 - **Branch**: `release/5-ci-failure-propagation`
 - **Base Commit**: `e1c6f0b` (`release(4): make all Android release variants fail closed`)
