@@ -1,3 +1,17 @@
+## Release Task 9 — Device Acceptance and QA Checklist (1 November 2026)
+- **Branch**: `release/9-device-acceptance`
+- **Base Commit**: `8437087` (`release(8): configure iOS dynamic version propagation and documentation`)
+- **Device Acceptance & Telemetry Verification**:
+  - Connected target physical hardware: Infinix X689 (`Infinix_X689`), Android 11 (API Level 30), `android-arm64`, 720x1640 @ 250/320 dpi.
+  - Built automated device telemetry audit tool `tool/verify_device_readiness.py`: verified clean package installation of `com.talibilm.app`, `MainActivity`, `ScheduledNotificationBootReceiver`, `AudioService`, 3 registered AppWidget providers (`RibbonWidgetProvider`, `CompactWidgetProvider`, `LargeWidgetProvider`), active system AppWidget bindings, and active `*walarm*` AlarmManager scheduled notifications (8/8 checks PASSED).
+  - Authored comprehensive 18-scenario acceptance checklist `docs/DEVICE_ACCEPTANCE_QA.md` covering clean install, permissions flow, tab navigation smoke tests, text scale 1.0/1.5/2.0 responsiveness, theme switching, RTL geometry, prayer schedules, audio focus/interruption, offline Quran/Shamela reading, diacritic search, and airplane mode.
+  - Transparently recorded physical user-interaction owner actions (physical incoming call test, OEM battery sleeping exemptions) required before live production rollout.
+- **Verification Commands & Results**:
+  - `python tool/verify_device_readiness.py`: 8/8 PASSED on Infinix X689.
+  - `flutter analyze --no-pub`: 0 issues found (9.1s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 10 — Performance and bundle size evidence.
+
 ## Release Task 8 — iOS Store Release Readiness (1 November 2026)
 - **Branch**: `release/8-ios-store-readiness`
 - **Base Commit**: `a326141` (`release(7): enforce strict HTTPS boundaries and remove TLS bypass`)
