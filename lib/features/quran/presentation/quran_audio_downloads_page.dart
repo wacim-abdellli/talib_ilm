@@ -31,37 +31,37 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   final Map<int, bool> _surahDownloadedStatus = {};
   final Map<int, int> _surahBytesOnDisk = {};
   Map<QuranReciter, List<DownloadedSurahItem>> _downloadedByReciter = {};
-  bool _isLoading = true;
+  bool _isLoading = false;
   bool _showOnlyDownloaded = false;
 
   @override
   void initState() {
     super.initState();
     _currentReciter = _audioService.selectedReciter;
-    _refreshStorageAndStatus(showLoading: true);
+    _refreshStorageAndStatus();
   }
 
   Future<void> _refreshStorageAndStatus({bool showLoading = false}) async {
-    if (showLoading) {
+    if (showLoading && _surahDownloadedStatus.isEmpty) {
       setState(() => _isLoading = true);
     }
-    final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
     final byReciter = await QuranAudioDownloader.getDownloadedSurahsByReciter();
+
+    int totalBytes = 0;
+    for (final list in byReciter.values) {
+      for (final item in list) {
+        totalBytes += item.bytes;
+      }
+    }
 
     final statusMap = <int, bool>{};
     final bytesMap = <int, int>{};
 
-    for (int s = 1; s <= 114; s++) {
-      final isDownloaded = await QuranAudioDownloader.isSurahDownloaded(
-        s,
-        reciter: _currentReciter,
-      );
-      statusMap[s] = isDownloaded;
-      if (isDownloaded) {
-        bytesMap[s] = await QuranAudioDownloader.getSurahDownloadedBytes(
-          s,
-          reciter: _currentReciter,
-        );
+    final currentReciterItems = byReciter[_currentReciter];
+    if (currentReciterItems != null) {
+      for (final item in currentReciterItems) {
+        statusMap[item.surah] = true;
+        bytesMap[item.surah] = item.bytes;
       }
     }
 
@@ -89,8 +89,14 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
             reciter: _currentReciter,
           )
         : 0;
-    final totalBytes = await QuranAudioDownloader.getTotalStorageUsed();
     final byReciter = await QuranAudioDownloader.getDownloadedSurahsByReciter();
+
+    int totalBytes = 0;
+    for (final list in byReciter.values) {
+      for (final item in list) {
+        totalBytes += item.bytes;
+      }
+    }
 
     if (mounted) {
       setState(() {

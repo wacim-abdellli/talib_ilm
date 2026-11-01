@@ -41,11 +41,16 @@ class QuranAudioStorage {
     return dir;
   }
 
-  /// Directory for a specific reciter and surah
-  static Future<Directory> getSurahDir(int surah, String reciterId) async {
+  /// Directory for a specific reciter and surah.
+  /// If [create] is true (default), creates the directory on disk if it does not exist.
+  static Future<Directory> getSurahDir(
+    int surah,
+    String reciterId, {
+    bool create = true,
+  }) async {
     final base = await getAudioBaseDir();
     final dir = Directory('${base.path}/$reciterId/$surah');
-    if (!await dir.exists()) {
+    if (create && !await dir.exists()) {
       await dir.create(recursive: true);
     }
     return dir;
@@ -96,7 +101,7 @@ class QuranAudioStorage {
     QuranReciter? reciter,
   }) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
+    final dir = await getSurahDir(surah, r.id, create: false);
     if (!await dir.exists()) return false;
 
     if (r.isSurahBased) {
@@ -105,6 +110,15 @@ class QuranAudioStorage {
     }
 
     final totalVerses = quran.getVerseCount(surah);
+    final List<FileSystemEntity> files;
+    try {
+      files = dir.listSync();
+    } catch (_) {
+      return false;
+    }
+    // Fast path: if directory contains fewer files than total verses, it cannot be complete
+    if (files.length < totalVerses) return false;
+
     for (int a = 1; a <= totalVerses; a++) {
       final sStr = formatNumber(surah);
       final aStr = formatNumber(a);
@@ -122,7 +136,7 @@ class QuranAudioStorage {
     QuranReciter? reciter,
   }) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
+    final dir = await getSurahDir(surah, r.id, create: false);
     if (!await dir.exists()) return 0;
 
     if (r.isSurahBased) {
@@ -145,6 +159,39 @@ class QuranAudioStorage {
     return total;
   }
 
+  /// Returns a map of reciterId -> total bytes stored on disk.
+  /// Scans only existing directories on disk in one fast pass.
+  static Future<Map<String, int>> getStorageByReciter() async {
+    final result = <String, int>{};
+    final base = await getAudioBaseDir();
+    if (!await base.exists()) return result;
+
+    try {
+      final reciterEntities = base.listSync();
+      for (final entity in reciterEntities) {
+        if (entity is! Directory) continue;
+        final reciterId = entity.uri.pathSegments.reversed.where((s) => s.isNotEmpty).firstOrNull ??
+            entity.path.split(RegExp(r'[\\/]')).last;
+
+        int totalBytes = 0;
+        try {
+          final files = entity.listSync(recursive: true);
+          for (final f in files) {
+            if (f is File && f.path.endsWith('.mp3')) {
+              totalBytes += f.lengthSync();
+            }
+          }
+        } catch (_) {}
+
+        if (totalBytes > 0) {
+          result[reciterId] = totalBytes;
+        }
+      }
+    } catch (_) {}
+
+    return result;
+  }
+
   /// Total storage used across all reciters or a specific reciter
   static Future<int> getTotalStorageUsed({String? reciterId}) async {
     final base = await getAudioBaseDir();
@@ -152,19 +199,22 @@ class QuranAudioStorage {
 
     int totalBytes = 0;
     try {
-      final entities = base.listSync(recursive: true);
-      for (final e in entities) {
-        if (e is File && e.path.endsWith('.mp3')) {
-          final normalized = e.path.replaceAll('\\', '/');
-          if (reciterId != null) {
-            if (!normalized.contains('/$reciterId/')) continue;
+      if (reciterId != null) {
+        final reciterDir = Directory('${base.path}/$reciterId');
+        if (!await reciterDir.exists()) return 0;
+        final files = reciterDir.listSync(recursive: true);
+        for (final f in files) {
+          if (f is File && f.path.endsWith('.mp3')) {
+            totalBytes += f.lengthSync();
           }
-          final isFullSurah = normalized.contains('full_surah');
-          final isSurahReciter = normalized.contains('/luhaidan/');
-          if (isFullSurah && !isSurahReciter) continue;
-          if (!isFullSurah && isSurahReciter) continue;
+        }
+        return totalBytes;
+      }
 
-          totalBytes += e.lengthSync();
+      final files = base.listSync(recursive: true);
+      for (final f in files) {
+        if (f is File && f.path.endsWith('.mp3')) {
+          totalBytes += f.lengthSync();
         }
       }
     } catch (_) {}
@@ -208,7 +258,7 @@ class QuranAudioStorage {
     QuranReciter? reciter,
   }) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
-    final dir = await getSurahDir(surah, r.id);
+    final dir = await getSurahDir(surah, r.id, create: false);
     if (await dir.exists()) {
       await dir.delete(recursive: true);
     }
@@ -238,29 +288,61 @@ class QuranAudioStorage {
     }
   }
 
-  /// Scans and returns all downloaded surahs grouped by reciter
+  /// Scans and returns all downloaded surahs grouped by reciter.
+  /// High-performance implementation: Scans ONLY directories that actually exist on disk!
   static Future<Map<QuranReciter, List<DownloadedSurahItem>>> getDownloadedSurahsByReciter() async {
     final results = <QuranReciter, List<DownloadedSurahItem>>{};
-    final allReciters = QuranAudioService.reciters;
+    final base = await getAudioBaseDir();
+    if (!await base.exists()) return results;
 
-    for (final reciter in allReciters) {
+    final recitersById = {for (final r in QuranAudioService.reciters) r.id: r};
+
+    final List<FileSystemEntity> reciterEntities;
+    try {
+      reciterEntities = base.listSync();
+    } catch (_) {
+      return results;
+    }
+
+    for (final entity in reciterEntities) {
+      if (entity is! Directory) continue;
+      final reciterId = entity.uri.pathSegments.reversed.where((s) => s.isNotEmpty).firstOrNull ??
+          entity.path.split(RegExp(r'[\\/]')).last;
+      final reciter = recitersById[reciterId];
+      if (reciter == null) continue;
+
+      final List<FileSystemEntity> surahEntities;
+      try {
+        surahEntities = entity.listSync();
+      } catch (_) {
+        continue;
+      }
+
       final downloadedSurahs = <DownloadedSurahItem>[];
-      for (int s = 1; s <= 114; s++) {
-        final downloaded = await isSurahDownloaded(s, reciter: reciter);
-        if (downloaded) {
-          final bytes = await getSurahDownloadedBytes(s, reciter: reciter);
+      for (final surahEntity in surahEntities) {
+        if (surahEntity is! Directory) continue;
+        final dirName = surahEntity.uri.pathSegments.reversed.where((s) => s.isNotEmpty).firstOrNull ??
+            surahEntity.path.split(RegExp(r'[\\/]')).last;
+        final surahNumber = int.tryParse(dirName);
+        if (surahNumber == null || surahNumber < 1 || surahNumber > 114) continue;
+
+        final isDownloaded = await isSurahDownloaded(surahNumber, reciter: reciter);
+        if (isDownloaded) {
+          final bytes = await getSurahDownloadedBytes(surahNumber, reciter: reciter);
           downloadedSurahs.add(
             DownloadedSurahItem(
-              surah: s,
-              surahName: quran.getSurahNameArabic(s),
-              verseCount: quran.getVerseCount(s),
+              surah: surahNumber,
+              surahName: quran.getSurahNameArabic(surahNumber),
+              verseCount: quran.getVerseCount(surahNumber),
               bytes: bytes,
               reciter: reciter,
             ),
           );
         }
       }
+
       if (downloadedSurahs.isNotEmpty) {
+        downloadedSurahs.sort((a, b) => a.surah.compareTo(b.surah));
         results[reciter] = downloadedSurahs;
       }
     }

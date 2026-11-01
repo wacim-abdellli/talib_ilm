@@ -39,8 +39,15 @@ class QuranAudioDownloader {
   static Future<Directory> getAudioBaseDir() =>
       QuranAudioStorage.getAudioBaseDir();
 
-  static Future<Directory> getSurahDir(int surah, String reciterId) =>
-      QuranAudioStorage.getSurahDir(surah, reciterId);
+  static Future<Directory> getSurahDir(
+    int surah,
+    String reciterId, {
+    bool create = true,
+  }) =>
+      QuranAudioStorage.getSurahDir(surah, reciterId, create: create);
+
+  static Future<Map<String, int>> getStorageByReciter() =>
+      QuranAudioStorage.getStorageByReciter();
 
   static Future<String> getLocalAyahPath(
     int surah,
@@ -157,7 +164,7 @@ class QuranAudioDownloader {
     _operationGenerations[key] = gen;
 
     final totalVerses = quran.getVerseCount(surah);
-    final surahDir = await QuranAudioStorage.getSurahDir(surah, reciter.id);
+    final surahDir = await QuranAudioStorage.getSurahDir(surah, reciter.id, create: true);
 
     _pauseFlags[key] = false;
     _cancelFlags[key] = false;

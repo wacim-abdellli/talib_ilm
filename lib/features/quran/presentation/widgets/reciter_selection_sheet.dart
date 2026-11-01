@@ -49,17 +49,12 @@ class _ReciterSelectionSheetState extends State<ReciterSelectionSheet> {
   }
 
   Future<void> _loadRecitersStorage() async {
-    final Map<String, int> storage = {};
-    for (final r in QuranAudioService.reciters) {
-      final bytes = await QuranAudioDownloader.getTotalStorageUsed(
-        reciterId: r.id,
-      );
-      if (bytes > 0) {
-        storage[r.id] = bytes;
-      }
-    }
+    final storage = await QuranAudioDownloader.getStorageByReciter();
     if (mounted) {
-      setState(() => _reciterStorageBytes.addAll(storage));
+      setState(() {
+        _reciterStorageBytes.clear();
+        _reciterStorageBytes.addAll(storage);
+      });
     }
   }
 
