@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/utils/safe_url_launcher.dart';
 
 import '../../../../app/constants/app_strings.dart';
 import '../../../../app/theme/app_palette.dart';
@@ -143,12 +144,9 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
 
   Future<void> _openFullPlaylist(String playlistId, String scholar) async {
     final uri = Uri.parse('https://www.youtube.com/playlist?list=$playlistId');
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
-      }
-    } catch (_) {}
+    if (await SafeUrlLauncher.launchSafeUrl(uri, mode: LaunchMode.externalApplication)) {
+      return;
+    }
 
     // Fallback: open the first lesson of this scholar's playlist in the in-app player
     final playlistLessons = widget.lessons

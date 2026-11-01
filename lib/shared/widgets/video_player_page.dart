@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/safe_url_launcher.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../../app/constants/app_strings.dart';
@@ -270,12 +271,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     for (final urlStr in urlsToTry) {
       final uri = Uri.parse(urlStr);
-      try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return;
-        }
-      } catch (_) {}
+      if (await SafeUrlLauncher.launchSafeUrl(uri, mode: LaunchMode.externalApplication)) {
+        return;
+      }
     }
 
     if (mounted) {
