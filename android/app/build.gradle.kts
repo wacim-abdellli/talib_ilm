@@ -33,15 +33,20 @@ fun getKeystoreProperty(name: String): String? {
         }?.value as? String
 }
 
-val envKeystore = System.getenv("KEYSTORE_PATH")
-val envStorePassword = System.getenv("KEYSTORE_PASSWORD")
-val envKeyAlias = System.getenv("KEY_ALIAS")
-val envKeyPassword = System.getenv("KEY_PASSWORD")
+fun findPropOrEnv(name: String, envName: String): String? {
+    val propVal = (project.findProperty(name) as? String) ?: (project.findProperty(envName) as? String)
+    if (!propVal.isNullOrBlank()) return propVal
+    val keyFileVal = getKeystoreProperty(name)
+    if (!keyFileVal.isNullOrBlank()) return keyFileVal
+    val envVal = System.getenv(envName)
+    if (!envVal.isNullOrBlank()) return envVal
+    return null
+}
 
-val storeFileProp = getKeystoreProperty("storeFile") ?: envKeystore
-val storePasswordProp = getKeystoreProperty("storePassword") ?: envStorePassword
-val keyAliasProp = getKeystoreProperty("keyAlias") ?: envKeyAlias
-val keyPasswordProp = getKeystoreProperty("keyPassword") ?: envKeyPassword
+val storeFileProp = findPropOrEnv("storeFile", "KEYSTORE_PATH")
+val storePasswordProp = findPropOrEnv("storePassword", "KEYSTORE_PASSWORD")
+val keyAliasProp = findPropOrEnv("keyAlias", "KEY_ALIAS")
+val keyPasswordProp = findPropOrEnv("keyPassword", "KEY_PASSWORD")
 
 val isRealReleaseSigningConfigured = !storeFileProp.isNullOrBlank() &&
     !storePasswordProp.isNullOrBlank() &&
@@ -101,24 +106,27 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = if (isReleaseSigningConfigured) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (isReleaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
 }
 
 gradle.taskGraph.whenReady {
-    val isAppBundleRequested = allTasks.any { task ->
-        task.name.equals("bundleRelease", ignoreCase = true)
+    val isReleaseBuildRequested = allTasks.any { task ->
+        val name = task.name
+        name.contains("Release", ignoreCase = true) && (
+            name.startsWith("assemble", ignoreCase = true) ||
+            name.startsWith("bundle", ignoreCase = true) ||
+            name.startsWith("package", ignoreCase = true)
+        )
     }
-    if (isAppBundleRequested && !isReleaseSigningConfigured) {
+    if (isReleaseBuildRequested && !isReleaseSigningConfigured) {
         throw GradleException(
-            "Release bundle rejected: release signing is not configured.\n" +
-            "Google Play App Bundles (.aab) must NOT be signed with the Android debug certificate.\n" +
-            "Please configure android/key.properties with your real keystore password.\n" +
+            "Release build rejected: production release signing is not configured.\n" +
+            "Release builds (AAB, universal APK, or split APKs) must NEVER fall back to debug signing or be published unsigned.\n" +
+            "Please configure android/key.properties or environment variables (KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD).\n" +
             "See android/key.properties.example for setup instructions."
         )
     }
