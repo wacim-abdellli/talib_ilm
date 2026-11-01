@@ -3,50 +3,53 @@
     "os": "Windows-10-10.0.19045-SP0",
     "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
     "python_version": "3.14.3",
-    "timestamp": "2026-10-24T23:34:23Z",
+    "timestamp": "2026-11-01T21:36:30Z",
     "flutter_version": "Flutter 3.38.7 â€¢ channel stable â€¢ https://github.com/flutter/flutter.git",
-    "attached_devices": []
+    "attached_devices": [
+      "0696537171100905\tdevice"
+    ],
+    "adb_binary": "adb"
   },
   "metrics": {
     "startup": {
-      "min_us": 501,
-      "mean_us": 1218,
-      "p95_us": 1264,
-      "max_us": 16096,
-      "mean_ms": 1.218
+      "min_us": 689,
+      "mean_us": 1852,
+      "p95_us": 2734,
+      "max_us": 23536,
+      "mean_ms": 1.852
     },
     "quran_pages": {
-      "total_604_pages_ms": 3,
-      "avg_page_retrieval_us": 6
+      "total_604_pages_ms": 5,
+      "avg_page_retrieval_us": 9
     },
     "quran_search": {
-      "Ø§Ù„Ù„Ù‡": 83,
-      "Ø§Ù„Ø±Ø­Ù…Ù†": 54,
-      "Ø§Ù„ØµÙ„Ø§Ø©": 22,
-      "Ø§Ù„Ø¬Ù†Ø©": 30,
-      "Ø§Ù„ØµØ¨Ø±": 34
+      "Ø§Ù„Ù„Ù‡": 137,
+      "Ø§Ù„Ø±Ø­Ù…Ù†": 91,
+      "Ø§Ù„ØµÙ„Ø§Ø©": 43,
+      "Ø§Ù„Ø¬Ù†Ø©": 60,
+      "Ø§Ù„ØµØ¨Ø±": 61
     },
     "mutun_catalog_sections": 7,
-    "mutun_catalog_load_us": 1468,
-    "mutun_text_parse_avg_us": 14,
+    "mutun_catalog_load_us": 6027,
+    "mutun_text_parse_avg_us": 19,
     "mutun_text_parse_runs": 100,
     "audio_switch": {
-      "total_us": 2410,
-      "avg_us": 12,
+      "total_us": 6232,
+      "avg_us": 31,
       "switches": 200
     },
     "prayer_wilayas": {
       "wilayas_computed": 15,
-      "total_ms": 13,
-      "avg_city_us": 917
+      "total_ms": 29,
+      "avg_city_us": 1949
     },
     "memory": {
-      "initial_rss_mb": 334.5,
-      "after_rss_mb": 335.9,
-      "delta_rss_mb": 1.37,
-      "elapsed_ms": 39,
+      "initial_rss_mb": 334.8,
+      "after_rss_mb": 336.6,
+      "delta_rss_mb": 1.77,
+      "elapsed_ms": 91,
       "sessions_count": 150
     },
-    "resume_refresh_us": 869
+    "resume_refresh_us": 1494
   }
 }

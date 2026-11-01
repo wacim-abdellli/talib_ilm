@@ -1,3 +1,24 @@
+## Release Task 10 — Performance and Bundle Size Evidence (1 November 2026)
+- **Branch**: `release/10-performance-evidence`
+- **Base Commit**: `5db04e5` (`release(9): verify device readiness telemetry and document QA matrix`)
+- **Performance & Binary Footprint Metrics**:
+  - Hardened `tool/run_bundle_size_analysis.py` with robust test keystore configuration and Gradle daemon project property propagation.
+  - Executed reproducible bundle size and per-ABI breakdown analysis:
+    - `app-release.aab`: 183.87 MB decimal (175.35 MiB) [183,867,767 bytes], SHA-256: `bebc66089130...`
+    - Google Play Delivered User Download (bundletool arm64-v8a): **109.34 MB decimal (104.27 MiB)** [109,336,577 bytes].
+    - `app-arm64-v8a-release.apk`: 144.02 MB decimal (137.35 MiB) [144,019,917 bytes].
+    - `app-armeabi-v7a-release.apk`: 144.38 MB decimal (137.69 MiB) [144,383,490 bytes].
+    - `app-x86_64-release.apk`: 145.72 MB decimal (138.96 MiB) [145,715,206 bytes].
+  - Inventoried all 1,747 tracked files and 110.25 MB tracked assets: 604 King Fahd Complex Medina Mushaf vector page fonts (66.81 MB), 16 Mutun classical texts (14.95 MB), 13 authentic JSON datasets (12.25 MB).
+  - Benchmarked runtime performance: startup service initialization (mean 1.85 ms, p95 2.73 ms), Quran 604 pages indexing (5 ms total, 9 µs/page), audio focus arbitration (31 µs/switch), 15 Algerian wilayas prayer computation (29 ms), prolonged use memory delta (+1.77 MB over 150 sessions).
+  - Authored comprehensive evidence document `docs/PERFORMANCE_EVIDENCE.md`.
+- **Verification Commands & Results**:
+  - `python tool/run_bundle_size_analysis.py`: ALL PASS.
+  - `python tool/measure_runtime_performance.py`: ALL PASS.
+  - `flutter analyze --no-pub`: 0 issues found (38.9s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+- **Next Task**: Task 11 — Final exact-commit release gate and release tagging.
+
 ## Release Task 9 — Device Acceptance and QA Checklist (1 November 2026)
 - **Branch**: `release/9-device-acceptance`
 - **Base Commit**: `8437087` (`release(8): configure iOS dynamic version propagation and documentation`)

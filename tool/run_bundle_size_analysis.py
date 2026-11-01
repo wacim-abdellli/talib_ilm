@@ -76,13 +76,16 @@ def setup_test_signing(android_dir=None):
     target_android_dir = android_dir if android_dir is not None else ANDROID_DIR
     key_props_workspace = os.path.join(target_android_dir, "key.properties")
     if os.path.exists(key_props_workspace):
-        rel_label = os.path.relpath(key_props_workspace, REPO_ROOT) if key_props_workspace.startswith(REPO_ROOT) else key_props_workspace
-        print(f"[SETUP] Using existing owner credentials at {rel_label}...")
-        return None, {}
+        with open(key_props_workspace, "r", encoding="utf-8", errors="ignore") as f:
+            c = f.read()
+        if "PUT_YOUR_KEYSTORE_PASSWORD" not in c and "storePassword" in c:
+            rel_label = os.path.relpath(key_props_workspace, REPO_ROOT) if key_props_workspace.startswith(REPO_ROOT) else key_props_workspace
+            print(f"[SETUP] Using existing owner credentials at {rel_label}...")
+            return None, {}
 
     temp_dir = tempfile.mkdtemp(prefix="talib_ilm_bundle_size_")
     temp_keystore = os.path.join(temp_dir, "test-upload.jks")
-    temp_key_props = os.path.join(temp_dir, "empty.properties")
+    temp_key_props = os.path.join(temp_dir, "key.properties")
 
     print("[SETUP] Creating temporary isolated test keystore...")
     cmd = [
@@ -97,8 +100,12 @@ def setup_test_signing(android_dir=None):
         "-dname", "CN=TestUpload, OU=Dev, O=TalibIlm, C=DZ"
     ]
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    escaped_keystore = temp_keystore.replace("\\", "/")
     with open(temp_key_props, "w", encoding="utf-8") as f:
-        f.write("")
+        f.write(f"storeFile={escaped_keystore}\n")
+        f.write("storePassword=testpass123\n")
+        f.write("keyAlias=test-upload\n")
+        f.write("keyPassword=testpass123\n")
 
     env_overrides = {
         "KEY_PROPERTIES_PATH": temp_key_props,
@@ -106,6 +113,10 @@ def setup_test_signing(android_dir=None):
         "KEYSTORE_PASSWORD": "testpass123",
         "KEY_ALIAS": "test-upload",
         "KEY_PASSWORD": "testpass123",
+        "ORG_GRADLE_PROJECT_KEYSTORE_PATH": temp_keystore,
+        "ORG_GRADLE_PROJECT_KEYSTORE_PASSWORD": "testpass123",
+        "ORG_GRADLE_PROJECT_KEY_ALIAS": "test-upload",
+        "ORG_GRADLE_PROJECT_KEY_PASSWORD": "testpass123",
     }
     return temp_dir, env_overrides
 
