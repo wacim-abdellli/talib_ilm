@@ -178,7 +178,9 @@ void main() {
       );
 
       // Verify stream was cancelled
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      for (int i = 0; i < 20 && !streamCancelled; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
       expect(streamCancelled, isTrue, reason: 'Stream must be cancelled early when exceeding 128 KB');
       expect(await QuranSyncService.instance.isChunkDownloaded(1), isFalse);
     });

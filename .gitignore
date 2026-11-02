@@ -63,3 +63,4 @@ test/**/failures/
 scratch/
 key.properties
 *.jks
+*keystore_secrets_export.txt
