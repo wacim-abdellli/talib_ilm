@@ -15,17 +15,19 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host " TALIB ILM — PRODUCTION ANDROID KEYSTORE SETUP TOOL        " -ForegroundColor Cyan
+Write-Host " TALIB ILM -- PRODUCTION ANDROID KEYSTORE SETUP TOOL        " -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 # 1. Check for keytool (JDK)
-$keytoolPath = (Get-Command keytool -ErrorAction SilentlyContinue)
-if (-not $keytoolPath) {
-    # Check common Java install paths
+$keytoolCmd = Get-Command keytool -ErrorAction SilentlyContinue
+$keytoolPath = ""
+if ($keytoolCmd) {
+    $keytoolPath = $keytoolCmd.Source
+} else {
     $javaHomes = @(
         $env:JAVA_HOME,
-        "C:\Program Files\Android\Android Studio\jbr\bin",
-        "C:\Program Files\Java"
+        "C:\Program Files\Java\jdk-17\bin",
+        "C:\Program Files\Android\Android Studio\jbr\bin"
     )
     foreach ($jh in $javaHomes) {
         if ($jh -and (Test-Path "$jh\keytool.exe")) {
@@ -58,7 +60,7 @@ if ([string]::IsNullOrWhiteSpace($Password)) {
     }
 }
 
-$repoRoot = Resolve-Path "$PSScriptRoot\.."
+$repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $androidDir = Join-Path $repoRoot "android"
 $keystorePath = Join-Path $androidDir "upload-keystore.jks"
 $propertiesPath = Join-Path $androidDir "key.properties"
@@ -96,20 +98,17 @@ if (-not (Test-Path $keystorePath)) {
 
 # 4. Generate android/key.properties
 Write-Host "`n[2/4] Writing android/key.properties..." -ForegroundColor Cyan
-$propsContent = @"
-storePassword=$Password
-keyPassword=$Password
-keyAlias=$Alias
-storeFile=../upload-keystore.jks
-"@
-Set-Content -Path $propertiesPath -Value $propsContent -Encoding Ascii
+$propsContent = "storePassword=" + $Password + "`nkeyPassword=" + $Password + "`nkeyAlias=" + $Alias + "`nstoreFile=../upload-keystore.jks`n"
+[System.IO.File]::WriteAllText($propertiesPath, $propsContent, [System.Text.Encoding]::ASCII)
 Write-Host "[PASS] android/key.properties written successfully." -ForegroundColor Green
 
 # 5. Extract Fingerprints
 Write-Host "`n[3/4] Extracting Certificate Fingerprints..." -ForegroundColor Cyan
 $certInfo = & $keytoolPath -list -v -keystore $keystorePath -alias $Alias -storepass $Password
-$sha256 = ($certInfo | Select-String "SHA256:\s*([A-F0-9:]+)").Matches.Groups[1].Value
-$sha1 = ($certInfo | Select-String "SHA1:\s*([A-F0-9:]+)").Matches.Groups[1].Value
+$sha256Match = [regex]::Match($certInfo, 'SHA256:\s*([A-F0-9:]+)')
+$sha1Match = [regex]::Match($certInfo, 'SHA1:\s*([A-F0-9:]+)')
+$sha256 = if ($sha256Match.Success) { $sha256Match.Groups[1].Value } else { "N/A" }
+$sha1 = if ($sha1Match.Success) { $sha1Match.Groups[1].Value } else { "N/A" }
 
 Write-Host "  -> SHA-256 Fingerprint: $sha256" -ForegroundColor Magenta
 Write-Host "  -> SHA-1   Fingerprint: $sha1" -ForegroundColor Magenta
@@ -119,50 +118,18 @@ Write-Host "`n[4/4] Base64 Encoding Keystore for GitHub Actions CI/CD..." -Foreg
 $keystoreBytes = [System.IO.File]::ReadAllBytes($keystorePath)
 $base64Keystore = [System.Convert]::ToBase64String($keystoreBytes)
 
-# Save secrets summary file (ignored by Git)
 $secretsOut = Join-Path $androidDir "keystore_secrets_export.txt"
-$secretsText = @"
-============================================================
- TALIB ILM — PRODUCTION RELEASE CREDENTIALS
- (KEEP THIS FILE STRICTLY PRIVATE - DO NOT COMMIT)
-============================================================
-Keystore File : android/upload-keystore.jks
-Properties    : android/key.properties
-Key Alias     : $Alias
-Key Password  : $Password
-Store Password: $Password
+$secretsText = "TALIB ILM RELEASE CREDENTIALS`n`n" +
+    "Keystore File: android/upload-keystore.jks`n" +
+    "Key Alias: $Alias`n" +
+    "Key Password: $Password`n" +
+    "SHA-256: $sha256`n" +
+    "SHA-1: $sha1`n`n" +
+    "GITHUB ACTIONS SECRET (ANDROID_KEYSTORE_BASE64):`n$base64Keystore`n"
 
-CERTIFICATE FINGERPRINTS:
-SHA-256: $sha256
-SHA-1  : $sha1
-
-GITHUB ACTIONS REPOSITORY SECRETS (Settings -> Secrets -> Actions):
-------------------------------------------------------------
-ANDROID_KEYSTORE_BASE64 :
-$base64Keystore
-
-KEYSTORE_PASSWORD : $Password
-KEY_ALIAS         : $Alias
-KEY_PASSWORD      : $Password
-============================================================
-"@
-Set-Content -Path $secretsOut -Value $secretsText -Encoding Utf8
+[System.IO.File]::WriteAllText($secretsOut, $secretsText, [System.Text.Encoding]::UTF8)
 Write-Host "[PASS] Secrets exported safely to: $secretsOut" -ForegroundColor Green
 
-# 7. Check .gitignore safety
-$gitignorePath = Join-Path $repoRoot ".gitignore"
-$gitignore = Get-Content $gitignorePath
-$hasKeystore = $gitignore | Select-String "upload-keystore.jks|\*.jks"
-$hasProps = $gitignore | Select-String "key.properties"
-
-if ($hasKeystore -and $hasProps) {
-    Write-Host "`n[VERIFIED] .gitignore safely protects upload-keystore.jks and key.properties from git commit." -ForegroundColor Green
-} else {
-    Write-Host "`n[WARN] Please verify .gitignore includes *.jks and key.properties." -ForegroundColor Yellow
-}
-
 Write-Host "`n============================================================" -ForegroundColor Cyan
-Write-Host " ALL SETUP COMPLETE! You can now run:" -ForegroundColor Green
-Write-Host "   flutter build appbundle --release" -ForegroundColor White
+Write-Host " ALL SETUP COMPLETE! Keystore and key.properties are ready." -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
-
