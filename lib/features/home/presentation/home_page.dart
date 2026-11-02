@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../shared/widgets/location_pre_permission_sheet.dart';
 
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/last_activity_service.dart';
@@ -81,6 +84,70 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         const Duration(minutes: 1),
         (_) => _refreshPeriodicData(),
       );
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndPromptLocationIfNeeded();
+    });
+  }
+
+  Future<void> _checkAndPromptLocationIfNeeded() async {
+    if (!mounted || widget.currentTime != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasPrompted = prefs.getBool('has_prompted_location_first_run') ?? false;
+      final isManual = prefs.getBool('manual_location_enabled') ?? false;
+      final isGpsVerified = prefs.getBool('last_is_verified_gps') ?? false;
+
+      // If location is already configured, nothing to do
+      if (isManual || isGpsVerified) return;
+
+      // Check current OS permission
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (isServiceEnabled) {
+          await LocationService().refreshGpsLocation();
+          if (mounted) _loadAllData(forceRefresh: true);
+          return;
+        }
+      }
+
+      // Only prompt once on initial app launch
+      if (hasPrompted) return;
+      await prefs.setBool('has_prompted_location_first_run', true);
+
+      if (!mounted) return;
+
+      final allow = await LocationPrePermissionSheet.show(
+        context,
+        onManualSelect: () {
+          LocationSettingsSheet.show(
+            context,
+            onSaved: () {
+              _loadAllData(forceRefresh: true);
+            },
+          );
+        },
+      );
+
+      if (allow == true && mounted) {
+        final req = await Geolocator.requestPermission();
+        if (req == LocationPermission.whileInUse || req == LocationPermission.always) {
+          await LocationService().refreshGpsLocation();
+          if (mounted) _loadAllData(forceRefresh: true);
+        } else if (mounted) {
+          LocationSettingsSheet.show(
+            context,
+            onSaved: () {
+              _loadAllData(forceRefresh: true);
+            },
+          );
+        }
+      }
+    } catch (_) {
+      // Defensive handling
     }
   }
 
