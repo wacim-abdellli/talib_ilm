@@ -8,6 +8,7 @@ import '../../../../core/services/adhan_settings_service.dart';
 import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import 'battery_reliability_sheet.dart';
 import 'iqama_interval_settings.dart';
 import 'prayer_notification_mode_pill.dart';
 
@@ -148,6 +149,62 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
         ),
 
         if (settings.enabled) ...[
+          const SizedBox(height: AppSpace.md),
+
+          // ── Battery Reliability & Background Protection Guide Card ──────
+          AppCard(
+            child: InkWell(
+              onTap: () => BatteryReliabilitySheet.show(context),
+              borderRadius: AppRadius.mdRadius,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: palette.goldSoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.battery_charging_full_rounded,
+                        color: palette.gold,
+                        size: AppIcon.sm,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ضمان استمرار الأذان في الخلفية',
+                            style: textTheme.body.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: palette.text,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpace.xxs),
+                          Text(
+                            'تفعيل استثناء البطارية لمنع توفير الطاقة من كتم الأذان',
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_left_rounded,
+                      color: palette.textSubtle,
+                      size: AppIcon.md,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpace.md),
 
           // ── 2. Current Voice Summary Card ──────────────────────────
