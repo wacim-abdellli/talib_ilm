@@ -5,8 +5,16 @@ import tempfile
 
 sys.stdout.reconfigure(encoding='utf-8')
 
+def get_gradlew_path():
+    gradlew_name = "gradlew.bat" if (sys.platform == "win32" or os.name == "nt") else "gradlew"
+    gradlew_path = os.path.abspath(os.path.join("android", gradlew_name))
+    if not (sys.platform == "win32" or os.name == "nt"):
+        if os.path.exists(gradlew_path):
+            os.chmod(gradlew_path, 0o755)
+    return gradlew_path
+
 def run_gradle(args, env_vars=None):
-    cmd = [os.path.abspath("android/gradlew.bat")] + args
+    cmd = [get_gradlew_path()] + args
     env = os.environ.copy()
     if env_vars:
         env.update(env_vars)
@@ -31,37 +39,50 @@ def main():
     print("ANDROID SIGNING FAIL-CLOSED VERIFICATION TEST SUITE")
     print("==================================================")
 
-    # 1. Test bundleRelease fails closed
-    print("\n[1/5] Verifying bundleRelease fails closed without signing credentials...")
-    code, output = run_gradle([":app:bundleRelease", "--dry-run"])
-    if code != 0 and "Release build rejected: production release signing is not configured" in output:
-        print("  PASS: bundleRelease rejected with fail-closed GradleException.")
-    else:
-        print(f"  FAIL: Expected rejection, got exit code {code}.\nOutput:\n{output[:500]}")
-        sys.exit(1)
+    # Isolated empty properties to guarantee fail-closed behavior regardless of local dev key.properties
+    with tempfile.TemporaryDirectory() as base_tmp:
+        empty_props = os.path.join(base_tmp, "empty.properties")
+        with open(empty_props, "w", encoding="utf-8") as f:
+            f.write("# Isolated empty properties for fail-closed verification\n")
 
-    # 2. Test assembleRelease fails closed
-    print("\n[2/5] Verifying assembleRelease fails closed without signing credentials...")
-    code, output = run_gradle([":app:assembleRelease", "--dry-run"])
-    if code != 0 and "Release build rejected: production release signing is not configured" in output:
-        print("  PASS: assembleRelease rejected with fail-closed GradleException.")
-    else:
-        print(f"  FAIL: Expected rejection, got exit code {code}.\nOutput:\n{output[:500]}")
-        sys.exit(1)
+        fail_closed_env = {
+            "KEY_PROPERTIES_PATH": empty_props,
+            "KEYSTORE_PATH": "",
+            "KEYSTORE_PASSWORD": "",
+            "KEY_ALIAS": "",
+            "KEY_PASSWORD": "",
+        }
 
-    # 3. Test assembleDebug succeeds without credentials
-    print("\n[3/5] Verifying assembleDebug succeeds without release credentials...")
-    code, output = run_gradle([":app:assembleDebug", "--dry-run"])
-    if code == 0 and "BUILD SUCCESSFUL" in output:
-        print("  PASS: assembleDebug builds cleanly without release credentials.")
-    else:
-        print(f"  FAIL: Expected debug success, got exit code {code}.\nOutput:\n{output[:500]}")
-        sys.exit(1)
+        # 1. Test bundleRelease fails closed
+        print("\n[1/5] Verifying bundleRelease fails closed without signing credentials...")
+        code, output = run_gradle([":app:bundleRelease", "--dry-run"], env_vars=fail_closed_env)
+        if code != 0 and "Release build rejected: production release signing is not configured" in output:
+            print("  PASS: bundleRelease rejected with fail-closed GradleException.")
+        else:
+            print(f"  FAIL: Expected rejection, got exit code {code}.\nOutput:\n{output[:500]}")
+            sys.exit(1)
 
-    # 4. Test isolated temporary keystore acceptance & fingerprint verification
-    print("\n[4/5] Verifying signing acceptance with isolated temporary keystore...")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        keystore_file = os.path.join(tmp_dir, "test_upload_key.jks")
+        # 2. Test assembleRelease fails closed
+        print("\n[2/5] Verifying assembleRelease fails closed without signing credentials...")
+        code, output = run_gradle([":app:assembleRelease", "--dry-run"], env_vars=fail_closed_env)
+        if code != 0 and "Release build rejected: production release signing is not configured" in output:
+            print("  PASS: assembleRelease rejected with fail-closed GradleException.")
+        else:
+            print(f"  FAIL: Expected rejection, got exit code {code}.\nOutput:\n{output[:500]}")
+            sys.exit(1)
+
+        # 3. Test assembleDebug succeeds without credentials
+        print("\n[3/5] Verifying assembleDebug succeeds without release credentials...")
+        code, output = run_gradle([":app:assembleDebug", "--dry-run"], env_vars=fail_closed_env)
+        if code == 0 and "BUILD SUCCESSFUL" in output:
+            print("  PASS: assembleDebug builds cleanly without release credentials.")
+        else:
+            print(f"  FAIL: Expected debug success, got exit code {code}.\nOutput:\n{output[:500]}")
+            sys.exit(1)
+
+        # 4. Test isolated temporary keystore acceptance & fingerprint verification
+        print("\n[4/5] Verifying signing acceptance with isolated temporary keystore...")
+        keystore_file = os.path.join(base_tmp, "test_upload_key.jks")
         alias = "test_release_alias"
         pwd = "TemporaryTestPassword123!"
 
@@ -110,6 +131,7 @@ def main():
             f"-PKEY_PASSWORD={pwd}",
         ]
         test_env = {
+            "KEY_PROPERTIES_PATH": empty_props,
             "KEYSTORE_PATH": keystore_file,
             "KEYSTORE_PASSWORD": pwd,
             "KEY_ALIAS": alias,
@@ -122,7 +144,7 @@ def main():
             print(f"  FAIL: Expected success with valid signing, got {code}.\nOutput:\n{output[:500]}")
             sys.exit(1)
 
-    # 5. Git cleanliness check (no secrets/keystores in git)
+    # 5. Git cleanliness check (no secrets/keystores in Git)
     print("\n[5/5] Verifying repository cleanliness (no keystore or secrets in Git)...")
     git_proc = subprocess.run(
         ["git", "ls-files", "*.jks", "*.keystore", "key.properties"],
@@ -141,4 +163,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

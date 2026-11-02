@@ -14,6 +14,8 @@ name: Verify Release Readiness
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      TZ: 'Africa/Algiers'
     defaults:
       run:
         shell: bash
