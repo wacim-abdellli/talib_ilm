@@ -1,3 +1,23 @@
+## Critical Refinement Stage — OEM Battery Resilience & Turnkey Keystore Tooling (2 November 2026)
+- **Branch**: `remediation/cr1-battery-resilience-and-stability`
+- **Base Commit**: `4666e46` (`remediation(p1.6): remove unused iOS background fetch mode and always-location description`)
+- **Implemented Critical Refinements**:
+  - **Pillar 1: OEM Battery Resilience & Adhan Protection**:
+    - Created `lib/features/prayer/presentation/widgets/battery_reliability_sheet.dart` using strict Design System tokens (`AppPalette`, `AppSpace`, `AppRadius`, `AppTypography`).
+    - Integrated native Android `Permission.ignoreBatteryOptimizations` request and status detection.
+    - Added step-by-step Arabic guidance for Xiaomi (Autostart + No Restrictions), Samsung (Never Sleeping Apps), and Huawei (Manual Launch).
+    - Integrated persistent "ضمان استمرار الأذان في الخلفية" entry card into `PrayerAdhanSection`.
+    - Added comprehensive widget test suite `test/battery_reliability_sheet_test.dart` (3 tests verifying Light/Dark themes and scales 1.0, 1.5, 2.0).
+  - **Pillar 5: Turnkey Production Keystore Automation**:
+    - Created `tool/setup_production_keystore.ps1` (PowerShell) and `tool/setup_production_keystore.sh` (Bash) generating 4096-bit RSA keystores, automated `key.properties`, certificate fingerprints (SHA-256, SHA-1), and GitHub Actions Base64 secrets in 1 click.
+    - Updated `.gitignore` protecting `*keystore_secrets_export.txt`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (6.0s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `python tool/verify_android_signing_fail_closed.py`: ALL 5/5 PASSED.
+  - `flutter test --no-pub`: **805 / 805 PASSED, 0 FAILED (100% green)** (3m 01s).
+- **Status**: Complete & Verified.
+
 ## Remediation Task R7 — Clean Exact-Commit Final Release Gate & Closure (2 November 2026)
 - **Branch**: `remediation/r7-clean-release-gate`
 - **Base Commit**: `e9a41a0` (`remediation(r6): enforce strict HTTPS boundaries for outbound web launchers`)
