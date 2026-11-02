@@ -56,8 +56,6 @@ class AdhkarFontSizeSheet extends StatefulWidget {
 class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
   static const double _minScale = AdhkarTypographyScale.minimum;
   static const double _maxScale = AdhkarTypographyScale.maximum;
-  static const double _step = AdhkarTypographyScale.step;
-
   static const List<double> _presets = AdhkarTypographyScale.presets;
   static final RegExp _tashkeelRegex = RegExp(r'[\u064B-\u0652\u0670\u0640]');
 
@@ -82,15 +80,21 @@ class _AdhkarFontSizeSheetState extends State<AdhkarFontSizeSheet> {
   }
 
   void _increase() {
-    if (_scale < _maxScale - 0.01) {
-      _applyScale(_scale + _step);
-    }
+    if (_scale >= _maxScale - 0.01) return;
+    final nextPreset = _presets.firstWhere(
+      (preset) => preset > _scale + 0.01,
+      orElse: () => _maxScale,
+    );
+    _applyScale(nextPreset);
   }
 
   void _decrease() {
-    if (_scale > _minScale + 0.01) {
-      _applyScale(_scale - _step);
-    }
+    if (_scale <= _minScale + 0.01) return;
+    final previousPreset = _presets.lastWhere(
+      (preset) => preset < _scale - 0.01,
+      orElse: () => _minScale,
+    );
+    _applyScale(previousPreset);
   }
 
   void _reset() {
