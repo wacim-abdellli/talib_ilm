@@ -1,11 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 abstract final class AdhkarTypographyScale {
-  static const double minimum = 0.70;
+  static const double minimum = 0.50;
   static const double maximum = 1.60;
   static const double step = 0.15;
 
   static const List<double> presets = [
+    0.50,
+    0.55,
+    0.60,
+    0.65,
     0.70,
     0.75,
     0.80,

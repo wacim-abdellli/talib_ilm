@@ -1,3 +1,8 @@
+## Remediation Task P1.7 — Smaller Adhkar Reading Sizes (2 November 2026)
+- Lowered the Adhkar text scale floor from 70% to 50%, added 50%, 55%, 60%, and 65% quick presets, and made the Tt +/- controls move through the available presets.
+- Existing platform defaults stay 85% on Android and 70% on iOS; Reset still uses those defaults, and saved sizes remain clamped to the supported 50–160% range.
+- Verification: `flutter analyze --no-pub` reported 0 issues; `python tool/ui_lint_v2.py` passed (7 allow markers / cap 10); `git diff --check` passed. Flutter tests were not run.
+
 ## Remediation Task R7 — Clean Exact-Commit Final Release Gate & Closure (2 November 2026)
 - **Branch**: `remediation/r7-clean-release-gate`
 - **Base Commit**: `e9a41a0` (`remediation(r6): enforce strict HTTPS boundaries for outbound web launchers`)
