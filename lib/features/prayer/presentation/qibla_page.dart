@@ -8,6 +8,7 @@ import '../../../app/theme/app_palette.dart';
 import '../../../core/services/compass_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
+import 'location_settings_sheet.dart';
 import 'widgets/astrolabe_compass.dart';
 
 class QiblaPage extends StatefulWidget {
@@ -47,7 +48,18 @@ class _QiblaPageState extends State<QiblaPage>
 
   Future<void> _initLocation() async {
     try {
-      final position = await _locationService.getLocation();
+      var position = await _locationService.getLocation();
+      if (position.isFallback) {
+        final permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          final req = await Geolocator.requestPermission();
+          if (req == LocationPermission.whileInUse || req == LocationPermission.always) {
+            position = await _locationService.refreshGpsLocation();
+          }
+        } else if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+          position = await _locationService.refreshGpsLocation();
+        }
+      }
       final myCoords = Coordinates(position.latitude, position.longitude);
       final qibla = Qibla(myCoords);
 
@@ -127,39 +139,92 @@ class _QiblaPageState extends State<QiblaPage>
                       children: [
                         const SizedBox(height: AppSpace.lg),
 
-                        // City & Status Pill (directly displays the chosen city/capital)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpace.lg,
-                            vertical: AppSpace.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isFacingQibla ? palette.goldSoft : palette.surfaceMuted,
-                            borderRadius: AppRadius.pillRadius,
-                            border: Border.all(
-                              color: isFacingQibla
-                                  ? gold
-                                  : palette.border,
+                        // City & Status Pill (tap to calibrate or change city)
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            LocationSettingsSheet.show(context, onSaved: _initLocation);
+                          },
+                          borderRadius: AppRadius.pillRadius,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.lg,
+                              vertical: AppSpace.xs,
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.location_city_rounded,
-                                size: AppIcon.sm,
-                                color: isFacingQibla ? gold : palette.textMuted,
+                            decoration: BoxDecoration(
+                              color: isFacingQibla ? palette.goldSoft : palette.surfaceMuted,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isFacingQibla
+                                    ? gold
+                                    : palette.border,
                               ),
-                              const SizedBox(width: AppSpace.xs),
-                              Text(
-                                _currentPosition?.city ?? 'مكة المكرمة',
-                                style: textTheme.captionBold.copyWith(
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.location_city_rounded,
+                                  size: AppIcon.sm,
                                   color: isFacingQibla ? gold : palette.textMuted,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: AppSpace.xs),
+                                Text(
+                                  _currentPosition?.city ?? 'مكة المكرمة',
+                                  style: textTheme.captionBold.copyWith(
+                                    color: isFacingQibla ? gold : palette.textMuted,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpace.xs),
+                                Icon(
+                                  Icons.edit_location_alt_rounded,
+                                  size: AppIcon.sm,
+                                  color: isFacingQibla ? gold : palette.textSubtle,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+
+                        if (_currentPosition?.isFallback == true) ...[
+                          const SizedBox(height: AppSpace.xs),
+                          InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              LocationSettingsSheet.show(context, onSaved: _initLocation);
+                            },
+                            borderRadius: AppRadius.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.surfaceRaised,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(color: palette.gold),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.my_location_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.gold,
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    'الموقع افتراضي • اضغط لضبط موقعك بدقة',
+                                    style: textTheme.caption.copyWith(
+                                      color: palette.gold,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
 
                         const Spacer(),
 

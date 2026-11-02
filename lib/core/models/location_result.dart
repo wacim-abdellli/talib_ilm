@@ -31,6 +31,8 @@ class LocationResult {
       source == LocationSource.manual ||
       source == LocationSource.savedGps;
 
+  bool get isFallback => source == LocationSource.defaultCity;
+
   String get sourceLabel {
     switch (source) {
       case LocationSource.gps:

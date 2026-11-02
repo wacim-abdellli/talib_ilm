@@ -1,3 +1,13 @@
+## Feature Enhancement — First-Entry Location Onboarding & Qibla Precision (2 November 2026)
+- **Branch**: `main`
+- **Features Implemented**:
+  - **Automatic First-Launch Location Prompt**: When user opens the app, checks if location is unconfigured. If GPS permission already granted, silently resolves GPS; otherwise presents `LocationPrePermissionSheet` prompting user to either allow GPS or select their city from the verified 58 Algerian wilayas / world cities.
+  - **Qibla Screen Precision & Interactive City Calibration**: In `QiblaPage`, automatically prompts for GPS if on default fallback coordinates. Made the City & Status pill interactive (`InkWell`) with edit icon and fallback warning pill (`الموقع افتراضي • اضغط لضبط موقعك بدقة`) to calibrate Qibla accurately anytime.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (5.5s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/verified_location_and_prayer_test.dart test/battery_reliability_sheet_test.dart --no-pub`: ALL 14 PASS.
+
 ## Critical Refinement Stage — OEM Battery Resilience & Turnkey Keystore Tooling (2 November 2026)
 - **Branch**: `remediation/cr1-battery-resilience-and-stability`
 - **Base Commit**: `4666e46` (`remediation(p1.6): remove unused iOS background fetch mode and always-location description`)
