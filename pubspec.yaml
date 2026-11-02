@@ -1,7 +1,7 @@
 name: talib_ilm
 description: "A comprehensive Arabic Islamic knowledge application."
 publish_to: 'none'
-version: 1.0.0+2002
+version: 1.0.1+2003
 
 environment:
   sdk: ^3.10.4
