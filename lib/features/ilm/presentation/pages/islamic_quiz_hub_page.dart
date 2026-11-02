@@ -51,6 +51,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
   }
 
   void _openDailyChallenge() async {
+    final isDone = _progressService?.isDailyChallengeCompletedToday() ?? false;
     final questions = IslamicQuizCatalog.getDailyChallengeQuestions();
     if (questions.isEmpty) return;
 
@@ -59,7 +60,9 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
       buildFadeRoute(
         page: QuizSessionPage(
           title: 'التحدي اليومي السريع',
-          subtitle: '10 أسئلة منوعة من سائر فنون الشريعة',
+          subtitle: isDone
+              ? 'مراجعة وتكرار لتثبيت المحفوظ'
+              : '10 أسئلة منوعة من سائر فنون الشريعة',
           questions: questions,
           isDailyChallenge: true,
         ),

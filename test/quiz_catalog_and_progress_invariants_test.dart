@@ -230,11 +230,17 @@ void main() {
       await progressService.markDailyChallengeCompleted(5, 5);
       final xpAfterFirst = prefs.getInt('quiz_total_xp') ?? 0;
       expect(xpAfterFirst, greaterThan(0));
+      expect(prefs.getInt('quiz_total_quizzes'), 1);
+      expect(prefs.getInt('quiz_total_questions_answered'), 5);
+      expect(prefs.getInt('quiz_total_correct'), 5);
 
       // Attempting same-day completion again
       await progressService.markDailyChallengeCompleted(5, 5);
       final xpAfterSecond = prefs.getInt('quiz_total_xp') ?? 0;
       expect(xpAfterSecond, xpAfterFirst);
+      expect(prefs.getInt('quiz_total_quizzes'), 1);
+      expect(prefs.getInt('quiz_total_questions_answered'), 5);
+      expect(prefs.getInt('quiz_total_correct'), 5);
     });
 
     test('Concurrent recordLevelResult calls are serialized safely via AsyncLock', () async {
