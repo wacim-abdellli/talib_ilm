@@ -29,6 +29,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.38.7'
           channel: 'stable'
           cache: true
 
@@ -40,13 +41,13 @@ jobs:
 
       - name: Configure Production Apple Signing (if secrets present)
         id: apple-signing
-        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' }}
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           BUILD_PROVISION_PROFILE_APP: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           BUILD_PROVISION_PROFILE_WIDGET: ${{ secrets.PROVISIONING_PROFILE_WIDGET_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'temporary-ci-keychain-pass' }}
+        if: env.BUILD_CERTIFICATE_BASE64 != ''
         run: |
           set -euo pipefail
           echo "=== Setting up Apple Distribution Signing Keychain ==="
@@ -94,7 +95,14 @@ jobs:
       - name: Verify embedded WidgetKit extension
         run: |
           set -euo pipefail
-          APP_DIR="build/ios/iphoneos/Runner.app"
+          if [ -d "build/ios/iphoneos/Runner.app" ]; then
+            APP_DIR="build/ios/iphoneos/Runner.app"
+          elif [ -d "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app" ]; then
+            APP_DIR="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          else
+            echo "ERROR: Runner.app not found"
+            exit 1
+          fi
           APPEX_DIR="$APP_DIR/PlugIns/TalibIlmWidgets.appex"
 
           test -d "$APPEX_DIR"
@@ -115,7 +123,11 @@ jobs:
       - name: Ensure Notification Audio Assets in Runner Bundle
         run: |
           echo "=== Copying all notification sounds to Runner.app bundle ==="
-          APP_DIR="build/ios/iphoneos/Runner.app"
+          if [ -d "build/ios/iphoneos/Runner.app" ]; then
+            APP_DIR="build/ios/iphoneos/Runner.app"
+          elif [ -d "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app" ]; then
+            APP_DIR="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          fi
           mkdir -p "$APP_DIR/Library/Sounds"
           mkdir -p "$APP_DIR/NotificationSounds"
           cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/"
@@ -152,12 +164,14 @@ jobs:
           retention-days: 14
 
       - name: Compress Runner.app for Simulator / Direct Testing
+        if: env.SIGNED_BUILD_CONFIGURED != 'true'
         run: |
           cd build/ios/iphoneos
           zip -yr ../Runner.app.zip Runner.app
           cd ../../..
 
       - name: Upload Runner.app.zip Artifact
+        if: env.SIGNED_BUILD_CONFIGURED != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: talib-ilm-Runner.app.zip

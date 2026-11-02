@@ -461,15 +461,15 @@ def build_and_verify_release_bundle(repo_root, output_dir):
             "-keyalg", "RSA",
             "-keysize", "2048",
             "-validity", "1",
-            "-keystore", f'"{keystore_path}"',
+            "-keystore", keystore_path,
             "-storepass", "testpass123",
             "-keypass", "testpass123",
-            "-dname", f'"{dname}"',
+            "-dname", dname,
         ]
         is_win = is_windows()
         res_kt = subprocess.run(
-            " ".join(keytool_cmd) if is_win else keytool_cmd,
-            shell=is_win,
+            keytool_cmd,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
