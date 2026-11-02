@@ -280,8 +280,13 @@ class QuizManhajSyllabus {
         stage: stageIntermediate,
       ),
       ManhajLevelDescriptor(
-        title: 'المستوى الرابع: أمهات المؤمنين ورواة الحديث والتابعين',
-        description: 'خديجة وعائشة رضي الله عنهما، حفاظ الحديث، وسادات التابعين',
+        title: 'المستوى الرابع: أمهات المؤمنين وآل البيت الأطهار',
+        description: 'خديجة، عائشة، فاطمة الزهراء، وسيدا شباب أهل الجنة الحسن والحسين',
+        stage: stageIntermediate,
+      ),
+      ManhajLevelDescriptor(
+        title: 'المستوى الخامس: رواة الحديث وحفاظ السنن وفقهاء الصحابة',
+        description: 'أبو هريرة، عبد الله بن عباس، ابن مسعود، ابن عمر، وأنس بن مالك',
         stage: stageMastery,
       ),
     ],

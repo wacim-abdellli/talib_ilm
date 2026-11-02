@@ -176,7 +176,8 @@ class QuizProgressService {
 
     if (prevLevelId != null) {
       final prevCompleted =
-          _prefs.getBool('quiz_completed_$prevLevelId') ?? false;
+          (_prefs.getBool('quiz_completed_$prevLevelId') ?? false) ||
+          ((_prefs.getInt('quiz_stars_$prevLevelId') ?? 0) > 0);
       return prevCompleted;
     }
     return false;
@@ -192,7 +193,9 @@ class QuizProgressService {
     final unlocked = isLevelUnlocked(levelId, levelNumber, prevLevelId);
     final highScore = _prefs.getInt('quiz_score_$levelId') ?? 0;
     final stars = _prefs.getInt('quiz_stars_$levelId') ?? 0;
-    final isCompleted = _prefs.getBool('quiz_completed_$levelId') ?? false;
+    final isCompleted = (_prefs.getBool('quiz_completed_$levelId') ?? false) ||
+        stars > 0 ||
+        (totalQuestions > 0 && (highScore / totalQuestions) >= 0.7);
 
     return QuizLevelProgress(
       levelId: levelId,
@@ -275,6 +278,16 @@ class QuizProgressService {
         final currentXp = _prefs.getInt(_keyXp) ?? 0;
         final xp = (safeCorrect * 12) + 20; // Extra daily bonus XP
         await _prefs.setInt(_keyXp, currentXp + xp);
+
+        final currentQuizzes = _prefs.getInt(_keyQuizzesCount) ?? 0;
+        await _prefs.setInt(_keyQuizzesCount, currentQuizzes + 1);
+
+        final currentQuestions = _prefs.getInt(_keyQuestionsAnswered) ?? 0;
+        await _prefs.setInt(
+            _keyQuestionsAnswered, currentQuestions + total);
+
+        final currentCorrect = _prefs.getInt(_keyCorrectAnswers) ?? 0;
+        await _prefs.setInt(_keyCorrectAnswers, currentCorrect + safeCorrect);
       });
 
   static const String _keySessionPrefix = 'quiz_active_session_';
