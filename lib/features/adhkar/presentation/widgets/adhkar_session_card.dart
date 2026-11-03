@@ -44,8 +44,91 @@ class AdhkarSessionCard extends StatelessWidget {
     return text.replaceAll(_tashkeelRegex, '');
   }
 
+  (String countLabel, String? occasionLabel) get _parsedMeta {
+    final cd = item.countDescription.trim();
+
+    final String defaultCount;
+    if (repeat == 1) {
+      defaultCount = 'مرة واحدة';
+    } else if (repeat == 2) {
+      defaultCount = 'مرتان';
+    } else if (repeat >= 3 && repeat <= 10) {
+      defaultCount = '$repeat مرات';
+    } else {
+      defaultCount = '$repeat مرة';
+    }
+
+    if (cd.isEmpty) {
+      return (defaultCount, null);
+    }
+
+    // Match parenthesized conditions: "مَرَّةً وَاحِدَةً (عِنْدَ الْخُرُوجِ)"
+    final parenMatch = RegExp(r'^(.*?)\s*[\(（](.*?)[\)）]$').firstMatch(cd);
+    if (parenMatch != null) {
+      final countPart = parenMatch.group(1)?.trim() ?? '';
+      final contextPart = parenMatch.group(2)?.trim() ?? '';
+      final cleanCount = _cleanCountWord(countPart, defaultCount);
+      return (cleanCount, contextPart.isNotEmpty ? contextPart : null);
+    }
+
+    // Known phrases that specify situational context
+    for (final phrase in const [
+      'دُبُرَ كُلِّ صَلَاةٍ',
+      'دبر كل صلاة',
+      'عِنْدَ النَّوْمِ',
+      'عند النوم',
+      'عِنْدَ الْقِيَامِ مِنَ الْمَجْلِسِ',
+      'من خاتمة سورة البقرة',
+      'فِي اليَوْمِ',
+      'في اليوم',
+      'فِي الْمَجْلِسِ',
+      'في المجلس',
+      'أَوْ يُكْثِرُ مِنْهَا',
+      'أَوْ حَسَبَ الْقُدْرَةِ',
+    ]) {
+      if (cd.contains(phrase)) {
+        final idx = cd.indexOf(phrase);
+        final countPart = cd.substring(0, idx).trim();
+        final contextPart = cd.substring(idx).trim();
+        final cleanCount = _cleanCountWord(countPart, defaultCount);
+        return (cleanCount, contextPart.isNotEmpty ? contextPart : null);
+      }
+    }
+
+    final hasRepeatWord = cd.contains('مرة') ||
+        cd.contains('مَرَّة') ||
+        cd.contains('مرات') ||
+        cd.contains('مَرَّات');
+
+    if (!hasRepeatWord) {
+      if (cd.length <= 20) {
+        return (cd, null);
+      }
+      return (defaultCount, cd);
+    }
+
+    return (_cleanCountWord(cd, defaultCount), null);
+  }
+
+  static String _cleanCountWord(String raw, String fallback) {
+    final clean = raw.trim();
+    if (clean.isEmpty) return fallback;
+    if (clean == 'مَرَّةً وَاحِدَةً' || clean == 'مرة واحدة') return 'مرة واحدة';
+    if (clean == 'ثَلَاثَ مَرَّاتٍ' || clean == '3 مَرَّاتٍ' || clean == '3 مرات') return '3 مرات';
+    if (clean == 'أَرْبَعَ مَرَّاتٍ' || clean == '4 مَرَّاتٍ') return '4 مرات';
+    if (clean == 'سَبْعَ مَرَّاتٍ' || clean == '7 مَرَّاتٍ') return '7 مرات';
+    if (clean == 'عَشْرَ مَرَّاتٍ' || clean == '10 مَرَّاتٍ' || clean == '10 مرات') return '10 مرات';
+    if (clean == 'ثَلَاثًا وَثَلَاثِينَ مَرَّةً' || clean == '33 مَرَّةً') return '33 مرة';
+    if (clean == 'مِائَةَ مَرَّةٍ' || clean == '100 مَرَّةً' || clean == '100 مرة') return '100 مرة';
+    if (clean.length <= 16) return clean;
+    return fallback;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final meta = _parsedMeta;
+    final countLabel = meta.$1;
+    final occasionLabel = meta.$2;
     final palette = context.palette;
     final textTheme = context.text;
     final arabicText = _cleanText(item.arabic);
@@ -80,7 +163,7 @@ class AdhkarSessionCard extends StatelessWidget {
                         child: Tooltip(
                           message: item.countDescription.isNotEmpty
                               ? item.countDescription
-                              : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
+                              : countLabel,
                           child: Container(
                           padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: AppSpace.md,
@@ -106,9 +189,7 @@ class AdhkarSessionCard extends StatelessWidget {
                               const SizedBox(width: AppSpace.xs),
                               Flexible(
                                 child: Text(
-                                  item.countDescription.isNotEmpty
-                                      ? item.countDescription
-                                      : (repeat > 1 ? '$repeat مرات' : 'مرة واحدة'),
+                                  countLabel,
                                   style: textTheme.caption.copyWith(
                                     color: isDone ? palette.gold : palette.textMuted,
                                     fontWeight: FontWeight.bold,
@@ -244,6 +325,46 @@ class AdhkarSessionCard extends StatelessWidget {
                     ],
                   ],
                 ),
+                // Occasion / Instruction Banner (if present, displayed completely without clipping)
+                if (occasionLabel != null && occasionLabel.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.sm),
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.surfaceMuted,
+                      borderRadius: AppRadius.pillRadius,
+                      border: Border.all(
+                        color: palette.border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: AppIcon.xs,
+                          color: palette.gold,
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Flexible(
+                          child: Text(
+                            occasionLabel,
+                            textAlign: TextAlign.center,
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpace.md),
 
                 // Arabic Sacred Text with responsive scaling and generous line height
