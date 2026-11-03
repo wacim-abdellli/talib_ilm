@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../core/utils/arabic_search_utils.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../data/catalogs/mutun_audio_catalog.dart';
 import '../../data/models/shamela_models.dart';
@@ -120,17 +121,37 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
   }
 
   List<ShamelaBook> get _filteredBooks {
+    if (_downloadedOnly) {
+      var downloadedList = ShamelaService.curatedClassics
+          .where((b) => _downloadedMap[b.id] == true)
+          .toList(growable: false);
+
+      if (_selectedCategoryId > 0) {
+        downloadedList = downloadedList
+            .where((b) => b.categoryId == _selectedCategoryId)
+            .toList(growable: false);
+      }
+      if (_selectedLevel > 0) {
+        downloadedList = downloadedList
+            .where((b) => b.level == _selectedLevel)
+            .toList(growable: false);
+      }
+      final query = _searchQuery.trim();
+      if (query.isNotEmpty) {
+        downloadedList = downloadedList.where((b) {
+          return ArabicSearchUtils.matches(b.title, query) ||
+              ArabicSearchUtils.matches(b.author, query);
+        }).toList(growable: false);
+      }
+      return downloadedList;
+    }
+
     final base = ShamelaService.searchCatalog(
       query: _searchQuery,
       categoryId: _selectedCategoryId,
       level: _selectedLevel,
       rootOnly: _searchQuery.isEmpty,
     );
-    if (_downloadedOnly) {
-      return base
-          .where((b) => _downloadedMap[b.id] == true)
-          .toList(growable: false);
-    }
     if (_audioOnly) {
       return base
           .where((b) => MutunAudioCatalog.hasShamelaAudio(b.id))
@@ -285,11 +306,9 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                               setState(() {
                                 _downloadedOnly = !_downloadedOnly;
                                 if (_downloadedOnly) {
-                                  final hasInSelection = _filteredBooks.isNotEmpty;
-                                  if (!hasInSelection && downloadedCount > 0) {
-                                    _selectedCategoryId = 0;
-                                    _selectedLevel = 0;
-                                  }
+                                  _selectedCategoryId = 0;
+                                  _selectedLevel = 0;
+                                  _audioOnly = false;
                                 }
                               });
                             },
@@ -481,17 +500,21 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                         ? 'لديك كتب محمّلة في أقسام أو مستويات أخرى. يمكنك تغيير التصنيف أو عرض جميع المحمّلات.'
                         : 'يمكنك تنزيل أي كتاب للقراءة بدون إنترنت بنقرة واحدة من بطاقة الكتاب.')
                     : 'جرب البحث باسم كتاب آخر أو تغيير الفن والمستوى.',
-                actionLabel: _downloadedOnly &&
-                        ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
-                    ? 'عرض جميع الكتب المحمّلة'
+                actionLabel: _downloadedOnly
+                    ? (ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                        ? 'عرض جميع الكتب المحمّلة'
+                        : 'تصفح جميع الكتب')
                     : null,
-                onAction: _downloadedOnly &&
-                        ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                onAction: _downloadedOnly
                     ? () {
                         HapticFeedback.selectionClick();
                         setState(() {
-                          _selectedCategoryId = 0;
-                          _selectedLevel = 0;
+                          if (ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)) {
+                            _selectedCategoryId = 0;
+                            _selectedLevel = 0;
+                          } else {
+                            _downloadedOnly = false;
+                          }
                         });
                       }
                     : null,

@@ -7,9 +7,10 @@ void main() {
   group('QuranAudioService Tests', () {
     final service = QuranAudioService();
 
-    test('reciters list contains official reciters including Nasser Al-Qatami', () {
-      expect(QuranAudioService.reciters.length, 32);
+    test('reciters list contains official reciters including Ahmad Talib and Nasser Al-Qatami', () {
+      expect(QuranAudioService.reciters.length, 43);
       expect(service.selectedReciter.id, 'alafasy');
+      expect(QuranAudioService.reciters.any((r) => r.id == 'ahmad_talib'), isTrue);
       expect(QuranAudioService.reciters.any((r) => r.id == 'qatami'), isTrue);
     });
 
@@ -48,6 +49,30 @@ void main() {
 
       service.setRepeatMode(AudioRepeatMode.none);
       expect(service.repeatModeNotifier.value, AudioRepeatMode.none);
+    });
+
+    test('cycleRepeatMode cycles through none -> infinite -> repeatOnce -> none', () async {
+      service.setRepeatMode(AudioRepeatMode.none);
+      await service.cycleRepeatMode();
+      expect(service.repeatModeNotifier.value, AudioRepeatMode.infinite);
+      await service.cycleRepeatMode();
+      expect(service.repeatModeNotifier.value, AudioRepeatMode.repeatOnce);
+      await service.cycleRepeatMode();
+      expect(service.repeatModeNotifier.value, AudioRepeatMode.none);
+    });
+
+    test('setSleepTimer updates timer notifier and stopAtEndOfSurahNotifier', () {
+      service.setSleepTimer(30);
+      expect(service.sleepTimerMinutesNotifier.value, 30);
+      expect(service.stopAtEndOfSurahNotifier.value, isFalse);
+
+      service.setSleepTimer(null, atEndOfSurah: true);
+      expect(service.sleepTimerMinutesNotifier.value, isNull);
+      expect(service.stopAtEndOfSurahNotifier.value, isTrue);
+
+      service.setSleepTimer(null);
+      expect(service.sleepTimerMinutesNotifier.value, isNull);
+      expect(service.stopAtEndOfSurahNotifier.value, isFalse);
     });
 
     test('classifyError distinguishes network failure from missing file', () {
@@ -96,4 +121,3 @@ void main() {
     });
   });
 }
-

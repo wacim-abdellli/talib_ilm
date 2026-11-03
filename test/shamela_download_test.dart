@@ -61,6 +61,19 @@ class FakeShamelaDatabase implements Database {
   }
 
   @override
+  Future<int> delete(
+    String table, {
+    String? where,
+    List<Object?>? whereArgs,
+  }) async {
+    final bookId = whereArgs?.first as int?;
+    if (bookId != null) {
+      pages.remove(bookId);
+    }
+    return 1;
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -325,6 +338,39 @@ void main() {
       expect(map[50001] ?? false, isFalse); // Bundled book not downloaded yet
       expect(map[testBook.id], isTrue); // Complete book
       expect(map[999] ?? false, isFalse); // Non-existent book
+    });
+
+    test('deleteBook deletes cached pages and resets downloaded status', () async {
+      await ShamelaService.saveDiscoveredTotalPages(testBook.id, 5);
+      fakeDb.pages[testBook.id] = {
+        1: 'محتوى 1',
+        2: 'محتوى 2',
+        3: 'محتوى 3',
+        4: 'محتوى 4',
+        5: 'محتوى 5',
+      };
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('shamela_downloaded_${testBook.id}', true);
+
+      expect(await ShamelaService.isBookDownloaded(testBook.id), isTrue);
+
+      await ShamelaService.deleteBook(testBook.id);
+
+      expect(await ShamelaService.isBookDownloaded(testBook.id), isFalse);
+      expect(fakeDb.pages.containsKey(testBook.id), isFalse);
+      final map = await ShamelaService.getDownloadedBooksMap();
+      expect(map[testBook.id] ?? false, isFalse);
+    });
+
+    test('Legacy bundled preference flag is migrated and wiped on first run', () async {
+      final prefs = await SharedPreferences.getInstance();
+      // Simulate dirty legacy state where bundled book was automatically set to true
+      await prefs.setBool('shamela_downloaded_50001', true);
+      await prefs.remove('shamela_legacy_cleaned_v5');
+
+      final map = await ShamelaService.getDownloadedBooksMap();
+      expect(map[50001] ?? false, isFalse);
+      expect(await ShamelaService.isBookDownloaded(50001), isFalse);
     });
   });
 }

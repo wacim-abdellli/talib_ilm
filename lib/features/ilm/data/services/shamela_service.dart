@@ -405,6 +405,10 @@ class ShamelaService {
   }) =>
       ShamelaDownloadManager.downloadBook(book, onProgress: onProgress);
 
+  /// Delete all downloaded and cached pages for [bookId]
+  static Future<void> deleteBook(int bookId) =>
+      ShamelaDownloadManager.deleteBook(bookId);
+
   /// Check if book is fully downloaded and verified offline
   static Future<bool> isBookDownloaded(int bookId, {int? totalPages}) =>
       ShamelaDownloadManager.isBookDownloaded(bookId, totalPages: totalPages);

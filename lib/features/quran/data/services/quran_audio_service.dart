@@ -68,6 +68,7 @@ class QuranAudioService {
   final ValueNotifier<AudioRepeatMode> repeatModeNotifier = ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
   final ValueNotifier<AudioPlaybackError?> errorNotifier = ValueNotifier<AudioPlaybackError?>(null);
   final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
+  final ValueNotifier<bool> stopAtEndOfSurahNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isFullSurahModeNotifier = ValueNotifier<bool>(false);
 
   Timer? _sleepTimer;
@@ -460,6 +461,23 @@ class QuranAudioService {
 
     // 0. Full Surah Mode (single continuous recording of the whole surah)
     if (isFullSurahMode) {
+      if (repeatModeNotifier.value == AudioRepeatMode.infinite) {
+        playFullSurah(surah: surah, reciter: _playbackReciter);
+        return;
+      }
+      if (repeatModeNotifier.value == AudioRepeatMode.repeatOnce) {
+        if (_ayahRepeatCount < 1) {
+          _ayahRepeatCount++;
+          playFullSurah(surah: surah, reciter: _playbackReciter);
+          return;
+        }
+        _ayahRepeatCount = 0;
+      }
+      if (stopAtEndOfSurahNotifier.value) {
+        stopAtEndOfSurahNotifier.value = false;
+        stop();
+        return;
+      }
       if (!_hasExplicitEnd && surah < 114) {
         playFullSurah(surah: surah + 1, reciter: _playbackReciter);
       } else {
@@ -499,6 +517,11 @@ class QuranAudioService {
       if (ayah < limit) {
         _startPlay(surah, ayah + 1);
       } else if (!_hasExplicitEnd && surah < 114) {
+        if (stopAtEndOfSurahNotifier.value) {
+          stopAtEndOfSurahNotifier.value = false;
+          stop();
+          return;
+        }
         playContinuous(
           surah: surah + 1,
           startAyah: 1,
@@ -550,14 +573,62 @@ class QuranAudioService {
 
   Future<void> setRepeatMode(AudioRepeatMode mode) async => repeatModeNotifier.value = mode;
 
-  void setSleepTimer(int? minutes) {
+  Future<void> cycleRepeatMode() async {
+    switch (repeatModeNotifier.value) {
+      case AudioRepeatMode.none:
+        await setRepeatMode(AudioRepeatMode.infinite);
+        break;
+      case AudioRepeatMode.infinite:
+        await setRepeatMode(AudioRepeatMode.repeatOnce);
+        break;
+      case AudioRepeatMode.repeatOnce:
+        await setRepeatMode(AudioRepeatMode.none);
+        break;
+    }
+  }
+
+  void setSleepTimer(int? minutes, {bool atEndOfSurah = false}) {
     _sleepTimer?.cancel();
+    stopAtEndOfSurahNotifier.value = atEndOfSurah;
     sleepTimerMinutesNotifier.value = minutes;
     if (minutes != null && minutes > 0) {
       _sleepTimer = Timer(Duration(minutes: minutes), () {
         stop();
         sleepTimerMinutesNotifier.value = null;
+        stopAtEndOfSurahNotifier.value = false;
       });
+    }
+  }
+
+  Future<void> nextSurah() async {
+    final s = activeSurahNotifier.value;
+    if (s == null) return;
+    if (s < 114) {
+      if (isFullSurahMode || selectedReciter.isSurahBased) {
+        await playFullSurah(surah: s + 1, reciter: _playbackReciter);
+      } else {
+        await playContinuous(surah: s + 1, startAyah: 1, reciter: _playbackReciter);
+      }
+    } else {
+      await stop();
+    }
+  }
+
+  Future<void> previousSurah() async {
+    final s = activeSurahNotifier.value;
+    if (s == null) return;
+    if (_player.position.inSeconds > 3) {
+      await seek(Duration.zero);
+      return;
+    }
+    if (s > 1) {
+      if (isFullSurahMode || selectedReciter.isSurahBased) {
+        await playFullSurah(surah: s - 1, reciter: _playbackReciter);
+      } else {
+        await playContinuous(surah: s - 1, startAyah: 1, reciter: _playbackReciter);
+      }
+    } else {
+      await seek(Duration.zero);
     }
   }
 
@@ -614,6 +685,7 @@ class QuranAudioService {
     _isContinuous = false;
     _sleepTimer?.cancel();
     sleepTimerMinutesNotifier.value = null;
+    stopAtEndOfSurahNotifier.value = false;
     clearError();
     try {
       await _player.stop();
@@ -630,6 +702,7 @@ class QuranAudioService {
     _sleepTimer?.cancel();
     _playerStateSub?.cancel();
     errorNotifier.dispose();
+    stopAtEndOfSurahNotifier.dispose();
     isFullSurahModeNotifier.dispose();
     _player.dispose();
   }
