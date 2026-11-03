@@ -57,14 +57,16 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       // Online: banner is hidden
       expect(find.text('وضع عدم الاتصال بالإنترنت'), findsNothing);
 
       // Trigger offline state
       OfflineConnectivityService.setOverrideForTesting(true);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       // Offline: banner appears
       expect(find.text('وضع عدم الاتصال بالإنترنت'), findsOneWidget);
@@ -72,12 +74,14 @@ void main() {
 
       // Tapping المحملات triggers callback
       await tester.tap(find.text('المحملات'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
       expect(hubOpened, isTrue);
 
       // Tapping close dismisses banner
       await tester.tap(find.byIcon(Icons.close_rounded));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('وضع عدم الاتصال بالإنترنت'), findsNothing);
     });
   });
@@ -116,7 +120,8 @@ void main() {
           textScale: 1.0,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('معارج القبول بشرح سلم الوصول'), findsOneWidget);
       expect(find.text('حافظ الحكمي · 1 / 1200 صفحة · 0%'), findsOneWidget);
@@ -137,7 +142,8 @@ void main() {
           textScale: 1.5,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
       expect(tester.takeException(), isNull);
     });
 
@@ -154,7 +160,8 @@ void main() {
           textScale: 2.0,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
       expect(tester.takeException(), isNull);
     });
 
@@ -172,7 +179,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('حقيبة المحتوى بدون إنترنت'), findsOneWidget);
       expect(find.text('سور القرآن الصوتية'), findsNothing);

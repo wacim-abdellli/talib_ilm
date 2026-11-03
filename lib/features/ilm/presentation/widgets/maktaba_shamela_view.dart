@@ -282,7 +282,16 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                             borderRadius: AppRadius.pillRadius,
                             onTap: () {
                               HapticFeedback.selectionClick();
-                              setState(() => _downloadedOnly = !_downloadedOnly);
+                              setState(() {
+                                _downloadedOnly = !_downloadedOnly;
+                                if (_downloadedOnly) {
+                                  final hasInSelection = _filteredBooks.isNotEmpty;
+                                  if (!hasInSelection && downloadedCount > 0) {
+                                    _selectedCategoryId = 0;
+                                    _selectedLevel = 0;
+                                  }
+                                }
+                              });
                             },
                             child: AnimatedContainer(
                               duration: AppMotion.fast,
@@ -315,7 +324,9 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                                   ),
                                   const SizedBox(width: AppSpace.xxs),
                                   Text(
-                                    'محمّل ($downloadedCount)',
+                                    downloadedCount > 0
+                                        ? 'محمّل ($downloadedCount)'
+                                        : 'محمّل (0)',
                                     style: textTheme.caption.copyWith(
                                       color: _downloadedOnly
                                           ? palette.primary
@@ -344,7 +355,16 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                             borderRadius: AppRadius.pillRadius,
                             onTap: () {
                               HapticFeedback.selectionClick();
-                              setState(() => _audioOnly = !_audioOnly);
+                              setState(() {
+                                _audioOnly = !_audioOnly;
+                                if (_audioOnly) {
+                                  final hasInSelection = _filteredBooks.isNotEmpty;
+                                  if (!hasInSelection && audioCount > 0) {
+                                    _selectedCategoryId = 0;
+                                    _selectedLevel = 0;
+                                  }
+                                }
+                              });
                             },
                             child: AnimatedContainer(
                               duration: AppMotion.fast,
@@ -452,11 +472,29 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                     ? Icons.offline_pin_rounded
                     : Icons.search_off_rounded,
                 title: _downloadedOnly
-                    ? 'لا توجد كتب محملة بعد'
+                    ? (ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                        ? 'لا توجد كتب محمّلة في هذا القسم'
+                        : 'لا توجد كتب محمّلة بعد')
                     : 'لا توجد نتائج في المكتبة',
                 subtitle: _downloadedOnly
-                    ? 'يمكنك تنزيل أي كتاب للقراءة بدون إنترنت بنقرة واحدة من بطاقة الكتاب.'
+                    ? (ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                        ? 'لديك كتب محمّلة في أقسام أو مستويات أخرى. يمكنك تغيير التصنيف أو عرض جميع المحمّلات.'
+                        : 'يمكنك تنزيل أي كتاب للقراءة بدون إنترنت بنقرة واحدة من بطاقة الكتاب.')
                     : 'جرب البحث باسم كتاب آخر أو تغيير الفن والمستوى.',
+                actionLabel: _downloadedOnly &&
+                        ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                    ? 'عرض جميع الكتب المحمّلة'
+                    : null,
+                onAction: _downloadedOnly &&
+                        ShamelaService.curatedClassics.any((b) => _downloadedMap[b.id] == true)
+                    ? () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _selectedCategoryId = 0;
+                          _selectedLevel = 0;
+                        });
+                      }
+                    : null,
               ),
             ),
           )

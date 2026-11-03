@@ -92,9 +92,10 @@ void main() {
   );
 
   group('Shamela Download Truthful Verification (T08 / C09 / C10)', () {
-    test('Bundled book (50001) is always verified downloaded and completes immediately', () async {
-      final isDownloaded = await ShamelaService.isBookDownloaded(50001);
-      expect(isDownloaded, isTrue);
+    test('Bundled book (50001) downloads immediately and is marked downloaded', () async {
+      // Bundled books are NOT automatically marked downloaded unless user chooses to download them
+      final beforeDownload = await ShamelaService.isBookDownloaded(50001);
+      expect(beforeDownload, isFalse);
 
       final bundledBook = ShamelaBook(
         id: 50001,
@@ -117,6 +118,8 @@ void main() {
       );
 
       expect(progressCalled, equals(1));
+      final afterDownload = await ShamelaService.isBookDownloaded(50001);
+      expect(afterDownload, isTrue);
     });
 
     test('Missing middle page: book is marked NOT downloaded and missing page is detected', () async {
@@ -319,7 +322,7 @@ void main() {
       };
 
       final map = await ShamelaService.getDownloadedBooksMap();
-      expect(map[50001], isTrue); // Bundled book
+      expect(map[50001] ?? false, isFalse); // Bundled book not downloaded yet
       expect(map[testBook.id], isTrue); // Complete book
       expect(map[999] ?? false, isFalse); // Non-existent book
     });
