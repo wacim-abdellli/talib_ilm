@@ -70,7 +70,13 @@ class ShamelaDownloadManager {
 
   /// Check if book is fully downloaded and verified offline
   static Future<bool> isBookDownloaded(int bookId, {int? totalPages}) async {
-    if (ShamelaService.isBundled(bookId)) return true;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Bundled books are available in assets, but only reported as downloaded
+    // if the user explicitly downloaded/saved them to their offline list.
+    if (ShamelaService.isBundled(bookId)) {
+      return prefs.getBool('shamela_downloaded_$bookId') == true;
+    }
 
     int total = totalPages ?? await ShamelaService.getDiscoveredTotalPages(bookId) ?? 0;
     if (total <= 0) {
@@ -82,7 +88,6 @@ class ShamelaDownloadManager {
     }
 
     if (total <= 0) {
-      final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool('shamela_downloaded_$bookId') == true) {
         await prefs.setBool('shamela_downloaded_$bookId', false);
       }
@@ -91,7 +96,6 @@ class ShamelaDownloadManager {
 
     final cachedPages = await getCachedPageNumbers(bookId);
     if (cachedPages.length < total) {
-      final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool('shamela_downloaded_$bookId') == true) {
         await prefs.setBool('shamela_downloaded_$bookId', false);
       }
@@ -100,7 +104,6 @@ class ShamelaDownloadManager {
 
     for (int p = 1; p <= total; p++) {
       if (!cachedPages.contains(p)) {
-        final prefs = await SharedPreferences.getInstance();
         if (prefs.getBool('shamela_downloaded_$bookId') == true) {
           await prefs.setBool('shamela_downloaded_$bookId', false);
         }
@@ -109,7 +112,6 @@ class ShamelaDownloadManager {
     }
 
     // Fully verified! Sync SharedPreferences flag.
-    final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('shamela_downloaded_$bookId') != true) {
       await prefs.setBool('shamela_downloaded_$bookId', true);
     }
@@ -119,8 +121,13 @@ class ShamelaDownloadManager {
   /// Returns a map of bookId -> isDownloaded for fast batch checking in catalog views
   static Future<Map<int, bool>> getDownloadedBooksMap() async {
     final map = <int, bool>{};
+    final prefs = await SharedPreferences.getInstance();
+
+    // Bundled books only show up if explicitly downloaded/saved by user
     for (final id in ShamelaService.bundledBookIds) {
-      map[id] = true;
+      if (prefs.getBool('shamela_downloaded_$id') == true) {
+        map[id] = true;
+      }
     }
 
     final db = await ShamelaService.getDatabase();
@@ -139,8 +146,10 @@ class ShamelaDownloadManager {
 
     for (final book in ShamelaService.curatedClassics) {
       if (map.containsKey(book.id)) continue;
+      final isMarked = prefs.getBool('shamela_downloaded_${book.id}') == true;
       final cachedCount = counts[book.id] ?? 0;
-      if (cachedCount > 0 && book.totalPages > 0 && cachedCount >= book.totalPages) {
+      final total = await ShamelaService.getDiscoveredTotalPages(book.id) ?? book.totalPages;
+      if (isMarked || (cachedCount > 0 && total > 0 && cachedCount >= total)) {
         map[book.id] = true;
       } else {
         map[book.id] = false;
@@ -150,8 +159,9 @@ class ShamelaDownloadManager {
     // Include any downloaded books discovered via search/catalog
     for (final entry in counts.entries) {
       if (map.containsKey(entry.key)) continue;
+      final isMarked = prefs.getBool('shamela_downloaded_${entry.key}') == true;
       final total = await ShamelaService.getDiscoveredTotalPages(entry.key);
-      if (total != null && total > 0 && entry.value >= total) {
+      if (isMarked || (total != null && total > 0 && entry.value >= total)) {
         map[entry.key] = true;
       } else {
         map[entry.key] = false;
@@ -180,11 +190,11 @@ class ShamelaDownloadManager {
     try {
       _cancelFlags[book.id] = false;
 
-      // Bundled books are always offline-ready
+      // Bundled books are bundled in assets; user downloading marks it as saved offline
       if (ShamelaService.isBundled(book.id)) {
-        onProgress?.call(book.totalPages, book.totalPages);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('shamela_downloaded_${book.id}', true);
+        onProgress?.call(book.totalPages, book.totalPages);
         completer.complete();
         return;
       }
