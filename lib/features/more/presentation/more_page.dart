@@ -381,8 +381,8 @@ class _MorePageState extends State<MorePage> {
                           section: MoreSection(
                             title: 'حقيبة المحتوى بدون إنترنت',
                             subtitle:
-                                'تصفح الكتب التراثية المحملة، متون العلم، وتلاوات القرآن',
-                            icon: Icons.offline_pin_rounded,
+                                'تصفح الكتب التراثية المحملة ومتون طالب العلم دون اتصال',
+                            icon: Icons.download_done_rounded,
                             color: palette.primary,
                             onTap: () => OfflineDownloadsHubSheet.show(
                               context: context,
