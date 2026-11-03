@@ -14,6 +14,7 @@ class OfflineBooksTabView extends StatelessWidget {
   final Map<String, BookProgress> progressById;
   final void Function(ShamelaBook book) onOpenShamelaBook;
   final void Function(IlmBook book) onOpenMutunBook;
+  final void Function(ShamelaBook book)? onDeleteShamelaBook;
 
   const OfflineBooksTabView({
     super.key,
@@ -22,11 +23,13 @@ class OfflineBooksTabView extends StatelessWidget {
     required this.progressById,
     required this.onOpenShamelaBook,
     required this.onOpenMutunBook,
+    this.onDeleteShamelaBook,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final textTheme = context.text;
 
     if (downloadedBooks.isEmpty && bundledMutun.isEmpty) {
       return Center(
@@ -57,7 +60,7 @@ class OfflineBooksTabView extends StatelessWidget {
           if (downloadedBooks.isNotEmpty) ...[
             _buildSectionHeader(
               context,
-              title: 'الكتب التراثية',
+              title: 'الكتب التراثية المحمّلة',
               badge: '${downloadedBooks.length}',
               icon: Icons.check_circle_outline_rounded,
               color: palette.primary,
@@ -65,13 +68,53 @@ class OfflineBooksTabView extends StatelessWidget {
             const SizedBox(height: AppSpace.sm),
             ...downloadedBooks.map((book) => _buildShamelaCard(context, book)),
             const SizedBox(height: AppSpace.lg),
+          ] else ...[
+            Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.md),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(color: palette.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.cloud_download_outlined,
+                    color: palette.textMuted,
+                    size: AppIcon.md,
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الكتب التراثية المحمّلة (0)',
+                          style: textTheme.captionBold.copyWith(
+                            color: palette.text,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.xxs),
+                        Text(
+                          'لم تقم بتحميل أي كتاب بعد. يمكنك حفظ أي كتاب من المكتبة الشاملة للقراءة بدون إنترنت.',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpace.lg),
           ],
 
           // ── 2. Bundled Core Syllabus Mutun (100% Offline) ───────────
           if (bundledMutun.isNotEmpty) ...[
             _buildSectionHeader(
               context,
-              title: 'متون طالب العلم',
+              title: 'متون طالب العلم (محتوى التطبيق المدمج)',
               badge: '${bundledMutun.length}',
               icon: Icons.menu_book_rounded,
               color: palette.primary,
@@ -199,6 +242,16 @@ class OfflineBooksTabView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpace.xs),
+                  if (onDeleteShamelaBook != null)
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: palette.textMuted,
+                        size: AppIcon.sm,
+                      ),
+                      tooltip: 'حذف من المحمّلات',
+                      onPressed: () => onDeleteShamelaBook?.call(book),
+                    ),
                   Icon(
                     Icons.chevron_left_rounded,
                     color: palette.primary,

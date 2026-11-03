@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
+import 'app/theme/app_ui.dart';
 import 'features/ilm/data/services/quiz_dump_service.dart';
 
 
@@ -40,10 +41,14 @@ Future<void> main() async {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.talibilm.app.channel.audio',
       androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
+      androidNotificationChannelDescription: 'مشغل تلاوات القرآن الكريم وإذاعة طالب العلم',
+      notificationColor: AppPalette.light.gold,
       androidNotificationOngoing: false,
       androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
       preloadArtwork: true,
+      fastForwardInterval: AppMotion.networkRetry,
+      rewindInterval: AppMotion.networkRetry,
     );
   } catch (e) {
     debugPrint('JustAudioBackground init warning: $e');

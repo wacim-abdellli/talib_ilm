@@ -9,6 +9,7 @@ import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import 'offline_books_tab_view.dart';
 
 /// Central Hub for all offline-ready books and syllabus mutun in talib_ilm.
@@ -101,6 +102,19 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _handleDeleteShamelaBook(ShamelaBook book) async {
+    HapticFeedback.lightImpact();
+    await ShamelaService.deleteBook(book.id);
+    await _loadAllOfflineData();
+    widget.onRefresh?.call();
+    if (mounted) {
+      AppSnackbar.info(
+        context,
+        'تمت إزالة كتاب "${book.title}" من المحمّلات',
+      );
     }
   }
 
@@ -220,6 +234,7 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet> {
                         Navigator.of(context).pop();
                         widget.onOpenMutunBook(book);
                       },
+                      onDeleteShamelaBook: _handleDeleteShamelaBook,
                     ),
             ),
           ],

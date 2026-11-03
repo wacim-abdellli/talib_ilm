@@ -445,13 +445,14 @@ class _IlmPageState extends State<IlmPage> {
             const SizedBox(height: AppSpace.sm),
 
             // ── 3. Unified Minimalist Search Bar ────────────────────
-            IlmSearchBar(
-              controller: _searchController,
-              onSearchChanged: _onSearchChanged,
-              onClear: _onClearSearch,
-            ),
-
-            const SizedBox(height: AppSpace.sm),
+            if (_selectedCategory != 'shamela') ...[
+              IlmSearchBar(
+                controller: _searchController,
+                onSearchChanged: _onSearchChanged,
+                onClear: _onClearSearch,
+              ),
+              const SizedBox(height: AppSpace.sm),
+            ],
 
             // ── 4. Categorized Partition Chips ──────────────────────
             IlmCategoryChips(

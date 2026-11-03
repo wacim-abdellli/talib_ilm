@@ -68,8 +68,20 @@ class ShamelaDownloadManager {
     return missing;
   }
 
+  /// One-time cleanup for any legacy flags that falsely marked bundled books as downloaded.
+  static Future<void> _cleanLegacyBundledPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('shamela_legacy_cleaned_v5')) {
+      for (final id in ShamelaService.bundledBookIds) {
+        await prefs.remove('shamela_downloaded_$id');
+      }
+      await prefs.setBool('shamela_legacy_cleaned_v5', true);
+    }
+  }
+
   /// Check if book is fully downloaded and verified offline
   static Future<bool> isBookDownloaded(int bookId, {int? totalPages}) async {
+    await _cleanLegacyBundledPrefs();
     final prefs = await SharedPreferences.getInstance();
 
     // Bundled books are available in assets, but only reported as downloaded
@@ -120,14 +132,13 @@ class ShamelaDownloadManager {
 
   /// Returns a map of bookId -> isDownloaded for fast batch checking in catalog views
   static Future<Map<int, bool>> getDownloadedBooksMap() async {
+    await _cleanLegacyBundledPrefs();
     final map = <int, bool>{};
     final prefs = await SharedPreferences.getInstance();
 
     // Bundled books only show up if explicitly downloaded/saved by user
     for (final id in ShamelaService.bundledBookIds) {
-      if (prefs.getBool('shamela_downloaded_$id') == true) {
-        map[id] = true;
-      }
+      map[id] = prefs.getBool('shamela_downloaded_$id') == true;
     }
 
     final db = await ShamelaService.getDatabase();
@@ -169,6 +180,20 @@ class ShamelaDownloadManager {
     }
 
     return map;
+  }
+
+  /// Delete all downloaded and cached pages for [bookId] and reset downloaded status
+  static Future<void> deleteBook(int bookId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('shamela_downloaded_$bookId');
+    await prefs.setBool('shamela_downloaded_$bookId', false);
+
+    final db = await ShamelaService.getDatabase();
+    await db.delete(
+      ShamelaService.tableNamePages,
+      where: 'book_id = ?',
+      whereArgs: [bookId],
+    );
   }
 
   /// Download entire book for full offline access with truthful completeness verification

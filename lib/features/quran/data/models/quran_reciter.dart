@@ -28,6 +28,61 @@ class QuranReciter {
       subfolder: 'Alafasy_128kbps',
     ),
     QuranReciter(
+      id: 'ahmad_talib',
+      name: 'أحمد طالب بن حميد',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/ahmad-humaid/r1/',
+    ),
+    QuranReciter(
+      id: 'badr_turki',
+      name: 'بدر بن محمد التركي',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/badr-turki/r1/',
+    ),
+    QuranReciter(
+      id: 'khalid_jalil',
+      name: 'خالد الجليل',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/khalid-jalil/r1/',
+    ),
+    QuranReciter(
+      id: 'haitham_dukhain',
+      name: 'هيثم الدخين',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/haitham-dukhain/r1/',
+    ),
+    QuranReciter(
+      id: 'wadee_yamani',
+      name: 'وديع اليمني',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/wadee-yamani/r1/',
+    ),
+    QuranReciter(
+      id: 'idrees_abkar',
+      name: 'إدريس أبكر',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/idrees-abkar/r1/',
+    ),
+    QuranReciter(
+      id: 'mansour_salimi',
+      name: 'منصور السالمي',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/mansour-salimi/r1/',
+    ),
+    QuranReciter(
+      id: 'islam_sobhi',
+      name: 'إسلام صبحي',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/islam-sobhi/r1/',
+    ),
+    QuranReciter(
+      id: 'abdulrasheed_sufi',
+      name: 'عبد الرشيد صوفي (حفص)',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/abdulrasheed-sufi/r3/',
+    ),
+    QuranReciter(
+      id: 'abdulaziz_zahrani',
+      name: 'عبد العزيز الزهراني',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/abdulaziz-zahrani/r1/',
+    ),
+    QuranReciter(
+      id: 'muhammad_muhaisni',
+      name: 'محمد المحيسني',
+      surahBaseUrl: 'https://cdn.mp3quran.net/audio/muhammad-muhaisni/r1/',
+    ),
+    QuranReciter(
       id: 'luhaidan',
       name: 'محمد اللحيدان',
       surahBaseUrl: 'https://cdn.mp3quran.net/audio/muhammad-luhaidan/r1/',

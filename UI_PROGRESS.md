@@ -4758,3 +4758,49 @@ FAILED (54 violations)
 - Verification: `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py` OK (0 failures, 7/10 allow markers); arm64 debug APK built successfully (261,847,349 bytes; SHA-256 `D608F30F2529A8AE5BFCDB1D58BBC89747D56892398211057B64DF9FD78E05DA`). Tests and device install were not run; `adb devices` returned no attached device.
 - Open issue: install on the user’s device/emulator and visually verify the settings sheet.
 
+
+
+## Round 23 — Modernized Quran Audio Player, Reciters Expansion & Android Media Notification (2026-11-03)
+- **Status:** Complete
+- **Branch:** main
+- **Core Enhancements:**
+  1. **Reciters Expansion (11 Verified Reciters Added, 43 Total):**
+     - Added 11 highly requested and beloved reciters with verified 200 OK CDN endpoints: أحمد طالب بن حميد (إمام المسجد النبوي الشريف), بدر بن محمد التركي, خالد الجليل, هيثم الدخين, وديع اليمني, إدريس أبكر, منصور السالمي, إسلام صبحي, عبد الرشيد صوفي (حفص), عبد العزيز الزهراني, محمد المحيسني.
+  2. **Resolution of Conflicting Inward +/-10s Transport Icons:**
+     - Enforced strict universal LTR directionality across media transport controls.
+     - Rewind 10s (replay_10_rounded) is physically on the left, curling counter-clockwise towards the past; Forward 10s (forward_10_rounded) is physically on the right, curling clockwise towards the future; flanking the prominent circular Play/Pause button with zero collision.
+  3. **Added Missing Essential Audio Player Controls:**
+     - **Repeat Mode Button:** Added cyclic toggle switching through none -> infinite (loop surah) -> repeatOnce (repeat once then advance) with active gold badge/icon feedback and automated repeat handling in full-surah audio service.
+     - **Previous & Next Surah Navigation:** Added nextSurah() and previousSurah() with smart 3-second rewind restart.
+     - **Sleep Timer (مؤقت النوم):** Added popup selector in the top player bar with options for 15, 30, 45, 60 minutes and 'نهاية السورة الحالية' (stop at end of current surah).
+  4. **Modernized Android Notification & Lock Screen Controls:**
+     - Configured JustAudioBackground.init in lib/main.dart with notificationColor: AppPalette.light.gold, channel description, and 10-second fast-forward / rewind intervals.
+  5. **Verification & Accessibility:**
+     - Added test/quran_audio_player_bar_test.dart verifying all controls, repeat cycling, and layout resilience across text scales 1.0, 1.5, and 2.0 on 360dp phone dimensions.
+     - flutter analyze: 0 issues found.
+     - python tool/ui_lint_v2.py: OK (7/10 allow markers).
+     - Full test suite: 810/810 tests passed (100%).
+
+
+## Round 24 — Offline Downloads Truthfulness, Default Book Purge, Double-Search Elimination & Maktaba Filter Resilience (2026-11-03)
+- **Status:** Complete
+- **Branch:** main
+- **Core Enhancements:**
+  1. **Purged False Auto-Downloaded Default Book (منهاج المسلم):**
+     - Implemented persistent one-time legacy cleanup migration (`shamela_legacy_cleaned_v5`) in `ShamelaDownloadManager` to wipe auto-downloaded flags written by earlier code for bundled assets.
+     - Ensured bundled book IDs (50001) in `getDownloadedBooksMap()` and `isBookDownloaded()` strictly evaluate to user explicit downloads only and never fall back to catalog page count overrides.
+  2. **Eliminated Stacked Duplicate Search Bar in Maktaba Shamela:**
+     - Conditioned `IlmSearchBar` in `IlmPage` so it does not render when `_selectedCategory == 'shamela'`, leaving only `MaktabaShamelaView`'s specialized search input and preventing double-search clutter.
+  3. **Fixed Downloaded Filter (`المحمّل`) & Empty State Resilience in Maktaba Shamela:**
+     - Toggling `_downloadedOnly` now automatically resets conflicting category and level filters (`_selectedCategoryId = 0`, `_selectedLevel = 0`, `_audioOnly = false`) so all downloaded books immediately display.
+     - Redesigned `_filteredBooks` when `_downloadedOnly` is active to query all downloaded books directly with fuzzy Arabic search.
+     - Added smart EmptyState recovery actions: when no downloaded books exist in a filtered discipline, an action pill offers to view all downloaded books; if 0 downloaded books exist repo-wide, an action button returns to browsing.
+  4. **Offline Hub & Library Enhancements:**
+     - Added `deleteBook(bookId)` in `ShamelaDownloadManager` and `ShamelaService` to cleanly remove cached pages and reset download flags.
+     - Added delete action button to `OfflineBooksTabView` and wired deletion handler in `OfflineDownloadsHubSheet`.
+     - When 0 heritage books are downloaded, `OfflineBooksTabView` now shows an informative empty-guide card while clearly separating the 18 bundled core syllabus mutun.
+  5. **Verification & Build:**
+     - `flutter analyze`: **0 issues found** (clean).
+     - `python tool/ui_lint_v2.py`: **OK** (0 violations, 7/10 allow markers).
+     - Full test suite: **812/812 tests passed** (100% pass rate in 2m48s).
+     - Release APK built successfully: `build\app\outputs\flutter-apk\app-release.apk` (251.0MB).
