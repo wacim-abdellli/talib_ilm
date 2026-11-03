@@ -1,9 +1,23 @@
 [
   {
-    "id": 74,
-    "name": "الحصري (مرتل)",
-    "rawName": "محمود خليل الحصري",
-    "url": "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
+    "id": 30,
+    "name": "عبد الباسط عبد الصمد (مرتل)",
+    "rawName": "عبدالباسط عبدالصمد",
+    "url": "https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
+    "category": "كبار القراء"
+  },
+  {
+    "id": 46,
+    "name": "علي الحذيفي",
+    "rawName": "علي بن عبدالرحمن الحذيفي",
+    "url": "https://backup.qurango.net/radio/ali_alhuthaifi",
+    "category": "كبار القراء"
+  },
+  {
+    "id": 64,
+    "name": "محمد الطبلاوي",
+    "rawName": "محمد الطبلاوي",
+    "url": "https://backup.qurango.net/radio/mohammad_altablaway",
     "category": "كبار القراء"
   },
   {
@@ -14,59 +28,17 @@
     "category": "كبار القراء"
   },
   {
-    "id": 30,
-    "name": "عبد الباسط عبد الصمد (مرتل)",
-    "rawName": "عبدالباسط عبدالصمد",
-    "url": "https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
+    "id": 70,
+    "name": "محمد صديق المنشاوي",
+    "rawName": "محمد صديق المنشاوي",
+    "url": "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad",
     "category": "كبار القراء"
   },
   {
-    "id": 79,
-    "name": "مشاري العفاسي",
-    "rawName": "مشاري العفاسي",
-    "url": "https://backup.qurango.net/radio/mishary_alafasi",
-    "category": "تلاوات خاشعة"
-  },
-  {
-    "id": 3,
-    "name": "أحمد بن علي العجمي",
-    "rawName": "أحمد العجمي",
-    "url": "https://backup.qurango.net/radio/ahmad_alajmy",
-    "category": "تلاوات خاشعة"
-  },
-  {
-    "id": 17,
-    "name": "سعد الغامدي",
-    "rawName": "سعد الغامدي",
-    "url": "https://backup.qurango.net/radio/saad_alghamdi",
-    "category": "تلاوات خاشعة"
-  },
-  {
-    "id": 63,
-    "name": "ماهر المعيقلي",
-    "rawName": "ماهر المعيقلي",
-    "url": "https://backup.qurango.net/radio/maher",
-    "category": "تلاوات خاشعة"
-  },
-  {
-    "id": 33,
-    "name": "عبد الرحمن السديس",
-    "rawName": "عبدالرحمن السديس",
-    "url": "https://backup.qurango.net/radio/abdulrahman_alsudaes",
-    "category": "الحرمين الشريفين"
-  },
-  {
-    "id": 18,
-    "name": "سعود الشريم",
-    "rawName": "سعود الشريم",
-    "url": "https://backup.qurango.net/radio/saud_alshuraim",
-    "category": "الحرمين الشريفين"
-  },
-  {
-    "id": 46,
-    "name": "علي الحذيفي",
-    "rawName": "علي بن عبدالرحمن الحذيفي",
-    "url": "https://backup.qurango.net/radio/ali_alhuthaifi",
+    "id": 75,
+    "name": "محمود خليل الحصري",
+    "rawName": "محمود خليل الحصري",
+    "url": "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad",
     "category": "كبار القراء"
   },
   {
@@ -77,17 +49,24 @@
     "category": "كبار القراء"
   },
   {
-    "id": 58,
-    "name": "ياسر الدوسري",
-    "rawName": "ياسر الدوسري",
-    "url": "https://backup.qurango.net/radio/yasser_aldosari",
-    "category": "تلاوات خاشعة"
+    "id": 78,
+    "name": "محمود علي البنا",
+    "rawName": "محمود علي البنا",
+    "url": "https://backup.qurango.net/radio/mahmoud_ali__albanna_mojawwad",
+    "category": "كبار القراء"
   },
   {
-    "id": 53,
-    "name": "ناصر القطامي",
-    "rawName": "ناصر القطامي",
-    "url": "https://backup.qurango.net/radio/nasser_alqatami",
+    "id": 80,
+    "name": "مصطفى إسماعيل",
+    "rawName": "مصطفى إسماعيل",
+    "url": "https://backup.qurango.net/radio/mustafa_ismail",
+    "category": "كبار القراء"
+  },
+  {
+    "id": 3,
+    "name": "أحمد بن علي العجمي",
+    "rawName": "أحمد العجمي",
+    "url": "https://backup.qurango.net/radio/ahmad_alajmy",
     "category": "تلاوات خاشعة"
   },
   {
@@ -98,24 +77,94 @@
     "category": "تلاوات خاشعة"
   },
   {
-    "id": 2,
-    "name": "أبو بكر الشاطري",
-    "rawName": "شيخ أبو بكر الشاطري",
-    "url": "https://backup.qurango.net/radio/shaik_abu_bakr_al_shatri",
+    "id": 17,
+    "name": "سعد الغامدي",
+    "rawName": "سعد الغامدي",
+    "url": "https://backup.qurango.net/radio/saad_alghamdi",
     "category": "تلاوات خاشعة"
   },
   {
-    "id": 116,
-    "name": "إذاعة تفسير القرآن الكريم",
-    "rawName": "تفسير القران الكريم--",
-    "url": "https://backup.qurango.net/radio/tafseer",
+    "id": 52,
+    "name": "فارس عباد",
+    "rawName": "فارس عباد",
+    "url": "https://backup.qurango.net/radio/fares_abbad",
+    "category": "تلاوات خاشعة"
+  },
+  {
+    "id": 58,
+    "name": "ياسر الدوسري",
+    "rawName": "ياسر الدوسري",
+    "url": "https://backup.qurango.net/radio/yasser_aldosari",
+    "category": "تلاوات خاشعة"
+  },
+  {
+    "id": 79,
+    "name": "مشاري العفاسي",
+    "rawName": "مشاري العفاسي",
+    "url": "https://backup.qurango.net/radio/mishary_alafasi",
+    "category": "تلاوات خاشعة"
+  },
+  {
+    "id": 117,
+    "name": "خالد الجليل",
+    "rawName": "خالد الجليل",
+    "url": "https://backup.qurango.net/radio/khalid_aljileel",
+    "category": "تلاوات خاشعة"
+  },
+  {
+    "id": 109078,
+    "name": "هزاع البلوشي",
+    "rawName": "هزاع البلوشي",
+    "url": "https://backup.qurango.net/radio/hazza",
+    "category": "تلاوات خاشعة"
+  },
+  {
+    "id": 18,
+    "name": "سعود الشريم",
+    "rawName": "سعود الشريم",
+    "url": "https://backup.qurango.net/radio/saud_alshuraim",
+    "category": "الحرمين الشريفين"
+  },
+  {
+    "id": 48,
+    "name": "علي جابر",
+    "rawName": "علي جابر",
+    "url": "https://backup.qurango.net/radio/ali_jaber",
+    "category": "الحرمين الشريفين"
+  },
+  {
+    "id": 217,
+    "name": "بندر بليلة",
+    "rawName": "بندر بليلة",
+    "url": "https://backup.qurango.net/radio/bandar_balilah",
+    "category": "الحرمين الشريفين"
+  },
+  {
+    "id": 76,
+    "name": "محمود خليل الحصري",
+    "rawName": "محمود خليل الحصري",
+    "url": "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_warsh",
+    "category": "القراءات والروايات"
+  },
+  {
+    "id": 109,
+    "name": "تلاوات خاشعة-",
+    "rawName": "تلاوات خاشعة-",
+    "url": "https://backup.qurango.net/radio/salma",
     "category": "تفاسير وعلوم"
   },
   {
-    "id": 10904,
-    "name": "المختصر في تفسير القرآن",
-    "rawName": "المختصر في تفسير القرآن الكريم",
-    "url": "https://backup.qurango.net/radio/mukhtasartafsir",
+    "id": 113,
+    "name": "إذاعة الفتاوى العامة",
+    "rawName": "الفتاوى العامة",
+    "url": "https://backup.qurango.net/radio/fatwa",
+    "category": "تفاسير وعلوم"
+  },
+  {
+    "id": 21115,
+    "name": "المختصر في السيرة النبوية",
+    "rawName": "المختصر في السيرة النبوية",
+    "url": "https://backup.qurango.net/radio/almukhtasar_fi_alsiyra",
     "category": "تفاسير وعلوم"
   },
   {
@@ -126,11 +175,18 @@
     "category": "تفاسير وعلوم"
   },
   {
-    "id": 21117,
-    "name": "تفسير ابن جرير الطبري",
-    "rawName": "تفسير القران الكريم-الخلاصة من تفسير الطبري",
-    "url": "https://backup.qurango.net/radio/tabri",
-    "category": "تفاسير وعلوم"
+    "id": 110,
+    "name": "تكبيرات العيد",
+    "rawName": "تكبيرات العيد",
+    "url": "https://backup.qurango.net/radio/eid",
+    "category": "أذكار ورقيا"
+  },
+  {
+    "id": 114,
+    "name": "إذاعة الرقية الشرعية",
+    "rawName": "الرقية الشرعية",
+    "url": "https://backup.qurango.net/radio/roqiah",
+    "category": "أذكار ورقيا"
   },
   {
     "id": 10906,
@@ -145,20 +201,6 @@
     "rawName": "أذكار المساء",
     "url": "https://backup.qurango.net/radio/athkar_masa",
     "category": "أذكار ورقيا"
-  },
-  {
-    "id": 114,
-    "name": "إذاعة الرقية الشرعية",
-    "rawName": "الرقية الشرعية",
-    "url": "https://backup.qurango.net/radio/roqiah",
-    "category": "أذكار ورقيا"
-  },
-  {
-    "id": 113,
-    "name": "إذاعة الفتاوى العامة",
-    "rawName": "الفتاوى العامة",
-    "url": "https://backup.qurango.net/radio/fatwa",
-    "category": "تفاسير وعلوم"
   },
   {
     "id": 1,
@@ -259,13 +301,6 @@
     "category": "قراء العالم الإسلامي"
   },
   {
-    "id": 20,
-    "name": "زكي داغستاني",
-    "rawName": "زكي داغستاني",
-    "url": "https://backup.qurango.net/radio/zaki_daghistani",
-    "category": "قراء العالم الإسلامي"
-  },
-  {
     "id": 21,
     "name": "سيد رمضان",
     "rawName": "سيد رمضان",
@@ -305,13 +340,6 @@
     "name": "صلاح بو خاطر",
     "rawName": "صلاح بو خاطر",
     "url": "https://backup.qurango.net/radio/slaah_bukhatir",
-    "category": "قراء العالم الإسلامي"
-  },
-  {
-    "id": 27,
-    "name": "عادل ريان",
-    "rawName": "عادل ريان",
-    "url": "https://backup.qurango.net/radio/adel_ryyan",
     "category": "قراء العالم الإسلامي"
   },
   {
@@ -417,6 +445,685 @@
     "name": "عبدالهادي أحمد كناكري",
     "rawName": "عبدالهادي أحمد كناكري",
     "url": "https://backup.qurango.net/radio/abdulhadi_kanakeri",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 45,
+    "name": "عبدالودود حنيف",
+    "rawName": "عبدالودود حنيف",
+    "url": "https://backup.qurango.net/radio/abdulwadood_haneef",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 47,
+    "name": "علي الحذيفي",
+    "rawName": "علي الحذيفي",
+    "url": "https://backup.qurango.net/radio/ali_alhuthaifi_qalon",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 49,
+    "name": "علي حجاج السويسي",
+    "rawName": "علي حجاج السويسي",
+    "url": "https://backup.qurango.net/radio/ali_hajjaj_alsouasi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 50,
+    "name": "عماد زهير حافظ",
+    "rawName": "عماد زهير حافظ",
+    "url": "https://backup.qurango.net/radio/emad_hafez",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 51,
+    "name": "عمر القزابري",
+    "rawName": "عمر القزابري",
+    "url": "https://backup.qurango.net/radio/omar_alqazabri",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 54,
+    "name": "نبيل الرفاعي",
+    "rawName": "نبيل الرفاعي",
+    "url": "https://backup.qurango.net/radio/nabil_al_rifay",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 55,
+    "name": "نعمة الحسان",
+    "rawName": "نعمة الحسان",
+    "url": "https://backup.qurango.net/radio/neamah_alhassan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 56,
+    "name": "هاني الرفاعي",
+    "rawName": "هاني الرفاعي",
+    "url": "https://backup.qurango.net/radio/hani_arrifai",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 57,
+    "name": "وليد النائحي",
+    "rawName": "وليد النائحي",
+    "url": "https://backup.qurango.net/radio/waleed_alnaehi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 59,
+    "name": "ياسر القرشي",
+    "rawName": "ياسر القرشي",
+    "url": "https://backup.qurango.net/radio/yasser_alqurashi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 60,
+    "name": "ياسر المزروعي",
+    "rawName": "ياسر المزروعي",
+    "url": "https://backup.qurango.net/radio/yasser_almazroyee",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 61,
+    "name": "يحيى حوا",
+    "rawName": "يحيى حوا",
+    "url": "https://backup.qurango.net/radio/yahya_hawwa",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 62,
+    "name": "يوسف الشويعي",
+    "rawName": "يوسف الشويعي",
+    "url": "https://backup.qurango.net/radio/yousef_alshoaey",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 65,
+    "name": "محمد اللحيدان",
+    "rawName": "محمد اللحيدان",
+    "url": "https://backup.qurango.net/radio/mohammed_allohaidan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 66,
+    "name": "محمد أيوب",
+    "rawName": "محمد أيوب",
+    "url": "https://backup.qurango.net/radio/mohammed_ayyub",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 67,
+    "name": "محمد صالح عالم شاه",
+    "rawName": "محمد صالح عالم شاه",
+    "url": "https://backup.qurango.net/radio/mohammad_saleh_alim_shah",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 68,
+    "name": "محمد جبريل",
+    "rawName": "محمد جبريل",
+    "url": "https://backup.qurango.net/radio/mohammed_jibreel",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 71,
+    "name": "محمد عبدالكريم",
+    "rawName": "محمد عبدالكريم",
+    "url": "https://backup.qurango.net/radio/mohammad_abdullkarem",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 72,
+    "name": "محمد عبدالحكيم سعيد العبدالله",
+    "rawName": "محمد عبدالحكيم سعيد العبدالله",
+    "url": "https://backup.qurango.net/radio/mohammad_alabdullah_albizi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 73,
+    "name": "محمد عبدالحكيم سعيد العبدالله",
+    "rawName": "محمد عبدالحكيم سعيد العبدالله",
+    "url": "https://backup.qurango.net/radio/mohammad_alabdullah_aldorai",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 81,
+    "name": "مصطفى اللاهوني",
+    "rawName": "مصطفى اللاهوني",
+    "url": "https://backup.qurango.net/radio/mustafa_allahoni",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 82,
+    "name": "مصطفى رعد العزاوي",
+    "rawName": "مصطفى رعد العزاوي",
+    "url": "https://backup.qurango.net/radio/mustafa_raad_alazawy",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 83,
+    "name": "مفتاح السلطني",
+    "rawName": "مفتاح السلطني",
+    "url": "https://backup.qurango.net/radio/muftah_alsaltany_aldori_an_abi_amr",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 84,
+    "name": "ماهر شخاشيرو",
+    "rawName": "ماهر شخاشيرو",
+    "url": "https://backup.qurango.net/radio/maher_shakhashero",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 85,
+    "name": "محمود الشيمي",
+    "rawName": "محمود الشيمي",
+    "url": "https://backup.qurango.net/radio/mahmood_alsheimy",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 86,
+    "name": "خالد المهنا",
+    "rawName": "خالد المهنا",
+    "url": "https://backup.qurango.net/radio/khalid_almohana",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 87,
+    "name": "عادل الكلباني",
+    "rawName": "عادل الكلباني",
+    "url": "https://backup.qurango.net/radio/adel_alkhalbany",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 88,
+    "name": "موسى بلال",
+    "rawName": "موسى بلال",
+    "url": "https://backup.qurango.net/radio/mousa_bilal",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 89,
+    "name": "حاتم فريد الواعر",
+    "rawName": "حاتم فريد الواعر",
+    "url": "https://backup.qurango.net/radio/hatem_fareed_alwaer",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 90,
+    "name": "محمود الرفاعي",
+    "rawName": "محمود الرفاعي",
+    "url": "https://backup.qurango.net/radio/mahmood_al_rifai",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 91,
+    "name": "ابراهيم الدوسري",
+    "rawName": "ابراهيم الدوسري",
+    "url": "https://backup.qurango.net/radio/ibrahim_aldosari",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 92,
+    "name": "مفتاح السلطني",
+    "rawName": "مفتاح السلطني",
+    "url": "https://backup.qurango.net/radio/muftah_alsaltany_aldorai",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 93,
+    "name": "جمعان العصيمي",
+    "rawName": "جمعان العصيمي",
+    "url": "https://backup.qurango.net/radio/jamaan_alosaimi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 95,
+    "name": "يوسف بن نوح أحمد",
+    "rawName": "يوسف بن نوح أحمد",
+    "url": "https://backup.qurango.net/radio/yousef_bin_noah_ahmad",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 96,
+    "name": "مفتاح السلطني",
+    "rawName": "مفتاح السلطني",
+    "url": "https://backup.qurango.net/radio/muftah_alsaltany_ibn_thakwan_an_ibn_amr",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 97,
+    "name": "معيض الحارثي",
+    "rawName": "معيض الحارثي",
+    "url": "https://backup.qurango.net/radio/moeedh_alharthi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 98,
+    "name": "محمد رشاد الشريف",
+    "rawName": "محمد رشاد الشريف",
+    "url": "https://backup.qurango.net/radio/mohammad_rashad_alshareef",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 99,
+    "name": "أحمد خضر الطرابلسي",
+    "rawName": "أحمد خضر الطرابلسي",
+    "url": "https://backup.qurango.net/radio/ahmad_khader_altarabulsi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 100,
+    "name": "أحمد الطرابلسي",
+    "rawName": "أحمد الطرابلسي",
+    "url": "https://backup.qurango.net/radio/ahmed_altrabulsi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 101,
+    "name": "عبدالله الكندري",
+    "rawName": "عبدالله الكندري",
+    "url": "https://backup.qurango.net/radio/abdullah_alkandari",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 102,
+    "name": "أحمد عامر",
+    "rawName": "أحمد عامر",
+    "url": "https://backup.qurango.net/radio/ahmed_amer",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 103,
+    "name": "محمد عثمان خان",
+    "rawName": "محمد عثمان خان",
+    "url": "https://backup.qurango.net/radio/mohammed_osman_khan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 104,
+    "name": "الدوكالي محمد العالم",
+    "rawName": "الدوكالي محمد العالم",
+    "url": "https://backup.qurango.net/radio/addokali_mohammad_alalim",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 105,
+    "name": "محمد عبدالكريم",
+    "rawName": "محمد عبدالكريم",
+    "url": "https://backup.qurango.net/radio/mohammad_abdullkarem_alasbahani",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 106,
+    "name": "الفاتح محمد الزبير",
+    "rawName": "الفاتح محمد الزبير",
+    "url": "https://backup.qurango.net/radio/alfateh_alzubair",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 107,
+    "name": "طارق عبدالغني دعوب",
+    "rawName": "طارق عبدالغني دعوب",
+    "url": "https://backup.qurango.net/radio/tareq_abdulgani_daawob",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 108,
+    "name": "العامة - متنوعة لمختلف القراء",
+    "rawName": "العامة - متنوعة لمختلف القراء",
+    "url": "https://backup.qurango.net/radio/mix",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 111,
+    "name": "عبدالرحمن الماجد",
+    "rawName": "عبدالرحمن الماجد",
+    "url": "https://backup.qurango.net/radio/abdulrahman_almajed",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 115,
+    "name": "سورة البقرة - لعدد من القراء---",
+    "rawName": "سورة البقرة - لعدد من القراء---",
+    "url": "https://backup.qurango.net/radio/albaqarah",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 118,
+    "name": "ناصر الماجد",
+    "rawName": "ناصر الماجد",
+    "url": "https://backup.qurango.net/radio/nasser_almajed",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 119,
+    "name": "هيثم الجدعاني",
+    "rawName": "هيثم الجدعاني",
+    "url": "https://backup.qurango.net/radio/hitham_aljadani",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 120,
+    "name": "أحمد خليل شاهين",
+    "rawName": "أحمد خليل شاهين",
+    "url": "https://backup.qurango.net/radio/ahmad_shaheen",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 121,
+    "name": "عبدالله الموسى",
+    "rawName": "عبدالله الموسى",
+    "url": "https://backup.qurango.net/radio/abdullah_almousa",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 122,
+    "name": "عبدالله الخلف",
+    "rawName": "عبدالله الخلف",
+    "url": "https://backup.qurango.net/radio/abdullah_alkhalaf",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 123,
+    "name": "تراتيل قصيرة متميزة-",
+    "rawName": "تراتيل قصيرة متميزة-",
+    "url": "https://backup.qurango.net/radio/tarateel",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 139,
+    "name": "ماجد الزامل",
+    "rawName": "ماجد الزامل",
+    "url": "https://backup.qurango.net/radio/majed_alzamel",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 248,
+    "name": "ناصر العصفور",
+    "rawName": "ناصر العصفور",
+    "url": "https://backup.qurango.net/radio/nasser_alosfor",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 261,
+    "name": "محمد أيوب - قراءة مميزة-",
+    "rawName": "محمد أيوب - قراءة مميزة-",
+    "url": "https://backup.qurango.net/radio/ayyoub2",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 265,
+    "name": "أحمد ديبان",
+    "rawName": "أحمد ديبان",
+    "url": "https://backup.qurango.net/radio/ahmad_deban",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 274,
+    "name": "أذاعة محمد أبوسنينة",
+    "rawName": "أذاعة محمد أبوسنينة",
+    "url": "https://backup.qurango.net/radio/sneineh",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 275,
+    "name": "محمد الأمين قنيوة",
+    "rawName": "محمد الأمين قنيوة",
+    "url": "https://backup.qurango.net/radio/qeniwa",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 287,
+    "name": "عبدالرحمن الشحات",
+    "rawName": "عبدالرحمن الشحات",
+    "url": "https://backup.qurango.net/radio/a_alshahhat",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 307,
+    "name": "عبدالعزيز سحيم",
+    "rawName": "عبدالعزيز سحيم",
+    "url": "https://backup.qurango.net/radio/a_sheim",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 10902,
+    "name": "آيات السكينة",
+    "rawName": "آيات السكينة",
+    "url": "https://backup.qurango.net/radio/sakeenah",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 21116,
+    "name": "كتاب الاختيارات الفقهية في مسائل العبادات والمعاملات",
+    "rawName": "كتاب الاختيارات الفقهية في مسائل العبادات والمعاملات",
+    "url": "https://backup.qurango.net/radio/alaikhtiarat_alfiqhayh_bin_baz",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109038,
+    "name": "صالح الهبدان",
+    "rawName": "صالح الهبدان",
+    "url": "https://backup.qurango.net/radio/saleh_alhabdan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109039,
+    "name": "ترجمة معاني القرآن باللغة الأوردية - عبدالباسط عبدالصمد",
+    "rawName": "ترجمة معاني القرآن باللغة الأوردية - عبدالباسط عبدالصمد",
+    "url": "https://backup.qurango.net/radio/translation_quran_urdu_basit",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109040,
+    "name": "ترجمة معاني القرآن باللغة الأسبانية",
+    "rawName": "ترجمة معاني القرآن باللغة الأسبانية",
+    "url": "https://backup.qurango.net/radio/translation_quran_spanish_afs",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109041,
+    "name": "ترجمة معاني القرآن باللغة الألبانية",
+    "rawName": "ترجمة معاني القرآن باللغة الألبانية",
+    "url": "https://backup.qurango.net/radio/translation_quran_albanian",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109042,
+    "name": "ترجمة معاني القرآن باللغة الألمانية",
+    "rawName": "ترجمة معاني القرآن باللغة الألمانية",
+    "url": "https://backup.qurango.net/radio/translation_quran_german",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109043,
+    "name": "ترجمة معاني القرآن باللغة الأمازيغية",
+    "rawName": "ترجمة معاني القرآن باللغة الأمازيغية",
+    "url": "https://backup.qurango.net/radio/translation_quran_tamazight",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109044,
+    "name": "ترجمة معاني القرآن باللغة الأوردية",
+    "rawName": "ترجمة معاني القرآن باللغة الأوردية",
+    "url": "https://backup.qurango.net/radio/translation_quran_urdu_sds_shur",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109045,
+    "name": "ترجمة معاني القرآن باللغة الأوردية",
+    "rawName": "ترجمة معاني القرآن باللغة الأوردية",
+    "url": "https://backup.qurango.net/radio/translation_quran_urdu_minsh",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109046,
+    "name": "ترجمة معاني القرآن باللغة الإنجليزية",
+    "rawName": "ترجمة معاني القرآن باللغة الإنجليزية",
+    "url": "https://backup.qurango.net/radio/translation_quran_english_basit",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109047,
+    "name": "ترجمة معاني القرآن باللغة الإنجليزية",
+    "rawName": "ترجمة معاني القرآن باللغة الإنجليزية",
+    "url": "https://backup.qurango.net/radio/translation_quran_english_bsfr",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109048,
+    "name": "ترجمة معاني القرآن باللغة الإنجليزية -ترجمة والك-",
+    "rawName": "ترجمة معاني القرآن باللغة الإنجليزية -ترجمة والك-",
+    "url": "https://backup.qurango.net/radio/translation_quran_english_walk_basit",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109049,
+    "name": "ترجمة معاني القرآن باللغة البرتغالية",
+    "rawName": "ترجمة معاني القرآن باللغة البرتغالية",
+    "url": "https://backup.qurango.net/radio/translation_quran_portuguese",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109050,
+    "name": "ترجمة معاني القرآن باللغة البوسنية",
+    "rawName": "ترجمة معاني القرآن باللغة البوسنية",
+    "url": "https://backup.qurango.net/radio/translation_quran_bosnia",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109051,
+    "name": "ترجمة معاني القرآن باللغة التركية",
+    "rawName": "ترجمة معاني القرآن باللغة التركية",
+    "url": "https://backup.qurango.net/radio/translation_quran_turkish",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109052,
+    "name": "ترجمة معاني القرآن باللغة الروسية",
+    "rawName": "ترجمة معاني القرآن باللغة الروسية",
+    "url": "https://backup.qurango.net/radio/translation_quran_Russia",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109053,
+    "name": "ترجمة معاني القرآن باللغة الصينية",
+    "rawName": "ترجمة معاني القرآن باللغة الصينية",
+    "url": "https://backup.qurango.net/radio/translation_quran_chinese",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109054,
+    "name": "ترجمة معاني القرآن باللغة الفارسية",
+    "rawName": "ترجمة معاني القرآن باللغة الفارسية",
+    "url": "https://backup.qurango.net/radio/translation_quran_farsi",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109055,
+    "name": "ترجمة معاني القرآن باللغة الفرنسية",
+    "rawName": "ترجمة معاني القرآن باللغة الفرنسية",
+    "url": "https://backup.qurango.net/radio/translation_quran_french",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109056,
+    "name": "ترجمة معاني القرآن باللغة الكردية",
+    "rawName": "ترجمة معاني القرآن باللغة الكردية",
+    "url": "https://backup.qurango.net/radio/translation_quran_kurdish",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109058,
+    "name": "ترجمة معاني القرآن باللغة المجرية",
+    "rawName": "ترجمة معاني القرآن باللغة المجرية",
+    "url": "https://backup.qurango.net/radio/translation_quran_hungarian",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109059,
+    "name": "ترجمة معاني القرآن باللغة اليونانية",
+    "rawName": "ترجمة معاني القرآن باللغة اليونانية",
+    "url": "https://backup.qurango.net/radio/translation_quran_greek",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109060,
+    "name": "سورة الملك",
+    "rawName": "سورة الملك",
+    "url": "https://backup.qurango.net/radio/Surah_Al-Mulk",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109061,
+    "name": "فضل شهر رمضان",
+    "rawName": "فضل شهر رمضان",
+    "url": "https://backup.qurango.net/radio/ramadan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109062,
+    "name": "ترجمة معاني القرآن باللغة الهوسا",
+    "rawName": "ترجمة معاني القرآن باللغة الهوسا",
+    "url": "https://backup.qurango.net/radio/Translation_Quran_Hausa",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109066,
+    "name": "صحيح مسلم",
+    "rawName": "صحيح مسلم",
+    "url": "https://backup.qurango.net/radio/saheh-muslim",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109067,
+    "name": "صحيح البخاري",
+    "rawName": "صحيح البخاري",
+    "url": "https://backup.qurango.net/radio/saheh-bokharee",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109069,
+    "name": "***قصص الأنبياء***",
+    "rawName": "***قصص الأنبياء***",
+    "url": "https://backup.qurango.net/radio/alanbiya",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109073,
+    "name": "رياض الصالحين",
+    "rawName": "رياض الصالحين",
+    "url": "https://backup.qurango.net/radio/riyad",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109074,
+    "name": "عبدالله البعيجان",
+    "rawName": "عبدالله البعيجان",
+    "url": "https://backup.qurango.net/radio/buajan",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109075,
+    "name": "أحمد طالب بن حميد",
+    "rawName": "أحمد طالب بن حميد",
+    "url": "https://backup.qurango.net/radio/a_binhameed",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109077,
+    "name": "بدر التركي",
+    "rawName": "بدر التركي",
+    "url": "https://backup.qurango.net/radio/bader",
+    "category": "قراء العالم الإسلامي"
+  },
+  {
+    "id": 109083,
+    "name": "الشمائل المحمدية",
+    "rawName": "الشمائل المحمدية",
+    "url": "https://backup.qurango.net/radio/shmaeel",
     "category": "قراء العالم الإسلامي"
   }
 ]
