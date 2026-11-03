@@ -77,12 +77,12 @@ class IlmHeader extends StatelessWidget {
 
   Widget _buildDownloadsButton(BuildContext context, AppPalette palette) {
     return Tooltip(
-      message: 'عرض المحتوى المحمّل بدون إنترنت',
+      message: 'الكتب والمتون المحفوظة بدون إنترنت',
       child: Semantics(
         button: true,
-        label: 'عرض المحتوى المحمّل بدون إنترنت',
+        label: 'الكتب والمتون المحفوظة بدون إنترنت',
         child: Material(
-          color: palette.primarySoft,
+          color: palette.surfaceMuted,
           borderRadius: AppRadius.pillRadius,
           child: InkWell(
             borderRadius: AppRadius.pillRadius,
@@ -91,19 +91,32 @@ class IlmHeader extends StatelessWidget {
               onDownloadsTap?.call();
             },
             child: Container(
-              constraints: const BoxConstraints(
-                minWidth: AppSize.tap,
-                minHeight: AppSize.tap,
+              constraints: const BoxConstraints(minHeight: AppSize.tap),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
               ),
-              alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border),
+                border: Border.all(color: palette.border, width: 1),
               ),
-              child: Icon(
-                Icons.offline_pin_rounded,
-                size: AppIcon.sm,
-                color: palette.onPrimarySoft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.download_done_rounded,
+                    size: AppIcon.sm,
+                    color: palette.primary,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Text(
+                    'المحمّلات',
+                    style: context.text.caption.copyWith(
+                      color: palette.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

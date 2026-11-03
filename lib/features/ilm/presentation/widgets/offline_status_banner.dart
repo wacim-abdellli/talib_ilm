@@ -91,7 +91,7 @@ class _OfflineStatusBannerState extends State<OfflineStatusBanner> {
                         ),
                         const SizedBox(height: AppSpace.xxs),
                         Text(
-                          'تصفح كتبك وسورك الصوتية المحمّلة',
+                          'تصفح كتبك التراثية والمتون المحفوظة',
                           style: textTheme.caption.copyWith(
                             color: palette.textMuted,
                           ),

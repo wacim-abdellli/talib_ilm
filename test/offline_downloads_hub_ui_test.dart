@@ -68,7 +68,7 @@ void main() {
 
       // Offline: banner appears
       expect(find.text('وضع عدم الاتصال بالإنترنت'), findsOneWidget);
-      expect(find.text('تصفح كتبك وسورك الصوتية المحمّلة'), findsOneWidget);
+      expect(find.text('تصفح كتبك التراثية والمتون المحفوظة'), findsOneWidget);
 
       // Tapping المحملات triggers callback
       await tester.tap(find.text('المحملات'));
@@ -175,7 +175,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('حقيبة المحتوى بدون إنترنت'), findsOneWidget);
-      expect(find.text('سور القرآن الصوتية'), findsOneWidget);
+      expect(find.text('سور القرآن الصوتية'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

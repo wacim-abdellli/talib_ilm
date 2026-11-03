@@ -10,11 +10,8 @@ import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
 import '../../data/services/shamela_service.dart';
 import 'offline_books_tab_view.dart';
-import 'offline_quran_audio_tab_view.dart';
 
-/// Central Hub for all offline-ready content in talib_ilm:
-/// - Downloaded Shamela heritage books & bundled syllabus mutun
-/// - Downloaded Holy Quran audio surahs
+/// Central Hub for all offline-ready books and syllabus mutun in talib_ilm.
 class OfflineDownloadsHubSheet extends StatefulWidget {
   final void Function(ShamelaBook book) onOpenShamelaBook;
   final void Function(IlmBook book) onOpenMutunBook;
@@ -51,10 +48,7 @@ class OfflineDownloadsHubSheet extends StatefulWidget {
       _OfflineDownloadsHubSheetState();
 }
 
-class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet> {
   List<ShamelaBook> _downloadedBooks = [];
   List<IlmBook> _bundledMutun = [];
   Map<String, BookProgress> _progressById = {};
@@ -66,14 +60,7 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadAllOfflineData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadAllOfflineData() async {
@@ -164,7 +151,7 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                     ),
                     alignment: Alignment.center,
                     child: Icon(
-                      Icons.offline_pin_rounded,
+                      Icons.download_done_rounded,
                       color: palette.gold,
                       size: AppIcon.lg,
                     ),
@@ -178,6 +165,16 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                           'حقيبة المحتوى بدون إنترنت',
                           style: textTheme.titleSmall.copyWith(
                             color: palette.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpace.xxs),
+                        Text(
+                          '$_offlineStudyContentCount كتاباً ومتناً متاحاً للقراءة بدون إنترنت',
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -198,45 +195,9 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
               ),
             ),
 
-            const SizedBox(height: AppSpace.md),
-
-            // ── Navigation Tabs ──────────────────────────────────────
-            Container(
-              margin: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.lg,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surfaceMuted,
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: palette.primary,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-                labelColor: palette.bg,
-                unselectedLabelColor: palette.textMuted,
-                labelStyle: textTheme.caption.copyWith(),
-                unselectedLabelStyle: textTheme.caption,
-                tabs: [
-                  Tab(
-                    icon: const Icon(Icons.menu_book_rounded, size: AppIcon.sm),
-                    text: 'الكتب والمتون ($_offlineStudyContentCount)',
-                  ),
-                  const Tab(
-                    icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
-                    text: 'سور القرآن الصوتية',
-                  ),
-                ],
-              ),
-            ),
-
             const SizedBox(height: AppSpace.sm),
 
-            // ── Tab Views ────────────────────────────────────────────
+            // ── Offline Books & Mutun Content ────────────────────────
             Expanded(
               child: _isLoading
                   ? Center(
@@ -247,29 +208,18 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet>
                         ),
                       ),
                     )
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        OfflineBooksTabView(
-                          downloadedBooks: _downloadedBooks,
-                          bundledMutun: _bundledMutun,
-                          progressById: _progressById,
-                          onOpenShamelaBook: (book) {
-                            Navigator.of(context).pop();
-                            widget.onOpenShamelaBook(book);
-                          },
-                          onOpenMutunBook: (book) {
-                            Navigator.of(context).pop();
-                            widget.onOpenMutunBook(book);
-                          },
-                        ),
-                        OfflineQuranAudioTabView(
-                          onStorageChanged: () {
-                            _loadAllOfflineData();
-                            widget.onRefresh?.call();
-                          },
-                        ),
-                      ],
+                  : OfflineBooksTabView(
+                      downloadedBooks: _downloadedBooks,
+                      bundledMutun: _bundledMutun,
+                      progressById: _progressById,
+                      onOpenShamelaBook: (book) {
+                        Navigator.of(context).pop();
+                        widget.onOpenShamelaBook(book);
+                      },
+                      onOpenMutunBook: (book) {
+                        Navigator.of(context).pop();
+                        widget.onOpenMutunBook(book);
+                      },
                     ),
             ),
           ],
