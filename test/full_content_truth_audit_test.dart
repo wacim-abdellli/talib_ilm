@@ -9,9 +9,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('DEEP TRUTH AUDIT — Pillar 1: Books (Turath 198 & Mutun Syllabus 18)', () {
-    test('TurathCatalog: All 198 books have valid unique IDs, positive pages, and valid categories', () {
+    test('TurathCatalog: All 266 books have valid unique IDs, positive pages, and valid categories', () {
       final books = TurathCatalog.books;
-      expect(books.length, equals(198), reason: 'TurathCatalog contains exactly 198 verified Shamela books');
+      expect(books.length, equals(266), reason: 'TurathCatalog contains exactly 198 verified Shamela books');
 
       final ids = books.map((b) => b.id).toList();
       final uniqueIds = ids.toSet();
