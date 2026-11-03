@@ -226,10 +226,14 @@ class _AdhkarPageState extends State<AdhkarPage> {
                                     ),
                                   ),
                                   if (res.item.countDescription.isNotEmpty)
-                                    Text(
-                                      res.item.countDescription,
-                                      style: context.text.captionBold.copyWith(
-                                        color: palette.textMuted,
+                                    Flexible(
+                                      child: Text(
+                                        res.item.countDescription,
+                                        style: context.text.captionBold.copyWith(
+                                          color: palette.textMuted,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                 ],
@@ -285,7 +289,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: AppSpace.md,
                             mainAxisSpacing: AppSpace.md,
-                            childAspectRatio: 0.94,
+                            childAspectRatio: 0.86,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -407,74 +411,75 @@ class _AdhkarPageState extends State<AdhkarPage> {
   String _fallbackSubtitle(String id) {
     switch (id) {
       case 'morning':
-        return 'الحفظ والسكينة وبداية اليوم بذكر الله';
+        return 'حصن اليوم وأوراد البركة';
       case 'evening':
-        return 'حصن المسلم والسكينة عند إقبال الليل';
+        return 'حفظ النفس والسكينة والأمان';
       case 'after_prayer':
-        return 'الاستغفار والتسبيح دبر الصلوات المكتوبة';
+        return 'تسبيحات دبر الصلوات المكتوبة';
       case 'prayer_sunan':
-        return 'أدعية الاستفتاح والركوع والسجود وقنوت الوتر';
+        return 'أدعية الاستفتاح والركوع والوتر';
       case 'prayer_opening':
-        return 'استفتاح الفريضة وقيام الليل الثابت عن النبي ﷺ';
+        return 'استفتاح الفريضة وقيام الليل';
       case 'prayer_rukuh_sujud':
-        return 'تسبيحات الركوع والرفع منه والسجود وسجود التلاوة';
+        return 'تسبيحات الركوع وسجود التلاوة';
       case 'tashahhud_salat':
-        return 'صيغ التشهد المأثورة والصلاة على النبي ﷺ بعد التشهد';
+        return 'التحيات والصلاة الإبراهيمية';
       case 'prayer_before_salam':
-        return 'الاستعاذة من الأربع وجوامع الدعاء في دبر الصلاة';
+        return 'الاستعاذة من الأربع والمأثور';
       case 'witr_istikharah':
-        return 'دعاء الاستخارة وقنوت الوتر وقيام الليل والذكر بعده';
+        return 'دعاء الاستخارة وقنوت الوتر';
       case 'waking':
-        return 'حمد الله والثناء عليه بعد بعث الروح';
+        return 'حمد الله والثناء بعد الانتباه';
       case 'sleeping':
-        return 'الحفظ والسكينة وأدعية النوم والاستيقاظ';
+        return 'آية الكرسي وأدعية الفطرة';
       case 'mosque_adhan':
-        return 'المشي إلى المسجد ودخوله وإجابة المؤذن';
+        return 'إجابة المؤذن وآداب المسجد';
       case 'adhan_iqamah':
-        return 'إجابة المؤذن والصلاة على النبي ﷺ ودعاء الوسيلة';
+        return 'إجابة المؤذن ودعاء الوسيلة';
       case 'mosque_etiquette':
-        return 'المشي إلى المسجد ودخوله باليمين والخروج منه باليسار';
+        return 'آداب المسجد والدخول باليمين';
       case 'home':
-        return 'أذكار الدخول والخروج والسلام على الأهل';
+        return 'أذكار الدخول ولبس الثوب';
       case 'wudu_taharah':
+        return 'سنن الوضوء وأذكار الخلاء';
       case 'wudu_food':
-        return 'أذكار الوضوء والخلاء وطهارة البدن';
+        return 'سنن الوضوء وطهارة البدن';
       case 'food_drink':
-        return 'الآداب النبوية عند الأكل والشرب والضيافة';
+        return 'آداب الطعام والشراب والحمد';
       case 'travel':
-        return 'الحفظ والمعونة والبركة في السفر والترحال';
+        return 'دعاء الركوب وتوديع المسافر';
       case 'distress':
       case 'distress_relief':
-        return 'دعاء ذي النون وتفريج الهموم والغموم وقضاء الدين';
+        return 'دعاء ذي النون وتفريج الكرب';
       case 'protection_ruqyah':
-        return 'التحصين من نزغات الشيطان والرؤيا المكروهة ودفع العين';
+        return 'التحصين ودفع العين والحسد';
       case 'sickness_funerals':
-        return 'عيادة المريض والرقية والمصائب والصبر';
+        return 'عيادة المريض وصلاة الجنازة';
       case 'sickness_ruqyah':
-        return 'عيادة المريض، الرقية النبوية، والتعوذ عند الألم';
+        return 'عيادة المريض والرقية النبوية';
       case 'funerals_graves':
-        return 'تلقين المحتضر، صلاة الجنازة، التعزية، وزيارة القبور';
+        return 'صلاة الجنازة وزيارة المقابر';
       case 'nature_weather':
-        return 'أدعية الرياح ونزول المطر ورؤية الهلال';
+        return 'دعاء الغيث والرياح والكسوف';
       case 'social_manners':
-        return 'كفارة المجلس وإفشاء السلام والعطاس وسجود الشكر';
+        return 'كفارة المجلس وإفشاء السلام';
       case 'fasting_hajj':
-        return 'أدعية الصائم والإفطار ومناسك الحج';
+        return 'أدعية الصيام ومناسك الحج';
       case 'fasting_adhkar':
-        return 'رؤية الهلال، سنن الإفطار والسحور، ودعاء ليلة القدر';
+        return 'دعاء الإفطار وليلة القدر';
       case 'hajj_umrah':
-        return 'التلبية، الطواف، السعي، عرفة، ومناسك الحج والعمرة';
+        return 'التلبية ومناسك الحج والعمرة';
       case 'tasbeeh':
-        return 'فضائل التسبيح والتحميد والأجور المضاعفة';
+        return 'الباقيات الصالحات والأجور';
       case 'istighfar':
-        return 'صيغ الاستغفار الثابتة وأبواب الرحمة';
+        return 'سيد الاستغفار ومحو الذنوب';
       case 'quranic_duas':
-        return 'أدعية الأنبياء والرسل والراسخين في العلم من القرآن';
+        return 'دعوات الأنبياء في التنزيل';
       case 'prophetic_duas':
-        return 'أكمل وأجمع الأدعية المأثورة عن رسول الله ﷺ';
+        return 'جوامع الأدعية النبوية الشريفة';
       case 'duas':
       default:
-        return 'جوامع الدعاء من القرآن وصحيح السنة';
+        return 'جوامع الدعاء من السنة والقرآن';
     }
   }
 

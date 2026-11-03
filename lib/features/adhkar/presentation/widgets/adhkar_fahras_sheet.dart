@@ -434,22 +434,24 @@ class _FahrasDhikrTile extends StatelessWidget {
                       if (hasCustomTitle) ...[
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: AppSpace.xs + 2,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: palette.goldSoft,
-                                borderRadius: AppRadius.smRadius,
-                              ),
-                              child: Text(
-                                item.countDescription,
-                                style: textTheme.captionHeavy.copyWith(
-                                  color: palette.gold,
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: AppSpace.xs + 2,
+                                  vertical: 1,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                decoration: BoxDecoration(
+                                  color: palette.goldSoft,
+                                  borderRadius: AppRadius.smRadius,
+                                ),
+                                child: Text(
+                                  item.countDescription,
+                                  style: textTheme.captionHeavy.copyWith(
+                                    color: palette.gold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                             if (isCurrent) ...[
