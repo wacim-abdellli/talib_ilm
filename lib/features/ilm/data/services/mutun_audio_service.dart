@@ -210,13 +210,12 @@ class MutunAudioService {
       mode == MutunRepeatMode.entireMatn ? seekToChapter(0) : stop();
       return;
     }
-    if (mode == MutunRepeatMode.singleParagraph) {
+    if (mode == MutunRepeatMode.singleParagraph ||
+        mode == MutunRepeatMode.entireMatn) {
       _player.seek(Duration.zero);
       _player.play();
-    } else if ((activeParagraphNotifier.value ?? 1) < _totalParagraphs) {
-      nextParagraph();
     } else {
-      mode == MutunRepeatMode.entireMatn ? seekToParagraph(1) : stop();
+      stop();
     }
   }
 
@@ -416,46 +415,10 @@ class MutunAudioService {
   }
 
   Future<void> seekToParagraph(int index, {String? bookId}) async {
-    final targetBookId = bookId ?? activeBookIdNotifier.value;
+    // Decoupled: paragraph clicks or text selection never seek or interrupt audio.
+    // Audio playback remains continuous and smooth.
     activeParagraphNotifier.value = index;
-    final targetMs = _loader.resolveParagraphTargetMs(
-      bookId: targetBookId,
-      reciterId: _selectedReciter.id,
-      index: index,
-      duration: durationNotifier.value,
-      totalParagraphs: _totalParagraphs,
-    );
-    final isNotReady = _player.audioSource == null ||
-        _player.processingState == ProcessingState.idle ||
-        _currentAudioUrl == null ||
-        (targetBookId != null && activeBookIdNotifier.value != targetBookId);
-
-    if (targetBookId != null && isNotReady) {
-      final audioUrl =
-          MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: _selectedReciter.id) ??
-              MutunAudioCatalog.getAudioUrl(targetBookId, reciterId: 'sini') ??
-              '';
-      await playMatnAudio(
-        bookId: targetBookId,
-        audioUrl: audioUrl,
-        paragraphIndex: index,
-        totalParagraphs:
-            MutunAudioCatalog.getTotalParagraphs(targetBookId, reciterId: _selectedReciter.id),
-        initialPosition: targetMs > 0 ? _audioPosition(targetMs) : null,
-      );
-      return;
-    }
-
-    try {
-      await _player.seek(_audioPosition(targetMs));
-      if (!_player.playing) await _player.play();
-    } catch (_) {
-      if (targetBookId != null) await togglePlayPause(bookId: targetBookId);
-    }
   }
-
-  static Duration _audioPosition(int ms) =>
-      Duration(milliseconds: ms); // ui-lint: allow audio seek position
 
   Future<void> seek(Duration position) async {
     await _player.seek(position);
@@ -476,13 +439,13 @@ class MutunAudioService {
   void clearActiveParagraph() => activeParagraphNotifier.value = null;
   void nextParagraph() {
     if ((activeParagraphNotifier.value ?? 1) < _totalParagraphs) {
-      seekToParagraph((activeParagraphNotifier.value ?? 1) + 1);
+      activeParagraphNotifier.value = (activeParagraphNotifier.value ?? 1) + 1;
     }
   }
 
   void previousParagraph() {
     if ((activeParagraphNotifier.value ?? 1) > 1) {
-      seekToParagraph((activeParagraphNotifier.value ?? 1) - 1);
+      activeParagraphNotifier.value = (activeParagraphNotifier.value ?? 1) - 1;
     }
   }
 

@@ -41,15 +41,18 @@ class QuranAudioService {
   Future<void> Function() _retryDelay = () => Future<void>.delayed(AppPolicy.debounce);
   Future<AudioSource> Function(int, int, QuranReciter)? _sourceResolver;
   StreamSubscription? _playerStateSub;
+  StreamSubscription? _positionSub;
 
   Future<void> _recreatePlayer(int operation) async {
     if (!_ownsOperation(operation)) return;
     final previous = _player;
     final previousSubscription = _playerStateSub;
+    final previousPosSub = _positionSub;
     _player = _playerFactory();
     _initAudioListener();
     try {
       await previousSubscription?.cancel();
+      await previousPosSub?.cancel();
       await previous.dispose();
     } catch (_) {}
   }
@@ -68,10 +71,12 @@ class QuranAudioService {
   final ValueNotifier<AudioRepeatMode> repeatModeNotifier = ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
   final ValueNotifier<AudioPlaybackError?> errorNotifier = ValueNotifier<AudioPlaybackError?>(null);
   final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
+  final ValueNotifier<int?> sleepTimerRemainingSecondsNotifier = ValueNotifier<int?>(null);
   final ValueNotifier<bool> stopAtEndOfSurahNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isFullSurahModeNotifier = ValueNotifier<bool>(false);
 
   Timer? _sleepTimer;
+  DateTime? _sleepTimerEndTime;
   bool _isContinuous = false, _isSingleVerseOnly = false, _hasExplicitEnd = false, _playWhenReady = false;
   bool _isTransitioning = false, _completionArmed = false, _disposed = false;
   int _endAyah = 0, _operation = 0, _ayahRepeatCount = 0;
@@ -116,6 +121,7 @@ class QuranAudioService {
   void _initAudioListener() {
     AudioCoordinator.onPauseQuran = pause;
     _playerStateSub?.cancel();
+    _positionSub?.cancel();
     final player = _player;
     _playerStateSub = _player.playerStateStream.listen(
       (state) {
@@ -132,6 +138,14 @@ class QuranAudioService {
         _handlePlaybackError(e);
       },
     );
+    try {
+      _positionSub = _player.positionStream.listen((_) {
+        if (_disposed || player != _player) return;
+        if (_sleepTimerEndTime != null && DateTime.now().isAfter(_sleepTimerEndTime!)) {
+          _triggerSleepTimer();
+        }
+      });
+    } catch (_) {}
   }
 
   static bool isValidSurah(int surah) => surah >= 1 && surah <= 114;
@@ -589,15 +603,42 @@ class QuranAudioService {
 
   void setSleepTimer(int? minutes, {bool atEndOfSurah = false}) {
     _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepTimerEndTime = null;
     stopAtEndOfSurahNotifier.value = atEndOfSurah;
     sleepTimerMinutesNotifier.value = minutes;
+
     if (minutes != null && minutes > 0) {
-      _sleepTimer = Timer(Duration(minutes: minutes), () {
-        stop();
-        sleepTimerMinutesNotifier.value = null;
-        stopAtEndOfSurahNotifier.value = false;
+      final totalSeconds = minutes * 60;
+      _sleepTimerEndTime = DateTime.now().add(Duration(minutes: minutes));
+      sleepTimerRemainingSecondsNotifier.value = totalSeconds;
+
+      _sleepTimer = Timer.periodic(AppPolicy.oneSecond, (timer) {
+        if (_sleepTimerEndTime == null || _disposed) {
+          timer.cancel();
+          return;
+        }
+        final remaining = _sleepTimerEndTime!.difference(DateTime.now()).inSeconds;
+        if (remaining <= 0) {
+          timer.cancel();
+          _triggerSleepTimer();
+        } else {
+          sleepTimerRemainingSecondsNotifier.value = remaining;
+        }
       });
+    } else {
+      sleepTimerRemainingSecondsNotifier.value = null;
     }
+  }
+
+  void _triggerSleepTimer() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepTimerEndTime = null;
+    sleepTimerMinutesNotifier.value = null;
+    sleepTimerRemainingSecondsNotifier.value = null;
+    stopAtEndOfSurahNotifier.value = false;
+    pause();
   }
 
   Future<void> nextSurah() async {
@@ -684,7 +725,10 @@ class QuranAudioService {
     isPlayingNotifier.value = false;
     _isContinuous = false;
     _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepTimerEndTime = null;
     sleepTimerMinutesNotifier.value = null;
+    sleepTimerRemainingSecondsNotifier.value = null;
     stopAtEndOfSurahNotifier.value = false;
     clearError();
     try {
@@ -700,9 +744,13 @@ class QuranAudioService {
     }
     ++_operation;
     _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepTimerEndTime = null;
     _playerStateSub?.cancel();
+    _positionSub?.cancel();
     errorNotifier.dispose();
     stopAtEndOfSurahNotifier.dispose();
+    sleepTimerRemainingSecondsNotifier.dispose();
     isFullSurahModeNotifier.dispose();
     _player.dispose();
   }
