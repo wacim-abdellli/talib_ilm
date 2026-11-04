@@ -17,6 +17,8 @@ class ControlledPlayer implements AudioPlayer {
   @override
   Stream<PlayerState> get playerStateStream => states.stream;
   @override
+  Stream<Duration> get positionStream => const Stream<Duration>.empty();
+  @override
   ProcessingState get processingState => phase;
   @override
   bool get playing => running;

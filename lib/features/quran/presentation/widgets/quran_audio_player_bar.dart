@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_ui.dart';
 import '../../data/services/quran_audio_service.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import 'surah_card.dart';
 
 /// Floating/sticky audio playback bar displayed at the bottom of the
@@ -40,6 +41,7 @@ class QuranAudioPlayerBar extends StatelessWidget {
         audioService.speedNotifier,
         audioService.repeatModeNotifier,
         audioService.sleepTimerMinutesNotifier,
+        audioService.sleepTimerRemainingSecondsNotifier,
         audioService.stopAtEndOfSurahNotifier,
       ]),
       builder: (context, _) {
@@ -67,12 +69,19 @@ class QuranAudioPlayerBar extends StatelessWidget {
         };
 
         final sleepMinutes = audioService.sleepTimerMinutesNotifier.value;
+        final remainingSeconds = audioService.sleepTimerRemainingSecondsNotifier.value;
         final stopAtEnd = audioService.stopAtEndOfSurahNotifier.value;
         final isTimerActive = sleepMinutes != null || stopAtEnd;
+        String? countdownLabel;
+        if (remainingSeconds != null && remainingSeconds > 0) {
+          final rMin = remainingSeconds ~/ 60;
+          final rSec = remainingSeconds % 60;
+          countdownLabel = '${rMin.toString().padLeft(2, '0')}:${rSec.toString().padLeft(2, '0')}';
+        }
         final String timerTooltip = isTimerActive
             ? (stopAtEnd
                 ? 'مؤقت النوم: نهاية السورة'
-                : 'مؤقت النوم: $sleepMinutes دقيقة')
+                : 'مؤقت النوم: ${countdownLabel ?? "$sleepMinutes دقيقة"}')
             : 'مؤقت النوم';
 
         return Container(
@@ -142,47 +151,84 @@ class QuranAudioPlayerBar extends StatelessWidget {
                           HapticFeedback.selectionClick();
                           if (val == 0) {
                             audioService.setSleepTimer(null);
+                            AppSnackbar.info(context, 'تم إيقاف مؤقت النوم');
                           } else if (val == -1) {
                             audioService.setSleepTimer(null, atEndOfSurah: true);
+                            AppSnackbar.success(context, 'سيتم إيقاف التلاوة عند نهاية السورة');
                           } else {
                             audioService.setSleepTimer(val);
+                            AppSnackbar.success(context, 'تم ضبط مؤقت النوم على $val دقيقة');
                           }
                         },
-                        itemBuilder: (ctx) => [
-                          const PopupMenuItem(
-                            value: 0,
-                            child: Text('إيقاف المؤقت (معطل)'),
+                        itemBuilder: (ctx) {
+                          final currentVal = stopAtEnd ? -1 : (sleepMinutes ?? 0);
+                          PopupMenuItem<int> buildItem(int val, String label) {
+                            final isSelected = currentVal == val;
+                            return PopupMenuItem<int>(
+                              value: val,
+                              child: Row(
+                                children: [
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_rounded,
+                                      size: AppIcon.xs,
+                                      color: palette.primary,
+                                    )
+                                  else
+                                    const SizedBox(width: AppIcon.xs),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    label,
+                                    style: isSelected
+                                        ? textTheme.captionBold.copyWith(color: palette.primary)
+                                        : textTheme.caption.copyWith(color: palette.text),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return [
+                            buildItem(0, 'إيقاف المؤقت (معطل)'),
+                            buildItem(5, '5 دقائق'),
+                            buildItem(10, '10 دقائق'),
+                            buildItem(15, '15 دقيقة'),
+                            buildItem(30, '30 دقيقة'),
+                            buildItem(45, '45 دقيقة'),
+                            buildItem(60, '60 دقيقة'),
+                            buildItem(-1, 'نهاية السورة الحالية'),
+                          ];
+                        },
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.xs,
+                            vertical: AppSpace.xxs,
                           ),
-                          const PopupMenuItem(
-                            value: 15,
-                            child: Text('15 دقيقة'),
+                          decoration: BoxDecoration(
+                            color: isTimerActive ? palette.primarySoft : palette.surfaceMuted,
+                            borderRadius: AppRadius.pillRadius,
+                            border: Border.all(
+                              color: isTimerActive ? palette.primary : palette.border,
+                            ),
                           ),
-                          const PopupMenuItem(
-                            value: 30,
-                            child: Text('30 دقيقة'),
-                          ),
-                          const PopupMenuItem(
-                            value: 45,
-                            child: Text('45 دقيقة'),
-                          ),
-                          const PopupMenuItem(
-                            value: 60,
-                            child: Text('60 دقيقة'),
-                          ),
-                          const PopupMenuItem(
-                            value: -1,
-                            child: Text('نهاية السورة الحالية'),
-                          ),
-                        ],
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                          child: Icon(
-                            isTimerActive
-                                ? Icons.bedtime_rounded
-                                : Icons.bedtime_outlined,
-                            color: isTimerActive
-                                ? palette.primary
-                                : palette.textMuted,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isTimerActive ? Icons.bedtime_rounded : Icons.bedtime_outlined,
+                                size: AppIcon.xs,
+                                color: isTimerActive ? palette.primary : palette.textMuted,
+                              ),
+                              if (isTimerActive) ...[
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  stopAtEnd ? 'نهاية السورة' : (countdownLabel ?? '$sleepMinutes د'),
+                                  style: textTheme.captionBold.copyWith(
+                                    color: palette.primary,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ),

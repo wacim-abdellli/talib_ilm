@@ -8,14 +8,13 @@ import '../../data/models/mutun_models.dart';
 import '../../data/services/mutun_audio_service.dart';
 
 /// Bottom modal sheet for scholarly options on an individual paragraph:
-/// recitation playback from paragraph, clipboard copying, typography customization, and note-taking.
+/// clipboard copying, typography customization, and note-taking.
 class MutnParagraphOptionsSheet extends StatelessWidget {
   final MutunParagraph paragraph;
   final IlmBook book;
   final MutunAudioService audioService;
   final VoidCallback onAddNote;
   final VoidCallback onOpenTypography;
-  final void Function(int paragraphIndex) onPlayFromParagraph;
 
   const MutnParagraphOptionsSheet({
     super.key,
@@ -24,7 +23,6 @@ class MutnParagraphOptionsSheet extends StatelessWidget {
     required this.audioService,
     required this.onAddNote,
     required this.onOpenTypography,
-    required this.onPlayFromParagraph,
   });
 
   static Future<void> show({
@@ -34,7 +32,6 @@ class MutnParagraphOptionsSheet extends StatelessWidget {
     required MutunAudioService audioService,
     required VoidCallback onAddNote,
     required VoidCallback onOpenTypography,
-    required void Function(int paragraphIndex) onPlayFromParagraph,
   }) {
     HapticFeedback.mediumImpact();
     return showModalBottomSheet<void>(
@@ -46,7 +43,6 @@ class MutnParagraphOptionsSheet extends StatelessWidget {
         audioService: audioService,
         onAddNote: onAddNote,
         onOpenTypography: onOpenTypography,
-        onPlayFromParagraph: onPlayFromParagraph,
       ),
     );
   }
@@ -55,7 +51,6 @@ class MutnParagraphOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final tokens = MutunThemeColors.getTokens(isDark: palette.isDark);
 
     return Container(
       decoration: BoxDecoration(
@@ -91,20 +86,6 @@ class MutnParagraphOptionsSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpace.md),
-              ListTile(
-                leading: Icon(
-                  Icons.play_circle_fill_rounded,
-                  color: tokens.rosetteGold,
-                ),
-                title: const Text('تشغيل التلاوة من هذه الفقرة'),
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.mdRadius,
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onPlayFromParagraph(paragraph.index);
-                },
-              ),
               ListTile(
                 leading: Icon(Icons.copy_rounded, color: palette.text),
                 title: const Text('نسخ نص الفقرة'),

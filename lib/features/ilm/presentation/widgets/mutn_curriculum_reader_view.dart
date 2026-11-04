@@ -23,7 +23,7 @@ import 'scholarly_reader_hud.dart' show BookPageTapDetector, ScholarlyReaderHud;
 import 'shamela_typography_sheet.dart';
 
 /// Authentic Continuous Scholarly Reader for curriculum mutun matching Hafed Mutun.
-/// Features continuous text flow, group section headers, instant paragraph seeking on tap,
+/// Features continuous text flow, group section headers, decoupled continuous audio playback,
 /// and quick jump navigation with docked audio controls.
 class MutnCurriculumReaderView extends StatefulWidget {
   final IlmBook book;
@@ -284,7 +284,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
         onParagraphSelected: (para) {
           _scrollToParagraph(para);
           _recordParagraphProgress(para);
-          widget.audioService.seekToParagraph(para, bookId: widget.book.id);
         },
       ),
     );
@@ -298,12 +297,6 @@ class _MutnCurriculumReaderViewState extends State<MutnCurriculumReaderView> {
       audioService: widget.audioService,
       onAddNote: widget.onAddNote,
       onOpenTypography: _openTypographySheet,
-      onPlayFromParagraph: (index) {
-        setState(() => _showAudioBar = true);
-        widget.audioService.seekToParagraph(index, bookId: widget.book.id);
-        _scrollToParagraph(index);
-        _recordParagraphProgress(index);
-      },
     );
   }
 
