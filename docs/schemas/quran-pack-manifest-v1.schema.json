@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Talib Ilm Quran Pack Manifest v1",
+  "description": "Signed metadata for one complete offline Quran edition. The signature covers RFC 8785 canonical JSON with the signature member omitted. Schema validation does not authenticate the signature or verify Quran text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "editionId",
+    "packVersion",
+    "minimumAppVersion",
+    "publishedAt",
+    "scriptName",
+    "source",
+    "coordinates",
+    "surahRanges",
+    "storage",
+    "capabilities",
+    "assets",
+    "signature"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "editionId": { "enum": ["hafs", "warsh", "qalun"] },
+    "packVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "minimumAppVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:\\+\\d+)?$",
+      "maxLength": 32
+    },
+    "publishedAt": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "scriptName": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "source": { "$ref": "#/$defs/source" },
+    "coordinates": { "$ref": "#/$defs/coordinates" },
+    "surahRanges": {
+      "type": "array",
+      "minItems": 114,
+      "maxItems": 114,
+      "items": { "$ref": "#/$defs/surahRange" }
+    },
+    "storage": { "$ref": "#/$defs/storage" },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 6,
+      "contains": { "const": "display_text" },
+      "items": {
+        "enum": [
+          "display_text",
+          "local_search",
+          "page_references",
+          "exact_page_layout",
+          "tajweed",
+          "audio_alignment"
+        ]
+      }
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/asset" }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "assets": {
+          "contains": {
+            "properties": { "roles": { "contains": { "const": "display_text" } } },
+            "required": ["roles"]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "capabilities": { "contains": { "const": "local_search" } } } },
+      "then": { "properties": { "assets": { "contains": { "properties": { "roles": { "contains": { "const": "search_index" } } }, "required": ["roles"] } } } }
+    },
+    {
+      "if": { "properties": { "capabilities": { "contains": { "const": "page_references" } } } },
+      "then": {
+        "properties": {
+          "coordinates": { "required": ["pageCount", "pageNumberingSystem"] },
+          "assets": { "contains": { "properties": { "roles": { "contains": { "const": "page_map" } } }, "required": ["roles"] } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "capabilities": { "contains": { "const": "exact_page_layout" } } } },
+      "then": {
+        "properties": {
+          "capabilities": { "contains": { "const": "page_references" } },
+          "assets": { "contains": { "properties": { "roles": { "contains": { "const": "page_layout" } } }, "required": ["roles"] } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "capabilities": { "contains": { "const": "tajweed" } } } },
+      "then": { "properties": { "assets": { "contains": { "properties": { "roles": { "contains": { "const": "tajweed" } } }, "required": ["roles"] } } } }
+    },
+    {
+      "if": { "properties": { "capabilities": { "contains": { "const": "audio_alignment" } } } },
+      "then": { "properties": { "assets": { "contains": { "properties": { "roles": { "contains": { "const": "audio_alignment" } } }, "required": ["roles"] } } } }
+    }
+  ],
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organization", "title", "editionId", "transmissionIdentity", "archiveUrl", "archiveVersion", "attribution"],
+      "properties": {
+        "organization": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "editionId": { "enum": ["hafs", "warsh", "qalun"] },
+        "transmissionIdentity": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "archiveUrl": { "type": "string", "format": "uri", "maxLength": 2048, "pattern": "^https://" },
+        "archiveVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "archiveSha256": { "$ref": "#/$defs/sha256" },
+        "sourceUpdatedAt": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+        "attribution": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "licenseUrl": { "type": "string", "format": "uri", "maxLength": 2048, "pattern": "^https://" }
+      }
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surahCount", "ayahCount", "ayahNumberingSystem"],
+      "properties": {
+        "surahCount": { "const": 114 },
+        "ayahCount": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "ayahNumberingSystem": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "pageCount": { "type": "integer", "minimum": 1, "maximum": 2000 },
+        "pageNumberingSystem": { "type": "string", "minLength": 1, "maxLength": 200 }
+      },
+      "dependentRequired": {
+        "pageCount": ["pageNumberingSystem"],
+        "pageNumberingSystem": ["pageCount"]
+      }
+    },
+    "surahRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surahNumber", "firstAyahNumber", "lastAyahNumber"],
+      "properties": {
+        "surahNumber": { "type": "integer", "minimum": 1, "maximum": 114 },
+        "firstAyahNumber": { "const": 1 },
+        "lastAyahNumber": { "type": "integer", "minimum": 1, "maximum": 10000 }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageBytes", "dataBytes", "fontBytes", "requiredTemporaryFreeSpaceBytes"],
+      "properties": {
+        "packageBytes": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "dataBytes": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "fontBytes": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "requiredTemporaryFreeSpaceBytes": { "type": "integer", "minimum": 1, "maximum": 2147483647 }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "roles", "mediaType", "path", "downloadUrl", "byteLength", "sha256"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "roles": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 7,
+          "items": { "enum": ["display_text", "font", "page_map", "page_layout", "search_index", "tajweed", "audio_alignment"] }
+        },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^(?!/)(?!.*//)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[/]$)[A-Za-z0-9._/-]+$" },
+        "downloadUrl": { "type": "string", "format": "uri", "maxLength": 2048, "pattern": "^https://" },
+        "fontFamily": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "fontVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "byteLength": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "roles": { "contains": { "const": "font" } } } },
+          "then": {
+            "required": ["fontFamily"],
+            "properties": { "roles": { "maxItems": 1 } }
+          },
+          "else": { "not": { "anyOf": [{ "required": ["fontFamily"] }, { "required": ["fontVersion"] }] } }
+        }
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "keyId", "value"],
+      "properties": {
+        "algorithm": { "const": "Ed25519" },
+        "keyId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "value": { "type": "string", "contentEncoding": "base64", "pattern": "^[A-Za-z0-9+/]{86}==$" }
+      }
+    },
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+  }
+}

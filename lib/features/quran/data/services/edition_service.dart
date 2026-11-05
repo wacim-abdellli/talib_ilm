@@ -15,12 +15,13 @@ class EditionService {
   static const String _downloadedEditionsKey = 'downloaded_editions';
   static const String _currentEditionKey = 'current_edition';
 
-  // API endpoints for different editions
+  // Legacy API paths. `warsh` is deliberately absent: the old mapping used
+  // quran-simple, which is not an authoritative Warsh source.
   static const Map<String, String> _editionApiUrls = {
     'hafs': 'https://api.alquran.cloud/v1/quran/quran-uthmani',
-    'warsh': 'https://api.alquran.cloud/v1/quran/quran-simple',
     'tajweed': 'https://api.alquran.cloud/v1/quran/quran-tajweed',
   };
+  static const String _unverifiedLegacyWarshId = 'warsh';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HTTP TEST SEAM & TEST DIRECTORY OVERRIDE
@@ -33,7 +34,8 @@ class EditionService {
   static Directory? testBaseDir;
 
   @visibleForTesting
-  static Future<void> Function(File source, File destination)? testFileInstaller;
+  static Future<void> Function(File source, File destination)?
+  testFileInstaller;
 
   @visibleForTesting
   static Future<void> Function(File backup, File destination)? testFileRestorer;
@@ -115,7 +117,10 @@ class EditionService {
 
   static Future<List<String>> getDownloadedEditions() async {
     final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_downloadedEditionsKey) ?? [];
+    final stored = prefs.getStringList(_downloadedEditionsKey) ?? [];
+    // Never report content stored under the known-invalid legacy Warsh ID as
+    // an installed Warsh edition.
+    final list = stored.where(_editionApiUrls.containsKey).toList();
     // Always include hafs
     if (!list.contains('hafs')) {
       list.insert(0, 'hafs');
@@ -128,14 +133,53 @@ class EditionService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static Future<void> setCurrentEdition(String editionId) async {
-    if (!isValidEditionId(editionId)) return;
+    final QuranRiwayahId riwayah;
+    try {
+      riwayah = QuranRiwayahId.parse(editionId);
+    } on FormatException {
+      return;
+    }
+    if (riwayah != QuranRiwayahId.hafs &&
+        !await isEditionDownloaded(editionId)) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_currentEditionKey, editionId);
   }
 
-  static Future<String> getCurrentEdition() async {
+  /// Returns null for an obsolete or unavailable saved riwayah. Callers must
+  /// surface that state instead of silently reading bundled Hafs text.
+  static Future<String?> getCurrentEdition() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_currentEditionKey) ?? 'hafs';
+    final stored = prefs.getString(_currentEditionKey);
+    if (stored == null) return 'hafs';
+    final QuranRiwayahId riwayah;
+    try {
+      riwayah = QuranRiwayahId.parse(stored);
+    } on FormatException {
+      return null;
+    }
+    if (riwayah == QuranRiwayahId.hafs ||
+        await isEditionDownloaded(riwayah.wireValue)) {
+      return riwayah.wireValue;
+    }
+    return null;
+  }
+
+  /// Reports old files that may contain unverified data saved as Warsh.
+  /// They are hidden from installed-edition state and are never loaded.
+  static Future<List<String>> getUnverifiedLegacyEditionIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getStringList(_downloadedEditionsKey) ?? [];
+    final directory = await _getEditionsDirectory();
+    final primary = File('${directory.path}/$_unverifiedLegacyWarshId.json');
+    final backup = File('${directory.path}/$_unverifiedLegacyWarshId.json.bak');
+    if (stored.contains(_unverifiedLegacyWarshId) ||
+        await primary.exists() ||
+        await backup.exists()) {
+      return const [_unverifiedLegacyWarshId];
+    }
+    return const [];
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -153,11 +197,7 @@ class EditionService {
     }
 
     if (_activeDownloads.contains(editionId)) {
-      yield DownloadProgress(
-        0.0,
-        'التحميل قيد التنفيذ بالفعل',
-        isError: true,
-      );
+      yield DownloadProgress(0.0, 'التحميل قيد التنفيذ بالفعل', isError: true);
       return;
     }
 
@@ -170,9 +210,9 @@ class EditionService {
       yield DownloadProgress(0.1, 'جاري التحميل من السيرفر...');
 
       final request = http.Request('GET', Uri.parse(apiUrl));
-      final streamedResponse = await _client.send(request).timeout(
-            AppPolicy.networkLong,
-          );
+      final streamedResponse = await _client
+          .send(request)
+          .timeout(AppPolicy.networkLong);
 
       if (streamedResponse.statusCode != 200) {
         yield DownloadProgress(
@@ -219,14 +259,18 @@ class EditionService {
           sink?.add(chunk);
         },
         onError: (Object error, StackTrace stackTrace) {
-          if (!completer.isCompleted) completer.completeError(error, stackTrace);
+          if (!completer.isCompleted) {
+            completer.completeError(error, stackTrace);
+          }
         },
         onDone: () async {
           if (sink != null) {
             await sink.flush();
             await sink.close();
           }
-          if (!completer.isCompleted) completer.complete();
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
         },
         cancelOnError: true,
       );
@@ -269,7 +313,8 @@ class EditionService {
       }
 
       try {
-        final installer = testFileInstaller ?? (File src, File dst) => src.rename(dst.path);
+        final installer =
+            testFileInstaller ?? (File src, File dst) => src.rename(dst.path);
         await installer(tmpFile, finalFile);
 
         // Installation succeeded: safely delete backup
@@ -289,7 +334,9 @@ class EditionService {
             }
             await _restoreFile(backupFile, finalFile);
           } catch (rollbackError) {
-            debugPrint('CRITICAL: Edition rollback failure: failed to restore backup file: $rollbackError');
+            debugPrint(
+              'CRITICAL: Edition rollback failure: failed to restore backup file: $rollbackError',
+            );
             throw FileSystemException(
               'Rollback error: $rollbackError (after install failure: $installError)',
               finalFile.path,
@@ -409,7 +456,9 @@ class EditionService {
           final backupString = await backupFile.readAsString();
           final surah = _parseSurahFromJson(backupString, surahNumber);
           if (surah != null) {
-            debugPrint('Successfully recovered and loaded surah from backup edition ($editionId)');
+            debugPrint(
+              'Successfully recovered and loaded surah from backup edition ($editionId)',
+            );
             // Restore primary from backup via copy so backup remains intact until valid primary is confirmed
             try {
               if (await file.exists()) {
@@ -464,7 +513,7 @@ class EditionService {
 
       final current = await getCurrentEdition();
       if (current == editionId) {
-        await setCurrentEdition('hafs');
+        await prefs.remove(_currentEditionKey);
       }
 
       return true;

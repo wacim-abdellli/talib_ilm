@@ -288,7 +288,17 @@ class QuranRepository {
   }) async {
     // If using a non-default edition, try loading from EditionService first
     if (editionId != 'hafs') {
-      onProgress?.call('جاري تحميل رواية $editionId...', 20);
+      try {
+        QuranRiwayahId.parse(editionId);
+      } on FormatException {
+        onProgress?.call('معرّف الرواية غير مدعوم', 0);
+        return null;
+      }
+      if (!await EditionService.isEditionDownloaded(editionId)) {
+        onProgress?.call('الرواية $editionId غير مثبتة على الجهاز', 0);
+        return null;
+      }
+      onProgress?.call('جاري فتح رواية $editionId...', 20);
       final editionSurah = await EditionService.loadSurahFromEdition(
         editionId,
         number,
@@ -297,8 +307,9 @@ class QuranRepository {
         onProgress?.call('تم التحميل', 100);
         return editionSurah;
       }
-      // If edition file not found, fall back to default hafs
-      onProgress?.call('الرواية غير متوفرة، جاري تحميل حفص...', 30);
+      // The selected edition is unavailable. Never use cached/API Hafs data.
+      onProgress?.call('الرواية المحددة غير مثبتة', 0);
+      return null;
     }
 
     onProgress?.call('جاري التحقق من الذاكرة...', 10);
