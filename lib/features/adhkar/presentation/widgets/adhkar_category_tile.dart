@@ -126,14 +126,16 @@ class _CategoryTileState extends State<CategoryTile> {
                         color: catColors.bg,
                         borderRadius: AppRadius.smRadius,
                       ),
-                      child: Text(
-                        _subtitleLabel(widget.data.id, widget.data.total),
-                        style: context.text.caption.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: catColors.fg,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _subtitleLabel(widget.data.id, widget.data.total),
+                          style: context.text.caption.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: catColors.fg,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -149,7 +151,10 @@ class _CategoryTileState extends State<CategoryTile> {
                     Flexible(
                       child: Text(
                         widget.data.title,
-                        style: context.text.titleSmall.copyWith(
+                        style: (MediaQuery.sizeOf(context).width < 390
+                                ? context.text.bodyBold
+                                : context.text.titleSmall)
+                            .copyWith(
                           color: palette.text,
                           fontWeight: FontWeight.bold,
                           height: 1.2,

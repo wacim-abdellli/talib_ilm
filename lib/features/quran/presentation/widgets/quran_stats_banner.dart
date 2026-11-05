@@ -176,25 +176,37 @@ class QuranStatCard extends StatelessWidget {
             child: Icon(icon, color: iconColor, size: AppIcon.sm),
           ),
           const SizedBox(height: AppSpace.xs),
-          Text(
-            value,
-            style: textTheme.titleSmall.copyWith(
-              color: palette.text,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: textTheme.titleSmall.copyWith(
+                color: palette.text,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
             ),
           ),
-          Text(
-            label,
-            style: textTheme.caption.copyWith(
-              color: palette.textMuted,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: textTheme.caption.copyWith(
+                color: palette.textMuted,
+              ),
+              maxLines: 1,
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: AppSpace.xs),
-            Text(
-              subtitle!,
-              style: textTheme.captionBold.copyWith(
-                color: iconColor,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                subtitle!,
+                style: textTheme.captionBold.copyWith(
+                  color: iconColor,
+                ),
+                maxLines: 1,
               ),
             ),
           ],

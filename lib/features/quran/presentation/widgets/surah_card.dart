@@ -197,12 +197,16 @@ class SurahCard extends StatelessWidget {
                         const SizedBox(width: AppSpace.sm),
                         // Juz number, Verses and page count
                         Flexible(
-                          child: Text(
-                            'الجزء $juzNumber • $versesCount آية • ص $startPage',
-                            style: context.text.caption.copyWith(
-                              color: palette.textMuted,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              'الجزء $juzNumber • $versesCount آية • ص $startPage',
+                              style: context.text.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

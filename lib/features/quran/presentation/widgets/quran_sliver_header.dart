@@ -146,7 +146,9 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
                         Expanded(
                           child: _buildTabButton(
                             context: context,
-                            title: 'المحفوظات ($bookmarksCount)',
+                            title: bookmarksCount > 0
+                                ? 'المحفوظات ($bookmarksCount)'
+                                : 'المحفوظات',
                             isSelected: selectedTabIndex == 3,
                             onTap: () => onTabSelected(3),
                           ),
@@ -260,13 +262,18 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
             boxShadow: isSelected ? palette.shadow : null,
           ),
           child: Center(
-            child: Text(
-              title,
-              style: (isSelected ? context.text.labelBold : context.text.labelMedium).copyWith(
-                color: isSelected ? palette.gold : palette.textMuted,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xxs),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  style: (isSelected ? context.text.labelBold : context.text.labelMedium).copyWith(
+                    color: isSelected ? palette.gold : palette.textMuted,
+                  ),
+                  maxLines: 1,
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),

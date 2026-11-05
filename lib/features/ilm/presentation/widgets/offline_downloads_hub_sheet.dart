@@ -185,13 +185,16 @@ class _OfflineDownloadsHubSheetState extends State<OfflineDownloadsHubSheet> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSpace.xxs),
-                        Text(
-                          '$_offlineStudyContentCount كتاباً ومتناً متاحاً للقراءة بدون إنترنت',
-                          style: textTheme.caption.copyWith(
-                            color: palette.textMuted,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            '$_offlineStudyContentCount كتاباً ومتناً متاحاً للقراءة بدون إنترنت',
+                            style: textTheme.caption.copyWith(
+                              color: palette.textMuted,
+                            ),
+                            maxLines: 1,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

@@ -45,11 +45,13 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: _buildLeading(context),
       title: Tooltip(
         message: title,
-        child: Text(
-          title,
-          style: textTheme.titleSmall.copyWith(color: palette.text),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            title,
+            style: textTheme.titleSmall.copyWith(color: palette.text),
+            maxLines: 1,
+          ),
         ),
       ),
       actions: actions.isEmpty ? [const SizedBox(width: AppSize.tap)] : actions,
