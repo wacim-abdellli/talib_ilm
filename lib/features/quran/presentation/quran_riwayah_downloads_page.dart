@@ -95,6 +95,12 @@ class _QuranRiwayahDownloadsPageState extends State<QuranRiwayahDownloadsPage> {
       },
       onError: (Object error) {
         if (mounted) {
+          setState(() {
+            _progress[edition] = QuranPackInstallProgress.failed(
+              edition,
+              'تعذر التنزيل: $error',
+            );
+          });
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('تعذر تنزيل الرواية: $error')));
@@ -287,20 +293,47 @@ class _QuranRiwayahDownloadsPageState extends State<QuranRiwayahDownloadsPage> {
             style: context.text.bodySmall.copyWith(color: palette.textMuted),
             textAlign: TextAlign.right,
           ),
-          if (isDownloading && progress != null) ...[
+          if (progress != null &&
+              (isDownloading || progress.isError || progress.isComplete)) ...[
             const SizedBox(height: AppSpace.sm),
-            LinearProgressIndicator(
-              value: progress.totalBytes == null
-                  ? null
-                  : progress.progress.clamp(0, 1),
-              color: palette.gold,
-              backgroundColor: palette.surfaceMuted,
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              progress.status,
-              style: context.text.caption.copyWith(color: palette.textMuted),
-              textAlign: TextAlign.right,
+            if (isDownloading) ...[
+              LinearProgressIndicator(
+                value: progress.totalBytes == null
+                    ? null
+                    : progress.progress.clamp(0, 1),
+                color: palette.gold,
+                backgroundColor: palette.surfaceMuted,
+              ),
+              const SizedBox(height: AppSpace.xs),
+            ],
+            Row(
+              textDirection: TextDirection.rtl,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (progress.isError || progress.isComplete) ...[
+                  Icon(
+                    progress.isError
+                        ? Icons.error_outline_rounded
+                        : Icons.check_circle_outline_rounded,
+                    size: AppIcon.sm,
+                    color: progress.isError ? palette.error : palette.success,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                ],
+                Expanded(
+                  child: Text(
+                    progress.status,
+                    style: context.text.caption.copyWith(
+                      color: progress.isError
+                          ? palette.error
+                          : progress.isComplete
+                          ? palette.success
+                          : palette.textMuted,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: AppSpace.md),

@@ -22,8 +22,9 @@ class QuranPackInstallService {
   static const String _downloadedKey = 'quran_installed_packs_v1';
   static const int _maxSourceBytes = 16 * 1024 * 1024;
   static const String sourceCommit = '281dbbe8eed1370daa5a023b6cd81655cbfd6473';
+  static const String _sourceRepositoryPath = 'thetruetruth/quran-data-kfgqpc';
   static const String sourceRepository =
-      'https://github.com/thetruetruth/quran-data-kfgqpc';
+      'https://github.com/$_sourceRepositoryPath';
 
   static http.Client? _injectedClient;
   static http.Client? _defaultClient;
@@ -53,6 +54,26 @@ class QuranPackInstallService {
 
   static Map<String, dynamic> sourcePin(QuranRiwayahId edition) =>
       Map.unmodifiable(_sourcePins[edition]!);
+
+  @visibleForTesting
+  static List<String> sourceUrlsForTesting(
+    QuranRiwayahId edition,
+    String assetKind,
+  ) {
+    final asset = _sourcePins[edition]![assetKind] as Map<String, dynamic>?;
+    if (asset == null) throw ArgumentError.value(assetKind, 'assetKind');
+    return List.unmodifiable(_sourceUrls(asset['url'] as String));
+  }
+
+  static List<String> _sourceUrls(String primaryUrl) {
+    final prefix =
+        'https://raw.githubusercontent.com/$_sourceRepositoryPath/$sourceCommit/';
+    if (!primaryUrl.startsWith(prefix)) return [primaryUrl];
+    final path = primaryUrl.substring(prefix.length);
+    final fallback =
+        'https://cdn.jsdelivr.net/gh/$_sourceRepositoryPath@$sourceCommit/$path';
+    return [primaryUrl, fallback];
+  }
 
   /// Fetches and validates both pinned files, builds an edition-scoped SQLite
   /// database in a staging directory, checks it through the runtime reader,
@@ -100,68 +121,100 @@ class QuranPackInstallService {
 
       for (final asset in assets) {
         final destination = File(p.join(staging.path, asset.filename));
-        final request = http.AbortableRequest(
-          'GET',
-          Uri.parse(asset.url),
-          abortTrigger: abort.future,
-        );
-        final response = await _client
-            .send(request)
-            .timeout(const Duration(minutes: 2));
-        if (response.statusCode != HttpStatus.ok) {
-          throw HttpException(
-            'تعذر تنزيل ملف الرواية (${response.statusCode})',
-            uri: request.url,
-          );
-        }
-        if (response.contentLength != null &&
-            response.contentLength! != asset.bytes) {
-          throw const FormatException('حجم الملف لا يطابق البصمة المثبتة');
-        }
         if (asset.bytes > _maxSourceBytes) {
           throw const FormatException('حجم الملف يتجاوز الحد المسموح');
         }
 
-        final sink = destination.openWrite();
-        var receivedBytes = 0;
-        var lastReportedBytes = 0;
-        try {
-          await for (final chunk in response.stream.timeout(
-            const Duration(minutes: 2),
-          )) {
-            receivedBytes += chunk.length;
-            if (receivedBytes > asset.bytes ||
-                receivedBytes > _maxSourceBytes) {
-              throw const FormatException('حجم الملف يتجاوز الحجم المتوقع');
-            }
-            sink.add(chunk);
-            if (receivedBytes - lastReportedBytes >= 128 * 1024 ||
-                receivedBytes == asset.bytes) {
-              lastReportedBytes = receivedBytes;
-              final fraction = (completedBytes + receivedBytes) / totalBytes;
-              yield QuranPackInstallProgress(
-                edition,
-                fraction.clamp(0.02, 0.92),
-                asset.kind == 'data'
-                    ? 'جارٍ تنزيل بيانات المصحف'
-                    : 'جارٍ تنزيل خط الرواية',
-                receivedBytes: completedBytes + receivedBytes,
-                totalBytes: totalBytes,
+        final urls = _sourceUrls(asset.url);
+        for (var sourceIndex = 0; sourceIndex < urls.length; sourceIndex++) {
+          if (abort.isCompleted) throw StateError('download aborted');
+          final url = urls[sourceIndex];
+          try {
+            final request = http.AbortableRequest(
+              'GET',
+              Uri.parse(url),
+              abortTrigger: abort.future,
+            );
+            final response = await _client
+                .send(request)
+                .timeout(const Duration(minutes: 2));
+            if (response.statusCode != HttpStatus.ok) {
+              throw HttpException(
+                'تعذر تنزيل ملف الرواية (${response.statusCode})',
+                uri: request.url,
               );
             }
+            if (response.contentLength != null &&
+                response.contentLength! != asset.bytes) {
+              throw const FormatException('حجم الملف لا يطابق البصمة المثبتة');
+            }
+
+            final sink = destination.openWrite();
+            var receivedBytes = 0;
+            var lastReportedBytes = 0;
+            try {
+              await for (final chunk in response.stream.timeout(
+                const Duration(minutes: 2),
+              )) {
+                receivedBytes += chunk.length;
+                if (receivedBytes > asset.bytes ||
+                    receivedBytes > _maxSourceBytes) {
+                  throw const FormatException('حجم الملف يتجاوز الحجم المتوقع');
+                }
+                sink.add(chunk);
+                if (receivedBytes - lastReportedBytes >= 128 * 1024 ||
+                    receivedBytes == asset.bytes) {
+                  lastReportedBytes = receivedBytes;
+                  final fraction =
+                      (completedBytes + receivedBytes) / totalBytes;
+                  yield QuranPackInstallProgress(
+                    edition,
+                    fraction.clamp(0.02, 0.92),
+                    sourceIndex == 0
+                        ? asset.kind == 'data'
+                              ? 'جارٍ تنزيل بيانات المصحف'
+                              : 'جارٍ تنزيل خط الرواية'
+                        : 'جارٍ التنزيل من مصدر احتياطي',
+                    receivedBytes: completedBytes + receivedBytes,
+                    totalBytes: totalBytes,
+                  );
+                }
+              }
+              await sink.flush();
+            } finally {
+              await sink.close();
+            }
+            if (receivedBytes != asset.bytes) {
+              throw const FormatException('اكتمل تنزيل ملف بحجم غير متوقع');
+            }
+            final digest = await _sha256File(destination);
+            if (digest != asset.sha256) {
+              throw FormatException('فشل التحقق من سلامة ملف ${asset.kind}');
+            }
+            completedBytes += receivedBytes;
+            break;
+          } on Object catch (error) {
+            if (await destination.exists()) {
+              try {
+                await destination.delete();
+              } catch (_) {}
+            }
+            if (abort.isCompleted || sourceIndex == urls.length - 1) {
+              rethrow;
+            }
+            debugPrint(
+              'Quran pack ${edition.wireValue} ${asset.kind} source '
+              '${sourceIndex + 1} failed; trying pinned CDN: $error',
+            );
+            yield QuranPackInstallProgress(
+              edition,
+              completedBytes / totalBytes,
+              'المصدر الأول غير متاح؛ جارٍ المحاولة بمصدر احتياطي',
+              receivedBytes: completedBytes,
+              totalBytes: totalBytes,
+            );
           }
-          await sink.flush();
-        } finally {
-          await sink.close();
         }
-        if (receivedBytes != asset.bytes) {
-          throw const FormatException('اكتمل تنزيل ملف بحجم غير متوقع');
-        }
-        final digest = await _sha256File(destination);
-        if (digest != asset.sha256) {
-          throw FormatException('فشل التحقق من سلامة ملف ${asset.kind}');
-        }
-        completedBytes += receivedBytes;
       }
 
       if (abort.isCompleted) throw StateError('download aborted');
@@ -253,17 +306,16 @@ class QuranPackInstallService {
         isComplete: true,
       );
     } on Object catch (error) {
+      debugPrint('Quran pack install failed (${edition.wireValue}): $error');
       if (staging != null && await staging.exists()) {
         try {
           await staging.delete(recursive: true);
         } catch (_) {}
       }
-      final message = error.toString().toLowerCase().contains('abort')
-          ? 'أُلغي التنزيل'
-          : error is TimeoutException
-          ? 'انتهت مهلة الاتصال؛ حاول التنزيل مرة أخرى'
-          : 'تعذر تثبيت الرواية: ${_shortError(error)}';
-      yield QuranPackInstallProgress.failed(edition, message);
+      yield QuranPackInstallProgress.failed(
+        edition,
+        _installErrorMessage(error),
+      );
     } finally {
       if (!abort.isCompleted) abort.complete();
       _active.remove(edition);
@@ -697,6 +749,28 @@ class QuranPackInstallService {
   static String _shortError(Object error) {
     final message = error.toString().replaceFirst(RegExp(r'^.*?: '), '');
     return message.length <= 100 ? message : '${message.substring(0, 97)}…';
+  }
+
+  static String _installErrorMessage(Object error) {
+    if (error.toString().toLowerCase().contains('abort')) {
+      return 'أُلغي التنزيل';
+    }
+    if (error is TimeoutException) {
+      return 'انتهت مهلة الاتصال؛ تحقق من الإنترنت وحاول مرة أخرى';
+    }
+    if (error is SocketException ||
+        error is HandshakeException ||
+        error is http.ClientException) {
+      return 'تعذر الاتصال بمصادر التنزيل. تحقق من الإنترنت أو جرّب شبكة أخرى.';
+    }
+    if (error is HttpException) {
+      return 'مصدر التنزيل غير متاح حالياً. حاول مرة أخرى بعد قليل.';
+    }
+    if (error is FileSystemException) {
+      return 'تعذر حفظ الحزمة على الجهاز. تحقق من مساحة التخزين ثم أعد المحاولة.';
+    }
+    if (error is FormatException) return error.message.toString();
+    return 'تعذر تثبيت الرواية: ${_shortError(error)}';
   }
 
   static const Map<QuranRiwayahId, Map<String, dynamic>> _sourcePins = {

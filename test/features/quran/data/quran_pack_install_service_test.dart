@@ -40,16 +40,28 @@ void main() {
         expect(font['sha256'], matches(RegExp(r'^[A-F0-9]{64}$')));
         expect(data['bytes'], greaterThan(0));
         expect(font['bytes'], greaterThan(0));
+        for (final kind in ['data', 'font']) {
+          final urls = QuranPackInstallService.sourceUrlsForTesting(
+            edition,
+            kind,
+          );
+          expect(urls, hasLength(2));
+          expect(urls.first, startsWith('https://raw.githubusercontent.com/'));
+          expect(urls.last, startsWith('https://cdn.jsdelivr.net/gh/'));
+          for (final url in urls) {
+            expect(url, contains(QuranPackInstallService.sourceCommit));
+          }
+        }
       }
     });
 
     test(
       'rejects a truncated pinned source and removes staging files',
       () async {
-        var requestCount = 0;
+        final requestHosts = <String>[];
         QuranPackInstallService.setHttpClient(
           MockClient((request) async {
-            requestCount++;
+            requestHosts.add(request.url.host);
             return http.Response('truncated', 200);
           }),
         );
@@ -58,7 +70,7 @@ void main() {
           QuranRiwayahId.warsh,
         ).toList();
 
-        expect(requestCount, 1);
+        expect(requestHosts, ['raw.githubusercontent.com', 'cdn.jsdelivr.net']);
         expect(events.last.isError, isTrue);
         expect(
           await QuranPackInstallService.isInstalled(QuranRiwayahId.warsh),
@@ -70,25 +82,28 @@ void main() {
       },
     );
 
-    test(
-      'rejects a failed GitHub response without marking an edition installed',
-      () async {
-        QuranPackInstallService.setHttpClient(
-          MockClient((_) async => http.Response('missing', 404)),
-        );
+    test('tries the pinned CDN when GitHub rejects the request', () async {
+      final requestHosts = <String>[];
+      QuranPackInstallService.setHttpClient(
+        MockClient((request) async {
+          requestHosts.add(request.url.host);
+          return http.Response('unavailable', 503);
+        }),
+      );
 
-        final events = await QuranPackInstallService.install(
-          QuranRiwayahId.qalun,
-        ).toList();
+      final events = await QuranPackInstallService.install(
+        QuranRiwayahId.qalun,
+      ).toList();
 
-        expect(events.last.isError, isTrue);
-        expect(
-          await QuranPackInstallService.isInstalled(QuranRiwayahId.qalun),
-          isFalse,
-        );
-        final packsDirectory = Directory('${tempDirectory.path}/quran_packs');
-        expect(await packsDirectory.list().toList(), isEmpty);
-      },
-    );
+      expect(requestHosts, ['raw.githubusercontent.com', 'cdn.jsdelivr.net']);
+      expect(events.last.isError, isTrue);
+      expect(events.last.status, contains('مصدر التنزيل غير متاح'));
+      expect(
+        await QuranPackInstallService.isInstalled(QuranRiwayahId.qalun),
+        isFalse,
+      );
+      final packsDirectory = Directory('${tempDirectory.path}/quran_packs');
+      expect(await packsDirectory.list().toList(), isEmpty);
+    });
   });
 }
