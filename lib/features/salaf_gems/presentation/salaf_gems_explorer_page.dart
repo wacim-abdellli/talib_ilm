@@ -406,7 +406,7 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                             onChanged: (_) => _applyFilters(resetScroll: true),
                             style: textTheme.body.copyWith(color: palette.text),
                             decoration: InputDecoration(
-                              hintText: 'ابحث في نصوص الأحاديث وأقوال الصحابة والسلف...',
+                              hintText: 'ابحث في أقوال الصحابة والسلف',
                               hintStyle: textTheme.body.copyWith(color: palette.textSubtle),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),

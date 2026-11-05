@@ -201,7 +201,7 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
                           },
                           style: textTheme.body.copyWith(color: palette.text),
                           decoration: InputDecoration(
-                            hintText: 'ابحث في أمهات كتب المكتبة والشروح...',
+                            hintText: 'ابحث في كتب المكتبة والشروح',
                             hintStyle: textTheme.bodySmall.copyWith(color: palette.textMuted),
                             border: InputBorder.none,
                           ),

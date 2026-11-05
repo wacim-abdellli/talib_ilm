@@ -244,7 +244,7 @@ class _AdhkarFahrasSheetState extends State<AdhkarFahrasSheet> {
                   textDirection: TextDirection.rtl,
                   style: textTheme.body.copyWith(color: palette.text),
                   decoration: InputDecoration(
-                    hintText: 'ابحث في أذكار هذا القسم...',
+                    hintText: 'ابحث في أذكار هذا القسم',
                     hintStyle: textTheme.caption.copyWith(color: palette.textMuted),
                     hintTextDirection: TextDirection.rtl,
                     prefixIcon: Icon(

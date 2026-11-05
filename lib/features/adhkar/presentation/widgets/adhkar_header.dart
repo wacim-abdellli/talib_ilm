@@ -155,7 +155,7 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                                 color: palette.text,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'ابحث في نصوص الأذكار والأدعية...',
+                                hintText: 'ابحث في الأذكار والأدعية',
                                 hintStyle: context.text.bodySmall.copyWith(
                                   color: palette.textSubtle,
                                 ),

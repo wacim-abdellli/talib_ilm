@@ -174,7 +174,7 @@ class _SalafTopicFilterSheetState extends State<SalafTopicFilterSheet> {
                             setState(() => _searchQuery = v.trim().toLowerCase()),
                         style: textTheme.body.copyWith(color: palette.text),
                         decoration: InputDecoration(
-                          hintText: 'ابحث في أسماء الأبواب...',
+                          hintText: 'ابحث في أسماء الأبواب',
                           hintStyle: textTheme.body.copyWith(
                             color: palette.textSubtle,
                           ),

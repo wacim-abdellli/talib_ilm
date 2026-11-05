@@ -102,7 +102,7 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                       color: palette.text,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'ابحث في الأدعية والمأثورات...',
+                      hintText: 'ابحث في الأدعية والمأثورات',
                       hintStyle: context.text.bodySmall.copyWith(
                         color: palette.textMuted,
                       ),

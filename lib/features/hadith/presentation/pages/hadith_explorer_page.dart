@@ -266,7 +266,7 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                               _searchDebounce = Timer(AppMotion.searchDebounce, _applyFilter);
                             },
                             decoration: InputDecoration(
-                              hintText: 'ابحث في الأحاديث، الرواة، أو الفوائد...',
+                              hintText: 'ابحث في الأحاديث والرواة',
                               hintStyle: AppTextStyles.bodyMedium.copyWith(
                                 color: palette.textSubtle,
                                 fontFamily: AppTextStyles.cairo,

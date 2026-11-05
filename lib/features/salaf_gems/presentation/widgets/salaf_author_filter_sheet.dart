@@ -175,7 +175,7 @@ class _SalafAuthorFilterSheetState extends State<SalafAuthorFilterSheet> {
                             setState(() => _searchQuery = v.trim().toLowerCase()),
                         style: textTheme.body.copyWith(color: palette.text),
                         decoration: InputDecoration(
-                          hintText: 'ابحث باسم الإمام أو الصحابي...',
+                          hintText: 'ابحث باسم الإمام أو الصحابي',
                           hintStyle: textTheme.body.copyWith(
                             color: palette.textSubtle,
                           ),

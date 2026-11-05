@@ -180,7 +180,7 @@ class _ReciterSelectionSheetState extends State<ReciterSelectionSheet> {
                         controller: _searchController,
                         style: textTheme.body.copyWith(color: palette.text),
                         decoration: InputDecoration(
-                          hintText: 'ابحث باسم القارئ...',
+                          hintText: 'ابحث باسم القارئ',
                           hintStyle: textTheme.body.copyWith(
                             color: palette.textMuted,
                           ),

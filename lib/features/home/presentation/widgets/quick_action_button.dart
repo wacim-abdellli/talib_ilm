@@ -73,14 +73,16 @@ class QuickActionButton extends StatelessWidget {
                 padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: AppSpace.xs,
                 ),
-                child: Text(
-                  label,
-                  style: context.text.label.copyWith(
-                    color: palette.text,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: context.text.label.copyWith(
+                      color: palette.text,
+                    ),
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
                   ),
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -292,7 +292,7 @@ class _QuranRadioSheetState extends State<QuranRadioSheet> {
                         Icons.search_rounded,
                         color: palette.textMuted,
                       ),
-                      hintText: 'ابحث باسم القارئ أو الإذاعة...',
+                      hintText: 'ابحث باسم القارئ أو الإذاعة',
                       hintStyle: AppTextStyles.bodyMedium.copyWith(
                         color: palette.textSubtle,
                         fontFamily: AppTextStyles.cairo,

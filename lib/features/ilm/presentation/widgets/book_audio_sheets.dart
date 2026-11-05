@@ -357,7 +357,7 @@ class _BookAudioChaptersSheetState extends State<BookAudioChaptersSheet> {
               TextField(
                 onChanged: (value) => setState(() => _query = value),
                 decoration: InputDecoration(
-                  hintText: 'ابحث في الأبواب والمقاطع الصوتية...',
+                  hintText: 'ابحث في الأبواب والمقاطع',
                   prefixIcon: Icon(
                     Icons.search_rounded,
                     size: AppIcon.md,
