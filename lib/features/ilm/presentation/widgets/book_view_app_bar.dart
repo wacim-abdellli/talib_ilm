@@ -40,6 +40,8 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
         if (onShowBookmarksAndNotes != null)
           IconButton(
             tooltip: 'المحفوظات والملاحظات',
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
             onPressed: onShowBookmarksAndNotes,
             icon: Icon(
               Icons.collections_bookmark_rounded,
@@ -51,6 +53,8 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
           builder: (context, _) {
             return IconButton(
               tooltip: themeService.themeDisplayName,
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
               onPressed: () {
                 HapticFeedback.selectionClick();
                 themeService.toggleTheme();
@@ -66,6 +70,8 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: isFavorite
               ? 'إزالة من المفضلة (قائمة المحفوظات)'
               : 'إضافة إلى المفضلة (قائمة المحفوظات)',
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
           onPressed: onToggleFavorite,
           icon: Icon(
             isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
@@ -74,6 +80,8 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         IconButton(
           tooltip: AppStrings.bookResetProgress,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
           onPressed: onResetProgress,
           icon: Icon(Icons.refresh_rounded, color: palette.text),
         ),

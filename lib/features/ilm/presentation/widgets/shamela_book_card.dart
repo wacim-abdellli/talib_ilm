@@ -207,13 +207,15 @@ class _ShamelaBookCardState extends State<ShamelaBookCard> {
                                     color: palette.surfaceMuted,
                                     borderRadius: AppRadius.pillRadius,
                                   ),
-                                  child: Text(
-                                    book.category,
-                                    style: textTheme.caption.copyWith(
-                                      color: palette.textMuted,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      book.category,
+                                      style: textTheme.caption.copyWith(
+                                        color: palette.textMuted,
+                                      ),
+                                      maxLines: 1,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),

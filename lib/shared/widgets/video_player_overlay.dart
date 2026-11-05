@@ -225,13 +225,16 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                               Expanded(
                                 child: Directionality(
                                   textDirection: TextDirection.rtl,
-                                  child: Text(
-                                    widget.title,
-                                    style: context.text.titleSmall.copyWith(
-                                      color: AppPalette.videoControlFg,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: Text(
+                                      widget.title,
+                                      style: context.text.titleSmall.copyWith(
+                                        color: AppPalette.videoControlFg,
+                                      ),
+                                      maxLines: 1,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),

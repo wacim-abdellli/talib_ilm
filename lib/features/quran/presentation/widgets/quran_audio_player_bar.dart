@@ -120,24 +120,30 @@ class QuranAudioPlayerBar extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'سورة $surahName',
-                              style: textTheme.titleSmall.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                'سورة $surahName',
+                                style: textTheme.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              isFullSurah || reciter.isSurahBased
-                                  ? 'تلاوة كاملة • ${reciter.name}'
-                                  : 'الآية $currentAyah من $totalAyahs • ${reciter.name}',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                isFullSurah || reciter.isSurahBased
+                                    ? 'تلاوة كاملة • ${reciter.name}'
+                                    : 'الآية $currentAyah من $totalAyahs • ${reciter.name}',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

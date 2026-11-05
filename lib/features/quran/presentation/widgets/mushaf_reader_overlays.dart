@@ -85,11 +85,17 @@ class MushafReaderTopBar extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          surahTitle,
-                          style: textTheme.titleSmall.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              surahTitle,
+                              style: textTheme.titleSmall.copyWith(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: AppSpace.xs),

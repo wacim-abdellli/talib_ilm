@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/book_view_header.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/shamela_reader_top_bar.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/quran_sliver_header.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/quran_stats_banner.dart';
 import 'package:talib_ilm/features/salaf_gems/data/models/salaf_gem.dart';
@@ -391,6 +393,92 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('السور (114)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('BookViewHeader renders long title without truncation on 360dp Android',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const longTitle = 'شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية';
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 360,
+          height: 800,
+          child: Column(
+            children: [
+              DefaultTabController(
+                length: 3,
+                child: Builder(
+                  builder: (context) {
+                    return BookViewHeader(
+                      showControls: false,
+                      bookTitle: longTitle,
+                      currentPage: 15,
+                      totalPages: 120,
+                      isFavorite: false,
+                      onToggleFavorite: () {},
+                      onResetProgress: () {},
+                      onShowBookmarksAndNotes: () {},
+                      tabController: DefaultTabController.of(context),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(longTitle), findsNWidgets(2));
+      final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
+      for (final rp in renderParagraphs) {
+        if (rp.text.toPlainText() == longTitle) {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'BookViewHeader must not truncate on 360dp');
+        }
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ShamelaReaderTopBar renders long title without truncation on 360dp Android',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const longTitle = 'شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية';
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 360,
+          height: 800,
+          child: Column(
+            children: [
+              ShamelaReaderTopBar(
+                title: longTitle,
+                author: 'الإمام ابن تيمية',
+                currentPage: 25,
+                totalPages: 300,
+                showControls: false,
+                bgColor: Colors.white,
+                onBack: () {},
+                onCopy: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(longTitle), findsNWidgets(2));
+      final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
+      for (final rp in renderParagraphs) {
+        if (rp.text.toPlainText() == longTitle) {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'ShamelaReaderTopBar must not truncate on 360dp');
+        }
+      }
       expect(tester.takeException(), isNull);
     });
   });

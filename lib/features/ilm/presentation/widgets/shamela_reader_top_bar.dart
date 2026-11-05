@@ -154,14 +154,17 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Flexible(
-                      child: Text(
-                        widget.title,
-                        style: textTheme.titleSmall.copyWith(
-                          color: surfaceTokens.text,
-                          fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          widget.title,
+                          style: textTheme.titleSmall.copyWith(
+                            color: surfaceTokens.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),
@@ -216,22 +219,28 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              widget.title,
-                              style: textTheme.titleSmall.copyWith(
-                                color: surfaceTokens.text,
-                                fontWeight: FontWeight.bold,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                widget.title,
+                                style: textTheme.titleSmall.copyWith(
+                                  color: surfaceTokens.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              widget.author,
-                              style: textTheme.captionBold.copyWith(
-                                color: accent.primary,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                widget.author,
+                                style: textTheme.captionBold.copyWith(
+                                  color: accent.primary,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

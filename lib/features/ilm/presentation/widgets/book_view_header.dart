@@ -67,14 +67,17 @@ class BookViewHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Flexible(
-                      child: Text(
-                        bookTitle,
-                        style: context.text.titleSmall.copyWith(
-                          color: context.palette.text,
-                          fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          bookTitle,
+                          style: context.text.titleSmall.copyWith(
+                            color: context.palette.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),

@@ -262,13 +262,16 @@ class PdfViewerPageState extends State<PdfViewerPage> {
                   color: palette.text,
                 ),
                 Expanded(
-                  child: Text(
-                    widget.title,
-                    style: textTheme.titleSmall.copyWith(
-                      color: palette.text,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      widget.title,
+                      style: textTheme.titleSmall.copyWith(
+                        color: palette.text,
+                      ),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (widget.onResetRequested != null)

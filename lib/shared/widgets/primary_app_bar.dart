@@ -36,17 +36,22 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
+    final hasManyActions = actions.length > 2;
+
     return AppBar(
       backgroundColor: palette.bg,
       elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: true,
+      centerTitle: hasManyActions ? false : true,
       toolbarHeight: height,
       leading: _buildLeading(context),
       title: Tooltip(
         message: title,
         child: FittedBox(
           fit: BoxFit.scaleDown,
+          alignment: hasManyActions
+              ? AlignmentDirectional.centerStart
+              : AlignmentDirectional.center,
           child: Text(
             title,
             style: textTheme.titleSmall.copyWith(color: palette.text),
