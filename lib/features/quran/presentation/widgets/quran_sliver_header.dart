@@ -177,8 +177,8 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
                 cursorColor: palette.primary,
                 decoration: InputDecoration(
                   hintText: isSearching || selectedTabIndex != 3
-                      ? 'ابحث عن سورة، آية، أو كلمة...'
-                      : 'ابحث في المحفوظات والتدبر...',
+                      ? 'ابحث عن سورة أو آية أو كلمة'
+                      : 'ابحث في المحفوظات',
                   hintStyle: textTheme.bodySmall.copyWith(
                     color: palette.textMuted,
                   ),
