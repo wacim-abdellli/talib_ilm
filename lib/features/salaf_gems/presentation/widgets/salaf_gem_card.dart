@@ -179,19 +179,23 @@ class SalafGemCard extends StatelessWidget {
           Row(
             children: [
               if (gem.topic.isNotEmpty)
-                Container(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.xs,
-                    vertical: AppSpace.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.goldSoft,
-                    borderRadius: AppRadius.pillRadius,
-                  ),
-                  child: Text(
-                    '#${gem.topic}',
-                    style: textTheme.caption.copyWith(
-                      color: palette.gold,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.xs,
+                      vertical: AppSpace.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: palette.goldSoft,
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                    child: Text(
+                      '#${gem.topic}',
+                      style: textTheme.caption.copyWith(
+                        color: palette.gold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

@@ -42,48 +42,89 @@ class BookViewAppBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: 'المحفوظات والملاحظات',
             padding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             onPressed: onShowBookmarksAndNotes,
             icon: Icon(
               Icons.collections_bookmark_rounded,
               color: palette.gold,
             ),
           ),
-        ListenableBuilder(
-          listenable: themeService,
-          builder: (context, _) {
-            return IconButton(
-              tooltip: themeService.themeDisplayName,
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                themeService.toggleTheme();
-              },
-              icon: Icon(
-                themeService.themeIcon,
-                color: palette.text,
-              ),
-            );
-          },
-        ),
         IconButton(
           tooltip: isFavorite
               ? 'إزالة من المفضلة (قائمة المحفوظات)'
               : 'إضافة إلى المفضلة (قائمة المحفوظات)',
           padding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           onPressed: onToggleFavorite,
           icon: Icon(
             isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
             color: isFavorite ? palette.error : palette.text,
           ),
         ),
-        IconButton(
-          tooltip: AppStrings.bookResetProgress,
+        PopupMenuButton<String>(
+          tooltip: 'خيارات إضافية',
           padding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          onPressed: onResetProgress,
-          icon: Icon(Icons.refresh_rounded, color: palette.text),
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          icon: Icon(Icons.more_vert_rounded, color: palette.text),
+          color: palette.surfaceRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.smRadius,
+            side: BorderSide(color: palette.border),
+          ),
+          onSelected: (value) {
+            if (value == 'theme') {
+              HapticFeedback.selectionClick();
+              themeService.toggleTheme();
+            } else if (value == 'reset') {
+              onResetProgress();
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'theme',
+              child: ListenableBuilder(
+                listenable: themeService,
+                builder: (context, _) {
+                  return Row(
+                    children: [
+                      Icon(
+                        themeService.themeIcon,
+                        color: palette.text,
+                        size: AppIcon.sm,
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Text(
+                        themeService.themeDisplayName,
+                        style: textTheme.bodySmall.copyWith(
+                          color: palette.text,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            PopupMenuItem(
+              value: 'reset',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.refresh_rounded,
+                    color: palette.text,
+                    size: AppIcon.sm,
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Text(
+                    AppStrings.bookResetProgress,
+                    style: textTheme.bodySmall.copyWith(
+                      color: palette.text,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
       bottom: TabBar(

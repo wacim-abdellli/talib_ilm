@@ -149,16 +149,13 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                                     ),
                                     const SizedBox(width: AppSpace.xs),
                                     Expanded(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: AlignmentDirectional.centerStart,
-                                        child: Text(
-                                          effectiveReciter.name,
-                                          style: textTheme.captionBold.copyWith(
-                                            color: palette.text,
-                                          ),
-                                          maxLines: 1,
+                                      child: Text(
+                                        effectiveReciter.name,
+                                        style: textTheme.captionBold.copyWith(
+                                          color: palette.text,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     if (reciters.length > 1) ...[
@@ -337,17 +334,14 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
                                           ),
                                           const SizedBox(width: AppSpace.xs),
                                           Expanded(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: AlignmentDirectional.centerStart,
-                                              child: Text(
-                                                '${safeIdx + 1}/${chapters.length} · ${chapter.title}',
-                                                style: textTheme.captionBold
-                                                    .copyWith(
-                                                  color: palette.text,
-                                                ),
-                                                maxLines: 1,
+                                            child: Text(
+                                              '${safeIdx + 1}/${chapters.length} · ${chapter.title}',
+                                              style: textTheme.captionBold.copyWith(
+                                                color: palette.text,
+                                                height: 1.2,
                                               ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                           Icon(

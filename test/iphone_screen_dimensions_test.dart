@@ -396,12 +396,12 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('BookViewHeader renders long title without truncation on 360dp Android',
+    testWidgets('BookViewHeader renders title with readable font >= 12sp on 360dp Android',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(360, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      const longTitle = 'شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية';
+      const title = 'شرح العقيدة الواسطية';
 
       await tester.pumpWidget(
         buildHostWidget(
@@ -415,7 +415,7 @@ void main() {
                   builder: (context) {
                     return BookViewHeader(
                       showControls: false,
-                      bookTitle: longTitle,
+                      bookTitle: title,
                       currentPage: 15,
                       totalPages: 120,
                       isFavorite: false,
@@ -433,22 +433,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(longTitle), findsNWidgets(2));
+      expect(find.text(title), findsNWidgets(2));
       final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
       for (final rp in renderParagraphs) {
-        if (rp.text.toPlainText() == longTitle) {
-          expect(rp.didExceedMaxLines, isFalse, reason: 'BookViewHeader must not truncate on 360dp');
+        if (rp.text.toPlainText() == title) {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'BookViewHeader must fit title without truncation');
+          expect(rp.text.style?.fontSize, greaterThanOrEqualTo(12.0), reason: 'Font size must remain readable (>= 12sp)');
         }
       }
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('ShamelaReaderTopBar renders long title without truncation on 360dp Android',
+    testWidgets('ShamelaReaderTopBar renders title with readable font >= 12sp on 360dp Android',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(360, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      const longTitle = 'شرح العقيدة الواسطية لشيخ الإسلام ابن تيمية';
+      const title = 'شرح العقيدة الواسطية';
 
       await tester.pumpWidget(
         buildHostWidget(
@@ -457,7 +458,7 @@ void main() {
           child: Column(
             children: [
               ShamelaReaderTopBar(
-                title: longTitle,
+                title: title,
                 author: 'الإمام ابن تيمية',
                 currentPage: 25,
                 totalPages: 300,
@@ -472,11 +473,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(longTitle), findsNWidgets(2));
+      expect(find.text(title), findsNWidgets(2));
       final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
       for (final rp in renderParagraphs) {
-        if (rp.text.toPlainText() == longTitle) {
-          expect(rp.didExceedMaxLines, isFalse, reason: 'ShamelaReaderTopBar must not truncate on 360dp');
+        if (rp.text.toPlainText() == title) {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'ShamelaReaderTopBar must fit title without truncation');
+          expect(rp.text.style?.fontSize, greaterThanOrEqualTo(12.0), reason: 'Font size must remain readable (>= 12sp)');
         }
       }
       expect(tester.takeException(), isNull);

@@ -118,7 +118,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
     );
     final topPadding = MediaQuery.paddingOf(context).top;
     final fullBarHeight = topPadding + AppSize.navH + AppSpace.lg;
-    final minimalBarHeight = topPadding + 42.0;
+    final minimalBarHeight = topPadding + 48.0;
     return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
@@ -144,7 +144,7 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
               top: topPadding,
               left: AppSpace.md,
               right: AppSpace.md,
-              height: 42.0,
+              height: 48.0,
               child: AnimatedOpacity(
                 duration: AppMotion.fast,
                 curve: AppMotion.easeOut,
@@ -153,39 +153,39 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text(
-                          widget.title,
-                          style: textTheme.titleSmall.copyWith(
-                            color: surfaceTokens.text,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: textTheme.captionBold.copyWith(
+                          color: surfaceTokens.text,
+                          height: 1.2,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),
-                    Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: accent.soft,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(
-                          color: accent.border,
-                          width: 1,
+                    Semantics(
+                      label: 'صفحة ${widget.currentPage} من ${widget.totalPages}',
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xxs,
                         ),
-                      ),
-                      child: Text(
-                        'صفحة ${widget.currentPage} من ${widget.totalPages}',
-                        style: textTheme.caption.copyWith(
-                          color: accent.onSoft,
-                          fontWeight: FontWeight.bold,
+                        decoration: BoxDecoration(
+                          color: accent.soft,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: accent.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${widget.currentPage} / ${widget.totalPages}',
+                          style: textTheme.caption.copyWith(
+                            color: accent.onSoft,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -219,29 +219,28 @@ class _ShamelaReaderTopBarState extends State<ShamelaReaderTopBar> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: AlignmentDirectional.centerStart,
-                              child: Text(
-                                widget.title,
-                                style: textTheme.titleSmall.copyWith(
-                                  color: surfaceTokens.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
+                            Text(
+                              widget.title,
+                              style: textTheme.titleSmall.copyWith(
+                                color: surfaceTokens.text,
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: AlignmentDirectional.centerStart,
-                              child: Text(
+                            if (widget.author.isNotEmpty) ...[
+                              const SizedBox(height: AppSpace.xxs),
+                              Text(
                                 widget.author,
-                                style: textTheme.captionBold.copyWith(
+                                style: textTheme.caption.copyWith(
                                   color: accent.primary,
+                                  height: 1.1,
                                 ),
                                 maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

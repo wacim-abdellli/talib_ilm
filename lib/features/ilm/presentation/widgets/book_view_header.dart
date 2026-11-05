@@ -32,7 +32,7 @@ class BookViewHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final topBarHeight = topPadding + kToolbarHeight + 48.0;
-    final minimalBarHeight = topPadding + 42.0;
+    final minimalBarHeight = topPadding + 48.0;
 
     return AnimatedContainer(
       duration: AppMotion.fast,
@@ -57,7 +57,7 @@ class BookViewHeader extends StatelessWidget {
               top: topPadding,
               left: AppSpace.md,
               right: AppSpace.md,
-              height: 42.0,
+              height: 48.0,
               child: AnimatedOpacity(
                 duration: AppMotion.fast,
                 curve: AppMotion.easeOut,
@@ -66,39 +66,39 @@ class BookViewHeader extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text(
-                          bookTitle,
-                          style: context.text.titleSmall.copyWith(
-                            color: context.palette.text,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
+                    Expanded(
+                      child: Text(
+                        bookTitle,
+                        style: context.text.captionBold.copyWith(
+                          color: context.palette.text,
+                          height: 1.2,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),
-                    Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.palette.goldSoft,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(
-                          color: context.palette.gold.withValues(alpha: 0.3),
-                          width: 1,
+                    Semantics(
+                      label: 'صفحة $currentPage من $totalPages',
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xxs,
                         ),
-                      ),
-                      child: Text(
-                        'صفحة $currentPage من $totalPages',
-                        style: context.text.caption.copyWith(
-                          color: context.palette.gold,
-                          fontWeight: FontWeight.bold,
+                        decoration: BoxDecoration(
+                          color: context.palette.goldSoft,
+                          borderRadius: AppRadius.pillRadius,
+                          border: Border.all(
+                            color: context.palette.gold.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '$currentPage / $totalPages',
+                          style: context.text.caption.copyWith(
+                            color: context.palette.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

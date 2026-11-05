@@ -36,7 +36,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
-    final hasManyActions = actions.length > 2;
+    final hasManyActions = actions.length > 1;
 
     return AppBar(
       backgroundColor: palette.bg,
@@ -44,19 +44,21 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: 0,
       centerTitle: hasManyActions ? false : true,
       toolbarHeight: height,
+      leadingWidth: (showBack || showMenu || leadingIcon != null) ? 44.0 : null,
+      titleSpacing: hasManyActions ? AppSpace.xs : null,
       leading: _buildLeading(context),
       title: Tooltip(
         message: title,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: hasManyActions
-              ? AlignmentDirectional.centerStart
-              : AlignmentDirectional.center,
-          child: Text(
-            title,
-            style: textTheme.titleSmall.copyWith(color: palette.text),
-            maxLines: 1,
+        child: Text(
+          title,
+          style: (hasManyActions ? textTheme.bodySmall : textTheme.body).copyWith(
+            color: palette.text,
+            fontWeight: FontWeight.bold,
+            height: 1.2,
           ),
+          maxLines: 2,
+          textAlign: hasManyActions ? TextAlign.start : TextAlign.center,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       actions: actions.isEmpty ? [const SizedBox(width: AppSize.tap)] : actions,
@@ -82,6 +84,8 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     final tap = onLeadingTap ?? () => Navigator.maybePop(context);
     return IconButton(
       tooltip: AppStrings.tooltipBack,
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
       onPressed: tap,
       icon: Icon(
         icon,
