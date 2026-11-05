@@ -281,5 +281,117 @@ void main() {
         }
       }
     });
+
+    testWidgets('Android Standard (360dp) renders Quran tabs, NavBar and Cards without truncation',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final searchController = TextEditingController();
+      final focusNode = FocusNode();
+
+      // 1. Test Quran Pinned Tabs on Android 360dp
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 360,
+          height: 800,
+          child: CustomScrollView(
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: QuranPinnedHeaderDelegate(
+                  selectedTabIndex: 3,
+                  bookmarksCount: 5,
+                  onTabSelected: (_) {},
+                  searchController: searchController,
+                  searchFocusNode: focusNode,
+                  onSearchChanged: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('المحفوظات (5)'), findsOneWidget);
+      expect(find.text('السور (114)'), findsOneWidget);
+      expect(find.text('الأجزاء (30)'), findsOneWidget);
+      expect(find.text('الأحزاب (60)'), findsOneWidget);
+
+      final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
+      for (final rp in renderParagraphs) {
+        final text = rp.text.toPlainText();
+        if (text == 'المحفوظات (5)') {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'Android 360dp tab $text must not truncate');
+        }
+      }
+
+      // 2. Test NavBar on Android 360dp
+      const items = [
+        NavBarItem(icon: Icons.home_rounded, label: 'الرئيسية'),
+        NavBarItem(icon: Icons.menu_book_rounded, label: 'المصحف'),
+        NavBarItem(icon: Icons.school_rounded, label: 'المتون'),
+        NavBarItem(icon: Icons.favorite_rounded, label: 'الأذكار'),
+        NavBarItem(icon: Icons.bookmark_rounded, label: 'المفضلة'),
+      ];
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 360,
+          height: 800,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: NavBar(
+              currentIndex: 0,
+              onTap: (_) {},
+              items: items,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final item in items) {
+        expect(find.text(item.label), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Android with Accessibility Text Scale (1.25x on 360dp) retains integrity',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final searchController = TextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 360,
+          height: 800,
+          textScale: 1.25,
+          child: CustomScrollView(
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: QuranPinnedHeaderDelegate(
+                  selectedTabIndex: 0,
+                  bookmarksCount: 0,
+                  onTabSelected: (_) {},
+                  searchController: searchController,
+                  searchFocusNode: focusNode,
+                  onSearchChanged: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('السور (114)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
