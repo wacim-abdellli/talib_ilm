@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_policy.dart';
+import '../catalogs/surah_fallback_catalog.dart';
 import '../models/quran_models.dart';
+import 'quran_pack_install_service.dart';
 
 /// Edition Service - Manages downloadable Quran editions (Riwayat)
 /// Handles: Check status, Download, Save, Load from local storage.
@@ -108,6 +110,10 @@ class EditionService {
   static Future<bool> isEditionDownloaded(String editionId) async {
     // Hafs is always "downloaded" (bundled)
     if (editionId == 'hafs') return true;
+    final QuranRiwayahId? packEdition = _packEditionOrNull(editionId);
+    if (packEdition != null) {
+      return QuranPackInstallService.isInstalled(packEdition);
+    }
     if (!isValidEditionId(editionId)) return false;
 
     final prefs = await SharedPreferences.getInstance();
@@ -125,7 +131,22 @@ class EditionService {
     if (!list.contains('hafs')) {
       list.insert(0, 'hafs');
     }
+    for (final edition in [QuranRiwayahId.warsh, QuranRiwayahId.qalun]) {
+      if (await QuranPackInstallService.isInstalled(edition) &&
+          !list.contains(edition.wireValue)) {
+        list.add(edition.wireValue);
+      }
+    }
     return list;
+  }
+
+  static QuranRiwayahId? _packEditionOrNull(String editionId) {
+    try {
+      final edition = QuranRiwayahId.parse(editionId);
+      return edition == QuranRiwayahId.hafs ? null : edition;
+    } on FormatException {
+      return null;
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -411,6 +432,44 @@ class EditionService {
     String editionId,
     int surahNumber,
   ) async {
+    final packEdition = _packEditionOrNull(editionId);
+    if (packEdition != null) {
+      if (!isValidSurahNumber(surahNumber)) return null;
+      final pack = await QuranPackInstallService.openInstalled(packEdition);
+      if (pack == null) return null;
+      try {
+        final surahRecord = await pack.getSurah(surahNumber);
+        if (surahRecord == null) return null;
+        final ayahRecords = await pack.getSurahAyahs(surahNumber);
+        final catalog = SurahFallbackCatalog.getSurahs().firstWhere(
+          (surah) => surah.number == surahNumber,
+        );
+        return Surah(
+          number: surahNumber,
+          name: surahRecord.nameArabic,
+          englishName: surahRecord.nameEnglish,
+          englishNameTranslation: catalog.englishNameTranslation,
+          numberOfAyahs: surahRecord.ayahCount,
+          revelationType: catalog.revelationType,
+          ayahs: ayahRecords
+              .map(
+                (ayah) => Ayah(
+                  number: ayah.sourceId,
+                  text: ayah.displayText,
+                  numberInSurah: ayah.ayahNumber,
+                  juz: ayah.juzNumber,
+                  page: ayah.firstPage,
+                  sajda: false,
+                  surahNumber: ayah.surahNumber,
+                  surahName: surahRecord.nameArabic,
+                ),
+              )
+              .toList(growable: false),
+        );
+      } finally {
+        await pack.close();
+      }
+    }
     // For hafs, use the normal API/cache flow
     if (editionId == 'hafs') return null;
     if (!isValidEditionId(editionId) || !isValidSurahNumber(surahNumber)) {
@@ -488,7 +547,18 @@ class EditionService {
 
   static Future<bool> deleteEdition(String editionId) async {
     // Cannot delete hafs
-    if (editionId == 'hafs' || !isValidEditionId(editionId)) return false;
+    if (editionId == 'hafs') return false;
+    final packEdition = _packEditionOrNull(editionId);
+    if (packEdition != null) {
+      final preferences = await SharedPreferences.getInstance();
+      final wasCurrent = preferences.getString(_currentEditionKey) == editionId;
+      final deleted = await QuranPackInstallService.delete(packEdition);
+      if (deleted && wasCurrent) {
+        await preferences.remove(_currentEditionKey);
+      }
+      return deleted;
+    }
+    if (!isValidEditionId(editionId)) return false;
 
     try {
       final directory = await _getEditionsDirectory();
@@ -528,6 +598,10 @@ class EditionService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static Future<int> getEditionStorageSize(String editionId) async {
+    final packEdition = _packEditionOrNull(editionId);
+    if (packEdition != null) {
+      return QuranPackInstallService.storageBytes(packEdition);
+    }
     if (!isValidEditionId(editionId)) return 0;
     try {
       final directory = await _getEditionsDirectory();
@@ -545,14 +619,16 @@ class EditionService {
   static Future<int> getTotalEditionsSize() async {
     try {
       final directory = await _getEditionsDirectory();
-      if (!await directory.exists()) return 0;
-
       int total = 0;
-      await for (final entity in directory.list()) {
-        if (entity is File && entity.path.endsWith('.json')) {
-          total += await entity.length();
+      if (await directory.exists()) {
+        await for (final entity in directory.list()) {
+          if (entity is File && entity.path.endsWith('.json')) {
+            total += await entity.length();
+          }
         }
       }
+      total += await QuranPackInstallService.storageBytes(QuranRiwayahId.warsh);
+      total += await QuranPackInstallService.storageBytes(QuranRiwayahId.qalun);
       return total;
     } catch (_) {
       return 0;

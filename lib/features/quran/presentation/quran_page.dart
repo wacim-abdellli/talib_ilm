@@ -9,12 +9,19 @@ import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/utils/arabic_search_utils.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/models/hizb_catalog.dart';
+import '../data/models/quran_models.dart';
+import '../data/database/quran_pack_database.dart';
 import '../data/services/bookmark_service.dart';
+import '../data/services/edition_service.dart';
+import '../data/services/quran_pack_install_service.dart';
 import '../data/services/reading_history_service.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
+import 'quran_pack_reader_page.dart';
+import 'quran_riwayah_downloads_page.dart';
 import 'widgets/mushaf_page_viewer.dart';
 import 'widgets/quick_jump_sheet.dart';
 import 'widgets/quran_ayah_search_card.dart';
@@ -57,9 +64,11 @@ class _QuranPageState extends State<QuranPage> {
   List<int> _filteredJuzs = List.generate(30, (i) => i + 1);
   List<int> _filteredHizbs = List.generate(60, (i) => i + 1);
   List<QuranAyahMatch> _filteredAyahs = const [];
+  Map<int, QuranPackSurah> _editionSurahs = const {};
   int _searchFilterIndex = 0; // 0: All, 1: Surahs, 2: Ayahs
   int _selectedTabIndex = 0; // 0: Surahs, 1: Juzs, 2: Hizbs, 3: Bookmarks
   bool _isLoading = true;
+  String _currentEditionId = 'hafs';
 
   // Stats
   int _minutesToday = 0;
@@ -98,11 +107,16 @@ class _QuranPageState extends State<QuranPage> {
       final streakFuture = _statsService.getStreak();
       final lastReadFuture = BookmarkService.getLastRead();
       final bookmarksFuture = BookmarkService.getBookmarks();
+      final editionFuture = EditionService.getCurrentEdition();
 
       final daily = await dailyFuture;
       final streak = await streakFuture;
       final lastRead = await lastReadFuture;
       final bookmarks = await bookmarksFuture;
+      final editionId = await editionFuture;
+      final editionSurahs = editionId == null || editionId == 'hafs'
+          ? const <int, QuranPackSurah>{}
+          : await _loadEditionSurahs(editionId);
 
       if (mounted) {
         setState(() {
@@ -110,9 +124,13 @@ class _QuranPageState extends State<QuranPage> {
           _streak = streak;
           _lastRead = lastRead;
           _bookmarks = bookmarks;
+          _currentEditionId = editionId ?? '';
+          _editionSurahs = editionSurahs;
           _isLoading = false;
         });
-        QcfFontLoader.preloadPages(lastRead.page, radius: 2);
+        if (_currentEditionId == 'hafs') {
+          QcfFontLoader.preloadPages(lastRead.page, radius: 2);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -120,6 +138,26 @@ class _QuranPageState extends State<QuranPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<Map<int, QuranPackSurah>> _loadEditionSurahs(String editionId) async {
+    final QuranRiwayahId edition;
+    try {
+      edition = QuranRiwayahId.parse(editionId);
+    } on FormatException {
+      return const {};
+    }
+    final database = await QuranPackInstallService.openInstalled(edition);
+    if (database == null) return const {};
+    try {
+      return {
+        for (final surah in await database.getSurahList()) surah.number: surah,
+      };
+    } catch (_) {
+      return const {};
+    } finally {
+      await database.close();
     }
   }
 
@@ -137,7 +175,11 @@ class _QuranPageState extends State<QuranPage> {
         final firstSurah = map.keys.first;
         final firstVerse = map[firstSurah]!.first;
         final surahName = quran.getSurahNameArabic(firstSurah);
-        final snippet = quran.getVerse(firstSurah, firstVerse, verseEndSymbol: false);
+        final snippet = quran.getVerse(
+          firstSurah,
+          firstVerse,
+          verseEndSymbol: false,
+        );
         return ArabicSearchUtils.normalize('الجزء $i $surahName $snippet $i');
       }(),
   };
@@ -195,18 +237,24 @@ class _QuranPageState extends State<QuranPage> {
     }
 
     if (query.length >= 2) {
-      final rawList = await compute(_performAyahSearch, query);
+      final List<Map<String, dynamic>> rawList;
+      if (_currentEditionId == 'hafs') {
+        rawList = await compute(_performAyahSearch, query);
+      } else {
+        rawList = await _searchInstalledEdition(_currentEditionId, query);
+      }
       if (_searchGeneration != currentGen || !mounted) return;
 
       final matchingAyahs = <QuranAyahMatch>[];
       for (final raw in rawList) {
         final sora = raw['sora'] as int;
         final ayaNo = raw['aya_no'] as int;
-        final page = quran.getPageNumber(sora, ayaNo);
-        final juz = quran.getJuzNumber(sora, ayaNo);
-        final surahName = quran.getSurahNameArabic(sora);
-        final verseText = raw['text'] ??
-            quran.getVerse(sora, ayaNo, verseEndSymbol: false);
+        final page = raw['page'] as int? ?? quran.getPageNumber(sora, ayaNo);
+        final juz = raw['juz'] as int? ?? quran.getJuzNumber(sora, ayaNo);
+        final surahName =
+            raw['surahName'] as String? ?? quran.getSurahNameArabic(sora);
+        final verseText =
+            raw['text'] ?? quran.getVerse(sora, ayaNo, verseEndSymbol: false);
 
         matchingAyahs.add(
           QuranAyahMatch(
@@ -235,6 +283,49 @@ class _QuranPageState extends State<QuranPage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _searchInstalledEdition(
+    String editionId,
+    String query,
+  ) async {
+    final QuranRiwayahId edition;
+    try {
+      edition = QuranRiwayahId.parse(editionId);
+    } on FormatException {
+      return const [];
+    }
+    final database = await QuranPackInstallService.openInstalled(edition);
+    if (database == null) return const [];
+    try {
+      final matches = await database.searchAyahs(
+        ArabicSearchUtils.normalize(query),
+        limit: 100,
+      );
+      final result = <Map<String, dynamic>>[];
+      final surahs = <int, QuranPackSurah>{};
+      for (final match in matches) {
+        var surah = surahs[match.surahNumber];
+        if (surah == null) {
+          surah = await database.getSurah(match.surahNumber);
+          if (surah == null) continue;
+          surahs[match.surahNumber] = surah;
+        }
+        result.add({
+          'sora': match.surahNumber,
+          'aya_no': match.ayahNumber,
+          'text': match.displayText,
+          'page': match.firstPage,
+          'juz': match.juzNumber,
+          'surahName': surah.nameArabic,
+        });
+      }
+      return result;
+    } catch (_) {
+      return const [];
+    } finally {
+      await database.close();
+    }
+  }
+
   Future<void> _toggleBookmark(int surahNum) async {
     HapticFeedback.selectionClick();
     await BookmarkService.toggleSurahBookmark(surahNum);
@@ -244,23 +335,36 @@ class _QuranPageState extends State<QuranPage> {
   Future<void> _openSurah(int surahNum, {int? ayah}) async {
     final startTime = DateTime.now();
     final effectiveAyah = ayah ?? 1;
-    final targetPage = quran.getPageNumber(surahNum, effectiveAyah);
-    QcfFontLoader.preloadPages(targetPage, radius: 2);
+    final editionId = await EditionService.getCurrentEdition();
+    if (editionId == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    final targetPage = await _resolvePage(editionId, surahNum, effectiveAyah);
+    if (targetPage == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    if (editionId == 'hafs') QcfFontLoader.preloadPages(targetPage, radius: 2);
 
-    ReadingHistoryService.recordReading(
-      surah: surahNum,
-      ayah: effectiveAyah,
-      page: targetPage,
-    );
+    if (editionId == 'hafs') {
+      ReadingHistoryService.recordReading(
+        surah: surahNum,
+        ayah: effectiveAyah,
+        page: targetPage,
+      );
+    }
 
     if (!mounted) return;
 
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MushafPageViewer(
-          initialSurah: surahNum,
-          initialAyah: effectiveAyah,
+        builder: (_) => _readerFor(
+          editionId,
+          page: targetPage,
+          surah: surahNum,
+          ayah: effectiveAyah,
         ),
       ),
     );
@@ -279,20 +383,27 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _openPage(int pageNumber) async {
     final startTime = DateTime.now();
-    QcfFontLoader.preloadPages(pageNumber, radius: 2);
+    final editionId = await EditionService.getCurrentEdition();
+    if (editionId == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    if (editionId == 'hafs') QcfFontLoader.preloadPages(pageNumber, radius: 2);
 
-    ReadingHistoryService.recordReading(
-      surah: _lastRead?.surah ?? 1,
-      ayah: _lastRead?.ayah ?? 1,
-      page: pageNumber,
-    );
+    if (editionId == 'hafs') {
+      ReadingHistoryService.recordReading(
+        surah: _lastRead?.surah ?? 1,
+        ayah: _lastRead?.ayah ?? 1,
+        page: pageNumber,
+      );
+    }
 
     if (!mounted) return;
 
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MushafPageViewer(initialPage: pageNumber),
+        builder: (_) => _readerFor(editionId, page: pageNumber),
       ),
     );
 
@@ -308,25 +419,82 @@ class _QuranPageState extends State<QuranPage> {
     _loadData();
   }
 
+  Future<void> _openJuz(int juzNumber) async {
+    final editionId = await EditionService.getCurrentEdition();
+    if (editionId == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    if (editionId == 'hafs') {
+      final location = quran.getSurahAndVersesFromJuz(juzNumber);
+      final surah = location.keys.first;
+      final ayah = location[surah]!.first;
+      await _openPage(quran.getPageNumber(surah, ayah));
+      return;
+    }
+    final QuranRiwayahId edition;
+    try {
+      edition = QuranRiwayahId.parse(editionId);
+    } on FormatException {
+      _showUnavailableEdition();
+      return;
+    }
+    final database = await QuranPackInstallService.openInstalled(edition);
+    if (database == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    try {
+      final start = await database.getJuzStartAyah(juzNumber);
+      if (start == null) {
+        _showUnavailableEdition();
+        return;
+      }
+      final surahNumber = start.surahNumber;
+      final ayahNumber = start.ayahNumber;
+      await database.close();
+      await _openSurah(surahNumber, ayah: ayahNumber);
+    } finally {
+      await database.close();
+    }
+  }
+
   Future<void> _openAyahMatch(QuranAyahMatch match) async {
     final startTime = DateTime.now();
-    QcfFontLoader.preloadPages(match.pageNumber, radius: 2);
-
-    ReadingHistoryService.recordReading(
-      surah: match.surahNumber,
-      ayah: match.ayahNumber,
-      page: match.pageNumber,
+    final editionId = await EditionService.getCurrentEdition();
+    if (editionId == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    final targetPage = await _resolvePage(
+      editionId,
+      match.surahNumber,
+      match.ayahNumber,
     );
+    if (targetPage == null) {
+      _showUnavailableEdition();
+      return;
+    }
+    if (editionId == 'hafs') QcfFontLoader.preloadPages(targetPage, radius: 2);
+
+    if (editionId == 'hafs') {
+      ReadingHistoryService.recordReading(
+        surah: match.surahNumber,
+        ayah: match.ayahNumber,
+        page: targetPage,
+      );
+    }
 
     if (!mounted) return;
 
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MushafPageViewer(
-          initialPage: match.pageNumber,
-          initialSurah: match.surahNumber,
-          initialAyah: match.ayahNumber,
+        builder: (_) => _readerFor(
+          editionId,
+          page: targetPage,
+          surah: match.surahNumber,
+          ayah: match.ayahNumber,
         ),
       ),
     );
@@ -341,6 +509,52 @@ class _QuranPageState extends State<QuranPage> {
     }
 
     _loadData();
+  }
+
+  Future<int?> _resolvePage(String editionId, int surah, int ayah) async {
+    if (editionId == 'hafs') return quran.getPageNumber(surah, ayah);
+    final QuranRiwayahId edition;
+    try {
+      edition = QuranRiwayahId.parse(editionId);
+    } on FormatException {
+      return null;
+    }
+    final database = await QuranPackInstallService.openInstalled(edition);
+    if (database == null) return null;
+    try {
+      return (await database.getAyah(surah, ayah))?.firstPage;
+    } finally {
+      await database.close();
+    }
+  }
+
+  Widget _readerFor(
+    String editionId, {
+    required int page,
+    int? surah,
+    int? ayah,
+  }) {
+    if (editionId == 'hafs') {
+      return MushafPageViewer(
+        initialPage: page,
+        initialSurah: surah,
+        initialAyah: ayah,
+      );
+    }
+    return QuranPackReaderPage(
+      editionId: QuranRiwayahId.parse(editionId),
+      initialPage: page,
+      initialSurah: surah,
+      initialAyah: ayah,
+    );
+  }
+
+  void _showUnavailableEdition() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('الرواية المحددة غير متاحة حالياً. اختر أو نزّل رواية.'),
+      ),
+    );
   }
 
   void _openQuickJump(BuildContext context) {
@@ -360,14 +574,30 @@ class _QuranPageState extends State<QuranPage> {
         showBack: false,
         actions: [
           AppIconButton(
-            icon: Icons.history_rounded,
-            tooltip: 'سجل القراءة',
+            icon: Icons.library_books_rounded,
+            tooltip: 'روايات المصحف والتنزيلات',
             color: palette.gold,
-            onPressed: () => ReadingHistorySheet.show(
-              context,
-              onOpenPage: _openPage,
-            ),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const QuranRiwayahDownloadsPage(),
+                ),
+              );
+              if (mounted) {
+                await _loadData();
+                _filterIndex();
+              }
+            },
           ),
+          if (_currentEditionId == 'hafs')
+            AppIconButton(
+              icon: Icons.history_rounded,
+              tooltip: 'سجل القراءة',
+              color: palette.gold,
+              onPressed: () =>
+                  ReadingHistorySheet.show(context, onOpenPage: _openPage),
+            ),
           AppIconButton(
             icon: Icons.explore_rounded,
             tooltip: 'الانتقال السريع',
@@ -419,7 +649,8 @@ class _QuranPageState extends State<QuranPage> {
                                       child: QuranStatCard(
                                         label: 'أيام التتابع',
                                         value: '$_streak',
-                                        icon: Icons.local_fire_department_rounded,
+                                        icon:
+                                            Icons.local_fire_department_rounded,
                                         iconColor: palette.gold,
                                       ),
                                     ),
@@ -446,7 +677,8 @@ class _QuranPageState extends State<QuranPage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => const BookmarksPage(),
+                                              builder: (_) =>
+                                                  const BookmarksPage(),
                                             ),
                                           ).then((_) => _loadData());
                                         },
@@ -457,7 +689,8 @@ class _QuranPageState extends State<QuranPage> {
                               ),
 
                               // Last read banner (آخر قراءة)
-                              if (_lastRead != null)
+                              if (_lastRead != null &&
+                                  _currentEditionId == 'hafs')
                                 Padding(
                                   padding: const EdgeInsetsDirectional.fromSTEB(
                                     AppSpace.lg,
@@ -537,12 +770,13 @@ class _QuranPageState extends State<QuranPage> {
                     onOpenSurah: _openSurah,
                     onToggleBookmark: _toggleBookmark,
                     onResetSearch: () => _searchController.clear(),
+                    editionSurahs: _editionSurahs,
                   )
                 else if (_selectedTabIndex == 1)
                   ...QuranIndexSlivers.buildJuzsSlivers(
                     context: context,
                     filteredJuzs: _filteredJuzs,
-                    onOpenPage: _openPage,
+                    onOpenJuz: _openJuz,
                     onResetSearch: () => _searchController.clear(),
                   )
                 else if (_selectedTabIndex == 2)
@@ -551,17 +785,33 @@ class _QuranPageState extends State<QuranPage> {
                     filteredHizbs: _filteredHizbs,
                     onOpenPage: _openPage,
                     onResetSearch: () => _searchController.clear(),
+                    isHafsEdition: _currentEditionId == 'hafs',
                   )
-                else
-                  SliverFillRemaining(
-                    hasScrollBody: true,
-                    child: QuranBookmarksTabView(
-                      bookmarks: _bookmarks,
-                      onEmptyAction: () =>
-                          setState(() => _selectedTabIndex = 0),
-                      onReload: _loadData,
+                else ...[
+                  if (_currentEditionId == 'hafs')
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: QuranBookmarksTabView(
+                        bookmarks: _bookmarks,
+                        onEmptyAction: () =>
+                            setState(() => _selectedTabIndex = 0),
+                        onReload: _loadData,
+                      ),
+                    )
+                  else
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+                        child: EmptyState(
+                          icon: Icons.bookmark_outline_rounded,
+                          title: 'المحفوظات مرتبطة بحفص حالياً',
+                          subtitle:
+                              'المحفوظات الحالية تستخدم ترقيم حفص. ارجع إلى رواية حفص لفتحها حتى لا تنتقل إلى آية مختلفة في الرواية المحددة.',
+                        ),
+                      ),
                     ),
-                  ),
+                ],
               ],
             ),
     );

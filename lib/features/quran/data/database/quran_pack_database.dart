@@ -151,6 +151,11 @@ class QuranPackDatabase {
         bounds.single['last_surah'] != 114) {
       throw const FormatException('Quran pack surah bounds are invalid');
     }
+    final integrityRows = await database.rawQuery('PRAGMA integrity_check');
+    if (integrityRows.length != 1 ||
+        integrityRows.single.values.single != 'ok') {
+      throw const FormatException('Quran pack SQLite integrity check failed');
+    }
 
     return QuranPackDatabase._(
       database: database,
@@ -210,6 +215,20 @@ class QuranPackDatabase {
     return List.unmodifiable(rows.map(QuranPackAyah.fromRow));
   }
 
+  Future<QuranPackAyah?> getJuzStartAyah(int juzNumber) async {
+    _ensureOpen();
+    if (juzNumber < 1 || juzNumber > 30) return null;
+    final rows = await _database.query(
+      'ayahs',
+      where: 'juz_number = ?',
+      whereArgs: [juzNumber],
+      orderBy: 'source_id ASC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return QuranPackAyah.fromRow(rows.single);
+  }
+
   /// Returns ayahs whose printed page span includes [pageNumber].
   /// Cross-page ayahs are returned on both pages with both coordinates intact.
   Future<List<QuranPackAyah>> getPageAyahs(int pageNumber) async {
@@ -220,6 +239,29 @@ class QuranPackDatabase {
       where: 'page_start <= ? AND page_end >= ?',
       whereArgs: [pageNumber, pageNumber],
       orderBy: 'surah_number ASC, ayah_number ASC',
+    );
+    return List.unmodifiable(rows.map(QuranPackAyah.fromRow));
+  }
+
+  /// Searches the edition's derived search field while keeping display text
+  /// untouched. SQL wildcard characters in the query are treated literally.
+  Future<List<QuranPackAyah>> searchAyahs(
+    String normalizedQuery, {
+    int limit = 100,
+  }) async {
+    _ensureOpen();
+    final query = normalizedQuery.trim();
+    if (query.isEmpty || limit < 1) return const [];
+    final escaped = query
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
+    final rows = await _database.query(
+      'ayahs',
+      where: "search_text LIKE ? ESCAPE '\\'",
+      whereArgs: ['%$escaped%'],
+      orderBy: 'source_id ASC',
+      limit: limit,
     );
     return List.unmodifiable(rows.map(QuranPackAyah.fromRow));
   }

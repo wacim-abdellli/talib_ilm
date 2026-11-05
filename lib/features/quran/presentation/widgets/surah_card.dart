@@ -4,17 +4,14 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../data/database/quran_pack_database.dart';
 
 /// Ornate Islamic medallion for Surah numbers with double concentric border rings.
 class SurahNumberMedallion extends StatelessWidget {
   final int number;
   final double size;
 
-  const SurahNumberMedallion({
-    super.key,
-    required this.number,
-    this.size = 42,
-  });
+  const SurahNumberMedallion({super.key, required this.number, this.size = 42});
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +46,7 @@ class SurahNumberMedallion extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               '$number',
-              style: context.text.labelHeavy.copyWith(
-                color: palette.gold,
-              ),
+              style: context.text.labelHeavy.copyWith(color: palette.gold),
             ),
           ),
         ),
@@ -70,7 +65,9 @@ class _RevelationBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final color = isMakki ? palette.gold : palette.success;
-    final bg = isMakki ? palette.goldSoft : palette.success.withValues(alpha: 0.12);
+    final bg = isMakki
+        ? palette.goldSoft
+        : palette.success.withValues(alpha: 0.12);
 
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
@@ -80,10 +77,7 @@ class _RevelationBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: AppRadius.pillRadius,
-        border: Border.all(
-          color: color.withValues(alpha: 0.35),
-          width: 0.8,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -96,9 +90,7 @@ class _RevelationBadge extends StatelessWidget {
           const SizedBox(width: AppSpace.xxs),
           Text(
             isMakki ? 'مكية' : 'مدنية',
-            style: context.text.captionHeavy.copyWith(
-              color: color,
-            ),
+            style: context.text.captionHeavy.copyWith(color: color),
           ),
         ],
       ),
@@ -113,6 +105,7 @@ class SurahCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
   final Widget? trailing;
+  final QuranPackSurah? editionSurah;
 
   const SurahCard({
     super.key,
@@ -121,16 +114,22 @@ class SurahCard extends StatelessWidget {
     required this.onTap,
     required this.onBookmarkTap,
     this.trailing,
+    this.editionSurah,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final surahName = quran.getSurahNameArabic(surahNumber);
-    final versesCount = quran.getVerseCount(surahNumber);
+    final surahName =
+        editionSurah?.nameArabic ?? quran.getSurahNameArabic(surahNumber);
+    final englishName =
+        editionSurah?.nameEnglish ?? quran.getSurahName(surahNumber);
+    final versesCount =
+        editionSurah?.ayahCount ?? quran.getVerseCount(surahNumber);
     final place = quran.getPlaceOfRevelation(surahNumber);
     final isMakki = place == 'Makkah';
-    final startPage = quran.getSurahPages(surahNumber)[0];
+    final startPage =
+        editionSurah?.firstPage ?? quran.getSurahPages(surahNumber)[0];
     final juzNumber = quran.getJuzNumber(surahNumber, 1);
 
     return Material(
@@ -182,7 +181,7 @@ class SurahCard extends StatelessWidget {
                         const SizedBox(width: AppSpace.xs),
                         // Transliteration name
                         Text(
-                          quran.getSurahName(surahNumber),
+                          englishName,
                           style: context.text.caption.copyWith(
                             color: palette.textMuted,
                           ),

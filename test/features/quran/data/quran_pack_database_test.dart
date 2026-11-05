@@ -125,6 +125,11 @@ class _FakePackDatabase implements Database {
         <String, Object?>{'user_version': 1},
       ];
     }
+    if (sql == 'PRAGMA integrity_check') {
+      return const [
+        <String, Object?>{'integrity_check': 'ok'},
+      ];
+    }
     if (sql.contains('COUNT(*) AS record_count FROM surahs')) {
       return const [
         <String, Object?>{'record_count': 114},
