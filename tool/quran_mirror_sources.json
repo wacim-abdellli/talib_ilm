@@ -1,0 +1,110 @@
+{
+  "sourceRepository": "https://github.com/thetruetruth/quran-data-kfgqpc",
+  "sourceCommit": "281dbbe8eed1370daa5a023b6cd81655cbfd6473",
+  "sourceCommitDate": "2022-02-15T08:13:12Z",
+  "upstreamClaim": "King Fahd Glorious Quran Printing Complex (KFGQPC)",
+  "sourceVerificationStatus": "pinned-community-mirror-not-independently-compared-with-official-archive",
+  "repositoryLicense": null,
+  "readmeUseStatement": "You may use this data by downloading from Github or serve over CDN",
+  "editions": {
+    "hafs": {
+      "dataVersion": "18",
+      "expectedAyahCount": 6236,
+      "expectedSurahCount": 114,
+      "pageCount": 604,
+      "fields": {
+        "id": "id",
+        "surah": "sora",
+        "ayah": "aya_no",
+        "displayText": "aya_text",
+        "searchText": "aya_text_emlaey",
+        "juz": "jozz",
+        "page": "page",
+        "lineStart": "line_start",
+        "lineEnd": "line_end",
+        "surahNameAr": "sora_name_ar",
+        "surahNameEn": "sora_name_en"
+      },
+      "data": {
+        "repositoryPath": "hafs/data/hafsData_v18.json",
+        "filename": "hafsData_v18.json",
+        "sizeBytes": 3582144,
+        "gitBlobSha1": "d95815b192b33b88cbc37c801dcd811aba740030",
+        "sha256": "5D8BB91726E482839D0057633CB1973031E4D706FA9604EEA5E08892F20BA140"
+      },
+      "font": {
+        "repositoryPath": "hafs/font/hafs.18.ttf",
+        "filename": "hafs.18.ttf",
+        "sizeBytes": 242368,
+        "gitBlobSha1": "1584d9248d22af73e336310d1017ffe0e801b38c",
+        "sha256": "A0636E68E375AF9552470D67773936F54D536E6586CE2608311B2FE7F9CBEC3A"
+      }
+    },
+    "warsh": {
+      "dataVersion": "10",
+      "expectedAyahCount": 6214,
+      "expectedSurahCount": 114,
+      "pageCount": 604,
+      "fields": {
+        "id": "id",
+        "surah": "sura_no",
+        "ayah": "aya_no",
+        "displayText": "aya_text",
+        "searchText": null,
+        "juz": "jozz",
+        "page": "page",
+        "lineStart": "line_start",
+        "lineEnd": "line_end",
+        "surahNameAr": "sura_name_ar",
+        "surahNameEn": "sura_name_en"
+      },
+      "data": {
+        "repositoryPath": "warsh/data/warshData_v10.json",
+        "filename": "warshData_v10.json",
+        "sizeBytes": 2772330,
+        "gitBlobSha1": "a907429f218fbaa5df8f6b54caffcfadce34e971",
+        "sha256": "F05D0DC652FD46B38563CACB13242F76F80DB4CC64D25873DA0BCE157253872F"
+      },
+      "font": {
+        "repositoryPath": "warsh/font/warsh.10.ttf",
+        "filename": "warsh.10.ttf",
+        "sizeBytes": 256048,
+        "gitBlobSha1": "40fb4dcb40819ca2f95c8a7f8ed9fa085fb4d4b9",
+        "sha256": "E6347A1B4CF0CA32E9CB187A7DB8C9ECEE0D5E384269CA6A943373A34FF747FB"
+      }
+    },
+    "qalun": {
+      "dataVersion": "10",
+      "expectedAyahCount": 6214,
+      "expectedSurahCount": 114,
+      "pageCount": 604,
+      "fields": {
+        "id": "id",
+        "surah": "sura_no",
+        "ayah": "aya_no",
+        "displayText": "aya_text",
+        "searchText": null,
+        "juz": "jozz",
+        "page": "page",
+        "lineStart": "line_start",
+        "lineEnd": "line_end",
+        "surahNameAr": "sura_name_ar",
+        "surahNameEn": "sura_name_en"
+      },
+      "data": {
+        "repositoryPath": "qaloon/data/QaloonData_v10.json",
+        "filename": "QaloonData_v10.json",
+        "sizeBytes": 2759672,
+        "gitBlobSha1": "b5822fe5c1089a4cb34c8ea55e5e2d5117a707b3",
+        "sha256": "18465C40EBEEC40A92EB98745C9B89796AC6E31F6E93988883DFB6602FAAEA95"
+      },
+      "font": {
+        "repositoryPath": "qaloon/font/qaloon.10.ttf",
+        "filename": "qaloon.10.ttf",
+        "sizeBytes": 260592,
+        "gitBlobSha1": "96bc8970fafa9be0ee2a47f453366a36a2f8c8df",
+        "sha256": "95E7F9268FD4AB9F8B79D2ED3827E0C8A78F80195C02C6CBADB97C90D837B1E3"
+      }
+    }
+  }
+}
