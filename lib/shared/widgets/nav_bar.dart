@@ -174,15 +174,17 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
                   ),
                 ),
                 const SizedBox(height: AppSpace.xxs),
-                Text(
-                  item.label,
-                  style: (isSelected ? textTheme.captionHeavy : textTheme.caption).copyWith(
-                    color: isSelected
-                        ? palette.primary
-                        : palette.textSubtle,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    item.label,
+                    style: (isSelected ? textTheme.captionHeavy : textTheme.caption).copyWith(
+                      color: isSelected
+                          ? palette.primary
+                          : palette.textSubtle,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

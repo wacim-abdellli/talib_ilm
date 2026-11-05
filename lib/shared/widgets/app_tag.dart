@@ -37,13 +37,15 @@ class AppTag extends StatelessWidget {
       ),
       child: Center(
         heightFactor: 1,
-        child: Text(
-          label,
-          style: textTheme.captionBold.copyWith(
-            color: effectiveFg,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: textTheme.captionBold.copyWith(
+              color: effectiveFg,
+            ),
+            maxLines: 1,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

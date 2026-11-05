@@ -255,10 +255,20 @@ class _IlmReadingTrackerSheetState extends State<IlmReadingTrackerSheet>
                     unselectedLabelStyle: textTheme.label,
                     tabs: [
                       Tab(
-                        text: 'قيد المتابعة (${widget.inProgressBooks.length})',
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'قيد المتابعة (${widget.inProgressBooks.length})',
+                          ),
+                        ),
                       ),
                       Tab(
-                        text: 'المنجز (${widget.completedBooks.length})',
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'المنجز (${widget.completedBooks.length})',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -326,13 +336,16 @@ class _IlmReadingTrackerSheetState extends State<IlmReadingTrackerSheet>
               ),
               const SizedBox(width: AppSpace.xs),
               Expanded(
-                child: Text(
-                  label,
-                  style: context.text.captionBold.copyWith(
-                    color: palette.textMuted,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    label,
+                    style: context.text.captionBold.copyWith(
+                      color: palette.textMuted,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

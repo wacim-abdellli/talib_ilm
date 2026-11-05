@@ -109,12 +109,15 @@ class _BookCardState extends State<BookCard> {
           const SizedBox(height: AppSpace.xs),
 
           // Subtitle / Author
-          Text(
-            widget.book.author,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.text.bodySmall.copyWith(
-              color: palette.textMuted,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              widget.book.author,
+              maxLines: 1,
+              style: context.text.bodySmall.copyWith(
+                color: palette.textMuted,
+              ),
             ),
           ),
 

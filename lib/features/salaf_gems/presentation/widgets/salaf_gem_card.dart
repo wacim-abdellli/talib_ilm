@@ -66,22 +66,28 @@ class SalafGemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      gem.author,
-                      style: textTheme.titleSmall.copyWith(
-                        color: palette.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (gem.role.isNotEmpty)
-                      Text(
-                        gem.role,
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        gem.author,
+                        style: textTheme.titleSmall.copyWith(
+                          color: palette.text,
                         ),
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (gem.role.isNotEmpty)
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          gem.role,
+                          style: textTheme.caption.copyWith(
+                            color: palette.textMuted,
+                          ),
+                          maxLines: 1,
+                        ),
                       ),
                   ],
                 ),
@@ -99,10 +105,13 @@ class SalafGemCard extends StatelessWidget {
                     color: palette.border,
                   ),
                 ),
-                child: Text(
-                  categoryLabel,
-                  style: textTheme.caption.copyWith(
-                    color: palette.primary,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    categoryLabel,
+                    style: textTheme.caption.copyWith(
+                      color: palette.primary,
+                    ),
                   ),
                 ),
               ),

@@ -138,14 +138,17 @@ class _HadithCardState extends State<HadithCard> {
               const SizedBox(width: AppSpace.xs),
               // Category tag
               Expanded(
-                child: Text(
-                  widget.hadith.category,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: palette.textMuted,
-                    fontFamily: AppTextStyles.cairo,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    widget.hadith.category,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: palette.textMuted,
+                      fontFamily: AppTextStyles.cairo,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               // Grade badge (صحيح / حسن)

@@ -4,6 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/quran_sliver_header.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/quran_stats_banner.dart';
+import 'package:talib_ilm/features/salaf_gems/data/models/salaf_gem.dart';
+import 'package:talib_ilm/features/salaf_gems/presentation/widgets/salaf_gem_card.dart';
+import 'package:talib_ilm/shared/widgets/app_tag.dart';
+import 'package:talib_ilm/shared/widgets/nav_bar.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -174,6 +178,108 @@ void main() {
       expect(find.text('أيام التتابع'), findsOneWidget);
       expect(find.text('قراءة اليوم'), findsOneWidget);
       expect(find.text('المحفوظات'), findsOneWidget);
+    });
+
+    testWidgets('NavBar renders all 5 tabs without truncation on iPhone SE (375dp)',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(375, 667));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const items = [
+        NavBarItem(icon: Icons.home_rounded, label: 'الرئيسية'),
+        NavBarItem(icon: Icons.menu_book_rounded, label: 'المصحف'),
+        NavBarItem(icon: Icons.school_rounded, label: 'المتون'),
+        NavBarItem(icon: Icons.favorite_rounded, label: 'الأذكار'),
+        NavBarItem(icon: Icons.bookmark_rounded, label: 'المفضلة'),
+      ];
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 375,
+          height: 667,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: NavBar(
+              currentIndex: 0,
+              onTap: (_) {},
+              items: items,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final item in items) {
+        expect(find.text(item.label), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('AppTag scales down long subject labels without truncation on 375dp',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(375, 667));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 375,
+          height: 667,
+          child: const SizedBox(
+            width: 100,
+            child: AppTag(label: 'أصول الفقه والقواعد الفقهية'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('أصول الفقه والقواعد الفقهية'), findsOneWidget);
+      final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
+      for (final rp in renderParagraphs) {
+        if (rp.text.toPlainText() == 'أصول الفقه والقواعد الفقهية') {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'AppTag must not truncate');
+        }
+      }
+    });
+
+    testWidgets('SalafGemCard header renders scholar name without truncation on iPhone SE (375dp)',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(375, 667));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const gem = SalafGem(
+        id: '1',
+        author: 'عبد الله بن مسعود رضي الله عنه',
+        role: 'صحابي جليل وفقيه الأمة',
+        text: 'إنكم في زمان كثير علماؤه قليل خطباؤه',
+        category: 'الصحابة',
+        topic: 'طلب العلم',
+        sourceRef: 'صحيح البخاري',
+      );
+
+      await tester.pumpWidget(
+        buildHostWidget(
+          width: 375,
+          height: 667,
+          child: SingleChildScrollView(
+            child: SalafGemCard(
+              gem: gem,
+              isFavorite: false,
+              onToggleFavorite: () {},
+              onCopy: () {},
+              onShare: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('عبد الله بن مسعود رضي الله عنه'), findsOneWidget);
+      final renderParagraphs = tester.renderObjectList<RenderParagraph>(find.byType(RichText));
+      for (final rp in renderParagraphs) {
+        if (rp.text.toPlainText() == 'عبد الله بن مسعود رضي الله عنه') {
+          expect(rp.didExceedMaxLines, isFalse, reason: 'Scholar name must not truncate');
+        }
+      }
     });
   });
 }
