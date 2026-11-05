@@ -126,7 +126,7 @@ class FavoritesBookEntriesView extends StatelessWidget {
                                 style: textTheme.bodyHeavy.copyWith(
                                   color: palette.text,
                                 ),
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: AppSpace.xxs),

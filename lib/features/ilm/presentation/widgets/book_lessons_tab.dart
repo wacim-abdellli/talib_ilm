@@ -392,7 +392,7 @@ class _BookLessonsTabState extends State<BookLessonsTab> {
                             color: palette.gold,
                             fontWeight: FontWeight.bold,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

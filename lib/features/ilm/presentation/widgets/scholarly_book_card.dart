@@ -132,13 +132,16 @@ class ScholarlyBookCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpace.xs),
               Expanded(
-                child: Text(
-                  book.author,
-                  style: context.text.caption.copyWith(
-                    color: palette.textMuted,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    book.author,
+                    style: context.text.caption.copyWith(
+                      color: palette.textMuted,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -214,14 +217,17 @@ class ScholarlyBookCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text(
-                        'مُتَمَّم بفضل الله',
-                        style: context.text.caption.copyWith(
-                          color: palette.success,
-                          fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          'مُتَمَّم بفضل الله',
+                          style: context.text.caption.copyWith(
+                            color: palette.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.xs),
@@ -251,14 +257,17 @@ class ScholarlyBookCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text(
-                        'التقدم: ${(progressValue * 100).round()}%',
-                        style: context.text.caption.copyWith(
-                          color: categoryColors.fg,
-                          fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          'التقدم: ${(progressValue * 100).round()}%',
+                          style: context.text.caption.copyWith(
+                            color: categoryColors.fg,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.xs),
@@ -279,13 +288,16 @@ class ScholarlyBookCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: Text(
-                    'لم يبدأ بعد',
-                    style: context.text.caption.copyWith(
-                      color: palette.textMuted,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      'لم يبدأ بعد',
+                      style: context.text.caption.copyWith(
+                        color: palette.textMuted,
+                      ),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: AppSpace.xs),
