@@ -37,6 +37,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
     final textTheme = context.text;
 
     final hasManyActions = actions.length > 1;
+    final hasLeading = showBack || showMenu || leadingIcon != null;
 
     return AppBar(
       backgroundColor: palette.bg,
@@ -44,7 +45,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: 0,
       centerTitle: hasManyActions ? false : true,
       toolbarHeight: height,
-      leadingWidth: (showBack || showMenu || leadingIcon != null) ? 44.0 : null,
+      leadingWidth: hasLeading ? AppSize.tap : null,
       titleSpacing: hasManyActions ? AppSpace.xs : null,
       leading: _buildLeading(context),
       title: Tooltip(
@@ -61,7 +62,9 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      actions: actions.isEmpty ? [const SizedBox(width: AppSize.tap)] : actions,
+      actions: actions.isEmpty
+          ? (hasLeading ? const [SizedBox(width: AppSize.tap)] : const [])
+          : actions,
       shape: Border(bottom: BorderSide(color: palette.border, width: 1)),
       bottom: bottom,
     );

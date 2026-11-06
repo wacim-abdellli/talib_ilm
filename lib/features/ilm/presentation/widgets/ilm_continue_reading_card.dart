@@ -87,7 +87,7 @@ class IlmContinueReadingCard extends StatelessWidget {
                       Text(
                         book.bookTitle,
                         style: context.text.titleSmall,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSpace.xs),
@@ -168,7 +168,7 @@ class IlmContinueReadingCard extends StatelessWidget {
                     style: context.text.bodySmall.copyWith(
                       color: palette.textMuted,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
