@@ -58,7 +58,10 @@ class AthkarNotificationScheduler {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
-    const androidDetails = AndroidNotificationDetails(
+    final timeoutMs = (id == 301)
+        ? 4 * 60 * 60 * 1000
+        : (id == 302 ? 5 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
+    final androidDetails = AndroidNotificationDetails(
       'talib_adhkar_reminders',
       'تنبيهات الأذكار اليومية',
       channelDescription: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
@@ -70,8 +73,10 @@ class AthkarNotificationScheduler {
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'أذكار المسلم',
+      timeoutAfter: timeoutMs,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -79,7 +84,7 @@ class AthkarNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
@@ -113,7 +118,7 @@ class AthkarNotificationScheduler {
     if (scheduledDate.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'talib_fasting_reminders',
       'تنبيهات صيام السنن والأيام البيض',
       channelDescription: 'تذكير مسنون بصيام الأيام البيض والإثنين والخميس في موعدها',
@@ -125,8 +130,11 @@ class AthkarNotificationScheduler {
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'صيام السنن',
+      timeoutAfter: 4 * 60 * 60 * 1000,
+      when: scheduledDate.millisecondsSinceEpoch,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -134,7 +142,7 @@ class AthkarNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,

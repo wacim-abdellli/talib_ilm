@@ -96,7 +96,8 @@ class PrayerNotificationScheduler {
     }
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
+    final timeoutMs = (minutesBefore > 0 ? minutesBefore : 15) * 60 * 1000;
+    final androidDetails = AndroidNotificationDetails(
       'talib_prayer_pre_reminder_v4',
       'تنبيهات اقتراب وقت الصلاة',
       channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
@@ -108,8 +109,11 @@ class PrayerNotificationScheduler {
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'اقترب وقت الصلاة',
+      timeoutAfter: timeoutMs,
+      when: scheduledTime.millisecondsSinceEpoch,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -117,7 +121,7 @@ class PrayerNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
@@ -155,7 +159,8 @@ class PrayerNotificationScheduler {
     }
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
+    final timeoutMs = (minutesBefore > 0 ? minutesBefore : 15) * 60 * 1000;
+    final androidDetails = AndroidNotificationDetails(
       'talib_prayer_pre_reminder_v4',
       'تنبيهات اقتراب وقت الصلاة',
       channelDescription: 'تنبيه مسبق قبل دخول وقت الصلاة للاستعداد والوضوء',
@@ -167,8 +172,10 @@ class PrayerNotificationScheduler {
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'اقترب وقت الصلاة',
+      timeoutAfter: timeoutMs,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -176,7 +183,7 @@ class PrayerNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
@@ -213,7 +220,7 @@ class PrayerNotificationScheduler {
     }
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'talib_prayer_iqama_v4',
       'تنبيهات إقامة الصلاة',
       channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
@@ -223,8 +230,11 @@ class PrayerNotificationScheduler {
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'موعد إقامة الصلاة',
+      timeoutAfter: 15 * 60 * 1000,
+      when: scheduledTime.millisecondsSinceEpoch,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -232,7 +242,7 @@ class PrayerNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
@@ -270,8 +280,8 @@ class PrayerNotificationScheduler {
     }
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
-      'talib_prayer_iqama_v4',
+    final androidDetails = AndroidNotificationDetails(
+      'talib_prayer_iqama_instant_v4',
       'تنبيهات إقامة الصلاة',
       channelDescription: 'تنبيه بحلول موعد إقامة الصلاة في المسجد',
       importance: Importance.high,
@@ -280,8 +290,10 @@ class PrayerNotificationScheduler {
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'موعد إقامة الصلاة',
+      timeoutAfter: 15 * 60 * 1000,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -289,7 +301,7 @@ class PrayerNotificationScheduler {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
@@ -324,7 +336,7 @@ class PrayerNotificationScheduler {
     }
     await _ensureInitialized();
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'talib_adhkar_reminders',
       'تذكير سورة الكهف يوم الجمعة',
       channelDescription:
@@ -334,15 +346,18 @@ class PrayerNotificationScheduler {
       playSound: true,
       enableVibration: true,
       icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ticker: 'سورة الكهف يوم الجمعة',
+      timeoutAfter: 8 * 60 * 60 * 1000,
+      when: scheduledTime.millisecondsSinceEpoch,
+      showWhen: true,
     );
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,
