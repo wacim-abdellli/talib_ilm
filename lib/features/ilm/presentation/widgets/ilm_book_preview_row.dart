@@ -53,7 +53,7 @@ class IlmBookPreviewRow extends StatelessWidget {
                 children: [
                   Container(
                     width: AppSpace.xs,
-                    height: AppSpace.xxxl,
+                    height: progressBadge != null ? 52 : 36,
                     decoration: BoxDecoration(
                       color: accentColor,
                       borderRadius: AppRadius.pillRadius,
@@ -76,78 +76,62 @@ class IlmBookPreviewRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSpace.xxs),
-                        if (progressBadge != null)
-                          Row(
-                            children: [
-                              if (author != null)
-                                Expanded(
-                                  child: Text(
-                                    author!,
-                                    style: context.text.caption.copyWith(
-                                      color: palette.textMuted,
-                                      height: 1.25,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              const SizedBox(width: AppSpace.xs),
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isCompleted
-                                      ? palette.success.withValues(alpha: 0.12)
-                                      : palette.primarySoft,
-                                  borderRadius: AppRadius.pillRadius,
-                                  border: Border.all(
-                                    color: isCompleted
-                                        ? palette.success.withValues(alpha: 0.35)
-                                        : palette.primary.withValues(alpha: 0.3),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isCompleted
-                                          ? Icons.check_circle_rounded
-                                          : Icons.auto_stories_rounded,
-                                      size: AppIcon.xs,
-                                      color: isCompleted
-                                          ? palette.success
-                                          : palette.primary,
-                                    ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Text(
-                                      progressBadge!,
-                                      style: context.text.caption.copyWith(
-                                        color: isCompleted
-                                            ? palette.success
-                                            : palette.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Text(
-                            subtitle,
-                            style: context.text.caption.copyWith(
-                              color: isCompleted
-                                  ? palette.success
-                                  : palette.textMuted,
-                              height: 1.25,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          author ?? subtitle,
+                          style: context.text.caption.copyWith(
+                            color: isCompleted
+                                ? palette.success
+                                : palette.textMuted,
+                            height: 1.25,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (progressBadge != null) ...[
+                          const SizedBox(height: AppSpace.xs),
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isCompleted
+                                  ? palette.success.withValues(alpha: 0.12)
+                                  : palette.primarySoft,
+                              borderRadius: AppRadius.pillRadius,
+                              border: Border.all(
+                                color: isCompleted
+                                    ? palette.success.withValues(alpha: 0.35)
+                                    : palette.primary.withValues(alpha: 0.3),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isCompleted
+                                      ? Icons.check_circle_rounded
+                                      : Icons.auto_stories_rounded,
+                                  size: AppIcon.xs,
+                                  color: isCompleted
+                                      ? palette.success
+                                      : palette.primary,
+                                ),
+                                const SizedBox(width: AppSpace.xxs),
+                                Text(
+                                  progressBadge!,
+                                  style: context.text.caption.copyWith(
+                                    color: isCompleted
+                                        ? palette.success
+                                        : palette.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

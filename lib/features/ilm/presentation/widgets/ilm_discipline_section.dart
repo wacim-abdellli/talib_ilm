@@ -132,7 +132,7 @@ class IlmDisciplineSection {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Tier 1: Category Icon + Full Title + Count Pill <---> View All
+                      // Tier 1: Category Icon + Title <---> View All
                       Row(
                         children: [
                           Container(
@@ -148,39 +148,14 @@ class IlmDisciplineSection {
                           ),
                           const SizedBox(width: AppSpace.sm),
                           Expanded(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    title,
-                                    style: context.text.title.copyWith(
-                                      color: palette.text,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpace.xs),
-                                Container(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.xs,
-                                    vertical: AppSpace.xxs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: catColors.bg,
-                                    borderRadius: AppRadius.pillRadius,
-                                  ),
-                                  child: Text(
-                                    '${books.length}',
-                                    style: context.text.caption.copyWith(
-                                      color: catColors.fg,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              title,
+                              style: context.text.title.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: AppSpace.xs),
@@ -228,14 +203,40 @@ class IlmDisciplineSection {
                         ],
                       ),
 
-                      const SizedBox(height: AppSpace.xxs),
+                      const SizedBox(height: AppSpace.xs),
 
-                      // Tier 2: Subtitle Description
-                      Text(
-                        subtitle,
-                        style: context.text.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
+                      // Tier 2: Count Badge & Subtitle Description
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: catColors.bg,
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            child: Text(
+                              '${books.length} كتاباً',
+                              style: context.text.caption.copyWith(
+                                color: catColors.fg,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.sm),
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              style: context.text.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

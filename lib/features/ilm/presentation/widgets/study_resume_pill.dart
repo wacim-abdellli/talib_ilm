@@ -130,21 +130,26 @@ class StudyResumePill extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'استئناف المدارسة',
-                            style: context.text.caption.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              'استئناف المدارسة',
+                              style: context.text.caption.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const Spacer(),
-                          if (currentStreak > 0)
+                          if (currentStreak > 0) ...[
+                            const SizedBox(width: AppSpace.xs),
                             Text(
                               '🔥 $currentStreak أيام متتالية',
                               style: context.text.captionBold.copyWith(
                                 color: palette.gold,
                               ),
                             ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: AppSpace.xs),
@@ -153,7 +158,7 @@ class StudyResumePill extends StatelessWidget {
                         style: context.text.titleSmall.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -179,12 +184,17 @@ class StudyResumePill extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'متوقف عند الصفحة $currentPage من $totalPages',
-                  style: context.text.caption.copyWith(
-                    color: palette.textMuted,
+                Expanded(
+                  child: Text(
+                    'متوقف عند الصفحة $currentPage من $totalPages',
+                    style: context.text.caption.copyWith(
+                      color: palette.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: AppSpace.xs),
                 Text(
                   '${(progressRatio * 100).round()}% أُنجز',
                   style: context.text.captionBold.copyWith(

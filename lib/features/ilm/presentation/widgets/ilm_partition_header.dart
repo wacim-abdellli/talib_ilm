@@ -51,7 +51,7 @@ class IlmPartitionHeader extends StatelessWidget {
                     color: palette.text,
                     fontWeight: FontWeight.bold,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (subtitle != null && subtitle!.isNotEmpty) ...[
@@ -61,7 +61,7 @@ class IlmPartitionHeader extends StatelessWidget {
                     style: textTheme.caption.copyWith(
                       color: palette.textMuted,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

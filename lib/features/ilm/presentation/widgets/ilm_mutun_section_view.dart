@@ -53,7 +53,7 @@ class IlmMutunSectionView {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Tier 1: Mutun Rosette + Full Title + Count Pill <---> View All
+                      // Tier 1: Mutun Rosette + Title <---> View All
                       Row(
                         children: [
                           Container(
@@ -69,39 +69,14 @@ class IlmMutunSectionView {
                           ),
                           const SizedBox(width: AppSpace.sm),
                           Expanded(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    'متون طالب العلم',
-                                    style: context.text.title.copyWith(
-                                      color: palette.text,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpace.xs),
-                                Container(
-                                  padding: const EdgeInsetsDirectional.symmetric(
-                                    horizontal: AppSpace.xs,
-                                    vertical: AppSpace.xxs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: palette.primarySoft,
-                                    borderRadius: AppRadius.pillRadius,
-                                  ),
-                                  child: Text(
-                                    '5 مستويات • ${allBooks.length}',
-                                    style: context.text.caption.copyWith(
-                                      color: palette.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'متون طالب العلم',
+                              style: context.text.title.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: AppSpace.xs),
@@ -149,14 +124,40 @@ class IlmMutunSectionView {
                         ],
                       ),
 
-                      const SizedBox(height: AppSpace.xxs),
+                      const SizedBox(height: AppSpace.xs),
 
-                      // Tier 2: Subtitle Description
-                      Text(
-                        'المنهاج العلمي التأصيلي المتدرج لحفظ المتون',
-                        style: context.text.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
+                      // Tier 2: Level Badge & Subtitle Description
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: AppSpace.xxs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.primarySoft,
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            child: Text(
+                              '5 مستويات • ${allBooks.length} متناً',
+                              style: context.text.caption.copyWith(
+                                color: palette.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.sm),
+                          Expanded(
+                            child: Text(
+                              'المنهاج العلمي التأصيلي المتدرج لحفظ المتون',
+                              style: context.text.caption.copyWith(
+                                color: palette.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
