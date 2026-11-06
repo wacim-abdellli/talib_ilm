@@ -40,7 +40,8 @@ class IlmHeader extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isVeryCompact = constraints.maxWidth < 420;
+          final isVeryCompact = constraints.maxWidth < 310 ||
+              MediaQuery.textScalerOf(context).scale(1.0) > 1.3;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +78,6 @@ class IlmHeader extends StatelessWidget {
                     _buildStatsButton(
                       context,
                       palette,
-                      compact: isVeryCompact,
                     ),
                   ],
                 ],
@@ -113,43 +113,55 @@ class IlmHeader extends StatelessWidget {
         button: true,
         label: 'الكتب والمتون المحفوظة بدون إنترنت',
         child: Material(
-          color: palette.surfaceMuted,
-          borderRadius: AppRadius.pillRadius,
+          color: Colors.transparent,
           child: InkWell(
             borderRadius: AppRadius.pillRadius,
             onTap: () {
               HapticFeedback.lightImpact();
               onDownloadsTap?.call();
             },
-            child: Container(
-              constraints: const BoxConstraints(minHeight: AppSize.tap),
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: AppSize.tap,
+                minWidth: AppSize.tap,
               ),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border, width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.download_done_rounded,
-                    size: AppIcon.xs,
-                    color: palette.primary,
+              child: Center(
+                child: Container(
+                  height: 34,
+                  width: compact ? 34 : null,
+                  padding: EdgeInsetsDirectional.symmetric(
+                    horizontal: compact ? 0 : AppSpace.sm + 4,
                   ),
-                  if (!compact) ...[
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      'المحمّلات',
-                      style: context.text.caption.copyWith(
-                        color: palette.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceMuted,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: palette.border.withValues(alpha: 0.8),
+                      width: 1,
                     ),
-                  ],
-                ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.download_done_rounded,
+                        size: AppIcon.xs,
+                        color: palette.primary,
+                      ),
+                      if (!compact) ...[
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          'المحمّلات',
+                          style: context.text.caption.copyWith(
+                            color: palette.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -160,9 +172,8 @@ class IlmHeader extends StatelessWidget {
 
   Widget _buildStatsButton(
     BuildContext context,
-    AppPalette palette, {
-    bool compact = false,
-  }) {
+    AppPalette palette,
+  ) {
     final statsLabel = completedBooksCount > 0
         ? '$completedBooksCount/$totalBooksCount'
         : '$totalBooksCount';
@@ -173,41 +184,52 @@ class IlmHeader extends StatelessWidget {
       child: Tooltip(
         message: 'الكتب المنجزة: $completedBooksCount من إجمالي $totalBooksCount',
         child: Material(
-          color: palette.surfaceMuted,
-          borderRadius: AppRadius.pillRadius,
+          color: Colors.transparent,
           child: InkWell(
             borderRadius: AppRadius.pillRadius,
             onTap: () {
               HapticFeedback.lightImpact();
               onStatsTap?.call();
             },
-            child: Container(
-              constraints: const BoxConstraints(minHeight: AppSize.tap),
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: AppSpace.xs,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: AppSize.tap,
+                minWidth: AppSize.tap,
               ),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.pillRadius,
-                border: Border.all(color: palette.border, width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.collections_bookmark_rounded,
-                    size: AppIcon.xs,
-                    color: palette.primary,
+              child: Center(
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.sm + 4,
                   ),
-                  const SizedBox(width: AppSpace.xs),
-                  Text(
-                    statsLabel,
-                    style: context.text.caption.copyWith(
-                      color: palette.primary,
-                      fontWeight: FontWeight.bold,
+                  decoration: BoxDecoration(
+                    color: palette.surfaceMuted,
+                    borderRadius: AppRadius.pillRadius,
+                    border: Border.all(
+                      color: palette.border.withValues(alpha: 0.8),
+                      width: 1,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.collections_bookmark_rounded,
+                        size: AppIcon.xs,
+                        color: palette.primary,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Text(
+                        statsLabel,
+                        style: context.text.caption.copyWith(
+                          color: palette.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

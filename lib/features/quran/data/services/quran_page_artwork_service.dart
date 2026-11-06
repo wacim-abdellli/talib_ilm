@@ -22,9 +22,8 @@ const int _maxExpandedPageBytes = 4 * 1024 * 1024;
 class QuranPageArtworkService {
   QuranPageArtworkService._();
 
-  static const String sourceRepository =
-      'AhmedAbuelenin/quran-svg-with-aya-clickable-layer';
-  static const String sourceCommit = '5fbcb1d4d92b5a2972ab51472fe991b6066bb6e2';
+  static const String sourceRepository = 'quran-ws/quran-svg';
+  static const String sourceCommit = 'b4155f07e4aea087d2c458069acff9f7c7e749f6';
   static const String _manifestAsset =
       'assets/data/quran/riwayah_page_art_manifest.json';
   static const int _maxCompressedPageBytes = 1024 * 1024;

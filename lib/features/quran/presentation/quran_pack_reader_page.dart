@@ -274,6 +274,14 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
                 ),
                 textAlign: TextAlign.right,
               ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                'ألوان التجويد الموثقة متاحة لحفص فقط؛ تعرض ورش وقالون صفحة المصحف الأصلية دون تلوين إضافي.',
+                style: context.text.caption.copyWith(
+                  color: context.palette.textMuted,
+                ),
+                textAlign: TextAlign.right,
+              ),
               const SizedBox(height: AppSpace.md),
               FutureBuilder<ArtworkStorageStatus>(
                 future: artworkStatusFuture,

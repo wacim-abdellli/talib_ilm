@@ -8,8 +8,10 @@ import urllib.request
 from pathlib import Path
 
 
-REPOSITORY = "AhmedAbuelenin/quran-svg-with-aya-clickable-layer"
-COMMIT = "5fbcb1d4d92b5a2972ab51472fe991b6066bb6e2"
+# Pin the canonical vector repository rather than a derived mirror. The
+# repository documents the official KFQC source bundles and their checksums.
+REPOSITORY = "quran-ws/quran-svg"
+COMMIT = "b4155f07e4aea087d2c458069acff9f7c7e749f6"
 EDITIONS = {"warsh": "warsh", "qalun": "qalon"}
 OUTPUT = Path(__file__).resolve().parents[1] / "assets/data/quran/riwayah_page_art_manifest.json"
 
