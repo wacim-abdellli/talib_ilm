@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -11,18 +12,16 @@ import '../../../core/utils/arabic_digits.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../data/database/quran_pack_database.dart';
 import '../data/models/quran_models.dart';
-import '../data/models/quran_pack_page_layout.dart';
 import '../data/services/quran_audio_service.dart';
-import '../data/services/quran_pack_font_service.dart';
 import '../data/services/quran_pack_install_service.dart';
+import '../data/services/quran_page_artwork_service.dart';
 import '../data/services/quran_reader_preferences.dart';
 import 'widgets/mushaf_reader_overlays.dart';
 
 /// Mushaf-style page reader for installed Warsh and Qalun editions.
 ///
-/// It shares the Hafs reader's page navigation, overlay controls, paper/dark
-/// themes, and 15-line page composition. Its text, font, line references, and
-/// surah counts come from the selected edition's installed pack.
+/// It shares the Hafs reader's navigation and controls, while painting each
+/// page from pinned King Fahd Complex Warsh/Qalun Mushaf page artwork.
 class QuranPackReaderPage extends StatefulWidget {
   final QuranRiwayahId editionId;
   final int? initialPage;
@@ -44,8 +43,6 @@ class QuranPackReaderPage extends StatefulWidget {
 class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
   final PageController _pageController = PageController();
   QuranPackDatabase? _database;
-  Map<int, QuranPackSurah> _surahs = const {};
-  String? _fontFamily;
   String? _error;
   int _page = 1;
   int _surah = 1;
@@ -76,12 +73,7 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
       if (database == null) throw StateError('حزمة الرواية غير مثبتة');
       openedDatabase = database;
 
-      final results = await Future.wait<Object>([
-        QuranPackFontService.load(widget.editionId),
-        QuranReaderPreferences.load(forceRefresh: true),
-      ]);
-      final fontFamily = results[0] as String;
-      final preferences = results[1] as QuranReaderSnapshot;
+      final preferences = await QuranReaderPreferences.load(forceRefresh: true);
       var targetPage = _page.clamp(1, database.pageCount);
       if (widget.initialPage == null && widget.initialSurah == null) {
         final storage = await SharedPreferences.getInstance();
@@ -102,9 +94,6 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
         _ayah = ayah.ayahNumber;
       }
 
-      final surahs = {
-        for (final surah in await database.getSurahList()) surah.number: surah,
-      };
       if (!mounted) {
         await database.close();
         openedDatabase = null;
@@ -112,8 +101,6 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
       }
       setState(() {
         _database = database;
-        _surahs = surahs;
-        _fontFamily = fontFamily;
         _page = targetPage;
         _fontSize = preferences.fontSize;
         _themeMode = preferences.themeMode;
@@ -200,6 +187,12 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
     var sheetTheme = _themeMode;
     var sheetFontSize = _fontSize;
     var sheetKeepAwake = _keepScreenAwake;
+    var artworkStatusFuture = QuranPageArtworkService.storageStatus(
+      widget.editionId,
+    );
+    ArtworkDownloadProgress? artworkProgress;
+    StreamSubscription<ArtworkDownloadProgress>? artworkSubscription;
+    var artworkDownloading = false;
     await AppSheet.show<void>(
       context: context,
       maxHeightFactor: 0.72,
@@ -245,9 +238,9 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
               const SizedBox(height: AppSpace.lg),
               Row(
                 children: [
-                  Text('حجم الخط', style: context.text.labelBold),
+                  Text('تكبير الصفحة', style: context.text.labelBold),
                   const Spacer(),
-                  Text('${sheetFontSize.round()}'),
+                  Text('${(sheetFontSize / 24 * 100).round()}%'),
                 ],
               ),
               Slider(
@@ -255,7 +248,7 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
                 min: 18,
                 max: 36,
                 divisions: 9,
-                label: '${sheetFontSize.round()}',
+                label: '${(sheetFontSize / 24 * 100).round()}%',
                 onChanged: (value) {
                   setSheetState(() => sheetFontSize = value);
                   setState(() => _fontSize = value);
@@ -275,17 +268,151 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
               ),
               const SizedBox(height: AppSpace.sm),
               Text(
-                'يُستخدم خط الرواية المثبتة، مع حفظ حجم الخط والصفحة لكل جهاز.',
+                'تُعرض صفحات المصحف الأصلية بالرسم والتخطيط المطبوع، ويُحفظ مستوى التكبير لكل جهاز.',
                 style: context.text.caption.copyWith(
                   color: context.palette.textMuted,
                 ),
                 textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: AppSpace.md),
+              FutureBuilder<ArtworkStorageStatus>(
+                future: artworkStatusFuture,
+                builder: (context, snapshot) {
+                  final status = snapshot.data;
+                  final totalMb = status == null
+                      ? null
+                      : (status.totalBytes / (1024 * 1024)).round();
+                  return Container(
+                    padding: const EdgeInsets.all(AppSpace.md),
+                    decoration: BoxDecoration(
+                      color: context.palette.surfaceMuted,
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(color: context.palette.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'صفحات المصحف دون اتصال',
+                          style: context.text.labelBold.copyWith(
+                            color: context.palette.text,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: AppSpace.xs),
+                        Text(
+                          artworkDownloading && artworkProgress != null
+                              ? artworkProgress!.status
+                              : status?.isComplete == true
+                              ? 'الصفحات الـ604 محفوظة على الجهاز.'
+                              : status == null
+                              ? 'جارٍ فحص الصفحات المحفوظة…'
+                              : '${status.downloadedPages} من ${status.totalPages} صفحة محفوظة. تنزيل الكل يستهلك نحو $totalMb م.ب إضافية.',
+                          style: context.text.caption.copyWith(
+                            color: context.palette.textMuted,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        if (artworkDownloading && artworkProgress != null) ...[
+                          const SizedBox(height: AppSpace.sm),
+                          LinearProgressIndicator(
+                            value: artworkProgress!.progress.clamp(0, 1),
+                            color: context.palette.gold,
+                            backgroundColor: context.palette.surface,
+                          ),
+                          const SizedBox(height: AppSpace.xs),
+                          Text(
+                            '${(artworkProgress!.completedBytes / (1024 * 1024)).toStringAsFixed(1)} / ${(artworkProgress!.totalBytes / (1024 * 1024)).toStringAsFixed(1)} م.ب',
+                            style: context.text.caption,
+                            textDirection: TextDirection.ltr,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: AppSpace.sm),
+                        if (artworkDownloading)
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                QuranPageArtworkService.cancelDownload(
+                                  widget.editionId,
+                                ),
+                            icon: const Icon(Icons.close_rounded),
+                            label: const Text('إيقاف التنزيل'),
+                          )
+                        else if (status?.isComplete == true)
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              await QuranPageArtworkService.deleteArtwork(
+                                widget.editionId,
+                              );
+                              if (!context.mounted) return;
+                              setSheetState(() {
+                                artworkProgress = null;
+                                artworkStatusFuture =
+                                    QuranPageArtworkService.storageStatus(
+                                      widget.editionId,
+                                    );
+                              });
+                            },
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            label: const Text('حذف الصفحات المحفوظة'),
+                          )
+                        else
+                          FilledButton.tonalIcon(
+                            onPressed: status == null
+                                ? null
+                                : () {
+                                    setSheetState(() {
+                                      artworkDownloading = true;
+                                      artworkProgress = null;
+                                    });
+                                    artworkSubscription =
+                                        QuranPageArtworkService.downloadAll(
+                                          widget.editionId,
+                                        ).listen(
+                                          (progress) {
+                                            if (!context.mounted) return;
+                                            setSheetState(() {
+                                              artworkProgress = progress;
+                                              if (progress.isComplete ||
+                                                  progress.isCanceled ||
+                                                  progress.isError) {
+                                                artworkDownloading = false;
+                                                artworkStatusFuture =
+                                                    QuranPageArtworkService.storageStatus(
+                                                      widget.editionId,
+                                                    );
+                                              }
+                                            });
+                                          },
+                                          onError: (Object error) {
+                                            if (!context.mounted) return;
+                                            setSheetState(() {
+                                              artworkDownloading = false;
+                                            });
+                                          },
+                                        );
+                                  },
+                            icon: const Icon(Icons.download_rounded),
+                            label: Text(
+                              status == null || status.downloadedPages == 0
+                                  ? 'تنزيل كل الصفحات'
+                                  : 'استكمال تنزيل الصفحات',
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
       ),
     );
+    if (artworkDownloading) {
+      QuranPageArtworkService.cancelDownload(widget.editionId);
+    }
+    await artworkSubscription?.cancel();
   }
 
   @override
@@ -302,16 +429,15 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
   @override
   Widget build(BuildContext context) {
     final database = _database;
-    final fontFamily = _fontFamily;
     final pageCount = database?.pageCount ?? 604;
     final surahTitle = getVocalizedSurahName(
       _surah,
-      fallback: _surahs[_surah]?.nameArabic ?? widget.editionId.nameArabic,
+      fallback: quran.getSurahNameArabic(_surah),
     );
     return Scaffold(
       backgroundColor: MushafColors.bgFor(_themeMode),
       body: SafeArea(
-        child: database == null || fontFamily == null
+        child: database == null
             ? _buildLoadingOrError(context)
             : Stack(
                 children: [
@@ -333,11 +459,9 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
                           key: ValueKey(
                             '${widget.editionId.wireValue}:${index + 1}',
                           ),
-                          database: database,
-                          surahs: _surahs,
+                          editionId: widget.editionId,
                           pageNumber: index + 1,
-                          fontFamily: fontFamily,
-                          fontSize: _fontSize,
+                          zoom: _fontSize,
                           themeMode: _themeMode,
                           onTap: _toggleOverlays,
                         ),
@@ -421,342 +545,155 @@ class _QuranPackReaderPageState extends State<QuranPackReaderPage> {
   }
 }
 
-class _PackPage extends StatelessWidget {
-  final QuranPackDatabase database;
-  final Map<int, QuranPackSurah> surahs;
+class _PackPage extends StatefulWidget {
+  final QuranRiwayahId editionId;
   final int pageNumber;
-  final String fontFamily;
-  final double fontSize;
+  final double zoom;
   final MushafThemeMode themeMode;
   final VoidCallback onTap;
 
   const _PackPage({
     super.key,
-    required this.database,
-    required this.surahs,
+    required this.editionId,
     required this.pageNumber,
-    required this.fontFamily,
-    required this.fontSize,
+    required this.zoom,
     required this.themeMode,
     required this.onTap,
   });
 
   @override
+  State<_PackPage> createState() => _PackPageState();
+}
+
+class _PackPageState extends State<_PackPage> {
+  late Future<String> _artworkFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadArtwork();
+  }
+
+  void _loadArtwork() {
+    _artworkFuture = QuranPageArtworkService.loadPage(
+      widget.editionId,
+      widget.pageNumber,
+    );
+  }
+
+  void _retryArtwork() {
+    setState(() {
+      _artworkFuture = QuranPageArtworkService.retryPage(
+        widget.editionId,
+        widget.pageNumber,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<QuranPackAyah>>(
-      future: database.getPageAyahs(pageNumber),
+    return FutureBuilder<String>(
+      future: _artworkFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(child: Text('تعذر تحميل الصفحة'));
+          return _ArtworkLoadError(
+            themeMode: widget.themeMode,
+            onRetry: _retryArtwork,
+          );
         }
         if (!snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(color: context.palette.gold),
+          return ColoredBox(
+            color: MushafColors.bgFor(widget.themeMode),
+            child: Center(
+              child: CircularProgressIndicator(color: context.palette.gold),
+            ),
           );
         }
-        if (snapshot.data!.isEmpty) {
-          return Center(
-            child: Text(
-              'لا توجد آيات في هذه الصفحة',
-              style: context.text.bodySmall.copyWith(
-                color: context.palette.textMuted,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final artwork = SvgPicture.string(
+              snapshot.data!,
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              allowDrawingOutsideViewBox: false,
+            );
+            return ColoredBox(
+              color: MushafColors.bgFor(widget.themeMode),
+              child: InkWell(
+                onTap: widget.onTap,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: ClipRect(
+                  child: Center(
+                    child: Transform.scale(
+                      scale: widget.zoom / 24,
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        child: widget.themeMode == MushafThemeMode.dark
+                            ? ColorFiltered(
+                                colorFilter: const ColorFilter.mode(
+                                  MushafColors.darkText,
+                                  BlendMode.srcIn,
+                                ),
+                                child: artwork,
+                              )
+                            : artwork,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-        }
-        final lines = QuranPackPageLayout.build(
-          pageNumber: pageNumber,
-          ayahs: snapshot.data!,
-        );
-        final firstAyah = snapshot.data!.first;
-        final surahTitle = getVocalizedSurahName(
-          firstAyah.surahNumber,
-          fallback: surahs[firstAyah.surahNumber]?.nameArabic ?? '',
-        );
-        return InkWell(
-          onTap: onTap,
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: Container(
-            color: MushafColors.bgFor(themeMode),
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 38,
-                  child: _PackPageHeader(
-                    surahTitle: surahTitle,
-                    juzNumber: firstAyah.juzNumber,
-                    themeMode: themeMode,
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      for (final line in lines)
-                        Expanded(
-                          child: _PackPageLine(
-                            line: line,
-                            surahs: surahs,
-                            fontFamily: fontFamily,
-                            fontSize: fontSize,
-                            themeMode: themeMode,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 34,
-                  child: _PackPageFooter(
-                    pageNumber: pageNumber,
-                    themeMode: themeMode,
-                  ),
-                ),
-              ],
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 }
 
-class _PackPageHeader extends StatelessWidget {
-  final String surahTitle;
-  final int juzNumber;
+class _ArtworkLoadError extends StatelessWidget {
   final MushafThemeMode themeMode;
+  final VoidCallback onRetry;
 
-  const _PackPageHeader({
-    required this.surahTitle,
-    required this.juzNumber,
-    required this.themeMode,
-  });
+  const _ArtworkLoadError({required this.themeMode, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
-    final textColor = MushafColors.textFor(themeMode);
-    final borderColor = MushafColors.bannerBorderFor(themeMode);
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.sm),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: borderColor.withValues(alpha: 0.35)),
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          PositionedDirectional(
-            start: 0,
-            child: Text(
-              surahTitle,
-              style: context.text.mushafChrome.copyWith(color: textColor),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            '۞',
-            style: context.text.caption.copyWith(
-              color: context.palette.gold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          PositionedDirectional(
-            end: 0,
-            child: Text(
-              getArabicJuzName(juzNumber),
-              style: context.text.mushafChrome.copyWith(color: textColor),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PackPageFooter extends StatelessWidget {
-  final int pageNumber;
-  final MushafThemeMode themeMode;
-
-  const _PackPageFooter({required this.pageNumber, required this.themeMode});
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = MushafColors.bannerBorderFor(themeMode);
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: borderColor.withValues(alpha: 0.35)),
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'ـ $pageNumber ـ',
-        style: context.text.mushafChrome.copyWith(
-          color: MushafColors.verseNumberFor(themeMode),
-        ),
-      ),
-    );
-  }
-}
-
-class _PackPageLine extends StatelessWidget {
-  final QuranPackPageLine line;
-  final Map<int, QuranPackSurah> surahs;
-  final String fontFamily;
-  final double fontSize;
-  final MushafThemeMode themeMode;
-
-  const _PackPageLine({
-    required this.line,
-    required this.surahs,
-    required this.fontFamily,
-    required this.fontSize,
-    required this.themeMode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = MushafColors.textFor(themeMode);
-    if (line.surahHeaderNumber case final surahNumber?) {
-      final surah = surahs[surahNumber];
-      if (surah != null) {
-        return LayoutBuilder(
-          builder: (context, constraints) => Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: SizedBox(
-                width: constraints.maxWidth,
-                height: 36,
-                child: _PackSurahBanner(surah: surah, themeMode: themeMode),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-    if (line.showBasmala) {
-      return Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-            textDirection: TextDirection.rtl,
-            style: context.text.sacred.copyWith(
-              fontFamily: fontFamily,
-              fontSize: fontSize * 1.08,
-              height: 1.3,
-              color: textColor,
-            ),
-          ),
-        ),
-      );
-    }
-    if (line.runs.isEmpty) return const SizedBox.expand();
-    return Center(
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text.rich(
-          TextSpan(
+    return ColoredBox(
+      color: MushafColors.bgFor(themeMode),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpace.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (var index = 0; index < line.runs.length; index++) ...[
-                if (index > 0) const TextSpan(text: ' '),
-                if (line.runs[index].text.isNotEmpty)
-                  TextSpan(text: line.runs[index].text),
-                if (line.runs[index].endsAyah)
-                  TextSpan(
-                    text: ' ۝${line.runs[index].ayahNumber} ',
-                    style: context.text.titleSmall.copyWith(
-                      fontFamily: fontFamily,
-                      color: MushafColors.verseNumberFor(themeMode),
-                    ),
-                  ),
-              ],
+              Icon(Icons.cloud_off_rounded, color: context.palette.gold),
+              const SizedBox(height: AppSpace.sm),
+              Text(
+                'تعذر تحميل صورة الصفحة الأصلية',
+                style: context.text.titleSmall.copyWith(
+                  color: MushafColors.textFor(themeMode),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                'تحتاج هذه الصفحة إلى اتصال بالإنترنت أول مرة. بعد تنزيلها ستبقى متاحة دون اتصال.',
+                style: context.text.caption.copyWith(
+                  color: context.palette.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpace.md),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('إعادة المحاولة'),
+              ),
             ],
           ),
-          maxLines: 1,
-          softWrap: false,
-          textAlign: TextAlign.center,
-          textDirection: TextDirection.rtl,
-          style: context.text.sacred.copyWith(
-            fontFamily: fontFamily,
-            fontSize: fontSize * 1.2,
-            height: 1.35,
-            color: textColor,
-          ),
         ),
-      ),
-    );
-  }
-}
-
-class _PackSurahBanner extends StatelessWidget {
-  final QuranPackSurah surah;
-  final MushafThemeMode themeMode;
-
-  const _PackSurahBanner({required this.surah, required this.themeMode});
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = MushafColors.bannerTextFor(themeMode);
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xs),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            'assets/surah_banner.png',
-            package: 'qcf_quran_plus',
-            fit: BoxFit.fill,
-            width: double.infinity,
-            height: 36,
-          ),
-          Padding(
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.xl,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${surah.ayahCount} آية',
-                    textAlign: TextAlign.start,
-                    style: context.text.captionHeavy.copyWith(color: textColor),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    getVocalizedSurahName(
-                      surah.number,
-                      fallback: surah.nameArabic,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: context.text.surahHeaderTitle.copyWith(
-                      color: textColor,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    quran.getPlaceOfRevelation(surah.number) == 'Makkah'
-                        ? 'مَكِّيَّة'
-                        : 'مَدَنِيَّة',
-                    textAlign: TextAlign.end,
-                    style: context.text.captionHeavy.copyWith(color: textColor),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -54,6 +54,8 @@ dependencies:
     path: packages/qcf_quran_plus
   sensors_plus: ^7.1.1
   home_widget: ^0.10.0
+  flutter_svg: 2.3.0
+  brotli: 0.6.0
 
 dev_dependencies:
   flutter_test:
