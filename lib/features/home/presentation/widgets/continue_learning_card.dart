@@ -239,13 +239,16 @@ class LearningPulseCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpace.sm),
                     Expanded(
-                      child: Text(
-                        'الأصول الثلاثة • القواعد الأربع • كتاب التوحيد',
-                        style: context.text.label.copyWith(
-                          color: context.palette.textMuted,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          'الأصول الثلاثة • القواعد الأربع • كتاب التوحيد',
+                          style: context.text.label.copyWith(
+                            color: context.palette.textMuted,
+                          ),
+                          maxLines: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: AppSpace.sm),

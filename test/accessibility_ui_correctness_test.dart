@@ -183,13 +183,9 @@ void main() {
               builder: (context) {
                 // Replicate TalibIlmApp.builder logic
                 final mediaQuery = MediaQuery.of(context);
-                final shortestSide = mediaQuery.size.shortestSide;
-                final sizeScale = (shortestSide / AppSize.textScaleBaseWidth)
-                    .clamp(AppSize.textScaleMin, AppSize.textScaleMax)
-                    .toDouble();
                 final baseScale = mediaQuery.textScaler.scale(1.0);
                 final scaled = TextScaler.linear(
-                  (baseScale * sizeScale).clamp(
+                  baseScale.clamp(
                     AppSize.textScaleMin,
                     AppSize.textScaleMax,
                   ),

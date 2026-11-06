@@ -158,7 +158,7 @@ class StudyResumePill extends StatelessWidget {
                         style: context.text.titleSmall.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],

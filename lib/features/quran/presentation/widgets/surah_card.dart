@@ -168,14 +168,18 @@ class SurahCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            'سورة $surahName',
-                            style: context.text.titleSmall.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.bold,
-                              height: 1.25,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              'سورة $surahName',
+                              style: context.text.titleSmall.copyWith(
+                                color: palette.text,
+                                fontWeight: FontWeight.bold,
+                                height: 1.25,
+                              ),
+                              maxLines: 1,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: AppSpace.xs),

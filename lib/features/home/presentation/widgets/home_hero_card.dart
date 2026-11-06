@@ -300,25 +300,28 @@ class _HomeHeroCardState extends State<HomeHeroCard> {
 
                         // Large Prayer Title (Uncluttered, Single Line)
                         Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'صلاة ',
-                                  style: textTheme.title.copyWith(
-                                    color: palette.text,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'صلاة ',
+                                    style: textTheme.title.copyWith(
+                                      color: palette.text,
+                                    ),
                                   ),
-                                ),
-                                TextSpan(
-                                  text: eval.prayerName,
-                                  style: textTheme.title.copyWith(
-                                    color: prayerColor,
+                                  TextSpan(
+                                    text: eval.prayerName,
+                                    style: textTheme.title.copyWith(
+                                      color: prayerColor,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              maxLines: 1,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

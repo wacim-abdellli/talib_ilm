@@ -40,7 +40,7 @@ class IlmHeader extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isVeryCompact = constraints.maxWidth < 340;
+          final isVeryCompact = constraints.maxWidth < 420;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,15 +50,18 @@ class IlmHeader extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'المكتبة العلمية',
-                      style: context.text.title.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        'المكتبة العلمية',
+                        style: context.text.title.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                        maxLines: 1,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (onDownloadsTap != null) ...[
@@ -90,7 +93,6 @@ class IlmHeader extends StatelessWidget {
                     height: 1.3,
                   ),
                   maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ],

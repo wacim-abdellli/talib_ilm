@@ -210,19 +210,27 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'الأذكار والأدعية',
-                          style: context.text.title.copyWith(
-                            color: palette.text,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            'الأذكار والأدعية',
+                            style: context.text.title.copyWith(
+                              color: palette.text,
+                            ),
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          'احفظ أذكار اليوم والليلة من السنة',
-                          style: context.text.bodySmall.copyWith(
-                            color: palette.textMuted,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            'احفظ أذكار اليوم والليلة من السنة',
+                            style: context.text.bodySmall.copyWith(
+                              color: palette.textMuted,
+                            ),
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

@@ -395,14 +395,17 @@ class _HeaderLocationChip extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpace.xs),
                   Expanded(
-                    child: Text(
-                      city,
-                      style: textTheme.caption.copyWith(
-                        color: palette.text,
-                        fontWeight: FontWeight.bold,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        city,
+                        style: textTheme.caption.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: AppSpace.xs / 2),

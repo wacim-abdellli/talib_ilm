@@ -17,7 +17,7 @@ class IlmSearchBar extends StatefulWidget {
     required this.controller,
     required this.onSearchChanged,
     this.onClear,
-    this.hintText = 'ابحث في المتون والكتب والشروح...',
+    this.hintText = 'ابحث في الكتب والمتون...',
   });
 
   @override

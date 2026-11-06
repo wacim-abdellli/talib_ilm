@@ -54,13 +54,12 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
 
           builder: (context, child) {
             final mediaQuery = MediaQuery.of(context);
-            final shortestSide = mediaQuery.size.shortestSide;
-            final sizeScale = (shortestSide / AppSize.textScaleBaseWidth)
-                .clamp(AppSize.textScaleMin, AppSize.textScaleMax)
-                .toDouble();
+            // Respect the user's OS accessibility font scale directly (from 0.85x to 2.0x)
+            // without compounding it with arbitrary screen-width multipliers that cause
+            // oversized text and truncated labels on modern high-res devices.
             final baseScale = mediaQuery.textScaler.scale(1.0);
             final scaled = TextScaler.linear(
-              (baseScale * sizeScale).clamp(
+              baseScale.clamp(
                 AppSize.textScaleMin,
                 AppSize.textScaleMax,
               ),

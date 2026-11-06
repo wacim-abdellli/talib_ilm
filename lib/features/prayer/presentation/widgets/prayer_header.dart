@@ -54,13 +54,17 @@ class PrayerHeader extends StatelessWidget {
                       const IconBadge(icon: Icons.mosque_rounded),
                       const SizedBox(width: AppSpace.md),
                       Expanded(
-                        child: Text(
-                          'مواقيت الصلاة',
-                          style: context.text.titleSmall.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.bold,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            'مواقيت الصلاة',
+                            style: context.text.titleSmall.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -123,13 +127,16 @@ class PrayerHeader extends StatelessWidget {
                             ),
                             const SizedBox(width: AppSpace.xs),
                             Expanded(
-                              child: Text(
-                                city,
-                                style: context.text.labelBold.copyWith(
-                                  color: palette.text,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  city,
+                                  style: context.text.labelBold.copyWith(
+                                    color: palette.text,
+                                  ),
+                                  maxLines: 1,
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
                               ),
                             ),
                             const SizedBox(width: AppSpace.xs),

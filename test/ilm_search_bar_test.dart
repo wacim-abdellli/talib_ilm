@@ -36,7 +36,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     expect(find.byIcon(Icons.search_rounded), findsOneWidget);
-    expect(find.text('ابحث في المتون والكتب والشروح...'), findsOneWidget);
+    expect(find.text('ابحث في الكتب والمتون...'), findsOneWidget);
     expect(find.byIcon(Icons.close_rounded), findsNothing);
   });
 

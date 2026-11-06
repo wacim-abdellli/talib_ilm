@@ -148,14 +148,17 @@ class IlmDisciplineSection {
                           ),
                           const SizedBox(width: AppSpace.sm),
                           Expanded(
-                            child: Text(
-                              title,
-                              style: context.text.title.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                title,
+                                style: context.text.title.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: AppSpace.xs),
@@ -206,7 +209,10 @@ class IlmDisciplineSection {
                       const SizedBox(height: AppSpace.xs),
 
                       // Tier 2: Count Badge & Subtitle Description
-                      Row(
+                      Wrap(
+                        spacing: AppSpace.sm,
+                        runSpacing: AppSpace.xxs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsetsDirectional.symmetric(
@@ -225,16 +231,12 @@ class IlmDisciplineSection {
                               ),
                             ),
                           ),
-                          const SizedBox(width: AppSpace.sm),
-                          Expanded(
-                            child: Text(
-                              subtitle,
-                              style: context.text.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            subtitle,
+                            style: context.text.caption.copyWith(
+                              color: palette.textMuted,
                             ),
+                            maxLines: 2,
                           ),
                         ],
                       ),

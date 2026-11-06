@@ -69,14 +69,17 @@ class IlmMutunSectionView {
                           ),
                           const SizedBox(width: AppSpace.sm),
                           Expanded(
-                            child: Text(
-                              'متون طالب العلم',
-                              style: context.text.title.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                'متون طالب العلم',
+                                style: context.text.title.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: AppSpace.xs),
@@ -127,7 +130,10 @@ class IlmMutunSectionView {
                       const SizedBox(height: AppSpace.xs),
 
                       // Tier 2: Level Badge & Subtitle Description
-                      Row(
+                      Wrap(
+                        spacing: AppSpace.sm,
+                        runSpacing: AppSpace.xxs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsetsDirectional.symmetric(
@@ -146,16 +152,12 @@ class IlmMutunSectionView {
                               ),
                             ),
                           ),
-                          const SizedBox(width: AppSpace.sm),
-                          Expanded(
-                            child: Text(
-                              'المنهاج العلمي التأصيلي المتدرج لحفظ المتون',
-                              style: context.text.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            'المنهاج العلمي التأصيلي المتدرج لحفظ المتون',
+                            style: context.text.caption.copyWith(
+                              color: palette.textMuted,
                             ),
+                            maxLines: 2,
                           ),
                         ],
                       ),
