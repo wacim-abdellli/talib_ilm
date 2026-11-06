@@ -15,6 +15,8 @@ class MushafReaderTopBar extends StatelessWidget {
   final int currentPage;
   final int currentAyah;
   final MushafThemeMode themeMode;
+  final String? currentSurahTitle;
+  final int? currentJuzNumber;
   final ValueChanged<int> onJumpToPage;
   final VoidCallback onOpenSettings;
   final VoidCallback? onToggleTheme;
@@ -25,6 +27,8 @@ class MushafReaderTopBar extends StatelessWidget {
     required this.currentPage,
     required this.currentAyah,
     this.themeMode = MushafThemeMode.white,
+    this.currentSurahTitle,
+    this.currentJuzNumber,
     required this.onJumpToPage,
     required this.onOpenSettings,
     this.onToggleTheme,
@@ -34,11 +38,14 @@ class MushafReaderTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final surahTitle = getVocalizedSurahName(
-      currentSurah,
-      fallback: quran.getSurahNameArabic(currentSurah),
-    );
-    final juzNum = quran.getJuzNumber(currentSurah, currentAyah);
+    final surahTitle =
+        currentSurahTitle ??
+        getVocalizedSurahName(
+          currentSurah,
+          fallback: quran.getSurahNameArabic(currentSurah),
+        );
+    final juzNum =
+        currentJuzNumber ?? quran.getJuzNumber(currentSurah, currentAyah);
 
     final barBg = MushafColors.overlayBgFor(themeMode, palette);
     final barBorder = MushafColors.overlayBorderFor(themeMode, palette);
@@ -108,9 +115,7 @@ class MushafReaderTopBar extends StatelessWidget {
                     ),
                     Text(
                       '${getArabicJuzName(juzNum)} • الصفحة $currentPage',
-                      style: textTheme.caption.copyWith(
-                        color: textMutedColor,
-                      ),
+                      style: textTheme.caption.copyWith(color: textMutedColor),
                     ),
                   ],
                 ),
@@ -160,9 +165,12 @@ class MushafReaderTopBar extends StatelessWidget {
 
 class MushafReaderBottomBar extends StatelessWidget {
   final int currentPage;
+  final int pageCount;
   final ValueChanged<int> onPageChanged;
   final QuranAudioService audioService;
   final MushafThemeMode themeMode;
+  final bool allowAudioControls;
+  final bool showTajweedLegend;
 
   const MushafReaderBottomBar({
     super.key,
@@ -170,7 +178,10 @@ class MushafReaderBottomBar extends StatelessWidget {
     required this.onPageChanged,
     required this.audioService,
     this.themeMode = MushafThemeMode.white,
-  });
+    this.pageCount = 604,
+    this.allowAudioControls = true,
+    this.showTajweedLegend = true,
+  }) : assert(pageCount > 0);
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +199,8 @@ class MushafReaderBottomBar extends StatelessWidget {
       builder: (context, isPlaying, _) {
         final activeAyah = audioService.activeAyahNotifier.value;
         final activeSurah = audioService.activeSurahNotifier.value;
-        final hasActiveAudio = activeAyah != null && activeSurah != null;
+        final hasActiveAudio =
+            allowAudioControls && activeAyah != null && activeSurah != null;
 
         return Container(
           padding: const EdgeInsetsDirectional.symmetric(
@@ -220,6 +232,8 @@ class MushafReaderBottomBar extends StatelessWidget {
                   textMutedColor: textMutedColor,
                   barBorder: barBorder,
                   pillBg: pillBg,
+                  pageCount: pageCount,
+                  showTajweedLegend: showTajweedLegend,
                 ),
         );
       },
@@ -275,9 +289,7 @@ class MushafReaderBottomBar extends StatelessWidget {
               ),
               Text(
                 audioService.selectedReciter.name,
-                style: textTheme.caption.copyWith(
-                  color: textMutedColor,
-                ),
+                style: textTheme.caption.copyWith(color: textMutedColor),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -414,6 +426,7 @@ class MushafReaderBottomBar extends StatelessWidget {
       ],
     );
   }
+
   Widget _buildPageScrubber({
     required BuildContext context,
     required AppPalette palette,
@@ -422,21 +435,25 @@ class MushafReaderBottomBar extends StatelessWidget {
     required Color textMutedColor,
     required Color barBorder,
     required Color pillBg,
+    required int pageCount,
+    required bool showTajweedLegend,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // ── 1. Authentic Medina Mushaf Tajweed Color Legend Strip ───────
-        _buildTajweedLegend(
-          context: context,
-          palette: palette,
-          textTheme: textTheme,
-          barBorder: barBorder,
-          pillBg: pillBg,
-          textColor: textColor,
-          textMutedColor: textMutedColor,
-        ),
-        const SizedBox(height: AppSpace.xxs),
+        if (showTajweedLegend) ...[
+          _buildTajweedLegend(
+            context: context,
+            palette: palette,
+            textTheme: textTheme,
+            barBorder: barBorder,
+            pillBg: pillBg,
+            textColor: textColor,
+            textMutedColor: textMutedColor,
+          ),
+          const SizedBox(height: AppSpace.xxs),
+        ],
         // ── 2. Mushaf Page Navigation Range Scrubber ─────────────────────
         Row(
           children: [
@@ -451,7 +468,7 @@ class MushafReaderBottomBar extends StatelessWidget {
               child: Slider.adaptive(
                 value: currentPage.toDouble(),
                 min: 1.0,
-                max: 604.0,
+                max: pageCount.toDouble(),
                 activeColor: palette.gold,
                 inactiveColor: barBorder,
                 onChanged: (val) {
@@ -460,16 +477,15 @@ class MushafReaderBottomBar extends StatelessWidget {
               ),
             ),
             Text(
-              '604',
-              style: textTheme.caption.copyWith(
-                color: textMutedColor,
-              ),
+              '$pageCount',
+              style: textTheme.caption.copyWith(color: textMutedColor),
             ),
           ],
         ),
       ],
     );
   }
+
   Widget _buildTajweedLegend({
     required BuildContext context,
     required AppPalette palette,
@@ -538,6 +554,7 @@ class MushafReaderBottomBar extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildTajweedItem({
     required Color color,
     required String label,
@@ -550,18 +567,10 @@ class MushafReaderBottomBar extends StatelessWidget {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: AppSpace.xxs),
-        Text(
-          label,
-          style: textTheme.captionBold.copyWith(
-            color: textColor,
-          ),
-        ),
+        Text(label, style: textTheme.captionBold.copyWith(color: textColor)),
       ],
     );
   }
