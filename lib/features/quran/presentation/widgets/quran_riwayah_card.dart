@@ -119,7 +119,7 @@ class QuranRiwayahCard extends StatelessWidget {
     final storageMb = storageBytes / (1024 * 1024);
 
     return AppCard(
-      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
       color: isCurrent ? palette.surfaceRaised : palette.surface,
       borderRadius: AppRadius.lgRadius,
       border: Border.all(
@@ -131,17 +131,17 @@ class QuranRiwayahCard extends StatelessWidget {
         children: [
           // Header Row: Emblem Medallion, Title & Lineage, Status Tag
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Sacred Medallion
+              // Sacred Medallion (Sleek 38dp)
               Container(
-                width: AppSize.tap,
-                height: AppSize.tap,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: isCurrent ? palette.goldSoft : palette.surfaceMuted,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isCurrent ? palette.gold : palette.border,
+                    color: isCurrent ? palette.gold : palette.border.withValues(alpha: 0.6),
                     width: isCurrent ? 1.5 : 1,
                   ),
                 ),
@@ -154,29 +154,23 @@ class QuranRiwayahCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpace.md),
+              const SizedBox(width: AppSpace.sm),
               // Titles & Lineage
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            edition.nameArabic,
-                            style: context.text.titleSmall.copyWith(
-                              color: palette.text,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        edition.nameArabic,
+                        style: context.text.titleSmall.copyWith(
+                          color: palette.text,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: AppSpace.xs),
-                        _buildStatusBadge(context),
-                      ],
+                        maxLines: 1,
+                      ),
                     ),
                     const SizedBox(height: AppSpace.xxs),
                     Text(
@@ -187,26 +181,20 @@ class QuranRiwayahCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: AppSpace.xxs),
-                    Text(
-                      edition.nameEnglish,
-                      textDirection: TextDirection.ltr,
-                      style: context.text.caption.copyWith(
-                        color: palette.textSubtle,
-                      ),
-                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpace.xs),
+              _buildStatusBadge(context),
             ],
           ),
 
-          const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.sm),
 
-          // Scholarly Tags Wrap
+          // Scholarly Tags Wrap (Clean & Minimalist)
           Wrap(
             spacing: AppSpace.xs,
-            runSpacing: AppSpace.xs,
+            runSpacing: AppSpace.xxs,
             children: [
               _ScholarlyTag(
                 icon: Icons.alt_route_rounded,
@@ -221,7 +209,7 @@ class QuranRiwayahCard extends StatelessWidget {
                 label: meta.region,
               ),
               const _ScholarlyTag(
-                icon: Icons.font_download_outlined,
+                icon: Icons.verified_outlined,
                 label: 'خط المجمع الرقمي',
               ),
             ],
@@ -234,24 +222,19 @@ class QuranRiwayahCard extends StatelessWidget {
             meta.description,
             style: context.text.bodySmall.copyWith(
               color: palette.textMuted,
+              height: 1.35,
             ),
             textAlign: TextAlign.start,
           ),
 
-          const SizedBox(height: AppSpace.md),
-
-          // Storage Info Divider & Label
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: palette.border.withValues(alpha: 0.5),
-          ),
           const SizedBox(height: AppSpace.sm),
+
+          // Storage Info Label (Subtle single line without heavy divider)
           Row(
             children: [
               Icon(
                 Icons.sd_storage_outlined,
-                size: AppIcon.sm,
+                size: AppIcon.xs,
                 color: palette.gold,
               ),
               const SizedBox(width: AppSpace.xs),
@@ -324,7 +307,7 @@ class QuranRiwayahCard extends StatelessWidget {
             ],
           ],
 
-          const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.sm),
 
           // Action Buttons
           if (isDownloading)
@@ -488,13 +471,14 @@ class _ScholarlyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.sm,
-        vertical: AppSpace.xs,
+        vertical: AppSpace.xxs,
       ),
       decoration: BoxDecoration(
         color: palette.surfaceMuted,
-        borderRadius: AppRadius.smRadius,
+        borderRadius: AppRadius.pillRadius,
         border: Border.all(
-          color: palette.border.withValues(alpha: 0.5),
+          color: palette.border.withValues(alpha: 0.4),
+          width: 0.6,
         ),
       ),
       child: Row(
@@ -502,7 +486,7 @@ class _ScholarlyTag extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: AppIcon.sm,
+            size: AppIcon.xs,
             color: palette.textMuted,
           ),
           const SizedBox(width: AppSpace.xs),
@@ -510,7 +494,6 @@ class _ScholarlyTag extends StatelessWidget {
             label,
             style: context.text.caption.copyWith(
               color: palette.textMuted,
-              fontWeight: FontWeight.bold,
             ),
           ),
         ],

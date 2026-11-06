@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/models/quran_models.dart';
@@ -278,7 +277,7 @@ class _QuranRiwayahDownloadsPageState extends State<QuranRiwayahDownloadsPage> {
   }
 }
 
-/// Hero overview header displaying the scholarly title and live status metrics.
+/// Minimalist overview header displaying the scholarly title and live status metrics.
 class _RiwayatOverviewHeader extends StatelessWidget {
   final String currentEdition;
   final int installedCount;
@@ -299,12 +298,15 @@ class _RiwayatOverviewHeader extends StatelessWidget {
       orElse: () => QuranRiwayahId.hafs,
     );
 
-    return AppCard(
-      padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-      color: palette.surface,
-      borderRadius: AppRadius.lgRadius,
-      border: Border.all(
-        color: palette.border.withValues(alpha: 0.7),
+    return Container(
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: AppRadius.lgRadius,
+        border: Border.all(
+          color: palette.border.withValues(alpha: 0.7),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -312,23 +314,20 @@ class _RiwayatOverviewHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: AppSize.tap,
-                height: AppSize.tap,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: palette.goldSoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: palette.gold.withValues(alpha: 0.35),
-                  ),
+                  borderRadius: AppRadius.smRadius,
                 ),
                 alignment: Alignment.center,
                 child: Icon(
                   Icons.auto_stories_rounded,
                   color: palette.gold,
-                  size: AppIcon.md,
+                  size: AppIcon.sm,
                 ),
               ),
-              const SizedBox(width: AppSpace.md),
+              const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,22 +351,9 @@ class _RiwayatOverviewHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpace.md),
-          Text(
-            'اختر الرواية التي تريد تلاوتها. بعد تنزيل حزمة الرواية، يمكنك قراءتها والبحث فيها بالكامل دون اتصال بالإنترنت.',
-            style: textTheme.bodySmall.copyWith(
-              color: palette.textMuted,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: palette.border.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: AppSpace.md),
+          const SizedBox(height: AppSpace.sm),
           Wrap(
-            spacing: AppSpace.sm,
+            spacing: AppSpace.xs,
             runSpacing: AppSpace.xs,
             children: [
               _MetricPill(
@@ -383,7 +369,7 @@ class _RiwayatOverviewHeader extends StatelessWidget {
                 value: '$installedCount من 3',
               ),
               _MetricPill(
-                icon: Icons.sd_storage_rounded,
+                icon: Icons.sd_storage_outlined,
                 iconColor: palette.textMuted,
                 label: 'المساحة المستخدمة',
                 value: '$totalStorageMb م.ب',
@@ -418,19 +404,20 @@ class _MetricPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpace.sm,
-        vertical: AppSpace.xs,
+        vertical: AppSpace.xxs,
       ),
       decoration: BoxDecoration(
         color: palette.surfaceMuted,
-        borderRadius: AppRadius.smRadius,
+        borderRadius: AppRadius.pillRadius,
         border: Border.all(
           color: palette.border.withValues(alpha: 0.5),
+          width: 0.6,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppIcon.sm, color: iconColor),
+          Icon(icon, size: AppIcon.xs, color: iconColor),
           const SizedBox(width: AppSpace.xs),
           Text(
             '$label: ',
@@ -461,21 +448,24 @@ class _AuthenticityFootnoteCard extends StatelessWidget {
     final textTheme = context.text;
 
     return Container(
-      padding: const EdgeInsetsDirectional.all(AppSpace.md),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.md,
+        vertical: AppSpace.sm,
+      ),
       decoration: BoxDecoration(
         color: palette.surfaceMuted,
         borderRadius: AppRadius.mdRadius,
-        border: Border.all(color: palette.border.withValues(alpha: 0.7)),
+        border: Border.all(color: palette.border.withValues(alpha: 0.5), width: 0.8),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.verified_user_outlined,
-            size: AppIcon.md,
+            size: AppIcon.sm,
             color: palette.gold,
           ),
-          const SizedBox(width: AppSpace.md),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,6 +482,7 @@ class _AuthenticityFootnoteCard extends StatelessWidget {
                   'تعتمد الروايات على الخطوط الرقمية المعتمدة الصادرة عن مجمع الملك فهد لطباعة المصحف الشريف، مع توثيق وضبط فواصل الآيات ومواضع الأحزاب وبصمة تحقق رقمية (SHA-256).',
                   style: textTheme.caption.copyWith(
                     color: palette.textMuted,
+                    height: 1.35,
                   ),
                 ),
               ],
