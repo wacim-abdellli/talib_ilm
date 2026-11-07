@@ -15,6 +15,7 @@ import 'widgets/adhkar_font_size_sheet.dart';
 import 'widgets/adhkar_session_bottom_dock.dart';
 import 'widgets/adhkar_session_card.dart';
 import 'widgets/dhikr_counter_dial.dart';
+import '../../quran/data/services/reading_stats_service.dart';
 
 /// Immersive, scholarly recitation session for Adhkar with tactile counting
 /// and ergonomically placed RTL navigation arrows.
@@ -48,6 +49,8 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
   final AdhkarSessionService _sessionService = AdhkarSessionService();
 
   late final PageController _pageController;
+  final DateTime _sessionStartTime = DateTime.now();
+  int _totalDhikrTaps = 0;
   List<AthkarItem> _items = const [];
   Map<String, int> _counts = {};
   String? _categoryTitle;
@@ -118,6 +121,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     HapticFeedback.lightImpact();
 
     final nextCount = current + 1;
+    _totalDhikrTaps++;
     final key = _favoriteIdFor(_items[_index]);
 
     setState(() {
@@ -591,8 +595,20 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
     await _sessionService.clearState(widget.category);
   }
 
+  void _recordLearningSession() {
+    final elapsed = DateTime.now().difference(_sessionStartTime).inSeconds;
+    if (_totalDhikrTaps > 0 && elapsed >= 5) {
+      ReadingStatsService().recordSession(
+        durationSeconds: elapsed,
+        versesRead: _totalDhikrTaps,
+        surahNumber: 0,
+      );
+    }
+  }
+
   @override
   void dispose() {
+    _recordLearningSession();
     _pageController.dispose();
     super.dispose();
   }

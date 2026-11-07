@@ -265,6 +265,11 @@ class _AdhkarFahrasSheetState extends State<AdhkarFahrasSheet> {
                           )
                         : null,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    filled: false,
                     contentPadding: const EdgeInsetsDirectional.symmetric(
                       horizontal: AppSpace.md,
                       vertical: AppSpace.sm,

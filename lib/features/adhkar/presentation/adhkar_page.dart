@@ -55,7 +55,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
   late Future<AthkarCatalog> _future;
   String _selectedCategory = 'all';
   String _searchQuery = '';
-  int _streak = 1;
+  int _streak = 0;
 
   List<_CachedSearchEntry>? _cachedSearchEntries;
   AthkarCatalog? _lastCachedCatalog;
@@ -65,13 +65,20 @@ class _AdhkarPageState extends State<AdhkarPage> {
     super.initState();
     _future = _service.loadCatalog();
     _loadStats();
+    ReadingStatsService.statsUpdateNotifier.addListener(_loadStats);
+  }
+
+  @override
+  void dispose() {
+    ReadingStatsService.statsUpdateNotifier.removeListener(_loadStats);
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
     final streak = await ReadingStatsService().getStreak();
     if (mounted) {
       setState(() {
-        _streak = streak > 0 ? streak : 1;
+        _streak = streak;
       });
     }
   }

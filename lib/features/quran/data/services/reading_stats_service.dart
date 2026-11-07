@@ -12,6 +12,9 @@ class ReadingStatsService {
   static const String _sessionsKey = 'quran_reading_sessions';
   static final AsyncLock _lock = AsyncLock();
 
+  /// Reactive notifier that triggers whenever a reading/learning session is committed.
+  static final ValueNotifier<int> statsUpdateNotifier = ValueNotifier<int>(0);
+
   // In-memory cache of decoded sessions with raw snapshot equality guard
   static List<String>? _cachedRawSessions;
   static List<Map<String, dynamic>>? _cachedDecodedSessions;
@@ -107,6 +110,7 @@ class ReadingStatsService {
       _cachedRawSessions = List<String>.of(encoded);
       _cachedDecodedSessions = sessions;
       await prefs.setStringList(_sessionsKey, encoded);
+      statsUpdateNotifier.value++;
     });
   }
 
@@ -125,7 +129,7 @@ class ReadingStatsService {
       final ts = decoded['timestamp'];
       if (ts is! int) continue;
       final date = DateTime.fromMillisecondsSinceEpoch(ts);
-      if (date.isAfter(startOfDay)) {
+      if (!date.isBefore(startOfDay)) {
         final dur = decoded['duration'];
         final ver = decoded['verses'];
         if (dur is int && dur > 0) totalSeconds += dur;

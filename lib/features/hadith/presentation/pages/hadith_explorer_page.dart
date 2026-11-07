@@ -272,6 +272,11 @@ class _HadithExplorerPageState extends State<HadithExplorerPage> {
                                 fontFamily: AppTextStyles.cairo,
                               ),
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              filled: false,
                               contentPadding: const EdgeInsetsDirectional.symmetric(
                                 vertical: AppSpace.sm,
                               ),

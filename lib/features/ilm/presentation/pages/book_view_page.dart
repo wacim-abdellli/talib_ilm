@@ -29,6 +29,7 @@ import '../widgets/book_mutn_tab.dart';
 import '../widgets/book_sharh_tab.dart';
 import '../widgets/book_view_bookmarks_sheet.dart';
 import '../widgets/book_view_header.dart';
+import '../../../quran/data/services/reading_stats_service.dart';
 
 class BookViewPage extends StatefulWidget {
   final IlmBook book;
@@ -205,6 +206,11 @@ class _BookViewPageState extends State<BookViewPage>
     );
     if (_sessionMinutes == 0) return;
     await progressService.addReadingTime(widget.book.id, _sessionMinutes);
+    await ReadingStatsService().recordSession(
+      durationSeconds: _sessionMinutes * 60,
+      versesRead: 0,
+      surahNumber: 0,
+    );
     _sessionMinutes = 0;
   }
 

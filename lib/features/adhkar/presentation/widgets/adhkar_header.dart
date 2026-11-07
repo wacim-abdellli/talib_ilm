@@ -127,70 +127,91 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
               Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: SizedBox(
                       height: AppSize.inputH,
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.md,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.surfaceMuted,
-                        borderRadius: AppRadius.pillRadius,
-                        border: Border.all(color: palette.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
+                      child: TextField(
+                        key: const ValueKey('adhkar_search_text_field'),
+                        controller: _searchController,
+                        autofocus: true,
+                        textInputAction: TextInputAction.search,
+                        textDirection: TextDirection.rtl,
+                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                        onChanged: (val) {
+                          _onSearchChanged(val);
+                          setState(() {});
+                        },
+                        style: context.text.body.copyWith(
+                          color: palette.text,
+                        ),
+                        cursorColor: palette.primary,
+                        decoration: InputDecoration(
+                          hintText: 'ابحث في الأذكار والأدعية...',
+                          hintStyle: context.text.bodySmall.copyWith(
+                            color: palette.textMuted,
+                          ),
+                          filled: true,
+                          fillColor: palette.surfaceMuted,
+                          isDense: true,
+                          contentPadding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpace.md,
+                            vertical: AppSpace.sm,
+                          ),
+                          prefixIcon: Icon(
                             Icons.search_rounded,
                             size: AppIcon.md,
                             color: palette.primary,
                           ),
-                          const SizedBox(width: AppSpace.sm),
-                          Expanded(
-                            child: TextField(
-              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                              controller: _searchController,
-                              autofocus: true,
-                              onChanged: _onSearchChanged,
-                              style: context.text.body.copyWith(
-                                color: palette.text,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'ابحث في الأذكار والأدعية',
-                                hintStyle: context.text.bodySmall.copyWith(
-                                  color: palette.textSubtle,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.close_rounded,
+                                    size: AppIcon.sm,
+                                    color: palette.textMuted,
+                                  ),
+                                  tooltip: 'مسح البحث',
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _onSearchChanged('');
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.pillRadius,
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.pillRadius,
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.pillRadius,
+                            borderSide: BorderSide(
+                              color: palette.primary,
+                              width: 1.5,
                             ),
                           ),
-                          if (_searchController.text.isNotEmpty)
-                            IconButton(
-                              icon: Icon(
-                                Icons.clear_rounded,
-                                size: AppIcon.sm,
-                                color: palette.textMuted,
-                              ),
-                              tooltip: 'مسح البحث',
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                                setState(() {});
-                              },
-                            ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpace.sm),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close_rounded,
-                      size: AppIcon.md,
-                      color: palette.textMuted,
-                    ),
-                    tooltip: 'إلغاء البحث',
+                  const SizedBox(width: AppSpace.xs),
+                  TextButton(
                     onPressed: _stopSearching,
+                    style: TextButton.styleFrom(
+                      foregroundColor: palette.textMuted,
+                      minimumSize: const Size(AppSize.tap, AppSize.inputH),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+                    ),
+                    child: Text(
+                      'إلغاء',
+                      style: context.text.labelMedium.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -258,35 +279,51 @@ class _AdhkarHeaderState extends State<AdhkarHeader> {
                   ),
                   const SizedBox(width: AppSpace.xs),
                   // Streak Badge
-                  Container(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.goldSoft,
-                      borderRadius: AppRadius.smRadius,
-                      border: Border.all(
-                        color: palette.gold.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.local_fire_department_rounded,
-                          size: AppIcon.sm,
-                          color: palette.gold,
+                  Semantics(
+                    label: 'أيام التتابع في الذكر والتعلم: ${widget.streak}',
+                    child: Tooltip(
+                      message: widget.streak > 0
+                          ? 'مواظبة ${widget.streak} أيام متتالية'
+                          : 'سجل التتابع يبدأ بأول ورد اليوم',
+                      child: Container(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.xs,
                         ),
-                        const SizedBox(width: AppSpace.xs),
-                        Text(
-                          '${widget.streak}',
-                          style: context.text.labelBold.copyWith(
-                            color: palette.gold,
+                        decoration: BoxDecoration(
+                          color: widget.streak > 0
+                              ? palette.goldSoft
+                              : palette.surfaceMuted,
+                          borderRadius: AppRadius.smRadius,
+                          border: Border.all(
+                            color: widget.streak > 0
+                                ? palette.gold.withValues(alpha: 0.3)
+                                : palette.border,
+                            width: 1,
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department_rounded,
+                              size: AppIcon.sm,
+                              color: widget.streak > 0
+                                  ? palette.gold
+                                  : palette.textMuted,
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Text(
+                              '${widget.streak}',
+                              style: context.text.labelBold.copyWith(
+                                color: widget.streak > 0
+                                    ? palette.gold
+                                    : palette.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -35,6 +35,19 @@ class _MorePageState extends State<MorePage> {
   void initState() {
     super.initState();
     _loadStats();
+    ReadingStatsService.statsUpdateNotifier.addListener(_loadStats);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadStats();
+  }
+
+  @override
+  void dispose() {
+    ReadingStatsService.statsUpdateNotifier.removeListener(_loadStats);
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
