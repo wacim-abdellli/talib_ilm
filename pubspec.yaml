@@ -37,7 +37,6 @@ dependencies:
   permission_handler: ^11.0.1
   shimmer: ^3.0.0
   http: ^1.2.0
-  crypto: ^3.0.7
   connectivity_plus: ^7.0.0
   wakelock_plus: ^1.4.0
   sqflite: ^2.4.2
@@ -54,8 +53,6 @@ dependencies:
     path: packages/qcf_quran_plus
   sensors_plus: ^7.1.1
   home_widget: ^0.10.0
-  flutter_svg: 2.3.0
-  brotli: 0.6.0
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../data/database/quran_pack_database.dart';
 import '../../data/models/hizb_catalog.dart';
 import 'hizb_card.dart';
 import 'juz_card.dart';
@@ -18,7 +17,6 @@ class QuranIndexSlivers {
     required ValueChanged<int> onOpenSurah,
     required ValueChanged<int> onToggleBookmark,
     required VoidCallback onResetSearch,
-    Map<int, QuranPackSurah> editionSurahs = const {},
   }) {
     if (filteredSurahs.isEmpty) {
       return [
@@ -54,7 +52,6 @@ class QuranIndexSlivers {
             isBookmarked: isBookmarked,
             onTap: () => onOpenSurah(surahNum),
             onBookmarkTap: () => onToggleBookmark(surahNum),
-            editionSurah: editionSurahs[surahNum],
           );
         },
       ),
@@ -114,25 +111,7 @@ class QuranIndexSlivers {
     required List<int> filteredHizbs,
     required ValueChanged<int> onOpenPage,
     required VoidCallback onResetSearch,
-    required bool isHafsEdition,
   }) {
-    if (!isHafsEdition) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.all(AppSpace.lg),
-            child: EmptyState(
-              icon: Icons.bookmark_outline_rounded,
-              title: 'فهرس الأحزاب متاح لحفص حالياً',
-              subtitle:
-                  'بيانات الأرباع الحالية مرتبطة بترقيم حفص. استخدم فهرس السور أو الأجزاء حتى لا تنتقل إلى موضع غير دقيق في هذه الرواية.',
-            ),
-          ),
-        ),
-      ];
-    }
-
     if (filteredHizbs.isEmpty) {
       return [
         SliverFillRemaining(

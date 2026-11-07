@@ -1,7 +1,6 @@
 // Quran Data Models
 // Models for Surah, Ayah, and metadata
 export 'reciter_model.dart';
-export 'quran_pack_manifest.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SURAH METADATA (Light version for lists)

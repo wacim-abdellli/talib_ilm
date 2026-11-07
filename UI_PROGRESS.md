@@ -4819,3 +4819,10 @@ FAILED (54 violations)
      - `python tool/ui_lint_v2.py`: **OK** (0 violations, 7/10 allow markers).
      - Full test suite: **812/812 tests passed** (100% pass rate in 2m48s).
      - Release APK built successfully: `build\app\outputs\flutter-apk\app-release.apk` (251.0MB).
+
+## Round 25 — Remove Warsh and Qālūn Quran Editions (2026-11-07)
+- Removed Warsh/Qālūn edition selection, download/install flows, pack readers, databases, artwork metadata, and edition-specific developer tooling.
+- Kept the Hafs Mushaf reader, page artwork, bookmarks, reading history, Quran search, and radio playback. Removed the two Warsh-only radio entries and updated onboarding copy to describe the supported Hafs reading.
+- Added a one-time startup migration that clears legacy Warsh/Qālūn selection preferences, installed pack directories, and edition JSON files from existing app installations.
+- Removed the now-unused direct `brotli`, `flutter_svg`, and `crypto` dependencies, along with tests that only covered the removed edition pack feature. (`crypto` remains transitively required by another package.)
+- **Verification:** `python tool/ui_lint_v2.py` passed (0 failures, 6/10 allow markers). Tests were not run.

@@ -4,7 +4,6 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
-import '../../data/database/quran_pack_database.dart';
 
 /// Ornate Islamic medallion for Surah numbers with double concentric border rings.
 class SurahNumberMedallion extends StatelessWidget {
@@ -105,7 +104,6 @@ class SurahCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
   final Widget? trailing;
-  final QuranPackSurah? editionSurah;
 
   const SurahCard({
     super.key,
@@ -114,22 +112,17 @@ class SurahCard extends StatelessWidget {
     required this.onTap,
     required this.onBookmarkTap,
     this.trailing,
-    this.editionSurah,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final surahName =
-        editionSurah?.nameArabic ?? quran.getSurahNameArabic(surahNumber);
-    final englishName =
-        editionSurah?.nameEnglish ?? quran.getSurahName(surahNumber);
-    final versesCount =
-        editionSurah?.ayahCount ?? quran.getVerseCount(surahNumber);
+    final surahName = quran.getSurahNameArabic(surahNumber);
+    final englishName = quran.getSurahName(surahNumber);
+    final versesCount = quran.getVerseCount(surahNumber);
     final place = quran.getPlaceOfRevelation(surahNumber);
     final isMakki = place == 'Makkah';
-    final startPage =
-        editionSurah?.firstPage ?? quran.getSurahPages(surahNumber)[0];
+    final startPage = quran.getSurahPages(surahNumber)[0];
     final juzNumber = quran.getJuzNumber(surahNumber, 1);
 
     return Material(

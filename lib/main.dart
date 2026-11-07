@@ -9,7 +9,7 @@ import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
 import 'app/theme/app_ui.dart';
 import 'features/ilm/data/services/quiz_dump_service.dart';
-
+import 'features/quran/data/services/removed_riwayah_cleanup.dart';
 
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +33,7 @@ Future<void> main() async {
   };
 
   unawaited(SharedPreferences.getInstance());
+  unawaited(RemovedRiwayahCleanup.run());
   await HomeWidgetService.initBackground();
   unawaited(NotificationService().init());
   unawaited(QuizDumpService.instance.loadDump());
@@ -41,7 +42,8 @@ Future<void> main() async {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.talibilm.app.channel.audio',
       androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
-      androidNotificationChannelDescription: 'مشغل تلاوات القرآن الكريم وإذاعة طالب العلم',
+      androidNotificationChannelDescription:
+          'مشغل تلاوات القرآن الكريم وإذاعة طالب العلم',
       notificationColor: AppPalette.light.gold,
       androidNotificationOngoing: false,
       androidNotificationIcon: 'mipmap/ic_launcher',

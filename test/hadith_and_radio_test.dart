@@ -69,16 +69,17 @@ void main() {
     test('QuranRadioStation parses correctly from json', () {
       final json = {
         'id': 1,
-        'name': 'محمود خليل الحصري (ورش عن نافع)',
-        'rawName': 'محمود خليل الحصري - رواية ورش عن نافع',
-        'url': 'https://backup.qurango.net/radio/mahmoud_khalil_alhussary_warsh',
-        'category': 'رواية ورش',
+        'name': 'محمود خليل الحصري',
+        'rawName': 'محمود خليل الحصري',
+        'url':
+            'https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad',
+        'category': 'قراء العالم الإسلامي',
       };
 
       final station = QuranRadioStation.fromJson(json);
       expect(station.id, 1);
       expect(station.name, contains('الحصري'));
-      expect(station.category, 'رواية ورش');
+      expect(station.category, 'قراء العالم الإسلامي');
       expect(station.url, startsWith('https://'));
     });
   });

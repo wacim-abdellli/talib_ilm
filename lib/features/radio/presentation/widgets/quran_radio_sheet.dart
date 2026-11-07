@@ -30,7 +30,6 @@ class _QuranRadioSheetState extends State<QuranRadioSheet> {
   final List<String> _categories = [
     'الكل',
     'كبار القراء',
-    'رواية ورش',
     'تلاوات خاشعة',
     'الحرمين الشريفين',
     'تفاسير وعلوم',
