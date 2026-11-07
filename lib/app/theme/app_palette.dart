@@ -1217,20 +1217,20 @@ class MushafColors {
   static const Color sepiaBannerText = Color(0xFF332014);
   static const Color sepiaBannerSubtext = Color(0xFF6B4E38);
 
-  static const Color darkBg = Color(0xFF101114);
-  static const Color darkText = Color(0xFFEAE5DC);
+  static const Color darkBg = Color(0xFF080706);
+  static const Color darkText = Color(0xFFFAF6EE);
   static const Color darkVerseNumber = Color(0xFFD4AF37);
-  static const Color darkBannerBg = Color(0xFF181A20);
+  static const Color darkBannerBg = Color(0xFF13110E);
   static const Color darkBannerBorder = Color(0xFF8C7338);
   static const Color darkBannerText = Color(0xFFF5D78E);
   static const Color darkBannerSubtext = Color(0xFFC7AA64);
 
-  static const Color darkOverlayBg = Color(0xFF181B22);
-  static const Color darkOverlayBorder = Color(0xFF282C36);
-  static const Color darkOverlayPill = Color(0xFF22252D);
-  static const Color darkMuted = Color(0xFFA2A7B4);
-  static const Color darkCardBorder = Color(0xFF2C3038);
-  static const Color darkBadgeBg = Color(0xFF242730);
+  static const Color darkOverlayBg = Color(0xFF100E0C);
+  static const Color darkOverlayBorder = Color(0xFF231F1A);
+  static const Color darkOverlayPill = Color(0xFF1A1713);
+  static const Color darkMuted = Color(0xFFA8A096);
+  static const Color darkCardBorder = Color(0xFF24201A);
+  static const Color darkBadgeBg = Color(0xFF1A1713);
 
   static const Color sepiaOverlayBg = Color(0xFFF4ECE0);
   static const Color sepiaOverlayBorder = Color(0xFFDFD4C4);
