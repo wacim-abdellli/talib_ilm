@@ -1,3 +1,18 @@
+## Warm AMOLED Mushaf, Decoupled Quran Themes, Reader Tap Menu & High-Contrast Dark Progress (7 November 2026)
+- **Branch**: `main` (commits `3c61efe`, `b8a49b5`, `79ce08f` pushed to origin)
+- **Changes Implemented**:
+  - **High-Contrast Dark Mode Progress Bar**: Added `progressTrack` (`#26221D`) and `progressTrackBorder` (`#787168`, 3.98:1 contrast) to `AppPalette`. Updated `AppProgress` with 6dp capsule, anti-aliased border/track rendering, and `activeWidth >= height` minimum cap. Applied across 12 screens and components so reading and quiz progress bars remain clearly legible on black surfaces.
+  - **Mutun Paragraph Reader Tap HUD Toggle**: Resolved double-toggle cancellation in `BookViewPage` and `BookPageTapDetector` by debouncing HUD toggles (`AppMotion.searchDebounce` 300ms) and expanding touch slop tolerance (18dp). Clicking anywhere on paragraph text now reliably displays and hides the bottom scholarly reader HUD (tasmee3, istimaa3, fihris, font).
+  - **Warm AMOLED Obsidian Mushaf Theme & Decoupling**: Replaced cold blue/slate Mushaf dark mode tokens with True Warm AMOLED Obsidian (`#080706`) and Medina Gold text (`#FAF6EE`, 18.67:1 contrast). Fully decoupled Quran reader theme from global app theme; Quran theme choices persist across all pages, surahs, and app launches independently.
+  - **Modern Mobile Release Artifacts**:
+    - **Android (ARM64 Modern Phones)**: Built `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (138.4 MB) alongside `app-armeabi-v7a-release.apk` (138.8 MB) and `app-x86_64-release.apk` (140.1 MB).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (6 allow markers used / cap 10).
+  - `flutter test --no-pub test/mushaf_single_page_test.dart test/surah_banner_test.dart test/mutun_curriculum_reader_test.dart`: All passed.
+  - `flutter build apk --release --split-per-abi`: Exited with code 0.
+- **Status**: Complete & Verified.
+
 ## UI & Search Polish, Authentic Learning Streak Sync & Modern Mobile Release Builds (7 November 2026)
 - **Branch**: `main` (commit `b08e823` pushed)
 - **Changes Implemented**:
