@@ -187,7 +187,7 @@ class _MorePageState extends State<MorePage> {
                                       theme: nextTheme,
                                       isReversed: isDark,
                                       onAnimationFinish: () {
-                                        themeService.saveThemeModeQuietly(nextMode);
+                                        themeService.setThemeMode(nextMode);
                                       },
                                     );
                                   },

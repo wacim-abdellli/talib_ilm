@@ -171,7 +171,7 @@ class AppDrawer extends StatelessWidget {
                           theme: nextTheme,
                           isReversed: darkModeActive,
                           onAnimationFinish: () {
-                            themeService.saveThemeModeQuietly(nextMode);
+                            themeService.setThemeMode(nextMode);
                           },
                         );
                       }

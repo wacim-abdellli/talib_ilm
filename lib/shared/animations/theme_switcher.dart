@@ -59,6 +59,9 @@ class _ThemeProviderState extends State<ThemeProvider>
     if (widget.duration != oldWidget.duration) {
       _controller.duration = widget.duration;
     }
+    if (!_isTransitioning && widget.initTheme != oldWidget.initTheme) {
+      _currentTheme = widget.initTheme;
+    }
   }
 
   @override

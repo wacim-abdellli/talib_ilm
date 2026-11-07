@@ -71,30 +71,6 @@ class ThemeService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Update the internal theme mode and persist to storage without notifyListeners
-  /// to avoid double-rebuilding when ThemeProvider runs an animated circular reveal.
-  Future<void> saveThemeModeQuietly(ThemeMode mode) async {
-    _themeMode = mode;
-    final prefs = await SharedPreferences.getInstance();
-    String themeName;
-    switch (mode) {
-      case ThemeMode.dark:
-        themeName = 'dark';
-        break;
-      case ThemeMode.light:
-        themeName = 'light';
-        break;
-      case ThemeMode.system:
-        themeName = 'system';
-        break;
-    }
-    await prefs.setString(_themeKey, themeName);
-    try {
-      HomeWidgetService.invalidateCache();
-      HomeWidgetService.updateAllWidgets(force: true);
-    } catch (_) {}
-  }
-
   /// Toggle between light and dark (ignores system)
   Future<void> toggleTheme() async {
     if (_themeMode == ThemeMode.dark) {
