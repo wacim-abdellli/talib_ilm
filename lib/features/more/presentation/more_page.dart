@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../app/app.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../app/theme/app_theme.dart';
 import '../../../shared/animations/staggered_entrance.dart';
+import '../../../shared/animations/theme_switcher.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../adhkar/presentation/widgets/adhkar_notification_sheet.dart';
 import '../../favorites/presentation/favorites_page.dart';
@@ -165,45 +168,64 @@ class _MorePageState extends State<MorePage> {
                             ),
                           ),
                           const SizedBox(width: AppSpace.sm),
-                          // Quick Theme Pill Action
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _showThemeSelector(context),
-                              borderRadius: AppRadius.pillRadius,
-                              child: Container(
-                                height: 36,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpace.md,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: palette.surfaceMuted,
+                          // Quick Theme Pill Action with Circular Reveal
+                          ThemeSwitcher(
+                            builder: (switcherContext) {
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    final isDark = themeService.isDark;
+                                    final nextMode = isDark
+                                        ? ThemeMode.light
+                                        : ThemeMode.dark;
+                                    final nextTheme = nextMode == ThemeMode.dark
+                                        ? AppTheme.darkTheme
+                                        : AppTheme.lightTheme;
+                                    ThemeSwitcher.of(switcherContext).changeTheme(
+                                      theme: nextTheme,
+                                      isReversed: isDark,
+                                    );
+                                    themeService.setThemeMode(nextMode);
+                                  },
+                                  onLongPress: () => _showThemeSelector(context),
                                   borderRadius: AppRadius.pillRadius,
-                                  border: Border.all(
-                                    color: palette.border,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      themeService.themeIcon,
-                                      size: AppIcon.sm,
-                                      color: palette.gold,
+                                  child: Container(
+                                    height: 36,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpace.md,
                                     ),
-                                    const SizedBox(width: AppSpace.xs),
-                                    Text(
-                                      themeService.themeDisplayName,
-                                      style: textTheme.caption.copyWith(
-                                        color: palette.text,
-                                        fontWeight: FontWeight.bold,
+                                    decoration: BoxDecoration(
+                                      color: palette.surfaceMuted,
+                                      borderRadius: AppRadius.pillRadius,
+                                      border: Border.all(
+                                        color: palette.border,
+                                        width: 1,
                                       ),
                                     ),
-                                  ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          themeService.themeIcon,
+                                          size: AppIcon.sm,
+                                          color: palette.gold,
+                                        ),
+                                        const SizedBox(width: AppSpace.xs),
+                                        Text(
+                                          themeService.themeDisplayName,
+                                          style: textTheme.caption.copyWith(
+                                            color: palette.text,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),

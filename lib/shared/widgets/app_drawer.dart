@@ -4,6 +4,8 @@ import '../../core/utils/app_share.dart';
 import '../../app/app.dart';
 import '../../app/constants/app_strings.dart';
 import '../../app/theme/app_palette.dart';
+import '../../app/theme/app_theme.dart';
+import '../animations/theme_switcher.dart';
 import '../navigation/app_shell.dart';
 import '../navigation/fade_page_route.dart';
 import '../../features/favorites/presentation/favorites_page.dart';
@@ -152,20 +154,37 @@ class AppDrawer extends StatelessWidget {
                   isActive: selectedIndex == 4,
                   onTap: () => _goShell(context, 4),
                 ),
-                ListenableBuilder(
-                  listenable: themeService,
-                  builder: (context, _) {
-                    final darkModeActive = themeService.themeMode == ThemeMode.dark;
-                    return _DrawerItem(
-                      icon: themeService.themeIcon,
-                      label: 'الوضع الداكن',
-                      trailing: Switch(
-                        value: darkModeActive,
-                        onChanged: (_) => themeService.toggleTheme(),
-                      ),
-                      onTap: () => themeService.toggleTheme(),
-                    );
-                  },
+                ThemeSwitcher(
+                  builder: (switcherContext) => ListenableBuilder(
+                    listenable: themeService,
+                    builder: (context, _) {
+                      final darkModeActive =
+                          themeService.themeMode == ThemeMode.dark;
+                      void toggle() {
+                        final nextMode = darkModeActive
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                        final nextTheme = nextMode == ThemeMode.dark
+                            ? AppTheme.darkTheme
+                            : AppTheme.lightTheme;
+                        ThemeSwitcher.of(switcherContext).changeTheme(
+                          theme: nextTheme,
+                          isReversed: darkModeActive,
+                        );
+                        themeService.setThemeMode(nextMode);
+                      }
+
+                      return _DrawerItem(
+                        icon: themeService.themeIcon,
+                        label: 'الوضع الداكن',
+                        trailing: Switch(
+                          value: darkModeActive,
+                          onChanged: (_) => toggle(),
+                        ),
+                        onTap: toggle,
+                      );
+                    },
+                  ),
                 ),
                 _DrawerItem(
                   icon: Icons.share_rounded,

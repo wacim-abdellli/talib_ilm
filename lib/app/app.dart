@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
 import 'theme/app_palette.dart';
 import '../features/splash/presentation/splash_page.dart';
+import '../shared/animations/theme_switcher.dart';
 import '../shared/widgets/app_scroll_behavior.dart';
 import '../core/services/theme_service.dart';
 
@@ -34,55 +35,63 @@ class _TalibIlmAppState extends State<TalibIlmApp> {
     return ListenableBuilder(
       listenable: themeService,
       builder: (context, _) {
-        return MaterialApp(
-          navigatorKey: rootNavigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: AppStrings.appName,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeService.themeMode,
-          themeAnimationDuration: AppMotion.zero,
-          scrollBehavior: const AppScrollBehavior(),
-          locale: const Locale('ar'),
-          supportedLocales: const [Locale('ar'), Locale('en')],
+        final currentTheme = AppTheme.resolveTheme(themeService.themeMode);
+        return ThemeProvider(
+          initTheme: currentTheme,
+          builder: (context, activeTheme) {
+            return MaterialApp(
+              navigatorKey: rootNavigatorKey,
+              debugShowCheckedModeBanner: false,
+              title: AppStrings.appName,
+              theme: activeTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeService.themeMode,
+              themeAnimationDuration: AppMotion.zero,
+              scrollBehavior: const AppScrollBehavior(),
+              locale: const Locale('ar'),
+              supportedLocales: const [Locale('ar'), Locale('en')],
 
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+              localizationsDelegates: [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
 
-          builder: (context, child) {
-            final mediaQuery = MediaQuery.of(context);
-            // Respect the user's OS accessibility font scale directly (from 0.85x to 2.0x)
-            // without compounding it with arbitrary screen-width multipliers that cause
-            // oversized text and truncated labels on modern high-res devices.
-            final baseScale = mediaQuery.textScaler.scale(1.0);
-            final scaled = TextScaler.linear(
-              baseScale.clamp(
-                AppSize.textScaleMin,
-                AppSize.textScaleMax,
-              ),
-            );
+              builder: (context, child) {
+                final mediaQuery = MediaQuery.of(context);
+                // Respect the user's OS accessibility font scale directly (from 0.85x to 2.0x)
+                // without compounding it with arbitrary screen-width multipliers that cause
+                // oversized text and truncated labels on modern high-res devices.
+                final baseScale = mediaQuery.textScaler.scale(1.0);
+                final scaled = TextScaler.linear(
+                  baseScale.clamp(
+                    AppSize.textScaleMin,
+                    AppSize.textScaleMax,
+                  ),
+                );
 
-            return MediaQuery(
-              data: mediaQuery.copyWith(textScaler: scaled),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Listener(
-                  behavior: HitTestBehavior.translucent,
-                  onPointerDown: (_) {
-                    final currentFocus = FocusManager.instance.primaryFocus;
-                    if (currentFocus != null && currentFocus.hasFocus) {
-                      currentFocus.unfocus();
-                    }
-                  },
-                  child: child!,
-                ),
-              ),
+                return MediaQuery(
+                  data: mediaQuery.copyWith(textScaler: scaled),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Listener(
+                      behavior: HitTestBehavior.translucent,
+                      onPointerDown: (_) {
+                        final currentFocus = FocusManager.instance.primaryFocus;
+                        if (currentFocus != null && currentFocus.hasFocus) {
+                          currentFocus.unfocus();
+                        }
+                      },
+                      child: ThemeSwitchingArea(
+                        child: child!,
+                      ),
+                    ),
+                  ),
+                );
+              },
+              home: const SplashPage(),
             );
           },
-          home: const SplashPage(),
         );
       },
     );

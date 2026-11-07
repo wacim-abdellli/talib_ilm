@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_theme.dart';
 import '../../../../core/services/home_widget_service.dart';
+import '../../../../shared/animations/theme_switcher.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 
@@ -136,40 +138,59 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
               ),
             ),
             const SizedBox(height: AppSpace.xs),
-            ThemeOption(
-              icon: Icons.brightness_auto_rounded,
-              title: 'تلقائي',
-              subtitle: 'حسب إعدادات النظام',
-              isSelected: themeService.isSystem,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.system);
-                setState(() {});
-              },
+            ThemeSwitcher(
+              builder: (switcherContext) => ThemeOption(
+                icon: Icons.brightness_auto_rounded,
+                title: 'تلقائي',
+                subtitle: 'حسب إعدادات النظام',
+                isSelected: themeService.isSystem,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  final nextTheme = AppTheme.resolveTheme(ThemeMode.system);
+                  ThemeSwitcher.of(switcherContext).changeTheme(
+                    theme: nextTheme,
+                    isReversed: !AppTheme.isSystemDark(),
+                  );
+                  themeService.setThemeMode(ThemeMode.system);
+                  setState(() {});
+                },
+              ),
             ),
             const SizedBox(height: AppSpace.xs),
-            ThemeOption(
-              icon: Icons.light_mode_rounded,
-              title: 'الوضع الفاتح',
-              subtitle: 'مظهر فاتح وناصع',
-              isSelected: themeService.isLight,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.light);
-                setState(() {});
-              },
+            ThemeSwitcher(
+              builder: (switcherContext) => ThemeOption(
+                icon: Icons.light_mode_rounded,
+                title: 'الوضع الفاتح',
+                subtitle: 'مظهر فاتح وناصع',
+                isSelected: themeService.isLight,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ThemeSwitcher.of(switcherContext).changeTheme(
+                    theme: AppTheme.lightTheme,
+                    isReversed: true,
+                  );
+                  themeService.setThemeMode(ThemeMode.light);
+                  setState(() {});
+                },
+              ),
             ),
             const SizedBox(height: AppSpace.xs),
-            ThemeOption(
-              icon: Icons.dark_mode_rounded,
-              title: 'الوضع الداكن',
-              subtitle: 'مظهر ليلي مريح للعين',
-              isSelected: themeService.isDark,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                themeService.setThemeMode(ThemeMode.dark);
-                setState(() {});
-              },
+            ThemeSwitcher(
+              builder: (switcherContext) => ThemeOption(
+                icon: Icons.dark_mode_rounded,
+                title: 'الوضع الداكن',
+                subtitle: 'مظهر ليلي مريح للعين',
+                isSelected: themeService.isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ThemeSwitcher.of(switcherContext).changeTheme(
+                    theme: AppTheme.darkTheme,
+                    isReversed: false,
+                  );
+                  themeService.setThemeMode(ThemeMode.dark);
+                  setState(() {});
+                },
+              ),
             ),
 
             const SizedBox(height: AppSpace.lg),
