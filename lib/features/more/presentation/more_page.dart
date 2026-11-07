@@ -186,8 +186,10 @@ class _MorePageState extends State<MorePage> {
                                     ThemeSwitcher.of(switcherContext).changeTheme(
                                       theme: nextTheme,
                                       isReversed: isDark,
+                                      onAnimationFinish: () {
+                                        themeService.saveThemeModeQuietly(nextMode);
+                                      },
                                     );
-                                    themeService.setThemeMode(nextMode);
                                   },
                                   onLongPress: () => _showThemeSelector(context),
                                   borderRadius: AppRadius.pillRadius,

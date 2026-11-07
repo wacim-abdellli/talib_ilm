@@ -1074,8 +1074,8 @@ class AppMotion {
   /// 600ms (extended micro-interaction transition)
   static const Duration deliberate = Duration(milliseconds: 600);
 
-  /// 500ms (circular theme reveal wave transition)
-  static const Duration themeReveal = Duration(milliseconds: 500);
+  /// 420ms (circular theme reveal wave transition)
+  static const Duration themeReveal = Duration(milliseconds: 420);
 
   /// 28ms (stagger delta between consecutive list rows)
   static const Duration staggerStep = Duration(milliseconds: 28);

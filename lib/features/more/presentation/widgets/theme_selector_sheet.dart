@@ -150,8 +150,10 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
                   ThemeSwitcher.of(switcherContext).changeTheme(
                     theme: nextTheme,
                     isReversed: !AppTheme.isSystemDark(),
+                    onAnimationFinish: () {
+                      themeService.saveThemeModeQuietly(ThemeMode.system);
+                    },
                   );
-                  themeService.setThemeMode(ThemeMode.system);
                   setState(() {});
                 },
               ),
@@ -168,8 +170,10 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
                   ThemeSwitcher.of(switcherContext).changeTheme(
                     theme: AppTheme.lightTheme,
                     isReversed: true,
+                    onAnimationFinish: () {
+                      themeService.saveThemeModeQuietly(ThemeMode.light);
+                    },
                   );
-                  themeService.setThemeMode(ThemeMode.light);
                   setState(() {});
                 },
               ),
@@ -186,8 +190,10 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
                   ThemeSwitcher.of(switcherContext).changeTheme(
                     theme: AppTheme.darkTheme,
                     isReversed: false,
+                    onAnimationFinish: () {
+                      themeService.saveThemeModeQuietly(ThemeMode.dark);
+                    },
                   );
-                  themeService.setThemeMode(ThemeMode.dark);
                   setState(() {});
                 },
               ),

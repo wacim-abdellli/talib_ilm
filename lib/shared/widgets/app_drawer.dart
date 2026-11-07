@@ -170,8 +170,10 @@ class AppDrawer extends StatelessWidget {
                         ThemeSwitcher.of(switcherContext).changeTheme(
                           theme: nextTheme,
                           isReversed: darkModeActive,
+                          onAnimationFinish: () {
+                            themeService.saveThemeModeQuietly(nextMode);
+                          },
                         );
-                        themeService.setThemeMode(nextMode);
                       }
 
                       return _DrawerItem(
