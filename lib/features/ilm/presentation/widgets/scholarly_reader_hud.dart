@@ -39,14 +39,14 @@ class _BookPageTapDetectorState extends State<BookPageTapDetector> {
         _downPos = event.position;
         _isCancelled = false;
         _longPressTimer?.cancel();
-        _longPressTimer = Timer(AppMotion.searchDebounce, () {
+        _longPressTimer = Timer(AppMotion.debounce, () {
           _isCancelled = true;
         });
       },
       onPointerMove: (event) {
         if (_downPos != null) {
           final distance = (event.position - _downPos!).distance;
-          if (distance >= 10.0) {
+          if (distance >= 18.0) {
             _isCancelled = true;
             _longPressTimer?.cancel();
           }
@@ -56,7 +56,7 @@ class _BookPageTapDetectorState extends State<BookPageTapDetector> {
         _longPressTimer?.cancel();
         if (_downPos != null && !_isCancelled) {
           final distance = (event.position - _downPos!).distance;
-          if (distance < 10.0) {
+          if (distance < 18.0) {
             widget.onTap();
           }
         }

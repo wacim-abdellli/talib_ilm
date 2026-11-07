@@ -6,6 +6,7 @@ import 'package:talib_ilm/features/ilm/data/catalogs/mutun_digital_catalog.dart'
 import 'package:talib_ilm/features/ilm/data/models/mutun_models.dart';
 import 'package:talib_ilm/features/ilm/data/services/mutun_audio_service.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_curriculum_reader_view.dart';
+import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_paragraph_block.dart';
 import 'package:talib_ilm/features/ilm/presentation/widgets/mutn_quick_jump_sheet.dart';
 
 void main() {
@@ -205,7 +206,14 @@ void main() {
       expect(find.text('- 1 -'), findsOneWidget);
       expect(find.text('- 2 -'), findsOneWidget);
 
-      // Verify tap on paragraph toggles controls without hijacking audio
+      // Verify tap on paragraph text itself toggles controls reliably
+      controlsToggled = false;
+      await tester.tap(find.byType(MutnParagraphBlock).first);
+      await tester.pump();
+      expect(controlsToggled, isTrue);
+
+      // Verify tap on paragraph badge toggles controls without hijacking audio
+      controlsToggled = false;
       await tester.tap(find.text('- 2 -'));
       await tester.pump();
       expect(controlsToggled, isTrue);

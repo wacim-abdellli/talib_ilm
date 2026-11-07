@@ -64,6 +64,7 @@ class _BookViewPageState extends State<BookViewPage>
   late Timer _readingTimer;
   int _sessionMinutes = 0;
   bool _showControls = true;
+  DateTime? _lastControlsToggleTime;
   final TextEditingController _noteController = TextEditingController();
   final Set<int> _bookmarkedPages = <int>{};
   bool _isBookmarked = false;
@@ -316,6 +317,12 @@ class _BookViewPageState extends State<BookViewPage>
   }
 
   void _toggleControls() {
+    final now = DateTime.now();
+    if (_lastControlsToggleTime != null &&
+        now.difference(_lastControlsToggleTime!) < AppMotion.searchDebounce) {
+      return;
+    }
+    _lastControlsToggleTime = now;
     setState(() => _showControls = !_showControls);
   }
 
