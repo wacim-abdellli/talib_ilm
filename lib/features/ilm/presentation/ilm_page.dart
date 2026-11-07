@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
+import '../../../shared/animations/staggered_entrance.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../core/services/last_activity_service.dart';
@@ -496,18 +497,21 @@ class _IlmPageState extends State<IlmPage> {
         // Continue Reading Resume Hero
         if (_continueReadingBook != null && _selectedCategory == 'all')
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
-              child: StudyResumePill(
-                continueReadingBook: _continueReadingBook,
-                recommendedFirstBook: _recommendedFirstBook,
-                bookCatalog: _bookCatalog,
-                dailyGoal: _dailyGoal,
-                pagesReadToday: _pagesReadToday,
-                currentStreak: _currentStreak,
-                onNavigateToBook: _navigateToBook,
-                onOpenBookId: _openBookFromTracker,
+            child: StaggeredEntrance(
+              index: 0,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
+                child: StudyResumePill(
+                  continueReadingBook: _continueReadingBook,
+                  recommendedFirstBook: _recommendedFirstBook,
+                  bookCatalog: _bookCatalog,
+                  dailyGoal: _dailyGoal,
+                  pagesReadToday: _pagesReadToday,
+                  currentStreak: _currentStreak,
+                  onNavigateToBook: _navigateToBook,
+                  onOpenBookId: _openBookFromTracker,
+                ),
               ),
             ),
           ),

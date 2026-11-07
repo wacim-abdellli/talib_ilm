@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../shared/animations/staggered_entrance.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -270,9 +271,12 @@ class _AdhkarPageState extends State<AdhkarPage> {
                       // Contextual Hero Recommendation (Visible on 'all' tab)
                       if (_selectedCategory == 'all')
                         SliverToBoxAdapter(
-                          child: AdhkarContextualHero(
-                            catalog: catalog,
-                            onOpenCategory: _openCategory,
+                          child: StaggeredEntrance(
+                            index: 0,
+                            child: AdhkarContextualHero(
+                              catalog: catalog,
+                              onOpenCategory: _openCategory,
+                            ),
                           ),
                         ),
 
@@ -293,11 +297,16 @@ class _AdhkarPageState extends State<AdhkarPage> {
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              return CategoryTile(
-                                data: items[index],
-                                progressLoader: items[index].showProgress
-                                    ? () => _progressFor(items[index])
-                                    : null,
+                              final rowIndex = (index ~/ 2) + (_selectedCategory == 'all' ? 1 : 0);
+                              return StaggeredEntrance(
+                                key: ValueKey('adhkar_tile_${items[index].id}'),
+                                index: rowIndex,
+                                child: CategoryTile(
+                                  data: items[index],
+                                  progressLoader: items[index].showProgress
+                                      ? () => _progressFor(items[index])
+                                      : null,
+                                ),
                               );
                             },
                             childCount: items.length,

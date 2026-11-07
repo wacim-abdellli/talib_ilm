@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/animations/staggered_entrance.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
 import '../../data/models/shamela_models.dart';
@@ -105,16 +106,20 @@ class IlmSearchResultsView extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final book = matchedMutun[index];
-                  return Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      bottom: AppSpace.md,
-                    ),
-                    child: IlmMutnCard(
-                      book: book,
-                      progress: progressById[book.id],
-                      isFavoriteOverride: favoriteBookIds.contains(book.id),
-                      onOpenReader: () => onNavigateToBook(book),
-                      onToggleFavorite: () => onToggleFavorite(book.id),
+                  return StaggeredEntrance(
+                    key: ValueKey('search_mutn_${book.id}'),
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        bottom: AppSpace.md,
+                      ),
+                      child: IlmMutnCard(
+                        book: book,
+                        progress: progressById[book.id],
+                        isFavoriteOverride: favoriteBookIds.contains(book.id),
+                        onOpenReader: () => onNavigateToBook(book),
+                        onToggleFavorite: () => onToggleFavorite(book.id),
+                      ),
                     ),
                   );
                 },
@@ -138,17 +143,21 @@ class IlmSearchResultsView extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final book = matchedShamela[index];
-                  return Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      bottom: AppSpace.md,
-                    ),
-                    child: ShamelaBookCard(
-                      book: book,
-                      isDownloaded: downloadedMap?[book.id] ?? false,
-                      downloadProgress: downloadProgress?[book.id],
-                      onOpen: () => onOpenShamelaReader(book),
-                      onDownload: () => onDownloadBook?.call(book),
-                      onOpenShuruh: onOpenShuruhSheet,
+                  return StaggeredEntrance(
+                    key: ValueKey('search_shamela_${book.id}'),
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        bottom: AppSpace.md,
+                      ),
+                      child: ShamelaBookCard(
+                        book: book,
+                        isDownloaded: downloadedMap?[book.id] ?? false,
+                        downloadProgress: downloadProgress?[book.id],
+                        onOpen: () => onOpenShamelaReader(book),
+                        onDownload: () => onDownloadBook?.call(book),
+                        onOpenShuruh: onOpenShuruhSheet,
+                      ),
                     ),
                   );
                 },

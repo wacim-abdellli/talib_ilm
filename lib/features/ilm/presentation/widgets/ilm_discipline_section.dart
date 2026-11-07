@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/animations/staggered_entrance.dart';
 import '../../data/catalogs/aqidah_catalog.dart';
 import '../../data/catalogs/arabic_catalog.dart';
 import '../../data/catalogs/fiqh_catalog.dart';
@@ -269,11 +270,14 @@ class IlmDisciplineSection {
                               indent: AppSpace.lg,
                               endIndent: 0,
                             ),
-                          IlmBookPreviewRow(
-                            title: books[i].title,
-                            subtitle: _buildSubtitle(books[i]),
-                            accentColor: catColors.fg,
-                            onTap: () => onOpenBook(books[i]),
+                          StaggeredEntrance(
+                            index: i,
+                            child: IlmBookPreviewRow(
+                              title: books[i].title,
+                              subtitle: _buildSubtitle(books[i]),
+                              accentColor: catColors.fg,
+                              onTap: () => onOpenBook(books[i]),
+                            ),
                           ),
                         ],
                         if (books.length > 4) ...[
@@ -480,15 +484,19 @@ class IlmDisciplineSection {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final book = filteredBooks[index];
-                return Padding(
-                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                  child: ShamelaBookCard(
-                    book: book,
-                    isDownloaded: downloadedMap?[book.id] ?? false,
-                    downloadProgress: downloadProgress?[book.id],
-                    onOpen: () => onOpenBook(book),
-                    onDownload: () => onDownloadBook?.call(book),
-                    onOpenShuruh: onOpenShuruh,
+                return StaggeredEntrance(
+                  key: ValueKey('discipline_book_${book.id}'),
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+                    child: ShamelaBookCard(
+                      book: book,
+                      isDownloaded: downloadedMap?[book.id] ?? false,
+                      downloadProgress: downloadProgress?[book.id],
+                      onOpen: () => onOpenBook(book),
+                      onDownload: () => onDownloadBook?.call(book),
+                      onOpenShuruh: onOpenShuruh,
+                    ),
                   ),
                 );
               },

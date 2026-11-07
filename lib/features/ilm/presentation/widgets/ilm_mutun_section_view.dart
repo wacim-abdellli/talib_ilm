@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../shared/animations/staggered_entrance.dart';
 import '../../data/catalogs/mutun_digital_catalog.dart';
 import '../../data/models/book_progress_model.dart';
 import '../../data/models/mutun_models.dart';
@@ -190,36 +191,39 @@ class IlmMutunSectionView {
                               indent: AppSpace.lg,
                               endIndent: 0,
                             ),
-                          Builder(
-                            builder: (context) {
-                              final book = allBooks[i];
-                              final progress = progressById[book.id];
-                              final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
-                              final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
-                                  ? digitalEntry.totalPages
-                                  : (book.totalPages > 0 ? book.totalPages : 1);
-                              final currentPage = progress?.currentPage ?? 0;
-                              final isCompleted = progress?.isCompleted ?? false;
+                          StaggeredEntrance(
+                            index: i,
+                            child: Builder(
+                              builder: (context) {
+                                final book = allBooks[i];
+                                final progress = progressById[book.id];
+                                final digitalEntry = MutunDigitalCatalog.getEntry(book.id);
+                                final totalPages = (digitalEntry != null && digitalEntry.totalPages > 0)
+                                    ? digitalEntry.totalPages
+                                    : (book.totalPages > 0 ? book.totalPages : 1);
+                                final currentPage = progress?.currentPage ?? 0;
+                                final isCompleted = progress?.isCompleted ?? false;
 
-                              String? badgeText;
-                              if (isCompleted) {
-                                badgeText = 'مكتمل';
-                              } else if (currentPage > 0) {
-                                badgeText = 'صفحة $currentPage من $totalPages';
-                              }
+                                String? badgeText;
+                                if (isCompleted) {
+                                  badgeText = 'مكتمل';
+                                } else if (currentPage > 0) {
+                                  badgeText = 'صفحة $currentPage من $totalPages';
+                                }
 
-                              return IlmBookPreviewRow(
-                                title: book.title,
-                                subtitle: _buildMutnSubtitle(book, progress),
-                                author: book.author,
-                                progressBadge: badgeText,
-                                accentColor: palette
-                                    .mutunLevel(book.level)
-                                    .fg,
-                                isCompleted: isCompleted,
-                                onTap: () => onNavigateToBook(book),
-                              );
-                            },
+                                return IlmBookPreviewRow(
+                                  title: book.title,
+                                  subtitle: _buildMutnSubtitle(book, progress),
+                                  author: book.author,
+                                  progressBadge: badgeText,
+                                  accentColor: palette
+                                      .mutunLevel(book.level)
+                                      .fg,
+                                  isCompleted: isCompleted,
+                                  onTap: () => onNavigateToBook(book),
+                                );
+                              },
+                            ),
                           ),
                         ],
                         if (allBooks.length > 4) ...[
@@ -393,14 +397,18 @@ class IlmMutunSectionView {
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final book = filteredMutun[index];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
-                child: IlmMutnCard(
-                  book: book,
-                  progress: progressById[book.id],
-                  isFavoriteOverride: favoriteBookIds.contains(book.id),
-                  onOpenReader: () => onNavigateToBook(book),
-                  onToggleFavorite: () => onToggleFavorite(book.id),
+              return StaggeredEntrance(
+                key: ValueKey('mutn_card_${book.id}'),
+                index: index,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(bottom: AppSpace.md),
+                  child: IlmMutnCard(
+                    book: book,
+                    progress: progressById[book.id],
+                    isFavoriteOverride: favoriteBookIds.contains(book.id),
+                    onOpenReader: () => onNavigateToBook(book),
+                    onToggleFavorite: () => onToggleFavorite(book.id),
+                  ),
                 ),
               );
             },

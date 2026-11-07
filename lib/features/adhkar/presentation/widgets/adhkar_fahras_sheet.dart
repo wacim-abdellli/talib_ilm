@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/animations/staggered_entrance.dart';
 import '../../../../shared/widgets/app_sheet.dart';
 import '../../data/adhkar_models.dart';
 
@@ -308,17 +309,21 @@ class _AdhkarFahrasSheetState extends State<AdhkarFahrasSheet> {
                       final currentCount = _countForItem(origIndex);
                       final targetRepeat = widget.repeatFor(widget.items, origIndex);
 
-                      return _FahrasDhikrTile(
-                        origIndex: origIndex,
-                        item: item,
-                        isDone: isDone,
-                        isCurrent: isCurrent,
-                        currentCount: currentCount,
-                        targetRepeat: targetRepeat,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          Navigator.pop(context, origIndex);
-                        },
+                      return StaggeredEntrance(
+                        key: ValueKey('fahras_$origIndex'),
+                        index: idx,
+                        child: _FahrasDhikrTile(
+                          origIndex: origIndex,
+                          item: item,
+                          isDone: isDone,
+                          isCurrent: isCurrent,
+                          currentCount: currentCount,
+                          targetRepeat: targetRepeat,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.pop(context, origIndex);
+                          },
+                        ),
                       );
                     },
                   ),

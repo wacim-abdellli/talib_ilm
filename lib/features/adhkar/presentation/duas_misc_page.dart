@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/utils/app_share.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../shared/animations/staggered_entrance.dart';
 import '../../../core/models/favorite_item.dart';
 import '../../../core/services/favorites_service.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -183,7 +184,11 @@ class _DuasMiscPageState extends State<DuasMiscPage> {
                               const SizedBox(height: AppSpace.md),
                           itemBuilder: (context, index) {
                             final item = _filteredItems[index];
-                            return _DuaCard(item: item, index: index + 1);
+                            return StaggeredEntrance(
+                              key: ValueKey('dua_${item.id}_$index'),
+                              index: index,
+                              child: _DuaCard(item: item, index: index + 1),
+                            );
                           },
                         ),
                 ),

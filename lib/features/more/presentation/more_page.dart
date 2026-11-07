@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/app.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../shared/animations/staggered_entrance.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../adhkar/presentation/widgets/adhkar_notification_sheet.dart';
 import '../../favorites/presentation/favorites_page.dart';
@@ -287,134 +288,161 @@ class _MorePageState extends State<MorePage> {
                     ),
                     children: [
                       // Group 1: الصلاة والتنبيهات
-                      _buildCategoryHeader(
-                        context,
-                        'الصلاة والتنبيهات',
-                        'إعداد موقعك ومواقيت الصلاة والأذان وتنبيهات الأذكار',
+                      StaggeredEntrance(
+                        index: 0,
+                        child: _buildCategoryHeader(
+                          context,
+                          'الصلاة والتنبيهات',
+                          'إعداد موقعك ومواقيت الصلاة والأذان وتنبيهات الأذكار',
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'تنبيهات الصلاة والأذان',
-                            subtitle:
-                                'اعرض حالة الإشعارات واضبط الأذان والإقامة',
-                            icon: Icons.notifications_active_rounded,
-                            color: palette.gold,
-                            onTap: () => _openPrayerSettings(
-                              context,
-                              initialTabIndex: 1,
+                      StaggeredEntrance(
+                        index: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'تنبيهات الصلاة والأذان',
+                              subtitle:
+                                  'اعرض حالة الإشعارات واضبط الأذان والإقامة',
+                              icon: Icons.notifications_active_rounded,
+                              color: palette.gold,
+                              onTap: () => _openPrayerSettings(
+                                context,
+                                initialTabIndex: 1,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'موقع الصلاة وطريقة الحساب',
-                            subtitle:
-                                'حدّد مدينتك وطريقة حساب مواقيت الصلاة',
-                            icon: Icons.explore_rounded,
-                            color: palette.success,
-                            onTap: () => _openLocationSettings(context),
+                      StaggeredEntrance(
+                        index: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'موقع الصلاة وطريقة الحساب',
+                              subtitle:
+                                  'حدّد مدينتك وطريقة حساب مواقيت الصلاة',
+                              icon: Icons.explore_rounded,
+                              color: palette.success,
+                              onTap: () => _openLocationSettings(context),
+                            ),
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'تنبيهات الأذكار اليومية',
-                            subtitle:
-                                'تذكير بأذكار الصباح، المساء، والنوم في أوقاتها المسنونة',
-                            icon: Icons.notifications_active_rounded,
-                            color: palette.gold,
-                            onTap: () => AdhkarNotificationSheet.show(context),
+                      StaggeredEntrance(
+                        index: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'تنبيهات الأذكار اليومية',
+                              subtitle:
+                                  'تذكير بأذكار الصباح، المساء، والنوم في أوقاتها المسنونة',
+                              icon: Icons.notifications_active_rounded,
+                              color: palette.gold,
+                              onTap: () => AdhkarNotificationSheet.show(context),
+                            ),
                           ),
                         ),
                       ),
 
                       // Group 2: المحتوى والمحفوظات
-                      _buildCategoryHeader(
-                        context,
-                        'المحتوى والمحفوظات',
-                        'العناصر التي حفظتها والتلاوات التي نزّلتها',
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'موسوعة درر السلف والآثار',
-                            subtitle:
-                                'أقوال الصحابة، حكم السلف، وفوائد المحققين (8,650+ أثر)',
-                            icon: Icons.auto_awesome_rounded,
-                            color: palette.gold,
-                            onTap: () => Navigator.push(
-                              context,
-                              buildFadeRoute(
-                                page: const SalafGemsExplorerPage(),
-                              ),
-                            ),
-                          ),
+                      StaggeredEntrance(
+                        index: 4,
+                        child: _buildCategoryHeader(
+                          context,
+                          'المحتوى والمحفوظات',
+                          'العناصر التي حفظتها والتلاوات التي نزّلتها',
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'المفضلة والمحفوظات',
-                            subtitle:
-                                'إشارات القراءة، الأذكار، المتون، والفوائد المحفوظة',
-                            icon: Icons.bookmark_rounded,
-                            color: palette.gold,
-                            onTap: () => Navigator.push(
-                              context,
-                              buildFadeRoute(page: const FavoritesPage()),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'حقيبة المحتوى بدون إنترنت',
-                            subtitle:
-                                'تصفح الكتب التراثية المحملة ومتون طالب العلم دون اتصال',
-                            icon: Icons.download_done_rounded,
-                            color: palette.primary,
-                            onTap: () => OfflineDownloadsHubSheet.show(
-                              context: context,
-                              onOpenShamelaBook: (book) => Navigator.push(
+                      StaggeredEntrance(
+                        index: 5,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'موسوعة درر السلف والآثار',
+                              subtitle:
+                                  'أقوال الصحابة، حكم السلف، وفوائد المحققين (8,650+ أثر)',
+                              icon: Icons.auto_awesome_rounded,
+                              color: palette.gold,
+                              onTap: () => Navigator.push(
                                 context,
                                 buildFadeRoute(
-                                  page: ShamelaReaderPage(book: book),
-                                ),
-                              ),
-                              onOpenMutunBook: (book) => Navigator.push(
-                                context,
-                                buildFadeRoute(
-                                  page: BookViewPage(book: book),
+                                  page: const SalafGemsExplorerPage(),
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'تنزيل تلاوات القرآن',
-                            subtitle:
-                                'إدارة تحميل تلاوات القرآن الكريم والاستماع دون اتصال',
-                            icon: Icons.download_for_offline_rounded,
-                            color: palette.gold,
-                            onTap: () => Navigator.push(
-                              context,
-                              buildFadeRoute(
-                                page: const QuranAudioDownloadsPage(),
+                      StaggeredEntrance(
+                        index: 6,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'المفضلة والمحفوظات',
+                              subtitle:
+                                  'إشارات القراءة، الأذكار، المتون، والفوائد المحفوظة',
+                              icon: Icons.bookmark_rounded,
+                              color: palette.gold,
+                              onTap: () => Navigator.push(
+                                context,
+                                buildFadeRoute(page: const FavoritesPage()),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      StaggeredEntrance(
+                        index: 7,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'حقيبة المحتوى بدون إنترنت',
+                              subtitle:
+                                  'تصفح الكتب التراثية المحملة ومتون طالب العلم دون اتصال',
+                              icon: Icons.download_done_rounded,
+                              color: palette.primary,
+                              onTap: () => OfflineDownloadsHubSheet.show(
+                                context: context,
+                                onOpenShamelaBook: (book) => Navigator.push(
+                                  context,
+                                  buildFadeRoute(
+                                    page: ShamelaReaderPage(book: book),
+                                  ),
+                                ),
+                                onOpenMutunBook: (book) => Navigator.push(
+                                  context,
+                                  buildFadeRoute(
+                                    page: BookViewPage(book: book),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      StaggeredEntrance(
+                        index: 8,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'تنزيل تلاوات القرآن',
+                              subtitle:
+                                  'إدارة تحميل تلاوات القرآن الكريم والاستماع دون اتصال',
+                              icon: Icons.download_for_offline_rounded,
+                              color: palette.gold,
+                              onTap: () => Navigator.push(
+                                context,
+                                buildFadeRoute(
+                                  page: const QuranAudioDownloadsPage(),
+                                ),
                               ),
                             ),
                           ),
@@ -422,41 +450,47 @@ class _MorePageState extends State<MorePage> {
                       ),
 
                       // Group 3: التفضيلات والمظهر
-                      _buildCategoryHeader(
-                        context,
-                        'تفضيلات التطبيق',
-                        'خصّص مظهر التطبيق لراحتك',
+                      StaggeredEntrance(
+                        index: 9,
+                        child: _buildCategoryHeader(
+                          context,
+                          'تفضيلات التطبيق',
+                          'خصّص مظهر التطبيق لراحتك',
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.sm),
-                        child: MoreSectionCard(
-                          section: MoreSection(
-                            title: 'المظهر والسمة',
-                            subtitle:
-                                'تخصيص وضع الرؤية وألوان الواجهة للقراءة المريحة',
-                            icon: themeService.themeIcon,
-                            color: palette.gold,
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpace.sm,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: palette.surfaceMuted,
-                                borderRadius: AppRadius.pillRadius,
-                                border: Border.all(
-                                  color: palette.border,
-                                  width: 1,
+                      StaggeredEntrance(
+                        index: 10,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                          child: MoreSectionCard(
+                            section: MoreSection(
+                              title: 'المظهر والسمة',
+                              subtitle:
+                                  'تخصيص وضع الرؤية وألوان الواجهة للقراءة المريحة',
+                              icon: themeService.themeIcon,
+                              color: palette.gold,
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: palette.surfaceMuted,
+                                  borderRadius: AppRadius.pillRadius,
+                                  border: Border.all(
+                                    color: palette.border,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  themeService.themeDisplayName,
+                                  style: textTheme.captionBold.copyWith(
+                                    color: palette.textMuted,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                themeService.themeDisplayName,
-                                style: textTheme.captionBold.copyWith(
-                                  color: palette.textMuted,
-                                ),
-                              ),
+                              onTap: () => _showThemeSelector(context),
                             ),
-                            onTap: () => _showThemeSelector(context),
                           ),
                         ),
                       ),
@@ -464,93 +498,96 @@ class _MorePageState extends State<MorePage> {
                       const SizedBox(height: AppSpace.lg),
 
                       // App Footer Card
-                      Center(
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpace.xl,
-                            vertical: AppSpace.lg,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.surfaceMuted,
-                            borderRadius: AppRadius.lgRadius,
-                            border: Border.all(
-                              color: palette.border,
+                      StaggeredEntrance(
+                        index: 11,
+                        child: Center(
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.xl,
+                              vertical: AppSpace.lg,
                             ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    palette.logoSymbol,
-                                    width: 22,
-                                    height: 22,
-                                    errorBuilder:
-                                        (context, error, stackTrace) => Icon(
-                                      Icons.mosque_rounded,
-                                      size: AppIcon.sm,
-                                      color: palette.gold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpace.sm),
-                                  Text(
-                                    'طالب علم • الإصدار 2.0.0',
-                                    style: textTheme.captionHeavy.copyWith(
-                                      color: palette.textMuted,
-                                    ),
-                                  ),
-                                ],
+                            decoration: BoxDecoration(
+                              color: palette.surfaceMuted,
+                              borderRadius: AppRadius.lgRadius,
+                              border: Border.all(
+                                color: palette.border,
                               ),
-                              const SizedBox(height: AppSpace.xs),
-                              Text(
-                                '«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الجَنَّةِ»',
-                                style: textTheme.sacred.copyWith(
-                                  color: palette.gold,
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      palette.logoSymbol,
+                                      width: 22,
+                                      height: 22,
+                                      errorBuilder:
+                                          (context, error, stackTrace) => Icon(
+                                        Icons.mosque_rounded,
+                                        size: AppIcon.sm,
+                                        color: palette.gold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpace.sm),
+                                    Text(
+                                      'طالب علم • الإصدار 2.0.0',
+                                      style: textTheme.captionHeavy.copyWith(
+                                        color: palette.textMuted,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: AppSpace.md),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    buildFadeRoute(
-                                      page: const CreditsAndLicensesPage(),
-                                    ),
+                                const SizedBox(height: AppSpace.xs),
+                                Text(
+                                  '«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الجَنَّةِ»',
+                                  style: textTheme.sacred.copyWith(
+                                    color: palette.gold,
                                   ),
-                                  borderRadius: AppRadius.pillRadius,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpace.md,
-                                      vertical: AppSpace.xs,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: AppSpace.md),
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      buildFadeRoute(
+                                        page: const CreditsAndLicensesPage(),
+                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.shield_outlined,
-                                          size: AppIcon.xs,
-                                          color: palette.textMuted,
-                                        ),
-                                        const SizedBox(width: AppSpace.xs),
-                                        Text(
-                                          'بيانات الإسناد ومصادر المحتوى',
-                                          style: textTheme.caption.copyWith(
+                                    borderRadius: AppRadius.pillRadius,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpace.md,
+                                        vertical: AppSpace.xs,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.shield_outlined,
+                                            size: AppIcon.xs,
                                             color: palette.textMuted,
-                                            decoration:
-                                                TextDecoration.underline,
-                                            decorationColor: palette.border,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: AppSpace.xs),
+                                          Text(
+                                            'بيانات الإسناد ومصادر المحتوى',
+                                            style: textTheme.caption.copyWith(
+                                              color: palette.textMuted,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              decorationColor: palette.border,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/animations/staggered_entrance.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../core/utils/arabic_search_utils.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -529,13 +530,17 @@ class _MaktabaShamelaViewState extends State<MaktabaShamelaView> {
               separatorBuilder: (_, index) => const SizedBox(height: AppSpace.sm),
               itemBuilder: (context, index) {
                 final book = books[index];
-                return ShamelaBookCard(
-                  book: book,
-                  isDownloaded: _downloadedMap[book.id] ?? false,
-                  downloadProgress: _downloadProgress[book.id],
-                  onOpen: () => _openBook(book),
-                  onDownload: () => _downloadBook(book),
-                  onOpenShuruh: _openShuruhSheet,
+                return StaggeredEntrance(
+                  key: ValueKey('maktaba_book_${book.id}'),
+                  index: index,
+                  child: ShamelaBookCard(
+                    book: book,
+                    isDownloaded: _downloadedMap[book.id] ?? false,
+                    downloadProgress: _downloadProgress[book.id],
+                    onOpen: () => _openBook(book),
+                    onDownload: () => _downloadBook(book),
+                    onOpenShuruh: _openShuruhSheet,
+                  ),
                 );
               },
             ),

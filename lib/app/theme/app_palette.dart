@@ -1074,6 +1074,15 @@ class AppMotion {
   /// 600ms (extended micro-interaction transition)
   static const Duration deliberate = Duration(milliseconds: 600);
 
+  /// 28ms (stagger delta between consecutive list rows)
+  static const Duration staggerStep = Duration(milliseconds: 28);
+
+  /// 220ms (individual row entrance duration)
+  static const Duration staggerDuration = Duration(milliseconds: 220);
+
+  /// 240ms (maximum stagger delay cap)
+  static const Duration staggerMaxDelay = Duration(milliseconds: 240);
+
   /// 5000ms / 5s (audio player seek forward/backward step)
   static const Duration seekStep = Duration(seconds: 5);
 
