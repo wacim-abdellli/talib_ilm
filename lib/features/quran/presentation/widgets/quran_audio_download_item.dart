@@ -241,7 +241,7 @@ class QuranAudioDownloadItem extends StatelessWidget {
                   borderRadius: AppRadius.pillRadius,
                   child: LinearProgressIndicator(
                     value: progress!.progressFraction,
-                    backgroundColor: palette.surfaceMuted,
+                    backgroundColor: palette.progressTrack,
                     color: progress!.isPaused
                         ? palette.gold
                         : palette.primary,

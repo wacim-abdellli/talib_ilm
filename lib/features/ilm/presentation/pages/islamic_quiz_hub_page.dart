@@ -503,7 +503,7 @@ class _IslamicQuizHubPageState extends State<IslamicQuizHubPage> {
                 borderRadius: AppRadius.pillRadius,
                 child: LinearProgressIndicator(
                   value: progressFraction,
-                  backgroundColor: palette.surfaceMuted,
+                  backgroundColor: palette.progressTrack,
                   color: fanTheme.primary,
                   minHeight: 4,
                 ),

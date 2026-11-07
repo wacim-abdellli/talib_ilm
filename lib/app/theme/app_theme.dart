@@ -216,8 +216,8 @@ class AppTheme {
 
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: palette.primary,
-        linearTrackColor: palette.border,
-        circularTrackColor: palette.border,
+        linearTrackColor: palette.progressTrack,
+        circularTrackColor: palette.progressTrack,
       ),
 
       switchTheme: SwitchThemeData(

@@ -84,6 +84,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color splashBg;
   final Color splashCardBg;
   final Color splashCardBorder;
+  final Color progressTrack;
+  final Color progressTrackBorder;
 
   const AppPalette({
     required this.bg,
@@ -113,6 +115,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.splashBg,
     required this.splashCardBg,
     required this.splashCardBorder,
+    required this.progressTrack,
+    required this.progressTrackBorder,
   });
 
   /// Pure serene white splash screen tokens
@@ -165,6 +169,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     splashBg: Color(0xFFFFFFFF),
     splashCardBg: Color(0xFFFFFBF2),
     splashCardBorder: Color(0xFFE9D8B4),
+    progressTrack: Color(0xFFEBE3D5),
+    progressTrackBorder: Color(0xFF8C7E6A),
   );
 
   /// Dark theme palette — Pure AMOLED Obsidian & Imperial Radiant Gold
@@ -196,6 +202,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     splashBg: Color(0xFF000000),
     splashCardBg: Color(0xFF0F0F0F),
     splashCardBorder: Color(0xFF221A12),
+    progressTrack: Color(0xFF26221D),
+    progressTrackBorder: Color(0xFF787168),
   );
 
   /// Default Mushaf theme mode aligning with palette brightness
@@ -752,6 +760,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? splashBg,
     Color? splashCardBg,
     Color? splashCardBorder,
+    Color? progressTrack,
+    Color? progressTrackBorder,
   }) {
     return AppPalette(
       bg: bg ?? this.bg,
@@ -781,7 +791,25 @@ class AppPalette extends ThemeExtension<AppPalette> {
       splashBg: splashBg ?? this.splashBg,
       splashCardBg: splashCardBg ?? this.splashCardBg,
       splashCardBorder: splashCardBorder ?? this.splashCardBorder,
+      progressTrack: progressTrack ?? this.progressTrack,
+      progressTrackBorder: progressTrackBorder ?? this.progressTrackBorder,
     );
+  }
+
+  /// Track color for progress bars, tinted appropriately with the active color in dark mode
+  Color progressTrackFor([Color? activeColor]) {
+    if (activeColor != null && isDark) {
+      return activeColor.withValues(alpha: 0.18);
+    }
+    return progressTrack;
+  }
+
+  /// Boundary color for progress tracks ensuring distinct visibility across AMOLED backgrounds
+  Color progressTrackBorderFor([Color? activeColor]) {
+    if (activeColor != null && isDark) {
+      return activeColor.withValues(alpha: 0.38);
+    }
+    return progressTrackBorder;
   }
 
   @override
@@ -815,6 +843,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       splashBg: Color.lerp(splashBg, other.splashBg, t)!,
       splashCardBg: Color.lerp(splashCardBg, other.splashCardBg, t)!,
       splashCardBorder: Color.lerp(splashCardBorder, other.splashCardBorder, t)!,
+      progressTrack: Color.lerp(progressTrack, other.progressTrack, t)!,
+      progressTrackBorder: Color.lerp(progressTrackBorder, other.progressTrackBorder, t)!,
     );
   }
 }

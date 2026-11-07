@@ -116,7 +116,7 @@ class QuizHeroStatsBanner extends StatelessWidget {
             borderRadius: AppRadius.pillRadius,
             child: LinearProgressIndicator(
               value: masteryProgress,
-              backgroundColor: palette.surfaceMuted,
+              backgroundColor: palette.progressTrack,
               color: palette.gold,
               minHeight: 4,
             ),

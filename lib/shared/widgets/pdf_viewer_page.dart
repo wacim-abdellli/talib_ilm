@@ -285,7 +285,7 @@ class PdfViewerPageState extends State<PdfViewerPage> {
           ),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: palette.border,
+            backgroundColor: palette.progressTrack,
             valueColor: AlwaysStoppedAnimation<Color>(
               palette.primary,
             ),

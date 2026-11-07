@@ -285,7 +285,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                   builder: (context, value, _) {
                     return LinearProgressIndicator(
                       value: value,
-                      backgroundColor: palette.surfaceMuted,
+                      backgroundColor: palette.progressTrack,
                       valueColor: AlwaysStoppedAnimation<Color>(palette.gold),
                       minHeight: AppSpace.xs,
                     );

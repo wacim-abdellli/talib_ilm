@@ -214,7 +214,7 @@ class _AdhkarFahrasSheetState extends State<AdhkarFahrasSheet> {
                     child: LinearProgressIndicator(
                       value: progressRatio,
                       minHeight: 4,
-                      backgroundColor: palette.border,
+                      backgroundColor: palette.progressTrack,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         completedCount == totalItems && totalItems > 0
                             ? palette.success

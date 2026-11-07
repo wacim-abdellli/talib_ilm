@@ -168,7 +168,7 @@ class IlmReadingTrackerInProgressTab extends StatelessWidget {
                       height: 6,
                       child: LinearProgressIndicator(
                         value: ratio,
-                        backgroundColor: palette.surfaceMuted,
+                        backgroundColor: palette.progressTrack,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           palette.primary,
                         ),

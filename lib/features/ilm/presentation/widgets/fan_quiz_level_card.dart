@@ -204,7 +204,7 @@ class FanQuizLevelCard extends StatelessWidget {
                         borderRadius: AppRadius.pillRadius,
                         child: LinearProgressIndicator(
                           value: (activeSession!.currentIndex + 1) / level.totalQuestions,
-                          backgroundColor: palette.surfaceMuted,
+                          backgroundColor: palette.progressTrack,
                           color: fanTheme.primary,
                           minHeight: 4,
                         ),

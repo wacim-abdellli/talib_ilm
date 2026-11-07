@@ -271,7 +271,7 @@ class _HomeDailyDhikrCardState extends State<HomeDailyDhikrCard> {
                   child: LinearProgressIndicator(
                     value: progressRatio,
                     minHeight: 3,
-                    backgroundColor: palette.surfaceMuted,
+                    backgroundColor: palette.progressTrack,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       isDone ? palette.gold : palette.primary,
                     ),

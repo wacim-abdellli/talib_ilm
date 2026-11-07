@@ -400,7 +400,7 @@ class _AdhkarSessionPageState extends State<AdhkarSessionPage> {
                       child: LinearProgressIndicator(
                         value: progressRatio,
                         minHeight: 3,
-                        backgroundColor: palette.surfaceMuted,
+                        backgroundColor: palette.progressTrack,
                         valueColor: AlwaysStoppedAnimation<Color>(palette.gold),
                       ),
                     ),

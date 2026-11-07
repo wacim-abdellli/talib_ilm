@@ -274,7 +274,7 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
             borderRadius: AppRadius.pillRadius,
             child: LinearProgressIndicator(
               value: disciplineProgress,
-              backgroundColor: palette.surfaceMuted,
+              backgroundColor: palette.progressTrack,
               color: fanTheme.primary,
               minHeight: 4,
             ),

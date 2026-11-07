@@ -310,7 +310,7 @@ class _BookAudioMiniPlayerState extends State<BookAudioMiniPlayer>
           height: 2.5,
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: palette.border,
+            backgroundColor: palette.progressTrack,
             valueColor: AlwaysStoppedAnimation<Color>(palette.gold),
           ),
         );
