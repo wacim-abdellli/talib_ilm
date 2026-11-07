@@ -1,3 +1,18 @@
+## UI & Search Polish, Authentic Learning Streak Sync & Modern Mobile Release Builds (7 November 2026)
+- **Branch**: `main` (commit `b08e823` pushed)
+- **Changes Implemented**:
+  - **Search Bar Polish**: Removed ugly yellow/gold inner border box and duplicate clear button in `AdhkarHeader`. Applied direct pill `OutlineInputBorder` on `TextField` and cleanly hidden focused border box in embedded search sheets (`AdhkarFahrasSheet`, `SalafGemsExplorerPage`, `HadithExplorerPage`, `MaktabaShamelaView`).
+  - **Authentic Streak & Learning Minutes Sync**: Removed hardcoded `streak = 1` fallback; synchronized authentic streak and study minutes app-wide via `ReadingStatsService.statsUpdateNotifier` across `AdhkarPage`, `MorePage`, and `QuranPage`. Added learning session tracking to `AdhkarSessionPage` and `BookViewPage`.
+  - **Modern Mobile Release Artifacts**:
+    - **Android**: Generated signed release APK for modern 64-bit phones: `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (139.2 MB) alongside `app-armeabi-v7a-release.apk` (139.6 MB) and `app-x86_64-release.apk` (140.8 MB).
+    - **iOS**: Push to `main` triggered GitHub Actions workflow `.github/workflows/build_ios.yml` on macOS runner to generate `talib-ilm-ios-unsigned-ipa` (`talib_ilm_ios.ipa`).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test --no-pub`: 54/54 tests passed.
+  - `flutter build apk --release --split-per-abi`: Succeeded (arm64-v8a, armeabi-v7a, x86_64).
+- **Status**: Complete & Verified.
+
 ## Feature & Question Bank Audit — Authentic 529+ Quiz Engine & Stats Sync (3 November 2026)
 - **Branch**: `main`
 - **Root Cause & Fixes Identified**:
