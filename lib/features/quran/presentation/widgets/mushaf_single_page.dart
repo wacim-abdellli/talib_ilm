@@ -50,6 +50,8 @@ class MushafSinglePage extends StatefulWidget {
   final int? lastReadAyah;
   final Set<String>? bookmarkedAyahs;
   final void Function(int surah, int ayah)? onAyahTap;
+  final void Function(int surah, int ayah, int wordIndex, String word)?
+      onWordTap;
   final void Function(int surah, int ayah)? onAyahLongPress;
   final VoidCallback? onToggleOverlays;
 
@@ -65,6 +67,7 @@ class MushafSinglePage extends StatefulWidget {
     this.lastReadAyah,
     this.bookmarkedAyahs,
     this.onAyahTap,
+    this.onWordTap,
     this.onAyahLongPress,
     this.onToggleOverlays,
   });
@@ -377,7 +380,8 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
         lineOffsets: wordOffsets,
         wordHighlightIndex: WordHighlightIndex.empty,
         bookmarkIndex: bookmarkIndex,
-        onWordTap: (surah, ayah, wordIdx, word) => _openAyah(surah, ayah),
+        onWordTap: widget.onWordTap ??
+            (surah, ayah, _, _) => _openAyah(surah, ayah),
         onLongPress: (surah, ayah, details) => _openAyahLongPress(surah, ayah),
         surahHeaderBuilder: (context, surah) => MushafSurahBanner(
           surahNumber: surah,

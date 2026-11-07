@@ -19,6 +19,8 @@ import 'ayah_action_menu_sheet.dart';
 import 'mushaf_reader_overlays.dart';
 import 'mushaf_settings_sheet.dart';
 import 'mushaf_single_page.dart';
+import 'quran_word_details_sheet.dart';
+import 'ayah_details_sheet.dart';
 
 /// Authentic King Fahd Complex 604-Page Medina Mushaf Reader
 ///
@@ -347,6 +349,31 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     }
   }
 
+  Future<void> _handleWordTap(
+    int surah,
+    int ayah,
+    int wordIndex,
+    String word,
+  ) async {
+    HapticFeedback.selectionClick();
+    await QuranWordDetailsSheet.show(
+      context,
+      surahNumber: surah,
+      ayahNumber: ayah,
+      wordIndex: wordIndex,
+      tappedWord: word,
+      onOpenVerseStudy: () async {
+        if (!mounted) return;
+        await AyahDetailsSheet.show(
+          context,
+          surahNumber: surah,
+          ayahNumber: ayah,
+          initialTabIndex: 1,
+        );
+      },
+    );
+  }
+
   Color _getBackgroundColor() => MushafColors.bgFor(_themeMode);
 
   @override
@@ -442,6 +469,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
                   lastReadAyah: _lastReadAyah,
                   bookmarkedAyahs: _bookmarkedAyahs,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
+                  onWordTap: _handleWordTap,
                   onAyahLongPress: _handleAyahLongPress,
                   onToggleOverlays: _toggleOverlays,
                 ),
