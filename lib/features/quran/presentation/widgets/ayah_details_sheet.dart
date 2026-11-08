@@ -260,15 +260,6 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final surahName = quran.getSurahNameArabic(widget.surahNumber);
-    final juzNum = quran.getJuzNumber(widget.surahNumber, widget.ayahNumber);
-    final pageNum = quran.getPageNumber(widget.surahNumber, widget.ayahNumber);
-    final verseText = quran.getVerse(
-      widget.surahNumber,
-      widget.ayahNumber,
-      verseEndSymbol: true,
-    );
-
     return Container(
       padding: const EdgeInsetsDirectional.only(
         top: AppSpace.md,
@@ -309,18 +300,37 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'سورة $surahName • الآية ${widget.ayahNumber}',
-                        style: textTheme.titleSmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'الجزء $juzNum • الصفحة $pageNum',
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
+                      AnimatedBuilder(
+                        animation: Listenable.merge([
+                          _audioService.activeSurahNotifier,
+                          _audioService.activeAyahNotifier,
+                        ]),
+                        builder: (context, _) {
+                          final playingSurah =
+                              _audioService.activeSurahNotifier.value;
+                          final playingAyah =
+                              _audioService.activeAyahNotifier.value;
+                          final syncSurah = playingSurah ?? widget.surahNumber;
+                          final syncAyah = playingAyah ?? widget.ayahNumber;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'سورة ${quran.getSurahNameArabic(syncSurah)} • الآية $syncAyah',
+                                style: textTheme.titleSmall.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'الجزء ${quran.getJuzNumber(syncSurah, syncAyah)} • الصفحة ${quran.getPageNumber(syncSurah, syncAyah)}',
+                                style: textTheme.caption.copyWith(
+                                  color: palette.textMuted,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -352,34 +362,56 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
             padding: const EdgeInsetsDirectional.symmetric(
               horizontal: AppSpace.lg,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 110),
-              child: AppCard(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.sm,
-                ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text.rich(
-                      TextSpan(
-                        children: TajweedService.buildVerseSpans(
-                          plainUthmani: verseText,
-                          quranComMarkup: _tajweedMarkup,
-                          baseStyle: textTheme.sacred.copyWith(
-                            color: palette.text,
-                            height: 1.6,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([
+                _audioService.activeSurahNotifier,
+                _audioService.activeAyahNotifier,
+              ]),
+              builder: (context, _) {
+                final syncSurah =
+                    _audioService.activeSurahNotifier.value ??
+                    widget.surahNumber;
+                final syncAyah =
+                    _audioService.activeAyahNotifier.value ?? widget.ayahNumber;
+                final syncVerse = quran.getVerse(
+                  syncSurah,
+                  syncAyah,
+                  verseEndSymbol: true,
+                );
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 110),
+                  child: AppCard(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text.rich(
+                          TextSpan(
+                            children: TajweedService.buildVerseSpans(
+                              plainUthmani: syncVerse,
+                              quranComMarkup:
+                                  syncSurah == widget.surahNumber &&
+                                      syncAyah == widget.ayahNumber
+                                  ? _tajweedMarkup
+                                  : null,
+                              baseStyle: textTheme.sacred.copyWith(
+                                color: palette.text,
+                                height: 1.6,
+                              ),
+                              isTajweedEnabled: true,
+                            ),
                           ),
-                          isTajweedEnabled: true,
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
 
@@ -428,7 +460,10 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                     text: 'المتشابهات',
                   ),
                   Tab(
-                    icon: Icon(Icons.pause_circle_outline_rounded, size: AppIcon.sm),
+                    icon: Icon(
+                      Icons.pause_circle_outline_rounded,
+                      size: AppIcon.sm,
+                    ),
                     text: 'أحكام الوقف',
                   ),
                   Tab(

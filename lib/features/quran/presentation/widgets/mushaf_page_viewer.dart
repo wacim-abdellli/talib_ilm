@@ -99,14 +99,16 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     } else if (widget.initialSurah != null) {
       _currentSurah = widget.initialSurah!.clamp(1, 114);
       _currentAyah = widget.initialAyah ?? 1;
-      startPage = quran.getPageNumber(_currentSurah, _currentAyah).clamp(1, 604);
+      startPage = quran
+          .getPageNumber(_currentSurah, _currentAyah)
+          .clamp(1, 604);
     }
 
     _currentPage = startPage;
     _trackedPage = startPage;
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    _isAppResumed = lifecycleState == null ||
-        lifecycleState == AppLifecycleState.resumed;
+    _isAppResumed =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
     if (_isAppResumed) _foregroundStartedAt = DateTime.now();
     _pageController = PageController(initialPage: _currentPage - 1);
     _positionNotifier = ValueNotifier(
@@ -159,7 +161,8 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     _saveLastReadDebounceTimer?.cancel();
     _preloadDebounceTimer?.cancel();
 
-    final surahToSave = (_lastReadPage == _currentPage && _lastReadSurah != null)
+    final surahToSave =
+        (_lastReadPage == _currentPage && _lastReadSurah != null)
         ? _lastReadSurah!
         : _currentSurah;
     final ayahToSave = (_lastReadPage == _currentPage && _lastReadAyah != null)
@@ -183,16 +186,8 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   void _scheduleSaveLastRead(int surah, int ayah, int page) {
     _saveLastReadDebounceTimer?.cancel();
     _saveLastReadDebounceTimer = Timer(AppMotion.toast, () {
-      BookmarkService.saveLastRead(
-        surah: surah,
-        ayah: ayah,
-        page: page,
-      );
-      ReadingHistoryService.recordReading(
-        surah: surah,
-        ayah: ayah,
-        page: page,
-      );
+      BookmarkService.saveLastRead(surah: surah, ayah: ayah, page: page);
+      ReadingHistoryService.recordReading(surah: surah, ayah: ayah, page: page);
     });
   }
 
@@ -404,8 +399,12 @@ class _MushafPageViewerState extends State<MushafPageViewer>
           _saveSettings();
         },
         onReciterChanged: (r) {
-          unawaited(_audioService.switchReciter(r));
-          unawaited(QuranReaderPreferences.saveReciter(r));
+          unawaited(() async {
+            await _audioService.switchReciter(r);
+            await QuranReaderPreferences.saveReciter(
+              _audioService.selectedReciter,
+            );
+          }());
         },
         onTafsirChanged: (scholar) {
           setState(() => _defaultTafsir = scholar);
@@ -491,9 +490,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
         child: Stack(
           children: [
             // Pure Authentic Medina Mushaf Page View
-            Positioned.fill(
-              child: _buildMushafPageMode(palette),
-            ),
+            Positioned.fill(child: _buildMushafPageMode(palette)),
 
             // Top Bar Overlay
             AnimatedPositioned(
@@ -548,7 +545,9 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       valueListenable: _audioService.activeAyahNotifier,
       builder: (context, activeAyah, _) {
         final activeSurah = _audioService.activeSurahNotifier.value;
-        final effectiveSurah = activeAyah != null ? activeSurah : _selectedSurah;
+        final effectiveSurah = activeAyah != null
+            ? activeSurah
+            : _selectedSurah;
         final effectiveAyah = activeAyah ?? _selectedAyah;
 
         return Directionality(

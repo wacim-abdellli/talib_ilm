@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,7 +16,7 @@ class QuranWordAnalysisService {
   QuranWordAnalysisService._internal();
 
   static const String _baseUrl = 'https://web.wahy.net/api';
-  static const String _prefsPrefix = 'quran_word_analysis_v1';
+  static const String _prefsPrefix = 'quran_word_analysis_v2';
   static const String _prefsTokensPrefix = 'quran_page_tokens_v1';
 
   final Map<String, List<QuranWordAnalysis>> _ramCache = {};
@@ -173,11 +174,35 @@ class QuranWordAnalysisService {
     return extracted;
   }
 
+  static final RegExp _waqfMarksAndSymbolsRegex = RegExp(
+    r'[\u06D6-\u06DC\u06DE\u06DF\u06E9\u08D3-\u08E1\uFD3E\uFD3F۩۞ۖۗۘۙۚۛۜ\(\)\[\]\{\}0-9\u0660-\u0669]+',
+  );
+  static final RegExp _wordSplitRegex = RegExp(r'\s+');
+
   List<String> _extractWordsFromAyah(int surah, int ayah) {
+    try {
+      final pages = QuranRepository.instance.pages;
+      for (final p in pages) {
+        for (final a in p.ayahs) {
+          if (a.surahNumber == surah && a.ayahNumber == ayah) {
+            final words = a.ayah
+                .replaceAll('\n', ' ')
+                .trim()
+                .split(_wordSplitRegex)
+                .map((w) => w.replaceAll(_waqfMarksAndSymbolsRegex, '').trim())
+                .where((w) => w.isNotEmpty)
+                .toList();
+            if (words.isNotEmpty) return words;
+          }
+        }
+      }
+    } catch (_) {}
+
     final rawText = quran.getVerse(surah, ayah, verseEndSymbol: false);
     return rawText
-        .split(RegExp(r'\s+'))
-        .where((w) => w.trim().isNotEmpty)
+        .split(_wordSplitRegex)
+        .map((w) => w.replaceAll(_waqfMarksAndSymbolsRegex, '').trim())
+        .where((w) => w.isNotEmpty)
         .toList();
   }
 

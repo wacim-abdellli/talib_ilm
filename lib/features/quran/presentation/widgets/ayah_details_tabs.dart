@@ -48,7 +48,15 @@ class AyahAudioTabView extends StatelessWidget {
         final hasActivePlayback = activeSurah != null && activeAyah != null;
         final isPlaying = audioService.isPlayingNotifier.value;
         final isLoading = audioService.isLoadingNotifier.value;
-        final reciter = audioService.selectedReciter;
+        final selectedReciter = audioService.selectedReciter;
+        // This is the ayah player, so keep its selector limited to reciters
+        // with per-ayah audio. Surah-only files always start at ayah 1.
+        final verseReciters = QuranAudioService.reciters
+            .where((item) => !item.isSurahBased)
+            .toList(growable: false);
+        final reciter = selectedReciter.isSurahBased
+            ? verseReciters.first
+            : selectedReciter;
         final repeatMode = audioService.repeatModeNotifier.value;
         final error = audioService.errorNotifier.value;
 
@@ -121,7 +129,7 @@ class AyahAudioTabView extends StatelessWidget {
                           dropdownColor: palette.surfaceRaised,
                           underline: const SizedBox.shrink(),
                           iconEnabledColor: palette.primary,
-                          items: QuranAudioService.reciters.map((item) {
+                          items: verseReciters.map((item) {
                             return DropdownMenuItem<QuranReciter>(
                               value: item,
                               child: Text(
@@ -139,10 +147,10 @@ class AyahAudioTabView extends StatelessWidget {
                               : (value) async {
                                   if (value == null) return;
                                   HapticFeedback.selectionClick();
-                                  await QuranReaderPreferences.saveReciter(
-                                    value,
-                                  );
                                   await audioService.switchReciter(value);
+                                  await QuranReaderPreferences.saveReciter(
+                                    audioService.selectedReciter,
+                                  );
                                 },
                         ),
                       ),

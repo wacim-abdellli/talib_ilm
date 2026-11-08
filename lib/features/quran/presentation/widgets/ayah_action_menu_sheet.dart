@@ -216,6 +216,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     HapticFeedback.mediumImpact();
     Navigator.of(context).pop();
     widget.audioService.setRepeatMode(AudioRepeatMode.none);
+    final switchedToAyahReciter =
+        widget.audioService.selectedReciter.isSurahBased;
     widget.audioService.playVerse(
       widget.surahNumber,
       widget.ayahNumber,
@@ -224,7 +226,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.info(
       context,
-      'تلاوة الآية ${widget.ayahNumber} من سورة $surahName',
+      switchedToAyahReciter
+          ? 'تعذر بدء التلاوة من منتصف السورة بهذا القارئ؛ تم اختيار مشاري العفاسي لتلاوة الآية ${widget.ayahNumber} فقط من سورة $surahName'
+          : 'تلاوة الآية ${widget.ayahNumber} فقط من سورة $surahName',
     );
   }
 
@@ -484,8 +488,12 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           icon: _isBookmarked
                               ? Icons.bookmark_added_rounded
                               : Icons.bookmark_add_outlined,
-                          title: _isBookmarked ? 'محفوظة في الفواصل' : 'حفظ في الفواصل',
-                          subtitle: _isBookmarked ? 'انقر لإلغاء الحفظ' : 'إضافة إلى المحفوظات',
+                          title: _isBookmarked
+                              ? 'محفوظة في الفواصل'
+                              : 'حفظ في الفواصل',
+                          subtitle: _isBookmarked
+                              ? 'انقر لإلغاء الحفظ'
+                              : 'إضافة إلى المحفوظات',
                           color: _isBookmarked ? palette.gold : palette.text,
                           onTap: _toggleBookmark,
                         ),
@@ -502,7 +510,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           icon: _isLastRead
                               ? Icons.bookmark_remove_rounded
                               : Icons.bookmark_border_rounded,
-                          title: _isLastRead ? 'موضع القراءة الحالي' : 'تعيين كموضع قراءة',
+                          title: _isLastRead
+                              ? 'موضع القراءة الحالي'
+                              : 'تعيين كموضع قراءة',
                           subtitle: _isLastRead
                               ? 'إزالة الموضع'
                               : 'حفظ كآخر موضع توقفت عنده',

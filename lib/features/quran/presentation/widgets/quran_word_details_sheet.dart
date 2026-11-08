@@ -75,7 +75,17 @@ class _QuranWordDetailsSheetState extends State<QuranWordDetailsSheet> {
   late Future<List<QuranWordAnalysis>> _analysesFuture;
   late Future<List<WordMeaning>> _meaningsFuture;
   late int _selectedWordIndex;
+  bool _userHasNavigated = false;
   WordAnalysisTier _selectedTier = WordAnalysisTier.meaning;
+
+  static final RegExp _uthmaniDiacriticsAndSymbols = RegExp(
+    r'[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u08D3-\u08FF\uFD3E\uFD3F۩۞ۖۗۘۙۚۛۜ\s]+',
+  );
+
+  static String _normalizeWord(String word) {
+    final stripped = word.replaceAll(_uthmaniDiacriticsAndSymbols, '');
+    return ArabicSearchUtils.normalize(stripped);
+  }
 
   @override
   void initState() {
@@ -96,23 +106,42 @@ class _QuranWordDetailsSheetState extends State<QuranWordDetailsSheet> {
   }
 
   int? _resolveAnalysisIndex(List<QuranWordAnalysis> analyses) {
+    if (analyses.isEmpty) return null;
+
+    if (_userHasNavigated) {
+      return _selectedWordIndex.clamp(0, analyses.length - 1);
+    }
+
+    final normalizedTapped = _normalizeWord(widget.tappedWord);
+
+    // 1. Check if the initial wordIndex aligns with tappedWord
+    if (_selectedWordIndex >= 0 && _selectedWordIndex < analyses.length) {
+      if (normalizedTapped.isEmpty ||
+          _normalizeWord(analyses[_selectedWordIndex].word) == normalizedTapped) {
+        return _selectedWordIndex;
+      }
+    }
+
+    // 2. Search for exact normalized match in analyses
+    if (normalizedTapped.isNotEmpty) {
+      for (var i = 0; i < analyses.length; i++) {
+        if (_normalizeWord(analyses[i].word) == normalizedTapped) {
+          return i;
+        }
+      }
+    }
+
+    // 3. Fallback to valid _selectedWordIndex or 0
     if (_selectedWordIndex >= 0 && _selectedWordIndex < analyses.length) {
       return _selectedWordIndex;
     }
-
-    final normalizedTapped = ArabicSearchUtils.normalize(widget.tappedWord);
-    for (var i = 0; i < analyses.length; i++) {
-      if (ArabicSearchUtils.normalize(analyses[i].word) == normalizedTapped) {
-        return i;
-      }
-    }
-    return analyses.isNotEmpty ? 0 : null;
+    return 0;
   }
 
   WordMeaning? _findGloss(List<WordMeaning> meanings, String word) {
-    final norm = ArabicSearchUtils.normalize(word);
+    final norm = _normalizeWord(word);
     for (final m in meanings) {
-      if (ArabicSearchUtils.normalize(m.word) == norm) {
+      if (_normalizeWord(m.word) == norm) {
         return m;
       }
     }
@@ -336,36 +365,40 @@ class _QuranWordDetailsSheetState extends State<QuranWordDetailsSheet> {
 
                     const SizedBox(height: AppSpace.sm),
 
-                    // 4. Previous / Next Word Navigation Steppers
+                    // 4. Next / Previous Word Navigation Steppers
                     Row(
                       children: [
-                        Expanded(
-                          child: TextButton.icon(
-                            onPressed: currentIndex != null && currentIndex > 0
-                                ? () {
-                                    HapticFeedback.selectionClick();
-                                    setState(
-                                      () => _selectedWordIndex = currentIndex - 1,
-                                    );
-                                  }
-                                : null,
-                            icon: const Icon(Icons.skip_previous_rounded),
-                            label: const Text('الكلمة السابقة'),
-                          ),
-                        ),
+                        // Next Word (First child in RTL - right side)
                         Expanded(
                           child: TextButton.icon(
                             onPressed: currentIndex != null &&
                                     currentIndex < analyses.length - 1
                                 ? () {
                                     HapticFeedback.selectionClick();
-                                    setState(
-                                      () => _selectedWordIndex = currentIndex + 1,
-                                    );
+                                    setState(() {
+                                      _userHasNavigated = true;
+                                      _selectedWordIndex = currentIndex + 1;
+                                    });
                                   }
                                 : null,
-                            icon: const Icon(Icons.skip_next_rounded),
+                            icon: const Icon(Icons.arrow_back_rounded),
                             label: const Text('الكلمة التالية'),
+                          ),
+                        ),
+                        // Previous Word (Second child in RTL - left side)
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: currentIndex != null && currentIndex > 0
+                                ? () {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _userHasNavigated = true;
+                                      _selectedWordIndex = currentIndex - 1;
+                                    });
+                                  }
+                                : null,
+                            icon: const Icon(Icons.arrow_forward_rounded),
+                            label: const Text('الكلمة السابقة'),
                           ),
                         ),
                       ],

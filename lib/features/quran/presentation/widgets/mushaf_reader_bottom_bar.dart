@@ -296,7 +296,9 @@ class MushafReaderBottomBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${getVocalizedSurahName(surah, fallback: playingSurahName)} • آية $ayah',
+            isFullSurah
+                ? 'سورة ${getVocalizedSurahName(surah, fallback: playingSurahName)} كاملة'
+                : '${getVocalizedSurahName(surah, fallback: playingSurahName)} • الآية $ayah',
             style: textTheme.bodySmall.copyWith(
               color: textColor,
               fontWeight: FontWeight.bold,
@@ -305,7 +307,7 @@ class MushafReaderBottomBar extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            audioService.selectedReciter.name,
+            audioService.activeReciter.name,
             style: textTheme.caption.copyWith(color: textMutedColor),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -335,11 +337,11 @@ class MushafReaderBottomBar extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  speedControl,
+                  repeatControl,
                   previousControl,
                   playControl,
                   nextControl,
-                  repeatControl,
-                  speedControl,
                 ],
               ),
             ],

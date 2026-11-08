@@ -138,7 +138,7 @@ class IlmHeader extends StatelessWidget {
                     border: Border.all(
                       color: palette.border.withValues(alpha: 0.8),
                       width: 1,
-                    ),
+                    ), 
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

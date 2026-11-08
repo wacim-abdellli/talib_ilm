@@ -130,6 +130,21 @@ void main() {
       expect(list.first.word, isNotEmpty);
       expect(list.first.irab, isNotEmpty);
     });
+
+    test('3:6 extracts exactly 13 words without waqf mark shift', () async {
+      final service = QuranWordAnalysisService();
+      final mockClient = MockClient((request) async {
+        return http.Response('Network Error', 500);
+      });
+
+      service.setHttpClient(mockClient);
+      final list = await service.getAyahWordAnalyses(3, 6);
+      expect(list.length, 13);
+      expect(list[11].word, contains('عَزِيز'));
+      expect(list[11].wordIndexInAyah, 12);
+      expect(list[12].word, contains('حَكِيم'));
+      expect(list[12].wordIndexInAyah, 13);
+    });
   });
 }
 
