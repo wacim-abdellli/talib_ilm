@@ -474,11 +474,11 @@ class QuranAudioPlayerBar extends StatelessWidget {
                             : null,
                       ),
 
-                      // Rewind 10 Seconds (Right of Play: <-10>)
+                      // Rewind 10 Seconds (Right of Play: points right against RTL timeline)
                       IconButton(
                         tooltip: 'تراجع 10 ثوانٍ',
                         icon: Icon(
-                          Icons.replay_10_rounded,
+                          Icons.forward_10_rounded,
                           color: palette.text,
                         ),
                         onPressed: () {
@@ -527,11 +527,11 @@ class QuranAudioPlayerBar extends StatelessWidget {
                         ),
                       ),
 
-                      // Forward 10 Seconds (Left of Play: <+10>)
+                      // Forward 10 Seconds (Left of Play: points left with RTL timeline)
                       IconButton(
                         tooltip: 'تقديم 10 ثوانٍ',
                         icon: Icon(
-                          Icons.forward_10_rounded,
+                          Icons.replay_10_rounded,
                           color: palette.text,
                         ),
                         onPressed: () {

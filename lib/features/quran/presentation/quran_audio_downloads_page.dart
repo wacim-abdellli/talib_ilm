@@ -9,7 +9,6 @@ import '../data/services/quran_audio_downloader.dart';
 import '../data/services/quran_audio_service.dart';
 import 'widgets/downloaded_reciters_list_view.dart';
 import 'widgets/quran_audio_download_item.dart';
-import 'widgets/quran_audio_player_bar.dart';
 import 'widgets/quran_audio_storage_header.dart';
 
 /// Screen for managing offline Holy Quran audio recitations, tracking
@@ -570,10 +569,6 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                             );
                           },
                         ),
-            ),
-            QuranAudioPlayerBar(
-              audioService: _audioService,
-              onClose: () => setState(() {}),
             ),
           ],
         ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../data/services/quran_audio_downloader.dart';
-import '../../data/services/quran_audio_service.dart';
+import '../../data/services/quran_audio_service.dart' show QuranReciter;
 import 'surah_card.dart';
 
 /// Item card for a Holy Quran surah in the Audio Downloads screen.
@@ -42,118 +41,58 @@ class QuranAudioDownloadItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
-    final audioService = QuranAudioService();
 
     final estMb = QuranAudioDownloader.estimateSurahSizeMb(
       surah,
       reciter: reciter,
     );
     final estFormatted = estMb < 0.1 ? '< 0.1' : estMb.toStringAsFixed(1);
+    final isReadyOffline = isDownloaded || progress?.isCompleted == true;
 
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        audioService.activeSurahNotifier,
-        audioService.isPlayingNotifier,
-      ]),
-      builder: (context, _) {
-        final isCurrentSurah = audioService.activeSurahNotifier.value == surah;
-        final isAudioPlaying = isCurrentSurah && audioService.isPlayingNotifier.value;
-        final isReadyOffline = isDownloaded || progress?.isCompleted == true;
-
-        return AppCard(
-          padding: const EdgeInsetsDirectional.all(AppSpace.md),
-          color: isAudioPlaying
-              ? palette.primarySoft.withValues(alpha: 0.12)
-              : palette.surface,
-          borderRadius: AppRadius.lgRadius,
-          border: Border.all(
-            color: isAudioPlaying
-                ? palette.primary
-                : isReadyOffline
-                    ? palette.gold.withValues(alpha: 0.35)
-                    : palette.border,
-            width: isAudioPlaying ? 1.5 : 1.0,
-          ),
-          onTap: isReadyOffline
-              ? () {
-                  HapticFeedback.lightImpact();
-                  if (isAudioPlaying) {
-                    audioService.pause();
-                  } else {
-                    audioService.playFullSurah(
-                      surah: surah,
-                      reciter: reciter,
-                    );
-                  }
-                }
-              : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppCard(
+      padding: const EdgeInsetsDirectional.all(AppSpace.md),
+      color: palette.surface,
+      borderRadius: AppRadius.lgRadius,
+      border: Border.all(
+        color: isReadyOffline
+            ? palette.gold.withValues(alpha: 0.35)
+            : palette.border,
+        width: 1.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  // Authentic Islamic medallion showing Surah number
-                  SurahNumberMedallion(
-                    number: surah,
-                    size: AppIcon.hero,
-                  ),
+              // Authentic Islamic medallion showing Surah number
+              SurahNumberMedallion(
+                number: surah,
+                size: AppIcon.hero,
+              ),
 
-                  const SizedBox(width: AppSpace.md),
+              const SizedBox(width: AppSpace.md),
 
-                  // Surah Name & Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+              // Surah Name & Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'سورة $surahName',
-                                style: textTheme.titleSmall.copyWith(
-                                  color: isAudioPlaying
-                                      ? palette.primary
-                                      : palette.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                        Flexible(
+                          child: Text(
+                            'سورة $surahName',
+                            style: textTheme.titleSmall.copyWith(
+                              color: palette.text,
+                              fontWeight: FontWeight.bold,
                             ),
-                            if (isAudioPlaying) ...[
-                              const SizedBox(width: AppSpace.xs),
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.xs,
-                                  vertical: AppSpace.xxs,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: palette.primarySoft,
-                                  borderRadius: AppRadius.pillRadius,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.graphic_eq_rounded,
-                                      size: AppIcon.sm,
-                                      color: palette.primary,
-                                    ),
-                                    const SizedBox(width: AppSpace.xxs),
-                                    Text(
-                                      'استماع الآن',
-                                      style: textTheme.caption.copyWith(
-                                        color: palette.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                      ],
+                    ),
                         const SizedBox(height: AppSpace.xs),
                         LayoutBuilder(
                           builder: (context, constraints) {
@@ -226,8 +165,6 @@ class QuranAudioDownloadItem extends StatelessWidget {
                     context: context,
                     palette: palette,
                     textTheme: textTheme,
-                    audioService: audioService,
-                    isAudioPlaying: isAudioPlaying,
                     isReadyOffline: isReadyOffline,
                   ),
                 ],
@@ -302,16 +239,12 @@ class QuranAudioDownloadItem extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildTrailingActions({
     required BuildContext context,
     required AppPalette palette,
     required AppTextTheme textTheme,
-    required QuranAudioService audioService,
-    required bool isAudioPlaying,
     required bool isReadyOffline,
   }) {
     // 1. Surah is currently downloading
@@ -388,43 +321,25 @@ class QuranAudioDownloadItem extends StatelessWidget {
       );
     }
 
-    // 3. Surah is fully downloaded (OFFLINE PLAYBACK READY)
+    // 3. Surah is fully downloaded
     if (isReadyOffline) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Play / Pause Circular Button
-          IconButton(
-            tooltip: isAudioPlaying ? 'إيقاف مؤقت' : 'استماع بدون إنترنت',
-            constraints: const BoxConstraints.tightFor(
-              width: AppSize.tap,
-              height: AppSize.tap,
+          // Downloaded indicator icon
+          Container(
+            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+            decoration: BoxDecoration(
+              color: palette.goldSoft,
+              shape: BoxShape.circle,
             ),
-            padding: EdgeInsets.zero,
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              if (isAudioPlaying) {
-                audioService.pause();
-              } else {
-                audioService.playFullSurah(
-                  surah: surah,
-                  reciter: reciter,
-                );
-              }
-            },
-            icon: Container(
-              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-              decoration: BoxDecoration(
-                color: isAudioPlaying ? palette.primary : palette.primarySoft,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isAudioPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                size: AppIcon.md,
-                color: isAudioPlaying ? palette.onPrimary : palette.primary,
-              ),
+            child: Icon(
+              Icons.check_circle_rounded,
+              size: AppIcon.md,
+              color: palette.gold,
             ),
           ),
+          const SizedBox(width: AppSpace.xs),
 
           // Delete Button
           IconButton(
