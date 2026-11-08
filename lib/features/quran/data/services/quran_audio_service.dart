@@ -91,7 +91,56 @@ class QuranAudioService {
 
   QuranReciter _selectedReciter = reciters[0];
   QuranReciter get selectedReciter => _selectedReciter;
-  void setSelectedReciter(QuranReciter reciter) => _selectedReciter = reciter;
+  final ValueNotifier<QuranReciter> selectedReciterNotifier =
+      ValueNotifier<QuranReciter>(QuranReciter.defaultReciters.first);
+  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
+
+  void setSelectedReciter(QuranReciter reciter) {
+    _selectedReciter = reciter;
+    selectedReciterNotifier.value = reciter;
+  }
+
+  /// Changes the reciter for the active session and resumes at its current
+  /// reading position, preserving pause state, speed, and continuation bounds.
+  Future<void> switchReciter(QuranReciter reciter) async {
+    if (_selectedReciter.id == reciter.id) return;
+
+    final surah = activeSurahNotifier.value;
+    final ayah = activeAyahNotifier.value;
+    final shouldPlay = _playWhenReady;
+    final wasFullSurah = isFullSurahMode;
+    final wasContinuous = _isContinuous;
+    final wasSingleVerse = _isSingleVerseOnly;
+    final hadExplicitEnd = _hasExplicitEnd;
+    final endAyah = _endAyah;
+
+    setSelectedReciter(reciter);
+    if (surah == null || ayah == null) return;
+
+    if (wasFullSurah || reciter.isSurahBased) {
+      await playFullSurah(
+        surah: surah,
+        reciter: reciter,
+        autoPlay: shouldPlay,
+      );
+    } else if (wasContinuous) {
+      await playContinuous(
+        surah: surah,
+        startAyah: ayah,
+        endAyah: hadExplicitEnd ? endAyah : null,
+        reciter: reciter,
+        autoPlay: shouldPlay,
+      );
+    } else {
+      await playVerse(
+        surah,
+        ayah,
+        reciter: reciter,
+        singleVerse: wasSingleVerse,
+        autoPlay: shouldPlay,
+      );
+    }
+  }
 
   // State Notifiers for selective, high-performance UI rebuilds
   final ValueNotifier<int?> activeSurahNotifier = ValueNotifier<int?>(null);
@@ -213,18 +262,19 @@ class QuranAudioService {
     int ayah, {
     QuranReciter? reciter,
     bool singleVerse = false,
+    bool autoPlay = true,
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, ayah)) return;
     final r = reciter ?? _selectedReciter;
     if (r.isSurahBased) {
-      await playFullSurah(surah: surah, reciter: r);
+      await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
       return;
     }
     _ayahRepeatCount = 0;
     _isContinuous = false;
     _isSingleVerseOnly = singleVerse;
     isFullSurahModeNotifier.value = false;
-    await _startPlay(surah, ayah, reciter: r);
+    await _startPlay(surah, ayah, reciter: r, autoPlay: autoPlay);
   }
 
   /// Plays full surah recorded audio as a single continuous track if downloaded,
@@ -232,6 +282,7 @@ class QuranAudioService {
   Future<void> playFullSurah({
     required int surah,
     QuranReciter? reciter,
+    bool autoPlay = true,
   }) async {
     if (!isValidSurah(surah)) return;
     final r = reciter ?? _selectedReciter;
@@ -249,7 +300,7 @@ class QuranAudioService {
       final surahName = quran.getSurahNameArabic(surah);
       final tag = _buildSurahMediaItem(surah, r, surahName);
       final source = AudioSource.file(fullFile.path, tag: tag);
-      await _startPlaySource(surah, 1, source, reciter: r);
+      await _startPlaySource(surah, 1, source, reciter: r, autoPlay: autoPlay);
       return;
     }
     if (r.isSurahBased) {
@@ -264,10 +315,15 @@ class QuranAudioService {
       final sStr = _formatNumber(surah);
       final url = '${r.surahBaseUrl}$sStr.mp3';
       final source = AudioSource.uri(Uri.parse(url), tag: tag);
-      await _startPlaySource(surah, 1, source, reciter: r);
+      await _startPlaySource(surah, 1, source, reciter: r, autoPlay: autoPlay);
       return;
     }
-    await playContinuous(surah: surah, startAyah: 1, reciter: r);
+    await playContinuous(
+      surah: surah,
+      startAyah: 1,
+      reciter: r,
+      autoPlay: autoPlay,
+    );
   }
 
   /// Play continuous verses (e.g. whole Surah or Page)
@@ -276,11 +332,12 @@ class QuranAudioService {
     required int startAyah,
     int? endAyah,
     QuranReciter? reciter,
+    bool autoPlay = true,
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, startAyah)) return;
     final r = reciter ?? _selectedReciter;
     if (r.isSurahBased) {
-      await playFullSurah(surah: surah, reciter: r);
+      await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
       return;
     }
     final totalVerses = quran.getVerseCount(surah);
@@ -289,7 +346,7 @@ class QuranAudioService {
     if (_sourceResolver == null && startAyah == 1 && (endAyah == null || endAyah >= totalVerses)) {
       final fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(surah, reciter: r);
       if (fullFile != null && fullFile.existsSync()) {
-        await playFullSurah(surah: surah, reciter: r);
+        await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
         return;
       }
     }
@@ -299,7 +356,7 @@ class QuranAudioService {
     isFullSurahModeNotifier.value = false;
     _hasExplicitEnd = endAyah != null;
     _endAyah = endAyah ?? totalVerses;
-    await _startPlay(surah, startAyah, reciter: r);
+    await _startPlay(surah, startAyah, reciter: r, autoPlay: autoPlay);
   }
 
   static final Uri _appIconUri = Uri.parse(
@@ -374,18 +431,26 @@ class QuranAudioService {
     return AudioSource.uri(Uri.parse(url), tag: tag);
   }
 
-  Future<void> _startPlay(int surah, int ayah, {QuranReciter? reciter}) async {
+  Future<void> _startPlay(
+    int surah,
+    int ayah, {
+    QuranReciter? reciter,
+    bool autoPlay = true,
+  }) async {
     if (_disposed) return;
     final operation = ++_operation;
     clearError();
     final r = reciter ?? _playbackReciter ?? _selectedReciter;
     _playbackReciter = r;
     _isTransitioning = true;
-    _playWhenReady = true;
+    _playWhenReady = autoPlay;
+    isLoadingNotifier.value = true;
     _completionArmed = false;
     activeSurahNotifier.value = surah;
     activeAyahNotifier.value = ayah;
-    unawaited(AudioCoordinator.acquireFocus(AudioStreamType.quran));
+    if (autoPlay) {
+      unawaited(AudioCoordinator.acquireFocus(AudioStreamType.quran));
+    }
 
     try {
       for (var attempt = 0; attempt < 3; attempt++) {
@@ -448,7 +513,10 @@ class QuranAudioService {
     } catch (e) {
       await _handlePlaybackError(e, operation);
     } finally {
-      if (_ownsOperation(operation)) _isTransitioning = false;
+      if (_ownsOperation(operation)) {
+        _isTransitioning = false;
+        isLoadingNotifier.value = false;
+      }
     }
   }
 
@@ -457,6 +525,7 @@ class QuranAudioService {
     int ayah,
     AudioSource audioSource, {
     QuranReciter? reciter,
+    bool autoPlay = true,
   }) async {
     if (_disposed) return;
     final operation = ++_operation;
@@ -464,11 +533,14 @@ class QuranAudioService {
     final r = reciter ?? _playbackReciter ?? _selectedReciter;
     _playbackReciter = r;
     _isTransitioning = true;
-    _playWhenReady = true;
+    _playWhenReady = autoPlay;
+    isLoadingNotifier.value = true;
     _completionArmed = false;
     activeSurahNotifier.value = surah;
     activeAyahNotifier.value = ayah;
-    unawaited(AudioCoordinator.acquireFocus(AudioStreamType.quran));
+    if (autoPlay) {
+      unawaited(AudioCoordinator.acquireFocus(AudioStreamType.quran));
+    }
 
     try {
       if (!_ownsOperation(operation)) return;
@@ -493,7 +565,10 @@ class QuranAudioService {
     } catch (e) {
       await _handlePlaybackError(e, operation);
     } finally {
-      if (_ownsOperation(operation)) _isTransitioning = false;
+      if (_ownsOperation(operation)) {
+        _isTransitioning = false;
+        isLoadingNotifier.value = false;
+      }
     }
   }
 
@@ -833,6 +908,7 @@ class QuranAudioService {
     activeSurahNotifier.value = null;
     activeAyahNotifier.value = null;
     isPlayingNotifier.value = false;
+    isLoadingNotifier.value = false;
     _isContinuous = false;
     _sleepTimer?.cancel();
     _sleepTimer = null;
@@ -859,6 +935,8 @@ class QuranAudioService {
     _playerStateSub?.cancel();
     _positionSub?.cancel();
     errorNotifier.dispose();
+    selectedReciterNotifier.dispose();
+    isLoadingNotifier.dispose();
     stopAtEndOfSurahNotifier.dispose();
     sleepTimerRemainingSecondsNotifier.dispose();
     isFullSurahModeNotifier.dispose();

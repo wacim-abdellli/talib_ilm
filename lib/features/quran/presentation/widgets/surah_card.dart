@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import 'surah_objectives_sheet.dart';
 
 /// Ornate Islamic medallion for Surah numbers with double concentric border rings.
 class SurahNumberMedallion extends StatelessWidget {
@@ -213,26 +214,48 @@ class SurahCard extends StatelessWidget {
 
               const SizedBox(width: AppSpace.xs),
 
-              // Trailing Action (Bookmark or custom)
-              trailing ??
+              // Trailing Actions (Info + Bookmark or custom)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   IconButton(
                     icon: Icon(
-                      isBookmarked
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_border_rounded,
-                      color: isBookmarked ? palette.gold : palette.textMuted,
+                      Icons.info_outline_rounded,
+                      color: palette.textMuted,
                       size: AppIcon.md,
                     ),
-                    tooltip: isBookmarked
-                        ? 'إزالة من المحفوظات'
-                        : 'إضافة للمحفوظات',
+                    tooltip: 'بطاقة التعريف بالسورة ومقاصدها',
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      onBookmarkTap();
+                      SurahObjectivesSheet.show(
+                        context,
+                        surahNumber: surahNumber,
+                      );
                     },
                   ),
+                  trailing ??
+                      IconButton(
+                        icon: Icon(
+                          isBookmarked
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
+                          color: isBookmarked ? palette.gold : palette.textMuted,
+                          size: AppIcon.md,
+                        ),
+                        tooltip: isBookmarked
+                            ? 'إزالة من المحفوظات'
+                            : 'إضافة للمحفوظات',
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          onBookmarkTap();
+                        },
+                      ),
+                ],
+              ),
             ],
           ),
         ),

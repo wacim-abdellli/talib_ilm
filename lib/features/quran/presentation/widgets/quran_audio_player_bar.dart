@@ -38,6 +38,8 @@ class QuranAudioPlayerBar extends StatelessWidget {
         audioService.activeSurahNotifier,
         audioService.activeAyahNotifier,
         audioService.isPlayingNotifier,
+        audioService.isLoadingNotifier,
+        audioService.selectedReciterNotifier,
         audioService.isFullSurahModeNotifier,
         audioService.speedNotifier,
         audioService.repeatModeNotifier,
@@ -50,6 +52,7 @@ class QuranAudioPlayerBar extends StatelessWidget {
         if (surah == null) return const SizedBox.shrink();
 
         final isPlaying = audioService.isPlayingNotifier.value;
+        final isLoading = audioService.isLoadingNotifier.value;
         final isFullSurah = audioService.isFullSurahModeNotifier.value;
         final surahName = quran.getSurahNameArabic(surah);
         final reciter = audioService.selectedReciter;
@@ -488,8 +491,12 @@ class QuranAudioPlayerBar extends StatelessWidget {
 
                         // Play / Pause Primary Button
                         IconButton(
-                          tooltip: isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
-                          onPressed: () {
+                          tooltip: isLoading
+                              ? 'جارٍ تحميل التلاوة'
+                              : isPlaying
+                                  ? 'إيقاف مؤقت'
+                                  : 'تشغيل',
+                          onPressed: isLoading ? null : () {
                             HapticFeedback.lightImpact();
                             if (isPlaying) {
                               audioService.pause();
@@ -504,12 +511,21 @@ class QuranAudioPlayerBar extends StatelessWidget {
                               color: palette.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              isPlaying
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                              color: palette.onPrimary,
-                            ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: AppIcon.sm,
+                                    height: AppIcon.sm,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: palette.onPrimary,
+                                    ),
+                                  )
+                                : Icon(
+                                    isPlaying
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded,
+                                    color: palette.onPrimary,
+                                  ),
                           ),
                         ),
 

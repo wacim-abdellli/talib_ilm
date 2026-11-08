@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart'
     show getArabicJuzName, getVocalizedSurahName;
+import 'surah_objectives_sheet.dart';
 
 /// Authentic Medina Mushaf Surah Header Banner
 class MushafSurahBanner extends StatelessWidget {
   final int surahNumber;
   final MushafThemeMode themeMode;
+  final VoidCallback? onTap;
 
   const MushafSurahBanner({
     super.key,
     required this.surahNumber,
     required this.themeMode,
+    this.onTap,
   });
 
   static const String _bannerAsset = 'assets/surah_banner.png';
@@ -53,7 +57,7 @@ class MushafSurahBanner extends StatelessWidget {
       MushafThemeMode.dark => MushafColors.darkBannerText,
     };
 
-    return FittedBox(
+    final bannerWidget = FittedBox(
       fit: BoxFit.scaleDown,
       child: Container(
         width: 380,
@@ -158,6 +162,23 @@ class MushafSurahBanner extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      label: 'بطاقة التعريف بسورة $surahName ومقاصدها',
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          if (onTap != null) {
+            onTap!();
+          } else {
+            SurahObjectivesSheet.show(context, surahNumber: surahNumber);
+          }
+        },
+        borderRadius: AppRadius.smRadius,
+        child: bannerWidget,
       ),
     );
   }

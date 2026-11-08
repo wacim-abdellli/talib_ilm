@@ -119,16 +119,25 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   }
 
   Future<void> _handlePlayDownloadedSurah(DownloadedSurahItem item) async {
+    final isSameSurah = _audioService.activeSurahNotifier.value == item.surah;
+    final isSameReciter = _audioService.selectedReciter.id == item.reciter.id;
+    if (isSameSurah && isSameReciter) {
+      if (_audioService.isPlayingNotifier.value) {
+        await _audioService.pause();
+      } else {
+        await _audioService.resume();
+      }
+      return;
+    }
+
     setState(() {
       _currentReciter = item.reciter;
       _audioService.setSelectedReciter(item.reciter);
     });
-    if (_audioService.activeSurahNotifier.value == item.surah &&
-        _audioService.isPlayingNotifier.value) {
-      _audioService.pause();
-    } else {
-      _audioService.playFullSurah(surah: item.surah, reciter: item.reciter);
-    }
+    await _audioService.playFullSurah(
+      surah: item.surah,
+      reciter: item.reciter,
+    );
   }
 
   Future<void> _confirmDeleteSurah(int surah) async {
@@ -292,7 +301,6 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
               onReciterChanged: (val) {
                 if (val != null) {
                   setState(() => _currentReciter = val);
-                  _audioService.setSelectedReciter(val);
                   _refreshStorageAndStatus(showLoading: true);
                 }
               },

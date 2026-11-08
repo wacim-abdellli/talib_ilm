@@ -207,7 +207,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _defaultTafsir = snapshot.defaultTafsir;
     });
 
-    _audioService.setSelectedReciter(snapshot.reciter);
+    unawaited(_audioService.switchReciter(snapshot.reciter));
     _applyWakelock(snapshot.keepScreenAwake);
   }
 
@@ -404,8 +404,8 @@ class _MushafPageViewerState extends State<MushafPageViewer>
           _saveSettings();
         },
         onReciterChanged: (r) {
-          _audioService.setSelectedReciter(r);
-          QuranReaderPreferences.saveReciter(r);
+          unawaited(_audioService.switchReciter(r));
+          unawaited(QuranReaderPreferences.saveReciter(r));
         },
         onTafsirChanged: (scholar) {
           setState(() => _defaultTafsir = scholar);

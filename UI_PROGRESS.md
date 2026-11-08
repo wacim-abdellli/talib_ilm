@@ -1,3 +1,28 @@
+## Surah Intro, Objectives & Thematic Divisions Engine (8 November 2026)
+- **Branch**: `main`
+- **Features Implemented (Wahy Inspiration — Step 5)**:
+  - **Surah Objectives Models & Repository**: Created `SurahThematicSection` and `SurahObjectivesCard` in `lib/features/quran/data/models/surah_objectives_card.dart`. Built `QuranSurahObjectivesService` in `lib/features/quran/data/services/quran_surah_objectives_service.dart` featuring:
+    - Complete metadata for all 114 Surahs (authentic revelation order 1-114, Makki/Madani classification, English names & meanings, verse counts, start pages).
+    - Markaz Tafsir live objective extraction from Wahy Source 65 (`/api/source/65/:surah`), with bundled offline classical objectives for all 114 Surahs.
+    - Deep classical analysis: other historical names, reasons for naming, comprehensive thematic section divisions with verse ranges, verified prophetic virtues with citations, and canonical inter-Surah connections.
+  - **Surah Objectives Sheet (`SurahObjectivesSheet`)**: Designed a modern, fully accessible RTL bottom sheet featuring:
+    - **بطاقة التعريف بالسورة**: Medallion index, vocalized calligraphic title, Makki/Madani badge, revelation order (`ترتيب النزول: X`), verse count, and start page.
+    - **المقصد الرئيس للسورة**: Highlighted quote card with gold accent and official Markaz Tafsir citation.
+    - **محاور وموضوعات السورة**: Interactive thematic section cards with verse range badges (`الآيات X - Y`); tapping any section jumps the Mushaf reader directly to those verses.
+    - **أسماء السورة وسبب التسمية**: Pill cloud of authentic classical names and historical reason for naming.
+    - **فضائل السورة وخصائصها المستفيضة**: Bulleted classical merits and prophetic hadiths.
+    - **مناسبة السورة لما قبلها**: Structural and thematic harmony in the Mushaf order.
+    - Quick action buttons: Jump directly to Surah reading, and copy objective.
+  - **Reader Integrations**:
+    - **Mushaf Surah Ornamental Banner (`MushafSurahBanner`)**: Made the authentic King Fahd Complex Medina banner directly tappable with touch ripple and Semantics to open `SurahObjectivesSheet`.
+    - **Mushaf Reader Top Bar (`MushafReaderTopBar`)**: Added dedicated `Icons.info_outline_rounded` button to inspect Surah objectives while reading.
+    - **Surah Index Cards (`SurahCard`)**: Added an info button on every Surah tile in the index.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/quran_surah_objectives_test.dart test/quran_waqf_engine_test.dart test/quran_word_analysis_test.dart test/quran_word_details_sheet_test.dart test/surah_banner_test.dart test/ayah_action_menu_test.dart test/quran_mutashabihat_test.dart test/hifdh_repeat_engine_test.dart test/quran_audio_service_test.dart test/quran_audio_player_bar_test.dart test/hadith_and_radio_test.dart`: All 51 tests passed.
+- **Status**: Complete & Verified.
+
 ## Classical Waqf Scholars Engine & Hidayat al-Quran (8 November 2026)
 - **Branch**: `main`
 - **Features Implemented (Wahy Inspiration — Step 4)**:
