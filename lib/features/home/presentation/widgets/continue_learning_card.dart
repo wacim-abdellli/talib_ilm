@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_palette.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
-import '../../../../shared/widgets/app_tag.dart';
 import '../../../ilm/data/models/mutun_models.dart';
 import '../../../ilm/data/models/sharh_model.dart';
 
@@ -118,23 +116,22 @@ class LearningPulseCard extends StatelessWidget {
                                 color: catColors.fg,
                               ),
                             ),
-                            if (hasData)
-                              Container(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: AppSpace.sm,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: catColors.fg.withValues(alpha: 0.14),
-                                  borderRadius: AppRadius.pillRadius,
-                                ),
-                                child: Text(
-                                  data!.book.subject,
-                                  style: context.text.label.copyWith(
-                                    color: catColors.fg,
-                                  ),
+                            Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.sm,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: catColors.fg.withValues(alpha: 0.14),
+                                borderRadius: AppRadius.pillRadius,
+                              ),
+                              child: Text(
+                                hasData ? data!.book.subject : 'المستوى الأول',
+                                style: context.text.label.copyWith(
+                                  color: catColors.fg,
                                 ),
                               ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpace.xxs),
@@ -202,66 +199,55 @@ class LearningPulseCard extends StatelessWidget {
                   color: catColors.fg,
                 ),
               ] else ...[
-              // Empty State Roadmap Tags
-              Wrap(
-                spacing: AppSpace.sm,
-                runSpacing: AppSpace.xs,
-                children: const [
-                  AppTag(
-                    label: 'المستوى الأول',
+                // Empty State Sleek Discovery Strip
+                Container(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
                   ),
-                  AppTag(
-                    label: 'التأسيس والتأصيل',
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpace.md),
-
-              // Discovery CTA Strip
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: context.palette.surfaceMuted,
-                  borderRadius: AppRadius.mdRadius,
-                  border: Border.all(
-                    color: context.palette.border,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.explore_outlined,
-                      size: AppIcon.md,
-                      color: context.palette.primary,
+                  decoration: BoxDecoration(
+                    color: catColors.fg.withValues(alpha: 0.08),
+                    borderRadius: AppRadius.smRadius,
+                    border: Border.all(
+                      color: catColors.fg.withValues(alpha: 0.18),
+                      width: 0.8,
                     ),
-                    const SizedBox(width: AppSpace.sm),
-                    Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerStart,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.auto_stories_rounded,
+                        size: AppIcon.sm,
+                        color: catColors.fg,
+                      ),
+                      const SizedBox(width: AppSpace.xs),
+                      Expanded(
                         child: Text(
-                          'الأصول الثلاثة • القواعد الأربع • كتاب التوحيد',
-                          style: context.text.label.copyWith(
-                            color: context.palette.textMuted,
+                          'التأسيس والتأصيل • الأصول الثلاثة • القواعد الأربع',
+                          style: context.text.caption.copyWith(
+                            color: palette.textMuted,
                           ),
                           maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    AppButton(
-                      label: 'ابدأ الآن',
-                      size: AppButtonSize.sm,
-                      variant: AppButtonVariant.primary,
-                      onPressed: onTap,
-                    ),
-                  ],
+                      const SizedBox(width: AppSpace.xs),
+                      Text(
+                        'ابدأ الآن',
+                        style: context.text.captionHeavy.copyWith(
+                          color: catColors.fg,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.xxs),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: AppIcon.xs,
+                        color: catColors.fg,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
           ],
         ),
       ),
