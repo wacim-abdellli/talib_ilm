@@ -49,11 +49,11 @@ class OfflineBooksTabView extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsetsDirectional.fromSTEB(
+        padding: EdgeInsetsDirectional.fromSTEB(
           AppSpace.lg,
           AppSpace.md,
           AppSpace.lg,
-          AppSpace.xxl,
+          AppSpace.xxl + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           // ── 1. Downloaded Shamela Classics Section ───────────────────

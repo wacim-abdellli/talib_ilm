@@ -207,7 +207,12 @@ class _SalafTopicFilterSheetState extends State<SalafTopicFilterSheet> {
             // Topics List
             Flexible(
               child: ListView.separated(
-                padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  AppSpace.md,
+                  AppSpace.md,
+                  AppSpace.md,
+                  AppSpace.md + MediaQuery.paddingOf(context).bottom,
+                ),
                 itemCount: filtered.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: AppSpace.xs),

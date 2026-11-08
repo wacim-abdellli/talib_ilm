@@ -57,7 +57,12 @@ class IlmReadingTrackerCompletedTab extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsetsDirectional.all(AppSpace.xl),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        AppSpace.xl,
+        AppSpace.xl,
+        AppSpace.xl,
+        AppSpace.xl + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: completedBooks.length,
       separatorBuilder: (context, index) => const SizedBox(height: AppSpace.md),
       itemBuilder: (context, index) {

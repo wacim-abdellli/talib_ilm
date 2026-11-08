@@ -143,6 +143,8 @@ class AppSheet extends StatelessWidget {
               child: child,
             ),
           ),
+          if (MediaQuery.paddingOf(context).bottom > 0)
+            SizedBox(height: MediaQuery.paddingOf(context).bottom),
         ],
       ),
     );

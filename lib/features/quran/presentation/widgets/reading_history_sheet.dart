@@ -263,7 +263,12 @@ class _ReadingHistorySheetState extends State<ReadingHistorySheet> {
                           ),
                         )
                       : ListView.separated(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md + MediaQuery.paddingOf(context).bottom,
+                          ),
                           physics: const BouncingScrollPhysics(),
                           itemCount: _items.length,
                           separatorBuilder: (context, index) =>

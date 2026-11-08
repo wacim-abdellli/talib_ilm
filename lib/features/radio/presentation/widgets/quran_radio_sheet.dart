@@ -360,7 +360,7 @@ class _QuranRadioSheetState extends State<QuranRadioSheet> {
                           start: AppSpace.xl,
                           end: AppSpace.xl,
                           top: AppSpace.xs,
-                          bottom: AppSpace.xl,
+                          bottom: AppSpace.xl + mediaQuery.padding.bottom,
                         ),
                         itemCount: stations.length,
                         separatorBuilder: (context, index) => const SizedBox(height: AppSpace.xs),

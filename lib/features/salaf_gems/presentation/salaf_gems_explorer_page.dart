@@ -578,7 +578,12 @@ class _SalafGemsExplorerPageState extends State<SalafGemsExplorerPage> {
                         )
                       : ListView.separated(
                           controller: _scrollController,
-                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md + MediaQuery.paddingOf(context).bottom,
+                          ),
                           itemCount: _filteredGems.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: AppSpace.md),

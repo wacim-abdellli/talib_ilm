@@ -256,10 +256,12 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
       verseEndSymbol: true,
     );
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Container(
-      padding: const EdgeInsetsDirectional.only(
+      padding: EdgeInsetsDirectional.only(
         top: AppSpace.md,
-        bottom: AppSpace.lg,
+        bottom: AppSpace.lg + bottomInset,
       ),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,

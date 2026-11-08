@@ -96,10 +96,12 @@ class _MushafSettingsSheetState extends State<MushafSettingsSheet> {
     final palette = context.palette;
     final textTheme = context.text;
 
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Container(
-      padding: const EdgeInsetsDirectional.only(
+      padding: EdgeInsetsDirectional.only(
         top: AppSpace.md,
-        bottom: AppSpace.md,
+        bottom: AppSpace.md + bottomInset,
       ),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
