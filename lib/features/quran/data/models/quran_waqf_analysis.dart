@@ -195,3 +195,4 @@ class AyahWaqfAnalysis {
     'words': words.map((w) => w.toJson()).toList(),
   };
 }
+

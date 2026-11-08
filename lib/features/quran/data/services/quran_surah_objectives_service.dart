@@ -720,3 +720,4 @@ class QuranSurahObjectivesService {
     114: SurahMeta(114, 21, 'مكية', 'An-Naas', 'Mankind'),
   };
 }
+

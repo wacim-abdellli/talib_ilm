@@ -139,7 +139,9 @@ class AyahAudioTabView extends StatelessWidget {
                               : (value) async {
                                   if (value == null) return;
                                   HapticFeedback.selectionClick();
-                                  await QuranReaderPreferences.saveReciter(value);
+                                  await QuranReaderPreferences.saveReciter(
+                                    value,
+                                  );
                                   await audioService.switchReciter(value);
                                 },
                         ),
@@ -278,12 +280,14 @@ class AyahAudioTabView extends StatelessWidget {
     };
     final repeatLabel = switch (repeatMode) {
       AudioRepeatMode.none => 'التكرار معطل',
-      AudioRepeatMode.repeatOnce => isFullSurah || reciter.isSurahBased
-          ? 'تكرار السورة مرة واحدة'
-          : 'تكرار الآية مرة واحدة',
-      AudioRepeatMode.infinite => isFullSurah || reciter.isSurahBased
-          ? 'تكرار السورة باستمرار'
-          : 'تكرار مستمر',
+      AudioRepeatMode.repeatOnce =>
+        isFullSurah || reciter.isSurahBased
+            ? 'تكرار السورة مرة واحدة'
+            : 'تكرار الآية مرة واحدة',
+      AudioRepeatMode.infinite =>
+        isFullSurah || reciter.isSurahBased
+            ? 'تكرار السورة باستمرار'
+            : 'تكرار مستمر',
     };
 
     return Row(
@@ -308,10 +312,10 @@ class AyahAudioTabView extends StatelessWidget {
             label: isLoading
                 ? 'جارٍ تحميل التلاوة'
                 : hasActivePlayback
-                    ? (isPlaying ? 'إيقاف مؤقت' : 'استئناف التلاوة')
-                    : reciter.isSurahBased
-                        ? 'تشغيل السورة'
-                        : 'تشغيل الآية',
+                ? (isPlaying ? 'إيقاف مؤقت' : 'استئناف التلاوة')
+                : reciter.isSurahBased
+                ? 'تشغيل السورة'
+                : 'تشغيل الآية',
             icon: isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
             isLoading: isLoading,
             onPressed: isLoading
@@ -398,8 +402,8 @@ class _NowPlayingCard extends StatelessWidget {
             isLoading
                 ? Icons.hourglass_top_rounded
                 : isPlaying
-                    ? Icons.graphic_eq_rounded
-                    : Icons.pause_circle_outline_rounded,
+                ? Icons.graphic_eq_rounded
+                : Icons.pause_circle_outline_rounded,
             size: AppIcon.md,
             color: palette.primary,
           ),
@@ -409,7 +413,11 @@ class _NowPlayingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${isLoading ? 'جارٍ تجهيز التلاوة' : isPlaying ? 'يُتلى الآن' : 'متوقف مؤقتًا'} • سورة ${quran.getSurahNameArabic(surah)} • الآية $ayah',
+                  '${isLoading
+                      ? 'جارٍ تجهيز التلاوة'
+                      : isPlaying
+                      ? 'يُتلى الآن'
+                      : 'متوقف مؤقتًا'} • سورة ${quran.getSurahNameArabic(surah)} • الآية $ayah',
                   style: textTheme.bodySmallBold.copyWith(color: palette.text),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -463,20 +471,23 @@ class _QuranAudioProgress extends StatelessWidget {
                   activeColor: palette.primary,
                   onChanged: maxMs <= 0
                       ? null
-                      : (milliseconds) => audioService.seekMilliseconds(
-                            milliseconds.round(),
-                          ),
+                      : (milliseconds) =>
+                            audioService.seekMilliseconds(milliseconds.round()),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       _format(position),
-                      style: textTheme.caption.copyWith(color: palette.textMuted),
+                      style: textTheme.caption.copyWith(
+                        color: palette.textMuted,
+                      ),
                     ),
                     Text(
                       _format(duration),
-                      style: textTheme.caption.copyWith(color: palette.textMuted),
+                      style: textTheme.caption.copyWith(
+                        color: palette.textMuted,
+                      ),
                     ),
                   ],
                 ),

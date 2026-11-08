@@ -113,7 +113,10 @@ class MushafReaderBottomBar extends StatelessWidget {
       valueListenable: audioService.speedNotifier,
       builder: (context, speed, _) {
         const speeds = [0.75, 1.0, 1.25, 1.5];
-        final nextSpeed = speeds[(speeds.indexWhere((item) => (item - speed).abs() < 0.01) + 1) % speeds.length];
+        final nextSpeed =
+            speeds[(speeds.indexWhere((item) => (item - speed).abs() < 0.01) +
+                    1) %
+                speeds.length];
         return Semantics(
           button: true,
           label: 'سرعة التلاوة $speed×',
@@ -167,12 +170,10 @@ class MushafReaderBottomBar extends StatelessWidget {
         };
         final description = switch (repeatMode) {
           AudioRepeatMode.none => 'التكرار معطل',
-          AudioRepeatMode.repeatOnce => isFullSurah
-              ? 'تكرار السورة مرة واحدة'
-              : 'تكرار الآية مرة واحدة',
-          AudioRepeatMode.infinite => isFullSurah
-              ? 'تكرار السورة باستمرار'
-              : 'تكرار الآية باستمرار',
+          AudioRepeatMode.repeatOnce =>
+            isFullSurah ? 'تكرار السورة مرة واحدة' : 'تكرار الآية مرة واحدة',
+          AudioRepeatMode.infinite =>
+            isFullSurah ? 'تكرار السورة باستمرار' : 'تكرار الآية باستمرار',
         };
         return AppIconButton(
           icon: icon,
@@ -201,8 +202,8 @@ class MushafReaderBottomBar extends StatelessWidget {
       onPressed: isLoading
           ? null
           : isFullSurah || audioService.selectedReciter.isSurahBased
-              ? audioService.previousSurah
-              : audioService.previousAyah,
+          ? audioService.previousSurah
+          : audioService.previousAyah,
     );
     final nextControl = AppIconButton(
       icon: Icons.skip_previous_rounded,
@@ -211,16 +212,16 @@ class MushafReaderBottomBar extends StatelessWidget {
       onPressed: isLoading
           ? null
           : isFullSurah || audioService.selectedReciter.isSurahBased
-              ? audioService.nextSurah
-              : audioService.nextAyah,
+          ? audioService.nextSurah
+          : audioService.nextAyah,
     );
     final playControl = Semantics(
       button: true,
       label: isLoading
           ? 'جارٍ تحميل التلاوة'
           : isPlaying
-              ? 'إيقاف التلاوة مؤقتًا'
-              : 'استئناف التلاوة',
+          ? 'إيقاف التلاوة مؤقتًا'
+          : 'استئناف التلاوة',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -315,7 +316,8 @@ class MushafReaderBottomBar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stacked = constraints.maxWidth < 500 ||
+        final stacked =
+            constraints.maxWidth < 500 ||
             MediaQuery.textScalerOf(context).scale(1) > 1.2;
         if (stacked) {
           return Column(
