@@ -68,6 +68,9 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   int? _lastReadSurah;
   int? _lastReadAyah;
   int? _lastReadPage;
+  bool _showLastReadHighlight = false;
+  Timer? _lastReadFadeTimer;
+  Timer? _targetedAyahTimer;
   Set<String> _bookmarkedAyahs = {};
 
   late final ValueNotifier<QuranPosition> _positionNotifier;
@@ -103,6 +106,12 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       startPage = quran
           .getPageNumber(_currentSurah, _currentAyah)
           .clamp(1, 604);
+    }
+
+    if (widget.initialAyah != null && widget.initialSurah != null) {
+      _selectedSurah = widget.initialSurah;
+      _selectedAyah = widget.initialAyah;
+      _highlightTargetedAyah();
     }
 
     _currentPage = startPage;
@@ -155,6 +164,8 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _lastReadFadeTimer?.cancel();
+    _targetedAyahTimer?.cancel();
     _accumulateForegroundTime(stop: true);
     _recordTrackedPageIfReadEnough();
     _audioService.activeAyahNotifier.removeListener(_onAudioAyahChanged);
@@ -224,8 +235,20 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _lastReadSurah = lastRead?.surah;
       _lastReadAyah = lastRead?.ayah;
       _lastReadPage = lastRead?.page;
+      _showLastReadHighlight = _lastReadAyah != null;
       _bookmarkedAyahs = bookmarks.map((b) => '${b.surah}:${b.ayah}').toSet();
     });
+
+    if (_lastReadAyah != null) {
+      _lastReadFadeTimer?.cancel();
+      _lastReadFadeTimer = Timer(AppMotion.oneSecond, () {
+        if (mounted && _showLastReadHighlight) {
+          setState(() {
+            _showLastReadHighlight = false;
+          });
+        }
+      });
+    }
   }
 
   Future<void> _applyWakelock(bool enable) async {
@@ -267,6 +290,15 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   }
 
   void _onPageChanged(int page) {
+    if (_showLastReadHighlight) {
+      _lastReadFadeTimer?.cancel();
+      _showLastReadHighlight = false;
+    }
+    if (_selectedAyah != null) {
+      _targetedAyahTimer?.cancel();
+      _selectedSurah = null;
+      _selectedAyah = null;
+    }
     if (page != _trackedPage) {
       _accumulateForegroundTime(stop: true);
       _recordTrackedPageIfReadEnough();
@@ -368,6 +400,19 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _currentAyah = ayah;
       _selectedSurah = surah;
       _selectedAyah = ayah;
+    });
+    _highlightTargetedAyah();
+  }
+
+  void _highlightTargetedAyah() {
+    _targetedAyahTimer?.cancel();
+    _targetedAyahTimer = Timer(AppMotion.oneSecond, () {
+      if (mounted) {
+        setState(() {
+          _selectedSurah = null;
+          _selectedAyah = null;
+        });
+      }
     });
   }
 
@@ -587,8 +632,8 @@ class _MushafPageViewerState extends State<MushafPageViewer>
                   isTajweedEnabled: _isTajweedEnabled,
                   activeSurah: effectiveSurah,
                   activeAyah: effectiveAyah,
-                  lastReadSurah: _lastReadSurah,
-                  lastReadAyah: _lastReadAyah,
+                  lastReadSurah: _showLastReadHighlight ? _lastReadSurah : null,
+                  lastReadAyah: _showLastReadHighlight ? _lastReadAyah : null,
                   bookmarkedAyahs: _bookmarkedAyahs,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
                   onWordTap: _handleWordTap,

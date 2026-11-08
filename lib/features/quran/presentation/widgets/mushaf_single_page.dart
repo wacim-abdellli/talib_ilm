@@ -371,7 +371,9 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
 
     return RepaintBoundary(
       child: QuranSinglePageWidget(
-        key: ValueKey('qcf_plus_page_$pageNumber'),
+        key: ValueKey(
+          'qcf_plus_page_${pageNumber}_${widget.lastReadAyah ?? 'none'}_${widget.activeAyah ?? 'none'}',
+        ),
         page: page,
         pageIndex: pageNumber,
         isTajweed: widget.isTajweedEnabled,
