@@ -4885,3 +4885,8 @@ FAILED (54 violations)
 - The main action is “ابدأ ورد اليوم”; it opens the earliest unread page and refreshes the plan when the reader closes. The Quran index displays plan progress and pages remaining today. Numeric page and daily-goal fields use left-to-right digits, right alignment, and start the first tap’s cursor at the end while keeping later cursor placement editable.
 - Plans are stored locally in SharedPreferences and work offline. They are not included in the existing bookmark JSON backup/sync. Automatic credit is a time-on-page heuristic, not proof that the user read the page.
 - **Verification:** `flutter analyze --no-pub` found no issues; `python tool/ui_lint_v2.py --strict` passed (0 failures, 7/10 allow markers); debug APK built in 65.8s and installed on the Pixel 6a emulator. Confirmed that entering `9` at first focus appended to page `1` (`19`), then canceled the editor without creating a plan. Tests were not run.
+
+## Quran Ayah Actions — Reading Position Toggle & Responsive Controls (8 November 2026)
+- Made the saved reading position a true toggle in both the ayah quick-action menu and details sheet. Removing it is conditional on the stored location still matching that ayah, so a stale sheet cannot clear a newer position.
+- Shortened the quick-action labels and descriptions. Tiles switch to a centered stacked layout on narrow screens or larger text; the details footer stacks its main action and copy/share controls when space is constrained.
+- **Verification:** `flutter analyze --no-pub` found no issues; `python tool/ui_lint_v2.py --strict` passed (0 failures, 7/10 allow markers); `git diff --check` passed. Tests were not run.

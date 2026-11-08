@@ -59,10 +59,14 @@ class BookmarkService {
     bool isSurah = false,
   }) {
     if (!Bookmark.isValidCoordinates(surah, ayah)) {
-      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah');
+      throw ArgumentError(
+        'Invalid Quran coordinates: surah $surah, ayah $ayah',
+      );
     }
     return _transaction((bookmarks) {
-      bookmarks.removeWhere((b) => b.surah == surah && b.ayah == ayah && b.isSurah == isSurah);
+      bookmarks.removeWhere(
+        (b) => b.surah == surah && b.ayah == ayah && b.isSurah == isSurah,
+      );
 
       final page = quran.getPageNumber(surah, ayah);
       final cleanNote = (note != null && note.length > 2000)
@@ -85,10 +89,16 @@ class BookmarkService {
   }
 
   /// Remove a bookmark atomically under [_lock].
-  static Future<void> removeBookmark(int surah, int ayah, {bool isSurah = false}) {
+  static Future<void> removeBookmark(
+    int surah,
+    int ayah, {
+    bool isSurah = false,
+  }) {
     return _transaction((bookmarks) {
       bookmarks.removeWhere(
-        (b) => b.surah == surah && (isSurah ? b.isSurah : (b.ayah == ayah && !b.isSurah)),
+        (b) =>
+            b.surah == surah &&
+            (isSurah ? b.isSurah : (b.ayah == ayah && !b.isSurah)),
       );
     });
   }
@@ -133,19 +143,26 @@ class BookmarkService {
   /// Check if an Ayah is specifically bookmarked
   static Future<bool> isAyahBookmarked(int surah, int ayah) async {
     final bookmarks = await getBookmarks();
-    return bookmarks.any((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
+    return bookmarks.any(
+      (b) => b.surah == surah && b.ayah == ayah && !b.isSurah,
+    );
   }
 
   /// Check if an ayah is bookmarked
-  static Future<bool> isBookmarked(int surah, int ayah) => isAyahBookmarked(surah, ayah);
+  static Future<bool> isBookmarked(int surah, int ayah) =>
+      isAyahBookmarked(surah, ayah);
 
   /// Toggle bookmark status for an ayah atomically under [_lock].
   static Future<bool> toggleBookmark(int surah, int ayah, {String? note}) {
     if (!Bookmark.isValidCoordinates(surah, ayah)) {
-      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah');
+      throw ArgumentError(
+        'Invalid Quran coordinates: surah $surah, ayah $ayah',
+      );
     }
     return _transaction((bookmarks) {
-      final index = bookmarks.indexWhere((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
+      final index = bookmarks.indexWhere(
+        (b) => b.surah == surah && b.ayah == ayah && !b.isSurah,
+      );
       if (index != -1) {
         bookmarks.removeAt(index);
         return false;
@@ -176,10 +193,14 @@ class BookmarkService {
   /// Update note for a bookmark atomically under [_lock].
   static Future<void> updateNote(int surah, int ayah, String? note) {
     if (!Bookmark.isValidCoordinates(surah, ayah)) {
-      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah');
+      throw ArgumentError(
+        'Invalid Quran coordinates: surah $surah, ayah $ayah',
+      );
     }
     return _transaction((bookmarks) {
-      final index = bookmarks.indexWhere((b) => b.surah == surah && b.ayah == ayah && !b.isSurah);
+      final index = bookmarks.indexWhere(
+        (b) => b.surah == surah && b.ayah == ayah && !b.isSurah,
+      );
       if (index != -1) {
         final old = bookmarks[index];
         bookmarks[index] = Bookmark(
@@ -288,7 +309,9 @@ class BookmarkService {
 
   /// Deprecated: Callers should not read a snapshot outside the lock and overwrite it.
   /// Use [_transaction], [atomicMergeBookmarks], or dedicated mutation methods instead.
-  @Deprecated('Use atomic mutation methods or atomicMergeBookmarks to avoid lost updates.')
+  @Deprecated(
+    'Use atomic mutation methods or atomicMergeBookmarks to avoid lost updates.',
+  )
   static Future<void> saveAllBookmarks(List<Bookmark> bookmarks) {
     return _transaction((list) {
       list
@@ -419,7 +442,9 @@ class BookmarkService {
     int? page,
   }) {
     if (!Bookmark.isValidCoordinates(surah, ayah, page)) {
-      throw ArgumentError('Invalid Quran coordinates: surah $surah, ayah $ayah, page $page');
+      throw ArgumentError(
+        'Invalid Quran coordinates: surah $surah, ayah $ayah, page $page',
+      );
     }
     return _lock.synchronized(() async {
       final prefs = await SharedPreferences.getInstance();
@@ -447,7 +472,10 @@ class BookmarkService {
       page: page,
       timestamp: timestamp,
     );
-    final success = await prefs.setString(_lastReadKey, jsonEncode(lastRead.toJson()));
+    final success = await prefs.setString(
+      _lastReadKey,
+      jsonEncode(lastRead.toJson()),
+    );
     if (!success) {
       throw StateError('Failed to persist last read to storage');
     }
@@ -460,7 +488,35 @@ class BookmarkService {
   /// Check whether an explicit last read position has been recorded
   static Future<bool> hasSavedLastRead() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_lastReadKey) || prefs.containsKey(_legacyLastSurahKey);
+    return prefs.containsKey(_lastReadKey) ||
+        prefs.containsKey(_legacyLastSurahKey);
+  }
+
+  /// Removes the saved position only if it still points to [surah]/[ayah].
+  /// This prevents a stale sheet from clearing a newer position saved elsewhere.
+  static Future<bool> clearLastReadIfMatches({
+    required int surah,
+    required int ayah,
+  }) {
+    return _lock.synchronized(() async {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSavedPosition =
+          prefs.containsKey(_lastReadKey) ||
+          prefs.containsKey(_legacyLastSurahKey);
+      if (!hasSavedPosition) return false;
+
+      final current = await _getLastReadRaw(prefs);
+      if (current.surah != surah || current.ayah != ayah) return false;
+
+      var removed = await prefs.remove(_lastReadKey);
+      removed = await prefs.remove(_legacyLastSurahKey) && removed;
+      removed = await prefs.remove(_legacyLastAyahKey) && removed;
+      removed = await prefs.remove(_legacyLastPageKey) && removed;
+      if (!removed) {
+        throw StateError('Failed to clear saved last-read position');
+      }
+      return true;
+    });
   }
 
   /// Get last read position with automatic legacy fallback. Serialized under [_lock].
@@ -483,7 +539,8 @@ class BookmarkService {
     // Legacy fallback
     final surah = prefs.getInt(_legacyLastSurahKey) ?? 1;
     final ayah = prefs.getInt(_legacyLastAyahKey) ?? 1;
-    final page = prefs.getInt(_legacyLastPageKey) ?? quran.getPageNumber(surah, ayah);
+    final page =
+        prefs.getInt(_legacyLastPageKey) ?? quran.getPageNumber(surah, ayah);
 
     return LastRead(
       surah: surah,

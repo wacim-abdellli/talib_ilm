@@ -91,7 +91,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     final exists = bookmarks.any(
       (b) => b.surah == widget.surahNumber && b.ayah == widget.ayahNumber,
     );
-    final isLastRead = hasSavedLastRead &&
+    final isLastRead =
+        hasSavedLastRead &&
         lastRead.surah == widget.surahNumber &&
         lastRead.ayah == widget.ayahNumber;
     setState(() {
@@ -116,8 +117,24 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     }
   }
 
-  Future<void> _saveAsLastRead() async {
+  Future<void> _toggleLastRead() async {
     HapticFeedback.selectionClick();
+    if (_isLastRead) {
+      final removed = await BookmarkService.clearLastReadIfMatches(
+        surah: widget.surahNumber,
+        ayah: widget.ayahNumber,
+      );
+      if (!mounted) return;
+      if (!removed) {
+        await _checkBookmark();
+        return;
+      }
+      widget.onBookmarkChanged?.call();
+      Navigator.of(context).pop();
+      AppSnackbar.info(context, 'تمت إزالة موضع القراءة');
+      return;
+    }
+
     final page = quran.getPageNumber(widget.surahNumber, widget.ayahNumber);
     await BookmarkService.saveLastRead(
       surah: widget.surahNumber,
@@ -131,7 +148,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     AppSnackbar.success(
       context,
-      'تم تثبيت موضع القراءة: سورة $surahName الآية ${widget.ayahNumber}',
+      'تم حفظ موضع القراءة: $surahName • ${widget.ayahNumber}',
     );
   }
 
@@ -161,7 +178,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     Navigator.of(context).pop();
     await AppShare.share(
-      context,'﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
+      context,
+      '﴿$verse﴾ [$surahName: ${widget.ayahNumber}]',
+    );
   }
 
   void _openDetailsAtTab(int tabIndex) {
@@ -264,7 +283,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
 
           // 2. Header: Surah & Ayah Reference
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.xl,
+            ),
             child: Row(
               children: [
                 const IconBadge(icon: Icons.menu_book_rounded),
@@ -305,7 +326,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
 
           // 3. Compact Verse Card Preview
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 96),
               child: AppCard(
@@ -334,7 +357,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
           Flexible(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.lg,
+              ),
               child: Column(
                 children: [
                   // Row 1: Tafsir & Meanings
@@ -343,8 +368,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.auto_stories_rounded,
-                          title: 'تفسير الآية',
-                          subtitle: 'تفاسير أهل السنة المعتمدة',
+                          title: 'التفسير',
+                          subtitle: 'تفسير موثوق',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(0),
                         ),
@@ -353,8 +378,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.spellcheck_rounded,
-                          title: 'معاني الكلمات',
-                          subtitle: 'مفردات الآية وغريب القرآن',
+                          title: 'المعاني',
+                          subtitle: 'شرح الكلمات',
                           color: palette.gold,
                           onTap: () => _openDetailsAtTab(1),
                         ),
@@ -369,8 +394,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.compare_arrows_rounded,
-                          title: 'المتشابهات والضوابط',
-                          subtitle: 'ربط الآيات المتشابهة وقواعد الحفظ',
+                          title: 'المتشابهات',
+                          subtitle: 'آيات وقواعد الحفظ',
                           color: palette.gold,
                           onTap: () => _openDetailsAtTab(2),
                         ),
@@ -379,8 +404,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.edit_note_rounded,
-                          title: 'تدبر وملاحظات',
-                          subtitle: 'تدوين خواطر وتأملات إيمانية',
+                          title: 'التدبر',
+                          subtitle: 'خواطرك وملاحظاتك',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(4),
                         ),
@@ -396,7 +421,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                         child: _ActionTile(
                           icon: Icons.playlist_play_rounded,
                           title: 'تلاوة مستمرة',
-                          subtitle: 'متابعة القراءة للآيات التالية تلقائياً',
+                          subtitle: 'تابع الآيات التالية',
                           color: palette.primary,
                           onTap: _playContinuous,
                         ),
@@ -405,8 +430,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.play_circle_fill_rounded,
-                          title: 'استماع للآية',
-                          subtitle: 'تلاوة هذه الآية فقط',
+                          title: 'استماع',
+                          subtitle: 'هذه الآية فقط',
                           color: palette.primary,
                           onTap: _playVerse,
                         ),
@@ -421,8 +446,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.repeat_one_rounded,
-                          title: 'تكرار الآية',
-                          subtitle: 'تكرار الآية أو مقطع كامل للحفظ',
+                          title: 'التكرار',
+                          subtitle: 'للحفظ والمراجعة',
                           color: palette.gold,
                           onTap: _openHifdhRepeatOptions,
                         ),
@@ -431,8 +456,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.record_voice_over_rounded,
-                          title: 'خيارات التلاوة',
-                          subtitle: 'تغيير القارئ وسرعة الصوت',
+                          title: 'إعدادات الصوت',
+                          subtitle: 'القارئ والسرعة',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(3),
                         ),
@@ -449,8 +474,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           icon: _isBookmarked
                               ? Icons.bookmark_added_rounded
                               : Icons.bookmark_add_outlined,
-                          title: _isBookmarked ? 'محفوظة في الفواصل' : 'حفظ في الفواصل',
-                          subtitle: _isBookmarked ? 'انقر لإلغاء الحفظ' : 'إضافة إلى المحفوظات',
+                          title: _isBookmarked ? 'في المفضلة' : 'إضافة للمفضلة',
+                          subtitle: _isBookmarked ? 'إزالة الحفظ' : 'حفظ الآية',
                           color: _isBookmarked ? palette.gold : palette.text,
                           onTap: _toggleBookmark,
                         ),
@@ -459,14 +484,14 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: _isLastRead
-                              ? Icons.bookmark_added_rounded
+                              ? Icons.bookmark_remove_rounded
                               : Icons.bookmark_border_rounded,
-                          title: _isLastRead ? 'موضع القراءة الحالي' : 'تعيين كموضع قراءة',
+                          title: _isLastRead ? 'موضع القراءة' : 'حفظ الموضع',
                           subtitle: _isLastRead
-                              ? 'مثبت كآخر موضع توقفت عنده'
-                              : 'حفظ كآخر موضع توقفت عنده',
+                              ? 'إزالة الموضع'
+                              : 'آخر موضع قراءة',
                           color: _isLastRead ? palette.success : palette.text,
-                          onTap: _saveAsLastRead,
+                          onTap: _toggleLastRead,
                         ),
                       ),
                     ],
@@ -480,7 +505,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                         child: _ActionTile(
                           icon: Icons.copy_rounded,
                           title: 'نسخ الآية',
-                          subtitle: 'نسخ النص القرآني مع السورة',
+                          subtitle: 'نسخ النص والمرجع',
                           color: palette.text,
                           onTap: _copyVerse,
                         ),
@@ -489,8 +514,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.share_rounded,
-                          title: 'مشاركة الآية الكريمة',
-                          subtitle: 'مشاركة النص مع المرجع',
+                          title: 'مشاركة',
+                          subtitle: 'النص مع المرجع',
                           color: palette.primary,
                           onTap: _shareVerse,
                         ),
@@ -526,70 +551,86 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
 
-    return Semantics(
-      button: true,
-      label: '$title: $subtitle',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: AppRadius.mdRadius,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 64),
-            padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-            decoration: BoxDecoration(
-              color: palette.surfaceMuted,
-              borderRadius: AppRadius.mdRadius,
-              border: Border.all(color: palette.border.withValues(alpha: 0.7)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 160 || textScale > 1.25;
+        final iconBadge = Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: AppIcon.sm, color: color),
+        );
+        final textContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: stacked
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              textAlign: stacked ? TextAlign.center : TextAlign.start,
+              style: textTheme.bodySmall.copyWith(
+                color: palette.text,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: stacked ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    size: AppIcon.sm,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        style: textTheme.bodySmall.copyWith(
-                          color: palette.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        subtitle,
-                        style: textTheme.caption.copyWith(
-                          color: palette.textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+            Text(
+              subtitle,
+              textAlign: stacked ? TextAlign.center : TextAlign.start,
+              style: textTheme.caption.copyWith(color: palette.textMuted),
+              maxLines: stacked ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+
+        return Semantics(
+          button: true,
+          label: '$title: $subtitle',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: AppRadius.mdRadius,
+              child: Container(
+                constraints: BoxConstraints(minHeight: stacked ? 84 : 64),
+                padding: const EdgeInsetsDirectional.all(AppSpace.sm),
+                decoration: BoxDecoration(
+                  color: palette.surfaceMuted,
+                  borderRadius: AppRadius.mdRadius,
+                  border: Border.all(
+                    color: palette.border.withValues(alpha: 0.7),
                   ),
                 ),
-              ],
+                child: stacked
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          iconBadge,
+                          const SizedBox(height: AppSpace.xs),
+                          textContent,
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          iconBadge,
+                          const SizedBox(width: AppSpace.xs),
+                          Expanded(child: textContent),
+                        ],
+                      ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

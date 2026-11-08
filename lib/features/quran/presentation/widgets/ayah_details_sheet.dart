@@ -76,12 +76,12 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
   String _tafsirText = '';
   bool _loadingTafsir = true;
   bool _isBookmarked = false;
+  bool _isLastRead = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedScholar =
-        widget.initialTafsirScholar ?? TafsirScholar.muyassar;
+    _selectedScholar = widget.initialTafsirScholar ?? TafsirScholar.muyassar;
     _tabController = TabController(
       length: 5,
       vsync: this,
@@ -121,11 +121,18 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
   Future<void> _loadBookmarkState() async {
     final bookmarks = await BookmarkService.getBookmarks();
+    final hasSavedLastRead = await BookmarkService.hasSavedLastRead();
+    final lastRead = await BookmarkService.getLastRead();
     final current = bookmarks.where(
       (b) => b.surah == widget.surahNumber && b.ayah == widget.ayahNumber,
     );
+    final isLastRead =
+        hasSavedLastRead &&
+        lastRead.surah == widget.surahNumber &&
+        lastRead.ayah == widget.ayahNumber;
 
     if (!mounted) return;
+    setState(() => _isLastRead = isLastRead);
     if (current.isNotEmpty) {
       final b = current.first;
       setState(() {
@@ -156,7 +163,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
   Future<void> _toggleBookmark() async {
     HapticFeedback.selectionClick();
-    final note = _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : null;
+    final note = _noteController.text.trim().isNotEmpty
+        ? _noteController.text.trim()
+        : null;
     final isNowBookmarked = await BookmarkService.toggleBookmark(
       widget.surahNumber,
       widget.ayahNumber,
@@ -188,8 +197,24 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
     AppSnackbar.success(context, 'تم حفظ الملاحظة والتدبر بنجاح');
   }
 
-  Future<void> _saveAsLastRead() async {
+  Future<void> _toggleLastRead() async {
     HapticFeedback.selectionClick();
+    if (_isLastRead) {
+      final removed = await BookmarkService.clearLastReadIfMatches(
+        surah: widget.surahNumber,
+        ayah: widget.ayahNumber,
+      );
+      if (!mounted) return;
+      if (!removed) {
+        await _loadBookmarkState();
+        return;
+      }
+      setState(() => _isLastRead = false);
+      widget.onBookmarkChanged?.call();
+      AppSnackbar.info(context, 'تمت إزالة موضع القراءة');
+      return;
+    }
+
     final page = quran.getPageNumber(widget.surahNumber, widget.ayahNumber);
     await BookmarkService.saveLastRead(
       surah: widget.surahNumber,
@@ -197,10 +222,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
       page: page,
     );
     if (!mounted) return;
-    AppSnackbar.success(
-      context,
-      'تم حفظ موضع القراءة (سورة ${quran.getSurahNameArabic(widget.surahNumber)} الآية ${widget.ayahNumber})',
-    );
+    setState(() => _isLastRead = true);
+    widget.onBookmarkChanged?.call();
+    AppSnackbar.success(context, 'تم حفظ موضع القراءة');
   }
 
   Future<void> _copyVerse() async {
@@ -227,7 +251,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
     );
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     await AppShare.share(
-      context,'﴿$verse﴾ [$surahName: ${widget.ayahNumber}]');
+      context,
+      '﴿$verse﴾ [$surahName: ${widget.ayahNumber}]',
+    );
   }
 
   @override
@@ -272,7 +298,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
           const SizedBox(height: AppSpace.md),
 
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.xl),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.xl,
+            ),
             child: Row(
               children: [
                 const IconBadge(icon: Icons.menu_book_rounded),
@@ -321,7 +349,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
           // Pinned Verse Text Card with Compact Constraint
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 110),
               child: AppCard(
@@ -357,7 +387,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
           // Pinned Tab Bar
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
             child: Container(
               padding: const EdgeInsetsDirectional.all(AppSpace.xxs),
               decoration: BoxDecoration(
@@ -411,7 +443,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
           // Expanded TabBarView: Takes full height, allowing inner tabs to scroll freely
           Expanded(
             child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.lg,
+              ),
               child: TabBarView(
                 controller: _tabController,
                 children: [
@@ -458,29 +492,59 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
 
           // Pinned Bottom Action Bar
           Padding(
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.lg),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    label: 'حفظ كموضع قراءة',
-                    icon: Icons.bookmark_rounded,
-                    onPressed: _saveAsLastRead,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                AppIconButton(
-                  icon: Icons.copy_rounded,
-                  tooltip: 'نسخ الآية',
-                  onPressed: _copyVerse,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                AppIconButton(
-                  icon: Icons.share_rounded,
-                  tooltip: 'مشاركة',
-                  onPressed: _shareVerse,
-                ),
-              ],
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.lg,
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final largeText =
+                    MediaQuery.textScalerOf(context).scale(1) > 1.2;
+                final isNarrow = constraints.maxWidth < 360 || largeText;
+                final positionButton = AppButton(
+                  label: _isLastRead ? 'إزالة الموضع' : 'حفظ الموضع',
+                  icon: _isLastRead
+                      ? Icons.bookmark_remove_rounded
+                      : Icons.bookmark_add_rounded,
+                  onPressed: _toggleLastRead,
+                );
+                final utilityButtons = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIconButton(
+                      icon: Icons.copy_rounded,
+                      tooltip: 'نسخ الآية',
+                      onPressed: _copyVerse,
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    AppIconButton(
+                      icon: Icons.share_rounded,
+                      tooltip: 'مشاركة',
+                      onPressed: _shareVerse,
+                    ),
+                  ],
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      positionButton,
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: utilityButtons,
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: positionButton),
+                    const SizedBox(width: AppSpace.sm),
+                    utilityButtons,
+                  ],
+                );
+              },
             ),
           ),
         ],
