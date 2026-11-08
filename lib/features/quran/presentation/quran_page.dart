@@ -265,7 +265,7 @@ class _QuranPageState extends State<QuranPage> {
         builder: (_) => MushafPageViewer(
           initialPage: targetPage,
           initialSurah: surahNum,
-          initialAyah: effectiveAyah,
+          initialAyah: ayah,
         ),
       ),
     );

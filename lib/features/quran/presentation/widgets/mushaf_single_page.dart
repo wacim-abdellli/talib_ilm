@@ -46,8 +46,10 @@ class MushafSinglePage extends StatefulWidget {
   final double fontSize;
   final int? activeSurah;
   final int? activeAyah;
+  final double activeAyahOpacity;
   final int? lastReadSurah;
   final int? lastReadAyah;
+  final double lastReadOpacity;
   final Set<String>? bookmarkedAyahs;
   final void Function(int surah, int ayah)? onAyahTap;
   final void Function(int surah, int ayah, int wordIndex, String word)?
@@ -63,8 +65,10 @@ class MushafSinglePage extends StatefulWidget {
     this.fontSize = 24.0,
     this.activeSurah,
     this.activeAyah,
+    this.activeAyahOpacity = 1.0,
     this.lastReadSurah,
     this.lastReadAyah,
+    this.lastReadOpacity = 1.0,
     this.bookmarkedAyahs,
     this.onAyahTap,
     this.onWordTap,
@@ -315,27 +319,36 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
     final wordOffsets = QuranRepository.instance.wordOffsets[pageIndex] ?? const {};
 
     final List<HighlightVerse> highlights = [];
-    if (widget.activeSurah != null && widget.activeAyah != null) {
+    if (widget.activeSurah != null &&
+        widget.activeAyah != null &&
+        widget.activeAyahOpacity > 0.01) {
+      final alpha = (0.16 * widget.activeAyahOpacity).clamp(0.0, 1.0);
       highlights.add(
         HighlightVerse(
           surah: widget.activeSurah!,
           verseNumber: widget.activeAyah!,
           page: pageNumber,
-          color: palette.gold.withValues(alpha: 0.28),
+          color: palette.gold.withValues(alpha: alpha),
         ),
       );
     }
 
-    if (widget.lastReadSurah != null && widget.lastReadAyah != null) {
-      final lastPage = quran.getPageNumber(widget.lastReadSurah!, widget.lastReadAyah!);
+    if (widget.lastReadSurah != null &&
+        widget.lastReadAyah != null &&
+        widget.lastReadOpacity > 0.01) {
+      final lastPage =
+          quran.getPageNumber(widget.lastReadSurah!, widget.lastReadAyah!);
       if (lastPage == pageNumber &&
-          (widget.activeSurah != widget.lastReadSurah || widget.activeAyah != widget.lastReadAyah)) {
+          (widget.activeSurah != widget.lastReadSurah ||
+              widget.activeAyah != widget.lastReadAyah ||
+              widget.activeAyahOpacity <= 0.01)) {
+        final alpha = (0.13 * widget.lastReadOpacity).clamp(0.0, 1.0);
         highlights.add(
           HighlightVerse(
             surah: widget.lastReadSurah!,
             verseNumber: widget.lastReadAyah!,
             page: pageNumber,
-            color: palette.success.withValues(alpha: 0.15),
+            color: palette.success.withValues(alpha: alpha),
           ),
         );
       }
@@ -349,14 +362,19 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
         final end = range['end'] as int;
         for (int a = start; a <= end; a++) {
           if (widget.bookmarkedAyahs!.contains('$surah:$a')) {
-            if ((widget.activeSurah != surah || widget.activeAyah != a) &&
-                (widget.lastReadSurah != surah || widget.lastReadAyah != a)) {
+            final isTargeted = widget.activeSurah == surah &&
+                widget.activeAyah == a &&
+                widget.activeAyahOpacity > 0.01;
+            final isLastRead = widget.lastReadSurah == surah &&
+                widget.lastReadAyah == a &&
+                widget.lastReadOpacity > 0.01;
+            if (!isTargeted && !isLastRead) {
               highlights.add(
                 HighlightVerse(
                   surah: surah,
                   verseNumber: a,
                   page: pageNumber,
-                  color: palette.success.withValues(alpha: 0.10),
+                  color: palette.success.withValues(alpha: 0.08),
                 ),
               );
             }
@@ -371,9 +389,7 @@ class _MushafSinglePageState extends State<MushafSinglePage> {
 
     return RepaintBoundary(
       child: QuranSinglePageWidget(
-        key: ValueKey(
-          'qcf_plus_page_${pageNumber}_${widget.lastReadAyah ?? 'none'}_${widget.activeAyah ?? 'none'}',
-        ),
+        key: ValueKey('qcf_plus_page_$pageNumber'),
         page: page,
         pageIndex: pageNumber,
         isTajweed: widget.isTajweedEnabled,

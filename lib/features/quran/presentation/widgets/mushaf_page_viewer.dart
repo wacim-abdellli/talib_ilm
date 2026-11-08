@@ -14,7 +14,6 @@ import '../../data/services/bookmark_service.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_reader_preferences.dart';
 import '../../data/services/quran_tafsir_service.dart';
-import '../../data/services/reading_history_service.dart';
 import '../../data/services/reading_stats_service.dart';
 import '../../data/services/khatmah_plan_service.dart';
 import 'ayah_action_menu_sheet.dart';
@@ -49,7 +48,7 @@ class MushafPageViewer extends StatefulWidget {
 }
 
 class _MushafPageViewerState extends State<MushafPageViewer>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   late final PageController _pageController;
   final ReadingStatsService _statsService = ReadingStatsService();
   final QuranAudioService _audioService = QuranAudioService();
@@ -68,13 +67,16 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   int? _lastReadSurah;
   int? _lastReadAyah;
   int? _lastReadPage;
-  bool _showLastReadHighlight = false;
+
+  double _lastReadOpacity = 0.0;
+  double _targetedAyahOpacity = 0.0;
   Timer? _lastReadFadeTimer;
   Timer? _targetedAyahTimer;
+  late final AnimationController _lastReadFadeController;
+  late final AnimationController _targetedAyahFadeController;
   Set<String> _bookmarkedAyahs = {};
 
   late final ValueNotifier<QuranPosition> _positionNotifier;
-  Timer? _saveLastReadDebounceTimer;
   Timer? _preloadDebounceTimer;
 
   MushafThemeMode _themeMode = MushafThemeMode.sepia;
@@ -91,6 +93,32 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addObserver(this);
     _sessionStartTime = DateTime.now();
+
+    _lastReadFadeController = AnimationController(
+      vsync: this,
+      duration: AppMotion.slow,
+    )..addListener(() {
+        if (mounted) {
+          setState(() {
+            _lastReadOpacity = _lastReadFadeController.value;
+          });
+        }
+      });
+
+    _targetedAyahFadeController = AnimationController(
+      vsync: this,
+      duration: AppMotion.slow,
+    )..addListener(() {
+        if (mounted) {
+          setState(() {
+            _targetedAyahOpacity = _targetedAyahFadeController.value;
+            if (_targetedAyahOpacity <= 0.01) {
+              _selectedSurah = null;
+              _selectedAyah = null;
+            }
+          });
+        }
+      });
 
     int startPage = 1;
     if (widget.initialPage != null) {
@@ -111,7 +139,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     if (widget.initialAyah != null && widget.initialSurah != null) {
       _selectedSurah = widget.initialSurah;
       _selectedAyah = widget.initialAyah;
-      _highlightTargetedAyah();
+      _triggerTargetedAyahHighlight();
     }
 
     _currentPage = startPage;
@@ -166,31 +194,16 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     WidgetsBinding.instance.removeObserver(this);
     _lastReadFadeTimer?.cancel();
     _targetedAyahTimer?.cancel();
+    _lastReadFadeController.dispose();
+    _targetedAyahFadeController.dispose();
     _accumulateForegroundTime(stop: true);
     _recordTrackedPageIfReadEnough();
     _audioService.activeAyahNotifier.removeListener(_onAudioAyahChanged);
     _audioService.errorNotifier.removeListener(_onAudioError);
-    _saveLastReadDebounceTimer?.cancel();
     _preloadDebounceTimer?.cancel();
 
-    final surahToSave =
-        (_lastReadPage == _currentPage && _lastReadSurah != null)
-        ? _lastReadSurah!
-        : _currentSurah;
-    final ayahToSave = (_lastReadPage == _currentPage && _lastReadAyah != null)
-        ? _lastReadAyah!
-        : _currentAyah;
+    QuranReaderPreferences.saveLastPage(_currentPage);
 
-    BookmarkService.updateMemoryLastRead(
-      surah: surahToSave,
-      ayah: ayahToSave,
-      page: _currentPage,
-    );
-    BookmarkService.saveLastRead(
-      surah: surahToSave,
-      ayah: ayahToSave,
-      page: _currentPage,
-    );
     _positionNotifier.dispose();
     _pageController.dispose();
     _recordStats();
@@ -200,11 +213,35 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     super.dispose();
   }
 
-  void _scheduleSaveLastRead(int surah, int ayah, int page) {
-    _saveLastReadDebounceTimer?.cancel();
-    _saveLastReadDebounceTimer = Timer(AppMotion.toast, () {
-      BookmarkService.saveLastRead(surah: surah, ayah: ayah, page: page);
-      ReadingHistoryService.recordReading(surah: surah, ayah: ayah, page: page);
+  void _triggerLastReadHighlight() {
+    _lastReadFadeTimer?.cancel();
+    _lastReadFadeController.stop();
+    _lastReadFadeController.value = 1.0;
+    if (mounted) {
+      setState(() {
+        _lastReadOpacity = 1.0;
+      });
+    }
+    _lastReadFadeTimer = Timer(AppMotion.oneSecond, () {
+      if (mounted) {
+        _lastReadFadeController.reverse(from: 1.0);
+      }
+    });
+  }
+
+  void _triggerTargetedAyahHighlight() {
+    _targetedAyahTimer?.cancel();
+    _targetedAyahFadeController.stop();
+    _targetedAyahFadeController.value = 1.0;
+    if (mounted) {
+      setState(() {
+        _targetedAyahOpacity = 1.0;
+      });
+    }
+    _targetedAyahTimer = Timer(AppMotion.oneSecond, () {
+      if (mounted) {
+        _targetedAyahFadeController.reverse(from: 1.0);
+      }
     });
   }
 
@@ -235,19 +272,19 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _lastReadSurah = lastRead?.surah;
       _lastReadAyah = lastRead?.ayah;
       _lastReadPage = lastRead?.page;
-      _showLastReadHighlight = _lastReadAyah != null;
       _bookmarkedAyahs = bookmarks.map((b) => '${b.surah}:${b.ayah}').toSet();
+      if (widget.initialAyah == null &&
+          _lastReadPage == _currentPage &&
+          _lastReadAyah != null) {
+        _currentSurah = _lastReadSurah!;
+        _currentAyah = _lastReadAyah!;
+      }
     });
 
-    if (_lastReadAyah != null) {
-      _lastReadFadeTimer?.cancel();
-      _lastReadFadeTimer = Timer(AppMotion.oneSecond, () {
-        if (mounted && _showLastReadHighlight) {
-          setState(() {
-            _showLastReadHighlight = false;
-          });
-        }
-      });
+    if (_lastReadPage == _currentPage &&
+        _lastReadAyah != null &&
+        widget.initialAyah == null) {
+      _triggerLastReadHighlight();
     }
   }
 
@@ -268,12 +305,6 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       QuranReaderPreferences.saveKeepScreenAwake(_keepScreenAwake),
       QuranReaderPreferences.saveLastPage(_currentPage),
     ]);
-
-    await BookmarkService.saveLastRead(
-      surah: _currentSurah,
-      ayah: _currentAyah,
-      page: _currentPage,
-    );
   }
 
   Future<void> _recordStats() async {
@@ -290,15 +321,16 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   }
 
   void _onPageChanged(int page) {
-    if (_showLastReadHighlight) {
-      _lastReadFadeTimer?.cancel();
-      _showLastReadHighlight = false;
-    }
-    if (_selectedAyah != null) {
-      _targetedAyahTimer?.cancel();
-      _selectedSurah = null;
-      _selectedAyah = null;
-    }
+    _lastReadFadeTimer?.cancel();
+    _lastReadFadeController.stop();
+    _lastReadOpacity = 0.0;
+
+    _targetedAyahTimer?.cancel();
+    _targetedAyahFadeController.stop();
+    _targetedAyahOpacity = 0.0;
+    _selectedSurah = null;
+    _selectedAyah = null;
+
     if (page != _trackedPage) {
       _accumulateForegroundTime(stop: true);
       _recordTrackedPageIfReadEnough();
@@ -312,8 +344,16 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     _currentPage = page;
     final pageData = quran.getPageData(page);
     if (pageData.isNotEmpty) {
-      _currentSurah = pageData.first['surah'] as int;
-      _currentAyah = pageData.first['start'] as int;
+      if (_lastReadPage == page &&
+          _lastReadAyah != null &&
+          _lastReadSurah != null) {
+        _currentSurah = _lastReadSurah!;
+        _currentAyah = _lastReadAyah!;
+        _triggerLastReadHighlight();
+      } else {
+        _currentSurah = pageData.first['surah'] as int;
+        _currentAyah = pageData.first['start'] as int;
+      }
     }
     _positionNotifier.value = QuranPosition(
       surah: _currentSurah,
@@ -325,12 +365,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     _preloadDebounceTimer = Timer(AppMotion.fast, () {
       QcfFontLoader.preloadPages(page, radius: 2);
     });
-    BookmarkService.updateMemoryLastRead(
-      surah: _currentSurah,
-      ayah: _currentAyah,
-      page: _currentPage,
-    );
-    _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
+    QuranReaderPreferences.saveLastPage(page);
   }
 
   @override
@@ -401,19 +436,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _selectedSurah = surah;
       _selectedAyah = ayah;
     });
-    _highlightTargetedAyah();
-  }
-
-  void _highlightTargetedAyah() {
-    _targetedAyahTimer?.cancel();
-    _targetedAyahTimer = Timer(AppMotion.oneSecond, () {
-      if (mounted) {
-        setState(() {
-          _selectedSurah = null;
-          _selectedAyah = null;
-        });
-      }
-    });
+    _triggerTargetedAyahHighlight();
   }
 
   void _toggleOverlays() {
@@ -609,10 +632,11 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       valueListenable: _audioService.activeAyahNotifier,
       builder: (context, activeAyah, _) {
         final activeSurah = _audioService.activeSurahNotifier.value;
-        final effectiveSurah = activeAyah != null
-            ? activeSurah
-            : _selectedSurah;
-        final effectiveAyah = activeAyah ?? _selectedAyah;
+        final isAudioActive = activeAyah != null;
+        final effectiveSurah = isAudioActive ? activeSurah : _selectedSurah;
+        final effectiveAyah = isAudioActive ? activeAyah : _selectedAyah;
+        final effectiveActiveOpacity =
+            isAudioActive ? 1.0 : _targetedAyahOpacity;
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -632,8 +656,10 @@ class _MushafPageViewerState extends State<MushafPageViewer>
                   isTajweedEnabled: _isTajweedEnabled,
                   activeSurah: effectiveSurah,
                   activeAyah: effectiveAyah,
-                  lastReadSurah: _showLastReadHighlight ? _lastReadSurah : null,
-                  lastReadAyah: _showLastReadHighlight ? _lastReadAyah : null,
+                  activeAyahOpacity: effectiveActiveOpacity,
+                  lastReadSurah: _lastReadSurah,
+                  lastReadAyah: _lastReadAyah,
+                  lastReadOpacity: _lastReadOpacity,
                   bookmarkedAyahs: _bookmarkedAyahs,
                   onAyahTap: (surah, ayah) => _toggleOverlays(),
                   onWordTap: _handleWordTap,

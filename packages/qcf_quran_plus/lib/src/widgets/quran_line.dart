@@ -233,9 +233,11 @@ class _QuranLineState extends State<QuranLine> {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4.0),
+                  borderRadius: BorderRadius.circular(6.0),
                   color: isAyahHighlighted
-                      ? highlightColor.withValues(alpha: 0.4)
+                      ? (highlightColor.a < 1.0
+                          ? highlightColor
+                          : highlightColor.withValues(alpha: 0.15))
                       : null,
                 ),
                 child: Text.rich(
