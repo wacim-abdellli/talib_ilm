@@ -85,6 +85,11 @@ void main() {
       expect(prefs.getInt('prayer_color_asr'), isNotNull);
       expect(prefs.getInt('prayer_color_maghrib'), isNotNull);
       expect(prefs.getInt('prayer_color_isha'), isNotNull);
+      expect(prefs.getString('prayer_fajr_time_str'), isNotNull);
+      expect(prefs.getString('prayer_dhuhr_time_str'), isNotNull);
+      expect(prefs.getString('prayer_asr_time_str'), isNotNull);
+      expect(prefs.getString('prayer_maghrib_time_str'), isNotNull);
+      expect(prefs.getString('prayer_isha_time_str'), isNotNull);
     });
 
     test('savePrayerSnapshot shares custom mosque intervals with native widgets', () async {

@@ -293,7 +293,6 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'RibbonWidgetProvider',
         androidName: 'RibbonWidgetProvider',
-        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -364,7 +363,6 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'StandardWidgetProvider',
         androidName: 'StandardWidgetProvider',
-        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -444,7 +442,6 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'LargeWidgetProvider',
         androidName: 'LargeWidgetProvider',
-        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
@@ -511,7 +508,6 @@ class HomeWidgetService {
       await HomeWidget.updateWidget(
         name: 'CompactWidgetProvider',
         androidName: 'CompactWidgetProvider',
-        iOSName: iOSWidgetName,
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
