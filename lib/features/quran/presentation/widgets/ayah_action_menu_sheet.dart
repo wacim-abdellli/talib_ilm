@@ -388,7 +388,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 2: Mutashabihat & Tadabbur
+                  // Row 2: Mutashabihat & Waqf Scholars
                   Row(
                     children: [
                       Expanded(
@@ -403,9 +403,35 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: _ActionTile(
+                          icon: Icons.pause_circle_outline_rounded,
+                          title: 'أحكام الوقف',
+                          subtitle: 'أئمة الوقف الخمسة وعلله',
+                          color: palette.gold,
+                          onTap: () => _openDetailsAtTab(3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+
+                  // Row 3: Tadabbur & Recitation Options
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionTile(
                           icon: Icons.edit_note_rounded,
                           title: 'تدبر وملاحظات',
                           subtitle: 'تدوين خواطر وتأملات إيمانية',
+                          color: palette.primary,
+                          onTap: () => _openDetailsAtTab(5),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.record_voice_over_rounded,
+                          title: 'خيارات التلاوة',
+                          subtitle: 'تغيير القارئ وسرعة الصوت',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(4),
                         ),
@@ -414,7 +440,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 3: Continuous Recitation & Single Ayah
+                  // Row 4: Continuous Recitation & Single Ayah
                   Row(
                     children: [
                       Expanded(
@@ -440,7 +466,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 4: Repeat & Audio Options
+                  // Row 5: Repeat & Audio Options
                   Row(
                     children: [
                       Expanded(
@@ -455,22 +481,6 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: _ActionTile(
-                          icon: Icons.record_voice_over_rounded,
-                          title: 'خيارات التلاوة',
-                          subtitle: 'تغيير القارئ وسرعة الصوت',
-                          color: palette.primary,
-                          onTap: () => _openDetailsAtTab(3),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.sm),
-
-                  // Row 5: Bookmark & Last Read
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ActionTile(
                           icon: _isBookmarked
                               ? Icons.bookmark_added_rounded
                               : Icons.bookmark_add_outlined,
@@ -480,7 +490,13 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           onTap: _toggleBookmark,
                         ),
                       ),
-                      const SizedBox(width: AppSpace.sm),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+
+                  // Row 6: Bookmark & Last Read
+                  Row(
+                    children: [
                       Expanded(
                         child: _ActionTile(
                           icon: _isLastRead
@@ -494,13 +510,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           onTap: _toggleLastRead,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.sm),
-
-                  // Row 6: Copy & Share
-                  Row(
-                    children: [
+                      const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.copy_rounded,
@@ -510,17 +520,17 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           onTap: _copyVerse,
                         ),
                       ),
-                      const SizedBox(width: AppSpace.sm),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.share_rounded,
-                          title: 'مشاركة الآية الكريمة',
-                          subtitle: 'النص مع المرجع',
-                          color: palette.primary,
-                          onTap: _shareVerse,
-                        ),
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+
+                  // Row 7: Share Verse
+                  _ActionTile(
+                    icon: Icons.share_rounded,
+                    title: 'مشاركة الآية الكريمة',
+                    subtitle: 'النص مع المرجع',
+                    color: palette.primary,
+                    onTap: _shareVerse,
                   ),
                 ],
               ),

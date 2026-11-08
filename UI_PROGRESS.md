@@ -1,3 +1,30 @@
+## Classical Waqf Scholars Engine & Hidayat al-Quran (8 November 2026)
+- **Branch**: `main`
+- **Features Implemented (Wahy Inspiration — Step 4)**:
+  - **Classical Waqf Scholars Models & Service**: Created `WaqfScholar`, `WaqfJudgment`, `WaqfWord`, and `AyahWaqfAnalysis` in `lib/features/quran/data/models/quran_waqf_analysis.dart`. Built `QuranWaqfService` in `lib/features/quran/data/services/quran_waqf_service.dart` with multi-tier caching (RAM memory cache, persistent `SharedPreferences`, live API mapping with Wahy Waqf endpoint `https://web.wahy.net/api/waqf/:surah/:ayah`, and offline fallback).
+  - **The 5 Classical Imams of Waqf Supported**:
+    1. أبو عمرو الداني (ت 444هـ) — المكتفى في الوقف والابتدا
+    2. السجاوندي (ت 560هـ) — علل الوقوف
+    3. زكريا الأنصاري (ت 926هـ) — المقصد لتلخيص ما في المرشد
+    4. الهبطي (ت 930هـ) — تقييد وقف القرآن
+    5. الأشموني (ت 1100هـ) — منار الهدى في بيان الوقف والابتدا
+  - **Waqf UI View (`AyahWaqfTabView`)**: Designed a modern, fully accessible RTL tab featuring:
+    - Scholar Filter Chips: Quick toggling between `جميع الأئمة الخمسة` and individual scholars with death year indicators.
+    - Interactive Word Stop Flow: Visual word pill strip highlighting all stop positions with gold indicator dots; tapping any word filters to its specific judgments.
+    - Scholar Judgments Card List: Per-stop breakdown showing scholar name, book citation, page number, semantic grade badges (`تام`, `كاف`, `حسن`, `جائز`, `لازم`, `لا يوقف`, `هبطي`), and theological/grammatical reasons for stopping (`علة الوقف`).
+    - Responsive `Wrap` layout surviving text scales 1.0, 1.5, and 2.0 without overflow.
+  - **Hidayat al-Quran (Source 191 — مركز تفسير للدراسات القرآنية)**:
+    - Added `TafsirScholar.hidayat` to `QuranTafsirService`.
+    - Integrated with Wahy source 191 (`https://web.wahy.net/api/source/191/:surah`), delivering rich spiritual, thematic, and linguistic reflections per Ayah.
+  - **HUD & Reader Integrations**:
+    - Expanded `AyahDetailsSheet` to 6 tabs (التفسير، المعاني، المتشابهات، أحكام الوقف، التلاوة، التدبر) with smooth horizontal scrolling tab bar.
+    - Added dedicated `أحكام الوقف` action tile to `AyahActionMenuSheet`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/quran_waqf_engine_test.dart test/quran_word_analysis_test.dart test/quran_word_details_sheet_test.dart test/ayah_action_menu_test.dart test/hadith_and_radio_test.dart test/quran_mutashabihat_test.dart`: All 25 tests passed.
+- **Status**: Complete & Verified.
+
 ## 4-Tier Quranic Word Linguistic Analysis Engine (8 November 2026)
 - **Branch**: `main`
 - **Features Implemented (Wahy Inspiration — Step 3)**:

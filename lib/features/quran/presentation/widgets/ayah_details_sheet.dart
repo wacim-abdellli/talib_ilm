@@ -83,9 +83,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
     super.initState();
     _selectedScholar = widget.initialTafsirScholar ?? TafsirScholar.muyassar;
     _tabController = TabController(
-      length: 5,
+      length: 6,
       vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 4),
+      initialIndex: widget.initialTabIndex.clamp(0, 5),
     );
     _loadBookmarkState();
     _loadTajweedMarkup();
@@ -399,6 +399,8 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
               ),
               child: TabBar(
                 controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
                 labelColor: palette.primary,
                 unselectedLabelColor: palette.textMuted,
                 indicator: BoxDecoration(
@@ -424,6 +426,10 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                   Tab(
                     icon: Icon(Icons.compare_arrows_rounded, size: AppIcon.sm),
                     text: 'المتشابهات',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.pause_circle_outline_rounded, size: AppIcon.sm),
+                    text: 'أحكام الوقف',
                   ),
                   Tab(
                     icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
@@ -470,6 +476,10 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                       Navigator.of(context).pop();
                       widget.onNavigateToVerse?.call(surah, ayah);
                     },
+                  ),
+                  AyahWaqfTabView(
+                    surahNumber: widget.surahNumber,
+                    ayahNumber: widget.ayahNumber,
                   ),
                   AyahAudioTabView(
                     surahNumber: widget.surahNumber,

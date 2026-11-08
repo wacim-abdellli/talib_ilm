@@ -14,6 +14,7 @@ enum TafsirScholar {
   saadi, // تفسير السعدي
   ibnKathir, // تفسير ابن كثير
   baghawi, // تفسير البغوي
+  hidayat, // هدايات القرآن الكريم (مركز تفسير)
   englishIbnKathir, // English Ibn Kathir & Translation
 }
 
@@ -104,10 +105,12 @@ class QuranTafsirService {
         return 'تفسير السعدي';
       case TafsirScholar.ibnKathir:
         return 'تفسير ابن كثير';
-      case TafsirScholar.englishIbnKathir:
-        return 'English (Tafsir & Translation)';
       case TafsirScholar.baghawi:
         return 'تفسير البغوي';
+      case TafsirScholar.hidayat:
+        return 'هدايات القرآن الكريم';
+      case TafsirScholar.englishIbnKathir:
+        return 'English (Tafsir & Translation)';
     }
   }
 
@@ -119,10 +122,12 @@ class QuranTafsirService {
         return 'الشيخ عبد الرحمن بن ناصر السعدي';
       case TafsirScholar.ibnKathir:
         return 'الحافظ ابن كثير الدمشقي';
-      case TafsirScholar.englishIbnKathir:
-        return 'Hafiz Ibn Kathir (English translation)';
       case TafsirScholar.baghawi:
         return 'الإمام الحسين بن مسعود البغوي';
+      case TafsirScholar.hidayat:
+        return 'مركز تفسير للدراسات القرآنية';
+      case TafsirScholar.englishIbnKathir:
+        return 'Hafiz Ibn Kathir (English translation)';
     }
   }
 
@@ -136,6 +141,8 @@ class QuranTafsirService {
         return 'ar-tafsir-ibn-kathir';
       case TafsirScholar.baghawi:
         return 'ar-tafsir-al-baghawi';
+      case TafsirScholar.hidayat:
+        return 'ar-tafsir-muyassar';
       case TafsirScholar.englishIbnKathir:
         return 'en-tafisr-ibn-kathir';
     }
@@ -149,10 +156,12 @@ class QuranTafsirService {
         return 91;
       case TafsirScholar.ibnKathir:
         return 14;
-      case TafsirScholar.englishIbnKathir:
-        return 169;
       case TafsirScholar.baghawi:
         return 94;
+      case TafsirScholar.hidayat:
+        return 16;
+      case TafsirScholar.englishIbnKathir:
+        return 169;
     }
   }
 
@@ -260,6 +269,27 @@ class QuranTafsirService {
     if (cached != null && cached.isNotEmpty) {
       _putTafsirMemory(cacheKey, cached);
       return cached;
+    }
+
+    // Special source: Wahy Source 191 (هدايات القرآن الكريم - مركز تفسير)
+    if (scholar == TafsirScholar.hidayat) {
+      try {
+        final url = Uri.parse('https://web.wahy.net/api/source/191/$surahNumber');
+        final body = await _fetchStreamedStringWithLimit(
+          url,
+          maxBytes: AppPolicy.maxTafsirResponseBytes * 4,
+        );
+        final map = json.decode(body) as Map<String, dynamic>;
+        final ayahObj = map['$ayahNumber'] as Map<String, dynamic>?;
+        final rawText = ayahObj?['t'] as String? ?? '';
+        final cleanText = _cleanHtml(rawText);
+
+        if (cleanText.isNotEmpty) {
+          _putTafsirMemory(cacheKey, cleanText);
+          await prefs.setString(cacheKey, cleanText);
+          return cleanText;
+        }
+      } catch (_) {}
     }
 
     // 2. Streamed Tafsir CDN source with byte ceiling

@@ -68,3 +68,4 @@ class QuranWordAnalysis {
     's': sarf,
   };
 }
+
