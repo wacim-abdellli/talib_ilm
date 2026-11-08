@@ -511,12 +511,14 @@ class _QuranAudioProgress extends StatelessWidget {
 class AyahNotesTabView extends StatelessWidget {
   final TextEditingController noteController;
   final VoidCallback onSaveNote;
+  final VoidCallback? onDeleteNote;
   final ValueChanged<String> onChanged;
 
   const AyahNotesTabView({
     super.key,
     required this.noteController,
     required this.onSaveNote,
+    this.onDeleteNote,
     required this.onChanged,
   });
 
@@ -586,13 +588,29 @@ class AyahNotesTabView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpace.sm),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: AppButton(
-              label: 'حفظ التدبر',
-              icon: Icons.check_rounded,
-              onPressed: onSaveNote,
-            ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: noteController,
+            builder: (context, value, _) {
+              final hasContent = value.text.trim().isNotEmpty;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (onDeleteNote != null && hasContent)
+                    AppButton.outline(
+                      label: 'حذف التدبر',
+                      icon: Icons.delete_outline_rounded,
+                      onPressed: onDeleteNote,
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  AppButton(
+                    label: 'حفظ التدبر',
+                    icon: Icons.check_rounded,
+                    onPressed: onSaveNote,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

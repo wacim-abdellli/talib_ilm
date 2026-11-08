@@ -191,23 +191,33 @@ class BookmarkService {
   }
 
   /// Update note for a bookmark atomically under [_lock].
+  /// If [note] is empty or null, removes the bookmark entry completely so it does not linger.
   static Future<void> updateNote(int surah, int ayah, String? note) {
     if (!Bookmark.isValidCoordinates(surah, ayah)) {
       throw ArgumentError(
         'Invalid Quran coordinates: surah $surah, ayah $ayah',
       );
     }
+    final trimmed = (note != null && note.trim().isNotEmpty) ? note.trim() : null;
     return _transaction((bookmarks) {
       final index = bookmarks.indexWhere(
         (b) => b.surah == surah && b.ayah == ayah && !b.isSurah,
       );
+      if (trimmed == null) {
+        // If note is empty or removed, purge the bookmark completely so it doesn't appear
+        if (index != -1) {
+          bookmarks.removeAt(index);
+        }
+        return;
+      }
+
       if (index != -1) {
         final old = bookmarks[index];
         bookmarks[index] = Bookmark(
           surah: old.surah,
           ayah: old.ayah,
           page: old.page,
-          note: note,
+          note: trimmed,
           timestamp: DateTime.now(),
           isSurah: false,
         );
@@ -219,7 +229,7 @@ class BookmarkService {
             surah: surah,
             ayah: ayah,
             page: page,
-            note: note,
+            note: trimmed,
             timestamp: DateTime.now(),
             isSurah: false,
           ),
@@ -229,6 +239,11 @@ class BookmarkService {
         }
       }
     });
+  }
+
+  /// Removes note and purges the bookmark for this ayah.
+  static Future<void> removeNote(int surah, int ayah) {
+    return updateNote(surah, ayah, null);
   }
 
   /// Atomically merges imported bookmarks and optional lastRead into storage under [_lock].

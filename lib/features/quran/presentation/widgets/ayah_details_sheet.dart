@@ -186,15 +186,32 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
   Future<void> _saveNote() async {
     HapticFeedback.selectionClick();
     final note = _noteController.text.trim();
+    if (note.isEmpty) {
+      await _deleteNote();
+      return;
+    }
     await BookmarkService.updateNote(
       widget.surahNumber,
       widget.ayahNumber,
-      note.isNotEmpty ? note : null,
+      note,
     );
     if (!mounted) return;
     setState(() => _isBookmarked = true);
     widget.onBookmarkChanged?.call();
-    AppSnackbar.success(context, 'تم حفظ الملاحظة والتدبر بنجاح');
+    AppSnackbar.success(context, 'تم حفظ التدبر بنجاح');
+  }
+
+  Future<void> _deleteNote() async {
+    HapticFeedback.lightImpact();
+    _noteController.clear();
+    await BookmarkService.removeNote(
+      widget.surahNumber,
+      widget.ayahNumber,
+    );
+    if (!mounted) return;
+    setState(() => _isBookmarked = false);
+    widget.onBookmarkChanged?.call();
+    AppSnackbar.info(context, 'تم حذف التدبر بنجاح');
   }
 
   Future<void> _toggleLastRead() async {
@@ -524,6 +541,7 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                   AyahNotesTabView(
                     noteController: _noteController,
                     onSaveNote: _saveNote,
+                    onDeleteNote: _deleteNote,
                     onChanged: (_) {},
                   ),
                 ],

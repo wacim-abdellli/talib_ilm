@@ -463,6 +463,13 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     int wordIndex,
     String word,
   ) async {
+    // When overlays are hidden (pure reading immersion), single tap toggles
+    // overlays on seamlessly without popping up modal sheets.
+    if (!_showOverlays) {
+      _toggleOverlays();
+      return;
+    }
+
     HapticFeedback.selectionClick();
     _pausePageTracking();
     try {

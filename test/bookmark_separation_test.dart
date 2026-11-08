@@ -77,5 +77,27 @@ void main() {
       expect(remaining.first.ayah, equals(82));
       expect(remaining.first.note, contains('إنما أمره'));
     });
+
+    test('Emptying or removing Tadabbur note completely removes bookmark so it does not linger', () async {
+      await BookmarkService.updateNote(2, 255, 'تدبر آية الكرسي العظيمة');
+      expect(await BookmarkService.isAyahBookmarked(2, 255), isTrue);
+
+      var bookmarks = await BookmarkService.getBookmarks();
+      expect(bookmarks.any((b) => b.surah == 2 && b.ayah == 255), isTrue);
+
+      // 1. Emptying note removes the bookmark completely
+      await BookmarkService.updateNote(2, 255, '   ');
+      expect(await BookmarkService.isAyahBookmarked(2, 255), isFalse);
+      bookmarks = await BookmarkService.getBookmarks();
+      expect(bookmarks.any((b) => b.surah == 2 && b.ayah == 255), isFalse);
+
+      // 2. removeNote also purges cleanly
+      await BookmarkService.updateNote(3, 18, 'شهد الله أنه لا إله إلا هو');
+      expect(await BookmarkService.isAyahBookmarked(3, 18), isTrue);
+      await BookmarkService.removeNote(3, 18);
+      expect(await BookmarkService.isAyahBookmarked(3, 18), isFalse);
+      bookmarks = await BookmarkService.getBookmarks();
+      expect(bookmarks.any((b) => b.surah == 3 && b.ayah == 18), isFalse);
+    });
   });
 }
