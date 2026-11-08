@@ -154,7 +154,6 @@ class _MushafPageViewerState extends State<MushafPageViewer>
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     WidgetsBinding.instance.removeObserver(this);
     _accumulateForegroundTime(stop: true);
     _recordTrackedPageIfReadEnough();

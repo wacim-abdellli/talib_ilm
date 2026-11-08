@@ -176,7 +176,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _autoResumeTimer?.cancel();
     // Restore orientations and system bars
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     _controller?.removeListener(_onPlayerStateChanged);
     _controller?.dispose();
@@ -232,7 +232,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     } else {
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     }
   }
 
