@@ -66,7 +66,12 @@ class _ShamelaTypographySheetState extends State<ShamelaTypographySheet> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        padding: const EdgeInsetsDirectional.all(AppSpace.lg),
+        padding: EdgeInsetsDirectional.fromSTEB(
+          AppSpace.lg,
+          AppSpace.lg,
+          AppSpace.lg,
+          AppSpace.lg + MediaQuery.paddingOf(context).bottom,
+        ),
         decoration: BoxDecoration(
           color: palette.surfaceRaised,
           borderRadius: const BorderRadius.vertical(

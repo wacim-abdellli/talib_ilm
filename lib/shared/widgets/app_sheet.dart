@@ -51,6 +51,7 @@ class AppSheet extends StatelessWidget {
             constraints: BoxConstraints(maxHeight: maxH),
             child: SafeArea(
               top: false,
+              bottom: false,
               child: builder(ctx),
             ),
           ),

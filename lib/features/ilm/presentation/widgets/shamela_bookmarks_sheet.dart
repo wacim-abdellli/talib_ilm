@@ -100,8 +100,11 @@ class _ShamelaBookmarksSheetState extends State<ShamelaBookmarksSheet> {
               : ListView.separated(
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    vertical: AppSpace.sm,
+                  padding: EdgeInsetsDirectional.fromSTEB(
+                    0,
+                    AppSpace.sm,
+                    0,
+                    AppSpace.sm + MediaQuery.paddingOf(context).bottom,
                   ),
                   itemCount: _pages.length,
                   separatorBuilder: (_, _) => Divider(

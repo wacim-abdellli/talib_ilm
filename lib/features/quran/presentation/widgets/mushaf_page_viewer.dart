@@ -85,6 +85,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addObserver(this);
     _sessionStartTime = DateTime.now();
 
@@ -153,6 +154,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     WidgetsBinding.instance.removeObserver(this);
     _accumulateForegroundTime(stop: true);
     _recordTrackedPageIfReadEnough();
@@ -305,6 +307,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     final resumed = state == AppLifecycleState.resumed;
     if (resumed == _isAppResumed) return;
     if (resumed) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       _isAppResumed = true;
       if (!_isPageCovered) _foregroundStartedAt = DateTime.now();
       return;

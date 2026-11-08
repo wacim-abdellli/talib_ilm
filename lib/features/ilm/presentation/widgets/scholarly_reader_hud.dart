@@ -39,7 +39,7 @@ class _BookPageTapDetectorState extends State<BookPageTapDetector> {
         _downPos = event.position;
         _isCancelled = false;
         _longPressTimer?.cancel();
-        _longPressTimer = Timer(AppMotion.debounce, () {
+        _longPressTimer = Timer(AppMotion.slow, () {
           _isCancelled = true;
         });
       },
@@ -136,7 +136,9 @@ class ScholarlyReaderHud extends StatelessWidget {
       isDark: isEffectiveDark,
     );
 
-    final effectiveHeight = showPageNavigation ? hudHeight : toolstripHeight;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final effectiveHeight =
+        (showPageNavigation ? hudHeight : toolstripHeight) + bottomInset;
 
     return AnimatedContainer(
       duration: AppMotion.fast,
@@ -154,163 +156,166 @@ class ScholarlyReaderHud extends StatelessWidget {
                 top: BorderSide(color: surfaceTokens.border, width: 1),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Row 1: Fast Page Navigation (if enabled) ────────
-                if (showPageNavigation) ...[
+            child: Padding(
+              padding: EdgeInsetsDirectional.only(bottom: bottomInset),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Row 1: Fast Page Navigation (if enabled) ────────
+                  if (showPageNavigation) ...[
+                    Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xxs,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: AppIcon.sm,
+                            ),
+                            tooltip: 'الصفحة السابقة',
+                            onPressed: onPreviousPage,
+                            color: surfaceTokens.text,
+                          ),
+                          InkWell(
+                            onTap: onPageIndicatorTap,
+                            borderRadius: AppRadius.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: surfaceTokens.bg,
+                                borderRadius: AppRadius.pillRadius,
+                                border: Border.all(color: surfaceTokens.border, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.menu_book_rounded,
+                                    size: AppIcon.xs,
+                                    color: accent.primary,
+                                  ),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    'صفحة $currentPage من $totalPages',
+                                    style: textTheme.label.copyWith(
+                                      color: surfaceTokens.text,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: AppIcon.sm,
+                            ),
+                            tooltip: 'الصفحة التالية',
+                            onPressed: onNextPage,
+                            color: surfaceTokens.text,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, thickness: 1, color: surfaceTokens.border),
+                  ],
+
+                  // ── Row 2: Consolidated Scholarly Toolstrip ───────────
                   Padding(
                     padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpace.md,
+                      horizontal: AppSpace.sm,
                       vertical: AppSpace.xxs,
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: AppIcon.sm,
-                          ),
-                          tooltip: 'الصفحة السابقة',
-                          onPressed: onPreviousPage,
-                          color: surfaceTokens.text,
+                        _buildToolItem(
+                          icon: isBookmarked
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
+                          label: isBookmarked ? 'محفوظة' : 'إشارة',
+                          iconColor: isBookmarked ? accent.primary : surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          onTap: onToggleBookmark,
+                          onLongPress: onShowBookmarks,
+                          palette: palette,
+                          textTheme: textTheme,
                         ),
-                        InkWell(
-                          onTap: onPageIndicatorTap,
-                          borderRadius: AppRadius.pillRadius,
-                          child: Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.md,
-                              vertical: AppSpace.xxs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: surfaceTokens.bg,
-                              borderRadius: AppRadius.pillRadius,
-                              border: Border.all(color: surfaceTokens.border, width: 1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.menu_book_rounded,
-                                  size: AppIcon.xs,
-                                  color: accent.primary,
-                                ),
-                                const SizedBox(width: AppSpace.xs),
-                                Text(
-                                  'صفحة $currentPage من $totalPages',
-                                  style: textTheme.label.copyWith(
-                                    color: surfaceTokens.text,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        _buildToolItem(
+                          icon: Icons.edit_note_rounded,
+                          label: 'ملاحظة',
+                          iconColor: surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          onTap: onAddNote,
+                          onLongPress: onShowBookmarks,
+                          palette: palette,
+                          textTheme: textTheme,
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: AppIcon.sm,
-                          ),
-                          tooltip: 'الصفحة التالية',
-                          onPressed: onNextPage,
-                          color: surfaceTokens.text,
+                        _buildToolItem(
+                          icon: Icons.format_list_bulleted_rounded,
+                          label: 'الفهرس',
+                          iconColor: surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          onTap: onOpenFihris,
+                          palette: palette,
+                          textTheme: textTheme,
                         ),
+                        if (onToggleAudio != null)
+                          _buildToolItem(
+                            icon: isAudioActive
+                                ? Icons.headphones_rounded
+                                : Icons.headphones_outlined,
+                            label: 'استماع',
+                            iconColor: isAudioActive ? accent.primary : surfaceTokens.text,
+                            textColor: surfaceTokens.text,
+                            bgColor: isAudioActive ? accent.soft : null,
+                            onTap: onToggleAudio!,
+                            palette: palette,
+                            textTheme: textTheme,
+                          ),
+                        _buildToolItem(
+                          icon: memorizationMode
+                              ? Icons.visibility_off_rounded
+                              : Icons.psychology_outlined,
+                          label: 'تسميع',
+                          iconColor: memorizationMode ? accent.primary : surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          bgColor: memorizationMode ? accent.soft : null,
+                          onTap: onToggleMemorization,
+                          palette: palette,
+                          textTheme: textTheme,
+                        ),
+                        _buildToolItem(
+                          icon: Icons.text_format_rounded,
+                          label: 'الخط',
+                          iconColor: surfaceTokens.text,
+                          textColor: surfaceTokens.text,
+                          onTap: onOpenTypography,
+                          palette: palette,
+                          textTheme: textTheme,
+                        ),
+                        if (onShare != null)
+                          _buildToolItem(
+                            icon: Icons.share_rounded,
+                            label: 'مشاركة',
+                            iconColor: surfaceTokens.text,
+                            textColor: surfaceTokens.text,
+                            onTap: onShare!,
+                            palette: palette,
+                            textTheme: textTheme,
+                          ),
                       ],
                     ),
                   ),
-                  Divider(height: 1, thickness: 1, color: surfaceTokens.border),
                 ],
-
-                // ── Row 2: Consolidated Scholarly Toolstrip ───────────
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpace.sm,
-                    vertical: AppSpace.xxs,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildToolItem(
-                        icon: isBookmarked
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_border_rounded,
-                        label: isBookmarked ? 'محفوظة' : 'إشارة',
-                        iconColor: isBookmarked ? accent.primary : surfaceTokens.text,
-                        textColor: surfaceTokens.text,
-                        onTap: onToggleBookmark,
-                        onLongPress: onShowBookmarks,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
-                      _buildToolItem(
-                        icon: Icons.edit_note_rounded,
-                        label: 'ملاحظة',
-                        iconColor: surfaceTokens.text,
-                        textColor: surfaceTokens.text,
-                        onTap: onAddNote,
-                        onLongPress: onShowBookmarks,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
-                      _buildToolItem(
-                        icon: Icons.format_list_bulleted_rounded,
-                        label: 'الفهرس',
-                        iconColor: surfaceTokens.text,
-                        textColor: surfaceTokens.text,
-                        onTap: onOpenFihris,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
-                      if (onToggleAudio != null)
-                        _buildToolItem(
-                          icon: isAudioActive
-                              ? Icons.headphones_rounded
-                              : Icons.headphones_outlined,
-                          label: 'استماع',
-                          iconColor: isAudioActive ? accent.primary : surfaceTokens.text,
-                          textColor: surfaceTokens.text,
-                          bgColor: isAudioActive ? accent.soft : null,
-                          onTap: onToggleAudio!,
-                          palette: palette,
-                          textTheme: textTheme,
-                        ),
-                      _buildToolItem(
-                        icon: memorizationMode
-                            ? Icons.visibility_off_rounded
-                            : Icons.psychology_outlined,
-                        label: 'تسميع',
-                        iconColor: memorizationMode ? accent.primary : surfaceTokens.text,
-                        textColor: surfaceTokens.text,
-                        bgColor: memorizationMode ? accent.soft : null,
-                        onTap: onToggleMemorization,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
-                      _buildToolItem(
-                        icon: Icons.text_format_rounded,
-                        label: 'الخط',
-                        iconColor: surfaceTokens.text,
-                        textColor: surfaceTokens.text,
-                        onTap: onOpenTypography,
-                        palette: palette,
-                        textTheme: textTheme,
-                      ),
-                      if (onShare != null)
-                        _buildToolItem(
-                          icon: Icons.share_rounded,
-                          label: 'مشاركة',
-                          iconColor: surfaceTokens.text,
-                          textColor: surfaceTokens.text,
-                          onTap: onShare!,
-                          palette: palette,
-                          textTheme: textTheme,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

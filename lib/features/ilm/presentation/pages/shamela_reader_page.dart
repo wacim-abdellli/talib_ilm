@@ -71,6 +71,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     themeService.addListener(_onThemeChanged);
     _currentPage = widget.initialPage;
     final activeAudio = _audioService.activeBookIdNotifier.value;
@@ -107,6 +108,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     themeService.removeListener(_onThemeChanged);
     ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
     _recordProgress(_currentPage);

@@ -131,7 +131,12 @@ class _ShamelaFihrisSheetState extends State<ShamelaFihrisSheet> {
                           subtitle: 'جرب البحث بكلمة أخرى أو تصفح الصفحات مباشرة.',
                         )
                       : ListView.separated(
-                          padding: const EdgeInsetsDirectional.all(AppSpace.md),
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md,
+                            AppSpace.md + MediaQuery.paddingOf(context).bottom,
+                          ),
                           itemCount: list.length,
                           separatorBuilder: (_, index) => Divider(color: palette.border, height: 1),
                           itemBuilder: (context, i) {
