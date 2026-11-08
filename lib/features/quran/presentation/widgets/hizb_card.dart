@@ -120,7 +120,7 @@ class HizbCard extends StatelessWidget {
 
                   const SizedBox(width: AppSpace.xs),
                   Icon(
-                    Icons.chevron_left_rounded,
+                    Icons.chevron_right_rounded,
                     size: AppIcon.md,
                     color: palette.textMuted,
                   ),

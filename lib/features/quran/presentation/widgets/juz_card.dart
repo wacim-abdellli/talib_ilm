@@ -151,9 +151,9 @@ class JuzCard extends StatelessWidget {
 
               const SizedBox(width: AppSpace.xs),
 
-              // Trailing arrow
+              // Trailing arrow (mirrors to point left in RTL)
               Icon(
-                Icons.chevron_left_rounded,
+                Icons.chevron_right_rounded,
                 size: AppIcon.md,
                 color: palette.textMuted,
               ),

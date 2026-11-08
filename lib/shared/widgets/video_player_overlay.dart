@@ -321,12 +321,12 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                       ),
                     ),
 
-                    // ── Center 3 Buttons: [Rewind -10s on Left] | [Play/Pause] | [Forward +10s on Right] ──
+                    // ── Center 3 Buttons: [<+10> on Left] | [Play/Pause] | [<-10> on Right] ──
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Rewind -10s (Left)
+                          // Rewind -10s (Right in RTL: <-10>)
                           Semantics(
                             button: true,
                             label: 'تأخير 10 ثوانٍ',
@@ -402,7 +402,7 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                           ),
                           const SizedBox(width: AppSpace.xl),
 
-                          // Forward +10s (Right)
+                          // Forward +10s (Left in RTL: <+10>)
                           Semantics(
                             button: true,
                             label: 'تقديم 10 ثوانٍ',

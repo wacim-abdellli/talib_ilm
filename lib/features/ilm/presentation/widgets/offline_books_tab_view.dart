@@ -253,7 +253,7 @@ class OfflineBooksTabView extends StatelessWidget {
                       onPressed: () => onDeleteShamelaBook?.call(book),
                     ),
                   Icon(
-                    Icons.chevron_left_rounded,
+                    Icons.chevron_right_rounded,
                     color: palette.primary,
                     size: AppIcon.md,
                   ),
@@ -334,7 +334,7 @@ class OfflineBooksTabView extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpace.xs),
                   Icon(
-                    Icons.chevron_left_rounded,
+                    Icons.chevron_right_rounded,
                     color: palette.primary,
                     size: AppIcon.md,
                   ),

@@ -129,7 +129,7 @@ class _OfflineStatusBannerState extends State<OfflineStatusBanner> {
                               ),
                               const SizedBox(width: AppSpace.xxs),
                               Icon(
-                                Icons.chevron_left_rounded,
+                                Icons.chevron_right_rounded,
                                 color: palette.primary,
                                 size: AppIcon.sm,
                               ),

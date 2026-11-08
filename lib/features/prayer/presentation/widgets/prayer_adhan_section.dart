@@ -196,7 +196,7 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                       ),
                     ),
                     Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       color: palette.textSubtle,
                       size: AppIcon.md,
                     ),

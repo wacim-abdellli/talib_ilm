@@ -455,110 +455,107 @@ class QuranAudioPlayerBar extends StatelessWidget {
 
                   const SizedBox(height: AppSpace.xs),
 
-                  // ── Transport Controls Row (Strict LTR Directionality) ────
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Previous Surah Button
-                        IconButton(
-                          tooltip: 'السورة السابقة',
-                          icon: Icon(
-                            Icons.skip_previous_rounded,
-                            color: surah > 1 ? palette.text : palette.textMuted,
-                          ),
-                          onPressed: surah > 1
-                              ? () {
-                                  HapticFeedback.lightImpact();
-                                  audioService.previousSurah();
-                                }
-                              : null,
+                  // ── Transport Controls Row (RTL Flow: <+10> || <-10>) ─────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Previous Surah Button (Right in RTL)
+                      IconButton(
+                        tooltip: 'السورة السابقة',
+                        icon: Icon(
+                          Icons.skip_next_rounded,
+                          color: surah > 1 ? palette.text : palette.textMuted,
                         ),
+                        onPressed: surah > 1
+                            ? () {
+                                HapticFeedback.lightImpact();
+                                audioService.previousSurah();
+                              }
+                            : null,
+                      ),
 
-                        // Rewind 10 Seconds (Points to past / left in LTR)
-                        IconButton(
-                          tooltip: 'تراجع 10 ثوانٍ',
-                          icon: Icon(
-                            Icons.replay_10_rounded,
-                            color: palette.text,
-                          ),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            audioService.seekRelativeSeconds(-10);
-                          },
+                      // Rewind 10 Seconds (Right of Play: <-10>)
+                      IconButton(
+                        tooltip: 'تراجع 10 ثوانٍ',
+                        icon: Icon(
+                          Icons.replay_10_rounded,
+                          color: palette.text,
                         ),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          audioService.seekRelativeSeconds(-10);
+                        },
+                      ),
 
-                        // Play / Pause Primary Button
-                        IconButton(
-                          tooltip: isLoading
-                              ? 'جارٍ تحميل التلاوة'
-                              : isPlaying
-                                  ? 'إيقاف مؤقت'
-                                  : 'تشغيل',
-                          onPressed: isLoading ? null : () {
-                            HapticFeedback.lightImpact();
-                            if (isPlaying) {
-                              audioService.pause();
-                            } else {
-                              audioService.resume();
-                            }
-                          },
-                          icon: Container(
-                            padding:
-                                const EdgeInsetsDirectional.all(AppSpace.xs),
-                            decoration: BoxDecoration(
-                              color: palette.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                                    width: AppIcon.sm,
-                                    height: AppIcon.sm,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: palette.onPrimary,
-                                    ),
-                                  )
-                                : Icon(
-                                    isPlaying
-                                        ? Icons.pause_rounded
-                                        : Icons.play_arrow_rounded,
+                      // Play / Pause Primary Button (Center)
+                      IconButton(
+                        tooltip: isLoading
+                            ? 'جارٍ تحميل التلاوة'
+                            : isPlaying
+                                ? 'إيقاف مؤقت'
+                                : 'تشغيل',
+                        onPressed: isLoading ? null : () {
+                          HapticFeedback.lightImpact();
+                          if (isPlaying) {
+                            audioService.pause();
+                          } else {
+                            audioService.resume();
+                          }
+                        },
+                        icon: Container(
+                          padding:
+                              const EdgeInsetsDirectional.all(AppSpace.xs),
+                          decoration: BoxDecoration(
+                            color: palette.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  width: AppIcon.sm,
+                                  height: AppIcon.sm,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                     color: palette.onPrimary,
                                   ),
-                          ),
+                                )
+                              : Icon(
+                                  isPlaying
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  color: palette.onPrimary,
+                                ),
                         ),
+                      ),
 
-                        // Forward 10 Seconds (Points to future / right in LTR)
-                        IconButton(
-                          tooltip: 'تقديم 10 ثوانٍ',
-                          icon: Icon(
-                            Icons.forward_10_rounded,
-                            color: palette.text,
-                          ),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            audioService.seekRelativeSeconds(10);
-                          },
+                      // Forward 10 Seconds (Left of Play: <+10>)
+                      IconButton(
+                        tooltip: 'تقديم 10 ثوانٍ',
+                        icon: Icon(
+                          Icons.forward_10_rounded,
+                          color: palette.text,
                         ),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          audioService.seekRelativeSeconds(10);
+                        },
+                      ),
 
-                        // Next Surah Button
-                        IconButton(
-                          tooltip: 'السورة التالية',
-                          icon: Icon(
-                            Icons.skip_next_rounded,
-                            color:
-                                surah < 114 ? palette.text : palette.textMuted,
-                          ),
-                          onPressed: surah < 114
-                              ? () {
-                                  HapticFeedback.lightImpact();
-                                  audioService.nextSurah();
-                                }
-                              : null,
+                      // Next Surah Button (Far Left in RTL)
+                      IconButton(
+                        tooltip: 'السورة التالية',
+                        icon: Icon(
+                          Icons.skip_previous_rounded,
+                          color:
+                              surah < 114 ? palette.text : palette.textMuted,
                         ),
-                      ],
-                    ),
+                        onPressed: surah < 114
+                            ? () {
+                                HapticFeedback.lightImpact();
+                                audioService.nextSurah();
+                              }
+                            : null,
+                      ),
+                    ],
                   ),
                 ],
               ),

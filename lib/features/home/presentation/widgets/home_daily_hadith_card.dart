@@ -173,7 +173,7 @@ class _HomeDailyHadithCardState extends State<HomeDailyHadithCard> {
                               ),
                             ),
                             Icon(
-                              Icons.chevron_left_rounded,
+                              Icons.chevron_right_rounded,
                               color: palette.primary,
                             ),
                           ],

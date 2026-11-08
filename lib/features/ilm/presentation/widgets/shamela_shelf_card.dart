@@ -199,7 +199,7 @@ class ShamelaShelfCard extends StatelessWidget {
                             ),
                             const Spacer(),
                             Icon(
-                              Icons.arrow_back_ios_new_rounded,
+                              Icons.arrow_forward_ios_rounded,
                               size: AppIcon.xs,
                               color: catColors.fg,
                             ),

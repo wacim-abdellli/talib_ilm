@@ -407,7 +407,7 @@ class _PlaceTile extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpace.xxs),
                         Icon(
-                          Icons.chevron_left_rounded,
+                          Icons.chevron_right_rounded,
                           size: AppIcon.sm,
                           color: palette.textMuted,
                         ),

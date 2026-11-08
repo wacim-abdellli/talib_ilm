@@ -467,27 +467,42 @@ class _QuranPageState extends State<QuranPage> {
                                 ),
                               ),
 
-                              // Last read banner (آخر قراءة)
-                              if (_lastRead != null)
-                                Padding(
-                                  padding: const EdgeInsetsDirectional.fromSTEB(
-                                    AppSpace.lg,
-                                    AppSpace.xs,
-                                    AppSpace.lg,
-                                    AppSpace.xs,
-                                  ),
-                                  child: QuranLastReadBanner(
-                                    lastRead: _lastRead!,
-                                    onTap: () => _openSurah(
-                                      _lastRead!.surah,
-                                      ayah: _lastRead!.ayah,
-                                    ),
-                                  ),
-                                ),
-
-                              QuranKhatmahEntry(
-                                suggestedStartPage: _lastRead?.page ?? 1,
-                                onOpenPage: _openPage,
+                              // Last read banner (آخر قراءة) and Khatmah entry (Real-time live synced)
+                              ValueListenableBuilder<LastRead?>(
+                                valueListenable: BookmarkService.lastReadNotifier,
+                                builder: (context, liveLastRead, _) {
+                                  final effectiveLastRead =
+                                      liveLastRead ?? _lastRead;
+                                  if (effectiveLastRead == null) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsetsDirectional.fromSTEB(
+                                          AppSpace.lg,
+                                          AppSpace.xs,
+                                          AppSpace.lg,
+                                          AppSpace.xs,
+                                        ),
+                                        child: QuranLastReadBanner(
+                                          lastRead: effectiveLastRead,
+                                          onTap: () => _openSurah(
+                                            effectiveLastRead.surah,
+                                            ayah: effectiveLastRead.ayah,
+                                          ),
+                                        ),
+                                      ),
+                                      QuranKhatmahEntry(
+                                        suggestedStartPage:
+                                            effectiveLastRead.page,
+                                        onOpenPage: _openPage,
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
 
                               const SizedBox(height: AppSpace.xs),

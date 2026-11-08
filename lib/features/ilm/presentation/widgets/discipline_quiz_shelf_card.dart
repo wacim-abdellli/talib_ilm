@@ -129,7 +129,7 @@ class DisciplineQuizShelfCard extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpace.xs),
                         Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                          Icons.arrow_forward_ios_rounded,
                           size: AppIcon.xs,
                           color: palette.gold,
                         ),

@@ -169,6 +169,11 @@ class _MushafPageViewerState extends State<MushafPageViewer>
         ? _lastReadAyah!
         : _currentAyah;
 
+    BookmarkService.updateMemoryLastRead(
+      surah: surahToSave,
+      ayah: ayahToSave,
+      page: _currentPage,
+    );
     BookmarkService.saveLastRead(
       surah: surahToSave,
       ayah: ayahToSave,
@@ -287,6 +292,11 @@ class _MushafPageViewerState extends State<MushafPageViewer>
     _preloadDebounceTimer = Timer(AppMotion.fast, () {
       QcfFontLoader.preloadPages(page, radius: 2);
     });
+    BookmarkService.updateMemoryLastRead(
+      surah: _currentSurah,
+      ayah: _currentAyah,
+      page: _currentPage,
+    );
     _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
   }
 

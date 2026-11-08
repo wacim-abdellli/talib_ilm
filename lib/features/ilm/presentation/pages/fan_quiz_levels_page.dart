@@ -259,9 +259,9 @@ class _FanQuizLevelsPageState extends State<FanQuizLevelsPage> {
             child: Row(
               children: [
                 _buildStageChip('التأسيس', palette, textTheme, true),
-                Icon(Icons.chevron_left_rounded, color: palette.textSubtle, size: AppIcon.sm),
+                Icon(Icons.chevron_right_rounded, color: palette.textSubtle, size: AppIcon.sm),
                 _buildStageChip('التأصيل', palette, textTheme, completedLevelsCount >= 2),
-                Icon(Icons.chevron_left_rounded, color: palette.textSubtle, size: AppIcon.sm),
+                Icon(Icons.chevron_right_rounded, color: palette.textSubtle, size: AppIcon.sm),
                 _buildStageChip('التمكين والإتقان', palette, textTheme, completedLevelsCount >= 4),
               ],
             ),

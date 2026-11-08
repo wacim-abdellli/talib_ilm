@@ -435,6 +435,33 @@ class BookmarkService {
   // LAST READ POSITION
   // ═══════════════════════════════════════════════════════════════════════════
 
+  static LastRead? _cachedLastRead;
+
+  /// Live notifier holding the latest active last-read position in real time.
+  static final ValueNotifier<LastRead?> lastReadNotifier =
+      ValueNotifier<LastRead?>(null);
+
+  /// Synchronous memory accessor for the latest last read position.
+  static LastRead? get currentLastRead => _cachedLastRead;
+
+  /// Immediately updates memory cache and live notifier with zero latency.
+  static void updateMemoryLastRead({
+    required int surah,
+    required int ayah,
+    int? page,
+  }) {
+    if (!Bookmark.isValidCoordinates(surah, ayah, page)) return;
+    final p = page ?? quran.getPageNumber(surah, ayah);
+    final lastRead = LastRead(
+      surah: surah,
+      ayah: ayah,
+      page: p,
+      timestamp: DateTime.now(),
+    );
+    _cachedLastRead = lastRead;
+    lastReadNotifier.value = lastRead;
+  }
+
   /// Save last read position with surah, ayah, and page atomically under [_lock].
   static Future<void> saveLastRead({
     required int surah,
@@ -446,6 +473,7 @@ class BookmarkService {
         'Invalid Quran coordinates: surah $surah, ayah $ayah, page $page',
       );
     }
+    updateMemoryLastRead(surah: surah, ayah: ayah, page: page);
     return _lock.synchronized(() async {
       final prefs = await SharedPreferences.getInstance();
       final p = page ?? quran.getPageNumber(surah, ayah);
@@ -479,6 +507,8 @@ class BookmarkService {
     if (!success) {
       throw StateError('Failed to persist last read to storage');
     }
+    _cachedLastRead = lastRead;
+    lastReadNotifier.value = lastRead;
     // Also update legacy keys for maximum backward compatibility
     await prefs.setInt(_legacyLastSurahKey, surah);
     await prefs.setInt(_legacyLastAyahKey, ayah);
@@ -515,6 +545,8 @@ class BookmarkService {
       if (!removed) {
         throw StateError('Failed to clear saved last-read position');
       }
+      _cachedLastRead = null;
+      lastReadNotifier.value = null;
       return true;
     });
   }
@@ -532,7 +564,10 @@ class BookmarkService {
 
     if (jsonString != null && jsonString.isNotEmpty) {
       try {
-        return LastRead.fromJson(jsonDecode(jsonString));
+        final res = LastRead.fromJson(jsonDecode(jsonString));
+        _cachedLastRead = res;
+        lastReadNotifier.value = res;
+        return res;
       } catch (_) {}
     }
 
@@ -542,11 +577,14 @@ class BookmarkService {
     final page =
         prefs.getInt(_legacyLastPageKey) ?? quran.getPageNumber(surah, ayah);
 
-    return LastRead(
+    final legacy = LastRead(
       surah: surah,
       ayah: ayah,
       page: page,
       timestamp: DateTime.fromMillisecondsSinceEpoch(0),
     );
+    _cachedLastRead = legacy;
+    lastReadNotifier.value = legacy;
+    return legacy;
   }
 }
