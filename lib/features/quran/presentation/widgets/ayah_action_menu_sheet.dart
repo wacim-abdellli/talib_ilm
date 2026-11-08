@@ -32,6 +32,7 @@ class AyahActionMenuSheet extends StatefulWidget {
   final QuranAudioService audioService;
   final TafsirScholar? defaultTafsir;
   final VoidCallback? onBookmarkChanged;
+  final void Function(int surah, int ayah)? onNavigateToVerse;
 
   const AyahActionMenuSheet({
     super.key,
@@ -40,6 +41,7 @@ class AyahActionMenuSheet extends StatefulWidget {
     required this.audioService,
     this.defaultTafsir,
     this.onBookmarkChanged,
+    this.onNavigateToVerse,
   });
 
   static Future<void> show(
@@ -49,6 +51,7 @@ class AyahActionMenuSheet extends StatefulWidget {
     required QuranAudioService audioService,
     TafsirScholar? defaultTafsir,
     VoidCallback? onBookmarkChanged,
+    void Function(int surah, int ayah)? onNavigateToVerse,
   }) {
     return AppSheet.show<void>(
       context: context,
@@ -60,6 +63,7 @@ class AyahActionMenuSheet extends StatefulWidget {
         audioService: audioService,
         defaultTafsir: defaultTafsir,
         onBookmarkChanged: onBookmarkChanged,
+        onNavigateToVerse: onNavigateToVerse,
       ),
     );
   }
@@ -168,6 +172,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
       ayahNumber: widget.ayahNumber,
       initialTafsirScholar: widget.defaultTafsir,
       onBookmarkChanged: widget.onBookmarkChanged,
+      onNavigateToVerse: widget.onNavigateToVerse,
       initialTabIndex: tabIndex,
     );
   }
@@ -358,7 +363,33 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 2: Continuous Recitation & Single Ayah
+                  // Row 2: Mutashabihat & Tadabbur
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.compare_arrows_rounded,
+                          title: 'المتشابهات والضوابط',
+                          subtitle: 'ربط الآيات المتشابهة وقواعد الحفظ',
+                          color: palette.gold,
+                          onTap: () => _openDetailsAtTab(2),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.edit_note_rounded,
+                          title: 'تدبر وملاحظات',
+                          subtitle: 'تدوين خواطر وتأملات إيمانية',
+                          color: palette.primary,
+                          onTap: () => _openDetailsAtTab(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+
+                  // Row 3: Continuous Recitation & Single Ayah
                   Row(
                     children: [
                       Expanded(
@@ -384,7 +415,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 3: Repeat & Audio Options
+                  // Row 4: Repeat & Audio Options
                   Row(
                     children: [
                       Expanded(
@@ -403,14 +434,14 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           title: 'خيارات التلاوة',
                           subtitle: 'تغيير القارئ وسرعة الصوت',
                           color: palette.primary,
-                          onTap: () => _openDetailsAtTab(2),
+                          onTap: () => _openDetailsAtTab(3),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 3: Bookmark & Last Read
+                  // Row 5: Bookmark & Last Read
                   Row(
                     children: [
                       Expanded(
@@ -442,19 +473,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                   ),
                   const SizedBox(height: AppSpace.sm),
 
-                  // Row 4: Reflection & Copy/Share
+                  // Row 6: Copy & Share
                   Row(
                     children: [
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.edit_note_rounded,
-                          title: 'تدبر وملاحظات',
-                          subtitle: 'تدوين خواطر وتأملات إيمانية',
-                          color: palette.primary,
-                          onTap: () => _openDetailsAtTab(3),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.copy_rounded,
@@ -464,41 +485,17 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           onTap: _copyVerse,
                         ),
                       ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.share_rounded,
+                          title: 'مشاركة الآية',
+                          subtitle: 'مشاركة النص مع المرجع',
+                          color: palette.primary,
+                          onTap: _shareVerse,
+                        ),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: AppSpace.sm),
-
-                  // Full Width Share Button
-                  InkWell(
-                    onTap: _shareVerse,
-                    borderRadius: AppRadius.mdRadius,
-                    child: Container(
-                      height: 48,
-                      padding: const EdgeInsetsDirectional.symmetric(horizontal: AppSpace.md),
-                      decoration: BoxDecoration(
-                        color: palette.surfaceMuted,
-                        borderRadius: AppRadius.mdRadius,
-                        border: Border.all(color: palette.border),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.share_rounded,
-                            size: AppIcon.sm,
-                            color: palette.primary,
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            'مشاركة الآية الكريمة',
-                            style: textTheme.bodySmall.copyWith(
-                              color: palette.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),

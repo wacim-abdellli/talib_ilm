@@ -1,3 +1,23 @@
+## Quranic Mutashabihat & Memorization Mnemonics Engine (8 November 2026)
+- **Branch**: `main`
+- **Features Implemented (Wahy Inspiration — Step 1)**:
+  - **Mutashabihat Data Models & Service**: Created `MutashabihCard` and `MutashabihPlace` in `lib/features/quran/data/models/mutashabih_card.dart`. Built `QuranMutashabihatService` featuring multi-tier caching (RAM memory cache, persistent `SharedPreferences`, live API integration with Wahy Mutashabih endpoint, and an offline structural phrase-matching fallback that prevents failures even when completely offline).
+  - **Scholarly Ayah Similarities Tab (`AyahSimilarTabView`)**: Designed a modern, accessible RTL tab featuring:
+    - Exact highlighted matching word spans with distinct golden amber tint.
+    - Interactive verse position cards with one-tap verse jumping to any matching surah/ayah.
+    - Dedicated "الضابط الحفظي للتمييز" card presenting classical memorization rules to prevent confusion.
+    - Dedicated "سر اختلاف اللفظ والتوجيه البلاغي" section explaining rhetorical choices.
+    - Scholarly citations and classical book references (e.g. Malak al-Ta'wil, Durrat al-Tanzil).
+  - **Full Reader & HUD Integration**:
+    - Expanded `AyahDetailsSheet` to 5 tabs with new `المتشابهات` tab.
+    - Added direct `المتشابهات والضوابط` tile to `AyahActionMenuSheet` quick grid.
+    - Wired `onNavigateToVerse` straight to `MushafPageViewer._jumpToAyah` so tapping any similar verse automatically jumps the Quran reader directly to that page.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (ran in 13.6s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/quran_mutashabihat_test.dart test/mushaf_single_page_test.dart test/surah_banner_test.dart`: All 8 tests passed.
+- **Status**: Complete & Verified.
+
 ## Warm AMOLED Mushaf, Decoupled Quran Themes, Reader Tap Menu & High-Contrast Dark Progress (7 November 2026)
 - **Branch**: `main` (commits `3c61efe`, `b8a49b5`, `79ce08f` pushed to origin)
 - **Changes Implemented**:
@@ -4841,3 +4861,10 @@ FAILED (54 violations)
 - Added a one-time startup migration that clears legacy Warsh/Qālūn selection preferences, installed pack directories, and edition JSON files from existing app installations.
 - Removed the now-unused direct `brotli`, `flutter_svg`, and `crypto` dependencies, along with tests that only covered the removed edition pack feature. (`crypto` remains transitively required by another package.)
 - **Verification:** `python tool/ui_lint_v2.py` passed (0 failures, 6/10 allow markers). Tests were not run.
+
+## Quran Feature — Local-First Khatmah Planner (8 November 2026)
+- Added a local-only Quran completion planner with daily page goals or a target date, multiple plans, manual page completion, pause/resume, edit, archive/restore, delete confirmation, and estimated completion progress.
+- Added a compact entry on the Quran index and a dedicated plan-management page; “ابدأ ورد اليوم” opens the existing Hafs Mushaf at the next planned page. Existing Mushaf renderer, page assets, bookmarks, and reading statistics were not changed.
+- Persistence is schema-versioned in SharedPreferences and skips invalid individual plan records. Target-date assignments recalculate from remaining pages/days; pausing shifts the target date by the pause duration. All plans work offline and require no account.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` passed (0 failures, 6/10 allow markers); debug APK built in 49.8s and installed on the connected Android emulator. Visually inspected the Quran entry, plan list, editor in daily-goal and target-date modes, and progress-entry dialog; no plan data was created during this check. Tests were not run in this session.
+- **Open issues:** page completion is an explicit user log and is not inferred from time in the reader; plans are local to this device and are not included in the existing bookmark JSON backup/sync.

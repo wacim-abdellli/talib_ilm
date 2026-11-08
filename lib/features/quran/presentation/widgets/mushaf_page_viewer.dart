@@ -6,6 +6,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
+import '../../../../app/theme/app_policy.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/models/quran_reader_index.dart';
@@ -15,6 +16,7 @@ import '../../data/services/quran_reader_preferences.dart';
 import '../../data/services/quran_tafsir_service.dart';
 import '../../data/services/reading_history_service.dart';
 import '../../data/services/reading_stats_service.dart';
+import '../../data/services/khatmah_plan_service.dart';
 import 'ayah_action_menu_sheet.dart';
 import 'mushaf_reader_overlays.dart';
 import 'mushaf_settings_sheet.dart';
@@ -46,13 +48,20 @@ class MushafPageViewer extends StatefulWidget {
   State<MushafPageViewer> createState() => _MushafPageViewerState();
 }
 
-class _MushafPageViewerState extends State<MushafPageViewer> {
+class _MushafPageViewerState extends State<MushafPageViewer>
+    with WidgetsBindingObserver {
   late final PageController _pageController;
   final ReadingStatsService _statsService = ReadingStatsService();
   final QuranAudioService _audioService = QuranAudioService();
   int _currentPage = 1;
   int _currentSurah = 1;
   int _currentAyah = 1;
+  late int _trackedPage;
+  Duration _trackedPageForegroundTime = Duration.zero;
+  DateTime? _foregroundStartedAt;
+  bool _isAppResumed = true;
+  bool _isPageCovered = false;
+  bool _trackedPageRecorded = false;
 
   int? _selectedSurah;
   int? _selectedAyah;
@@ -76,6 +85,7 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _sessionStartTime = DateTime.now();
 
     int startPage = 1;
@@ -93,6 +103,11 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     }
 
     _currentPage = startPage;
+    _trackedPage = startPage;
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _isAppResumed = lifecycleState == null ||
+        lifecycleState == AppLifecycleState.resumed;
+    if (_isAppResumed) _foregroundStartedAt = DateTime.now();
     _pageController = PageController(initialPage: _currentPage - 1);
     _positionNotifier = ValueNotifier(
       QuranPosition(
@@ -136,6 +151,9 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _accumulateForegroundTime(stop: true);
+    _recordTrackedPageIfReadEnough();
     _audioService.activeAyahNotifier.removeListener(_onAudioAyahChanged);
     _audioService.errorNotifier.removeListener(_onAudioError);
     _saveLastReadDebounceTimer?.cancel();
@@ -248,6 +266,16 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
   }
 
   void _onPageChanged(int page) {
+    if (page != _trackedPage) {
+      _accumulateForegroundTime(stop: true);
+      _recordTrackedPageIfReadEnough();
+      _trackedPage = page;
+      _trackedPageForegroundTime = Duration.zero;
+      _trackedPageRecorded = false;
+      if (_isAppResumed && !_isPageCovered) {
+        _foregroundStartedAt = DateTime.now();
+      }
+    }
     _currentPage = page;
     final pageData = quran.getPageData(page);
     if (pageData.isNotEmpty) {
@@ -267,12 +295,73 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     _scheduleSaveLastRead(_currentSurah, _currentAyah, _currentPage);
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final resumed = state == AppLifecycleState.resumed;
+    if (resumed == _isAppResumed) return;
+    if (resumed) {
+      _isAppResumed = true;
+      if (!_isPageCovered) _foregroundStartedAt = DateTime.now();
+      return;
+    }
+    _accumulateForegroundTime(stop: true);
+    _recordTrackedPageIfReadEnough();
+    _isAppResumed = false;
+  }
+
+  void _accumulateForegroundTime({required bool stop}) {
+    final startedAt = _foregroundStartedAt;
+    if (startedAt != null) {
+      _trackedPageForegroundTime += DateTime.now().difference(startedAt);
+    }
+    _foregroundStartedAt = stop || !_isAppResumed ? null : DateTime.now();
+  }
+
+  void _recordTrackedPageIfReadEnough() {
+    if (_trackedPageRecorded ||
+        _trackedPageForegroundTime < AppPolicy.khatmahPageReadThreshold) {
+      return;
+    }
+    _trackedPageRecorded = true;
+    unawaited(_saveTrackedPage(_trackedPage));
+  }
+
+  void _pausePageTracking() {
+    _isPageCovered = true;
+    _accumulateForegroundTime(stop: true);
+    _recordTrackedPageIfReadEnough();
+  }
+
+  void _resumePageTracking() {
+    _isPageCovered = false;
+    if (_isAppResumed) _foregroundStartedAt = DateTime.now();
+  }
+
+  Future<void> _saveTrackedPage(int page) async {
+    try {
+      await KhatmahPlanService.recordPageRead(page: page);
+    } catch (_) {
+      // Reading must remain available if local plan storage is unavailable.
+    }
+  }
+
   void _jumpToPage(int page) {
     QcfFontLoader.ensureFontLoaded(page);
     _onPageChanged(page);
     if (_pageController.hasClients) {
       _pageController.jumpToPage(page - 1);
     }
+  }
+
+  void _jumpToAyah(int surah, int ayah) {
+    final targetPage = quran.getPageNumber(surah, ayah);
+    _jumpToPage(targetPage);
+    setState(() {
+      _currentSurah = surah;
+      _currentAyah = ayah;
+      _selectedSurah = surah;
+      _selectedAyah = ayah;
+    });
   }
 
   void _toggleOverlays() {
@@ -290,37 +379,42 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     _saveSettings();
   }
 
-  void _openSettings() {
+  Future<void> _openSettings() async {
     HapticFeedback.lightImpact();
-    MushafSettingsSheet.show(
-      context,
-      currentTheme: _themeMode,
-      isTajweedEnabled: _isTajweedEnabled,
-      keepScreenAwake: _keepScreenAwake,
-      selectedReciter: _audioService.selectedReciter,
-      selectedTafsir: _defaultTafsir,
-      onThemeChanged: (mode) {
-        setState(() => _themeMode = mode);
-        _saveSettings();
-      },
-      onTajweedChanged: (val) {
-        setState(() => _isTajweedEnabled = val);
-        _saveSettings();
-      },
-      onKeepScreenAwakeChanged: (val) {
-        setState(() => _keepScreenAwake = val);
-        _applyWakelock(val);
-        _saveSettings();
-      },
-      onReciterChanged: (r) {
-        _audioService.setSelectedReciter(r);
-        QuranReaderPreferences.saveReciter(r);
-      },
-      onTafsirChanged: (scholar) {
-        setState(() => _defaultTafsir = scholar);
-        QuranReaderPreferences.saveTafsirScholar(scholar);
-      },
-    );
+    _pausePageTracking();
+    try {
+      await MushafSettingsSheet.show(
+        context,
+        currentTheme: _themeMode,
+        isTajweedEnabled: _isTajweedEnabled,
+        keepScreenAwake: _keepScreenAwake,
+        selectedReciter: _audioService.selectedReciter,
+        selectedTafsir: _defaultTafsir,
+        onThemeChanged: (mode) {
+          setState(() => _themeMode = mode);
+          _saveSettings();
+        },
+        onTajweedChanged: (val) {
+          setState(() => _isTajweedEnabled = val);
+          _saveSettings();
+        },
+        onKeepScreenAwakeChanged: (val) {
+          setState(() => _keepScreenAwake = val);
+          _applyWakelock(val);
+          _saveSettings();
+        },
+        onReciterChanged: (r) {
+          _audioService.setSelectedReciter(r);
+          QuranReaderPreferences.saveReciter(r);
+        },
+        onTafsirChanged: (scholar) {
+          setState(() => _defaultTafsir = scholar);
+          QuranReaderPreferences.saveTafsirScholar(scholar);
+        },
+      );
+    } finally {
+      _resumePageTracking();
+    }
   }
 
   Future<void> _handleAyahLongPress(int surah, int ayah) async {
@@ -332,20 +426,25 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
       _selectedAyah = ayah;
     });
 
-    await AyahActionMenuSheet.show(
-      context,
-      surahNumber: surah,
-      ayahNumber: ayah,
-      audioService: _audioService,
-      defaultTafsir: _defaultTafsir,
-      onBookmarkChanged: _reloadLastReadAndBookmarks,
-    );
-
-    if (mounted) {
-      setState(() {
-        _selectedSurah = null;
-        _selectedAyah = null;
-      });
+    _pausePageTracking();
+    try {
+      await AyahActionMenuSheet.show(
+        context,
+        surahNumber: surah,
+        ayahNumber: ayah,
+        audioService: _audioService,
+        defaultTafsir: _defaultTafsir,
+        onBookmarkChanged: _reloadLastReadAndBookmarks,
+        onNavigateToVerse: _jumpToAyah,
+      );
+    } finally {
+      _resumePageTracking();
+      if (mounted) {
+        setState(() {
+          _selectedSurah = null;
+          _selectedAyah = null;
+        });
+      }
     }
   }
 
@@ -356,22 +455,27 @@ class _MushafPageViewerState extends State<MushafPageViewer> {
     String word,
   ) async {
     HapticFeedback.selectionClick();
-    await QuranWordDetailsSheet.show(
-      context,
-      surahNumber: surah,
-      ayahNumber: ayah,
-      wordIndex: wordIndex,
-      tappedWord: word,
-      onOpenVerseStudy: () async {
-        if (!mounted) return;
-        await AyahDetailsSheet.show(
-          context,
-          surahNumber: surah,
-          ayahNumber: ayah,
-          initialTabIndex: 1,
-        );
-      },
-    );
+    _pausePageTracking();
+    try {
+      await QuranWordDetailsSheet.show(
+        context,
+        surahNumber: surah,
+        ayahNumber: ayah,
+        wordIndex: wordIndex,
+        tappedWord: word,
+        onOpenVerseStudy: () async {
+          if (!mounted) return;
+          await AyahDetailsSheet.show(
+            context,
+            surahNumber: surah,
+            ayahNumber: ayah,
+            initialTabIndex: 1,
+          );
+        },
+      );
+    } finally {
+      _resumePageTracking();
+    }
   }
 
   Color _getBackgroundColor() => MushafColors.bgFor(_themeMode);

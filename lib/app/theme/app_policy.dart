@@ -14,6 +14,7 @@ class AppPolicy {
   static const Duration microPause = Duration(milliseconds: 50);
   static const Duration debounce = Duration(milliseconds: 500);
   static const Duration seekStep = Duration(seconds: 5);
+  static const Duration khatmahPageReadThreshold = Duration(seconds: 15);
 
   // Periodic Intervals & Polling
   static const Duration oneSecond = Duration(seconds: 1);

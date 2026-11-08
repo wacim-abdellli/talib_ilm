@@ -8,6 +8,7 @@ import '../../data/services/quran_audio_service.dart';
 
 export 'ayah_tafsir_tab_view.dart';
 export 'ayah_words_tab_view.dart';
+export 'ayah_similar_tab_view.dart';
 
 class AyahAudioTabView extends StatelessWidget {
   final int surahNumber;

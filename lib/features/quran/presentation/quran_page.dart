@@ -23,6 +23,7 @@ import 'widgets/quran_index_slivers.dart';
 import 'widgets/quran_search_results_view.dart';
 import 'widgets/quran_sliver_header.dart';
 import 'widgets/quran_stats_banner.dart';
+import 'widgets/quran_khatmah_entry.dart';
 import 'widgets/reading_history_sheet.dart';
 
 List<Map<String, dynamic>> _performAyahSearch(String query) {
@@ -483,6 +484,11 @@ class _QuranPageState extends State<QuranPage> {
                                     ),
                                   ),
                                 ),
+
+                              QuranKhatmahEntry(
+                                suggestedStartPage: _lastRead?.page ?? 1,
+                                onOpenPage: _openPage,
+                              ),
 
                               const SizedBox(height: AppSpace.xs),
                             ],

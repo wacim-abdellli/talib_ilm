@@ -23,6 +23,7 @@ class AyahDetailsSheet extends StatefulWidget {
   final int ayahNumber;
   final TafsirScholar? initialTafsirScholar;
   final VoidCallback? onBookmarkChanged;
+  final void Function(int surah, int ayah)? onNavigateToVerse;
 
   final int initialTabIndex;
 
@@ -32,6 +33,7 @@ class AyahDetailsSheet extends StatefulWidget {
     required this.ayahNumber,
     this.initialTafsirScholar,
     this.onBookmarkChanged,
+    this.onNavigateToVerse,
     this.initialTabIndex = 0,
   });
 
@@ -41,6 +43,7 @@ class AyahDetailsSheet extends StatefulWidget {
     required int ayahNumber,
     TafsirScholar? initialTafsirScholar,
     VoidCallback? onBookmarkChanged,
+    void Function(int surah, int ayah)? onNavigateToVerse,
     int initialTabIndex = 0,
   }) {
     return AppSheet.show<void>(
@@ -52,6 +55,7 @@ class AyahDetailsSheet extends StatefulWidget {
         ayahNumber: ayahNumber,
         initialTafsirScholar: initialTafsirScholar,
         onBookmarkChanged: onBookmarkChanged,
+        onNavigateToVerse: onNavigateToVerse,
         initialTabIndex: initialTabIndex,
       ),
     );
@@ -79,9 +83,9 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
     _selectedScholar =
         widget.initialTafsirScholar ?? TafsirScholar.muyassar;
     _tabController = TabController(
-      length: 4,
+      length: 5,
       vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 3),
+      initialIndex: widget.initialTabIndex.clamp(0, 4),
     );
     _loadBookmarkState();
     _loadTajweedMarkup();
@@ -386,6 +390,10 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                     text: 'المعاني',
                   ),
                   Tab(
+                    icon: Icon(Icons.compare_arrows_rounded, size: AppIcon.sm),
+                    text: 'المتشابهات',
+                  ),
+                  Tab(
                     icon: Icon(Icons.headphones_rounded, size: AppIcon.sm),
                     text: 'التلاوة',
                   ),
@@ -420,6 +428,14 @@ class _AyahDetailsSheetState extends State<AyahDetailsSheet>
                   AyahWordsTabView(
                     surahNumber: widget.surahNumber,
                     ayahNumber: widget.ayahNumber,
+                  ),
+                  AyahSimilarTabView(
+                    surahNumber: widget.surahNumber,
+                    ayahNumber: widget.ayahNumber,
+                    onNavigateToVerse: (surah, ayah) {
+                      Navigator.of(context).pop();
+                      widget.onNavigateToVerse?.call(surah, ayah);
+                    },
                   ),
                   AyahAudioTabView(
                     surahNumber: widget.surahNumber,
