@@ -57,6 +57,8 @@ class _KhatmahPlanEditorSheetState extends State<KhatmahPlanEditorSheet> {
   late _PlanGoalMode _goalMode;
   late DateTime _targetDate;
   String? _error;
+  bool _startPageHasBeenFocused = false;
+  bool _dailyPagesHasBeenFocused = false;
 
   bool get _isEditing => widget.plan != null;
 
@@ -195,6 +197,13 @@ class _KhatmahPlanEditorSheetState extends State<KhatmahPlanEditorSheet> {
                 textDirection: TextDirection.ltr,
                 textAlign: TextAlign.end,
                 textInputAction: TextInputAction.next,
+                onTap: () {
+                  if (_startPageHasBeenFocused) return;
+                  _startPageHasBeenFocused = true;
+                  _startPageController.selection = TextSelection.collapsed(
+                    offset: _startPageController.text.length,
+                  );
+                },
                 decoration: _decoration(context, 'ابدأ من الصفحة (1–604)'),
                 onChanged: (_) => setState(() {}),
               ),
@@ -234,6 +243,13 @@ class _KhatmahPlanEditorSheetState extends State<KhatmahPlanEditorSheet> {
                 keyboardType: TextInputType.number,
                 textDirection: TextDirection.ltr,
                 textAlign: TextAlign.end,
+                onTap: () {
+                  if (_dailyPagesHasBeenFocused) return;
+                  _dailyPagesHasBeenFocused = true;
+                  _dailyPagesController.selection = TextSelection.collapsed(
+                    offset: _dailyPagesController.text.length,
+                  );
+                },
                 decoration: _decoration(context, 'صفحات الورد اليومي (1–604)'),
               )
             else
