@@ -368,8 +368,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.auto_stories_rounded,
-                          title: 'التفسير',
-                          subtitle: 'تفسير موثوق',
+                          title: 'تفسير الآية',
+                          subtitle: 'تفاسير أهل السنة المعتمدة',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(0),
                         ),
@@ -378,8 +378,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.spellcheck_rounded,
-                          title: 'المعاني',
-                          subtitle: 'شرح الكلمات',
+                          title: 'معاني الكلمات',
+                          subtitle: 'شرح الكلمات والتحليل اللغوي',
                           color: palette.gold,
                           onTap: () => _openDetailsAtTab(1),
                         ),
@@ -394,8 +394,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.compare_arrows_rounded,
-                          title: 'المتشابهات',
-                          subtitle: 'آيات وقواعد الحفظ',
+                          title: 'المتشابهات والضوابط',
+                          subtitle: 'ربط الآيات المتشابهة وقواعد الحفظ',
                           color: palette.gold,
                           onTap: () => _openDetailsAtTab(2),
                         ),
@@ -404,8 +404,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.edit_note_rounded,
-                          title: 'التدبر',
-                          subtitle: 'خواطرك وملاحظاتك',
+                          title: 'تدبر وملاحظات',
+                          subtitle: 'تدوين خواطر وتأملات إيمانية',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(4),
                         ),
@@ -430,7 +430,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.play_circle_fill_rounded,
-                          title: 'استماع',
+                          title: 'استماع للآية',
                           subtitle: 'هذه الآية فقط',
                           color: palette.primary,
                           onTap: _playVerse,
@@ -446,8 +446,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.repeat_one_rounded,
-                          title: 'التكرار',
-                          subtitle: 'للحفظ والمراجعة',
+                          title: 'تكرار الآية',
+                          subtitle: 'تكرار الآية أو مقطع كامل للحفظ',
                           color: palette.gold,
                           onTap: _openHifdhRepeatOptions,
                         ),
@@ -456,8 +456,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.record_voice_over_rounded,
-                          title: 'إعدادات الصوت',
-                          subtitle: 'القارئ والسرعة',
+                          title: 'خيارات التلاوة',
+                          subtitle: 'تغيير القارئ وسرعة الصوت',
                           color: palette.primary,
                           onTap: () => _openDetailsAtTab(3),
                         ),
@@ -474,8 +474,8 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           icon: _isBookmarked
                               ? Icons.bookmark_added_rounded
                               : Icons.bookmark_add_outlined,
-                          title: _isBookmarked ? 'في المفضلة' : 'إضافة للمفضلة',
-                          subtitle: _isBookmarked ? 'إزالة الحفظ' : 'حفظ الآية',
+                          title: _isBookmarked ? 'محفوظة في الفواصل' : 'حفظ في الفواصل',
+                          subtitle: _isBookmarked ? 'انقر لإلغاء الحفظ' : 'إضافة إلى المحفوظات',
                           color: _isBookmarked ? palette.gold : palette.text,
                           onTap: _toggleBookmark,
                         ),
@@ -486,10 +486,10 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                           icon: _isLastRead
                               ? Icons.bookmark_remove_rounded
                               : Icons.bookmark_border_rounded,
-                          title: _isLastRead ? 'موضع القراءة' : 'حفظ الموضع',
+                          title: _isLastRead ? 'موضع القراءة الحالي' : 'تعيين كموضع قراءة',
                           subtitle: _isLastRead
                               ? 'إزالة الموضع'
-                              : 'آخر موضع قراءة',
+                              : 'حفظ كآخر موضع توقفت عنده',
                           color: _isLastRead ? palette.success : palette.text,
                           onTap: _toggleLastRead,
                         ),
@@ -514,7 +514,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.share_rounded,
-                          title: 'مشاركة',
+                          title: 'مشاركة الآية الكريمة',
                           subtitle: 'النص مع المرجع',
                           color: palette.primary,
                           onTap: _shareVerse,

@@ -6,6 +6,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 import '../../data/services/quran_tafsir_service.dart';
+import 'quran_word_details_sheet.dart';
 
 class AyahWordsTabView extends StatefulWidget {
   final int surahNumber;
@@ -144,10 +145,6 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
 
             return Container(
               margin: const EdgeInsetsDirectional.only(bottom: AppSpace.xs),
-              padding: const EdgeInsetsDirectional.symmetric(
-                vertical: AppSpace.sm,
-                horizontal: AppSpace.md,
-              ),
               decoration: BoxDecoration(
                 color: palette.surfaceMuted,
                 borderRadius: AppRadius.mdRadius,
@@ -155,56 +152,101 @@ class _AyahWordsTabViewState extends State<AyahWordsTabView> {
                   color: palette.border.withValues(alpha: 0.6),
                 ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: AppRadius.mdRadius,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    QuranWordDetailsSheet.show(
+                      context,
+                      surahNumber: widget.surahNumber,
+                      ayahNumber: widget.ayahNumber,
+                      wordIndex: index,
+                      tappedWord: item.word,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      vertical: AppSpace.sm,
+                      horizontal: AppSpace.md,
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          item.word,
-                          style: textTheme.sacred.copyWith(
-                            color: palette.text,
-                            fontWeight: FontWeight.bold,
-                            height: 1.3,
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.word,
+                                style: textTheme.sacred.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.3,
+                                ),
+                              ),
+                              if (hasTranslit) ...[
+                                const SizedBox(height: AppSpace.xxs),
+                                Container(
+                                  padding: const EdgeInsetsDirectional.symmetric(
+                                    horizontal: AppSpace.xs,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: palette.goldSoft,
+                                    borderRadius: AppRadius.smRadius,
+                                  ),
+                                  child: Text(
+                                    item.transliteration!,
+                                    style: textTheme.captionBold.copyWith(
+                                      color: palette.gold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (hasTranslit) ...[
-                          const SizedBox(height: AppSpace.xxs),
-                          Container(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: AppSpace.xs,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: palette.goldSoft,
-                              borderRadius: AppRadius.smRadius,
-                            ),
-                            child: Text(
-                              item.transliteration!,
-                              style: textTheme.captionBold.copyWith(
-                                color: palette.gold,
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                item.meaning,
+                                textAlign: TextAlign.end,
+                                style: textTheme.bodySmallMedium.copyWith(
+                                  color: palette.text,
+                                  height: 1.4,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: AppSpace.xxs),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'إعراب وصرف وقراءات',
+                                    style: textTheme.captionBold.copyWith(
+                                      color: palette.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpace.xxs),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: AppIcon.xs,
+                                    color: palette.primary,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpace.md),
-                  Expanded(
-                    flex: 6,
-                    child: Text(
-                      item.meaning,
-                      textAlign: TextAlign.end,
-                      style: textTheme.bodySmallMedium.copyWith(
-                        color: palette.text,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             );
           },

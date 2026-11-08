@@ -1,3 +1,21 @@
+## 4-Tier Quranic Word Linguistic Analysis Engine (8 November 2026)
+- **Branch**: `main`
+- **Features Implemented (Wahy Inspiration — Step 3)**:
+  - **4-Tier Linguistic Data Models & Service**: Created `QuranWordAnalysis` in `lib/features/quran/data/models/quran_word_analysis.dart` and `QuranWordAnalysisService` in `lib/features/quran/data/services/quran_word_analysis_service.dart`. Implemented multi-tier caching (RAM memory cache, persistent `SharedPreferences`, live API mapping with Wahy global word endpoint `/api/words/:surah?from=&to=` and Mushaf Hafs page token parser `/api/mushaf/hafs/:page`, with offline algorithmic fallback).
+  - **Scholarly Word Analysis Sheet (`QuranWordDetailsSheet`)**: Upgraded to authentic 4-tier scientific analysis:
+    1. **المعنى والبيان**: Contextual Quranic vocabulary explanation in Arabic with dual-language English gloss & transliteration support.
+    2. **الإعراب المفصل**: Classical grammatical syntax breakdown with morphological case and dependency relations.
+    3. **الصرف والاشتقاق والوزن**: Deep morphological decomposition (وزن، مادة معجمية، مجرد/مزيد، إعلال/إبدال).
+    4. **القراءات الواردة**: Canonical 10 Qira'at variants per word (وصلاً ووقفاً وعزو للرواة).
+  - **Mushaf & Tafsir Integration (`AyahWordsTabView`)**:
+    - Made all words in the "معاني الكلمات" tab interactive with touch ripples, tap targets, and visual cues ("إعراب وصرف وقراءات ❯") directly opening the 4-tier linguistic sheet.
+    - Word-to-word previous/next navigation steppers with responsive `Wrap` layout surviving text scales 1.0, 1.5, and 2.0 without overflow.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found (ran in 8.5s).
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/quran_word_analysis_test.dart test/quran_word_details_sheet_test.dart test/quran_mutashabihat_test.dart test/hifdh_repeat_engine_test.dart test/ayah_action_menu_test.dart`: All 44 tests passed.
+- **Status**: Complete & Verified.
+
 ## Quranic Hifdh Repetition & Range Loop Audio Engine (8 November 2026)
 - **Branch**: `main`
 - **Features Implemented (Wahy Inspiration — Step 2)**:
