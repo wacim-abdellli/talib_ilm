@@ -1,3 +1,20 @@
+## Quranic Hifdh Repetition & Range Loop Audio Engine (8 November 2026)
+- **Branch**: `main`
+- **Features Implemented (Wahy Inspiration — Step 2)**:
+  - **Hifdh Repetition Models & Audio Controller**: Created `HifdhRangeConfig` in `lib/features/quran/data/services/quran_audio_service.dart`. Extended `QuranAudioService` with `verseRepeatTargetNotifier`, `hifdhRangeNotifier`, `setVerseRepeatCount(int)`, `playHifdhRange(...)`, and `clearHifdhRange()`.
+  - **Repetition Options Bottom Sheet (`HifdhRepeatOptionsSheet`)**: Designed a modern, fully accessible RTL bottom sheet featuring:
+    - **Single Verse Repetition**: Quick selection chips for `1x`, `2x`, `3x`, `5x`, `10x`, and `مستمر (∞)` repetition counts.
+    - **Range Loop Engine (تحديد النطاق)**: Start Ayah and End Ayah bounded steppers, with custom iteration counts (`1x`, `3x`, `5x`, `10x`, `∞`) and live active range indicators.
+  - **Player & HUD Integrations**:
+    - Embedded Hifdh repetition into `AyahActionMenuSheet` under `تكرار الآية` (`تكرار الآية أو مقطع كامل للحفظ`).
+    - Added dedicated Hifdh options control in `QuranAudioPlayerBar` while preserving standard repeat cycling.
+    - Added direct Hifdh repetition launcher in `MushafReaderBottomBar` in `mushaf_reader_overlays.dart`.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (7 allow markers used / cap 10).
+  - `flutter test test/quran_audio_service_test.dart test/quran_audio_player_bar_test.dart test/ayah_action_menu_test.dart test/hifdh_repeat_engine_test.dart`: All 23 tests passed.
+- **Status**: Complete & Verified.
+
 ## Quranic Mutashabihat & Memorization Mnemonics Engine (8 November 2026)
 - **Branch**: `main`
 - **Features Implemented (Wahy Inspiration — Step 1)**:

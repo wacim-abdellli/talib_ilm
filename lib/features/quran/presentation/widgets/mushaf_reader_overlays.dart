@@ -7,6 +7,7 @@ import '../../../../app/theme/app_ui.dart';
 import '../../../../core/utils/arabic_digits.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../data/services/quran_audio_service.dart';
+import 'hifdh_repeat_options_sheet.dart';
 import 'quick_jump_sheet.dart';
 import 'tajweed_guide_sheet.dart';
 
@@ -351,16 +352,16 @@ class MushafReaderBottomBar extends StatelessWidget {
 
             return AppIconButton(
               icon: icon,
-              tooltip: tooltip,
+              tooltip: 'تكرار الحفظ: $tooltip',
               color: active ? palette.gold : textMutedColor,
               onPressed: () {
                 HapticFeedback.selectionClick();
-                final next = switch (repeatMode) {
-                  AudioRepeatMode.none => AudioRepeatMode.repeatOnce,
-                  AudioRepeatMode.repeatOnce => AudioRepeatMode.infinite,
-                  AudioRepeatMode.infinite => AudioRepeatMode.none,
-                };
-                audioService.setRepeatMode(next);
+                HifdhRepeatOptionsSheet.show(
+                  context,
+                  audioService: audioService,
+                  surahNumber: surah,
+                  currentAyah: ayah,
+                );
               },
             );
           },

@@ -14,6 +14,7 @@ import '../../data/services/bookmark_service.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../data/services/quran_tafsir_service.dart';
 import 'ayah_details_sheet.dart';
+import 'hifdh_repeat_options_sheet.dart';
 
 /// Interactive Quick Action Menu displayed on Ayah Hold / Long-Press.
 ///
@@ -208,15 +209,14 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
     );
   }
 
-  void _repeatVerseInfinite() {
-    HapticFeedback.mediumImpact();
+  void _openHifdhRepeatOptions() {
+    HapticFeedback.selectionClick();
     Navigator.of(context).pop();
-    widget.audioService.setRepeatMode(AudioRepeatMode.infinite);
-    widget.audioService.playVerse(widget.surahNumber, widget.ayahNumber);
-    final surahName = quran.getSurahNameArabic(widget.surahNumber);
-    AppSnackbar.info(
+    HifdhRepeatOptionsSheet.show(
       context,
-      'تكرار مستمر للآية ${widget.ayahNumber} من سورة $surahName',
+      audioService: widget.audioService,
+      surahNumber: widget.surahNumber,
+      currentAyah: widget.ayahNumber,
     );
   }
 
@@ -422,9 +422,9 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                         child: _ActionTile(
                           icon: Icons.repeat_one_rounded,
                           title: 'تكرار الآية',
-                          subtitle: 'تكرار مستمر للحفظ والمراجعة',
+                          subtitle: 'تكرار الآية أو مقطع كامل للحفظ',
                           color: palette.gold,
-                          onTap: _repeatVerseInfinite,
+                          onTap: _openHifdhRepeatOptions,
                         ),
                       ),
                       const SizedBox(width: AppSpace.sm),
@@ -489,7 +489,7 @@ class _AyahActionMenuSheetState extends State<AyahActionMenuSheet> {
                       Expanded(
                         child: _ActionTile(
                           icon: Icons.share_rounded,
-                          title: 'مشاركة الآية',
+                          title: 'مشاركة الآية الكريمة',
                           subtitle: 'مشاركة النص مع المرجع',
                           color: palette.primary,
                           onTap: _shareVerse,

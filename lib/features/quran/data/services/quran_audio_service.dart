@@ -16,6 +16,36 @@ import 'quran_audio_frame_merger.dart';
 
 enum AudioRepeatMode { none, repeatOnce, infinite }
 
+/// Configuration for repeating a custom range of ayahs for Quran memorization (حفظ القرآن).
+class HifdhRangeConfig {
+  final int surah;
+  final int startAyah;
+  final int endAyah;
+  final int repeatCount; // 1, 3, 5, 10, or 0 (infinite)
+  final int currentIteration;
+
+  const HifdhRangeConfig({
+    required this.surah,
+    required this.startAyah,
+    required this.endAyah,
+    this.repeatCount = 1,
+    this.currentIteration = 0,
+  });
+
+  bool get isInfinite => repeatCount == 0;
+  bool get isCompleted => !isInfinite && currentIteration >= repeatCount;
+
+  HifdhRangeConfig nextIteration() {
+    return HifdhRangeConfig(
+      surah: surah,
+      startAyah: startAyah,
+      endAyah: endAyah,
+      repeatCount: repeatCount,
+      currentIteration: currentIteration + 1,
+    );
+  }
+}
+
 class QuranAudioService {
   static final QuranAudioService _instance = QuranAudioService._internal();
   factory QuranAudioService() => _instance;
@@ -69,6 +99,8 @@ class QuranAudioService {
   final ValueNotifier<bool> isPlayingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<double> speedNotifier = ValueNotifier<double>(1.0);
   final ValueNotifier<AudioRepeatMode> repeatModeNotifier = ValueNotifier<AudioRepeatMode>(AudioRepeatMode.none);
+  final ValueNotifier<int> verseRepeatTargetNotifier = ValueNotifier<int>(1);
+  final ValueNotifier<HifdhRangeConfig?> hifdhRangeNotifier = ValueNotifier<HifdhRangeConfig?>(null);
   final ValueNotifier<AudioPlaybackError?> errorNotifier = ValueNotifier<AudioPlaybackError?>(null);
   final ValueNotifier<int?> sleepTimerMinutesNotifier = ValueNotifier<int?>(null);
   final ValueNotifier<int?> sleepTimerRemainingSecondsNotifier = ValueNotifier<int?>(null);
@@ -79,8 +111,10 @@ class QuranAudioService {
   DateTime? _sleepTimerEndTime;
   bool _isContinuous = false, _isSingleVerseOnly = false, _hasExplicitEnd = false, _playWhenReady = false;
   bool _isTransitioning = false, _completionArmed = false, _disposed = false;
-  int _endAyah = 0, _operation = 0, _ayahRepeatCount = 0;
+  int _endAyah = 0, _operation = 0, _ayahRepeatCount = 0, _verseRepeatTarget = 1;
   QuranReciter? _playbackReciter;
+
+  int get verseRepeatTarget => _verseRepeatTarget;
 
   bool get isFullSurahMode => isFullSurahModeNotifier.value;
   bool _ownsOperation(int operation) => !_disposed && operation == _operation;
@@ -506,9 +540,12 @@ class QuranAudioService {
       return;
     }
 
-    // 2. Repeat Once Mode (repeats the ayah once, then advances to next)
-    if (repeatModeNotifier.value == AudioRepeatMode.repeatOnce) {
-      if (_ayahRepeatCount < 1) {
+    // 2. Verse Repetition Mode (supports repeatOnce and multi-count Hifdh repetitions)
+    final repeatTarget = _verseRepeatTarget > 1
+        ? _verseRepeatTarget
+        : (repeatModeNotifier.value == AudioRepeatMode.repeatOnce ? 2 : 1);
+    if (repeatTarget > 1) {
+      if (_ayahRepeatCount < repeatTarget - 1) {
         _ayahRepeatCount++;
         _startPlay(surah, ayah);
         return;
@@ -520,6 +557,25 @@ class QuranAudioService {
     if (_isSingleVerseOnly) {
       _isSingleVerseOnly = false;
       stop();
+      return;
+    }
+
+    // 4. Hifdh Range Loop Mode (repeats a custom range of ayahs for memorization)
+    final rangeConfig = hifdhRangeNotifier.value;
+    if (rangeConfig != null && rangeConfig.surah == surah) {
+      if (ayah < rangeConfig.endAyah) {
+        _startPlay(surah, ayah + 1);
+      } else {
+        // Reached end of range
+        if (rangeConfig.isInfinite ||
+            rangeConfig.currentIteration + 1 < rangeConfig.repeatCount) {
+          hifdhRangeNotifier.value = rangeConfig.nextIteration();
+          _startPlay(surah, rangeConfig.startAyah);
+        } else {
+          hifdhRangeNotifier.value = null;
+          stop();
+        }
+      }
       return;
     }
 
@@ -585,7 +641,60 @@ class QuranAudioService {
     await _player.setSpeed(speed);
   }
 
-  Future<void> setRepeatMode(AudioRepeatMode mode) async => repeatModeNotifier.value = mode;
+  Future<void> setRepeatMode(AudioRepeatMode mode) async {
+    repeatModeNotifier.value = mode;
+    if (mode == AudioRepeatMode.none) {
+      _verseRepeatTarget = 1;
+      verseRepeatTargetNotifier.value = 1;
+    } else if (mode == AudioRepeatMode.repeatOnce) {
+      _verseRepeatTarget = 2;
+      verseRepeatTargetNotifier.value = 2;
+    } else if (mode == AudioRepeatMode.infinite) {
+      _verseRepeatTarget = 0;
+      verseRepeatTargetNotifier.value = 0;
+    }
+  }
+
+  void setVerseRepeatCount(int count) {
+    _verseRepeatTarget = count;
+    verseRepeatTargetNotifier.value = count;
+    if (count == 0) {
+      repeatModeNotifier.value = AudioRepeatMode.infinite;
+    } else if (count == 1) {
+      repeatModeNotifier.value = AudioRepeatMode.none;
+    } else {
+      repeatModeNotifier.value = AudioRepeatMode.repeatOnce;
+    }
+  }
+
+  Future<void> playHifdhRange({
+    required int surah,
+    required int startAyah,
+    required int endAyah,
+    int repeatCount = 1,
+    QuranReciter? reciter,
+  }) async {
+    final effectiveStart = startAyah.clamp(1, endAyah);
+    final effectiveEnd =
+        endAyah.clamp(effectiveStart, quran.getVerseCount(surah));
+    hifdhRangeNotifier.value = HifdhRangeConfig(
+      surah: surah,
+      startAyah: effectiveStart,
+      endAyah: effectiveEnd,
+      repeatCount: repeatCount,
+      currentIteration: 0,
+    );
+    await playContinuous(
+      surah: surah,
+      startAyah: effectiveStart,
+      endAyah: effectiveEnd,
+      reciter: reciter,
+    );
+  }
+
+  void clearHifdhRange() {
+    hifdhRangeNotifier.value = null;
+  }
 
   Future<void> cycleRepeatMode() async {
     switch (repeatModeNotifier.value) {
@@ -720,6 +829,7 @@ class QuranAudioService {
     _isTransitioning = false;
     _isSingleVerseOnly = false;
     isFullSurahModeNotifier.value = false;
+    hifdhRangeNotifier.value = null;
     activeSurahNotifier.value = null;
     activeAyahNotifier.value = null;
     isPlayingNotifier.value = false;

@@ -165,3 +165,4 @@ class QuranMutashabihatService {
 }
 
 typedef MutashabihPlacesOfflineMatcher = MutashabihCard;
+

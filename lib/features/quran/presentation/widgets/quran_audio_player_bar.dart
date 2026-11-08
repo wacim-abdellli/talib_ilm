@@ -5,6 +5,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../../app/theme/app_ui.dart';
 import '../../data/services/quran_audio_service.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import 'hifdh_repeat_options_sheet.dart';
 import 'surah_card.dart';
 
 /// Floating/sticky audio playback bar displayed at the bottom of the
@@ -333,33 +334,79 @@ class QuranAudioPlayerBar extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Repeat Mode Button
-                        IconButton(
-                          tooltip: repeatTooltip,
-                          icon: Container(
-                            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-                            decoration: BoxDecoration(
-                              color: isRepeatActive
-                                  ? palette.primarySoft
-                                  : palette.surfaceMuted,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isRepeatActive
-                                    ? palette.primary
-                                    : palette.border,
+                        // Repeat Mode & Advanced Hifdh Loop Controls
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Repeat Mode Button
+                            IconButton(
+                              tooltip: repeatTooltip,
+                              icon: Container(
+                                padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                                decoration: BoxDecoration(
+                                  color: isRepeatActive
+                                      ? palette.primarySoft
+                                      : palette.surfaceMuted,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isRepeatActive
+                                        ? palette.primary
+                                        : palette.border,
+                                  ),
+                                ),
+                                child: Icon(
+                                  repeatIcon,
+                                  color: isRepeatActive
+                                      ? palette.primary
+                                      : palette.textMuted,
+                                ),
                               ),
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                audioService.cycleRepeatMode();
+                              },
                             ),
-                            child: Icon(
-                              repeatIcon,
-                              color: isRepeatActive
-                                  ? palette.primary
-                                  : palette.textMuted,
+
+                            // Advanced Hifdh Repetition & Range Loop
+                            ValueListenableBuilder<HifdhRangeConfig?>(
+                              valueListenable: audioService.hifdhRangeNotifier,
+                              builder: (context, hifdhRange, _) {
+                                final isRangeActive = hifdhRange != null;
+                                return IconButton(
+                                  tooltip: 'تكرار الحفظ وتحديد النطاق',
+                                  icon: Container(
+                                    padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+                                    decoration: BoxDecoration(
+                                      color: isRangeActive
+                                          ? palette.goldSoft
+                                          : palette.surfaceMuted,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isRangeActive
+                                            ? palette.gold
+                                            : palette.border,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      Icons.tune_rounded,
+                                      color: isRangeActive
+                                          ? palette.gold
+                                          : palette.textMuted,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    HapticFeedback.selectionClick();
+                                    HifdhRepeatOptionsSheet.show(
+                                      context,
+                                      audioService: audioService,
+                                      surahNumber: surah,
+                                      currentAyah: currentAyah,
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          ),
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            audioService.cycleRepeatMode();
-                          },
+                          ],
                         ),
 
                         // Speed Selector Pill
