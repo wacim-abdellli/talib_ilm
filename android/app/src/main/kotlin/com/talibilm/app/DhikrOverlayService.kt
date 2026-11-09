@@ -95,12 +95,22 @@ class DhikrOverlayService : Service() {
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
+            try {
+                manager.deleteNotificationChannel("talib_dhikr_overlay_service")
+            } catch (_: Exception) {}
+
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
                     "تذكير لحظة ذكر",
-                    NotificationManager.IMPORTANCE_LOW,
-                ).apply { description = "إبقاء بطاقة الذكر العائمة متاحة" },
+                    NotificationManager.IMPORTANCE_MIN,
+                ).apply {
+                    description = "إبقاء بطاقة الذكر العائمة متاحة"
+                    setShowBadge(false)
+                    enableLights(false)
+                    enableVibration(false)
+                    lockscreenVisibility = Notification.VISIBILITY_SECRET
+                },
             )
         }
     }
@@ -116,7 +126,9 @@ class DhikrOverlayService : Service() {
                 .setContentTitle("لحظة ذكر مفعّلة")
                 .setContentText("تظهر بطاقة ذكر صغيرة حسب جدولك")
                 .setContentIntent(openApp)
-                .setOngoing(true)
+                .setOngoing(false)
+                .setShowWhen(false)
+                .setVisibility(Notification.VISIBILITY_SECRET)
                 .build()
         } else {
             @Suppress("DEPRECATION")
@@ -125,7 +137,8 @@ class DhikrOverlayService : Service() {
                 .setContentTitle("لحظة ذكر مفعّلة")
                 .setContentText("تظهر بطاقة ذكر صغيرة حسب جدولك")
                 .setContentIntent(openApp)
-                .setOngoing(true)
+                .setOngoing(false)
+                .setPriority(Notification.PRIORITY_MIN)
                 .build()
         }
         if (Build.VERSION.SDK_INT >= 34) {
@@ -314,7 +327,7 @@ class DhikrOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
-        const val CHANNEL_ID = "talib_dhikr_overlay_service"
+        const val CHANNEL_ID = "talib_dhikr_overlay_silent_v2"
         const val NOTIFICATION_ID = 8490
         const val ACTION_START = "com.talibilm.app.DHIKR_OVERLAY_START"
         const val ACTION_STOP = "com.talibilm.app.DHIKR_OVERLAY_STOP"
