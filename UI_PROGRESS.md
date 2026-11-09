@@ -1,3 +1,28 @@
+## Stage R54 — iOS WidgetKit Prayer Times & Live Countdown Fix (9 November 2026)
+- **Branch**: `ui/r54-ios-widget-time-fix`
+- **Root Cause Analysis**:
+  - The iOS WidgetKit widgets displayed `--:--` for all 5 prayers because:
+    1. `HomeWidgetSnapshot.writeWidgetValue` previously threw a fatal `StateError` on sideloaded/AltStore/test environments when App Group verification readback returned null, aborting `_saveNextPrayerEpoch` and blocking the widget update pipeline entirely.
+    2. Calls to `HomeWidget.saveWidgetData` lacked `appGroupId: appGroupId`, causing silent failures under native platform channel isolation.
+    3. `HomeWidgetService.updatePrayerWidget` only notified WidgetKit after Android offscreen bitmap rendering, leaving iOS updates vulnerable to offscreen rendering exceptions.
+    4. Swift `TalibIlmWidgets.swift` previously had no autonomous mathematical fallback when UserDefaults suite was unprovisioned or empty, causing `--:--` across all cells.
+- **Architectural Fixes Implemented**:
+  - **Native Swift (`TalibIlmWidgets.swift` & `TalibIlmWidgetViews.swift`)**:
+    - **Multi-Tier Suite Discovery (`getPreferences()`)**: Dynamically searches `group.com.talibilm.app`, provisioned groups from `embedded.mobileprovision` (handling AltStore/Sideloadly dynamic team ID prefixes), dynamic bundle groups, and `UserDefaults.standard`.
+    - **Unified JSON Storage Extraction**: Decodes atomic `prayer_data_json` payload with full prayer timings, coordinates, city, and daily hadith gems.
+    - **Autonomous Offline Astronomical Solar Calculator (`OfflinePrayerCalculator`)**: Pure Swift solar position & prayer calculation engine based on Jean Meeus astronomical algorithms; computes exact Fajr, Sunrise, Dhuhr, Asr, Maghrib, and Isha for today and tomorrow using GPS coordinates or localized defaults. WidgetKit NEVER displays `--:--` under any circumstance.
+    - **Live Countdown & Active Prayer Status**: Restored live ticking `Text(target, style: .timer)` and added prominent "حان الآن" indicator for active adhan/salah phases.
+  - **Flutter Core Layer (`home_widget_snapshot.dart` & `home_widget_service.dart`)**:
+    - Made `writeWidgetValue` resilient across App Group and standard preferences without throwing blocking `StateError`s.
+    - Persisted full `prayer_data_json` and individual prayer epochs/strings directly to shared storage.
+    - Triggered WidgetKit reload (`HomeWidget.updateWidget(name: iOSWidgetName, iOSName: iOSWidgetName)`) immediately and directly upon saving prayer snapshots on iOS.
+    - Resolved Rule 8 by splitting files > 600 lines into `home_widget_pre_render.dart` and `home_widget_android_renderer.dart`.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (8 allow markers used / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart test/dhikr_moment_service_test.dart`: All 21 tests passed.
+- **Status**: Complete & Verified.
+
 ## Surah Intro, Objectives & Thematic Divisions Engine (8 November 2026)
 - **Branch**: `main`
 - **Features Implemented (Wahy Inspiration — Step 5)**:

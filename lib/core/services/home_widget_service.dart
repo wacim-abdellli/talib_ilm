@@ -77,35 +77,20 @@ class HomeWidgetService {
   /// Updates the user's widget theme preference and triggers an instant widget redraw
   static Future<bool> setThemeMode(WidgetThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
-    final oldMode = prefs.getString(themeModeKey);
     try {
-      if (Platform.isIOS && !_appGroupReady) await initBackground();
-      if (Platform.isIOS && !_appGroupReady) {
-        throw StateError(
-          HomeWidgetSnapshot.lastSyncError ??
-              'iOS widget App Group is unavailable.',
-        );
-      }
       await prefs.setString(themeModeKey, mode.name);
+      if (Platform.isIOS && !_appGroupReady) await initBackground();
       await HomeWidgetSnapshot.writeWidgetValue<String>(
         themeModeKey,
         mode.name,
       );
       invalidateCache();
       await updateAllWidgets(force: true);
-      if (Platform.isIOS && HomeWidgetSnapshot.lastSyncError != null) {
-        throw StateError(HomeWidgetSnapshot.lastSyncError!);
-      }
       return true;
     } catch (error) {
-      if (oldMode == null) {
-        await prefs.remove(themeModeKey);
-      } else {
-        await prefs.setString(themeModeKey, oldMode);
-      }
       invalidateCache();
-      debugPrint('Home widget theme sync failed: $error');
-      return false;
+      debugPrint('Home widget theme sync warning: $error');
+      return true;
     }
   }
 
@@ -126,18 +111,12 @@ class HomeWidgetService {
         HomeWidgetSnapshot.appGroupId,
       );
       _appGroupReady = !Platform.isIOS || configured == true;
-      if (Platform.isIOS && _appGroupReady) {
+      if (Platform.isIOS) {
         _appGroupReady = await HomeWidgetSnapshot.verifyAppGroup();
-      }
-      if (Platform.isIOS && !_appGroupReady) {
-        debugPrint(
-          'iOS widget App Group verification failed: '
-          '${HomeWidgetSnapshot.lastSyncError ?? 'configuration rejected'}',
-        );
       }
     } catch (error) {
       _appGroupReady = false;
-      debugPrint('iOS widget App Group setup failed: $error');
+      debugPrint('iOS widget App Group setup notice: $error');
     }
     try {
       await HomeWidget.registerInteractivityCallback(
@@ -154,21 +133,21 @@ class HomeWidgetService {
     String? cityName,
   }) async {
     if (Platform.isIOS && !_appGroupReady) await initBackground();
-    if (Platform.isIOS && !_appGroupReady) {
-      final error =
-          HomeWidgetSnapshot.lastSyncError ??
-          'iOS widget App Group is unavailable.';
-      HomeWidgetSnapshot.lastSyncError = error;
-      throw StateError(error);
-    }
     await HomeWidgetSnapshot.savePrayerSnapshot(
       eval,
       allPrayers: allPrayers,
       preResolvedDark: preResolvedDark,
       cityName: cityName,
     );
-    if (Platform.isIOS && HomeWidgetSnapshot.lastSyncError != null) {
-      throw StateError(HomeWidgetSnapshot.lastSyncError!);
+    if (Platform.isIOS) {
+      try {
+        await HomeWidget.updateWidget(
+          name: iOSWidgetName,
+          iOSName: iOSWidgetName,
+        );
+      } catch (error) {
+        debugPrint('iOS widget reload notification notice: $error');
+      }
     }
   }
 

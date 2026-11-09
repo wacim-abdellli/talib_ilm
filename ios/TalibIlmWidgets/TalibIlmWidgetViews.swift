@@ -107,6 +107,11 @@ private struct PrayerSmallWidgetView: View {
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+            } else if entry.isPrayerActive {
+                Text("حان الآن")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
             } else {
                 Text(entry.nextPrayerName)
                     .font(.system(size: 20, weight: .bold))
@@ -243,6 +248,11 @@ private struct FeaturedPrayerBlock: View {
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+            } else if entry.isPrayerActive {
+                Text("حان الآن")
+                    .font(.system(size: prominent ? 21 : 18, weight: .bold))
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
             } else {
                 Text(entry.nextPrayerName)
                     .font(.system(size: prominent ? 21 : 18, weight: .bold))

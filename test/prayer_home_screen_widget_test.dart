@@ -582,4 +582,29 @@ void main() {
     const lightText = AppPalette.light;
     expect(lightText.text.toARGB32(), 0xFF1C1917);
   });
+
+  test('HomeWidgetSnapshot writes comprehensive snapshot with all prayers and json', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prayers = {
+      AppStrings.prayerFajr: DateTime(2026, 11, 10, 5, 12),
+      AppStrings.prayerDhuhr: DateTime(2026, 11, 10, 12, 15),
+      AppStrings.prayerAsr: DateTime(2026, 11, 10, 15, 30),
+      AppStrings.prayerMaghrib: DateTime(2026, 11, 10, 17, 45),
+      AppStrings.prayerIsha: DateTime(2026, 11, 10, 19, 15),
+    };
+    final eval = PrayerWidgetStateEvaluator.evaluate(
+      now: DateTime(2026, 11, 10, 10, 0),
+      all: prayers,
+    );
+
+    await HomeWidgetSnapshot.savePrayerSnapshot(
+      eval,
+      allPrayers: prayers,
+      cityName: 'تونس',
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('next_prayer_name'), isNotEmpty);
+    expect(prefs.getInt('next_prayer_epoch_ms'), isNotNull);
+  });
 }
