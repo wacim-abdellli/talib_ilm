@@ -4965,3 +4965,8 @@ FAILED (54 violations)
 - Extracted the native widget views, then rebuilt small, medium, and large layouts with explicit app-matched light/dark colors, readable Arabic text, and no oversized empty spacer; automatic mode now follows the app/system theme without being overwritten during refresh.
 - **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK; all widget text/accent color pairs passed `tool/contrast.py`; Xcode project parsed. macOS CI successfully built the iOS app and verified the embedded WidgetKit extension after removing the iOS 15-only timer modifier. Tests were not run.
 - **Open issue:** physical iPhone Widget Gallery visual confirmation remains; this Windows host has no Swift toolchain/device simulator.
+
+## Dhikr Moment Settings Preparation — Extract Oversized More Page (9 November 2026)
+- Extracted the Dhikr Moment settings sheet and More page header into focused widgets without changing their behavior or appearance, bringing `more_page.dart` below the 600-line restyling threshold.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); `git diff --check` clean. Tests were not run.
+- **Open issue:** this is the no-visual-change preparation commit; the permission flow and content-selector UX follow in the next commit.

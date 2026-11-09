@@ -52,11 +52,7 @@ class MoreSectionCard extends StatelessWidget {
                 width: 1,
               ),
             ),
-            child: Icon(
-              section.icon,
-              color: color,
-              size: AppIcon.md,
-            ),
+            child: Icon(section.icon, color: color, size: AppIcon.md),
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(
@@ -103,9 +99,7 @@ class MoreSectionCard extends StatelessWidget {
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   section.subtitle,
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
-                  ),
+                  style: textTheme.caption.copyWith(color: palette.textMuted),
                 ),
               ],
             ),
@@ -119,6 +113,44 @@ class MoreSectionCard extends StatelessWidget {
             Icons.arrow_forward_ios_rounded,
             color: palette.textMuted,
             size: AppIcon.sm,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MoreSectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const MoreSectionHeader(this.title, {super.key, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        start: AppSpace.xs,
+        top: AppSpace.md,
+        bottom: AppSpace.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: textTheme.caption.copyWith(
+              color: palette.gold,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: AppSpace.xxs),
+          Text(
+            subtitle,
+            style: textTheme.caption.copyWith(color: palette.textMuted),
           ),
         ],
       ),
