@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		269E99BD5AB963094043BBB6 /* TalibIlmWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B43F99F081FD5AE05E8794 /* TalibIlmWidgets.swift */; };
+		269E99BD5AB963094043BBB7 /* TalibIlmWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B43F99F081FD5AE05E8795 /* TalibIlmWidgetViews.swift */; };
 		2B2A1738872305ADB9FC7199 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46CB3397CF4B593530123883 /* SwiftUI.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
@@ -111,6 +112,7 @@
 		A10000000000000000000012 /* adhan_announcement_isha.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = NotificationSounds/adhan_announcement_isha.caf; sourceTree = "<group>"; };
 		A10000000000000000000013 /* adhan_announcement_general.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = NotificationSounds/adhan_announcement_general.caf; sourceTree = "<group>"; };
 		A3B43F99F081FD5AE05E8794 /* TalibIlmWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TalibIlmWidgets.swift; sourceTree = "<group>"; };
+		A3B43F99F081FD5AE05E8795 /* TalibIlmWidgetViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TalibIlmWidgetViews.swift; sourceTree = "<group>"; };
 		F7CCF477B6B782042C1E012D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -146,6 +148,7 @@
 		46490C17F24BBE3A0BD29D6A /* TalibIlmWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				A3B43F99F081FD5AE05E8795 /* TalibIlmWidgetViews.swift */,
 				A3B43F99F081FD5AE05E8794 /* TalibIlmWidgets.swift */,
 				F7CCF477B6B782042C1E012D /* Info.plist */,
 				49B524ADA568CE9B5DE4E80D /* TalibIlmWidgets.entitlements */,
@@ -426,6 +429,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				269E99BD5AB963094043BBB7 /* TalibIlmWidgetViews.swift in Sources */,
 				269E99BD5AB963094043BBB6 /* TalibIlmWidgets.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
