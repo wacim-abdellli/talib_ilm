@@ -4978,3 +4978,8 @@ FAILED (54 violations)
 - Prayer snapshots now always carry the resolved prayer-day city, and city/prayer-setting refreshes send the refreshed schedule to the home widgets. The next-prayer epoch and all five prayer times are verified in shared storage before reload; overlapping updates now let the newest snapshot win.
 - **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); `git diff --check` clean. Tests were not run. iOS build/device verification is pending the macOS workflow after push.
 - **Open issue:** the iPhone’s signed App Group entitlement and on-device WidgetKit rendering cannot be inspected from this Windows workspace; the new runtime verification will report an App Group mismatch instead of accepting blank shared storage.
+
+## Quran Reader — Resume Last Page and Highlight Resume Ayah (9 November 2026)
+- The Continue card now resumes the latest reader page instead of the default 1:1 position. A saved fasila is used as the exact target when it belongs to that page; otherwise resume targets the page’s first ayah.
+- Reopening from Continue triggers the existing one-second ayah highlight on the chosen target. The reader now persists its initial page as well as page changes and exit, so leaving after opening a new page also resumes correctly.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); `git diff --check` clean. Tests were not run. Physical-device navigation/highlight confirmation remains open.

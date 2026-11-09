@@ -144,6 +144,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
 
     _currentPage = startPage;
     _trackedPage = startPage;
+    unawaited(QuranReaderPreferences.saveLastPage(startPage));
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
     _isAppResumed =
         lifecycleState == null || lifecycleState == AppLifecycleState.resumed;

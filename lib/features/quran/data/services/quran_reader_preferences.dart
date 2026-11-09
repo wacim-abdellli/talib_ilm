@@ -52,8 +52,8 @@ class QuranReaderPreferences {
       readingMode: QuranReadingMode
           .values[(prefs.getInt(readingModeKey) ?? 0).clamp(0, 1)],
       isTajweedEnabled: prefs.getBool(tajweedKey) ?? true,
-      themeMode: MushafThemeMode
-          .values[(prefs.getInt(themeModeKey) ?? 1).clamp(0, 2)],
+      themeMode:
+          MushafThemeMode.values[(prefs.getInt(themeModeKey) ?? 1).clamp(0, 2)],
       fontSize: prefs.getDouble(fontSizeKey) ?? 24.0,
       showTranslation: prefs.getBool(translationKey) ?? false,
       keepScreenAwake: prefs.getBool(wakelockKey) ?? true,
@@ -118,6 +118,13 @@ class QuranReaderPreferences {
     await prefs.setInt(lastPageKey, page);
   }
 
+  static Future<int?> getLastPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final page = prefs.getInt(lastPageKey);
+    if (page == null || page < 1 || page > 604) return null;
+    return page;
+  }
+
   static Future<void> saveLastScrollIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(lastScrollIndexKey, index);
@@ -172,4 +179,3 @@ class QuranReaderSnapshot {
     );
   }
 }
-

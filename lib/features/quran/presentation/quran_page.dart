@@ -12,6 +12,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/models/hizb_catalog.dart';
 import '../data/services/bookmark_service.dart';
+import '../data/services/quran_reader_preferences.dart';
 import '../data/services/reading_history_service.dart';
 import '../data/services/reading_stats_service.dart';
 import 'bookmarks_page.dart';
@@ -68,6 +69,7 @@ class _QuranPageState extends State<QuranPage> {
   final int _dailyGoal = 20; // minutes
 
   LastRead? _lastRead;
+  bool _hasExplicitLastRead = false;
   List<Bookmark> _bookmarks = [];
   Timer? _searchDebounce;
   int _searchGeneration = 0;
@@ -97,11 +99,20 @@ class _QuranPageState extends State<QuranPage> {
       // Fire all independent I/O concurrently — total wait = slowest, not sum.
       final dailyFuture = _statsService.getDailyStats();
       final streakFuture = _statsService.getStreak();
-      final lastReadFuture = BookmarkService.getLastRead();
+      final hasSavedPositionFuture = BookmarkService.hasSavedLastRead();
+      final lastPageFuture = QuranReaderPreferences.getLastPage();
       final bookmarksFuture = BookmarkService.getBookmarks();
       final daily = await dailyFuture;
       final streak = await streakFuture;
-      final lastRead = await lastReadFuture;
+      final hasSavedPosition = await hasSavedPositionFuture;
+      final savedPosition = hasSavedPosition
+          ? await BookmarkService.getLastRead()
+          : null;
+      final lastPage = await lastPageFuture;
+      final lastRead = _resumePosition(
+        lastPage: lastPage,
+        savedPosition: savedPosition,
+      );
       final bookmarks = await bookmarksFuture;
 
       if (mounted) {
@@ -109,10 +120,13 @@ class _QuranPageState extends State<QuranPage> {
           _minutesToday = daily['minutes'] ?? 0;
           _streak = streak;
           _lastRead = lastRead;
+          _hasExplicitLastRead = hasSavedPosition;
           _bookmarks = bookmarks;
           _isLoading = false;
         });
-        QcfFontLoader.preloadPages(lastRead.page, radius: 2);
+        if (lastRead != null) {
+          QcfFontLoader.preloadPages(lastRead.page, radius: 2);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -121,6 +135,42 @@ class _QuranPageState extends State<QuranPage> {
         });
       }
     }
+  }
+
+  LastRead? _resumePosition({required int? lastPage, LastRead? savedPosition}) {
+    final page = lastPage ?? savedPosition?.page;
+    if (page == null) return savedPosition;
+
+    // A fasila is an exact reading anchor only on the page it belongs to.
+    if (savedPosition?.page == page) return savedPosition;
+
+    final pageData = quran.getPageData(page);
+    if (pageData.isEmpty) return savedPosition;
+    final firstVerse = pageData.first;
+    final surah = firstVerse['surah'] as int?;
+    final ayah = firstVerse['start'] as int?;
+    if (surah == null || ayah == null) return savedPosition;
+
+    return LastRead(
+      surah: surah,
+      ayah: ayah,
+      page: page,
+      timestamp: DateTime.now(),
+    );
+  }
+
+  Future<void> _continueReading(LastRead displayedPosition) async {
+    final lastPage = await QuranReaderPreferences.getLastPage();
+    final hasSavedPosition = await BookmarkService.hasSavedLastRead();
+    final savedPosition = hasSavedPosition
+        ? await BookmarkService.getLastRead()
+        : null;
+    final resumePosition = _resumePosition(
+      lastPage: lastPage ?? displayedPosition.page,
+      savedPosition: savedPosition,
+    );
+    if (resumePosition == null || !mounted) return;
+    await _openSurah(resumePosition.surah, ayah: resumePosition.ayah);
   }
 
   static final Map<int, String> _surahSearchIndex = {
@@ -469,10 +519,12 @@ class _QuranPageState extends State<QuranPage> {
 
                               // Last read banner (آخر قراءة) and Khatmah entry (Real-time live synced)
                               ValueListenableBuilder<LastRead?>(
-                                valueListenable: BookmarkService.lastReadNotifier,
+                                valueListenable:
+                                    BookmarkService.lastReadNotifier,
                                 builder: (context, liveLastRead, _) {
-                                  final effectiveLastRead =
-                                      liveLastRead ?? _lastRead;
+                                  final effectiveLastRead = _hasExplicitLastRead
+                                      ? liveLastRead ?? _lastRead
+                                      : _lastRead;
                                   if (effectiveLastRead == null) {
                                     return const SizedBox.shrink();
                                   }
@@ -482,16 +534,15 @@ class _QuranPageState extends State<QuranPage> {
                                       Padding(
                                         padding:
                                             const EdgeInsetsDirectional.fromSTEB(
-                                          AppSpace.lg,
-                                          AppSpace.xs,
-                                          AppSpace.lg,
-                                          AppSpace.xs,
-                                        ),
+                                              AppSpace.lg,
+                                              AppSpace.xs,
+                                              AppSpace.lg,
+                                              AppSpace.xs,
+                                            ),
                                         child: QuranLastReadBanner(
                                           lastRead: effectiveLastRead,
-                                          onTap: () => _openSurah(
-                                            effectiveLastRead.surah,
-                                            ayah: effectiveLastRead.ayah,
+                                          onTap: () => _continueReading(
+                                            effectiveLastRead,
                                           ),
                                         ),
                                       ),
