@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../app/theme/app_colors.dart';
 import 'adhan_settings_service.dart';
 
 /// Helper to build and resolve platform-specific [NotificationDetails] for prayer alarms and reminders.
@@ -80,8 +81,9 @@ class PrayerNotificationDetailsBuilder {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
           ticker: 'صلاة $prayerName',
           timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
@@ -108,8 +110,9 @@ class PrayerNotificationDetailsBuilder {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
           ticker: 'صلاة $prayerName',
           timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
@@ -141,8 +144,9 @@ class PrayerNotificationDetailsBuilder {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
           ticker: 'صلاة $prayerName',
           timeoutAfter: prayerNotificationTimeoutMs,
           actions: const <AndroidNotificationAction>[
@@ -155,7 +159,7 @@ class PrayerNotificationDetailsBuilder {
           ],
         );
       case PrayerNotificationMode.tone:
-        return const AndroidNotificationDetails(
+        return AndroidNotificationDetails(
           'talib_prayer_tone_v4',
           'نغمة التنبيه الهادئة',
           channelDescription: 'نغمة هادئة عند دخول وقت الصلاة',
@@ -168,13 +172,14 @@ class PrayerNotificationDetailsBuilder {
           channelShowBadge: true,
           enableVibration: true,
           enableLights: true,
-          icon: '@mipmap/ic_launcher',
-          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          icon: '@drawable/ic_notification',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
           timeoutAfter: prayerNotificationTimeoutMs,
         );
       case PrayerNotificationMode.silent:
       case PrayerNotificationMode.off:
-        return const AndroidNotificationDetails(
+        return AndroidNotificationDetails(
           'talib_prayer_silent_v4',
           'تنبيه مرئي صامت',
           channelDescription: 'إشعار مرئي بدون صوت لمواقيت الصلاة',
@@ -183,8 +188,9 @@ class PrayerNotificationDetailsBuilder {
           playSound: false,
           enableVibration: false,
           visibility: NotificationVisibility.public,
-          icon: '@mipmap/ic_launcher',
-          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          icon: '@drawable/ic_notification',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
           timeoutAfter: prayerNotificationTimeoutMs,
         );
     }
@@ -247,14 +253,22 @@ class PrayerNotificationDetailsBuilder {
         ? AdhanSound.qatami
         : sound;
     switch (effectiveSound) {
+      case AdhanSound.qatami:
+        return 'adhan_qatami';
+      case AdhanSound.dosari:
+        return 'adhan_dosari';
+      case AdhanSound.islamSobhi:
+        return 'adhan_islam_sobhi';
+      case AdhanSound.maryamAyah:
+        return 'adhan_maryam_ayah';
       case AdhanSound.madinah:
         return 'adhan_madinah';
       case AdhanSound.alafasy:
         return 'adhan_alafasy';
+      case AdhanSound.zahrani:
+        return 'adhan_zahrani';
       case AdhanSound.abdulbasit:
         return 'adhan_abdulbasit';
-      case AdhanSound.qatami:
-        return 'adhan_qatami';
       case AdhanSound.aqsa:
         return 'adhan_aqsa';
       case AdhanSound.makkah:
@@ -270,14 +284,22 @@ class PrayerNotificationDetailsBuilder {
         ? AdhanSound.qatami
         : sound;
     switch (effectiveSound) {
+      case AdhanSound.qatami:
+        return 'talib_prayer_qatami_v4';
+      case AdhanSound.dosari:
+        return 'talib_prayer_dosari_v4';
+      case AdhanSound.islamSobhi:
+        return 'talib_prayer_islam_sobhi_v4';
+      case AdhanSound.maryamAyah:
+        return 'talib_prayer_maryam_ayah_v4';
       case AdhanSound.madinah:
         return 'talib_prayer_madinah_v4';
       case AdhanSound.alafasy:
         return 'talib_prayer_alafasy_v4';
+      case AdhanSound.zahrani:
+        return 'talib_prayer_zahrani_v4';
       case AdhanSound.abdulbasit:
         return 'talib_prayer_abdulbasit_v4';
-      case AdhanSound.qatami:
-        return 'talib_prayer_qatami_v4';
       case AdhanSound.aqsa:
         return 'talib_prayer_aqsa_v4';
       case AdhanSound.makkah:
@@ -293,14 +315,22 @@ class PrayerNotificationDetailsBuilder {
         ? AdhanSound.qatami
         : sound;
     switch (effectiveSound) {
+      case AdhanSound.qatami:
+        return 'أذان الشيخ ناصر القطامي';
+      case AdhanSound.dosari:
+        return 'أذان الشيخ ياسر الدوسري';
+      case AdhanSound.islamSobhi:
+        return 'أذان الشيخ إسلام صبحي';
+      case AdhanSound.maryamAyah:
+        return 'تنبيه قرآني: آية إضاعة الصلاة (سورة مريم)';
       case AdhanSound.madinah:
         return 'أذان المسجد النبوي الشريف';
       case AdhanSound.alafasy:
         return 'أذان الشيخ مشاري العفاسي';
+      case AdhanSound.zahrani:
+        return 'أذان الشيخ منصور الزهراني (جامع الراجحي)';
       case AdhanSound.abdulbasit:
         return 'أذان الشيخ عبد الباسط عبد الصمد';
-      case AdhanSound.qatami:
-        return 'أذان الشيخ ناصر القطامي';
       case AdhanSound.aqsa:
         return 'أذان المسجد الأقصى (القدس الشريف)';
       case AdhanSound.makkah:

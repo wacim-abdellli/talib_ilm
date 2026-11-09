@@ -9,6 +9,7 @@ import '../features/splash/presentation/splash_page.dart';
 import '../shared/animations/theme_switcher.dart';
 import '../shared/widgets/app_scroll_behavior.dart';
 import '../core/services/theme_service.dart';
+import '../core/services/dhikr_moment_service.dart';
 
 /// Global theme service instance
 final themeService = ThemeService();
@@ -80,10 +81,7 @@ class _TalibIlmAppState extends State<TalibIlmApp> with WidgetsBindingObserver {
                 // oversized text and truncated labels on modern high-res devices.
                 final baseScale = mediaQuery.textScaler.scale(1.0);
                 final scaled = TextScaler.linear(
-                  baseScale.clamp(
-                    AppSize.textScaleMin,
-                    AppSize.textScaleMax,
-                  ),
+                  baseScale.clamp(AppSize.textScaleMin, AppSize.textScaleMax),
                 );
 
                 return MediaQuery(
@@ -99,7 +97,7 @@ class _TalibIlmAppState extends State<TalibIlmApp> with WidgetsBindingObserver {
                         }
                       },
                       child: ThemeSwitchingArea(
-                        child: child!,
+                        child: DhikrMomentOverlay(child: child!),
                       ),
                     ),
                   ),

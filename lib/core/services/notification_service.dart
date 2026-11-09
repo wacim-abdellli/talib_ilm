@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../app/constants/app_strings.dart';
+import '../../app/theme/app_colors.dart';
 import 'adhan_service.dart';
 import 'adhan_settings_service.dart';
 import 'athkar_notification_scheduler.dart';
@@ -87,7 +88,7 @@ class NotificationService {
   Future<void> _performInit() async {
     await _initTimeZones();
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('@drawable/ic_notification');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -229,12 +230,8 @@ class NotificationService {
     final notificationsAllowed = await arePermissionsGranted();
     final exactAlarmsAllowed = await canScheduleExactNotifications();
     final channels = await android.getNotificationChannels() ?? const [];
-    final requiredChannels = <String>{
-      'talib_adhkar_reminders',
-    };
-    final soundChannels = <String>{
-      'talib_adhkar_reminders',
-    };
+    final requiredChannels = <String>{'talib_adhkar_reminders'};
+    final soundChannels = <String>{'talib_adhkar_reminders'};
 
     if (settings.enabled) {
       for (final prayerName in AdhanSettingsService.prayerNames) {
@@ -648,6 +645,14 @@ class NotificationService {
     payload: payload,
   );
 
+  Future<ScheduleOutcome> scheduleAdhkarTestNotification({
+    required int id,
+    required DateTime scheduledDate,
+  }) => _athkarScheduler.scheduleAdhkarTestNotification(
+    id: id,
+    scheduledDate: scheduledDate,
+  );
+
   /// Displays a one-off Adhkar reminder when the daily platform alarm could
   /// not be confirmed and the app is currently foregrounded.
   Future<void> showInstantAdhkarNotification({
@@ -660,7 +665,7 @@ class NotificationService {
       return;
     }
     await init();
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'talib_adhkar_reminders',
       'تنبيهات الأذكار اليومية',
       channelDescription:
@@ -672,8 +677,9 @@ class NotificationService {
       enableLights: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      icon: '@drawable/ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'أذكار المسلم',
     );
     const darwinDetails = DarwinNotificationDetails(
@@ -682,7 +688,7 @@ class NotificationService {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
       macOS: darwinDetails,

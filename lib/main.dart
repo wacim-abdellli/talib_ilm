@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
-import 'app/theme/app_ui.dart';
+import 'app/theme/app_colors.dart';
 import 'features/ilm/data/services/quiz_dump_service.dart';
 import 'features/quran/data/services/removed_riwayah_cleanup.dart';
 
@@ -46,9 +46,9 @@ Future<void> main() async {
       androidNotificationChannelName: 'تلاوة القرآن الكريم والإذاعة',
       androidNotificationChannelDescription:
           'مشغل تلاوات القرآن الكريم وإذاعة طالب العلم',
-      notificationColor: AppPalette.light.gold,
+      notificationColor: AppColors.notificationAccent,
       androidNotificationOngoing: false,
-      androidNotificationIcon: 'mipmap/ic_launcher',
+      androidNotificationIcon: 'drawable/ic_notification',
       androidStopForegroundOnPause: true,
       preloadArtwork: true,
       fastForwardInterval: AppMotion.networkRetry,

@@ -5,12 +5,16 @@ import 'iqama_timing_policy.dart';
 
 enum AdhanSound {
   qatami,
+  dosari,
+  islamSobhi,
+  maryamAyah,
+  takbeer,
   makkah,
   madinah,
   alafasy,
   abdulbasit,
   aqsa,
-  takbeer,
+  zahrani,
 }
 
 /// Rich notification options for prayer times
@@ -193,7 +197,7 @@ class AdhanSettingsService {
     final madhab = prefs.getString(_keyMadhab) ?? 'shafi';
     final volume = prefs.getDouble(_keyVolume) ?? 80.0;
     final notifyBefore = prefs.getDouble(_keyNotifyBefore) ?? 15.0;
-    final iqama = prefs.getBool(_keyIqama) ?? true;
+    final iqama = prefs.getBool(_keyIqama) ?? false;
     final iqamaMinutes = <String, int>{};
     for (final prayer in prayerNames) {
       final value = prefs.getInt('$_keyIqamaMinutesPrefix$prayer');

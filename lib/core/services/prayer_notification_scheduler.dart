@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../app/theme/app_colors.dart';
 import 'adhan_settings_service.dart';
 import 'athkar_notification_scheduler.dart';
 import 'prayer_notification_details_builder.dart';
@@ -108,8 +109,9 @@ class PrayerNotificationScheduler {
       enableLights: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'اقترب وقت الصلاة',
       timeoutAfter: timeoutMs,
       when: scheduledTime.millisecondsSinceEpoch,
@@ -171,8 +173,9 @@ class PrayerNotificationScheduler {
       enableLights: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'اقترب وقت الصلاة',
       timeoutAfter: timeoutMs,
       showWhen: true,
@@ -229,8 +232,9 @@ class PrayerNotificationScheduler {
       playSound: true,
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'موعد إقامة الصلاة',
       timeoutAfter: 15 * 60 * 1000,
       when: scheduledTime.millisecondsSinceEpoch,
@@ -289,8 +293,9 @@ class PrayerNotificationScheduler {
       playSound: true,
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'موعد إقامة الصلاة',
       timeoutAfter: 15 * 60 * 1000,
       showWhen: true,
@@ -345,8 +350,9 @@ class PrayerNotificationScheduler {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'سورة الكهف يوم الجمعة',
       timeoutAfter: 8 * 60 * 60 * 1000,
       when: scheduledTime.millisecondsSinceEpoch,

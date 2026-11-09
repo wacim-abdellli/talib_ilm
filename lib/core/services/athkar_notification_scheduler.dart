@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../app/theme/app_colors.dart';
 import 'schedule_outcome.dart';
 
 typedef SafeZonedScheduleCallback =
@@ -28,8 +29,8 @@ class AthkarNotificationScheduler {
   const AthkarNotificationScheduler({
     required Future<void> Function() ensureInitialized,
     required SafeZonedScheduleCallback safeZonedSchedule,
-  })  : _ensureInitialized = ensureInitialized,
-        _safeZonedSchedule = safeZonedSchedule;
+  }) : _ensureInitialized = ensureInitialized,
+       _safeZonedSchedule = safeZonedSchedule;
 
   /// Schedules a repeating daily notification for Morning, Evening, or Sleep Adhkar.
   Future<ScheduleOutcome> scheduleDailyAdhkarNotification({
@@ -64,7 +65,8 @@ class AthkarNotificationScheduler {
     final androidDetails = AndroidNotificationDetails(
       'talib_adhkar_reminders',
       'تنبيهات الأذكار اليومية',
-      channelDescription: 'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
+      channelDescription:
+          'تذكير بأذكار الصباح والمساء والنوم في أوقاتها المسنونة',
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
@@ -72,8 +74,9 @@ class AthkarNotificationScheduler {
       enableLights: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'أذكار المسلم',
       timeoutAfter: timeoutMs,
       showWhen: true,
@@ -104,6 +107,47 @@ class AthkarNotificationScheduler {
     );
   }
 
+  Future<ScheduleOutcome> scheduleAdhkarTestNotification({
+    required int id,
+    required DateTime scheduledDate,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return ScheduleOutcome.skippedPast;
+    }
+    await _ensureInitialized();
+    final android = AndroidNotificationDetails(
+      'talib_adhkar_reminders',
+      'تنبيهات الأذكار اليومية',
+      channelDescription: 'تذكير بالأذكار التي يختارها المستخدم',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      icon: '@drawable/ic_notification',
+      color: AppColors.notificationAccent,
+    );
+    const darwin = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    return _safeZonedSchedule(
+      id: id,
+      title: 'اختبار لحظة ذكر',
+      body: 'إذا وصل هذا التنبيه بعد إغلاق التطبيق، فالتذكيرات تعمل على جهازك.',
+      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+      notificationDetails: NotificationDetails(
+        android: android,
+        iOS: darwin,
+        macOS: darwin,
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'dhikr_moment',
+      scheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
   /// Schedules a notification for Sunnah Fasting (White Days / Monday / Thursday).
   Future<ScheduleOutcome> scheduleFastingReminder({
     required int id,
@@ -115,13 +159,16 @@ class AthkarNotificationScheduler {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return ScheduleOutcome.skippedPast;
     }
-    if (scheduledDate.isBefore(DateTime.now())) return ScheduleOutcome.skippedPast;
+    if (scheduledDate.isBefore(DateTime.now())) {
+      return ScheduleOutcome.skippedPast;
+    }
     await _ensureInitialized();
 
     final androidDetails = AndroidNotificationDetails(
       'talib_fasting_reminders',
       'تنبيهات صيام السنن والأيام البيض',
-      channelDescription: 'تذكير مسنون بصيام الأيام البيض والإثنين والخميس في موعدها',
+      channelDescription:
+          'تذكير مسنون بصيام الأيام البيض والإثنين والخميس في موعدها',
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
@@ -129,8 +176,9 @@ class AthkarNotificationScheduler {
       enableLights: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      color: AppColors.notificationAccent,
       ticker: 'صيام السنن',
       timeoutAfter: 4 * 60 * 60 * 1000,
       when: scheduledDate.millisecondsSinceEpoch,

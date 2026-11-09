@@ -24,6 +24,7 @@ enum NotificationDestination {
   istighfar,
   duasMisc,
   dynamicAthkar,
+  dhikrMoment,
   surahKahf,
   quranDeepLink,
   prayer,
@@ -48,6 +49,8 @@ class NotificationRouter {
       return NotificationDestination.unknown;
     }
     final payload = rawPayload.trim().toLowerCase();
+
+    if (payload == 'dhikr_moment') return NotificationDestination.dhikrMoment;
 
     // ── 1. Adhkar Destinations ───────────────────────────────────────────
     if (payload == 'morning' ||
@@ -131,8 +134,9 @@ class NotificationRouter {
     }
 
     // ── 4. Dynamic Adhkar Category Fallback ───────────────────────────────
-    final stripped =
-        payload.startsWith('adhkar_') ? payload.substring(7) : payload;
+    final stripped = payload.startsWith('adhkar_')
+        ? payload.substring(7)
+        : payload;
     final parsedCategory =
         adhkarCategoryFromId(payload) ?? adhkarCategoryFromId(stripped);
     if (parsedCategory != null) {
@@ -212,14 +216,19 @@ class NotificationRouter {
         break;
 
       case NotificationDestination.dynamicAthkar:
-        final stripped =
-            payload.startsWith('adhkar_') ? payload.substring(7) : payload;
+        final stripped = payload.startsWith('adhkar_')
+            ? payload.substring(7)
+            : payload;
         final cat =
             adhkarCategoryFromId(payload) ?? adhkarCategoryFromId(stripped);
         if (cat != null) {
           AppShell.switchTo(targetContext, AppShellTab.adhkar);
           _pushPage(AdhkarSessionPage(category: cat));
         }
+        break;
+
+      case NotificationDestination.dhikrMoment:
+        AppShell.switchTo(targetContext, AppShellTab.adhkar);
         break;
 
       case NotificationDestination.surahKahf:
@@ -232,11 +241,13 @@ class NotificationRouter {
         if (uri != null) {
           final target = QuranDeepLinkService.parse(uri);
           if (target.isValid && target.page != null) {
-            _pushPage(MushafPageViewer(
-              initialPage: target.page!,
-              initialSurah: target.surah,
-              initialAyah: target.ayah,
-            ));
+            _pushPage(
+              MushafPageViewer(
+                initialPage: target.page!,
+                initialSurah: target.surah,
+                initialAyah: target.ayah,
+              ),
+            );
           }
         }
         break;

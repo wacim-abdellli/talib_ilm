@@ -6,13 +6,17 @@ class AppAssets {
   static const String mutunProgram = 'assets/data/mutun_program.json';
   static const String dailyMotivation = 'assets/data/daily_motivation.json';
 
+  static const String adhanQatami = 'assets/audio/adhan_qatami.mp3';
+  static const String adhanDosari = 'assets/audio/adhan_dosari.mp3';
+  static const String adhanIslamSobhi = 'assets/audio/adhan_islam_sobhi.mp3';
+  static const String adhanMaryamAyah = 'assets/audio/adhan_maryam_ayah.mp3';
+  static const String adhanTakbeer = 'assets/audio/adhan_takbeer.mp3';
   static const String adhanMakkah = 'assets/audio/adhan_makkah.mp3';
   static const String adhanMadinah = 'assets/audio/adhan_madinah.mp3';
   static const String adhanAlafasy = 'assets/audio/adhan_alafasy.mp3';
+  static const String adhanZahrani = 'assets/audio/adhan_zahrani.mp3';
   static const String adhanAbdulbasit = 'assets/audio/adhan_abdulbasit.mp3';
-  static const String adhanQatami = 'assets/audio/adhan_qatami.mp3';
   static const String adhanAqsa = 'assets/audio/adhan_aqsa.mp3';
-  static const String adhanTakbeer = 'assets/audio/adhan_takbeer.mp3';
 
   static const String adhanAnnouncementFajr =
       'assets/audio/adhan_announcement_fajr.mp3';

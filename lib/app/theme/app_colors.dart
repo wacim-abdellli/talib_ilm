@@ -20,6 +20,7 @@ class AppColors {
   static const accent = Color(0xFFF59E0B);
   static const accentGold = accent;
   static const gold = accent;
+  static const notificationAccent = Color(0xFFC9A326);
   static const goldLight = Color(0xFFFEF3C7);
   static const goldDark = Color(0xFFB45309);
   static const goldGlow = Color(0xFFFBBF24);

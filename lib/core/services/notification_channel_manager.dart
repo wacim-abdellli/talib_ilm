@@ -43,11 +43,50 @@ class NotificationChannelManager {
     // ── Muezzin Full Adhan Channels (v4) ──────────────────────────────────
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        'talib_prayer_makkah_v4',
-        'أذان مكة المكرمة (الشيخ علي ملا)',
-        description: 'صوت أذان الحرم المكي الشريف عند دخول وقت الصلاة',
+        'talib_prayer_qatami_v4',
+        'أذان الشيخ ناصر القطامي',
+        description: 'صوت أذان الشيخ ناصر القطامي عند دخول وقت الصلاة',
         importance: Importance.max,
-        sound: RawResourceAndroidNotificationSound('adhan_makkah'),
+        sound: RawResourceAndroidNotificationSound('adhan_qatami'),
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ),
+    );
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'talib_prayer_dosari_v4',
+        'أذان الشيخ ياسر الدوسري',
+        description: 'صوت أذان الشيخ ياسر الدوسري (إمام المسجد الحرام)',
+        importance: Importance.max,
+        sound: RawResourceAndroidNotificationSound('adhan_dosari'),
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ),
+    );
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'talib_prayer_islam_sobhi_v4',
+        'أذان الشيخ إسلام صبحي',
+        description: 'صوت أذان هادئ وخاشع بصوت الشيخ إسلام صبحي',
+        importance: Importance.max,
+        sound: RawResourceAndroidNotificationSound('adhan_islam_sobhi'),
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ),
+    );
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'talib_prayer_maryam_ayah_v4',
+        'تنبيه قرآني: آية إضاعة الصلاة (سورة مريم)',
+        description: 'تنبيه إيقاظ قوي بصوت الشيخ ياسر الدوسري لسورة مريم الآية 59',
+        importance: Importance.max,
+        sound: RawResourceAndroidNotificationSound('adhan_maryam_ayah'),
         playSound: true,
         enableVibration: true,
         enableLights: true,
@@ -74,6 +113,19 @@ class NotificationChannelManager {
         description: 'صوت أذان الشيخ مشاري العفاسي عند دخول وقت الصلاة',
         importance: Importance.max,
         sound: RawResourceAndroidNotificationSound('adhan_alafasy'),
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ),
+    );
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'talib_prayer_zahrani_v4',
+        'أذان الشيخ منصور الزهراني (جامع الراجحي)',
+        description: 'صوت أذان الشيخ منصور الزهراني عند دخول وقت الصلاة',
+        importance: Importance.max,
+        sound: RawResourceAndroidNotificationSound('adhan_zahrani'),
         playSound: true,
         enableVibration: true,
         enableLights: true,

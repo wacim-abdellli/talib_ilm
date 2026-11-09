@@ -51,56 +51,59 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
     VoiceOptionItem(
       sound: AdhanSound.qatami,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان الشيخ ناصر القطامي',
+      title: 'الشيخ ناصر القطامي',
       subtitle: 'أذان ندي خاشع بمقام حجازي وقور',
       tag: 'الموصى به',
       tagIcon: Icons.star_rounded,
       icon: Icons.record_voice_over_rounded,
     ),
     VoiceOptionItem(
-      sound: AdhanSound.makkah,
+      sound: AdhanSound.dosari,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان الحرم المكي الشريف',
-      subtitle: 'الشيخ علي أحمد ملا (شيخ مؤذني المسجد الحرام)',
-      tag: 'مكة المكرمة',
-      tagIcon: Icons.location_on_outlined,
+      title: 'الشيخ ياسر الدوسري',
+      subtitle: 'أذان خاشع ونبرة شجية عذبة (إمام المسجد الحرام)',
+      tag: 'الحرم المكي',
+      tagIcon: Icons.mosque_rounded,
       icon: Icons.mosque_rounded,
     ),
     VoiceOptionItem(
-      sound: AdhanSound.madinah,
+      sound: AdhanSound.islamSobhi,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان المسجد النبوي الشريف',
-      subtitle: 'الشيخ عصام بخاري (أذان المدينة المنورة الشجي)',
-      tag: 'المدينة المنورة',
-      tagIcon: Icons.location_on_outlined,
-      icon: Icons.mosque_rounded,
+      title: 'الشيخ إسلام صبحي',
+      subtitle: 'أذان هادئ ومؤثر بسكينة وخشوع تام',
+      tag: 'سكينة وخشوع',
+      tagIcon: Icons.spa_rounded,
+      icon: Icons.graphic_eq_rounded,
     ),
     VoiceOptionItem(
       sound: AdhanSound.alafasy,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان الشيخ مشاري راشد العفاسي',
-      subtitle: 'تسجيل استوديو عالي النقاوة والوضوح الصوتي',
+      title: 'الشيخ مشاري راشد العفاسي',
+      subtitle: 'أذان نقي ورخيم بأداء شجي (استوديو عالي النقاوة)',
       tag: 'استوديو نقي',
-      tagIcon: Icons.graphic_eq_rounded,
-      icon: Icons.mic_none_rounded,
+      tagIcon: Icons.mic_rounded,
+      icon: Icons.graphic_eq_rounded,
     ),
     VoiceOptionItem(
-      sound: AdhanSound.abdulbasit,
+      sound: AdhanSound.zahrani,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان الشيخ عبد الباسط عبد الصمد',
-      subtitle: 'الأذان المصري التراثي النادر ذو النبرة الخاشعة',
-      tag: 'تراث أصيل',
-      tagIcon: Icons.history_edu_rounded,
-      icon: Icons.auto_stories_rounded,
+      title: 'الشيخ منصور الزهراني',
+      subtitle: 'أذان خاشع بمقام حجازي (جامع الراجحي بالرياض)',
+      tag: 'جامع الراجحي',
+      tagIcon: Icons.location_on_rounded,
+      icon: Icons.mosque_rounded,
     ),
+  ];
+
+  static const List<VoiceOptionItem> _quranAyahVoices = [
     VoiceOptionItem(
-      sound: AdhanSound.aqsa,
+      sound: AdhanSound.maryamAyah,
       mode: PrayerNotificationMode.adhan,
-      title: 'أذان المسجد الأقصى المبارك',
-      subtitle: 'القدس الشريف (بصوت مؤذن الأقصى الشيخ ناجي قزاز)',
-      tag: 'القدس الشريف',
-      tagIcon: Icons.location_on_outlined,
-      icon: Icons.place_outlined,
+      title: 'آية الصلاة (سورة مريم: 59)',
+      subtitle: '﴿فَخَلَفَ مِن بَعْدِهِمْ خَلْفٌ أَضَاعُوا الصَّلَاةَ﴾ نبرة نذير قوية وإيقاظ للنائم (الشيخ ياسر الدوسري)',
+      tag: 'إيقاظ مهيب',
+      tagIcon: Icons.alarm_rounded,
+      icon: Icons.menu_book_rounded,
     ),
   ];
 
@@ -118,7 +121,7 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
     VoiceOptionItem(
       sound: null,
       mode: PrayerNotificationMode.announcement,
-      title: 'نداء وقت الصلاة الوقور',
+      title: 'نداء وقت الصلاة',
       subtitle: 'نداء صوتي مسجل: "حان الآن وقت صلاة الفجر / الظهر..."',
       tag: 'نداء صوتي',
       tagIcon: Icons.record_voice_over_outlined,
@@ -238,7 +241,44 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
 
             const SizedBox(height: AppSpace.lg),
 
-            // Section 2: Alternative Voices
+            // Section 2: Quranic Prayer Alerts
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_stories_rounded,
+                  size: AppIcon.sm,
+                  color: palette.primary,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                Text(
+                  'تنبيهات قرآنية للصلاة',
+                  style: textTheme.label.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.xxs),
+            Text(
+              'تلاوة آيات بينات من الذكر الحكيم تحث على إقامة الصلاة عند دخول وقتها:',
+              style: textTheme.caption.copyWith(color: palette.textMuted),
+            ),
+            const SizedBox(height: AppSpace.sm),
+
+            ..._quranAyahVoices.map((item) {
+              return _buildVoiceCard(
+                item: item,
+                palette: palette,
+                textTheme: textTheme,
+                isSelected: _isOptionSelected(item),
+                isPlaying: currentPlaying == item,
+              );
+            }),
+
+            const SizedBox(height: AppSpace.lg),
+
+            // Section 3: Alternative Voices
             Row(
               children: [
                 Icon(
@@ -412,7 +452,7 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
             ),
             child: Row(
               children: [
-                // Radio icon
+                // Radio indicator
                 Icon(
                   isSelected
                       ? Icons.radio_button_checked_rounded
@@ -422,45 +462,28 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
                 ),
                 const SizedBox(width: AppSpace.sm),
 
-                // Icon indicator
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: isSelected ? palette.primary : palette.surfaceMuted,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    item.icon,
-                    size: AppIcon.sm,
-                    color: isSelected ? palette.onPrimary : palette.textMuted,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-
                 // Title + Subtitle + Tag
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpace.xs,
+                        runSpacing: AppSpace.xxs,
                         children: [
-                          Flexible(
-                            child: Text(
-                              item.title,
-                              style: (isSelected
-                                      ? textTheme.bodyHeavy
-                                      : textTheme.bodyBold)
-                                  .copyWith(
-                                color: isSelected
-                                    ? palette.onPrimarySoft
-                                    : palette.text,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            item.title,
+                            style: (isSelected
+                                    ? textTheme.bodyHeavy
+                                    : textTheme.bodyBold)
+                                .copyWith(
+                              color: isSelected
+                                  ? palette.onPrimarySoft
+                                  : palette.text,
                             ),
                           ),
-                          const SizedBox(width: AppSpace.xs),
                           Container(
                             padding: const EdgeInsetsDirectional.symmetric(
                               horizontal: AppSpace.xs,
@@ -512,8 +535,6 @@ class _PrayerMuezzinSelectorState extends State<PrayerMuezzinSelector> {
                           color: palette.textMuted,
                           height: 1.25,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

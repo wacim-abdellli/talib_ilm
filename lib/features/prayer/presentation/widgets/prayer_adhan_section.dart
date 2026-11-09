@@ -9,7 +9,6 @@ import '../../../../core/services/flip_to_stop_service.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
 import 'battery_reliability_sheet.dart';
-import 'iqama_interval_settings.dart';
 import 'prayer_notification_mode_pill.dart';
 
 class PrayerAdhanSection extends StatefulWidget {
@@ -39,12 +38,20 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
     switch (sound) {
       case AdhanSound.qatami:
         return 'الشيخ ناصر القطامي';
+      case AdhanSound.dosari:
+        return 'الشيخ ياسر الدوسري';
+      case AdhanSound.islamSobhi:
+        return 'الشيخ إسلام صبحي';
+      case AdhanSound.maryamAyah:
+        return 'آية الصلاة (سورة مريم: 59)';
       case AdhanSound.makkah:
         return 'الحرم المكي الشريف (علي ملا)';
       case AdhanSound.madinah:
         return 'المسجد النبوي (عصام بخاري)';
       case AdhanSound.alafasy:
         return 'الشيخ مشاري العفاسي';
+      case AdhanSound.zahrani:
+        return 'الشيخ منصور الزهراني (جامع الراجحي)';
       case AdhanSound.abdulbasit:
         return 'الشيخ عبد الباسط عبد الصمد';
       case AdhanSound.aqsa:
@@ -490,55 +497,6 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                       );
                     },
                   ),
-                ),
-
-                const SizedBox(height: AppSpace.md),
-                Divider(color: palette.border, height: 1),
-                const SizedBox(height: AppSpace.md),
-
-                // Iqama toggle
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: AppSize.tap),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'تذكير الإقامة',
-                              style: textTheme.bodyBold.copyWith(
-                                color: palette.text,
-                              ),
-                            ),
-                            Text(
-                              'إشعار تذكيري عند موعد الإقامة الذي تضبطه لكل صلاة',
-                              style: textTheme.caption.copyWith(
-                                color: palette.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: settings.iqamaReminders,
-                        onChanged: (val) {
-                          HapticFeedback.selectionClick();
-                          onSettingsChanged(
-                            settings.copyWith(iqamaReminders: val),
-                          );
-                        },
-                        activeThumbColor: palette.primary,
-                        activeTrackColor: palette.primarySoft,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSpace.sm),
-                IqamaIntervalSettings(
-                  settings: settings,
-                  onSettingsChanged: onSettingsChanged,
                 ),
 
                 const SizedBox(height: AppSpace.md),

@@ -106,17 +106,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify all 6 full adhan muezzins are present
-      expect(find.text('أذان الشيخ ناصر القطامي', skipOffstage: false), findsOneWidget);
-      expect(find.text('أذان الحرم المكي الشريف', skipOffstage: false), findsOneWidget);
-      expect(find.text('أذان المسجد النبوي الشريف', skipOffstage: false), findsOneWidget);
-      expect(find.text('أذان الشيخ مشاري راشد العفاسي', skipOffstage: false), findsOneWidget);
-      expect(find.text('أذان الشيخ عبد الباسط عبد الصمد', skipOffstage: false), findsOneWidget);
-      expect(find.text('أذان المسجد الأقصى المبارك', skipOffstage: false), findsOneWidget);
+      // Verify full adhan muezzins are present
+      expect(find.text('الشيخ ناصر القطامي', skipOffstage: false), findsOneWidget);
+      expect(find.text('الشيخ ياسر الدوسري', skipOffstage: false), findsOneWidget);
+      expect(find.text('الشيخ إسلام صبحي', skipOffstage: false), findsOneWidget);
+      expect(find.text('الشيخ مشاري راشد العفاسي', skipOffstage: false), findsOneWidget);
+      expect(find.text('الشيخ منصور الزهراني', skipOffstage: false), findsOneWidget);
 
-      // Verify the 2 alternative voices are present
+      // Verify Quran ayah and alternative voices are present
+      expect(find.text('آية الصلاة (سورة مريم: 59)', skipOffstage: false), findsOneWidget);
       expect(find.text('تكبيرات الأذان فقط', skipOffstage: false), findsOneWidget);
-      expect(find.text('نداء وقت الصلاة الوقور', skipOffstage: false), findsOneWidget);
+      expect(find.text('نداء وقت الصلاة', skipOffstage: false), findsOneWidget);
 
       // Verify volume controls are present
       expect(find.text('مستوى صوت الأذان والتنبيه', skipOffstage: false), findsOneWidget);
@@ -151,9 +151,7 @@ void main() {
         // Switch to Tab 1 (Notifications)
         await tester.tap(find.text('التنبيهات والأذان'), warnIfMissed: false);
         await tester.pumpAndSettle();
-        expect(find.text('الفاصل من الأذان إلى الإقامة حسب مسجدك'), findsOneWidget);
-        expect(find.text('الجمعة'), findsOneWidget);
-        expect(find.byType(DropdownButton<int>), findsNWidgets(6));
+        expect(find.text('ضمان استمرار الأذان في الخلفية'), findsOneWidget);
 
         // Switch to Tab 2 (Calculation)
         await tester.tap(find.text('الحساب والضبط'), warnIfMissed: false);

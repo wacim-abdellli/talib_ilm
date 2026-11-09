@@ -101,13 +101,16 @@ class AdhanService {
         prayerName: prayerName,
       );
 
+      final isQuranAyah = effectiveSound == AdhanSound.maryamAyah;
       final source = AudioSource.asset(
         assetPath,
         tag: MediaItem(
           id: assetPath,
-          album: 'أذان الصلاة',
-          title: prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة',
-          artist: 'طالب العلم',
+          album: isQuranAyah ? 'تنبيه قرآني للصلاة' : 'أذان الصلاة',
+          title: isQuranAyah
+              ? 'سورة مريم (آية 59) · ناصر القطامي'
+              : (prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة'),
+          artist: isQuranAyah ? 'الشيخ ناصر القطامي' : 'طالب العلم',
           artUri: Uri.parse(
             'android.resource://com.talibilm.app/mipmap/ic_launcher',
           ),
@@ -198,16 +201,24 @@ class AdhanService {
         : sound;
 
     switch (effectiveSound) {
+      case AdhanSound.qatami:
+        return AppAssets.adhanQatami;
+      case AdhanSound.dosari:
+        return AppAssets.adhanDosari;
+      case AdhanSound.islamSobhi:
+        return AppAssets.adhanIslamSobhi;
+      case AdhanSound.maryamAyah:
+        return AppAssets.adhanMaryamAyah;
       case AdhanSound.makkah:
         return AppAssets.adhanMakkah;
       case AdhanSound.madinah:
         return AppAssets.adhanMadinah;
       case AdhanSound.alafasy:
         return AppAssets.adhanAlafasy;
+      case AdhanSound.zahrani:
+        return AppAssets.adhanZahrani;
       case AdhanSound.abdulbasit:
         return AppAssets.adhanAbdulbasit;
-      case AdhanSound.qatami:
-        return AppAssets.adhanQatami;
       case AdhanSound.aqsa:
         return AppAssets.adhanAqsa;
       case AdhanSound.takbeer:
