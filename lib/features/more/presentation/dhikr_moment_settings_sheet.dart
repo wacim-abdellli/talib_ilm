@@ -50,18 +50,31 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _waitingForSettings) {
-      unawaited(_completeOverlayPermissionRequest());
+    if (state == AppLifecycleState.resumed) {
+      if (_waitingForSettings) {
+        unawaited(_completeOverlayPermissionRequest());
+      } else if (DhikrMomentService.supportsFloatingOverlay) {
+        unawaited(_refreshOverlayPermission());
+      }
     }
   }
 
   Future<void> _refreshOverlayPermission() async {
     final allowed = await DhikrMomentService.hasOverlayPermission();
     if (!mounted) return;
+    final wasEnabled = _settings.enabled;
     setState(() {
       _overlayPermission = allowed;
       _checkingPermission = false;
+      if (!allowed && DhikrMomentService.supportsFloatingOverlay) {
+        _settings = _settings.copyWith(enabled: false);
+      }
     });
+    if (!allowed && wasEnabled && DhikrMomentService.supportsFloatingOverlay) {
+      try {
+        await DhikrMomentService.save(_settings);
+      } catch (_) {}
+    }
   }
 
   Future<void> _onEnabledChanged(bool enabled) async {
