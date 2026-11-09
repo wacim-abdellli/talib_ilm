@@ -22,6 +22,91 @@ class QuranLastReadBanner extends StatelessWidget {
     final palette = context.palette;
     final textTheme = context.text;
     final surahName = quran.getSurahNameArabic(lastRead.surah);
+    final iconBadge = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: palette.goldSoft,
+        border: Border.all(
+          color: palette.gold.withValues(alpha: 0.4),
+          width: 1.2,
+        ),
+      ),
+      child: Icon(
+        Icons.auto_stories_rounded,
+        color: palette.gold,
+        size: AppIcon.md,
+      ),
+    );
+    final positionDetails = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppSpace.sm,
+          runSpacing: AppSpace.xxs,
+          children: [
+            Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.sm,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: palette.goldSoft,
+                borderRadius: AppRadius.pillRadius,
+              ),
+              child: Text(
+                'آخر قراءة',
+                style: textTheme.captionHeavy.copyWith(
+                  color: palette.onPrimarySoft,
+                ),
+              ),
+            ),
+            Text(
+              'صفحة ${lastRead.page} • آية ${lastRead.ayah}',
+              style: textTheme.captionBold.copyWith(color: palette.gold),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.xs),
+        Text(
+          'سورة $surahName',
+          style: textTheme.sacred.copyWith(
+            color: palette.text,
+            fontWeight: FontWeight.bold,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+    final continuePill = Container(
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpace.md,
+        vertical: AppSpace.xs,
+      ),
+      decoration: BoxDecoration(
+        color: palette.goldSoft,
+        borderRadius: AppRadius.pillRadius,
+        border: Border.all(color: palette.gold.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'تابع القراءة',
+            style: textTheme.captionHeavy.copyWith(color: palette.gold),
+          ),
+          const SizedBox(width: AppSpace.xs),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: AppIcon.md,
+            color: palette.gold,
+          ),
+        ],
+      ),
+    );
 
     return AppCard(
       onTap: () {
@@ -33,99 +118,37 @@ class QuranLastReadBanner extends StatelessWidget {
         color: palette.gold.withValues(alpha: 0.35),
         width: 1.2,
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: palette.goldSoft,
-              border: Border.all(
-                color: palette.gold.withValues(alpha: 0.4),
-                width: 1.2,
-              ),
-            ),
-            child: Icon(
-              Icons.auto_stories_rounded,
-              color: palette.gold,
-              size: AppIcon.md,
-            ),
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final text = Expanded(child: positionDetails);
+          if (constraints.maxWidth < 460) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: AppSpace.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: palette.goldSoft,
-                        borderRadius: AppRadius.pillRadius,
-                      ),
-                      child: Text(
-                        'آخر قراءة',
-                        style: textTheme.captionHeavy.copyWith(
-                          color: palette.onPrimarySoft,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      'صفحة ${lastRead.page} • آية ${lastRead.ayah}',
-                      style: textTheme.captionBold.copyWith(
-                        color: palette.gold,
-                      ),
-                    ),
+                    iconBadge,
+                    const SizedBox(width: AppSpace.md),
+                    text,
                   ],
                 ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  'سورة $surahName',
-                  style: textTheme.sacred.copyWith(
-                    color: palette.text,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(height: AppSpace.sm),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: continuePill,
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpace.md,
-              vertical: AppSpace.xs,
-            ),
-            decoration: BoxDecoration(
-              color: palette.goldSoft,
-              borderRadius: AppRadius.pillRadius,
-              border: Border.all(
-                color: palette.gold.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'تابع القراءة',
-                  style: textTheme.captionHeavy.copyWith(
-                    color: palette.gold,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppIcon.md,
-                  color: palette.gold,
-                ),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: [
+              iconBadge,
+              const SizedBox(width: AppSpace.md),
+              text,
+              continuePill,
+            ],
+          );
+        },
       ),
     );
   }
@@ -191,9 +214,7 @@ class QuranStatCard extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               label,
-              style: textTheme.caption.copyWith(
-                color: palette.textMuted,
-              ),
+              style: textTheme.caption.copyWith(color: palette.textMuted),
               maxLines: 1,
             ),
           ),
@@ -203,9 +224,7 @@ class QuranStatCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 subtitle!,
-                style: textTheme.captionBold.copyWith(
-                  color: iconColor,
-                ),
+                style: textTheme.captionBold.copyWith(color: iconColor),
                 maxLines: 1,
               ),
             ),

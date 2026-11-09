@@ -449,8 +449,10 @@ class MushafReaderBottomBar extends StatelessWidget {
           borderRadius: AppRadius.pillRadius,
           border: Border.all(color: barBorder, width: 0.8),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: AppSpace.sm,
+          runSpacing: AppSpace.xxs,
           children: [
             _buildTajweedItem(
               color: TajweedPalette.madd,
