@@ -81,11 +81,15 @@ class AthkarNotificationScheduler {
       timeoutAfter: timeoutMs,
       showWhen: true,
     );
-    const darwinDetails = DarwinNotificationDetails(
+    final isDhikrMoment = payload == 'dhikr_moment';
+    final darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
-      presentBadge: true,
+      presentBadge: !isDhikrMoment,
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
+      threadIdentifier: isDhikrMoment
+          ? 'talib_dhikr_moment'
+          : 'talib_adhkar_reminders',
     );
     final details = NotificationDetails(
       android: androidDetails,
@@ -184,11 +188,15 @@ class AthkarNotificationScheduler {
       when: scheduledDate.millisecondsSinceEpoch,
       showWhen: true,
     );
-    const darwinDetails = DarwinNotificationDetails(
+    final isDhikrMoment = payload == 'dhikr_moment';
+    final darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
-      presentBadge: true,
+      presentBadge: !isDhikrMoment,
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
+      threadIdentifier: isDhikrMoment
+          ? 'talib_dhikr_moment'
+          : 'talib_adhkar_reminders',
     );
     final details = NotificationDetails(
       android: androidDetails,

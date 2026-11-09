@@ -278,9 +278,12 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
                       ),
                       const SizedBox(height: AppSpace.xs),
                       Text(
-                        'حتى ${_settings.timesPerDay} ${_settings.timesPerDay == 1 ? 'مرة' : 'مرات'} خلال الفترة التي تختارها',
+                        _frequencyDescription,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
+                      const SizedBox(height: AppSpace.sm),
+                      _buildFrequencyPresets(context, colors),
+                      const SizedBox(height: AppSpace.xs),
                       Directionality(
                         textDirection: TextDirection.ltr,
                         child: Slider(
@@ -422,25 +425,65 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
     );
   }
 
+  String get _frequencyDescription {
+    final span = _settings.endMinutes - _settings.startMinutes;
+    final interval = span > 0 && _settings.timesPerDay > 0
+        ? (span / (_settings.timesPerDay + 1)).round()
+        : 0;
+    final intervalText = interval > 0 ? ' (تذكير كل $interval دقيقة تقريباً)' : '';
+    final timesLabel = _settings.timesPerDay == 1
+        ? 'مرة واحدة'
+        : _settings.timesPerDay == 2
+            ? 'مرتان'
+            : _settings.timesPerDay <= 10
+                ? '${_settings.timesPerDay} مرات'
+                : '${_settings.timesPerDay} مرة';
+    return '$timesLabel يومياً$intervalText خلال الفترة المحددة';
+  }
+
+  Widget _buildFrequencyPresets(BuildContext context, ColorScheme colors) {
+    const presets = [5, 10, 15, 20, 30, 40, 50];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final count in presets) ...[
+            ChoiceChip(
+              label: Text('$count'),
+              selected: _settings.timesPerDay == count,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _settings = _settings.copyWith(timesPerDay: count);
+                  });
+                }
+              },
+              selectedColor: colors.primaryContainer,
+              labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: _settings.timesPerDay == count
+                    ? colors.onPrimaryContainer
+                    : colors.onSurface,
+                fontWeight: _settings.timesPerDay == count
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(width: AppSpace.xs),
+          ],
+        ],
+      ),
+    );
+  }
+
   static (String, String) _previewFor(
     DhikrMomentContent content,
-  ) => switch (content) {
-    DhikrMomentContent.names => ('الرَّحْمَنُ', 'واسع الرحمة بخلقه'),
-    DhikrMomentContent.adhkar => (
-      'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
-      'تنزيهٌ لله وحمدٌ له',
-    ),
-    DhikrMomentContent.duas => ('رَبِّ زِدْنِي عِلْمًا', 'دعاءٌ قرآني قصير'),
-    DhikrMomentContent.quran => ('إِنَّ مَعَ الْعُسْرِ يُسْرًا', 'الشرح • ٦'),
-    DhikrMomentContent.hadith => (
-      'إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ',
-      'صحيح البخاري • ١',
-    ),
-    DhikrMomentContent.mixed => (
-      'تذكيرٌ يتجدد خلال يومك',
-      'ذكر • دعاء • آية • حديث',
-    ),
-  };
+  ) {
+    final item = DhikrMomentService.getItemForSlot(content, 0);
+    return (
+      item.text,
+      item.meaning.isNotEmpty ? item.meaning : item.categoryLabel,
+    );
+  }
 
   static IconData _iconFor(DhikrMomentContent content) => switch (content) {
     DhikrMomentContent.names => Icons.auto_awesome_rounded,

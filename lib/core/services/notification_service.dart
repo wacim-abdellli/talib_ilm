@@ -713,6 +713,7 @@ class NotificationService {
 
   /// Cancels a specific notification by ID
   Future<void> cancelNotification(int id) async {
+    await init();
     try {
       await _plugin.cancel(id);
     } catch (e) {
@@ -722,6 +723,7 @@ class NotificationService {
 
   /// Cancels one notification and reports whether the platform call completed.
   Future<bool> tryCancelNotification(int id) async {
+    await init();
     try {
       await _plugin.cancel(id);
       return true;

@@ -164,7 +164,7 @@ class DhikrOverlayService : Service() {
             return
         }
         val prefs = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
-        val count = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 24)
+        val count = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 50)
         val start = readInt(prefs, "dhikr_moment_start_minutes", 480).coerceIn(0, 1439)
         val end = readInt(prefs, "dhikr_moment_end_minutes", 1320).coerceIn(1, 1440)
         if (end <= start) return
@@ -173,7 +173,7 @@ class DhikrOverlayService : Service() {
         val nowMinute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         val scheduled = (1..count).map { index ->
             start + (span.toDouble() * index / (count + 1)).roundToInt()
-        }
+        }.distinct().sorted()
         var next = scheduled.firstOrNull { it > nowMinute }
         var daysAhead = 0
         if (next == null) {
