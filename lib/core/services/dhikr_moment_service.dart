@@ -192,11 +192,7 @@ class DhikrMomentService {
       return true;
     }
     if (Platform.isAndroid) {
-      var permission = await hasOverlayPermission();
-      if (!permission) {
-        await requestOverlayPermission();
-        permission = await hasOverlayPermission();
-      }
+      final permission = await hasOverlayPermission();
       if (permission) {
         return await _overlayChannel.invokeMethod<bool>(
               'startOverlayService',

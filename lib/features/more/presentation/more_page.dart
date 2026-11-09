@@ -126,9 +126,17 @@ class _MorePageState extends State<MorePage> {
                         ),
                         Switch.adaptive(
                           value: settings.enabled,
-                          onChanged: (value) => setModalState(
-                            () => settings = settings.copyWith(enabled: value),
-                          ),
+                          onChanged: (value) async {
+                            setModalState(
+                              () =>
+                                  settings = settings.copyWith(enabled: value),
+                            );
+                            if (value &&
+                                DhikrMomentService.supportsFloatingOverlay &&
+                                !await DhikrMomentService.hasOverlayPermission()) {
+                              await DhikrMomentService.requestOverlayPermission();
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -288,7 +296,7 @@ class _MorePageState extends State<MorePage> {
                                     DhikrMomentService.requestOverlayPermission,
                                 icon: const Icon(Icons.open_in_new_rounded),
                                 label: const Text(
-                                  'إعداد إذن البطاقة فوق التطبيقات',
+                                  'فتح إعدادات الظهور فوق التطبيقات',
                                 ),
                               )
                             else

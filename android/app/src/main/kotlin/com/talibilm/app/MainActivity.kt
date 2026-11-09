@@ -20,7 +20,7 @@ class MainActivity : AudioServiceActivity() {
                         Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
                     )
                     "requestOverlayPermission" -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val intent = Intent(
                                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:$packageName"),
