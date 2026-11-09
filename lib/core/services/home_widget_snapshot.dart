@@ -8,10 +8,11 @@ import '../../app/theme/app_palette.dart';
 import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
-import '../../features/prayer/presentation/widgets/widget_large.dart';
-import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
 import '../../features/salaf_gems/data/repositories/salaf_gems_repository.dart';
 import 'adhan_settings_service.dart';
+
+import 'home_widget_pre_render.dart';
+export 'home_widget_pre_render.dart';
 
 /// Supported visual themes for the native Android and iOS home widgets.
 enum WidgetThemeMode { dark, light, auto }
@@ -475,150 +476,35 @@ class HomeWidgetSnapshot {
     }
   }
 
-  static String? _lastDailyRibbonRenderKey;
-  static String? _lastDailyLargeRenderKey;
-
   /// Invalidates cached daily pre-rendered prayer state snapshots
-  static void invalidateDailyCache() {
-    _lastDailyRibbonRenderKey = null;
-    _lastDailyLargeRenderKey = null;
-  }
+  static void invalidateDailyCache() =>
+      HomeWidgetPreRender.invalidateDailyCache();
 
-  /// Pre-renders the 5 prayer lifecycle states (Fajr, Dhuhr, Asr, Maghrib, Isha)
-  /// into distinct on-disk images for the Ribbon (4x1) widget. This allows native
-  /// Android AlarmManager exact wakeups to switch the active prayer pill instantly
-  /// without requiring a background Flutter engine or user app launch.
+  /// Pre-renders daily prayer state variations for Ribbon widget.
   static Future<void> preRenderDailyRibbonSnapshots({
     required PrayerTimesDay day,
     required bool useDark,
     required String hijriDate,
     bool force = false,
-  }) async {
-    final dailyKey =
-        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_$useDark';
-    if (!force && dailyKey == _lastDailyRibbonRenderKey) return;
-    _lastDailyRibbonRenderKey = dailyKey;
-
-    const resolvedSize = Size(kRibbonW, kRibbonH);
-    final all = day.prayers;
-    final iqamaOverrides =
-        (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
-
-    const slugs = {
-      AppStrings.prayerFajr: 'fajr',
-      AppStrings.prayerDhuhr: 'dhuhr',
-      AppStrings.prayerAsr: 'asr',
-      AppStrings.prayerMaghrib: 'maghrib',
-      AppStrings.prayerIsha: 'isha',
-    };
-
-    for (final entry in slugs.entries) {
-      final pName = entry.key;
-      final slug = entry.value;
-      final pTime = all[pName];
-      if (pTime == null) continue;
-
-      final pEval = PrayerWidgetStateEvaluator.evaluate(
-        now: pTime.add(const Duration(minutes: 2)),
-        all: all,
-        iqamaOverrides: iqamaOverrides,
+  }) =>
+      HomeWidgetPreRender.preRenderDailyRibbonSnapshots(
+        day: day,
+        useDark: useDark,
+        hijriDate: hijriDate,
+        force: force,
       );
 
-      try {
-        await HomeWidget.renderFlutterWidget(
-          MediaQuery(
-            data: const MediaQueryData(
-              size: resolvedSize,
-              devicePixelRatio: 2.5,
-              textScaler: TextScaler.noScaling,
-            ),
-            child: Theme(
-              data: useDark ? AppTheme.dark() : AppTheme.light(),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: WidgetRibbon(
-                  eval: pEval,
-                  all: all,
-                  hijriDate: hijriDate,
-                  isDark: useDark,
-                  forNativeWidget: true,
-                ),
-              ),
-            ),
-          ),
-          key: 'prayer_ribbon_widget_$slug',
-          logicalSize: resolvedSize,
-          pixelRatio: 2.5,
-        );
-      } catch (_) {}
-    }
-  }
-
-  /// Pre-renders the 5 prayer lifecycle states for the Large (4x3/4x2) widget.
+  /// Pre-renders daily prayer state variations for Large widget.
   static Future<void> preRenderDailyLargeSnapshots({
     required PrayerTimesDay day,
     required bool useDark,
     required String hijriDate,
     bool force = false,
-  }) async {
-    final dailyKey =
-        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_$useDark';
-    if (!force && dailyKey == _lastDailyLargeRenderKey) return;
-    _lastDailyLargeRenderKey = dailyKey;
-
-    const resolvedSize = Size(kLargeW, kLargeH);
-    final all = day.prayers;
-    final iqamaOverrides =
-        (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
-
-    const slugs = {
-      AppStrings.prayerFajr: 'fajr',
-      AppStrings.prayerDhuhr: 'dhuhr',
-      AppStrings.prayerAsr: 'asr',
-      AppStrings.prayerMaghrib: 'maghrib',
-      AppStrings.prayerIsha: 'isha',
-    };
-
-    for (final entry in slugs.entries) {
-      final pName = entry.key;
-      final slug = entry.value;
-      final pTime = all[pName];
-      if (pTime == null) continue;
-
-      final pEval = PrayerWidgetStateEvaluator.evaluate(
-        now: pTime.add(const Duration(minutes: 2)),
-        all: all,
-        iqamaOverrides: iqamaOverrides,
+  }) =>
+      HomeWidgetPreRender.preRenderDailyLargeSnapshots(
+        day: day,
+        useDark: useDark,
+        hijriDate: hijriDate,
+        force: force,
       );
-
-      try {
-        await HomeWidget.renderFlutterWidget(
-          MediaQuery(
-            data: const MediaQueryData(
-              size: resolvedSize,
-              devicePixelRatio: 2.0,
-              textScaler: TextScaler.noScaling,
-            ),
-            child: Theme(
-              data: useDark ? AppTheme.dark() : AppTheme.light(),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: WidgetLarge(
-                  eval: pEval,
-                  all: all,
-                  hijriDate: hijriDate,
-                  cityName: day.city,
-                  isDark: useDark,
-                  forNativeWidget: true,
-                ),
-              ),
-            ),
-          ),
-          key: 'prayer_large_widget_$slug',
-          logicalSize: resolvedSize,
-          pixelRatio: 2.0,
-        );
-      } catch (_) {}
-    }
-  }
 }
