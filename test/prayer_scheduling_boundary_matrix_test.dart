@@ -225,6 +225,8 @@ void main() {
       'per-occurrence state assigns one delivery owner and falls back safely',
       () async {
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('adhan_iqama', true);
+        AdhanSettingsService.invalidateCache();
         final date = fixedNow;
 
         expect(PrayerScheduleService.shouldUseForegroundFallback(null), isTrue);

@@ -1,16 +1,16 @@
 package com.talibilm.app
 
+import android.app.ActivityManager
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.app.ActivityManager
-import android.app.KeyguardManager
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
@@ -21,42 +21,42 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
-import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
-import java.util.Calendar
-import kotlin.math.max
-import kotlin.math.roundToInt
 
-/** Opt-in, dismissible dhikr card for Android. It runs only after the user
- * grants draw-over permission and sees a persistent foreground notification. */
+/**
+ * Opt-in, dismissible dhikr card for Android.
+ * Runs briefly to display the card (4.5s), then removes the view,
+ * clears the foreground notification, schedules the next alarm, and terminates.
+ */
 class DhikrOverlayService : Service() {
     private data class CardContent(val label: String, val text: String, val meaning: String)
 
     private val handler = Handler(Looper.getMainLooper())
     private var windowManager: WindowManager? = null
-    private var card: android.view.View? = null
+    private var card: View? = null
+    private var isCurrentRunTest = false
     private var contentRotation = 0
-    private val hideCard = Runnable {
-        card?.animate()?.alpha(0f)?.setDuration(300)?.withEndAction { removeCard() }
+
+    private val autoRemoveRunnable = Runnable {
+        removeCardAndStop()
     }
+
+    private val fadeOutRunnable = Runnable {
+        try {
+            card?.animate()?.alpha(0f)?.setDuration(250L)?.start()
+        } catch (_: Exception) {}
+    }
+
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_SCREEN_OFF) removeCard()
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                removeCardAndStop()
+            }
         }
-    }
-    private val showCardRunnable = Runnable {
-        try {
-            val power = getSystemService(POWER_SERVICE) as PowerManager
-            if (power.isInteractive &&
-                !isLockScreenShowing() &&
-                !isAppInForeground() &&
-                Settings.canDrawOverlays(this)
-            ) showCard()
-        } catch (_: Exception) { }
-        scheduleNext()
     }
 
     override fun onCreate() {
@@ -74,22 +74,47 @@ class DhikrOverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val isTest = intent?.action == ACTION_SHOW_NOW
-        if (!Settings.canDrawOverlays(this) || (!isEnabled() && !isTest)) {
-            stopSelf()
+        if (!Settings.canDrawOverlays(this)) {
+            removeCardAndStop()
             return START_NOT_STICKY
         }
-        handler.removeCallbacks(showCardRunnable)
-        handler.removeCallbacks(hideCard)
-        if (intent?.action == ACTION_SHOW_NOW) showCard()
-        if (isEnabled()) {
-            try {
-                scheduleNext()
-            } catch (error: Exception) {
-                Log.e(TAG, "Could not schedule the next floating dhikr", error)
+
+        val hasExtraContent = intent?.hasExtra(EXTRA_TEXT) == true
+        isCurrentRunTest = hasExtraContent || intent?.action == ACTION_SHOW_NOW && intent.hasExtra(EXTRA_LABEL)
+
+        if (!isCurrentRunTest) {
+            val power = getSystemService(POWER_SERVICE) as PowerManager
+            val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+            val isInteractive = power.isInteractive
+            val isLocked = keyguard.isKeyguardLocked
+            val isAppForeground = isAppInForeground()
+            val isEnabled = isEnabled()
+
+            if (!isEnabled || !isInteractive || isLocked || isAppForeground) {
+                if (isEnabled) {
+                    DhikrOverlayScheduler.scheduleNext(this)
+                }
+                removeCardAndStop()
+                return START_NOT_STICKY
             }
         }
-        return START_STICKY
+
+        val extraLabel = intent?.getStringExtra(EXTRA_LABEL)
+        val extraText = intent?.getStringExtra(EXTRA_TEXT)
+        val extraMeaning = intent?.getStringExtra(EXTRA_MEANING)
+
+        val content = if (!extraText.isNullOrBlank()) {
+            CardContent(
+                label = if (!extraLabel.isNullOrBlank()) extraLabel else "لَحْظَةُ ذِكْر",
+                text = extraText,
+                meaning = extraMeaning ?: "",
+            )
+        } else {
+            currentContent()
+        }
+
+        showCard(content)
+        return START_NOT_STICKY
     }
 
     private fun createChannel() {
@@ -105,7 +130,7 @@ class DhikrOverlayService : Service() {
                     "تذكير لحظة ذكر",
                     NotificationManager.IMPORTANCE_MIN,
                 ).apply {
-                    description = "إبقاء بطاقة الذكر العائمة متاحة"
+                    description = "إظهار بطاقة الذكر العائمة"
                     setShowBadge(false)
                     enableLights(false)
                     enableVibration(false)
@@ -117,14 +142,16 @@ class DhikrOverlayService : Service() {
 
     private fun startForegroundCompat() {
         val openApp = PendingIntent.getActivity(
-            this, 0, packageManager.getLaunchIntentForPackage(packageName),
+            this,
+            0,
+            packageManager.getLaunchIntentForPackage(packageName),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("لحظة ذكر مفعّلة")
-                .setContentText("تظهر بطاقة ذكر صغيرة حسب جدولك")
+                .setContentTitle("لحظة ذكر")
+                .setContentText("بطاقة الذكر معروضة الآن")
                 .setContentIntent(openApp)
                 .setOngoing(false)
                 .setShowWhen(false)
@@ -134,8 +161,8 @@ class DhikrOverlayService : Service() {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("لحظة ذكر مفعّلة")
-                .setContentText("تظهر بطاقة ذكر صغيرة حسب جدولك")
+                .setContentTitle("لحظة ذكر")
+                .setContentText("بطاقة الذكر معروضة الآن")
                 .setContentIntent(openApp)
                 .setOngoing(false)
                 .setPriority(Notification.PRIORITY_MIN)
@@ -164,45 +191,8 @@ class DhikrOverlayService : Service() {
         } == true
     }
 
-    private fun isLockScreenShowing(): Boolean =
-        (getSystemService(KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
-
     private fun readInt(prefs: android.content.SharedPreferences, key: String, fallback: Int): Int =
         (prefs.all["flutter.$key"] as? Number)?.toInt() ?: fallback
-
-    private fun scheduleNext() {
-        handler.removeCallbacks(showCardRunnable)
-        if (!isEnabled()) {
-            stopSelf()
-            return
-        }
-        val prefs = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
-        val count = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 50)
-        val start = readInt(prefs, "dhikr_moment_start_minutes", 480).coerceIn(0, 1439)
-        val end = readInt(prefs, "dhikr_moment_end_minutes", 1320).coerceIn(1, 1440)
-        if (end <= start) return
-        val span = end - start
-        val now = Calendar.getInstance()
-        val nowMinute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-        val scheduled = (1..count).map { index ->
-            start + (span.toDouble() * index / (count + 1)).roundToInt()
-        }.distinct().sorted()
-        var next = scheduled.firstOrNull { it > nowMinute }
-        var daysAhead = 0
-        if (next == null) {
-            next = scheduled.first()
-            daysAhead = 1
-        }
-        val target = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, daysAhead)
-            set(Calendar.HOUR_OF_DAY, next / 60)
-            set(Calendar.MINUTE, next % 60)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val delay = max(1000L, target.timeInMillis - System.currentTimeMillis())
-        handler.postDelayed(showCardRunnable, delay)
-    }
 
     private fun currentContent(): CardContent {
         val prefs = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
@@ -218,9 +208,10 @@ class DhikrOverlayService : Service() {
         return content[contentRotation++ % content.size]
     }
 
-    private fun showCard() {
-        removeCard()
-        val entry = currentContent()
+    private fun showCard(entry: CardContent) {
+        // Remove any previously showing card immediately
+        cleanupCardView()
+
         val label = TextView(this).apply {
             text = entry.label
             textSize = 11f
@@ -228,41 +219,51 @@ class DhikrOverlayService : Service() {
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
-            maxWidth = dp(300)
+            maxWidth = dp(310)
         }
         val body = TextView(this).apply {
             text = entry.text
-            textSize = 18f
+            textSize = 17f
             setTextColor(Color.WHITE)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
-            maxLines = 3
-            maxWidth = dp(300)
+            maxLines = 4
+            maxWidth = dp(310)
         }
         val meaning = TextView(this).apply {
             text = entry.meaning
-            textSize = 13f
+            textSize = 12f
             setTextColor(Color.rgb(246, 230, 195))
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
             maxLines = 2
-            maxWidth = dp(300)
+            maxWidth = dp(310)
         }
-        val content = LinearLayout(this).apply {
+
+        val contentLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(12), dp(16), dp(12))
             addView(label)
-            addView(body, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(5) })
-            addView(meaning, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(4) })
+            addView(
+                body,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(4) },
+            )
+            if (entry.meaning.isNotBlank()) {
+                addView(
+                    meaning,
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                    ).apply { topMargin = dp(4) },
+                )
+            }
         }
+
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -273,54 +274,100 @@ class DhikrOverlayService : Service() {
                 cornerRadius = dp(18).toFloat()
                 setStroke(dp(1), Color.rgb(214, 170, 89))
             }
-            addView(content, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            ))
+            addView(
+                contentLayout,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            // Tap on card to dismiss instantly
+            isClickable = true
+            isFocusable = false
+            setOnClickListener {
+                removeCardAndStop()
+            }
         }
-        row.elevation = dp(5).toFloat()
+        row.elevation = dp(6).toFloat()
         row.alpha = 0f
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE
+            },
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.RIGHT
             y = dp(48)
             x = dp(12)
         }
+
         try {
             windowManager?.addView(row, params)
             card = row
-            row.animate().alpha(1f).setDuration(160).start()
-            handler.removeCallbacks(hideCard)
-            handler.postDelayed(hideCard, CARD_DURATION_MS - FADE_DURATION_MS)
+            row.animate().alpha(1f).setDuration(160L).start()
+
+            handler.removeCallbacks(fadeOutRunnable)
+            handler.removeCallbacks(autoRemoveRunnable)
+            handler.postDelayed(fadeOutRunnable, 4200L)
+            handler.postDelayed(autoRemoveRunnable, 4500L)
         } catch (_: Exception) {
-            removeCard()
+            removeCardAndStop()
         }
     }
 
-    private fun removeCard() {
-        handler.removeCallbacks(hideCard)
-        card?.let { view ->
-            try { windowManager?.removeView(view) } catch (_: Exception) { }
-        }
+    private fun cleanupCardView() {
+        handler.removeCallbacks(fadeOutRunnable)
+        handler.removeCallbacks(autoRemoveRunnable)
+        val view = card ?: return
         card = null
+        try {
+            windowManager?.removeViewImmediate(view)
+        } catch (_: Exception) {
+            try {
+                windowManager?.removeView(view)
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun removeCardAndStop() {
+        cleanupCardView()
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            manager?.cancel(NOTIFICATION_ID)
+        } catch (_: Exception) {}
+
+        if (!isCurrentRunTest && isEnabled()) {
+            try {
+                DhikrOverlayScheduler.scheduleNext(this)
+            } catch (_: Exception) {}
+        }
+        stopSelf()
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        try { unregisterReceiver(screenOffReceiver) } catch (_: Exception) { }
-        removeCard()
+        try {
+            unregisterReceiver(screenOffReceiver)
+        } catch (_: Exception) {}
+        cleanupCardView()
         super.onDestroy()
     }
 
@@ -332,76 +379,113 @@ class DhikrOverlayService : Service() {
         const val ACTION_START = "com.talibilm.app.DHIKR_OVERLAY_START"
         const val ACTION_STOP = "com.talibilm.app.DHIKR_OVERLAY_STOP"
         const val ACTION_SHOW_NOW = "com.talibilm.app.DHIKR_OVERLAY_SHOW_NOW"
-        private const val CARD_DURATION_MS = 4_500L
-        private const val FADE_DURATION_MS = 300L
-        private const val DAY_MS = 86_400_000L
-        private const val TAG = "DhikrOverlayService"
+        const val EXTRA_LABEL = "extra_dhikr_label"
+        const val EXTRA_TEXT = "extra_dhikr_text"
+        const val EXTRA_MEANING = "extra_dhikr_meaning"
+
         private val NAMES = listOf(
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّحْمَنُ", "واسع الرحمة بخلقه"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّحِيمُ", "يرحم عباده ويُحسن إليهم"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمَلِكُ", "له الملك والتدبير"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْقُدُّوسُ", "المنزَّه عن كل نقص"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "السَّلَامُ", "السالم من كل عيب ونقص"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُؤْمِنُ", "يؤمّن عباده ولا يظلمهم"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُهَيْمِنُ", "الرقيب الحافظ لكل شيء"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْعَزِيزُ", "له العزة والغلبة"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْجَبَّارُ", "العليّ القاهر، وجابر الكسير"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُتَكَبِّرُ", "له الكبرياء والعظمة"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْخَالِقُ", "خالق كل شيء"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْبَارِئُ", "مُنشئ الخلق على ما شاء"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُصَوِّرُ", "يعطي كل مخلوق صورته"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْغَفَّارُ", "كثير المغفرة لمن تاب"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْقَهَّارُ", "القاهر فوق عباده"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْوَهَّابُ", "كثير العطاء بلا مقابل"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّزَّاقُ", "يرزق خلقه ويكفيهم"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْفَتَّاحُ", "يفتح أبواب رحمته وخيره"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْعَلِيمُ", "لا يخفى عليه شيء"),
-            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْحَكِيمُ", "يضع الأمور مواضعها بحكمة"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّحْمَنُ", "واسع الرحمة بجميع خلقه في الدنيا والآخرة"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّحِيمُ", "ذو الرحمة الخاصة بعباده المؤمنين إحسانًا وتوفيقًا"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمَلِكُ", "المتصرّف في ملكه بلا منازع، المالك لكل شيء"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْقُدُّوسُ", "المنزَّه عن كل عيب ونقص، الطاهر المبارك"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "السَّلَامُ", "السالم من كل آفة، وواهب الأمان والسلام لعباده"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُؤْمِنُ", "المصدّق لوعده، الذي يؤمّن عباده من الخوف والظلم"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْمُهَيْمِنُ", "الرقيب الحافظ لكل شيء، الشاهد المطلع على خلقه"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْعَزِيزُ", "القوي الغالب الذي لا يُعجزه شيءٌ في الأرض ولا في السماء"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْجَبَّارُ", "العليّ القاهر، وجابر قلوب المنكسرين بلطفه ورحمته"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْغَفَّارُ", "السَّتّار لذنوب عباده، المتجاوز عن خطاياهم تكرارًا"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْوَهَّابُ", "كثير النعم والمنح بلا مقابل ولا عوض"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الرَّزَّاقُ", "المتكفّل بأرزاق خلقه، المفيض عليهم بالخيرات"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْفَتَّاحُ", "يفتح أبواب رحمته وخزائن رزقه، ويحكم بين خلقه بالعدل"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْعَلِيمُ", "المحيط بكل شيء ظاهرًا وباطنًا، دقيقًا وجليلاً"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْحَكِيمُ", "الذي يضع الأشياء في مواضعها بعدل تام وحكمة بالغة"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْوَدُودُ", "المحب لأوليائه، والمحبوب في قلوب عباده الصالحين"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْغَفُورُ", "عظيم المغفرة والستر، يغفر الذنب ويعفو عن العقوبة"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الشَّكُورُ", "الذي يزكو عنده القليل من العمل فيضاعف الجزاء عليه"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْقَرِيبُ الْمُجِيبُ", "القريب بعلمه، يجيب دعوة المضطر إذا دعاه"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْحَيُّ الْقَيُّومُ", "الدائم الباقي، القائم بنفسه المقيم لكل ما سواه"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْكَرِيمُ", "الذي يعطي بلا سؤال، ويجود بأفضل مما يؤمّل السائل"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "اللَّطِيفُ", "البارّ بعباده، الموصل للخيرات برفق وإحسان خفي"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "التَّوَّابُ", "الذي يقبل توبة التائبين ويفرح بأوبتهم واستغفارهم"),
+            CardContent("مِنْ أَسْمَاءِ اللَّهِ", "الْوَكِيلُ", "الكافي لمن توكل عليه، القائم بمصالح خلقه"),
         )
+
         private val ADHKAR = listOf(
-            CardContent("ذِكْرٌ", "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", "تنزيهٌ لله وحمدٌ له"),
-            CardContent("ذِكْرٌ", "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", "إفراد الله بالعبادة والثناء"),
-            CardContent("ذِكْرٌ", "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ", "طلب المغفرة والرجوع إلى الله"),
-            CardContent("ذِكْرٌ", "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ", "تسبيحٌ وحمدٌ وتهليلٌ وتكبير"),
-            CardContent("ذِكْرٌ", "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", "التبرؤ من الحول والقوة إلا بالله"),
-            CardContent("ذِكْرٌ", "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", "صلاةٌ وسلامٌ على النبي ﷺ"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ", "سؤال الله العون على الطاعة"),
-            CardContent("دُعَاءٌ", "يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ", "التوسل إلى الله الحي القيوم"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي", "سؤال الله العفو"),
-            CardContent("دُعَاءٌ", "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ", "دعاءٌ بالمغفرة والتوبة"),
-            CardContent("ذِكْرٌ", "الْحَمْدُ لِلَّهِ عَلَى كُلِّ حَالٍ", "حمدُ الله في السراء والضراء"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي", "سؤال الله الهداية والتوفيق"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ", "سؤال الله العفو والسلامة"),
-            CardContent("ذِكْرٌ", "حَسْبِيَ اللَّهُ وَنِعْمَ الْوَكِيلُ", "توكلٌ على الله"),
-            CardContent("ذِكْرٌ", "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا", "تجديد الرضا بالله والإسلام والنبي ﷺ"),
-            CardContent("ذِكْرٌ", "سُبْحَانَ اللَّهِ الْعَظِيمِ وَبِحَمْدِهِ", "تنزيهٌ لله العظيم وحمدٌ له"),
+            CardContent("ذِكْرٌ مَأْثُور", "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", "تُحَطُّ خطاياه وإن كانت مثل زبد البحر"),
+            CardContent("ذِكْرٌ مَأْثُور", "سُبْحَانَ اللَّهِ الْعَظِيمِ وَبِحَمْدِهِ", "غُرست له بها نخلةٌ في الجنة"),
+            CardContent("ذِكْرٌ مَأْثُور", "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ", "أحبُّ الكلام إلى الله، وهنّ الباقيات الصالحات"),
+            CardContent("ذِكْرٌ مَأْثُور", "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", "تعدل عتق رقاب، وحرزٌ تام من الشيطان"),
+            CardContent("ذِكْرٌ مَأْثُور", "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", "كنزٌ من كنوز الجنة، وباب عظيم لدفع الهم"),
+            CardContent("ذِكْرٌ مَأْثُور", "أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ وَأَتُوبُ إِلَيْهِ", "مغفرةٌ للذنوب وسعةٌ في الرزق وتفريجٌ للكروب"),
+            CardContent("ذِكْرٌ مَأْثُور", "اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ", "من صلّى عليه صلاةً صلّى الله عليه بها عشرًا"),
+            CardContent("ذِكْرٌ مَأْثُور", "لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ", "دعوة ذي النون، لم يدعُ بها مكروب إلا فرّج الله عنه"),
+            CardContent("ذِكْرٌ مَأْثُور", "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ ﷺ نَبِيًّا", "وجبت له الجنة وذاق حلاوة الإيمان"),
+            CardContent("ذِكْرٌ مَأْثُور", "يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ", "صلاح الشأن كله وتمام التوكل والافتقار"),
+            CardContent("ذِكْرٌ مَأْثُور", "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ", "أمانٌ من كل خوف وكفايةٌ من كل هم"),
+            CardContent("ذِكْرٌ مَأْثُور", "أَسْتَغْفِرُ اللَّهَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيَّ الْقَيُّومَ وَأَتُوبُ إِلَيْهِ", "غُفرت ذنوبه وإن كان فرّ من الزحف"),
+            CardContent("ذِكْرٌ مَأْثُور", "الْحَمْدُ لِلَّهِ حَمْدًا كَثِيرًا طَيِّبًا مُبَارَكًا فِيهِ", "ثقل في الميزان وأجر عظيم تتسابق الملائكة لكتابته"),
+            CardContent("ذِكْرٌ مَأْثُور", "بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ", "حفظٌ وحرزٌ تام لا يضره شيء معه"),
+            CardContent("ذِكْرٌ مَأْثُور", "سُبْحَانَ اللَّهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ", "تسبيحٌ مضاعف يزن عبادة ساعات طويلة"),
+            CardContent("ذِكْرٌ مَأْثُور", "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ", "سيد الاستغفار، من قاله موقنًا به دخل الجنة"),
+            CardContent("ذِكْرٌ مَأْثُور", "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", "أفضل الدعاء، تملأ ميزان العبد يوم القيامة"),
+            CardContent("ذِكْرٌ مَأْثُور", "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ", "كفارة للمجلس ومحوٌ لما سواه"),
+            CardContent("ذِكْرٌ مَأْثُور", "تَوَكَّلْتُ عَلَى اللَّهِ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", "يُقال له: كُفيتَ ووُقيتَ وهُديتَ وتنحى عنه الشيطان"),
+            CardContent("ذِكْرٌ مَأْثُور", "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ", "السلامة التامة في الدين والنفس والأهل والمال"),
         )
+
         private val DUAS = listOf(
-            CardContent("دُعَاءٌ", "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ", "سؤال الله العون على الطاعة"),
-            CardContent("دُعَاءٌ", "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ", "سؤال المغفرة والتوبة"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ", "سؤال الله العفو والسلامة"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي", "دعاءٌ بالعفو"),
-            CardContent("دُعَاءٌ", "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ", "دعاءٌ جامعٌ لخيري الدارين"),
-            CardContent("دُعَاءٌ", "رَبِّ زِدْنِي عِلْمًا", "سؤال الله الزيادة في العلم"),
-            CardContent("دُعَاءٌ", "اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي", "سؤال الهداية والتوفيق"),
-            CardContent("دُعَاءٌ", "يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ", "استغاثةٌ برحمة الله"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ", "دعاءٌ جامع لخيري الدنيا والآخرة والوقاية من النار"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ", "طلب معونة الله وتوفيقه على دوام الطاعة"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ", "طلب المغفرة والتوبة الصادقة"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي", "سؤال الله المحو التام للذنوب والصفح الجميل"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبِّ زِدْنِي عِلْمًا", "سؤال البركة والزيادة في العلم النافع"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي", "انشراح الصدر وتيسير الأمور وزوال العسر"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى", "جوامع الخير في الدين والدنيا وغنى النفس"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبِّ إِنِّي لِمَا أَنْزَلْتَ إِلَيَّ مِنْ خَيْرٍ فَقِيرٌ", "استجلاب فضل الله والافتقار إلى جوده"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْجُبْنِ وَالْبُخْلِ", "استعاذة جامعة من آفات النفس وثقل الحياة"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِنْ لَدُنْكَ رَحْمَةً", "الثبات على الإيمان والهدى حتى الممات"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا", "دعاء الصباح المبارك لبركة اليوم ورزقه"),
+            CardContent("دُعَاءٌ مُبَارَك", "يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ", "سؤال الثبات والاستقامة في زمن الفتن"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي", "سؤال الله السداد في القول والعمل والهدى"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ آتِ نَفْسِي تَقْوَاهَا، وَزَكِّهَا أَنْتَ خَيْرُ مَنْ زَكَّاهَا", "تزكية النفس وصلاح السريرة والأخلاق"),
+            CardContent("دُعَاءٌ مُبَارَك", "رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا", "صلاح الأهل والذرية والقدوة في الخير"),
+            CardContent("دُعَاءٌ مُبَارَك", "اللَّهُمَّ اجْعَلْ فِي قَلْبِي نُورًا، وَفِي سَمْعِي نُورًا، وَفِي بَصَرِي نُورًا", "سؤال النور والبركة في الحواس والأركان"),
         )
+
         private val QURAN = listOf(
-            CardContent("آيَةٌ • البَقَرَة ١٥٢", "فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ", "تذكيرٌ بالذكر والشكر"),
-            CardContent("آيَةٌ • الرَّعْد ٢٨", "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ", "من آيةٍ عن طمأنينة القلوب بالذكر"),
-            CardContent("آيَةٌ • الشَّرْح ٦", "إِنَّ مَعَ الْعُسْرِ يُسْرًا", "من سورة الشرح"),
-            CardContent("آيَةٌ • الحَدِيد ٤", "وَهُوَ مَعَكُمْ أَيْنَ مَا كُنْتُمْ", "من آيةٍ تذكّر بعلم الله وإحاطته"),
-            CardContent("آيَةٌ • الزُّمَر ٥٣", "لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ", "دعوةٌ لعدم اليأس من رحمة الله"),
-            CardContent("آيَةٌ • البَقَرَة ١٥٣", "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ", "من آيةٍ في الصبر والصلاة"),
-            CardContent("آيَةٌ • الطَّلَاق ٣", "وَمَنْ يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ", "من آيةٍ في التوكل على الله"),
-            CardContent("آيَةٌ • البَقَرَة ١٨٦", "فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ", "من آيةٍ في قرب الله وإجابة الدعاء"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾", "سورة الرعد • ٢٨"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ﴾", "سورة البقرة • ١٥٢"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ﴾", "سورة البقرة • ١٨٦"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿إِنَّ مَعَ الْعُسْرِ يُسْرًا﴾", "سورة الشرح • ٦"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَمَنْ يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ﴾", "سورة الطلاق • ٣"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا • وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ﴾", "سورة الطلاق • ٢-٣"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾", "سورة الزمر • ٥٣"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَهُوَ مَعَكُمْ أَيْنَ مَا كُنْتُمْ﴾", "سورة الحديد • ٤"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَاصْبِرْ لِحُكْمِ رَبِّكَ فَإِنَّكَ بِأَعْيُنِنَا﴾", "سورة الطور • ٤٨"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿إِنَّ اللَّهَ مَعَ الصَّابِرِينَ﴾", "سورة البقرة • ١٥٣"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَتَوَكَّلْ عَلَى الْحَيِّ الَّذِي لَا يَمُوتُ وَسَبِّحْ بِحَمْدِهِ﴾", "سورة الفرقان • ٥٨"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ﴾", "سورة غافر • ٦٠"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَرَحْمَتِي وَسِعَتْ كُلَّ شَيْءٍ﴾", "سورة الأعراف • ١٥٦"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿فَصَبْرٌ جَمِيلٌ وَاللَّهُ الْمُسْتَعَانُ﴾", "سورة يوسف • ١٨"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿إِنَّ رَبِّي قَرِيبٌ مُجِيبٌ﴾", "سورة هود • ٦١"),
+            CardContent("آيَةٌ قُرْآنِيَّة", "﴿وَمَا كَانَ اللَّهُ لِيُعْجِزَهُ مِنْ شَيْءٍ فِي السَّمَاوَاتِ وَلَا فِي الْأَرْضِ﴾", "سورة فاطر • ٤٤"),
         )
+
         private val HADITH = listOf(
-            CardContent("حَدِيثٌ • البُخَارِي ١", "إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ", "النية أساس العمل"),
-            CardContent("حَدِيثٌ • مُسْلِم ٥٥", "الدِّينُ النَّصِيحَةُ", "حديثٌ في النصيحة"),
-            CardContent("حَدِيثٌ • مُتَّفَقٌ عَلَيْهِ", "فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ", "إرشادٌ لحفظ اللسان"),
-            CardContent("حَدِيثٌ • مُتَّفَقٌ عَلَيْهِ", "لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ", "من كمال الإيمان محبة الخير للآخرين"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»", "صحيح البخاري • ١"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«الدِّينُ النَّصِيحَةُ: لِلَّهِ، وَلِكِتَابِهِ، وَلِرَسُولِهِ، وَلِأَئِمَّةِ الْمُسْلِمِينَ وَعَامَّتِهِمْ»", "صحيح مسلم • ٥٥"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»", "متفق عليه"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ»", "متفق عليه"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ، ثَقِيلَتَانِ فِي الْمِيزَانِ: سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ»", "متفق عليه"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»", "صحيح مسلم"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا، وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ»", "سنن الترمذي"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ»", "متفق عليه"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«احْفَظِ اللَّهَ يَحْفَظْكَ، احْفَظِ اللَّهَ تَجِدْهُ تُجَاهَكَ، إِذَا سَأَلْتَ فَاسْأَلِ اللَّهَ»", "سنن الترمذي"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«مَنْ صَلَّى عَلَيَّ صَلَاةً صَلَّى اللَّهُ عَلَيْهِ بِهَا عَشْرًا»", "صحيح مسلم"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ»", "صحيح البخاري"),
+            CardContent("حَدِيثٌ نَبَوِيّ", "«عَجَبًا لِأَمْرِ الْمُؤْمِنِ، إِنَّ أَمْرَهُ كُلَّهُ خَيْرٌ»", "صحيح مسلم"),
         )
+
         private val MIXED = NAMES + ADHKAR + DUAS + QURAN + HADITH
     }
 }

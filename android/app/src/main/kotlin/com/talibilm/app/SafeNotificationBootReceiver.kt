@@ -47,6 +47,12 @@ class SafeNotificationBootReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to safely reschedule notifications: ${e.message}", e)
         }
+
+        try {
+            DhikrOverlayScheduler.scheduleNext(context)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to reschedule dhikr overlay: ${e.message}", e)
+        }
     }
 
     private fun pruneStaleScheduledNotifications(context: Context) {

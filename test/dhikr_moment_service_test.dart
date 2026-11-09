@@ -42,9 +42,12 @@ void main() {
             return true;
           },
         );
+
+    DhikrMomentService.supportsFloatingOverlayOverride = true;
   });
 
   tearDown(() {
+    DhikrMomentService.supportsFloatingOverlayOverride = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dexterous.com/flutter/local_notifications'),
@@ -144,6 +147,34 @@ void main() {
       expect(loaded.timesPerDay, equals(45));
       expect(loaded.content, equals(DhikrMomentContent.quran));
     });
+
+    test('showOverlayTest transmits content payload over method channel', () async {
+      Map<dynamic, dynamic>? receivedArgs;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('com.talibilm.app/dhikr_overlay'),
+            (call) async {
+              if (call.method == 'hasOverlayPermission') return true;
+              if (call.method == 'showOverlayTest') {
+                receivedArgs = call.arguments as Map<dynamic, dynamic>?;
+                return true;
+              }
+              return true;
+            },
+          );
+
+      final success = await DhikrMomentService.showOverlayTest(
+        categoryLabel: 'آيَةٌ قُرْآنِيَّة',
+        text: '﴿فَصَبْرٌ جَمِيلٌ وَاللَّهُ الْمُسْتَعَانُ﴾',
+        meaning: 'سورة يوسف • ١٨',
+      );
+
+      expect(success, isTrue);
+      expect(receivedArgs, isNotNull);
+      expect(receivedArgs!['label'], equals('آيَةٌ قُرْآنِيَّة'));
+      expect(receivedArgs!['text'], equals('﴿فَصَبْرٌ جَمِيلٌ وَاللَّهُ الْمُسْتَعَانُ﴾'));
+      expect(receivedArgs!['meaning'], equals('سورة يوسف • ١٨'));
+    });
   });
 
   group('DhikrMomentSettingsSheet UI Tests', () {
@@ -181,6 +212,57 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.textContaining('10 مرات'), findsOneWidget);
+    });
+
+    testWidgets('Tapping content category updates preview and test button invokes showOverlayTest with matching content', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      Map<dynamic, dynamic>? receivedPayload;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('com.talibilm.app/dhikr_overlay'),
+            (call) async {
+              if (call.method == 'hasOverlayPermission') return true;
+              if (call.method == 'showOverlayTest') {
+                receivedPayload = call.arguments as Map<dynamic, dynamic>?;
+                return true;
+              }
+              return true;
+            },
+          );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => DhikrMomentSettingsSheet.show(context),
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('آيات قرآنية'), findsOneWidget);
+      await tester.tap(find.text('آيات قرآنية'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('تجربة الظهور'), findsOneWidget);
+      await tester.tap(find.text('تجربة الظهور'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(receivedPayload, isNotNull);
+      expect(receivedPayload!['label'], equals('آيَةٌ قُرْآنِيَّة'));
+      expect(receivedPayload!['text'].toString().isNotEmpty, isTrue);
     });
   });
 }

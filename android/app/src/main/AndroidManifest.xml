@@ -72,6 +72,9 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="user-enabled floating dhikr reminders" />
         </service>
+        <receiver
+            android:name=".DhikrOverlayReceiver"
+            android:exported="false" />
 
         <receiver
             android:name="com.ryanheise.audioservice.MediaButtonReceiver"

@@ -194,7 +194,12 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
         _showMessage('يتطلب عرض البطاقة العائمة إذن الظهور فوق التطبيقات.');
         return;
       }
-      final shown = await DhikrMomentService.showOverlayTest();
+      final currentItem = DhikrMomentService.cardItemNotifier.value;
+      final shown = await DhikrMomentService.showOverlayTest(
+        categoryLabel: currentItem.categoryLabel,
+        text: currentItem.text,
+        meaning: currentItem.meaning,
+      );
       if (shown && mounted) {
         _showMessage('تم إظهار بطاقة الذكر كتجربة على الشاشة');
       }
@@ -450,9 +455,12 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
                   icon: _iconFor(option),
                   label: _labelFor(option),
                   selected: _settings.content == option,
-                  onTap: () => setState(
-                    () => _settings = _settings.copyWith(content: option),
-                  ),
+                  onTap: () {
+                    DhikrMomentService.rotate(option);
+                    setState(
+                      () => _settings = _settings.copyWith(content: option),
+                    );
+                  },
                   colors: colors,
                 ),
               ),
