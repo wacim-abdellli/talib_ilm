@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:home_widget/home_widget.dart';
@@ -26,6 +28,7 @@ class HomeWidgetService {
   static const String iOSWidgetName = 'TalibIlmWidgets';
   static const String widgetImageKey = 'prayer_widget_image';
   static const String themeModeKey = 'prayer_widget_theme_mode';
+  static bool _appGroupReady = false;
 
   /// Standard 4x1 Home Screen Android widget dimensions (Salaat First style)
   static const Size widgetLogicalSize = Size(380, 120);
@@ -49,7 +52,9 @@ class HomeWidgetService {
     HomeWidgetSnapshot.invalidateDailyCache();
   }
 
-  static Future<PrayerTimesDay> _resolvePrayerDay(PrayerTimesDay? explicit) async {
+  static Future<PrayerTimesDay> _resolvePrayerDay(
+    PrayerTimesDay? explicit,
+  ) async {
     if (explicit != null) {
       _cachedPrayerDay = explicit;
       return explicit;
@@ -80,14 +85,38 @@ class HomeWidgetService {
   }
 
   /// Updates the user's widget theme preference and triggers an instant widget redraw
-  static Future<void> setThemeMode(WidgetThemeMode mode) async {
+  static Future<bool> setThemeMode(WidgetThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    final oldMode = prefs.getString(themeModeKey);
     try {
-      final prefs = await SharedPreferences.getInstance();
+      if (Platform.isIOS && !_appGroupReady) await initBackground();
+      if (Platform.isIOS && !_appGroupReady) {
+        throw StateError(
+          HomeWidgetSnapshot.lastSyncError ??
+              'iOS widget App Group is unavailable.',
+        );
+      }
       await prefs.setString(themeModeKey, mode.name);
-      await HomeWidget.saveWidgetData<String>(themeModeKey, mode.name);
+      await HomeWidgetSnapshot.writeWidgetValue<String>(
+        themeModeKey,
+        mode.name,
+      );
       invalidateCache();
       await updateAllWidgets(force: true);
-    } catch (_) {}
+      if (Platform.isIOS && HomeWidgetSnapshot.lastSyncError != null) {
+        throw StateError(HomeWidgetSnapshot.lastSyncError!);
+      }
+      return true;
+    } catch (error) {
+      if (oldMode == null) {
+        await prefs.remove(themeModeKey);
+      } else {
+        await prefs.setString(themeModeKey, oldMode);
+      }
+      invalidateCache();
+      debugPrint('Home widget theme sync failed: $error');
+      return false;
+    }
   }
 
   static Future<ThemeData> _resolveAutoTheme() async {
@@ -103,10 +132,27 @@ class HomeWidgetService {
   /// Registers background callback for interactive widget resizing
   static Future<void> initBackground() async {
     try {
-      await HomeWidget.setAppGroupId('group.com.talibilm.app');
-    } catch (_) {}
+      final configured = await HomeWidget.setAppGroupId(
+        HomeWidgetSnapshot.appGroupId,
+      );
+      _appGroupReady = !Platform.isIOS || configured == true;
+      if (Platform.isIOS && _appGroupReady) {
+        _appGroupReady = await HomeWidgetSnapshot.verifyAppGroup();
+      }
+      if (Platform.isIOS && !_appGroupReady) {
+        debugPrint(
+          'iOS widget App Group verification failed: '
+          '${HomeWidgetSnapshot.lastSyncError ?? 'configuration rejected'}',
+        );
+      }
+    } catch (error) {
+      _appGroupReady = false;
+      debugPrint('iOS widget App Group setup failed: $error');
+    }
     try {
-      await HomeWidget.registerInteractivityCallback(prayerWidgetBackgroundCallback);
+      await HomeWidget.registerInteractivityCallback(
+        prayerWidgetBackgroundCallback,
+      );
     } catch (_) {}
   }
 
@@ -115,11 +161,26 @@ class HomeWidgetService {
     EvaluatedPrayerWidgetState eval, {
     Map<String, DateTime>? allPrayers,
     bool? preResolvedDark,
-  }) => HomeWidgetSnapshot.savePrayerSnapshot(
-    eval,
-    allPrayers: allPrayers,
-    preResolvedDark: preResolvedDark,
-  );
+    String? cityName,
+  }) async {
+    if (Platform.isIOS && !_appGroupReady) await initBackground();
+    if (Platform.isIOS && !_appGroupReady) {
+      final error =
+          HomeWidgetSnapshot.lastSyncError ??
+          'iOS widget App Group is unavailable.';
+      HomeWidgetSnapshot.lastSyncError = error;
+      throw StateError(error);
+    }
+    await HomeWidgetSnapshot.savePrayerSnapshot(
+      eval,
+      allPrayers: allPrayers,
+      preResolvedDark: preResolvedDark,
+      cityName: cityName,
+    );
+    if (Platform.isIOS && HomeWidgetSnapshot.lastSyncError != null) {
+      throw StateError(HomeWidgetSnapshot.lastSyncError!);
+    }
+  }
 
   /// Updates the Android Home Screen Widget by rendering the Flutter prayer card
   /// offscreen and notifying the native AppWidgetProvider.
@@ -133,8 +194,8 @@ class HomeWidgetService {
     try {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
-      final iqamaOverrides = (await AdhanSettingsService().getSettings())
-          .iqamaMinutesAfterAdhan;
+      final iqamaOverrides =
+          (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
       final mode = await getThemeMode();
 
       // Resolve theme according to user choice: Dark (AMOLED black), Light (crisp white), or Auto
@@ -150,24 +211,35 @@ class HomeWidgetService {
       try {
         final rawW = await HomeWidget.getWidgetData<dynamic>('widget_width');
         final rawH = await HomeWidget.getWidgetData<dynamic>('widget_height');
-        final savedW = rawW is int ? rawW : (rawW is num ? rawW.toInt() : int.tryParse(rawW?.toString() ?? ''));
-        final savedH = rawH is int ? rawH : (rawH is num ? rawH.toInt() : int.tryParse(rawH?.toString() ?? ''));
+        final savedW = rawW is int
+            ? rawW
+            : (rawW is num
+                  ? rawW.toInt()
+                  : int.tryParse(rawW?.toString() ?? ''));
+        final savedH = rawH is int
+            ? rawH
+            : (rawH is num
+                  ? rawH.toInt()
+                  : int.tryParse(rawH?.toString() ?? ''));
         if (savedW != null && savedW >= 140) targetW = savedW.clamp(140, 480);
         if (savedH != null && savedH >= 70) targetH = savedH.clamp(70, 280);
       } catch (_) {}
 
       final all = day.prayers;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
-        now: now,
-        all: all,
-        iqamaOverrides: iqamaOverrides,
-      );
+      final eval =
+          preResolvedEval ??
+          PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: all,
+            iqamaOverrides: iqamaOverrides,
+          );
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, allPrayers: all);
+        await _saveNextPrayerEpoch(eval, allPrayers: all, cityName: day.city);
       }
 
       final timeKey = '${now.hour}:${now.minute}';
-      final renderKey = '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
+      final renderKey =
+          '${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${mode.name}_${targetW}x$targetH';
       if (!force && renderKey == _lastRenderKey) {
         return;
       }
@@ -235,21 +307,29 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final iqamaOverrides = (await AdhanSettingsService().getSettings())
-          .iqamaMinutesAfterAdhan;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
-        now: now,
-        all: all,
-        iqamaOverrides: iqamaOverrides,
-      );
+      final iqamaOverrides =
+          (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
+      final eval =
+          preResolvedEval ??
+          PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: all,
+            iqamaOverrides: iqamaOverrides,
+          );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(
+          eval,
+          allPrayers: all,
+          preResolvedDark: useDark,
+          cityName: day.city,
+        );
       }
       final hijri = _formatHijri(now);
 
       final timeKey = '${now.hour}:${now.minute}';
-      final renderKey = 'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+      final renderKey =
+          'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
       }
@@ -314,16 +394,23 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final iqamaOverrides = (await AdhanSettingsService().getSettings())
-          .iqamaMinutesAfterAdhan;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
-        now: now,
-        all: all,
-        iqamaOverrides: iqamaOverrides,
-      );
+      final iqamaOverrides =
+          (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
+      final eval =
+          preResolvedEval ??
+          PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: all,
+            iqamaOverrides: iqamaOverrides,
+          );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(
+          eval,
+          allPrayers: all,
+          preResolvedDark: useDark,
+          cityName: day.city,
+        );
       }
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -347,11 +434,7 @@ class HomeWidgetService {
             data: useDark == true ? AppTheme.dark() : AppTheme.light(),
             child: Directionality(
               textDirection: TextDirection.rtl,
-              child: WidgetStandard(
-                eval: eval,
-                all: all,
-                isDark: useDark,
-              ),
+              child: WidgetStandard(eval: eval, all: all, isDark: useDark),
             ),
           ),
         ),
@@ -381,16 +464,23 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final iqamaOverrides = (await AdhanSettingsService().getSettings())
-          .iqamaMinutesAfterAdhan;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
-        now: now,
-        all: all,
-        iqamaOverrides: iqamaOverrides,
-      );
+      final iqamaOverrides =
+          (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
+      final eval =
+          preResolvedEval ??
+          PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: all,
+            iqamaOverrides: iqamaOverrides,
+          );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(
+          eval,
+          allPrayers: all,
+          preResolvedDark: useDark,
+          cityName: day.city,
+        );
       }
       final hijri = _formatHijri(now);
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
@@ -460,16 +550,23 @@ class HomeWidgetService {
       final now = referenceTime ?? DateTime.now();
       final day = await _resolvePrayerDay(prayerDay);
       final all = day.prayers;
-      final iqamaOverrides = (await AdhanSettingsService().getSettings())
-          .iqamaMinutesAfterAdhan;
-      final eval = preResolvedEval ?? PrayerWidgetStateEvaluator.evaluate(
-        now: now,
-        all: all,
-        iqamaOverrides: iqamaOverrides,
-      );
+      final iqamaOverrides =
+          (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
+      final eval =
+          preResolvedEval ??
+          PrayerWidgetStateEvaluator.evaluate(
+            now: now,
+            all: all,
+            iqamaOverrides: iqamaOverrides,
+          );
       final useDark = preResolvedDark ?? await _resolveWidgetIsDark();
       if (preResolvedEval == null) {
-        await _saveNextPrayerEpoch(eval, allPrayers: all, preResolvedDark: useDark);
+        await _saveNextPrayerEpoch(
+          eval,
+          allPrayers: all,
+          preResolvedDark: useDark,
+          cityName: day.city,
+        );
       }
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -493,10 +590,7 @@ class HomeWidgetService {
             data: useDark == true ? AppTheme.dark() : AppTheme.light(),
             child: Directionality(
               textDirection: TextDirection.rtl,
-              child: WidgetCompact(
-                eval: eval,
-                isDark: useDark,
-              ),
+              child: WidgetCompact(eval: eval, isDark: useDark),
             ),
           ),
         ),
@@ -526,22 +620,27 @@ class HomeWidgetService {
   }) async {
     final op = ++_latestOperation;
     return _updateLock.synchronized(() async {
-      if (op < _latestOperation && !force) return;
+      if (op < _latestOperation) return;
       try {
         final now = referenceTime ?? DateTime.now();
         final day = await _resolvePrayerDay(prayerDay);
-        final iqamaOverrides = (await AdhanSettingsService().getSettings())
-            .iqamaMinutesAfterAdhan;
+        final iqamaOverrides =
+            (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
         final eval = PrayerWidgetStateEvaluator.evaluate(
           now: now,
           all: day.prayers,
           iqamaOverrides: iqamaOverrides,
         );
         final useDark = await _resolveWidgetIsDark();
-        if (op < _latestOperation && !force) return;
+        if (op < _latestOperation) return;
 
-        await _saveNextPrayerEpoch(eval, allPrayers: day.prayers, preResolvedDark: useDark);
-        if (op < _latestOperation && !force) return;
+        await _saveNextPrayerEpoch(
+          eval,
+          allPrayers: day.prayers,
+          preResolvedDark: useDark,
+          cityName: day.city,
+        );
+        if (op < _latestOperation) return;
 
         await Future.wait([
           updateRibbon(
@@ -579,8 +678,10 @@ class HomeWidgetService {
             preResolvedEval: eval,
           ),
         ]);
-      } catch (_) {
-        // Graceful fallback when platform channels are unavailable
+      } catch (error) {
+        // Keep the current widget contents when an update cannot be completed.
+        HomeWidgetSnapshot.lastSyncError ??= error.toString();
+        debugPrint('Prayer widget update failed: $error');
       }
     });
   }

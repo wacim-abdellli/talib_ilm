@@ -4972,3 +4972,9 @@ FAILED (54 violations)
 - Removed the duplicate Settings shortcut. Replaced the content chips with a responsive two-column selector that keeps all six content choices, supports larger text, and gives the selected choice a clear check state.
 - **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); Android debug APK build succeeded; `git diff --check` clean. Tests were not run.
 - **Open issue:** physical Android permission-screen and iOS reminder visual confirmation were not available in this verification pass.
+
+## iOS Prayer Widgets — Shared Data, Location, Theme, and Countdown Refresh (9 November 2026)
+- iOS App Group initialization and widget snapshot writes now verify shared values before WidgetKit reloads. Failures are retained and surfaced when a user changes the widget theme instead of silently leaving the optimistic white selection while the widget stays dark.
+- Prayer snapshots now always carry the resolved prayer-day city, and city/prayer-setting refreshes send the refreshed schedule to the home widgets. The next-prayer epoch and all five prayer times are verified in shared storage before reload; overlapping updates now let the newest snapshot win.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); `git diff --check` clean. Tests were not run. iOS build/device verification is pending the macOS workflow after push.
+- **Open issue:** the iPhone’s signed App Group entitlement and on-device WidgetKit rendering cannot be inspected from this Windows workspace; the new runtime verification will report an App Group mismatch instead of accepting blank shared storage.

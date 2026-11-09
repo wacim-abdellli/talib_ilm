@@ -7,6 +7,7 @@ import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/services/adhan_settings_service.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_schedule_service.dart';
 import '../../../core/services/prayer_time_service.dart';
@@ -75,9 +76,7 @@ class _PrayerPageState extends State<PrayerPage> {
     setState(() {
       _adhanSettings = settings;
     });
-    _countdownController?.updateIqamaOverrides(
-      settings.iqamaMinutesAfterAdhan,
-    );
+    _countdownController?.updateIqamaOverrides(settings.iqamaMinutesAfterAdhan);
   }
 
   @override
@@ -113,7 +112,8 @@ class _PrayerPageState extends State<PrayerPage> {
             builder: (context, snapshot) {
               final data = snapshot.data ?? _cachedDay;
 
-              if (data == null && snapshot.connectionState == ConnectionState.waiting) {
+              if (data == null &&
+                  snapshot.connectionState == ConnectionState.waiting) {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpace.xl),
                   child: SingleChildScrollView(
@@ -157,10 +157,16 @@ class _PrayerPageState extends State<PrayerPage> {
               }
 
               _ensureCountdown(data);
-              final nextName = PrayerPageHelpers.findNextPrayerName(data.prayers);
-              final currentName = PrayerPageHelpers.findCurrentPrayerName(data.prayers);
+              final nextName = PrayerPageHelpers.findNextPrayerName(
+                data.prayers,
+              );
+              final currentName = PrayerPageHelpers.findCurrentPrayerName(
+                data.prayers,
+              );
               final times = _buildPrayerTimes(data, nextName, currentName);
-              final gregorianDate = PrayerPageHelpers.formatGregorianDate(data.date);
+              final gregorianDate = PrayerPageHelpers.formatGregorianDate(
+                data.date,
+              );
 
               return FutureBuilder<LocationInfo>(
                 future: _locationFuture,
@@ -178,8 +184,10 @@ class _PrayerPageState extends State<PrayerPage> {
                         PrayerHeader(
                           city: city,
                           gregorianDate: gregorianDate,
-                          onOpenLocationSettings: () => _openLocationSettings(context),
-                          onOpenPrayerSettings: () => _openPrayerSettings(context),
+                          onOpenLocationSettings: () =>
+                              _openLocationSettings(context),
+                          onOpenPrayerSettings: () =>
+                              _openPrayerSettings(context),
                           onOpenQibla: () => _openQibla(context),
                         ),
 
@@ -214,10 +222,12 @@ class _PrayerPageState extends State<PrayerPage> {
                                 ValueListenableBuilder<PrayerCountdownState>(
                                   valueListenable: _countdownController!.state,
                                   builder: (context, countdownState, _) {
-                                    final dynamicCurrentName = countdownState.isInPrayerTime
+                                    final dynamicCurrentName =
+                                        countdownState.isInPrayerTime
                                         ? countdownState.nextPrayerName
                                         : null;
-                                    final dynamicNextName = countdownState.isInPrayerTime
+                                    final dynamicNextName =
+                                        countdownState.isInPrayerTime
                                         ? null
                                         : countdownState.nextPrayerName;
                                     final dynamicTimes = _buildPrayerTimes(
@@ -227,14 +237,24 @@ class _PrayerPageState extends State<PrayerPage> {
                                     );
                                     return Column(
                                       children: [
-                                        for (var i = 0; i < dynamicTimes.length; i++) ...[
+                                        for (
+                                          var i = 0;
+                                          i < dynamicTimes.length;
+                                          i++
+                                        ) ...[
                                           PrayerTimeCard(
                                             item: dynamicTimes[i],
-                                            onBeforeAdhkar: () => _openDuas(context),
+                                            onBeforeAdhkar: () =>
+                                                _openDuas(context),
                                             onAfterAdhkar: () =>
-                                                _openAfterPrayer(context, dynamicTimes[i].name),
-                                            onTap: () =>
-                                                _openAfterPrayer(context, dynamicTimes[i].name),
+                                                _openAfterPrayer(
+                                                  context,
+                                                  dynamicTimes[i].name,
+                                                ),
+                                            onTap: () => _openAfterPrayer(
+                                              context,
+                                              dynamicTimes[i].name,
+                                            ),
                                           ),
                                           if (i != dynamicTimes.length - 1)
                                             const SizedBox(height: AppSpace.sm),
@@ -248,10 +268,14 @@ class _PrayerPageState extends State<PrayerPage> {
                                   PrayerTimeCard(
                                     item: times[i],
                                     onBeforeAdhkar: () => _openDuas(context),
-                                    onAfterAdhkar: () =>
-                                        _openAfterPrayer(context, times[i].name),
-                                    onTap: () =>
-                                        _openAfterPrayer(context, times[i].name),
+                                    onAfterAdhkar: () => _openAfterPrayer(
+                                      context,
+                                      times[i].name,
+                                    ),
+                                    onTap: () => _openAfterPrayer(
+                                      context,
+                                      times[i].name,
+                                    ),
                                   ),
                                   if (i != times.length - 1)
                                     const SizedBox(height: AppSpace.sm),
@@ -283,8 +307,10 @@ class _PrayerPageState extends State<PrayerPage> {
     final controller = _countdownController;
     if (controller == null) {
       final prayer = PrayerPageHelpers.buildNextPrayer(day);
-      var nextTime = day.nextPrayerTime ?? day.prayers[day.nextPrayer] ?? DateTime.now();
-      if (nextTime.isBefore(DateTime.now()) && day.nextPrayer == AppStrings.prayerFajr) {
+      var nextTime =
+          day.nextPrayerTime ?? day.prayers[day.nextPrayer] ?? DateTime.now();
+      if (nextTime.isBefore(DateTime.now()) &&
+          day.nextPrayer == AppStrings.prayerFajr) {
         nextTime = nextTime.add(const Duration(days: 1));
       }
       final remaining = nextTime.difference(DateTime.now());
@@ -296,7 +322,9 @@ class _PrayerPageState extends State<PrayerPage> {
       );
       return NextPrayerCard(
         prayer: prayer,
-        countdownText: PrayerPageHelpers.formatCountdown(remaining.isNegative ? Duration.zero : remaining),
+        countdownText: PrayerPageHelpers.formatCountdown(
+          remaining.isNegative ? Duration.zero : remaining,
+        ),
         progress: progress,
         onTap: () => _openPrayerSettings(context),
         onOpenQibla: () => _openQibla(context),
@@ -350,12 +378,13 @@ class _PrayerPageState extends State<PrayerPage> {
       final isSunrise = name.contains('الشروق');
       final mode = isSunrise
           ? PrayerNotificationMode.off
-          : (_adhanSettings?.modeForPrayer(name) ?? PrayerNotificationMode.adhan);
+          : (_adhanSettings?.modeForPrayer(name) ??
+                PrayerNotificationMode.adhan);
 
       final displayName =
           (isFriday && (name.contains('الظهر') || name == 'الظهر'))
-              ? 'صلاة الجمعة'
-              : name;
+          ? 'صلاة الجمعة'
+          : name;
 
       return PrayerTimeEntry(
         name: displayName,
@@ -365,8 +394,9 @@ class _PrayerPageState extends State<PrayerPage> {
         isCompleted: !isCurrent && time.isBefore(now),
         isNotificationEnabled: mode != PrayerNotificationMode.off,
         notificationMode: mode,
-        onToggleNotification:
-            isSunrise ? null : () => _togglePrayerNotification(name),
+        onToggleNotification: isSunrise
+            ? null
+            : () => _togglePrayerNotification(name),
         onSelectMode: isSunrise
             ? null
             : (selectedMode) => _setPrayerNotificationMode(name, selectedMode),
@@ -378,7 +408,8 @@ class _PrayerPageState extends State<PrayerPage> {
     String prayerName,
     PrayerNotificationMode newMode,
   ) {
-    final currentSettings = _adhanSettings ??
+    final currentSettings =
+        _adhanSettings ??
         const AdhanSettings(
           enabled: true,
           sound: AdhanSound.qatami,
@@ -391,12 +422,14 @@ class _PrayerPageState extends State<PrayerPage> {
           adjustments: {},
         );
 
-    final updatedModes =
-        Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
+    final updatedModes = Map<String, PrayerNotificationMode>.from(
+      currentSettings.prayerModes,
+    );
     updatedModes[prayerName] = newMode;
 
-    final updatedToggles =
-        Map<String, bool>.from(currentSettings.prayerToggles);
+    final updatedToggles = Map<String, bool>.from(
+      currentSettings.prayerToggles,
+    );
     updatedToggles[prayerName] = newMode != PrayerNotificationMode.off;
 
     final updatedSettings = currentSettings.copyWith(
@@ -443,7 +476,8 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _togglePrayerNotification(String prayerName) {
-    final currentSettings = _adhanSettings ??
+    final currentSettings =
+        _adhanSettings ??
         const AdhanSettings(
           enabled: true,
           sound: AdhanSound.qatami,
@@ -467,12 +501,14 @@ class _PrayerPageState extends State<PrayerPage> {
       PrayerNotificationMode.off => PrayerNotificationMode.adhan,
     };
 
-    final updatedModes =
-        Map<String, PrayerNotificationMode>.from(currentSettings.prayerModes);
+    final updatedModes = Map<String, PrayerNotificationMode>.from(
+      currentSettings.prayerModes,
+    );
     updatedModes[prayerName] = nextMode;
 
-    final updatedToggles =
-        Map<String, bool>.from(currentSettings.prayerToggles);
+    final updatedToggles = Map<String, bool>.from(
+      currentSettings.prayerToggles,
+    );
     updatedToggles[prayerName] = nextMode != PrayerNotificationMode.off;
 
     final updatedSettings = currentSettings.copyWith(
@@ -539,11 +575,23 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   void _loadPrayer({bool forceRefresh = false}) {
-    _prayerFuture = _prayerTimeService.getPrayerTimesDay(forceRefresh: forceRefresh);
+    _prayerFuture = _prayerTimeService.getPrayerTimesDay(
+      forceRefresh: forceRefresh,
+    );
     _prayerFuture.then((day) {
       if (!mounted) return;
       _ensureCountdown(day);
-      unawaited(_prayerScheduleService.refreshSchedulesIfNeeded(day: day, force: forceRefresh));
+      if (forceRefresh) {
+        unawaited(
+          HomeWidgetService.updateAllWidgets(prayerDay: day, force: true),
+        );
+      }
+      unawaited(
+        _prayerScheduleService.refreshSchedulesIfNeeded(
+          day: day,
+          force: forceRefresh,
+        ),
+      );
     });
   }
 

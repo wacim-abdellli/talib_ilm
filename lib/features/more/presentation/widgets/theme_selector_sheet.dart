@@ -7,6 +7,7 @@ import '../../../../core/services/home_widget_service.dart';
 import '../../../../shared/animations/theme_switcher.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 
 class ThemeOption extends StatelessWidget {
   final IconData icon;
@@ -62,15 +63,11 @@ class ThemeOption extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: textTheme.labelBold.copyWith(
-                    color: palette.text,
-                  ),
+                  style: textTheme.labelBold.copyWith(color: palette.text),
                 ),
                 Text(
                   subtitle,
-                  style: textTheme.caption.copyWith(
-                    color: palette.textMuted,
-                  ),
+                  style: textTheme.caption.copyWith(color: palette.textMuted),
                 ),
               ],
             ),
@@ -133,9 +130,7 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
             // ── Section 1: App Theme ──
             Text(
               'مظهر التطبيق',
-              style: textTheme.labelBold.copyWith(
-                color: palette.textMuted,
-              ),
+              style: textTheme.labelBold.copyWith(color: palette.textMuted),
             ),
             const SizedBox(height: AppSpace.xs),
             ThemeSwitcher(
@@ -204,16 +199,12 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
             // ── Section 2: Home Screen Widget Theme ──
             Text(
               'مظهر أداة الشاشة الرئيسية',
-              style: textTheme.labelBold.copyWith(
-                color: palette.textMuted,
-              ),
+              style: textTheme.labelBold.copyWith(color: palette.textMuted),
             ),
             const SizedBox(height: AppSpace.xxs),
             Text(
               'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
-              style: textTheme.caption.copyWith(
-                color: palette.textMuted,
-              ),
+              style: textTheme.caption.copyWith(color: palette.textMuted),
             ),
             const SizedBox(height: AppSpace.sm),
             Row(
@@ -263,7 +254,17 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
           onTap: () async {
             HapticFeedback.selectionClick();
             setState(() => _widgetTheme = mode);
-            await HomeWidgetService.setThemeMode(mode);
+            final synced = await HomeWidgetService.setThemeMode(mode);
+            if (!synced) {
+              if (!context.mounted) return;
+              final savedMode = await HomeWidgetService.getThemeMode();
+              if (!context.mounted) return;
+              setState(() => _widgetTheme = savedMode);
+              AppSnackbar.error(
+                context,
+                'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
+              );
+            }
           },
           borderRadius: AppRadius.mdRadius,
           child: Ink(
@@ -290,9 +291,13 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
                 const SizedBox(height: AppSpace.xxs),
                 Text(
                   label,
-                  style: (isSelected ? textTheme.captionHeavy : textTheme.captionBold).copyWith(
-                    color: isSelected ? palette.primary : palette.text,
-                  ),
+                  style:
+                      (isSelected
+                              ? textTheme.captionHeavy
+                              : textTheme.captionBold)
+                          .copyWith(
+                            color: isSelected ? palette.primary : palette.text,
+                          ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -259,7 +259,10 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.notifications_active_rounded, size: AppIcon.sm),
+                      Icon(
+                        Icons.notifications_active_rounded,
+                        size: AppIcon.sm,
+                      ),
                       SizedBox(width: AppSpace.xs),
                       Text('التنبيهات والأذان'),
                     ],
@@ -424,9 +427,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
           const SizedBox(height: AppSpace.xs),
           Text(
             'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن موفر للبطارية أو ناصع البياض)',
-            style: context.text.caption.copyWith(
-              color: palette.textMuted,
-            ),
+            style: context.text.caption.copyWith(color: palette.textMuted),
           ),
           const SizedBox(height: AppSpace.md),
           _buildWidgetThemeOption(
@@ -469,7 +470,17 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
         onTap: () async {
           HapticFeedback.selectionClick();
           setState(() => _widgetThemeMode = mode);
-          await HomeWidgetService.setThemeMode(mode);
+          final synced = await HomeWidgetService.setThemeMode(mode);
+          if (!synced) {
+            if (!mounted) return;
+            final savedMode = await HomeWidgetService.getThemeMode();
+            if (!mounted) return;
+            setState(() => _widgetThemeMode = savedMode);
+            AppSnackbar.error(
+              context,
+              'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
+            );
+          }
         },
         borderRadius: AppRadius.mdRadius,
         child: Ink(
@@ -535,9 +546,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
       padding: const EdgeInsetsDirectional.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
-        border: Border(
-          top: BorderSide(color: palette.border),
-        ),
+        border: Border(top: BorderSide(color: palette.border)),
       ),
       child: SafeArea(
         top: false,

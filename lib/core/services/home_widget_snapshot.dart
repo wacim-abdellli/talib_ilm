@@ -14,11 +14,7 @@ import '../../features/salaf_gems/data/repositories/salaf_gems_repository.dart';
 import 'adhan_settings_service.dart';
 
 /// Supported visual themes for the native Android and iOS home widgets.
-enum WidgetThemeMode {
-  dark,
-  light,
-  auto,
-}
+enum WidgetThemeMode { dark, light, auto }
 
 /// Manages native widget preference serialization, snapshot versioning, and
 /// theme resolution to keep Android and iOS widget appearances in sync.
@@ -26,8 +22,49 @@ class HomeWidgetSnapshot {
   const HomeWidgetSnapshot._();
 
   static const String themeModeKey = 'prayer_widget_theme_mode';
+  static const String appGroupId = 'group.com.talibilm.app';
   static int _snapshotVersion = 0;
   static int get snapshotVersion => _snapshotVersion;
+  static String? lastSyncError;
+
+  /// Writes a value to the app group and confirms it can be read back there.
+  /// This catches a missing or mismatched iOS App Group before WidgetKit
+  /// reloads into a blank/default timeline.
+  static Future<void> writeWidgetValue<T>(String key, T value) async {
+    try {
+      final saved = await HomeWidget.saveWidgetData<T>(
+        key,
+        value,
+        appGroupId: appGroupId,
+      );
+      if (saved != true) {
+        throw StateError('Could not write shared widget value: $key');
+      }
+      final readBack = await HomeWidget.getWidgetData<T>(
+        key,
+        appGroupId: appGroupId,
+      );
+      if (readBack != value) {
+        throw StateError('Shared widget value did not verify: $key');
+      }
+      lastSyncError = null;
+    } catch (error) {
+      lastSyncError = error.toString();
+      rethrow;
+    }
+  }
+
+  static Future<bool> verifyAppGroup() async {
+    final probe = DateTime.now().microsecondsSinceEpoch.toString();
+    try {
+      await writeWidgetValue<String>('widget_app_group_probe', probe);
+      lastSyncError = null;
+      return true;
+    } catch (error) {
+      lastSyncError = error.toString();
+      return false;
+    }
+  }
 
   /// Resolves whether the widget should render in dark mode.
   static Future<bool> resolveWidgetIsDark() async {
@@ -54,7 +91,9 @@ class HomeWidgetSnapshot {
     EvaluatedPrayerWidgetState eval, {
     Map<String, DateTime>? allPrayers,
     bool? preResolvedDark,
+    String? cityName,
   }) async {
+    lastSyncError = null;
     try {
       final adhanSettings = await AdhanSettingsService().getSettings();
       final int epochMs;
@@ -68,22 +107,27 @@ class HomeWidgetSnapshot {
         case PrayerWidgetPhase.betweenAdhanAndIqama:
           final iqamaMinutes = PrayerWidgetStateEvaluator.getIqamaMinutes(
             eval.activePrayerName,
-            isJumua: eval.targetPrayerTime.weekday == DateTime.friday &&
+            isJumua:
+                eval.targetPrayerTime.weekday == DateTime.friday &&
                 eval.activePrayerName == AppStrings.prayerDhuhr,
             iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
           );
-          final iqamaTime = eval.targetPrayerTime.add(Duration(minutes: iqamaMinutes));
+          final iqamaTime = eval.targetPrayerTime.add(
+            Duration(minutes: iqamaMinutes),
+          );
           epochMs = iqamaTime.millisecondsSinceEpoch;
           countdownPrefix = 'الإقامة بعد ';
           break;
         case PrayerWidgetPhase.atAdhan:
         case PrayerWidgetPhase.inSalah:
-          epochMs = 0; // Chronometer hidden during active adhan or congregational prayer
+          epochMs =
+              0; // Chronometer hidden during active adhan or congregational prayer
           countdownPrefix = '';
           break;
       }
 
-      final isPrayerActive = eval.phase == PrayerWidgetPhase.atAdhan ||
+      final isPrayerActive =
+          eval.phase == PrayerWidgetPhase.atAdhan ||
           eval.phase == PrayerWidgetPhase.inSalah;
 
       final prefs = await SharedPreferences.getInstance();
@@ -97,6 +141,9 @@ class HomeWidgetSnapshot {
         _ => useDark ? 'dark' : 'light',
       };
       final appThemeMode = prefs.getString('theme_mode') ?? 'system';
+      final resolvedCity = cityName?.trim().isNotEmpty == true
+          ? cityName!.trim()
+          : LocationService.cachedLocation?.city.trim();
       final prayerColor = palette.prayer(eval.activePrayerName);
       final prayerColorInt = prayerColor.toARGB32();
       final textColorInt = palette.text.toARGB32();
@@ -120,32 +167,59 @@ class HomeWidgetSnapshot {
 
       try {
         await HomeWidget.saveWidgetData<int>('next_prayer_epoch_ms', epochMs);
-        await HomeWidget.saveWidgetData<String>('next_prayer_name', eval.activePrayerName);
-        await HomeWidget.saveWidgetData<String>('prayer_display_title', eval.displayTitle);
-        await HomeWidget.saveWidgetData<int>('prayer_color_value', prayerColorInt);
+        await HomeWidget.saveWidgetData<String>(
+          'next_prayer_name',
+          eval.activePrayerName,
+        );
+        await HomeWidget.saveWidgetData<String>(
+          'prayer_display_title',
+          eval.displayTitle,
+        );
+        await HomeWidget.saveWidgetData<int>(
+          'prayer_color_value',
+          prayerColorInt,
+        );
         await HomeWidget.saveWidgetData<int>('widget_text_color', textColorInt);
         await HomeWidget.saveWidgetData<bool>('widget_is_dark', useDark);
         await HomeWidget.saveWidgetData<String>(themeModeKey, widgetMode);
         await HomeWidget.saveWidgetData<String>('theme_mode', appThemeMode);
-        await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
-        await HomeWidget.saveWidgetData<String>('prayer_status_label', eval.statusLabel);
-        await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);
-        await HomeWidget.saveWidgetData<int>('widget_snapshot_version', version);
+        await HomeWidget.saveWidgetData<String>(
+          'countdown_prefix',
+          countdownPrefix,
+        );
+        await HomeWidget.saveWidgetData<String>(
+          'prayer_status_label',
+          eval.statusLabel,
+        );
+        await HomeWidget.saveWidgetData<bool>(
+          'is_prayer_active',
+          isPrayerActive,
+        );
+        await HomeWidget.saveWidgetData<int>(
+          'widget_snapshot_version',
+          version,
+        );
 
         final nowDt = DateTime.now();
         final hijri = HijriCalendar.fromDate(nowDt);
-        final hijriStr = '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} هـ';
+        final hijriStr =
+            '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} هـ';
         await HomeWidget.saveWidgetData<String>('hijri_date', hijriStr);
-        final loc = LocationService.cachedLocation;
-        if (loc != null && loc.city.isNotEmpty) {
-          await HomeWidget.saveWidgetData<String>('location_city', loc.city);
+        if (resolvedCity != null && resolvedCity.isNotEmpty) {
+          await HomeWidget.saveWidgetData<String>(
+            'location_city',
+            resolvedCity,
+          );
         }
         try {
           final gem = await SalafGemsRepository.instance.getDailyGem();
           await prefs.setString('daily_gem_text', gem.text);
           await prefs.setString('daily_gem_author', gem.author);
           await HomeWidget.saveWidgetData<String>('daily_gem_text', gem.text);
-          await HomeWidget.saveWidgetData<String>('daily_gem_author', gem.author);
+          await HomeWidget.saveWidgetData<String>(
+            'daily_gem_author',
+            gem.author,
+          );
         } catch (_) {}
       } catch (_) {}
 
@@ -157,7 +231,14 @@ class HomeWidgetSnapshot {
         final maghribTime = allPrayers[AppStrings.prayerMaghrib];
         final ishaTime = allPrayers[AppStrings.prayerIsha];
         final tomorrowFajrTime = fajrTime != null
-            ? DateTime(fajrTime.year, fajrTime.month, fajrTime.day + 1, fajrTime.hour, fajrTime.minute, fajrTime.second)
+            ? DateTime(
+                fajrTime.year,
+                fajrTime.month,
+                fajrTime.day + 1,
+                fajrTime.hour,
+                fajrTime.minute,
+                fajrTime.second,
+              )
             : null;
 
         final refTime = dhuhrTime ?? DateTime.now();
@@ -186,32 +267,73 @@ class HomeWidgetSnapshot {
         );
 
         final fajrColor = palette.prayer(AppStrings.prayerFajr).toARGB32();
-        final dhuhrColor = (isFriday ? palette.success : palette.prayer(AppStrings.prayerDhuhr)).toARGB32();
+        final dhuhrColor =
+            (isFriday
+                    ? palette.success
+                    : palette.prayer(AppStrings.prayerDhuhr))
+                .toARGB32();
         final asrColor = palette.prayer(AppStrings.prayerAsr).toARGB32();
-        final maghribColor = palette.prayer(AppStrings.prayerMaghrib).toARGB32();
+        final maghribColor = palette
+            .prayer(AppStrings.prayerMaghrib)
+            .toARGB32();
         final ishaColor = palette.prayer(AppStrings.prayerIsha).toARGB32();
 
         if (fajrTime != null) {
-          await prefs.setInt('prayer_fajr_epoch_ms', fajrTime.millisecondsSinceEpoch);
-          await prefs.setString('prayer_fajr_time_str', formatPrayerTime12h(fajrTime));
+          await prefs.setInt(
+            'prayer_fajr_epoch_ms',
+            fajrTime.millisecondsSinceEpoch,
+          );
+          await prefs.setString(
+            'prayer_fajr_time_str',
+            formatPrayerTime12h(fajrTime),
+          );
         }
         if (dhuhrTime != null) {
-          await prefs.setInt('prayer_dhuhr_epoch_ms', dhuhrTime.millisecondsSinceEpoch);
-          await prefs.setString('prayer_dhuhr_time_str', formatPrayerTime12h(dhuhrTime));
+          await prefs.setInt(
+            'prayer_dhuhr_epoch_ms',
+            dhuhrTime.millisecondsSinceEpoch,
+          );
+          await prefs.setString(
+            'prayer_dhuhr_time_str',
+            formatPrayerTime12h(dhuhrTime),
+          );
         }
         if (asrTime != null) {
-          await prefs.setInt('prayer_asr_epoch_ms', asrTime.millisecondsSinceEpoch);
-          await prefs.setString('prayer_asr_time_str', formatPrayerTime12h(asrTime));
+          await prefs.setInt(
+            'prayer_asr_epoch_ms',
+            asrTime.millisecondsSinceEpoch,
+          );
+          await prefs.setString(
+            'prayer_asr_time_str',
+            formatPrayerTime12h(asrTime),
+          );
         }
         if (maghribTime != null) {
-          await prefs.setInt('prayer_maghrib_epoch_ms', maghribTime.millisecondsSinceEpoch);
-          await prefs.setString('prayer_maghrib_time_str', formatPrayerTime12h(maghribTime));
+          await prefs.setInt(
+            'prayer_maghrib_epoch_ms',
+            maghribTime.millisecondsSinceEpoch,
+          );
+          await prefs.setString(
+            'prayer_maghrib_time_str',
+            formatPrayerTime12h(maghribTime),
+          );
         }
         if (ishaTime != null) {
-          await prefs.setInt('prayer_isha_epoch_ms', ishaTime.millisecondsSinceEpoch);
-          await prefs.setString('prayer_isha_time_str', formatPrayerTime12h(ishaTime));
+          await prefs.setInt(
+            'prayer_isha_epoch_ms',
+            ishaTime.millisecondsSinceEpoch,
+          );
+          await prefs.setString(
+            'prayer_isha_time_str',
+            formatPrayerTime12h(ishaTime),
+          );
         }
-        if (tomorrowFajrTime != null) await prefs.setInt('prayer_tomorrow_fajr_epoch_ms', tomorrowFajrTime.millisecondsSinceEpoch);
+        if (tomorrowFajrTime != null) {
+          await prefs.setInt(
+            'prayer_tomorrow_fajr_epoch_ms',
+            tomorrowFajrTime.millisecondsSinceEpoch,
+          );
+        }
         await prefs.setBool('is_friday', isFriday);
         await prefs.setInt('iqama_fajr_min', iqamaFajr);
         await prefs.setInt('iqama_dhuhr_min', iqamaDhuhr);
@@ -228,45 +350,129 @@ class HomeWidgetSnapshot {
         try {
           if (fajrTime != null) {
             final fStr = formatPrayerTime12h(fajrTime);
-            await HomeWidget.saveWidgetData<int>('prayer_fajr_epoch_ms', fajrTime.millisecondsSinceEpoch);
-            await HomeWidget.saveWidgetData<String>('prayer_fajr_time_str', fStr);
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_fajr_epoch_ms',
+              fajrTime.millisecondsSinceEpoch,
+            );
+            await HomeWidget.saveWidgetData<String>(
+              'prayer_fajr_time_str',
+              fStr,
+            );
           }
           if (dhuhrTime != null) {
             final dStr = formatPrayerTime12h(dhuhrTime);
-            await HomeWidget.saveWidgetData<int>('prayer_dhuhr_epoch_ms', dhuhrTime.millisecondsSinceEpoch);
-            await HomeWidget.saveWidgetData<String>('prayer_dhuhr_time_str', dStr);
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_dhuhr_epoch_ms',
+              dhuhrTime.millisecondsSinceEpoch,
+            );
+            await HomeWidget.saveWidgetData<String>(
+              'prayer_dhuhr_time_str',
+              dStr,
+            );
           }
           if (asrTime != null) {
             final aStr = formatPrayerTime12h(asrTime);
-            await HomeWidget.saveWidgetData<int>('prayer_asr_epoch_ms', asrTime.millisecondsSinceEpoch);
-            await HomeWidget.saveWidgetData<String>('prayer_asr_time_str', aStr);
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_asr_epoch_ms',
+              asrTime.millisecondsSinceEpoch,
+            );
+            await HomeWidget.saveWidgetData<String>(
+              'prayer_asr_time_str',
+              aStr,
+            );
           }
           if (maghribTime != null) {
             final mStr = formatPrayerTime12h(maghribTime);
-            await HomeWidget.saveWidgetData<int>('prayer_maghrib_epoch_ms', maghribTime.millisecondsSinceEpoch);
-            await HomeWidget.saveWidgetData<String>('prayer_maghrib_time_str', mStr);
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_maghrib_epoch_ms',
+              maghribTime.millisecondsSinceEpoch,
+            );
+            await HomeWidget.saveWidgetData<String>(
+              'prayer_maghrib_time_str',
+              mStr,
+            );
           }
           if (ishaTime != null) {
             final iStr = formatPrayerTime12h(ishaTime);
-            await HomeWidget.saveWidgetData<int>('prayer_isha_epoch_ms', ishaTime.millisecondsSinceEpoch);
-            await HomeWidget.saveWidgetData<String>('prayer_isha_time_str', iStr);
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_isha_epoch_ms',
+              ishaTime.millisecondsSinceEpoch,
+            );
+            await HomeWidget.saveWidgetData<String>(
+              'prayer_isha_time_str',
+              iStr,
+            );
           }
-          if (tomorrowFajrTime != null) await HomeWidget.saveWidgetData<int>('prayer_tomorrow_fajr_epoch_ms', tomorrowFajrTime.millisecondsSinceEpoch);
+          if (tomorrowFajrTime != null) {
+            await HomeWidget.saveWidgetData<int>(
+              'prayer_tomorrow_fajr_epoch_ms',
+              tomorrowFajrTime.millisecondsSinceEpoch,
+            );
+          }
           await HomeWidget.saveWidgetData<bool>('is_friday', isFriday);
           await HomeWidget.saveWidgetData<int>('iqama_fajr_min', iqamaFajr);
           await HomeWidget.saveWidgetData<int>('iqama_dhuhr_min', iqamaDhuhr);
           await HomeWidget.saveWidgetData<int>('iqama_asr_min', iqamaAsr);
-          await HomeWidget.saveWidgetData<int>('iqama_maghrib_min', iqamaMaghrib);
+          await HomeWidget.saveWidgetData<int>(
+            'iqama_maghrib_min',
+            iqamaMaghrib,
+          );
           await HomeWidget.saveWidgetData<int>('iqama_isha_min', iqamaIsha);
 
           await HomeWidget.saveWidgetData<int>('prayer_color_fajr', fajrColor);
-          await HomeWidget.saveWidgetData<int>('prayer_color_dhuhr', dhuhrColor);
+          await HomeWidget.saveWidgetData<int>(
+            'prayer_color_dhuhr',
+            dhuhrColor,
+          );
           await HomeWidget.saveWidgetData<int>('prayer_color_asr', asrColor);
-          await HomeWidget.saveWidgetData<int>('prayer_color_maghrib', maghribColor);
+          await HomeWidget.saveWidgetData<int>(
+            'prayer_color_maghrib',
+            maghribColor,
+          );
           await HomeWidget.saveWidgetData<int>('prayer_color_isha', ishaColor);
         } catch (_) {}
       }
-    } catch (_) {}
+
+      // Verify the exact values the iOS extension consumes before asking
+      // WidgetKit to reload. Pass the group explicitly so this does not depend
+      // on hidden plugin state or fallback UserDefaults.
+      await writeWidgetValue<int>('next_prayer_epoch_ms', epochMs);
+      await writeWidgetValue<String>('next_prayer_name', eval.activePrayerName);
+      await writeWidgetValue<String>('prayer_display_title', eval.displayTitle);
+      await writeWidgetValue<String>(themeModeKey, widgetMode);
+      await writeWidgetValue<String>('theme_mode', appThemeMode);
+      await writeWidgetValue<bool>('widget_is_dark', useDark);
+      await writeWidgetValue<int>('widget_snapshot_version', version);
+      if (resolvedCity != null && resolvedCity.isNotEmpty) {
+        await writeWidgetValue<String>('location_city', resolvedCity);
+      }
+      if (allPrayers != null) {
+        for (final prayerName in AppStrings.prayerOrder) {
+          final prayerTime = allPrayers[prayerName];
+          if (prayerTime == null) continue;
+          final key = switch (prayerName) {
+            AppStrings.prayerFajr => 'fajr',
+            AppStrings.prayerDhuhr => 'dhuhr',
+            AppStrings.prayerAsr => 'asr',
+            AppStrings.prayerMaghrib => 'maghrib',
+            AppStrings.prayerIsha => 'isha',
+            _ => null,
+          };
+          if (key == null) continue;
+          await writeWidgetValue<int>(
+            'prayer_${key}_epoch_ms',
+            prayerTime.millisecondsSinceEpoch,
+          );
+          await writeWidgetValue<String>(
+            'prayer_${key}_time_str',
+            formatPrayerTime12h(prayerTime),
+          );
+        }
+      }
+    } catch (error) {
+      lastSyncError = error.toString();
+      debugPrint('Home widget snapshot sync failed: $error');
+    }
   }
 
   static String? _lastDailyRibbonRenderKey;
@@ -295,8 +501,8 @@ class HomeWidgetSnapshot {
 
     const resolvedSize = Size(kRibbonW, kRibbonH);
     final all = day.prayers;
-    final iqamaOverrides = (await AdhanSettingsService().getSettings())
-        .iqamaMinutesAfterAdhan;
+    final iqamaOverrides =
+        (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
 
     const slugs = {
       AppStrings.prayerFajr: 'fajr',
@@ -362,8 +568,8 @@ class HomeWidgetSnapshot {
 
     const resolvedSize = Size(kLargeW, kLargeH);
     final all = day.prayers;
-    final iqamaOverrides = (await AdhanSettingsService().getSettings())
-        .iqamaMinutesAfterAdhan;
+    final iqamaOverrides =
+        (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
 
     const slugs = {
       AppStrings.prayerFajr: 'fajr',
