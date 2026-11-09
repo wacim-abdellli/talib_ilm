@@ -13,15 +13,15 @@ import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
 import '../../features/salaf_gems/data/repositories/salaf_gems_repository.dart';
 import 'adhan_settings_service.dart';
 
-/// Supported visual themes for the Android Home Screen AppWidget.
+/// Supported visual themes for the native Android and iOS home widgets.
 enum WidgetThemeMode {
   dark,
   light,
   auto,
 }
 
-/// Manages native Android widget preference serialization, snapshot versioning,
-/// and theme resolution to guarantee data coherence across all widget providers.
+/// Manages native widget preference serialization, snapshot versioning, and
+/// theme resolution to keep Android and iOS widget appearances in sync.
 class HomeWidgetSnapshot {
   const HomeWidgetSnapshot._();
 
@@ -86,21 +86,29 @@ class HomeWidgetSnapshot {
       final isPrayerActive = eval.phase == PrayerWidgetPhase.atAdhan ||
           eval.phase == PrayerWidgetPhase.inSalah;
 
+      final prefs = await SharedPreferences.getInstance();
       final useDark = preResolvedDark ?? await resolveWidgetIsDark();
       final palette = useDark ? AppPalette.dark : AppPalette.light;
+      final selectedWidgetMode = prefs.getString(themeModeKey);
+      final widgetMode = switch (selectedWidgetMode) {
+        'dark' => 'dark',
+        'light' => 'light',
+        'auto' => 'auto',
+        _ => useDark ? 'dark' : 'light',
+      };
+      final appThemeMode = prefs.getString('theme_mode') ?? 'system';
       final prayerColor = palette.prayer(eval.activePrayerName);
       final prayerColorInt = prayerColor.toARGB32();
       final textColorInt = palette.text.toARGB32();
       final version = ++_snapshotVersion;
 
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('next_prayer_epoch_ms', epochMs);
       await prefs.setString('next_prayer_name', eval.activePrayerName);
       await prefs.setString('prayer_display_title', eval.displayTitle);
       await prefs.setInt('prayer_color_value', prayerColorInt);
       await prefs.setInt('widget_text_color', textColorInt);
       await prefs.setBool('widget_is_dark', useDark);
-      await prefs.setString('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
+      await prefs.setString(themeModeKey, widgetMode);
       await prefs.setString('countdown_prefix', countdownPrefix);
       await prefs.setString('prayer_status_label', eval.statusLabel);
       await prefs.setBool('is_prayer_active', isPrayerActive);
@@ -117,7 +125,8 @@ class HomeWidgetSnapshot {
         await HomeWidget.saveWidgetData<int>('prayer_color_value', prayerColorInt);
         await HomeWidget.saveWidgetData<int>('widget_text_color', textColorInt);
         await HomeWidget.saveWidgetData<bool>('widget_is_dark', useDark);
-        await HomeWidget.saveWidgetData<String>('prayer_widget_theme_mode', useDark ? 'dark' : 'light');
+        await HomeWidget.saveWidgetData<String>(themeModeKey, widgetMode);
+        await HomeWidget.saveWidgetData<String>('theme_mode', appThemeMode);
         await HomeWidget.saveWidgetData<String>('countdown_prefix', countdownPrefix);
         await HomeWidget.saveWidgetData<String>('prayer_status_label', eval.statusLabel);
         await HomeWidget.saveWidgetData<bool>('is_prayer_active', isPrayerActive);

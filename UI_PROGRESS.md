@@ -4960,3 +4960,8 @@ FAILED (54 violations)
 - Made the saved reading position a true toggle in both the ayah quick-action menu and details sheet. Removing it is conditional on the stored location still matching that ayah, so a stale sheet cannot clear a newer position.
 - Shortened the quick-action labels and descriptions. Tiles switch to a centered stacked layout on narrow screens or larger text; the details footer stacks its main action and copy/share controls when space is constrained.
 - **Verification:** `flutter analyze --no-pub` found no issues; `python tool/ui_lint_v2.py --strict` passed (0 failures, 7/10 allow markers); `git diff --check` passed. Tests were not run.
+
+## R53 — iOS Widget Light/Dark Readability & Layout (9 November 2026)
+- Extracted the native widget views, then rebuilt small, medium, and large layouts with explicit app-matched light/dark colors, readable Arabic text, and no oversized empty spacer; automatic mode now follows the app/system theme without being overwritten during refresh.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK; all widget text/accent color pairs passed `tool/contrast.py`; Xcode project parsed and `git diff --check` passed. Tests were not run.
+- **Open issue:** Xcode compilation and visual confirmation in iOS Widget Gallery require the macOS CI/device; this Windows host has no Swift toolchain.

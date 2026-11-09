@@ -252,6 +252,8 @@ struct PrayerWidgetEntry: TimelineEntry {
     let dailyGem: String
     let dailyGemAuthor: String
     let isDark: Bool
+    let widgetThemeMode: String
+    let appThemeMode: String
     let isPrayerActive: Bool
 }
 
@@ -266,6 +268,8 @@ struct PrayerTimelineProvider: TimelineProvider {
         let gem = prefs.string(forKey: "daily_gem_text") ?? "من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة"
         let author = prefs.string(forKey: "daily_gem_author") ?? "حديث نبوي شريف"
         let isDark = prefs.bool(forKey: "widget_is_dark")
+        let widgetThemeMode = prefs.string(forKey: "prayer_widget_theme_mode") ?? "dark"
+        let appThemeMode = prefs.string(forKey: "theme_mode") ?? "system"
 
         return PrayerWidgetEntry(
             date: date,
@@ -283,11 +287,14 @@ struct PrayerTimelineProvider: TimelineProvider {
             dailyGem: gem,
             dailyGemAuthor: author,
             isDark: isDark,
+            widgetThemeMode: widgetThemeMode,
+            appThemeMode: appThemeMode,
             isPrayerActive: evaluated.isPrayerActive
         )
     }
 
     func placeholder(in context: Context) -> PrayerWidgetEntry {
+        let prefs = getPreferences()
         return PrayerWidgetEntry(
             date: Date(),
             nextPrayerName: "العصر",
@@ -303,7 +310,9 @@ struct PrayerTimelineProvider: TimelineProvider {
             cityName: "مكة المكرمة",
             dailyGem: "العلم ما نفع، ليس العلم ما حفظ.",
             dailyGemAuthor: "الإمام الشافعي",
-            isDark: false,
+            isDark: prefs.object(forKey: "widget_is_dark") as? Bool ?? true,
+            widgetThemeMode: prefs.string(forKey: "prayer_widget_theme_mode") ?? "dark",
+            appThemeMode: prefs.string(forKey: "theme_mode") ?? "system",
             isPrayerActive: false
         )
     }
@@ -371,24 +380,6 @@ struct PrayerTimelineProvider: TimelineProvider {
 }
 
 // MARK: - Widget Entry View Dispatcher
-
-struct TalibIlmWidgetsEntryView: View {
-    @Environment(\.widgetFamily) var family
-    var entry: PrayerTimelineProvider.Entry
-
-    var body: some View {
-        switch family {
-        case .systemSmall:
-            PrayerSmallWidgetView(entry: entry)
-        case .systemMedium:
-            PrayerMediumWidgetView(entry: entry)
-        case .systemLarge:
-            PrayerLargeWidgetView(entry: entry)
-        default:
-            PrayerSmallWidgetView(entry: entry)
-        }
-    }
-}
 
 // MARK: - Main Widget Declaration
 

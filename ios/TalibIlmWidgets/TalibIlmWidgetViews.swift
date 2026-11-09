@@ -1,238 +1,327 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
-// MARK: - Calm Scholar Palette Helpers
+// These values mirror AppPalette's existing light and dark widget tokens.
+private struct WidgetPalette {
+    let background: Color
+    let surface: Color
+    let inset: Color
+    let text: Color
+    let muted: Color
+    let accent: Color
+    let accentSoft: Color
+    let accentInk: Color
+    let prayer: Color
 
-private let goldColor = Color(red: 0.79, green: 0.64, blue: 0.15)
-private let emeraldColor = Color(red: 0.18, green: 0.52, blue: 0.38)
-private let darkBgColor = Color(red: 0.07, green: 0.08, blue: 0.09)
-private let lightBgColor = Color(red: 0.98, green: 0.97, blue: 0.95)
-
-extension View {
-    @ViewBuilder
-    func applyWidgetBackground(isDark: Bool) -> some View {
-        let bg = isDark ? darkBgColor : lightBgColor
-        if #available(iOSApplicationExtension 17.0, *) {
-            self.containerBackground(for: .widget) {
-                bg
-            }
+    init(isDark: Bool) {
+        if isDark {
+            background = Color(hex: 0xFF000000)
+            surface = Color(hex: 0xFF070707)
+            inset = Color(hex: 0xFF090909)
+            text = Color(hex: 0xFFFAF8F5)
+            muted = Color(hex: 0xFFA8A096)
+            accent = Color(hex: 0xFFFBBF24)
+            accentSoft = Color(hex: 0xFF1E170A)
+            accentInk = Color(hex: 0xFFFDE68A)
+            prayer = Color(hex: 0xFF34D399)
         } else {
-            self.background(bg)
+            background = Color(hex: 0xFFFAF8F5)
+            surface = Color(hex: 0xFFFFFFFF)
+            inset = Color(hex: 0xFFF4EFE6)
+            text = Color(hex: 0xFF1C1917)
+            muted = Color(hex: 0xFF5E574E)
+            accent = Color(hex: 0xFFB45309)
+            accentSoft = Color(hex: 0xFFFEF3C7)
+            accentInk = Color(hex: 0xFF713F08)
+            prayer = Color(hex: 0xFF047857)
         }
     }
 }
 
-// MARK: - Small Widget View (2x2)
+private extension Color {
+    init(hex: UInt32) {
+        self.init(
+            .sRGB,
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
+            opacity: Double((hex >> 24) & 0xFF) / 255
+        )
+    }
+}
 
-struct PrayerSmallWidgetView: View {
+private extension PrayerWidgetEntry {
+    func resolvedDarkMode(for systemScheme: ColorScheme) -> Bool {
+        if widgetThemeMode == "dark" { return true }
+        if widgetThemeMode == "light" { return false }
+        if appThemeMode == "dark" { return true }
+        if appThemeMode == "light" { return false }
+        if appThemeMode == "system" { return systemScheme == .dark }
+        return isDark
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func widgetBackground(_ color: Color) -> some View {
+        if #available(iOSApplicationExtension 17.0, *) {
+            containerBackground(for: .widget) { color }
+        } else {
+            background(color)
+        }
+    }
+}
+
+private struct PrayerSmallWidgetView: View {
     let entry: PrayerWidgetEntry
+    let palette: WidgetPalette
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 5) {
-            HStack {
+        VStack(alignment: .trailing, spacing: 0) {
+            HStack(spacing: 6) {
                 Text("طالب العلم")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(goldColor)
-                Spacer()
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(palette.accent)
+                Spacer(minLength: 4)
                 Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 11))
-                    .foregroundColor(goldColor)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(palette.accent)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             Text(entry.prayerDisplayTitle)
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.trailing)
+                .foregroundColor(palette.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
 
             Text(entry.countdownPrefix)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.secondary)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(palette.muted)
+                .lineLimit(1)
 
-            if let target = entry.nextPrayerDate, target > Date() {
+            if let target = entry.nextPrayerDate, target > entry.date {
                 Text(target, style: .timer)
-                    .font(.system(size: 18, weight: .heavy, design: .monospaced))
-                    .foregroundColor(emeraldColor)
+                    .font(.system(size: 23, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             } else {
                 Text(entry.nextPrayerName)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(emeraldColor)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            HStack {
-                Text(entry.cityName)
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Spacer()
+            Text(entry.cityName)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(palette.muted)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+    }
+}
+
+private struct PrayerMediumWidgetView: View {
+    let entry: PrayerWidgetEntry
+    let palette: WidgetPalette
+
+    var body: some View {
+        VStack(spacing: 9) {
+            HStack(alignment: .center, spacing: 8) {
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(entry.cityName)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(palette.text)
+                        .lineLimit(1)
+                    Text(entry.hijriDate)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(palette.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 6)
+                Image(systemName: "moon.stars.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(palette.accent)
+            }
+
+            FeaturedPrayerBlock(entry: entry, palette: palette, prominent: false)
+            PrayerTimesRow(entry: entry, palette: palette, prominent: false)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct PrayerLargeWidgetView: View {
+    let entry: PrayerWidgetEntry
+    let palette: WidgetPalette
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 12) {
+            HStack(spacing: 8) {
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("طالب العلم")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(palette.accent)
+                    Text(entry.cityName)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(palette.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 6)
                 Text(entry.hijriDate)
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(12)
-        .environment(\.layoutDirection, .rightToLeft)
-        .applyWidgetBackground(isDark: entry.isDark)
-    }
-}
-
-// MARK: - Medium Widget View (4x2)
-
-struct PrayerMediumWidgetView: View {
-    let entry: PrayerWidgetEntry
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.hijriDate)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(goldColor)
-                    Text(entry.cityName)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(entry.prayerDisplayTitle)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(emeraldColor)
-                    if let target = entry.nextPrayerDate, target > Date() {
-                        Text(target, style: .timer)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundColor(.primary)
-                    }
-                }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(palette.muted)
+                    .lineLimit(1)
             }
 
-            Divider()
+            FeaturedPrayerBlock(entry: entry, palette: palette, prominent: true)
+            PrayerTimesRow(entry: entry, palette: palette, prominent: true)
 
-            HStack(spacing: 4) {
-                prayerColumn(name: "الفجر", time: entry.fajrTime, isNext: entry.nextPrayerName == "الفجر")
-                prayerColumn(name: "الظهر", time: entry.dhuhrTime, isNext: entry.nextPrayerName == "الظهر" || entry.nextPrayerName == "الجمعة")
-                prayerColumn(name: "العصر", time: entry.asrTime, isNext: entry.nextPrayerName == "العصر")
-                prayerColumn(name: "المغرب", time: entry.maghribTime, isNext: entry.nextPrayerName == "المغرب")
-                prayerColumn(name: "العشاء", time: entry.ishaTime, isNext: entry.nextPrayerName == "العشاء")
-            }
-        }
-        .padding(12)
-        .environment(\.layoutDirection, .rightToLeft)
-        .applyWidgetBackground(isDark: entry.isDark)
-    }
-
-    private func prayerColumn(name: String, time: String, isNext: Bool) -> some View {
-        VStack(spacing: 4) {
-            Text(name)
-                .font(.system(size: 11, weight: isNext ? .bold : .regular))
-                .foregroundColor(isNext ? goldColor : .secondary)
-
-            Text(time)
-                .font(.system(size: 10, weight: isNext ? .bold : .medium))
-                .foregroundColor(isNext ? .primary : .secondary)
-                .minimumScaleFactor(0.8)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isNext ? goldColor.opacity(0.18) : Color.clear)
-        )
-    }
-}
-
-// MARK: - Large Widget View (4x4)
-
-struct PrayerLargeWidgetView: View {
-    let entry: PrayerWidgetEntry
-
-    var body: some View {
-        VStack(spacing: 10) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.hijriDate)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(goldColor)
-                    Text(entry.cityName)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(entry.prayerDisplayTitle)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(emeraldColor)
-                    if let target = entry.nextPrayerDate, target > Date() {
-                        Text(target, style: .timer)
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
-
-            Divider()
-
-            HStack(spacing: 4) {
-                prayerCard(name: "الفجر", time: entry.fajrTime, isNext: entry.nextPrayerName == "الفجر")
-                prayerCard(name: "الظهر", time: entry.dhuhrTime, isNext: entry.nextPrayerName == "الظهر" || entry.nextPrayerName == "الجمعة")
-                prayerCard(name: "العصر", time: entry.asrTime, isNext: entry.nextPrayerName == "العصر")
-                prayerCard(name: "المغرب", time: entry.maghribTime, isNext: entry.nextPrayerName == "المغرب")
-                prayerCard(name: "العشاء", time: entry.ishaTime, isNext: entry.nextPrayerName == "العشاء")
-            }
-
-            Spacer()
-
-            // Daily Gem / Athar Card (درة اليوم)
-            VStack(alignment: .trailing, spacing: 4) {
-                HStack {
-                    Image(systemName: "quote.opening")
-                        .font(.system(size: 10))
-                        .foregroundColor(goldColor)
+            VStack(alignment: .trailing, spacing: 7) {
+                HStack(spacing: 6) {
                     Text("درة اليوم")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(goldColor)
-                    Spacer()
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(palette.accent)
+                    Spacer(minLength: 4)
+                    Image(systemName: "quote.opening")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(palette.accent)
                 }
 
                 Text(entry.dailyGem)
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(.primary)
-                    .lineLimit(3)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(palette.text)
+                    .lineLimit(4)
                     .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("— " + entry.dailyGemAuthor)
-                    .font(.system(size: 10, weight: .light))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(palette.muted)
+                    .lineLimit(1)
             }
-            .padding(8)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(goldColor.opacity(0.08))
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(palette.inset)
             )
         }
         .padding(14)
-        .environment(\.layoutDirection, .rightToLeft)
-        .applyWidgetBackground(isDark: entry.isDark)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
+}
 
-    private func prayerCard(name: String, time: String, isNext: Bool) -> some View {
-        VStack(spacing: 4) {
-            Text(name)
-                .font(.system(size: 11, weight: isNext ? .bold : .regular))
-                .foregroundColor(isNext ? goldColor : .secondary)
+private struct FeaturedPrayerBlock: View {
+    let entry: PrayerWidgetEntry
+    let palette: WidgetPalette
+    let prominent: Bool
 
-            Text(time)
-                .font(.system(size: 11, weight: isNext ? .bold : .medium))
-                .foregroundColor(isNext ? .primary : .secondary)
-                .minimumScaleFactor(0.75)
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(entry.prayerDisplayTitle)
+                    .font(.system(size: prominent ? 16 : 14, weight: .bold))
+                    .foregroundColor(palette.text)
+                    .lineLimit(1)
+                Text(entry.countdownPrefix)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(palette.muted)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if let target = entry.nextPrayerDate, target > entry.date {
+                Text(target, style: .timer)
+                    .font(.system(size: prominent ? 25 : 21, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            } else {
+                Text(entry.nextPrayerName)
+                    .font(.system(size: prominent ? 21 : 18, weight: .bold))
+                    .foregroundColor(palette.prayer)
+                    .lineLimit(1)
+            }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, prominent ? 12 : 9)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isNext ? goldColor.opacity(0.18) : Color.clear)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(palette.inset)
         )
     }
 }
 
+private struct PrayerTimesRow: View {
+    let entry: PrayerWidgetEntry
+    let palette: WidgetPalette
+    let prominent: Bool
+
+    var body: some View {
+        HStack(spacing: 4) {
+            prayerCell(name: "الفجر", time: entry.fajrTime, isNext: entry.nextPrayerName == "الفجر")
+            prayerCell(name: "الظهر", time: entry.dhuhrTime, isNext: entry.nextPrayerName == "الظهر" || entry.nextPrayerName == "الجمعة")
+            prayerCell(name: "العصر", time: entry.asrTime, isNext: entry.nextPrayerName == "العصر")
+            prayerCell(name: "المغرب", time: entry.maghribTime, isNext: entry.nextPrayerName == "المغرب")
+            prayerCell(name: "العشاء", time: entry.ishaTime, isNext: entry.nextPrayerName == "العشاء")
+        }
+    }
+
+    private func prayerCell(name: String, time: String, isNext: Bool) -> some View {
+        VStack(spacing: 5) {
+            Text(name)
+                .font(.system(size: 12, weight: isNext ? .bold : .medium))
+                .foregroundColor(isNext ? palette.accentInk : palette.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+            Text(time)
+                .font(.system(size: 12, weight: isNext ? .bold : .medium))
+                .foregroundColor(isNext ? palette.text : palette.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, prominent ? 10 : 7)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isNext ? palette.accentSoft : palette.surface)
+        )
+    }
+}
+
+struct TalibIlmWidgetsEntryView: View {
+    @Environment(\.widgetFamily) private var family
+    @Environment(\.colorScheme) private var colorScheme
+    let entry: PrayerTimelineProvider.Entry
+
+    var body: some View {
+        let isDark = entry.resolvedDarkMode(for: colorScheme)
+        let palette = WidgetPalette(isDark: isDark)
+
+        Group {
+            switch family {
+            case .systemSmall:
+                PrayerSmallWidgetView(entry: entry, palette: palette)
+            case .systemMedium:
+                PrayerMediumWidgetView(entry: entry, palette: palette)
+            case .systemLarge:
+                PrayerLargeWidgetView(entry: entry, palette: palette)
+            default:
+                PrayerSmallWidgetView(entry: entry, palette: palette)
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.colorScheme, isDark ? .dark : .light)
+        .widgetBackground(palette.background)
+    }
+}
