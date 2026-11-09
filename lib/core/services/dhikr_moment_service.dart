@@ -66,7 +66,12 @@ class DhikrMomentSettings {
 
 class DhikrMomentService {
   static const maxAppearancesPerDay = 50;
-  static bool get supportsFloatingOverlay => Platform.isAndroid;
+  static bool? _supportsFloatingOverlayOverride;
+  @visibleForTesting
+  static set supportsFloatingOverlayOverride(bool? value) =>
+      _supportsFloatingOverlayOverride = value;
+  static bool get supportsFloatingOverlay =>
+      _supportsFloatingOverlayOverride ?? Platform.isAndroid;
   static const _overlayChannel = MethodChannel(
     'com.talibilm.app/dhikr_overlay',
   );
@@ -362,7 +367,7 @@ class DhikrMomentService {
   }
 
   static Future<bool> hasOverlayPermission() async {
-    if (!Platform.isAndroid) return false;
+    if (!supportsFloatingOverlay) return false;
     try {
       return await _overlayChannel.invokeMethod<bool>('hasOverlayPermission') ??
           false;
@@ -372,7 +377,7 @@ class DhikrMomentService {
   }
 
   static Future<bool> requestOverlayPermission() async {
-    if (!Platform.isAndroid) return false;
+    if (!supportsFloatingOverlay) return false;
     try {
       return await _overlayChannel.invokeMethod<bool>(
             'requestOverlayPermission',
@@ -383,10 +388,18 @@ class DhikrMomentService {
     }
   }
 
-  static Future<bool> showOverlayTest() async {
-    if (!Platform.isAndroid || !await hasOverlayPermission()) return false;
+  static Future<bool> showOverlayTest({
+    String? categoryLabel,
+    String? text,
+    String? meaning,
+  }) async {
+    if (!supportsFloatingOverlay || !await hasOverlayPermission()) return false;
     try {
-      return await _overlayChannel.invokeMethod<bool>('showOverlayTest') ??
+      return await _overlayChannel.invokeMethod<bool>('showOverlayTest', {
+            if (categoryLabel != null) 'label': categoryLabel,
+            if (text != null) 'text': text,
+            if (meaning != null) 'meaning': meaning,
+          }) ??
           false;
     } catch (_) {
       return false;
@@ -394,7 +407,7 @@ class DhikrMomentService {
   }
 
   static Future<void> syncOverlayService() async {
-    if (!Platform.isAndroid) return;
+    if (!supportsFloatingOverlay) return;
     final settings = settingsNotifier.value;
     try {
       if (settings.enabled && await hasOverlayPermission()) {
@@ -406,7 +419,7 @@ class DhikrMomentService {
   }
 
   static Future<void> _stopOverlay() async {
-    if (!Platform.isAndroid) return;
+    if (!supportsFloatingOverlay) return;
     try {
       await _overlayChannel.invokeMethod<bool>('stopOverlayService');
     } catch (_) {}

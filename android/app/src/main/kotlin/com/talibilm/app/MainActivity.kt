@@ -38,10 +38,7 @@ class MainActivity : AudioServiceActivity() {
                     "startOverlayService" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
                             try {
-                                val intent = Intent(this, DhikrOverlayService::class.java)
-                                    .setAction(DhikrOverlayService.ACTION_START)
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
-                                else startService(intent)
+                                DhikrOverlayScheduler.scheduleNext(this)
                                 result.success(true)
                             } catch (_: Exception) {
                                 result.success(false)
@@ -51,10 +48,21 @@ class MainActivity : AudioServiceActivity() {
                     "showOverlayTest" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
                             try {
-                                val intent = Intent(this, DhikrOverlayService::class.java)
-                                    .setAction(DhikrOverlayService.ACTION_SHOW_NOW)
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
-                                else startService(intent)
+                                val args = call.arguments as? Map<*, *>
+                                val label = args?.get("label") as? String
+                                val text = args?.get("text") as? String
+                                val meaning = args?.get("meaning") as? String
+                                val intent = Intent(this, DhikrOverlayService::class.java).apply {
+                                    action = DhikrOverlayService.ACTION_SHOW_NOW
+                                    putExtra(DhikrOverlayService.EXTRA_LABEL, label)
+                                    putExtra(DhikrOverlayService.EXTRA_TEXT, text)
+                                    putExtra(DhikrOverlayService.EXTRA_MEANING, meaning)
+                                }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    startForegroundService(intent)
+                                } else {
+                                    startService(intent)
+                                }
                                 result.success(true)
                             } catch (_: Exception) {
                                 result.success(false)
@@ -62,8 +70,13 @@ class MainActivity : AudioServiceActivity() {
                         } else result.success(false)
                     }
                     "stopOverlayService" -> {
-                        stopService(Intent(this, DhikrOverlayService::class.java))
-                        result.success(true)
+                        try {
+                            DhikrOverlayScheduler.cancel(this)
+                            stopService(Intent(this, DhikrOverlayService::class.java))
+                            result.success(true)
+                        } catch (_: Exception) {
+                            result.success(false)
+                        }
                     }
                     else -> result.notImplemented()
                 }

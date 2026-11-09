@@ -1,3 +1,25 @@
+## Stage R58 — Fix Dhikr Overlay Stuck Card, Pinned Notification & Payload Routing (9 November 2026)
+- **Branch**: `ui/r58-fix-dhikr-overlay-stuck-and-notification`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Category Mismatch in Test Overlay**: In `DhikrMomentSettingsSheet`, choosing Quran verses or Duas showed God's Names ("من أسماء الله") in the test card because `showOverlayTest()` did not forward the active payload, and `DhikrOverlayService` fell back to unpersisted preferences. Fixed by passing `label`, `text`, and `meaning` through the method channel and Intent extras, and immediately rotating the preview when tapping categories.
+  2. **Overlay Card Stuck on Screen**:
+     - `WindowManager.LayoutParams` had `FLAG_NOT_TOUCHABLE`, preventing user taps from interacting with the card.
+     - `hideCard` used `withEndAction { removeCard() }` on `ViewPropertyAnimator`, which fails to fire on MIUI/HyperOS devices for WindowManager overlay views. View was only destroyed on screen-off broadcast.
+     - Fixed by removing `FLAG_NOT_TOUCHABLE`, adding instant tap-to-dismiss (`setOnClickListener { removeCardAndStop() }`), and adding a deterministic `handler.postDelayed(autoRemoveRunnable, 4500L)` with graceful 250ms fade-out at 4200ms.
+  3. **Pinned Foreground Notification**:
+     - Previously, `DhikrOverlayService` ran continuously 24/7 as a foreground service using `handler.postDelayed` loops, pinning "لحظة ذكر مفعلة" in the Android notification shade.
+     - Replaced with standard `AlarmManager` exact/idle alarms via `DhikrOverlayScheduler` and `DhikrOverlayReceiver`. The service only runs briefly for the 4.5s card presentation, calls `stopForeground(STOP_FOREGROUND_REMOVE)` and `NotificationManager.cancel()`, and calls `stopSelf()`.
+     - Zero pinned notifications, zero background CPU/battery drain, and the system alert "This app is displaying over other apps" disappears the instant the card is dismissed.
+  4. **CI Gate 3 Prayer Boundary Matrix Test Fix**:
+     - Fixed `test/prayer_scheduling_boundary_matrix_test.dart` to set `'adhan_iqama': true` matching the updated user setting key.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found (ran in 23.0s).
+  - `python tool/ui_lint_v2.py --strict`: OK (8 allow markers used / cap 10).
+  - `flutter test test/dhikr_moment_service_test.dart test/prayer_scheduling_boundary_matrix_test.dart test/native_widget_snapshot_test.dart test/ilm_book_preview_test.dart`: All 33 unit tests passed (100%).
+  - `flutter build apk --debug`: Built `build/app/outputs/flutter-apk/app-debug.apk` successfully (0 errors).
+  - `flutter build apk --target-platform android-arm64 --obfuscate`: Built modern phones release APK (`build/app/outputs/flutter-apk/talib_ilm_modern_phones_release.apk`, 120.9MB).
+- **Status**: Complete & Verified.
+
 ## Stage R54 — iOS WidgetKit Prayer Times & Live Countdown Fix (9 November 2026)
 - **Branch**: `ui/r54-ios-widget-time-fix`
 - **Root Cause Analysis**:
