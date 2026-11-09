@@ -332,7 +332,7 @@ class DhikrOverlayService : Service() {
         const val ACTION_START = "com.talibilm.app.DHIKR_OVERLAY_START"
         const val ACTION_STOP = "com.talibilm.app.DHIKR_OVERLAY_STOP"
         const val ACTION_SHOW_NOW = "com.talibilm.app.DHIKR_OVERLAY_SHOW_NOW"
-        private const val CARD_DURATION_MS = 3_000L
+        private const val CARD_DURATION_MS = 4_500L
         private const val FADE_DURATION_MS = 300L
         private const val DAY_MS = 86_400_000L
         private const val TAG = "DhikrOverlayService"

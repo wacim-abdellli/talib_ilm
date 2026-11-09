@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../core/services/dhikr_moment_service.dart';
+import 'widgets/dhikr_content_option_tile.dart';
 
 class DhikrMomentSettingsSheet {
   static Future<void> show(BuildContext context) async {
@@ -184,6 +185,24 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
     }
   }
 
+  Future<void> _testDhikrMoment() async {
+    DhikrMomentService.rotate(_settings.content);
+    if (mounted) setState(() {});
+
+    if (DhikrMomentService.supportsFloatingOverlay) {
+      if (!await DhikrMomentService.hasOverlayPermission()) {
+        _showMessage('يتطلب عرض البطاقة العائمة إذن الظهور فوق التطبيقات.');
+        return;
+      }
+      final shown = await DhikrMomentService.showOverlayTest();
+      if (shown && mounted) {
+        _showMessage('تم إظهار بطاقة الذكر كتجربة على الشاشة');
+      }
+    } else {
+      _showMessage('تم تحديث الذكر التالي في المعاينة');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final preview = _previewFor(_settings.content);
@@ -360,35 +379,53 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
     ColorScheme colors,
     (String, String) preview,
   ) => Container(
-    padding: const EdgeInsets.all(AppSpace.lg),
+    padding: const EdgeInsetsDirectional.all(AppSpace.lg),
     decoration: BoxDecoration(
       color: colors.primary,
       borderRadius: AppRadius.lgRadius,
     ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          _settings.content == DhikrMomentContent.mixed
-              ? 'لَحْظَةٌ لِقَلْبِكَ'
-              : 'مِثَالٌ عَلَى الْبِطَاقَة',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: colors.onPrimary.withValues(alpha: .78),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _settings.content == DhikrMomentContent.mixed
+                  ? 'لَحْظَةٌ لِقَلْبِكَ'
+                  : 'مِثَالٌ عَلَى الْبِطَاقَة',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.onPrimary.withValues(alpha: .78),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _testDhikrMoment,
+              style: TextButton.styleFrom(
+                foregroundColor: colors.onPrimary,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: AppSpace.xs,
+                ),
+              ),
+              icon: const Icon(Icons.play_circle_outline_rounded),
+              label: const Text('تجربة الظهور'),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpace.sm),
+        const SizedBox(height: AppSpace.xs),
         Text(
           preview.$1,
-          textAlign: TextAlign.end,
+          textAlign: TextAlign.start,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: colors.onPrimary,
             height: 1.5,
           ),
         ),
-        const SizedBox(height: AppSpace.xs),
+        const SizedBox(height: AppSpace.xxs),
         Text(
           preview.$2,
-          textAlign: TextAlign.end,
+          textAlign: TextAlign.start,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: colors.onPrimary.withValues(alpha: .82),
           ),
@@ -409,7 +446,7 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
             for (final option in DhikrMomentContent.values)
               SizedBox(
                 width: itemWidth,
-                child: _ContentOptionTile(
+                child: DhikrContentOptionTile(
                   icon: _iconFor(option),
                   label: _labelFor(option),
                   selected: _settings.content == option,
@@ -478,7 +515,7 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
   static (String, String) _previewFor(
     DhikrMomentContent content,
   ) {
-    final item = DhikrMomentService.getItemForSlot(content, 0);
+    final item = DhikrMomentService.cardItemNotifier.value;
     return (
       item.text,
       item.meaning.isNotEmpty ? item.meaning : item.categoryLabel,
@@ -510,73 +547,4 @@ class _DhikrMomentSettingsFormState extends State<_DhikrMomentSettingsForm>
     final displayHour = hour % 12 == 0 ? 12 : hour % 12;
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
-}
-
-class _ContentOptionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final ColorScheme colors;
-
-  const _ContentOptionTile({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: selected ? colors.primaryContainer : colors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: AppRadius.mdRadius,
-      side: BorderSide(
-        color: selected ? colors.primary : colors.outline,
-        width: selected ? 1.5 : 1,
-      ),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.lg,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: AppIcon.sm,
-                color: selected ? colors.primary : colors.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: selected
-                        ? colors.onPrimaryContainer
-                        : colors.onSurface,
-                  ),
-                ),
-              ),
-              if (selected)
-                Icon(
-                  Icons.check_circle_rounded,
-                  size: AppIcon.sm,
-                  color: colors.primary,
-                ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }
