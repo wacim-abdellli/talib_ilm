@@ -4966,7 +4966,9 @@ FAILED (54 violations)
 - **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK; all widget text/accent color pairs passed `tool/contrast.py`; Xcode project parsed. macOS CI successfully built the iOS app and verified the embedded WidgetKit extension after removing the iOS 15-only timer modifier. Tests were not run.
 - **Open issue:** physical iPhone Widget Gallery visual confirmation remains; this Windows host has no Swift toolchain/device simulator.
 
-## Dhikr Moment Settings Preparation — Extract Oversized More Page (9 November 2026)
-- Extracted the Dhikr Moment settings sheet and More page header into focused widgets without changing their behavior or appearance, bringing `more_page.dart` below the 600-line restyling threshold.
-- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); `git diff --check` clean. Tests were not run.
-- **Open issue:** this is the no-visual-change preparation commit; the permission flow and content-selector UX follow in the next commit.
+## Dhikr Moment Settings — Permission-Coupled Toggle and Content Picker (9 November 2026)
+- Extracted the settings sheet and More page header before restyling, bringing the main page below the 600-line threshold.
+- The main switch now opens Android's app-specific “display over other apps” setting when permission is missing, waits for the app to resume, checks the permission result, then persists activation. Denials, failed Settings launches, service-start failures, and revoked permissions leave the feature off with a clear status. Disabling stops the feature immediately. iOS keeps scheduled reminders and explains that iOS does not permit an overlay card.
+- Removed the duplicate Settings shortcut. Replaced the content chips with a responsive two-column selector that keeps all six content choices, supports larger text, and gives the selected choice a clear check state.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK (8/10 allow markers); Android debug APK build succeeded; `git diff --check` clean. Tests were not run.
+- **Open issue:** physical Android permission-screen and iOS reminder visual confirmation were not available in this verification pass.

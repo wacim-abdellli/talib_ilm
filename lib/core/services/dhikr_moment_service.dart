@@ -260,11 +260,16 @@ class DhikrMomentService {
     }
   }
 
-  static Future<void> requestOverlayPermission() async {
-    if (!Platform.isAndroid) return;
+  static Future<bool> requestOverlayPermission() async {
+    if (!Platform.isAndroid) return false;
     try {
-      await _overlayChannel.invokeMethod<bool>('requestOverlayPermission');
-    } catch (_) {}
+      return await _overlayChannel.invokeMethod<bool>(
+            'requestOverlayPermission',
+          ) ??
+          false;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<bool> showOverlayTest() async {
