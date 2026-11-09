@@ -104,7 +104,6 @@ private struct PrayerSmallWidgetView: View {
             if let target = entry.nextPrayerDate, target > entry.date {
                 Text(target, style: .timer)
                     .font(.system(size: 23, weight: .bold, design: .rounded))
-                    .monospacedDigit()
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -241,7 +240,6 @@ private struct FeaturedPrayerBlock: View {
             if let target = entry.nextPrayerDate, target > entry.date {
                 Text(target, style: .timer)
                     .font(.system(size: prominent ? 25 : 21, weight: .bold, design: .rounded))
-                    .monospacedDigit()
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)

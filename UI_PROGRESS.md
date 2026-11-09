@@ -4963,5 +4963,5 @@ FAILED (54 violations)
 
 ## R53 — iOS Widget Light/Dark Readability & Layout (9 November 2026)
 - Extracted the native widget views, then rebuilt small, medium, and large layouts with explicit app-matched light/dark colors, readable Arabic text, and no oversized empty spacer; automatic mode now follows the app/system theme without being overwritten during refresh.
-- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK; all widget text/accent color pairs passed `tool/contrast.py`; Xcode project parsed and `git diff --check` passed. Tests were not run.
-- **Open issue:** Xcode compilation and visual confirmation in iOS Widget Gallery require the macOS CI/device; this Windows host has no Swift toolchain.
+- **Verification:** `flutter analyze --no-pub` clean; `python tool/ui_lint_v2.py --strict` OK; all widget text/accent color pairs passed `tool/contrast.py`; Xcode project parsed. The first macOS build identified `monospacedDigit()` as iOS 15-only; removed it to preserve the iOS 14 target. Tests were not run.
+- **Open issue:** awaiting the CI rebuild and physical iPhone Widget Gallery visual confirmation; this Windows host has no Swift toolchain.
