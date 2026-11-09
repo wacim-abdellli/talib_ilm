@@ -33,6 +33,19 @@ class HomeWidgetSnapshot {
   /// seamless data delivery across normal, sideloaded, and test environments.
   static Future<void> writeWidgetValue<T>(String key, T value) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      if (value is int) {
+        await prefs.setInt(key, value);
+      } else if (value is String) {
+        await prefs.setString(key, value);
+      } else if (value is bool) {
+        await prefs.setBool(key, value);
+      } else if (value is double) {
+        await prefs.setDouble(key, value);
+      }
+    } catch (_) {}
+
+    try {
       await HomeWidget.saveWidgetData<T>(
         key,
         value,

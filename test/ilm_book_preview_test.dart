@@ -33,7 +33,7 @@ void main() {
 
       expect(find.text('كتاب التوحيد الذي هو حق الله على العبيد'), findsOneWidget);
       expect(find.text('الشيخ محمد بن عبد الوهاب • 192 ص'), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios_rounded), findsOneWidget);
 
       await tester.tap(find.byType(IlmBookPreviewRow));
       await tester.pumpAndSettle();
@@ -132,7 +132,7 @@ void main() {
       );
 
       expect(find.text('عرض جميع الكتب (18)'), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios_rounded), findsOneWidget);
 
       await tester.tap(find.byType(IlmViewAllRow));
       await tester.pumpAndSettle();
