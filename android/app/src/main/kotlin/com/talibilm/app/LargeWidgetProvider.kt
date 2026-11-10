@@ -98,6 +98,15 @@ class LargeWidgetProvider : AppWidgetProvider() {
             }
             views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
 
+            // Short frames (single launcher row): hide the city/date header so the
+            // hero + prayer strip fit fully inside the card with no clipping.
+            val frameHeightDp = appWidgetManager.getAppWidgetOptions(appWidgetId)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            views.setViewVisibility(
+                R.id.widget_header_row,
+                if (frameHeightDp in 1..117) android.view.View.GONE else android.view.View.VISIBLE
+            )
+
             val widgetData = HomeWidgetPlugin.getData(context)
             WidgetChronometerHelper.setupChronometer(context, views, widgetData, this::class.java)
             appWidgetManager.updateAppWidget(appWidgetId, views)

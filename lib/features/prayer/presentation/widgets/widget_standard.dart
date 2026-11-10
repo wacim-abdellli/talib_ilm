@@ -12,7 +12,6 @@ const double kStandardBorder = 1.0;
 const double kStandardContent =
     kStandardW - (kStandardPadH * 2) - (kStandardBorder * 2); // 326dp
 const double kMedallionSize = 36.0;
-
 /// Standard widget (4×2) — 360×160dp fixed canvas.
 /// Section 1: Hero prayer info & countdown badge
 /// Section 2: Divider
@@ -90,7 +89,7 @@ class WidgetStandard extends StatelessWidget {
                               eval.prayerIcon,
                               size: AppIcon.xs,
                               color: prayerColor,
-                            ),
+                            ), 
                           ),
                           const SizedBox(width: AppSpace.xs),
                           Expanded(
@@ -123,7 +122,6 @@ class WidgetStandard extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     // Left Card (RTL End): Live Countdown Badge
                     Container(
                       width: cardW,

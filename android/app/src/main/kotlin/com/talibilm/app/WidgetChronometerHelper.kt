@@ -89,7 +89,7 @@ object WidgetChronometerHelper {
             val primaryTextColor = if (isDark) 0xFFF4EFE6.toInt() else 0xFF181612.toInt()
             val mutedTextColor = if (isDark) 0xFFA9A59C.toInt() else 0xFF5C574E.toInt()
             val goldColor = if (isDark) 0xFFE3B341.toInt() else 0xFF8C5E00.toInt()
-            val dividerColor = if (isDark) 0xFF23232C.toInt() else 0xFFE2DACB.toInt()
+            val dividerColor = if (isDark) 0xFF1F1F1F.toInt() else 0xFFE2DACB.toInt()
 
             try {
                 views.setInt(R.id.widget_container, "setBackgroundResource", cardBgRes)

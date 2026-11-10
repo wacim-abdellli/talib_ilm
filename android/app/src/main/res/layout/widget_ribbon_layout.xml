@@ -7,8 +7,7 @@
 <LinearLayout
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_vertical"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:layoutDirection="ltr"
     android:paddingLeft="12dp"
@@ -160,14 +159,15 @@
         android:layout_height="1dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="4dp"
-        android:background="#FF23232C"
+        android:background="#FF1F1F1F"
         android:text="" />
 
     <!-- Row 2: 5 Daily Prayers Strip (RTL order: Fajr on far right -> Isha on far left) -->
     <LinearLayout
         android:id="@+id/widget_prayers_row"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:layoutDirection="ltr"
         android:gravity="center_vertical"

@@ -7,14 +7,13 @@
 <LinearLayout
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_vertical"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:layoutDirection="ltr"
-    android:paddingLeft="14dp"
-    android:paddingRight="14dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="7dp"
+    android:paddingBottom="7dp"
     android:background="@drawable/widget_card_dark">
 
     <!-- Section 1: Top Bar [Left: City Name + Pin] <-> [Right: Hijri Date + Calendar] -->
@@ -96,12 +95,12 @@
         android:id="@+id/widget_hero_box"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="6dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="3dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         android:orientation="horizontal"
         android:layoutDirection="ltr"
         android:gravity="center_vertical"
@@ -242,8 +241,8 @@
 
             <LinearLayout
                 android:id="@+id/widget_hero_icon_box"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_marginLeft="8dp"
                 android:gravity="center"
                 android:background="@drawable/widget_countdown_badge_dark">
@@ -264,8 +263,8 @@
     <LinearLayout
         android:id="@+id/widget_prayers_row"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:layoutDirection="ltr"
         android:gravity="center_vertical"
@@ -279,8 +278,8 @@
             android:layout_weight="1"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -330,8 +329,8 @@
             android:layout_weight="1"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -381,8 +380,8 @@
             android:layout_weight="1"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -432,8 +431,8 @@
             android:layout_weight="1"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:orientation="vertical"
             android:gravity="center"
             android:background="@drawable/widget_col_active_dark">
@@ -485,8 +484,8 @@
             android:layout_weight="1"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:orientation="vertical"
             android:gravity="center">
 
