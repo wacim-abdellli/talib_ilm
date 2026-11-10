@@ -21,23 +21,30 @@ class WidgetStandard extends StatelessWidget {
   final EvaluatedPrayerWidgetState eval;
   final Map<String, DateTime> all;
   final bool isDark;
+  final double? width;
+  final double? height;
 
   const WidgetStandard({
     super.key,
     required this.eval,
     required this.all,
     this.isDark = false,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    const double cardW = (kStandardContent - AppSpace.sm) / 2.0; // 159dp each
+    final effectiveW = width ?? kStandardW;
+    final effectiveH = height ?? kStandardH;
+    final contentW = effectiveW - (kStandardPadH * 2) - (kStandardBorder * 2);
+    final double cardW = (contentW - AppSpace.sm) / 2.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
-        width: kStandardW,
-        height: kStandardH,
+        width: effectiveW,
+        height: effectiveH,
         isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kStandardPadH,
@@ -189,7 +196,7 @@ class WidgetStandard extends StatelessWidget {
 
                 // ── 5-Prayer Station Strip ──
                 PrayerStrip(
-                  totalWidth: kStandardContent,
+                  totalWidth: contentW,
                   eval: eval,
                   all: all,
                 ),

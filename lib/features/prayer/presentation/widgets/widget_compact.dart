@@ -17,15 +17,23 @@ const double kCompactContent =
 class WidgetCompact extends StatelessWidget {
   final EvaluatedPrayerWidgetState eval;
   final bool isDark;
+  final double? width;
+  final double? height;
 
   const WidgetCompact({
     super.key,
     required this.eval,
     this.isDark = false,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveW = width ?? kCompactW;
+    final effectiveH = height ?? kCompactH;
+    final contentW = effectiveW - (kCompactPad * 2) - (kCompactBorder * 2);
+
     final nextName = eval.nextPrayerName;
     final nextTime = eval.nextPrayerTime;
     final nextLabel = nextName != null && nextTime != null
@@ -35,8 +43,8 @@ class WidgetCompact extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
-        width: kCompactW,
-        height: kCompactH,
+        width: effectiveW,
+        height: effectiveH,
         isDark: isDark,
         padding: const EdgeInsetsDirectional.all(kCompactPad),
         child: Builder(
@@ -52,7 +60,7 @@ class WidgetCompact extends StatelessWidget {
               children: [
                 // 1. Prayer Title + Icon
                 SizedBox(
-                  width: kCompactContent,
+                  width: contentW,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -78,7 +86,7 @@ class WidgetCompact extends StatelessWidget {
 
                 // 2. Big Prayer Time
                 SizedBox(
-                  width: kCompactContent,
+                  width: contentW,
                   child: Text(
                     eval.timePillLabel,
                     style: textTheme.titleSmall.copyWith(
@@ -93,7 +101,7 @@ class WidgetCompact extends StatelessWidget {
 
                 // 3. Countdown Badge
                 FixedCountdownBadge(
-                  maxWidth: kCompactContent,
+                  maxWidth: contentW,
                   statusLabel: eval.statusLabel,
                   countdown: eval.countdownFormatted,
                   bgColor: palette.surfaceMuted,
@@ -105,7 +113,7 @@ class WidgetCompact extends StatelessWidget {
 
                 // 4. Next Prayer Footer
                 SizedBox(
-                  width: kCompactContent,
+                  width: contentW,
                   child: Text(
                     nextLabel,
                     style: textTheme.caption.copyWith(

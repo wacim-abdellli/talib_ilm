@@ -3,14 +3,14 @@ package com.talibilm.app
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.os.Bundle
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
-import java.io.File
 
 class CompactWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -18,9 +18,41 @@ class CompactWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
+        val effectiveIds = if (appWidgetIds.isNotEmpty()) appWidgetIds else {
+            appWidgetManager.getAppWidgetIds(ComponentName(context, this::class.java))
+        }
+        for (appWidgetId in effectiveIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        val minWidth = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+        val minHeight = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
+        if (minWidth > 0 && minHeight > 0) {
+            try {
+                val widgetData = HomeWidgetPlugin.getData(context)
+                widgetData.edit()
+                    .putInt("compact_widget_width", minWidth)
+                    .putInt("compact_widget_height", minHeight)
+                    .putInt("widget_width", minWidth)
+                    .putInt("widget_height", minHeight)
+                    .apply()
+
+                val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
+                    context,
+                    android.net.Uri.parse("talibilm://resize?provider=compact&minWidth=$minWidth&minHeight=$minHeight")
+                )
+                backgroundIntent.send()
+            } catch (_: Exception) {}
+        }
+        updateAppWidget(context, appWidgetManager, appWidgetId)
     }
 
     private fun updateAppWidget(

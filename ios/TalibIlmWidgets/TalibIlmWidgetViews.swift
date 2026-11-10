@@ -82,52 +82,58 @@ private struct PrayerSmallWidgetView: View {
                 Text("طالب العلم")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(palette.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Spacer(minLength: 4)
                 Image(systemName: "moon.stars.fill")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(palette.accent)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
 
             Text(entry.prayerDisplayTitle)
                 .font(.system(size: 15, weight: .bold))
                 .foregroundColor(palette.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.85)
+                .minimumScaleFactor(0.75)
 
             Text(entry.countdownPrefix)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(palette.muted)
                 .lineLimit(1)
+                .minimumScaleFactor(0.75)
 
             if let target = entry.nextPrayerDate, target > entry.date {
                 Text(target, style: .timer)
-                    .font(.system(size: 23, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.65)
             } else if entry.isPrayerActive {
                 Text("حان الآن")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 19, weight: .bold))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             } else {
                 Text(entry.nextPrayerName)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 19, weight: .bold))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
 
             Text(entry.cityName)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(palette.muted)
                 .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
     }
 }
@@ -137,28 +143,30 @@ private struct PrayerMediumWidgetView: View {
     let palette: WidgetPalette
 
     var body: some View {
-        VStack(spacing: 9) {
+        VStack(spacing: 6) {
             HStack(alignment: .center, spacing: 8) {
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .trailing, spacing: 2) {
                     Text(entry.cityName)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(palette.text)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                     Text(entry.hijriDate)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(palette.muted)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
                 Spacer(minLength: 6)
                 Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(palette.accent)
             }
 
             FeaturedPrayerBlock(entry: entry, palette: palette, prominent: false)
             PrayerTimesRow(entry: entry, palette: palette, prominent: false)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -168,58 +176,65 @@ private struct PrayerLargeWidgetView: View {
     let palette: WidgetPalette
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: 8) {
             HStack(spacing: 8) {
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .trailing, spacing: 2) {
                     Text("طالب العلم")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(palette.accent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                     Text(entry.cityName)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(palette.muted)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 Spacer(minLength: 6)
                 Text(entry.hijriDate)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(palette.muted)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
 
             FeaturedPrayerBlock(entry: entry, palette: palette, prominent: true)
             PrayerTimesRow(entry: entry, palette: palette, prominent: true)
 
-            VStack(alignment: .trailing, spacing: 7) {
+            VStack(alignment: .trailing, spacing: 5) {
                 HStack(spacing: 6) {
                     Text("درة اليوم")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(palette.accent)
+                        .lineLimit(1)
                     Spacer(minLength: 4)
                     Image(systemName: "quote.opening")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(palette.accent)
                 }
 
                 Text(entry.dailyGem)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(palette.text)
-                    .lineLimit(4)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.75)
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Text("— " + entry.dailyGemAuthor)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(palette.muted)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
-            .padding(12)
+            .padding(10)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(palette.inset)
             )
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
 }
@@ -231,40 +246,44 @@ private struct FeaturedPrayerBlock: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
-            VStack(alignment: .trailing, spacing: 3) {
+            VStack(alignment: .trailing, spacing: 2) {
                 Text(entry.prayerDisplayTitle)
-                    .font(.system(size: prominent ? 16 : 14, weight: .bold))
+                    .font(.system(size: prominent ? 15 : 13, weight: .bold))
                     .foregroundColor(palette.text)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text(entry.countdownPrefix)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(palette.muted)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             Spacer(minLength: 4)
             if let target = entry.nextPrayerDate, target > entry.date {
                 Text(target, style: .timer)
-                    .font(.system(size: prominent ? 25 : 21, weight: .bold, design: .rounded))
+                    .font(.system(size: prominent ? 24 : 20, weight: .bold, design: .rounded))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.65)
             } else if entry.isPrayerActive {
                 Text("حان الآن")
-                    .font(.system(size: prominent ? 21 : 18, weight: .bold))
+                    .font(.system(size: prominent ? 20 : 17, weight: .bold))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             } else {
                 Text(entry.nextPrayerName)
-                    .font(.system(size: prominent ? 21 : 18, weight: .bold))
+                    .font(.system(size: prominent ? 20 : 17, weight: .bold))
                     .foregroundColor(palette.prayer)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, prominent ? 12 : 9)
+        .padding(.horizontal, 10)
+        .padding(.vertical, prominent ? 9 : 6)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 14)
                 .fill(palette.inset)
         )
     }
@@ -276,7 +295,7 @@ private struct PrayerTimesRow: View {
     let prominent: Bool
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             prayerCell(name: "الفجر", time: entry.fajrTime, isNext: entry.nextPrayerName == "الفجر")
             prayerCell(name: "الظهر", time: entry.dhuhrTime, isNext: entry.nextPrayerName == "الظهر" || entry.nextPrayerName == "الجمعة")
             prayerCell(name: "العصر", time: entry.asrTime, isNext: entry.nextPrayerName == "العصر")
@@ -286,22 +305,22 @@ private struct PrayerTimesRow: View {
     }
 
     private func prayerCell(name: String, time: String, isNext: Bool) -> some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 4) {
             Text(name)
-                .font(.system(size: 12, weight: isNext ? .bold : .medium))
+                .font(.system(size: 11, weight: isNext ? .bold : .medium))
                 .foregroundColor(isNext ? palette.accentInk : palette.muted)
                 .lineLimit(1)
-                .minimumScaleFactor(0.85)
+                .minimumScaleFactor(0.7)
             Text(time)
-                .font(.system(size: 12, weight: isNext ? .bold : .medium))
+                .font(.system(size: 11, weight: isNext ? .bold : .medium))
                 .foregroundColor(isNext ? palette.text : palette.muted)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.65)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, prominent ? 10 : 7)
+        .padding(.vertical, prominent ? 8 : 5)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(isNext ? palette.accentSoft : palette.surface)
         )
     }

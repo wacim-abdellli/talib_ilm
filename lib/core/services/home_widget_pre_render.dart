@@ -32,13 +32,17 @@ class HomeWidgetPreRender {
     required bool useDark,
     required String hijriDate,
     bool force = false,
+    double? width,
+    double? height,
   }) async {
+    final effectiveW = width ?? kRibbonW;
+    final effectiveH = height ?? kRibbonH;
     final dailyKey =
-        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_$useDark';
+        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_${useDark}_${effectiveW.toInt()}x${effectiveH.toInt()}';
     if (!force && dailyKey == _lastDailyRibbonRenderKey) return;
     _lastDailyRibbonRenderKey = dailyKey;
 
-    const resolvedSize = Size(kRibbonW, kRibbonH);
+    final resolvedSize = Size(effectiveW, effectiveH);
     final all = day.prayers;
     final iqamaOverrides =
         (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
@@ -66,7 +70,7 @@ class HomeWidgetPreRender {
       try {
         await HomeWidget.renderFlutterWidget(
           MediaQuery(
-            data: const MediaQueryData(
+            data: MediaQueryData(
               size: resolvedSize,
               devicePixelRatio: 2.5,
               textScaler: TextScaler.noScaling,
@@ -81,6 +85,8 @@ class HomeWidgetPreRender {
                   hijriDate: hijriDate,
                   isDark: useDark,
                   forNativeWidget: true,
+                  width: effectiveW,
+                  height: effectiveH,
                 ),
               ),
             ),
@@ -99,13 +105,17 @@ class HomeWidgetPreRender {
     required bool useDark,
     required String hijriDate,
     bool force = false,
+    double? width,
+    double? height,
   }) async {
+    final effectiveW = width ?? kLargeW;
+    final effectiveH = height ?? kLargeH;
     final dailyKey =
-        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_$useDark';
+        '${day.city}_${day.date.year}-${day.date.month}-${day.date.day}_${useDark}_${effectiveW.toInt()}x${effectiveH.toInt()}';
     if (!force && dailyKey == _lastDailyLargeRenderKey) return;
     _lastDailyLargeRenderKey = dailyKey;
 
-    const resolvedSize = Size(kLargeW, kLargeH);
+    final resolvedSize = Size(effectiveW, effectiveH);
     final all = day.prayers;
     final iqamaOverrides =
         (await AdhanSettingsService().getSettings()).iqamaMinutesAfterAdhan;
@@ -133,7 +143,7 @@ class HomeWidgetPreRender {
       try {
         await HomeWidget.renderFlutterWidget(
           MediaQuery(
-            data: const MediaQueryData(
+            data: MediaQueryData(
               size: resolvedSize,
               devicePixelRatio: 2.0,
               textScaler: TextScaler.noScaling,
@@ -149,6 +159,8 @@ class HomeWidgetPreRender {
                   cityName: day.city,
                   isDark: useDark,
                   forNativeWidget: true,
+                  width: effectiveW,
+                  height: effectiveH,
                 ),
               ),
             ),

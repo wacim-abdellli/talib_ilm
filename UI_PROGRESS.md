@@ -1,3 +1,25 @@
+## Stage R59 — Dynamic & Responsive Widgets for All Screen Dimensions (10 November 2026)
+- **Branch**: `ui/r59-dynamic-responsive-widgets`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Android Layout Collision & Drifting**: In `widget_large_layout.xml` and `widget_ribbon_layout.xml`, fixed 380x104dp canvas and hardcoded RelativeLayout positioning caused native Chronometer overlays (`widget_hero_row`) to collide with borders or drift over text when launcher slots had different aspect ratios (e.g., 4x1, 4x2, 5x1, 5x2, tablets/foldables).
+  2. **Static Sizing in Android Widget Providers**: Previous providers (`LargeWidgetProvider`, `StandardWidgetProvider`, `RibbonWidgetProvider`, `CompactWidgetProvider`) lacked `onAppWidgetOptionsChanged`, ignoring user grid resize events and launcher dimensions.
+  3. **Dynamic Dimension Resolution & Offscreen Rendering**:
+     - Implemented `onAppWidgetOptionsChanged` across all 4 Android providers to capture launcher `minWidth` and `minHeight` and broadcast background `talibilm://resize` intents.
+     - Enhanced `HomeWidgetAndroidRenderer.resolveDimensions` and `HomeWidgetPreRender` to dynamically size offscreen Flutter bitmaps to the exact launcher slot dimensions with zero letterboxing.
+     - Updated Flutter widget layouts (`WidgetLarge`, `WidgetRibbon`, `WidgetStandard`, `WidgetCompact`, `WidgetCard`) to accept dynamic width/height and adapt fluidly via `Expanded`, `FittedBox(fit: BoxFit.scaleDown)`, and proportional spacing.
+     - Updated `widget_large.xml`, `widget_ribbon.xml`, `widget_standard.xml`, and `widget_compact.xml` with flexible `minResizeWidth`, `minResizeHeight`, `maxResizeWidth`, `maxResizeHeight`, and `resizeMode="horizontal|vertical"`.
+  4. **iOS WidgetKit Fluid Responsiveness**:
+     - In `TalibIlmWidgetViews.swift`, added `.minimumScaleFactor(0.65 ... 0.8)` and flexible spacing across Small, Medium, and Large widgets.
+     - Reduced prayer cell padding and font sizes dynamically so all 5 prayer columns fit seamlessly on smaller screens (iPhone SE, iPhone mini) as well as larger screens (iPhone Pro Max, iPad) without wrapping, clipping, or text truncation.
+     - Enforced `lineLimit(3)` with `minimumScaleFactor(0.75)` on daily gems to prevent card overflow under large Dynamic Type accessibility text scales.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found (ran in 45.0s).
+  - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
+  - `flutter test test/prayer_home_screen_widget_test.dart test/native_widget_snapshot_test.dart test/dhikr_moment_service_test.dart`: All 31 unit tests passed (100%).
+  - `flutter build apk --debug`: Built `build/app/outputs/flutter-apk/app-debug.apk` successfully (0 errors).
+  - `flutter build apk --target-platform android-arm64 --obfuscate`: Built modern phones release APK (`build/app/outputs/flutter-apk/talib_ilm_modern_phones_release.apk`, 120.9MB).
+- **Status**: Complete & Verified.
+
 ## Stage R58 — Fix Dhikr Overlay Stuck Card, Pinned Notification & Payload Routing (9 November 2026)
 - **Branch**: `ui/r58-fix-dhikr-overlay-stuck-and-notification`
 - **Root Cause Analysis & Problems Solved**:
