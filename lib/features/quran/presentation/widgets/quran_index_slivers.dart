@@ -15,6 +15,7 @@ class QuranIndexSlivers {
     required List<int> filteredSurahs,
     required Set<int> bookmarkedSurahSet,
     required ValueChanged<int> onOpenSurah,
+    void Function(int surah, {int? ayah})? onOpenSurahWithAyah,
     required ValueChanged<int> onToggleBookmark,
     required VoidCallback onResetSearch,
   }) {
@@ -51,6 +52,10 @@ class QuranIndexSlivers {
             surahNumber: surahNum,
             isBookmarked: isBookmarked,
             onTap: () => onOpenSurah(surahNum),
+            onNavigateToVerse: (surah, ayah) =>
+                onOpenSurahWithAyah != null
+                    ? onOpenSurahWithAyah(surah, ayah: ayah)
+                    : onOpenSurah(surah),
             onBookmarkTap: () => onToggleBookmark(surahNum),
           );
         },

@@ -105,6 +105,7 @@ class SurahCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
   final Widget? trailing;
+  final void Function(int surah, int ayah)? onNavigateToVerse;
 
   const SurahCard({
     super.key,
@@ -113,6 +114,7 @@ class SurahCard extends StatelessWidget {
     required this.onTap,
     required this.onBookmarkTap,
     this.trailing,
+    this.onNavigateToVerse,
   });
 
   @override
@@ -232,6 +234,8 @@ class SurahCard extends StatelessWidget {
                       SurahObjectivesSheet.show(
                         context,
                         surahNumber: surahNumber,
+                        onNavigateToVerse: onNavigateToVerse ??
+                            (s, a) => onTap(),
                       );
                     },
                   ),

@@ -5145,6 +5145,9 @@ FAILED (54 violations)
      - Eliminated 150ms `Timer` + `setState` in `QuranLine.dart`, constructing recognizers synchronously to eliminate 15 post-mount widget rebuilds per page.
      - Enabled `allowImplicitScrolling: true` on `MushafPageViewer`'s `PageView.builder` for instant, buttery 60/120fps page swiping.
      - Debounced `saveLastPage` (300ms) with font preloading to eliminate disk I/O on gesture frames.
+  4. **Surah Objectives Sheet Direct Navigation:**
+     - Connected the "قراءة السورة (ص X)" bottom button and all thematic sections in `SurahObjectivesSheet` so tapping either directly navigates to the target page and ayah.
+     - Added direct fallback navigation to `MushafPageViewer` when opened without an explicit callback, and wired `onOpenSurahWithAyah` through `quran_index_slivers.dart`, `surah_card.dart`, and `quran_search_results_view.dart`.
 - **Verification Gate:**
   - `flutter analyze`: 0 issues found (clean).
   - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).

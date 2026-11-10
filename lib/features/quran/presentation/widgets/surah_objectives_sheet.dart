@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:quran/quran.dart' as quran;
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_ui.dart';
+import '../../../../shared/navigation/fade_page_route.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
@@ -10,6 +13,8 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/icon_badge.dart';
 import '../../data/models/surah_objectives_card.dart';
 import '../../data/services/quran_surah_objectives_service.dart';
+import '../../data/services/reading_history_service.dart';
+import 'mushaf_page_viewer.dart';
 
 /// Scholarly bottom sheet presenting the comprehensive objectives, themes,
 /// naming reasons, and virtues of a Quranic Surah (بطاقة التعريف بالسورة ومقاصدها).
@@ -83,6 +88,35 @@ class _SurahObjectivesSheetState extends State<SurahObjectivesSheet> {
       ClipboardData(text: 'مقصد سورة $surahName:\n$text\n[مركز تفسير للدراسات القرآنية]'),
     );
     AppSnackbar.success(context, 'تم نسخ مقصد السورة');
+  }
+
+  void _navigateToVerse(BuildContext context, int surah, int ayah) {
+    HapticFeedback.lightImpact();
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
+    if (widget.onNavigateToVerse != null) {
+      widget.onNavigateToVerse!(surah, ayah);
+      return;
+    }
+
+    final targetPage = quran.getPageNumber(surah, ayah);
+    QcfFontLoader.preloadPages(targetPage, radius: 2);
+    ReadingHistoryService.recordReading(
+      surah: surah,
+      ayah: ayah,
+      page: targetPage,
+    );
+    navigator.push(
+      buildFadeRoute(
+        page: MushafPageViewer(
+          initialPage: targetPage,
+          initialSurah: surah,
+          initialAyah: ayah,
+        ),
+      ),
+    );
   }
 
   @override
@@ -245,10 +279,8 @@ class _SurahObjectivesSheetState extends State<SurahObjectivesSheet> {
                     child: AppButton(
                       label: 'قراءة السورة (ص ${_card!.startPage})',
                       icon: Icons.auto_stories_rounded,
-                      onPressed: () {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                        widget.onNavigateToVerse?.call(_card!.surahNumber, 1);
-                      },
+                      onPressed: () =>
+                          _navigateToVerse(context, _card!.surahNumber, 1),
                     ),
                   ),
                   const SizedBox(width: AppSpace.sm),
@@ -520,9 +552,8 @@ class _SurahObjectivesSheetState extends State<SurahObjectivesSheet> {
                 label: 'الانتقال إلى ${section.title}',
                 child: InkWell(
                   onTap: () {
-                    HapticFeedback.selectionClick();
-                    if (Navigator.canPop(context)) Navigator.pop(context);
-                    widget.onNavigateToVerse?.call(
+                    _navigateToVerse(
+                      context,
                       card.surahNumber,
                       section.startAyah,
                     );

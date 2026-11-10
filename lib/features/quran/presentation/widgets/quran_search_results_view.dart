@@ -75,6 +75,7 @@ List<Widget> buildQuranSearchResultsSlivers({
   required List<QuranAyahMatch> filteredAyahs,
   required Set<int> bookmarkedSurahSet,
   required ValueChanged<int> onOpenSurah,
+  void Function(int surah, {int? ayah})? onOpenSurahWithAyah,
   required ValueChanged<int> onToggleBookmark,
   required ValueChanged<QuranAyahMatch> onOpenAyah,
   required VoidCallback onResetSearch,
@@ -134,6 +135,10 @@ List<Widget> buildQuranSearchResultsSlivers({
             surahNumber: surahNum,
             isBookmarked: bookmarkedSurahSet.contains(surahNum),
             onTap: () => onOpenSurah(surahNum),
+            onNavigateToVerse: (surah, ayah) =>
+                onOpenSurahWithAyah != null
+                    ? onOpenSurahWithAyah(surah, ayah: ayah)
+                    : onOpenSurah(surah),
             onBookmarkTap: () => onToggleBookmark(surahNum),
           );
         },
@@ -212,6 +217,10 @@ List<Widget> buildQuranSearchResultsSlivers({
             surahNumber: surahNum,
             isBookmarked: bookmarkedSurahSet.contains(surahNum),
             onTap: () => onOpenSurah(surahNum),
+            onNavigateToVerse: (surah, ayah) =>
+                onOpenSurahWithAyah != null
+                    ? onOpenSurahWithAyah(surah, ayah: ayah)
+                    : onOpenSurah(surah),
             onBookmarkTap: () => onToggleBookmark(surahNum),
           );
         },

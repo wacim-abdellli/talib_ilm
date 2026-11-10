@@ -185,6 +185,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('tapping "قراءة السورة" bottom button triggers navigation to verse 1', (tester) async {
+      int? navigatedSurah;
+      int? navigatedAyah;
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          textScale: 1.0,
+          onNavigate: (s, a) {
+            navigatedSurah = s;
+            navigatedAyah = a;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final readSurahButton = find.textContaining('قراءة السورة');
+      expect(readSurahButton, findsOneWidget);
+
+      await tester.tap(readSurahButton, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(navigatedSurah, 1);
+      expect(navigatedAyah, 1);
+    });
   });
 }
 

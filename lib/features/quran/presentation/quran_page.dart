@@ -615,6 +615,7 @@ class _QuranPageState extends State<QuranPage> {
                         .map((b) => b.surah)
                         .toSet(),
                     onOpenSurah: _openSurah,
+                    onOpenSurahWithAyah: _openSurah,
                     onToggleBookmark: _toggleBookmark,
                     onOpenAyah: _openAyahMatch,
                     onResetSearch: () {
@@ -633,6 +634,7 @@ class _QuranPageState extends State<QuranPage> {
                         .map((b) => b.surah)
                         .toSet(),
                     onOpenSurah: _openSurah,
+                    onOpenSurahWithAyah: _openSurah,
                     onToggleBookmark: _toggleBookmark,
                     onResetSearch: () => _searchController.clear(),
                   )
