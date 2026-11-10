@@ -21,6 +21,8 @@ class QuranAudioDownloadItem extends StatelessWidget {
   final VoidCallback onPauseDownload;
   final VoidCallback onCancelDownload;
   final VoidCallback onDelete;
+  final VoidCallback? onPlay;
+  final bool isPlaying;
 
   const QuranAudioDownloadItem({
     super.key,
@@ -35,6 +37,8 @@ class QuranAudioDownloadItem extends StatelessWidget {
     required this.onPauseDownload,
     required this.onCancelDownload,
     required this.onDelete,
+    this.onPlay,
+    this.isPlaying = false,
   });
 
   @override
@@ -326,20 +330,40 @@ class QuranAudioDownloadItem extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Downloaded indicator icon
-          Container(
-            padding: const EdgeInsetsDirectional.all(AppSpace.xs),
-            decoration: BoxDecoration(
-              color: palette.goldSoft,
-              shape: BoxShape.circle,
+          if (onPlay != null) ...[
+            IconButton(
+              tooltip: isPlaying ? 'إيقاف مؤقت' : 'تشغيل السورة',
+              constraints: const BoxConstraints.tightFor(
+                width: AppSize.tap,
+                height: AppSize.tap,
+              ),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                isPlaying
+                    ? Icons.pause_circle_filled_rounded
+                    : Icons.play_circle_fill_rounded,
+                size: AppIcon.lg,
+                color: palette.primary,
+              ),
+              onPressed: onPlay,
             ),
-            child: Icon(
-              Icons.check_circle_rounded,
-              size: AppIcon.md,
-              color: palette.gold,
+            const SizedBox(width: AppSpace.xs),
+          ] else ...[
+            // Downloaded indicator icon
+            Container(
+              padding: const EdgeInsetsDirectional.all(AppSpace.xs),
+              decoration: BoxDecoration(
+                color: palette.goldSoft,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                size: AppIcon.md,
+                color: palette.gold,
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpace.xs),
+            const SizedBox(width: AppSpace.xs),
+          ],
 
           // Delete Button
           IconButton(

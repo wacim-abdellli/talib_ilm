@@ -5053,3 +5053,32 @@ FAILED (54 violations)
 - Reopening from Continue triggers the existing one-second ayah highlight on the chosen target. The reader now persists its initial page as well as page changes and exit, so leaving after opening a new page also resumes correctly.
 - The resume banner and tajweed legend now adapt to narrow phone widths; the prior banner and legend rows could overflow while using Continue on a typical phone-sized viewport.
 - **Verification:** the new 390dp widget test passes all 3 resume cases (no fasila, fasila on the resume page, and fasila on another page); existing Mushaf viewer and Quran page widget tests passed after the responsive fixes. `flutter analyze --no-pub`, strict UI lint, and `git diff --check` pass. A full-suite run before the final responsive fixes/new test ended with 847 passed and 20 failures, mainly golden-image diffs plus an icon expectation outside this flow; the full suite was not rerun after those fixes. Physical-device navigation/highlight confirmation remains open.
+
+## Round 60 — In-App Audio Player Dock & Media Notification Controls & Artwork (10 November 2026)
+- **Status:** Complete
+- **Branch:** `ui/r60-player-and-notification-upgrade`
+- **Tag:** `ui-r60-done`
+- **Core Problems Solved:**
+  1. **Missing In-App Player in "التنزيلات الصوتية" (Pic 1):**
+     - When users tapped play on a surah (e.g. سورة الصف) in the downloads screen, the track played in the background, but the bottom player bar never appeared on screen because `QuranAudioDownloadsPage` lacked a `bottomNavigationBar`.
+     - Resolution:
+       - Wired `bottomNavigationBar: AnimatedBuilder` bound to `_audioService.activeSurahNotifier` and `_audioService.isPlayingNotifier`, rendering `QuranAudioPlayerBar` smoothly when a surah is active and cleanly collapsing to `SizedBox.shrink()` when closed.
+       - Extracted `QuranAudioDeleteDialog` to `lib/features/quran/presentation/widgets/quran_audio_delete_dialog.dart`, keeping `quran_audio_downloads_page.dart` compact at 586 lines (< 600 line limit, Rule 8).
+       - Added `onPlay` and `isPlaying` parameters to `QuranAudioDownloadItem`, enabling direct one-tap playback from both "جميع السور" and "المحمّلة فقط" tabs.
+  2. **Android Media Notification Broken Artwork & Missing Controls (Pic 2):**
+     - The notification shade displayed a broken grey circular placeholder ring because `_appIconUri` used `android.resource://.../mipmap/ic_launcher` (an XML adaptive icon that Android's `MediaSessionCompat` / `BitmapFactory.decodeStream()` cannot decode).
+     - The notification controls were restricted to a single play/pause button without Previous/Next Surah or accurate duration seeking because `playFullSurah` loaded standalone single sources rather than a playlist.
+     - Resolution:
+       - Copied high-resolution 1024x1024 authentic Islamic app artwork to `android/app/src/main/res/drawable/quran_artwork.png`.
+       - Updated `_appIconUri` in `quran_audio_service.dart`, `adhan_service.dart`, and `quran_radio_service.dart` to `android.resource://com.talibilm.app/drawable/quran_artwork`, rendering crisp, authentic high-res album art.
+       - Re-engineered `playFullSurah` to build/reuse an authentic 114-surah playlist via `_player.setAudioSources(children, initialIndex: surah - 1)` with `useLazyPreparation: true`. Local files use `AudioSource.file`, streaming surahs use `AudioSource.uri`.
+       - Enabled full transport controls: Previous Surah (⏮️), Play/Pause (⏯️), Stop (⏹️), Next Surah (⏭️), with seekbar reporting accurate track duration.
+       - Synchronized `_player.currentIndexStream` with `activeSurahNotifier.value`, keeping the in-app player and notification 100% in sync when changing tracks from lock screen or bluetooth controls.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (clean).
+  - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).
+  - `flutter test test/quran_audio_service_test.dart test/quran_audio_player_bar_test.dart test/quran_audio_download_test.dart test/hadith_and_radio_test.dart test/adhan_full_audio_playback_test.dart`: 40/40 passed (100%).
+  - `flutter test test/quran_audio_downloads_page_player_test.dart`: 3/3 passed (100%).
+  - `flutter build apk --debug`: Built `build\app\outputs\flutter-apk\app-debug.apk`.
+  - `flutter build apk --target-platform android-arm64`: Built `build\app\outputs\flutter-apk\app-release.apk` (116.7MB) and updated `build\app\outputs\flutter-apk\talib_ilm_modern_phones_release.apk`.
+- **Open Issues:** None.

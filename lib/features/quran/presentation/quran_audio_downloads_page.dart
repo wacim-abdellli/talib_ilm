@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../../../app/theme/app_ui.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../data/services/quran_audio_downloader.dart';
 import '../data/services/quran_audio_service.dart';
 import 'widgets/downloaded_reciters_list_view.dart';
+import 'widgets/quran_audio_delete_dialog.dart';
 import 'widgets/quran_audio_download_item.dart';
+import 'widgets/quran_audio_player_bar.dart';
 import 'widgets/quran_audio_storage_header.dart';
 
 /// Screen for managing offline Holy Quran audio recitations, tracking
@@ -141,7 +142,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
 
   Future<void> _confirmDeleteSurah(int surah) async {
     final surahName = quran.getSurahNameArabic(surah);
-    final confirmed = await _showConfirmDialog(
+    final confirmed = await QuranAudioDeleteDialog.show(
+      context,
       title: 'حذف تلاوة سورة $surahName',
       content:
           'هل أنت متأكد من حذف الملفات الصوتية الخاصة بسورة $surahName للقارئ ${_currentReciter.name}؟',
@@ -160,7 +162,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   }
 
   Future<void> _confirmDeleteDownloadedSurah(DownloadedSurahItem item) async {
-    final confirmed = await _showConfirmDialog(
+    final confirmed = await QuranAudioDeleteDialog.show(
+      context,
       title: 'حذف تلاوة سورة ${item.surahName}',
       content:
           'هل أنت متأكد من حذف سورة ${item.surahName} للقارئ ${item.reciter.name}؟',
@@ -179,7 +182,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   }
 
   Future<void> _confirmDeleteReciter(QuranReciter reciter) async {
-    final confirmed = await _showConfirmDialog(
+    final confirmed = await QuranAudioDeleteDialog.show(
+      context,
       title: 'حذف تلاوات ${reciter.name}',
       content:
           'هل أنت متأكد من حذف كافة السور المحملة للقارئ ${reciter.name}؟',
@@ -195,7 +199,8 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
   }
 
   Future<void> _confirmDeleteAll() async {
-    final confirmed = await _showConfirmDialog(
+    final confirmed = await QuranAudioDeleteDialog.show(
+      context,
       title: 'حذف جميع التنزيلات الصوتية',
       content:
           'سيتم حذف جميع السور والتلاوات المحملة لكافة القراء وتحرير المساحة التخزينية بالكامل.',
@@ -208,49 +213,6 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
         _refreshStorageAndStatus(showLoading: false);
       }
     }
-  }
-
-  Future<bool?> _showConfirmDialog({
-    required String title,
-    required String content,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final palette = ctx.palette;
-        final textTheme = ctx.text;
-
-        return AlertDialog(
-          backgroundColor: palette.surface,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
-          title: Text(
-            title,
-            style: textTheme.titleSmall.copyWith(
-              color: palette.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            content,
-            style: textTheme.body.copyWith(color: palette.textMuted),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'إلغاء',
-                style: textTheme.label.copyWith(color: palette.textMuted),
-              ),
-            ),
-            AppButton(
-              label: 'حذف',
-              variant: AppButtonVariant.primary,
-              onPressed: () => Navigator.pop(ctx, true),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -515,55 +477,84 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                           onDeleteSurah: _confirmDeleteDownloadedSurah,
                           onDeleteReciter: _confirmDeleteReciter,
                         )
-                      : ValueListenableBuilder<Map<String, SurahDownloadProgress>>(
-                          valueListenable: _downloader.downloadProgressNotifier,
-                          builder: (context, progressMap, _) {
-                            return ListView.separated(
-                              padding: const EdgeInsetsDirectional.only(
-                                start: AppSpace.lg,
-                                end: AppSpace.lg,
-                                top: AppSpace.xs,
-                                bottom: AppSpace.xxl,
-                              ),
-                              itemCount: displaySurahs.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: AppSpace.sm),
-                              itemBuilder: (context, index) {
-                                final surah = displaySurahs[index];
-                                final surahName =
-                                    quran.getSurahNameArabic(surah);
-                                final verseCount =
-                                    quran.getVerseCount(surah);
-                                final isDownloaded =
-                                    _surahDownloadedStatus[surah] ?? false;
-                                final downloadedBytes =
-                                    _surahBytesOnDisk[surah] ?? 0;
-                                final downloadKey =
-                                    '${_currentReciter.id}_$surah';
-                                final activeProgress = progressMap[downloadKey];
+                      : AnimatedBuilder(
+                          animation: Listenable.merge([
+                            _audioService.activeSurahNotifier,
+                            _audioService.isPlayingNotifier,
+                          ]),
+                          builder: (context, _) {
+                            return ValueListenableBuilder<
+                                Map<String, SurahDownloadProgress>>(
+                              valueListenable:
+                                  _downloader.downloadProgressNotifier,
+                              builder: (context, progressMap, _) {
+                                return ListView.separated(
+                                  padding: const EdgeInsetsDirectional.only(
+                                    start: AppSpace.lg,
+                                    end: AppSpace.lg,
+                                    top: AppSpace.xs,
+                                    bottom: AppSpace.xxl,
+                                  ),
+                                  itemCount: displaySurahs.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: AppSpace.sm),
+                                  itemBuilder: (context, index) {
+                                    final surah = displaySurahs[index];
+                                    final surahName =
+                                        quran.getSurahNameArabic(surah);
+                                    final verseCount =
+                                        quran.getVerseCount(surah);
+                                    final isDownloaded =
+                                        _surahDownloadedStatus[surah] ?? false;
+                                    final downloadedBytes =
+                                        _surahBytesOnDisk[surah] ?? 0;
+                                    final downloadKey =
+                                        '${_currentReciter.id}_$surah';
+                                    final activeProgress =
+                                        progressMap[downloadKey];
+                                    final isCurrentPlaying = _audioService
+                                                .activeSurahNotifier.value ==
+                                            surah &&
+                                        _audioService.selectedReciter ==
+                                            _currentReciter &&
+                                        _audioService.isPlayingNotifier.value;
 
-                                return QuranAudioDownloadItem(
-                                  surah: surah,
-                                  surahName: surahName,
-                                  verseCount: verseCount,
-                                  isDownloaded: isDownloaded,
-                                  downloadedBytes: downloadedBytes,
-                                  reciter: _currentReciter,
-                                  progress: activeProgress,
-                                  onStartDownload: () =>
-                                      _startDownload(surah),
-                                  onPauseDownload: () =>
-                                      _downloader.pauseDownload(
-                                    surah,
-                                    reciter: _currentReciter,
-                                  ),
-                                  onCancelDownload: () =>
-                                      _downloader.cancelDownload(
-                                    surah,
-                                    reciter: _currentReciter,
-                                  ),
-                                  onDelete: () =>
-                                      _confirmDeleteSurah(surah),
+                                    return QuranAudioDownloadItem(
+                                      surah: surah,
+                                      surahName: surahName,
+                                      verseCount: verseCount,
+                                      isDownloaded: isDownloaded,
+                                      downloadedBytes: downloadedBytes,
+                                      reciter: _currentReciter,
+                                      progress: activeProgress,
+                                      isPlaying: isCurrentPlaying,
+                                      onPlay: isDownloaded
+                                          ? () => _handlePlayDownloadedSurah(
+                                                DownloadedSurahItem(
+                                                  surah: surah,
+                                                  reciter: _currentReciter,
+                                                  bytes: downloadedBytes,
+                                                  surahName: surahName,
+                                                  verseCount: verseCount,
+                                                ),
+                                              )
+                                          : null,
+                                      onStartDownload: () =>
+                                          _startDownload(surah),
+                                      onPauseDownload: () =>
+                                          _downloader.pauseDownload(
+                                        surah,
+                                        reciter: _currentReciter,
+                                      ),
+                                      onCancelDownload: () =>
+                                          _downloader.cancelDownload(
+                                        surah,
+                                        reciter: _currentReciter,
+                                      ),
+                                      onDelete: () =>
+                                          _confirmDeleteSurah(surah),
+                                    );
+                                  },
                                 );
                               },
                             );
@@ -572,6 +563,23 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: AnimatedBuilder(
+        animation: Listenable.merge([
+          _audioService.activeSurahNotifier,
+          _audioService.isPlayingNotifier,
+        ]),
+        builder: (context, _) {
+          final activeSurah = _audioService.activeSurahNotifier.value;
+          if (activeSurah == null) return const SizedBox.shrink();
+          return SafeArea(
+            top: false,
+            child: QuranAudioPlayerBar(
+              audioService: _audioService,
+              onClose: () => _audioService.stop(),
+            ),
+          );
+        },
       ),
     );
   }
