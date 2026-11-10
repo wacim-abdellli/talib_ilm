@@ -83,7 +83,26 @@ class MainActivity : AudioServiceActivity() {
                     "startOverlayService" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
                             try {
-                                DhikrOverlayScheduler.scheduleNext(this)
+                                val args = call.arguments as? Map<*, *>
+                                val resetFirstTrigger = args?.get("resetFirstTrigger") as? Boolean ?: false
+                                if (resetFirstTrigger) {
+                                    DhikrOverlayScheduler.resetForImmediateSession(this)
+                                }
+                                DhikrOverlayScheduler.scheduleNext(
+                                    this,
+                                    delayMsOverride = if (resetFirstTrigger) 12_000L else null,
+                                )
+                                val serviceIntent = Intent(this, DhikrOverlayService::class.java).apply {
+                                    action = DhikrOverlayService.ACTION_START
+                                    putExtra(DhikrOverlayService.EXTRA_KICKOFF_FAST, resetFirstTrigger)
+                                }
+                                try {
+                                    startService(serviceIntent)
+                                } catch (_: Exception) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        startForegroundService(serviceIntent)
+                                    }
+                                }
                                 result.success(true)
                             } catch (_: Exception) {
                                 result.success(false)

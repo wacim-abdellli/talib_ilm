@@ -283,6 +283,7 @@ class DhikrMomentService {
       if (permission) {
         return await _overlayChannel.invokeMethod<bool>(
               'startOverlayService',
+              const {'resetFirstTrigger': true},
             ) ??
             false;
       }

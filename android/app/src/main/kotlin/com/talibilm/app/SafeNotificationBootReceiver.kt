@@ -50,6 +50,22 @@ class SafeNotificationBootReceiver : BroadcastReceiver() {
 
         try {
             DhikrOverlayScheduler.scheduleNext(context)
+            val prefs = DhikrOverlayScheduler.prefs(context)
+            if (DhikrOverlayScheduler.isEnabled(prefs) &&
+                (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M ||
+                    android.provider.Settings.canDrawOverlays(context))
+            ) {
+                val serviceIntent = Intent(context, DhikrOverlayService::class.java).apply {
+                    action = DhikrOverlayService.ACTION_START
+                }
+                try {
+                    context.startService(serviceIntent)
+                } catch (_: Exception) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    }
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reschedule dhikr overlay: ${e.message}", e)
         }

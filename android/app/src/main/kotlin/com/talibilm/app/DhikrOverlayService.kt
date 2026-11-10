@@ -1,6 +1,5 @@
 package com.talibilm.app
 
-import android.app.ActivityManager
 import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -24,34 +23,72 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Opt-in, dismissible dhikr card for Android.
- * Runs briefly to display the card (4.5s), then removes the view,
- * clears the foreground notification, schedules the next alarm, and terminates.
+ * Smart Active-Usage Dhikr Moment Service for Android.
+ *
+ * Tracks when the user is actually using their phone (unlocked + interactive screen):
+ * 1. Never renders while the screen is off or locked; if a slot becomes due while locked,
+ *    it marks `pending_on_unlock` and displays 2.5s after the user unlocks their phone.
+ * 2. While the user continues actively using their phone across any app, paces reminders
+ *    at `computeActiveIntervalMs` (~5 min for 50/day) and rotates categories without consecutive repeats.
  */
 class DhikrOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var windowManager: WindowManager? = null
     private var card: View? = null
-    private var isCurrentRunTest = false
+    private var receiverRegistered = false
 
     private val autoRemoveRunnable = Runnable {
-        removeCardAndStop()
+        finishCardDisplay()
     }
 
     private val fadeOutRunnable = Runnable {
         try {
-            card?.animate()?.alpha(0f)?.setDuration(250L)?.start()
+            card?.animate()
+                ?.alpha(0f)
+                ?.translationY(-dp(10).toFloat())
+                ?.setDuration(260L)
+                ?.start()
         } catch (_: Exception) {}
     }
 
-    private val screenOffReceiver = object : BroadcastReceiver() {
+    private val unlockTriggerRunnable = Runnable {
+        evaluateAndShowIfDue(isUnlockEvent = true)
+    }
+
+    private val activeUsageCheckRunnable = Runnable {
+        evaluateAndShowIfDue(isUnlockEvent = false)
+    }
+
+    private val usageStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                removeCardAndStop()
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    handler.removeCallbacks(unlockTriggerRunnable)
+                    handler.removeCallbacks(activeUsageCheckRunnable)
+                    cleanupCardView()
+                    clearForegroundNotification()
+                    if (isEnabled()) {
+                        DhikrOverlayScheduler.scheduleNext(this@DhikrOverlayService)
+                    }
+                }
+                Intent.ACTION_USER_PRESENT -> {
+                    scheduleUnlockEvaluation(delayMs = 2400L)
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    if (isDeviceActivelyUsed()) {
+                        scheduleUnlockEvaluation(delayMs = 2600L)
+                    }
+                }
+                Intent.ACTION_TIME_TICK -> {
+                    if (isDeviceActivelyUsed()) {
+                        evaluateAndShowIfDue(isUnlockEvent = false)
+                    }
+                }
             }
         }
     }
@@ -60,58 +97,147 @@ class DhikrOverlayService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createChannel()
-        startForegroundCompat()
-        val screenOffFilter = IntentFilter(Intent.ACTION_SCREEN_OFF)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(screenOffReceiver, screenOffFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            registerReceiver(screenOffReceiver, screenOffFilter)
+        startForegroundSafe()
+        clearForegroundNotification()
+        registerUsageReceiver()
+    }
+
+    private fun registerUsageReceiver() {
+        if (receiverRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_TIME_TICK)
         }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(usageStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(usageStateReceiver, filter)
+            }
+            receiverRegistered = true
+        } catch (_: Exception) {}
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!Settings.canDrawOverlays(this)) {
-            removeCardAndStop()
+        startForegroundSafe()
+        clearForegroundNotification()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            stopAndCleanupService()
             return START_NOT_STICKY
         }
 
-        val hasExtraContent = intent?.hasExtra(EXTRA_TEXT) == true
-        isCurrentRunTest = hasExtraContent || intent?.action == ACTION_SHOW_NOW && intent.hasExtra(EXTRA_LABEL)
+        val action = intent?.action ?: ACTION_START
+        if (action == ACTION_STOP) {
+            stopAndCleanupService()
+            return START_NOT_STICKY
+        }
 
-        if (!isCurrentRunTest) {
-            val power = getSystemService(POWER_SERVICE) as PowerManager
-            val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
-            val isInteractive = power.isInteractive
-            val isLocked = keyguard.isKeyguardLocked
-            val isAppForeground = isAppInForeground()
-            val isEnabled = isEnabled()
+        val hasExplicitTestContent = intent?.hasExtra(EXTRA_TEXT) == true
+        if (hasExplicitTestContent) {
+            val extraLabel = intent?.getStringExtra(EXTRA_LABEL)
+            val extraText = intent?.getStringExtra(EXTRA_TEXT) ?: ""
+            val extraMeaning = intent?.getStringExtra(EXTRA_MEANING) ?: ""
+            showCard(
+                DhikrCardEntry(
+                    label = if (!extraLabel.isNullOrBlank()) extraLabel else "لَحْظَةُ ذِكْر",
+                    text = extraText,
+                    meaning = extraMeaning,
+                ),
+                isTestRun = true,
+            )
+            if (isEnabled()) {
+                scheduleNextActiveCheck(delayMs = DhikrOverlayScheduler.computeNextDelayMs(DhikrOverlayScheduler.prefs(this)))
+            }
+            return START_STICKY
+        }
 
-            if (!isEnabled || !isInteractive || isLocked || isAppForeground) {
-                if (isEnabled) {
-                    DhikrOverlayScheduler.scheduleNext(this)
+        if (!isEnabled()) {
+            stopAndCleanupService()
+            return START_NOT_STICKY
+        }
+
+        when (action) {
+            ACTION_START -> {
+                val kickOffFast = intent?.getBooleanExtra(EXTRA_KICKOFF_FAST, false) == true
+                if (kickOffFast && isDeviceActivelyUsed()) {
+                    scheduleNextActiveCheck(delayMs = 10_000L)
+                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 12_000L)
+                } else {
+                    evaluateAndShowIfDue(isUnlockEvent = false)
                 }
-                removeCardAndStop()
-                return START_NOT_STICKY
+            }
+            ACTION_USER_UNLOCKED -> {
+                scheduleUnlockEvaluation(delayMs = 2400L)
+            }
+            ACTION_ALARM_CHECK, ACTION_SHOW_NOW -> {
+                evaluateAndShowIfDue(isUnlockEvent = false)
+            }
+            else -> {
+                evaluateAndShowIfDue(isUnlockEvent = false)
             }
         }
 
-        val extraLabel = intent?.getStringExtra(EXTRA_LABEL)
-        val extraText = intent?.getStringExtra(EXTRA_TEXT)
-        val extraMeaning = intent?.getStringExtra(EXTRA_MEANING)
+        return START_STICKY
+    }
 
-        val content = if (!extraText.isNullOrBlank()) {
-            DhikrCardEntry(
-                label = if (!extraLabel.isNullOrBlank()) extraLabel else "لَحْظَةُ ذِكْر",
-                text = extraText,
-                meaning = extraMeaning ?: "",
-            )
-        } else {
-            currentContent()
+    private fun scheduleUnlockEvaluation(delayMs: Long) {
+        if (!isEnabled()) return
+        handler.removeCallbacks(unlockTriggerRunnable)
+        handler.postDelayed(unlockTriggerRunnable, delayMs)
+    }
+
+    private fun scheduleNextActiveCheck(delayMs: Long) {
+        handler.removeCallbacks(activeUsageCheckRunnable)
+        if (!isEnabled() || !isDeviceActivelyUsed()) return
+        val safeDelay = delayMs.coerceIn(5_000L, 60_000L)
+        handler.postDelayed(activeUsageCheckRunnable, safeDelay)
+    }
+
+    private fun isDeviceActivelyUsed(): Boolean {
+        val power = getSystemService(POWER_SERVICE) as? PowerManager ?: return false
+        val keyguard = getSystemService(KEYGUARD_SERVICE) as? KeyguardManager ?: return false
+        return power.isInteractive && !keyguard.isKeyguardLocked
+    }
+
+    private fun evaluateAndShowIfDue(isUnlockEvent: Boolean) {
+        val prefs = DhikrOverlayScheduler.prefs(this)
+        if (!DhikrOverlayScheduler.isEnabled(prefs)) {
+            stopAndCleanupService()
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            stopAndCleanupService()
+            return
         }
 
-        showCard(content)
-        return START_NOT_STICKY
+        if (!isDeviceActivelyUsed()) {
+            // Phone is locked or screen is off: never show on a locked screen!
+            // Instead, if a dhikr is due now, mark it pending so it shows right after unlock.
+            if (DhikrOverlayScheduler.isDueNow(prefs, isUnlockEvent = false)) {
+                DhikrOverlayScheduler.markPendingOnUnlock(prefs)
+            }
+            DhikrOverlayScheduler.scheduleNext(this)
+            return
+        }
+
+        if (card != null) {
+            // A card is already visible on screen; wait for it to finish.
+            return
+        }
+
+        if (DhikrOverlayScheduler.isDueNow(prefs, isUnlockEvent = isUnlockEvent)) {
+            val entry = currentContent()
+            DhikrOverlayScheduler.recordShownNow(prefs)
+            showCard(entry, isTestRun = false)
+        }
+
+        val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)
+        scheduleNextActiveCheck(nextDelay)
+        DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
     }
 
     private fun createChannel() {
@@ -127,7 +253,7 @@ class DhikrOverlayService : Service() {
                     "تذكير لحظة ذكر",
                     NotificationManager.IMPORTANCE_MIN,
                 ).apply {
-                    description = "إظهار بطاقة الذكر العائمة"
+                    description = "إظهار بطاقة الذكر العائمة أثناء استخدام الهاتف"
                     setShowBadge(false)
                     enableLights(false)
                     enableVibration(false)
@@ -137,69 +263,70 @@ class DhikrOverlayService : Service() {
         }
     }
 
-    private fun startForegroundCompat() {
-        val openApp = PendingIntent.getActivity(
-            this,
-            0,
-            packageManager.getLaunchIntentForPackage(packageName),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("لحظة ذكر")
-                .setContentText("بطاقة الذكر معروضة الآن")
-                .setContentIntent(openApp)
-                .setOngoing(false)
-                .setShowWhen(false)
-                .setVisibility(Notification.VISIBILITY_SECRET)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            Notification.Builder(this)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("لحظة ذكر")
-                .setContentText("بطاقة الذكر معروضة الآن")
-                .setContentIntent(openApp)
-                .setOngoing(false)
-                .setPriority(Notification.PRIORITY_MIN)
-                .build()
-        }
-        if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+    private fun startForegroundSafe() {
+        try {
+            val openApp = PendingIntent.getActivity(
+                this,
+                0,
+                packageManager.getLaunchIntentForPackage(packageName),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
-        }
+            val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle("لحظة ذكر")
+                    .setContentText("بطاقة الذكر نشطة أثناء استخدام الهاتف")
+                    .setContentIntent(openApp)
+                    .setOngoing(false)
+                    .setShowWhen(false)
+                    .setVisibility(Notification.VISIBILITY_SECRET)
+                    .build()
+            } else {
+                @Suppress("DEPRECATION")
+                Notification.Builder(this)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle("لحظة ذكر")
+                    .setContentText("بطاقة الذكر نشطة أثناء استخدام الهاتف")
+                    .setContentIntent(openApp)
+                    .setOngoing(false)
+                    .setPriority(Notification.PRIORITY_MIN)
+                    .build()
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun clearForegroundNotification() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            manager?.cancel(NOTIFICATION_ID)
+        } catch (_: Exception) {}
     }
 
     private fun isEnabled(): Boolean =
-        getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
-            .getBoolean("flutter.dhikr_moment_enabled", false)
-
-    private fun isAppInForeground(): Boolean {
-        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-        return activityManager.runningAppProcesses?.any { process ->
-            process.processName == packageName &&
-                process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-        } == true
-    }
-
-    private fun readInt(prefs: android.content.SharedPreferences, key: String, fallback: Int): Int =
-        (prefs.all["flutter.$key"] as? Number)?.toInt() ?: fallback
+        DhikrOverlayScheduler.isEnabled(DhikrOverlayScheduler.prefs(this))
 
     private fun currentContent(): DhikrCardEntry {
-        val prefs = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
-        val contentMode = readInt(prefs, "dhikr_moment_content", 2)
-        val lastCategoryIndex = readInt(prefs, "dhikr_moment_last_category_index", -1)
+        val prefs = DhikrOverlayScheduler.prefs(this)
+        val contentMode = DhikrOverlayScheduler.readInt(prefs, "dhikr_moment_content", 2)
+        val lastCategoryIndex = DhikrOverlayScheduler.readInt(prefs, "dhikr_moment_last_category_index", -1)
         val lastItemText = prefs.getString("flutter.dhikr_moment_last_item_text", "") ?: ""
 
         val candidateCategories = if (contentMode == 2) {
-            // Mixed mode: strictly exclude the previous category so consecutive
-            // appearances NEVER show the same section twice.
             val filtered = listOf(0, 1, 3, 4, 5).filter { it != lastCategoryIndex }
             if (filtered.isNotEmpty()) filtered else listOf(0, 1, 3, 4, 5)
         } else {
@@ -220,15 +347,14 @@ class DhikrOverlayService : Service() {
         val selected = (if (candidateItems.isNotEmpty()) candidateItems else pool).random()
 
         prefs.edit()
-            .putInt("flutter.dhikr_moment_last_category_index", chosenCategory)
+            .putLong("flutter.dhikr_moment_last_category_index", chosenCategory.toLong())
             .putString("flutter.dhikr_moment_last_item_text", selected.text)
             .apply()
 
         return selected
     }
 
-    private fun showCard(entry: DhikrCardEntry) {
-        // Remove any previously showing card immediately
+    private fun showCard(entry: DhikrCardEntry, isTestRun: Boolean) {
         cleanupCardView()
 
         val label = TextView(this).apply {
@@ -238,17 +364,17 @@ class DhikrOverlayService : Service() {
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
-            maxWidth = dp(310)
+            maxWidth = dp(320)
         }
         val body = TextView(this).apply {
             text = entry.text
-            textSize = 17f
+            textSize = 16.5f
             setTextColor(Color.WHITE)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
             maxLines = 4
-            maxWidth = dp(310)
+            maxWidth = dp(320)
         }
         val meaning = TextView(this).apply {
             text = entry.meaning
@@ -257,7 +383,7 @@ class DhikrOverlayService : Service() {
             gravity = Gravity.END
             textDirection = TextView.TEXT_DIRECTION_RTL
             maxLines = 2
-            maxWidth = dp(310)
+            maxWidth = dp(320)
         }
 
         val contentLayout = LinearLayout(this).apply {
@@ -288,10 +414,10 @@ class DhikrOverlayService : Service() {
             gravity = Gravity.CENTER_VERTICAL
             background = GradientDrawable(
                 GradientDrawable.Orientation.LEFT_RIGHT,
-                intArrayOf(Color.rgb(103, 66, 18), Color.rgb(137, 88, 20)),
+                intArrayOf(Color.rgb(92, 58, 14), Color.rgb(132, 84, 18)),
             ).apply {
                 cornerRadius = dp(18).toFloat()
-                setStroke(dp(1), Color.rgb(214, 170, 89))
+                setStroke(dp(1), Color.rgb(218, 174, 92))
             }
             addView(
                 contentLayout,
@@ -300,15 +426,15 @@ class DhikrOverlayService : Service() {
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                 ),
             )
-            // Tap on card to dismiss instantly
             isClickable = true
             isFocusable = false
             setOnClickListener {
-                removeCardAndStop()
+                finishCardDisplay()
             }
         }
-        row.elevation = dp(6).toFloat()
+        row.elevation = dp(8).toFloat()
         row.alpha = 0f
+        row.translationY = -dp(14).toFloat()
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -332,14 +458,20 @@ class DhikrOverlayService : Service() {
         try {
             windowManager?.addView(row, params)
             card = row
-            row.animate().alpha(1f).setDuration(160L).start()
+            row.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(220L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
 
             handler.removeCallbacks(fadeOutRunnable)
             handler.removeCallbacks(autoRemoveRunnable)
-            handler.postDelayed(fadeOutRunnable, 4200L)
-            handler.postDelayed(autoRemoveRunnable, 4500L)
+            val displayDuration = if (isTestRun) 4800L else 5800L
+            handler.postDelayed(fadeOutRunnable, displayDuration - 300L)
+            handler.postDelayed(autoRemoveRunnable, displayDuration)
         } catch (_: Exception) {
-            removeCardAndStop()
+            finishCardDisplay()
         }
     }
 
@@ -357,35 +489,43 @@ class DhikrOverlayService : Service() {
         }
     }
 
-    private fun removeCardAndStop() {
+    private fun finishCardDisplay() {
         cleanupCardView()
-
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-            } else {
-                @Suppress("DEPRECATION")
-                stopForeground(true)
-            }
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            manager?.cancel(NOTIFICATION_ID)
-        } catch (_: Exception) {}
-
-        if (!isCurrentRunTest && isEnabled()) {
-            try {
-                DhikrOverlayScheduler.scheduleNext(this)
-            } catch (_: Exception) {}
+        clearForegroundNotification()
+        if (isEnabled()) {
+            val prefs = DhikrOverlayScheduler.prefs(this)
+            val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)
+            scheduleNextActiveCheck(nextDelay)
+            DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
+        } else {
+            stopAndCleanupService()
         }
+    }
+
+    private fun stopAndCleanupService() {
+        handler.removeCallbacksAndMessages(null)
+        cleanupCardView()
+        clearForegroundNotification()
         stopSelf()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (isEnabled()) {
+            DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 15_000L)
+        }
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        try {
-            unregisterReceiver(screenOffReceiver)
-        } catch (_: Exception) {}
+        if (receiverRegistered) {
+            try {
+                unregisterReceiver(usageStateReceiver)
+            } catch (_: Exception) {}
+            receiverRegistered = false
+        }
         cleanupCardView()
         super.onDestroy()
     }
@@ -398,6 +538,9 @@ class DhikrOverlayService : Service() {
         const val ACTION_START = "com.talibilm.app.DHIKR_OVERLAY_START"
         const val ACTION_STOP = "com.talibilm.app.DHIKR_OVERLAY_STOP"
         const val ACTION_SHOW_NOW = "com.talibilm.app.DHIKR_OVERLAY_SHOW_NOW"
+        const val ACTION_ALARM_CHECK = "com.talibilm.app.DHIKR_OVERLAY_ALARM_CHECK"
+        const val ACTION_USER_UNLOCKED = "com.talibilm.app.DHIKR_OVERLAY_USER_UNLOCKED"
+        const val EXTRA_KICKOFF_FAST = "extra_dhikr_kickoff_fast"
         const val EXTRA_LABEL = "extra_dhikr_label"
         const val EXTRA_TEXT = "extra_dhikr_text"
         const val EXTRA_MEANING = "extra_dhikr_meaning"

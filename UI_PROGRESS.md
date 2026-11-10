@@ -11,6 +11,9 @@
   4. **iOS & Android Widget Polish (Zero `...` Ellipsis & Luxury/Vercel Dark Mode)**:
      - Eliminated `...` text truncation across iOS Medium and Large widgets (`TalibIlmWidgetViews.swift`) using `fixedSize(horizontal: true, vertical: false)`, decoupled `HStack` layout priorities for `"موعد الأذان"`, and `Font.monospacedDigit()` (iOS 13+ compatible).
      - Upgraded both Android (`widget_large.xml`, `widget_ribbon.xml`) and iOS (`TalibIlmWidgetViews.swift`) dark themes to a deep obsidian Luxury/Vercel palette (`#070707`–`#0B0B0B` card canvas, `#0F0F0F`–`#111111` raised pill surfaces, crisp 1dp hairline borders).
+  5. **Smart Active-Phone-Usage Dhikr Moment Engine (`DhikrOverlayService.kt`, `DhikrOverlayScheduler.kt`, `DhikrOverlayReceiver.kt`)**:
+     - **Root Cause**: Previously, `DhikrOverlayScheduler` only set fixed clock-minute alarms, `DhikrOverlayService` discarded any slot that fired while the screen was locked (`!isInteractive || isLocked`) or while the user was inside the app (`isAppForeground`), and `stopSelf()` terminated the service so it never listened for `ACTION_USER_PRESENT` (screen unlock) or active screen-on sessions.
+     - **Fix**: Rebuilt `DhikrOverlayService` and `DhikrOverlayScheduler` to track active phone usage (`ACTION_USER_PRESENT`, `ACTION_SCREEN_ON`, `ACTION_SCREEN_OFF`, `ACTION_TIME_TICK` + active session loop): never renders on a locked screen, queues missed slots via `pending_on_unlock` to display `2.4s` after the user unlocks their phone, paces reminders against realistic active screen-on time (`~5 min` for `50/day`), and kicks off the first live reminder within `10–12s` after saving settings.
 - **Verification Commands & Results**:
   - `flutter analyze`: 0 issues found.
   - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
@@ -4512,12 +4515,7 @@ FAILED (54 violations)
 - **Commit:** `39d320b`
 - **Root Cause Diagnosed & Fixed:**
   1. **Launcher Resize & True Responsive Filling (scaleType="fitXY"):**
-     - Diagnosed why resizing made the widget smaller: `prayer_widget_layout.xml` had `scaleType="fitCenter"` with `adjustViewBounds="true"` and fixed 380x180 bitmap ratio. On wider launcher cells (e.g. 4x1 or 5x1 with 110dp height), Android scaled the width down proportionally to 232dp, leaving huge blank margins.
-     - Changed to `scaleType="fitXY"` with `fill_parent` in XML, set `minResizeWidth="180dp"`, `minResizeHeight="80dp"`, `maxResizeWidth="600dp"`, `maxResizeHeight="400dp"`, and `widgetFeatures="reconfigurable"`.
-     - In `PrayerWidgetProvider.kt`, implemented `onAppWidgetOptionsChanged` to capture launcher resize events and persist user dimensions (`widget_width`, `widget_height`).
-     - In `HomeWidgetService`, dynamically reads launcher-allocated dimensions or defaults to responsive `380x145` aspect ratio with crisp `3.0` pixel ratio.
-  2. **Frozen Seconds Elimination & Real-time Background Updates:**
-     - Android Home Screen AppWidgets render static bitmaps; re-rendering 60 frames/sec causes OS throttling/battery kills. Displaying `: 53` 
+     - Diagnosed why resizing made the
 
 ## Round 13 — Android Home Screen Widget Persistent Live Chronometer Countdown
 - **Status:** Complete
