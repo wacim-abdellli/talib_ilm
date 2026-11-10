@@ -162,11 +162,14 @@ class DhikrOverlayService : Service() {
             ACTION_START -> {
                 val kickOffFast = intent?.getBooleanExtra(EXTRA_KICKOFF_FAST, false) == true
                 if (kickOffFast && isDeviceActivelyUsed()) {
-                    scheduleNextActiveCheck(delayMs = 6_000L)
-                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 8_000L)
+                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 6_000L)
                 } else {
-                    evaluateAndShowIfDue(isUnlockEvent = false)
+                    val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(DhikrOverlayScheduler.prefs(this))
+                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
                 }
+                clearForegroundNotification()
+                stopSelf()
+                return START_NOT_STICKY
             }
             ACTION_USER_UNLOCKED -> {
                 scheduleUnlockEvaluation(delayMs = 1200L)
@@ -218,6 +221,8 @@ class DhikrOverlayService : Service() {
             // Instead, mark pending so it immediately greets the user upon unlocking.
             DhikrOverlayScheduler.markPendingOnUnlock(prefs)
             DhikrOverlayScheduler.scheduleNext(this)
+            clearForegroundNotification()
+            stopSelf()
             return
         }
 
@@ -230,11 +235,13 @@ class DhikrOverlayService : Service() {
             val entry = currentContent()
             DhikrOverlayScheduler.recordShownNow(prefs)
             showCard(entry, isTestRun = false)
+        } else {
+            // Cooldown active: schedule next check and shut down immediately so no notification lingers!
+            val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)
+            DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
+            clearForegroundNotification()
+            stopSelf()
         }
-
-        val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)
-        scheduleNextActiveCheck(nextDelay)
-        DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
     }
 
     private fun createChannel() {
@@ -487,14 +494,13 @@ class DhikrOverlayService : Service() {
 
     private fun finishCardDisplay() {
         cleanupCardView()
+        clearForegroundNotification()
         if (isEnabled()) {
             val prefs = DhikrOverlayScheduler.prefs(this)
             val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)
-            scheduleNextActiveCheck(nextDelay)
             DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = nextDelay)
-        } else {
-            stopAndCleanupService()
         }
+        stopSelf()
     }
 
     private fun stopAndCleanupService() {

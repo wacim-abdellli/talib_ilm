@@ -5153,6 +5153,10 @@ FAILED (54 violations)
      - Fixed foreground service notification lifecycle: stopped premature `stopForeground(REMOVE)` demoting the service, keeping it alive as a silent background foreground service.
      - Accelerated pacing for 50/day (active interval ~80s, unlock cooldown ~20s, first kickoff 6s).
      - Centered overlay card with `Gravity.TOP or Gravity.CENTER_HORIZONTAL` and `y = 52dp` for clean notch-safe floating presentation.
+  6. **Zero Pinned Notification in Drawer (Transient Overlay Lifecycle):**
+     - Made `DhikrOverlayService` transient: runs only while the card is visibly displayed on screen, and clears notification immediately with `stopForeground(STOP_FOREGROUND_REMOVE)` and `stopSelf()`.
+     - Completely eliminated pinned notifications from the notification shade when idle.
+     - Pacing is handled entirely via `AlarmManager.setExactAndAllowWhileIdle` and manifest `USER_PRESENT` receiver.
 - **Verification Gate:**
   - `flutter analyze`: 0 issues found (clean).
   - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).
