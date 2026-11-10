@@ -5082,3 +5082,29 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built `build\app\outputs\flutter-apk\app-debug.apk`.
   - `flutter build apk --target-platform android-arm64`: Built `build\app\outputs\flutter-apk\app-release.apk` (116.7MB) and updated `build\app\outputs\flutter-apk\talib_ilm_modern_phones_release.apk`.
 - **Open Issues:** None.
+
+## Round 61 — Smooth, Clean Page & Component Animations (10 November 2026)
+- **Status:** Complete
+- **Branch:** `ui/r61-smooth-page-and-component-animations`
+- **Tag:** `ui-r61-done`
+- **Core Problems Solved:**
+  1. **Global Unified RTL-Aware Page Transitions:**
+     - The app previously relied on Android's default zoom transitions with raw timing, causing abrupt jumps between pages.
+     - Implemented `AppRtlPageTransitionsBuilder` in `lib/app/theme/app_page_transitions.dart`, registered in `ThemeData.pageTransitionsTheme` for Android, Windows, Linux, and Fuchsia, while preserving native `CupertinoPageTransitionsBuilder` on iOS/macOS for edge-swipe gestures.
+     - Entering pages gently lift with micro-elevation (3.5% down to zero), subtle scale breathing (0.98 -> 1.0), and smooth opacity fade over `AppMotion.base` using `Curves.easeOutCubic`. Popping back reverses smoothly with `Curves.easeInCubic`.
+  2. **Tactile Directional Tab Transitions in App Shell:**
+     - Enhanced `AnimatedIndexedStack` in `lib/shared/navigation/app_shell.dart` from a flat opacity transition to directional horizontal sliding with micro-scale breathing (`0.985 -> 1.0`), smoothly animating along the natural reading direction when switching between bottom tabs.
+  3. **Smooth Modal Bottom Sheet & Dialog Transitions:**
+     - Upgraded `AppSheet.show` in `lib/shared/widgets/app_sheet.dart` with `sheetAnimationStyle: const AnimationStyle(curve: AppMotion.easeOut, duration: AppMotion.slow, reverseCurve: AppMotion.easeIn, reverseDuration: AppMotion.base)`.
+     - Upgraded `AppDialog.show` in `lib/shared/widgets/app_dialog.dart` with custom `showGeneralDialog` scale (`0.94 -> 1.0`) and fade transition over `AppMotion.base`.
+  4. **Strict Token Compliance & File Limits:**
+     - All transitions strictly utilize `AppMotion` tokens (`fast 120ms`, `base 200ms`, `slow 320ms`, `easeOutCubic`, `easeInCubic`).
+     - Every modified file strictly adheres to Rule 8 (<600 lines: `app_theme.dart` 295 lines, `app_shell.dart` 451 lines, `app_sheet.dart` 158 lines, `app_dialog.dart` 151 lines).
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (clean).
+  - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).
+  - `flutter test test/app_animation_transitions_test.dart`: 5/5 passed (100%).
+  - `flutter test test/navigation_transition_test.dart test/favorites_page_navigation_test.dart`: 8/8 passed (100%).
+  - `flutter build apk --debug`: Built `build\app\outputs\flutter-apk\app-debug.apk`.
+  - `flutter build apk --target-platform android-arm64`: Built `build\app\outputs\flutter-apk\app-release.apk` (116.7MB) and updated `build\app\outputs\flutter-apk\talib_ilm_modern_phones_release.apk`.
+- **Open Issues:** None.

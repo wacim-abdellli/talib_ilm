@@ -64,18 +64,25 @@ class AppFadePageRoute<T> extends PageRoute<T>
     }
     final curved = CurvedAnimation(
       parent: animation,
-      curve: Curves.easeOut,
-      reverseCurve: Curves.easeOut,
+      curve: AppMotion.easeOut,
+      reverseCurve: AppMotion.easeIn,
     );
     final offsetTween = Tween<Offset>(
-      begin: const Offset(0, 0.03),
+      begin: const Offset(0, 0.035),
       end: Offset.zero,
+    );
+    final scaleTween = Tween<double>(
+      begin: 0.98,
+      end: 1.0,
     );
     return FadeTransition(
       opacity: curved,
       child: SlideTransition(
         position: curved.drive(offsetTween),
-        child: child,
+        child: ScaleTransition(
+          scale: curved.drive(scaleTween),
+          child: child,
+        ),
       ),
     );
   }

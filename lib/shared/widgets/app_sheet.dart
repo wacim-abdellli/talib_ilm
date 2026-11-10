@@ -38,6 +38,12 @@ class AppSheet extends StatelessWidget {
       context: context,
       isScrollControlled: isScrollControlled,
       enableDrag: enableDrag,
+      sheetAnimationStyle: const AnimationStyle(
+        curve: AppMotion.easeOut,
+        duration: AppMotion.slow,
+        reverseCurve: AppMotion.easeIn,
+        reverseDuration: AppMotion.base,
+      ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       barrierColor: context.palette.brandDark.withValues(alpha: 0.55),

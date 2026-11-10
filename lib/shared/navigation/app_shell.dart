@@ -384,8 +384,11 @@ class AnimatedIndexedStack extends StatefulWidget {
 class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _animation;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
   late int _currentIndex;
+  double _slideDirection = 1.0;
 
   @override
   void initState() {
@@ -395,20 +398,30 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
       vsync: this,
       duration: widget.duration,
     );
-    _animation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppMotion.easeOut,
-      ),
-    );
+    _buildAnimations();
     _controller.value = 1.0;
+  }
+
+  void _buildAnimations() {
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: AppMotion.easeOut,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0.035 * _slideDirection, 0.0),
+      end: Offset.zero,
+    ).animate(curved);
+    _scaleAnimation = Tween<double>(begin: 0.985, end: 1.0).animate(curved);
   }
 
   @override
   void didUpdateWidget(AnimatedIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.index != _currentIndex) {
+      _slideDirection = (widget.index > _currentIndex) ? 1.0 : -1.0;
       _currentIndex = widget.index;
+      _buildAnimations();
       _controller.forward(from: 0.0);
     }
   }
@@ -422,10 +435,16 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: _animation,
-      child: IndexedStack(
-        index: _currentIndex,
-        children: widget.children,
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: IndexedStack(
+            index: _currentIndex,
+            children: widget.children,
+          ),
+        ),
       ),
     );
   }

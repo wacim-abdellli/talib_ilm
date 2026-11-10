@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_palette.dart';
 import 'app_colors.dart';
+import 'app_page_transitions.dart';
+import 'app_palette.dart';
 
 class AppTheme {
   static final ThemeData lightTheme = _buildTheme(AppPalette.light);
@@ -278,6 +279,16 @@ class AppTheme {
         radius: const Radius.circular(8),
       ),
 
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: AppRtlPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: AppRtlPageTransitionsBuilder(),
+          TargetPlatform.linux: AppRtlPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: AppRtlPageTransitionsBuilder(),
+        },
+      ),
     );
   }
 }
