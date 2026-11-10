@@ -78,7 +78,14 @@ class QuranAudioFrameMerger {
   static Future<File> getFullSurahFile(int surah, {QuranReciter? reciter}) async {
     final r = reciter ?? QuranAudioService().selectedReciter;
     final dir = await QuranAudioDownloader.getSurahDir(surah, r.id);
-    return File('${dir.path}/full_surah.mp3');
+    final standardFile = File('${dir.path}/full_surah.mp3');
+    if (standardFile.existsSync()) return standardFile;
+    // Check zero-padded directory convention (e.g. 069) for backward compatibility
+    final base = await QuranAudioStorage.getAudioBaseDir();
+    final sStr = _formatNumber(surah);
+    final paddedFile = File('${base.path}/${r.id}/$sStr/full_surah.mp3');
+    if (paddedFile.existsSync()) return paddedFile;
+    return standardFile;
   }
 
   /// Checks whether an existing full_surah.mp3 is valid and complete, or if
