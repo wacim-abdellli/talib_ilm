@@ -43,6 +43,8 @@ class QuranAudioPlayerBar extends StatelessWidget {
         audioService.isFullSurahModeNotifier,
         audioService.speedNotifier,
         audioService.repeatModeNotifier,
+        audioService.verseRepeatTargetNotifier,
+        audioService.hifdhRangeNotifier,
         audioService.sleepTimerMinutesNotifier,
         audioService.sleepTimerRemainingSecondsNotifier,
         audioService.stopAtEndOfSurahNotifier,
@@ -58,6 +60,24 @@ class QuranAudioPlayerBar extends StatelessWidget {
         final reciter = audioService.selectedReciter;
         final currentAyah = audioService.activeAyahNotifier.value ?? 1;
         final totalAyahs = quran.getVerseCount(surah);
+        final activeRange = audioService.hifdhRangeNotifier.value;
+        final verseRepeatTarget = audioService.verseRepeatTargetNotifier.value;
+
+        final String subtitleText;
+        if (activeRange != null && activeRange.surah == surah) {
+          final iter = activeRange.currentIteration + 1;
+          final totalIter =
+              activeRange.isInfinite ? '∞' : '${activeRange.repeatCount}';
+          subtitleText =
+              'تكرار الآيات (${activeRange.startAyah} - ${activeRange.endAyah}) • دورة $iter/$totalIter • ${reciter.name}';
+        } else if (verseRepeatTarget > 1) {
+          subtitleText =
+              'الآية $currentAyah من $totalAyahs (تكرار $verseRepeatTarget×) • ${reciter.name}';
+        } else if (isFullSurah || reciter.isSurahBased) {
+          subtitleText = 'تلاوة كاملة • ${reciter.name}';
+        } else {
+          subtitleText = 'الآية $currentAyah من $totalAyahs • ${reciter.name}';
+        }
 
         final repeatMode = audioService.repeatModeNotifier.value;
         final isRepeatActive = repeatMode != AudioRepeatMode.none;
@@ -140,9 +160,7 @@ class QuranAudioPlayerBar extends StatelessWidget {
                               fit: BoxFit.scaleDown,
                               alignment: AlignmentDirectional.centerStart,
                               child: Text(
-                                isFullSurah || reciter.isSurahBased
-                                    ? 'تلاوة كاملة • ${reciter.name}'
-                                    : 'الآية $currentAyah من $totalAyahs • ${reciter.name}',
+                                subtitleText,
                                 style: textTheme.caption.copyWith(
                                   color: palette.textMuted,
                                 ),

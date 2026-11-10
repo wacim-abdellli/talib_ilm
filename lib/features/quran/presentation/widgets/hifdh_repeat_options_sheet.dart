@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
@@ -12,9 +14,9 @@ import '../../data/services/quran_audio_service.dart';
 import 'hifdh_repeat_controls.dart';
 
 /// Interactive modal sheet providing scholarly Hifdh repetition tools:
-/// 1. Single Ayah Repetitions (1x, 2x, 3x, 5x, 10x, ∞).
-/// 2. Range Loop Engine (تكرار المقطع للحفظ بين آيتين محددتين مع عدد تكرارات).
-/// 3. Educational & Scholarly Reciter switching.
+/// 1. Single Ayah Repetitions (1x, 2x, 3x, 5x, 10x, ∞) for all reciters.
+/// 2. Range Loop Engine (تكرار المقطع للحفظ بين آيتين محددتين مع عدد تكرارات)
+///    working seamlessly with both verse-by-verse and full-surah reciters.
 class HifdhRepeatOptionsSheet extends StatefulWidget {
   final QuranAudioService audioService;
   final int surahNumber;
@@ -35,7 +37,7 @@ class HifdhRepeatOptionsSheet extends StatefulWidget {
   }) {
     return AppSheet.show<void>(
       context: context,
-      maxHeightFactor: 0.88,
+      maxHeightFactor: 0.90,
       enableDrag: true,
       builder: (_) => HifdhRepeatOptionsSheet(
         audioService: audioService,
@@ -62,18 +64,18 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
     final totalAyahs = quran.getVerseCount(widget.surahNumber);
 
     if (activeRange != null && activeRange.surah == widget.surahNumber) {
-      _startAyah = activeRange.startAyah;
-      _endAyah = activeRange.endAyah;
+      _startAyah = activeRange.startAyah.clamp(1, totalAyahs);
+      _endAyah = activeRange.endAyah.clamp(_startAyah, totalAyahs);
       _rangeRepeatCount = activeRange.repeatCount;
     } else {
-      _startAyah = widget.currentAyah;
-      _endAyah = (widget.currentAyah + 4).clamp(1, totalAyahs);
+      final safeCurrent = widget.currentAyah.clamp(1, totalAyahs);
+      _startAyah = safeCurrent;
+      _endAyah = (safeCurrent + 4).clamp(safeCurrent, totalAyahs);
     }
   }
 
   void _onVerseRepeatSelected(int count) {
     HapticFeedback.selectionClick();
-    final wasSurahBased = widget.audioService.selectedReciter.isSurahBased;
     widget.audioService.setVerseRepeatCount(count);
 
     final String message = switch (count) {
@@ -85,37 +87,34 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
       10 => 'سيتم تكرار الآية 10 مرات لتثبيت الحفظ',
       _ => 'تم ضبط تكرار الآية $count مرات',
     };
-    if (wasSurahBased && (count > 1 || count == 0)) {
-      AppSnackbar.info(
-        context,
-        '$message (تم التبديل للقارئ ${widget.audioService.selectedReciter.name} لدعم تكرار الآيات)',
-      );
-    } else {
-      AppSnackbar.info(context, message);
-    }
+    AppSnackbar.info(context, message);
     setState(() {});
   }
 
   void _startRangePlayback() {
     HapticFeedback.mediumImpact();
-    Navigator.of(context).pop();
-    final wasSurahBased = widget.audioService.selectedReciter.isSurahBased;
-    widget.audioService.playHifdhRange(
-      surah: widget.surahNumber,
-      startAyah: _startAyah,
-      endAyah: _endAyah,
-      repeatCount: _rangeRepeatCount,
-    );
+    final start = _startAyah <= _endAyah ? _startAyah : _endAyah;
+    final end = _endAyah >= _startAyah ? _endAyah : _startAyah;
+    final repeatCount = _rangeRepeatCount;
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
-    final countLabel =
-        _rangeRepeatCount == 0 ? 'مستمر' : '$_rangeRepeatCount مرات';
     final reciterName = widget.audioService.selectedReciter.name;
-    final message = wasSurahBased
-        ? 'بدء تكرار مقطع سورة $surahName (الآيات $_startAyah - $_endAyah) بصوت $reciterName • $countLabel'
-        : 'بدء تكرار مقطع سورة $surahName (الآيات $_startAyah - $_endAyah) • $countLabel';
+    final countLabel = repeatCount == 0 ? 'مستمر' : '$repeatCount مرات';
+
+    Navigator.of(context).pop();
+    unawaited(
+      widget.audioService.playHifdhRange(
+        surah: widget.surahNumber,
+        startAyah: start,
+        endAyah: end,
+        repeatCount: repeatCount,
+      ),
+    );
+
+    final rangeLabel =
+        start == end ? 'الآية $start' : 'الآيات $start - $end';
     AppSnackbar.success(
       context,
-      message,
+      'بدء تكرار مقطع سورة $surahName ($rangeLabel) بصوت $reciterName • $countLabel',
     );
   }
 
@@ -133,6 +132,9 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
     final textTheme = context.text;
     final surahName = quran.getSurahNameArabic(widget.surahNumber);
     final totalAyahs = quran.getVerseCount(widget.surahNumber);
+    final reciterName = widget.audioService.selectedReciter.name;
+    final safeCurrent = widget.currentAyah.clamp(1, totalAyahs);
+    final fiveEnd = (safeCurrent + 4).clamp(safeCurrent, totalAyahs);
 
     return Container(
       padding: const EdgeInsetsDirectional.only(
@@ -141,9 +143,7 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
       ),
       decoration: BoxDecoration(
         color: palette.surfaceRaised,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: AppRadius.sheetTopRadius,
         border: Border.all(color: palette.border),
       ),
       child: Column(
@@ -153,8 +153,8 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
           // Drag Handle
           Center(
             child: Container(
-              width: 36,
-              height: 4,
+              width: AppSpace.xxl,
+              height: AppSpace.xxs,
               decoration: BoxDecoration(
                 color: palette.border,
                 borderRadius: AppRadius.pillRadius,
@@ -183,10 +183,12 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                         ),
                       ),
                       Text(
-                        'سورة $surahName • الآية ${widget.currentAyah}',
+                        'سورة $surahName • الآية $safeCurrent • $reciterName',
                         style: textTheme.caption.copyWith(
                           color: palette.textMuted,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -209,44 +211,12 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpace.lg),
+                horizontal: AppSpace.lg,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Notice if active reciter is surah-based
-                  if (widget.audioService.selectedReciter.isSurahBased) ...[
-                    Container(
-                      padding: const EdgeInsetsDirectional.all(AppSpace.sm),
-                      decoration: BoxDecoration(
-                        color: palette.gold.withValues(alpha: 0.12),
-                        borderRadius: AppRadius.smRadius,
-                        border: Border.all(
-                          color: palette.gold.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: AppIcon.sm,
-                            color: palette.gold,
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          Expanded(
-                            child: Text(
-                              'تكرار الآيات والمقاطع يتطلب قارئاً آية بآية (سيتم التبديل تلقائياً لمصحف مجزأ)',
-                              style: textTheme.caption.copyWith(
-                                color: palette.text,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                  ],
-
-                  // ── Section 1: Verse Repetition (تكرار الآية الحالية) ───
+                  // ── Section 1: Verse Repetition (تكرار الآية الواحدة) ───
                   Container(
                     padding: const EdgeInsetsDirectional.all(AppSpace.md),
                     decoration: BoxDecoration(
@@ -261,15 +231,16 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                           children: [
                             Icon(
                               Icons.repeat_one_rounded,
-                              size: AppIcon.sm,
                               color: palette.gold,
                             ),
                             const SizedBox(width: AppSpace.xs),
-                            Text(
-                              'تكرار الآية الواحدة',
-                              style: textTheme.label.copyWith(
-                                color: palette.text,
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Text(
+                                'تكرار الآية الواحدة',
+                                style: textTheme.label.copyWith(
+                                  color: palette.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -282,12 +253,16 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                           ),
                         ),
                         const SizedBox(height: AppSpace.sm),
-                        ValueListenableBuilder<int>(
-                          valueListenable:
-                              widget.audioService.verseRepeatTargetNotifier,
-                          builder: (context, activeTarget, _) {
-                            final repeatMode = widget
-                                .audioService.repeatModeNotifier.value;
+                        AnimatedBuilder(
+                          animation: Listenable.merge([
+                            widget.audioService.verseRepeatTargetNotifier,
+                            widget.audioService.repeatModeNotifier,
+                          ]),
+                          builder: (context, _) {
+                            final activeTarget = widget
+                                .audioService.verseRepeatTargetNotifier.value;
+                            final repeatMode =
+                                widget.audioService.repeatModeNotifier.value;
                             final currentCount =
                                 repeatMode == AudioRepeatMode.infinite
                                     ? 0
@@ -343,7 +318,7 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
 
                   const SizedBox(height: AppSpace.md),
 
-                  // ── Section 2: Range Loop (تكرار مقطع للحفظ) ─────────────
+                  // ── Section 2: Range Loop (تكرار مقطع كامل للحفظ) ─────────
                   Container(
                     padding: const EdgeInsetsDirectional.all(AppSpace.md),
                     decoration: BoxDecoration(
@@ -360,15 +335,16 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                           children: [
                             Icon(
                               Icons.all_inclusive_rounded,
-                              size: AppIcon.sm,
                               color: palette.primary,
                             ),
                             const SizedBox(width: AppSpace.xs),
-                            Text(
-                              'تكرار مقطع كامل للحفظ (Range Loop)',
-                              style: textTheme.label.copyWith(
-                                color: palette.primary,
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Text(
+                                'تكرار مقطع كامل للحفظ (Range Loop)',
+                                style: textTheme.label.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -380,33 +356,91 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                             color: palette.textMuted,
                           ),
                         ),
-                        const SizedBox(height: AppSpace.md),
+                        const SizedBox(height: AppSpace.sm),
 
-                        // Range Selectors (From Ayah to Ayah)
+                        // Quick Scope Presets
+                        Wrap(
+                          spacing: AppSpace.xs,
+                          runSpacing: AppSpace.xs,
+                          children: [
+                            HifdhScopeChip(
+                              label: 'الآية الحالية ($safeCurrent)',
+                              isSelected: _startAyah == safeCurrent &&
+                                  _endAyah == safeCurrent,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  _startAyah = safeCurrent;
+                                  _endAyah = safeCurrent;
+                                });
+                              },
+                            ),
+                            if (totalAyahs > 1)
+                              HifdhScopeChip(
+                                label: '5 آيات ($safeCurrent - $fiveEnd)',
+                                isSelected: _startAyah == safeCurrent &&
+                                    _endAyah == fiveEnd &&
+                                    fiveEnd > safeCurrent,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _startAyah = safeCurrent;
+                                    _endAyah = fiveEnd;
+                                  });
+                                },
+                              ),
+                            HifdhScopeChip(
+                              label: 'السورة كاملة (1 - $totalAyahs)',
+                              isSelected:
+                                  _startAyah == 1 && _endAyah == totalAyahs,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  _startAyah = 1;
+                                  _endAyah = totalAyahs;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSpace.sm),
+
+                        // Range Selectors (From Ayah to Ayah — auto-adjusting bounds)
                         Row(
                           children: [
-                            // Start Ayah
                             Expanded(
                               child: HifdhAyahStepper(
                                 label: 'من الآية',
                                 value: _startAyah,
                                 min: 1,
-                                max: _endAyah,
+                                max: totalAyahs,
                                 onChanged: (val) {
-                                  setState(() => _startAyah = val);
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _startAyah = val.clamp(1, totalAyahs);
+                                    if (_endAyah < _startAyah) {
+                                      _endAyah = _startAyah;
+                                    }
+                                  });
                                 },
                               ),
                             ),
                             const SizedBox(width: AppSpace.sm),
-                            // End Ayah
                             Expanded(
                               child: HifdhAyahStepper(
                                 label: 'إلى الآية',
                                 value: _endAyah,
-                                min: _startAyah,
+                                min: 1,
                                 max: totalAyahs,
                                 onChanged: (val) {
-                                  setState(() => _endAyah = val);
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _endAyah = val.clamp(1, totalAyahs);
+                                    if (_startAyah > _endAyah) {
+                                      _startAyah = _endAyah;
+                                    }
+                                  });
                                 },
                               ),
                             ),
@@ -431,62 +465,72 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                               label: '1× (مرة)',
                               count: 1,
                               isSelected: _rangeRepeatCount == 1,
-                              onTap: () =>
-                                  setState(() => _rangeRepeatCount = 1),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _rangeRepeatCount = 1);
+                              },
                             ),
                             HifdhCountPill(
                               label: '3× (مرات)',
                               count: 3,
                               isSelected: _rangeRepeatCount == 3,
-                              onTap: () =>
-                                  setState(() => _rangeRepeatCount = 3),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _rangeRepeatCount = 3);
+                              },
                             ),
                             HifdhCountPill(
                               label: '5× (مرات)',
                               count: 5,
                               isSelected: _rangeRepeatCount == 5,
-                              onTap: () =>
-                                  setState(() => _rangeRepeatCount = 5),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _rangeRepeatCount = 5);
+                              },
                             ),
                             HifdhCountPill(
                               label: '10× (تثبيت)',
                               count: 10,
                               isSelected: _rangeRepeatCount == 10,
-                              onTap: () =>
-                                  setState(() => _rangeRepeatCount = 10),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _rangeRepeatCount = 10);
+                              },
                             ),
                             HifdhCountPill(
                               label: 'مستمر (∞)',
                               count: 0,
                               isSelected: _rangeRepeatCount == 0,
-                              onTap: () =>
-                                  setState(() => _rangeRepeatCount = 0),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _rangeRepeatCount = 0);
+                              },
                             ),
                           ],
                         ),
 
                         const SizedBox(height: AppSpace.md),
 
-                        // Active Range State or Start Button
+                        // Active Range Status + Start/Update & Stop Buttons
                         ValueListenableBuilder<HifdhRangeConfig?>(
                           valueListenable:
                               widget.audioService.hifdhRangeNotifier,
                           builder: (context, activeRange, _) {
                             final isRangeActive = activeRange != null &&
                                 activeRange.surah == widget.surahNumber;
+                            final spanCount = _endAyah - _startAyah + 1;
+                            final spanLabel = spanCount == 1
+                                ? 'آية واحدة'
+                                : '$spanCount آيات';
 
-                            if (isRangeActive) {
-                              final iter = activeRange.currentIteration + 1;
-                              final total = activeRange.isInfinite
-                                  ? '∞'
-                                  : '${activeRange.repeatCount}';
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (isRangeActive) ...[
                                   Container(
                                     padding: const EdgeInsetsDirectional.all(
-                                        AppSpace.xs),
+                                      AppSpace.xs,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: palette.primary
                                           .withValues(alpha: 0.12),
@@ -494,14 +538,24 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        'المقطع قيد التكرار الآن: الآيات (${activeRange.startAyah} - ${activeRange.endAyah}) • دورة $iter من $total',
+                                        'المقطع قيد التكرار الآن: الآيات (${activeRange.startAyah} - ${activeRange.endAyah}) • دورة ${activeRange.currentIteration + 1} من ${activeRange.isInfinite ? "∞" : activeRange.repeatCount}',
                                         style: textTheme.captionBold.copyWith(
                                           color: palette.primary,
                                         ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(height: AppSpace.sm),
+                                ],
+                                AppButton(
+                                  label:
+                                      'بدء تكرار المقطع ($spanLabel)',
+                                  icon: Icons.play_arrow_rounded,
+                                  onPressed: _startRangePlayback,
+                                ),
+                                if (isRangeActive) ...[
+                                  const SizedBox(height: AppSpace.xs),
                                   AppButton(
                                     label: 'إيقاف تكرار المقطع',
                                     icon: Icons.stop_rounded,
@@ -509,14 +563,7 @@ class _HifdhRepeatOptionsSheetState extends State<HifdhRepeatOptionsSheet> {
                                     onPressed: _stopRangePlayback,
                                   ),
                                 ],
-                              );
-                            }
-
-                            return AppButton(
-                              label:
-                                  'بدء تكرار المقطع (${_endAyah - _startAyah + 1} آيات)',
-                              icon: Icons.play_arrow_rounded,
-                              onPressed: _startRangePlayback,
+                              ],
                             );
                           },
                         ),

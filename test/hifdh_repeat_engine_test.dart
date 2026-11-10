@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+import 'package:talib_ilm/features/quran/data/services/hifdh_audio_range_helper.dart';
 import 'package:talib_ilm/features/quran/data/services/quran_audio_service.dart';
 import 'package:talib_ilm/features/quran/presentation/widgets/hifdh_repeat_options_sheet.dart';
 
@@ -13,6 +14,8 @@ class _FakePlayer implements AudioPlayer {
   @override
   ProcessingState get processingState => ProcessingState.idle;
   @override
+  Duration? get duration => null;
+  @override
   bool get playing => false;
   @override
   Future<void> play() async {}
@@ -20,6 +23,8 @@ class _FakePlayer implements AudioPlayer {
   Future<void> pause() async {}
   @override
   Future<void> stop() async {}
+  @override
+  Future<void> seek(Duration? position, {int? index}) async {}
   @override
   Future<void> setSpeed(double speed) async {}
   @override
@@ -121,7 +126,7 @@ void main() {
       expect(service.hifdhRangeNotifier.value, isNull);
     });
 
-    test('playHifdhRange switches surah-based reciter to verse-based and clears isFullSurahMode', () async {
+    test('playHifdhRange preserves surah-based reciter (e.g. Ahmad Talib) and loops inside full surah', () async {
       final fakePlayer = _FakePlayer();
       final testService = QuranAudioService.forTesting(
         player: fakePlayer,
@@ -139,24 +144,48 @@ void main() {
         repeatCount: 3,
       );
 
-      expect(testService.selectedReciter.isSurahBased, isFalse);
-      expect(testService.isFullSurahMode, isFalse);
+      expect(testService.selectedReciter.id, surahBasedReciter.id);
+      expect(testService.selectedReciter.isSurahBased, isTrue);
+      expect(testService.isFullSurahMode, isTrue);
       expect(testService.hifdhRangeNotifier.value?.startAyah, 3);
       expect(testService.hifdhRangeNotifier.value?.endAyah, 4);
       expect(testService.hifdhRangeNotifier.value?.repeatCount, 3);
       testService.dispose();
     });
 
-    test('setVerseRepeatCount disables isFullSurahMode and heals surah-based reciter', () {
+    test('setVerseRepeatCount preserves surah-based reciter and disables full surah only for verse-by-verse reciters', () {
       final surahBasedReciter = QuranReciter.defaultReciters.firstWhere((r) => r.isSurahBased);
       service.setSelectedReciter(surahBasedReciter);
       service.isFullSurahModeNotifier.value = true;
 
       service.setVerseRepeatCount(3);
 
-      expect(service.isFullSurahMode, isFalse);
-      expect(service.selectedReciter.isSurahBased, isFalse);
+      expect(service.selectedReciter.id, surahBasedReciter.id);
+      expect(service.selectedReciter.isSurahBased, isTrue);
+      expect(service.isFullSurahMode, isTrue);
       expect(service.verseRepeatTarget, 3);
+    });
+
+    test('HifdhAudioRangeHelper computes monotonic verse boundaries for full-surah audio', () {
+      const totalMs = 45000;
+      final start1 = HifdhAudioRangeHelper.ayahStartMs(1, 1, totalMs);
+      final end1 = HifdhAudioRangeHelper.ayahEndMs(1, 1, totalMs);
+      final start4 = HifdhAudioRangeHelper.ayahStartMs(1, 4, totalMs);
+      final end5 = HifdhAudioRangeHelper.ayahEndMs(1, 5, totalMs);
+      final end7 = HifdhAudioRangeHelper.ayahEndMs(1, 7, totalMs);
+
+      expect(start1, 0);
+      expect(end1, greaterThan(start1));
+      expect(end5, greaterThan(start4));
+      expect(end7, totalMs);
+      expect(
+        HifdhAudioRangeHelper.ayahAtPosition(
+          1,
+          start4 + 200,
+          totalMs,
+        ),
+        4,
+      );
     });
   });
 
@@ -224,6 +253,35 @@ void main() {
 
       expect(find.text('تكرار الحفظ والمراجعة'), findsOneWidget);
       expect(find.textContaining('سورة البقرة'), findsOneWidget);
+    });
+
+    testWidgets('keeps start/apply button visible alongside stop button when range loop is active',
+        (tester) async {
+      service.hifdhRangeNotifier.value = const HifdhRangeConfig(
+        surah: 1,
+        startAyah: 1,
+        endAyah: 5,
+        repeatCount: 3,
+        currentIteration: 0,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: HifdhRepeatOptionsSheet(
+              audioService: service,
+              surahNumber: 1,
+              currentAyah: 1,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      expect(find.textContaining('المقطع قيد التكرار الآن'), findsOneWidget);
+      expect(find.textContaining('بدء تكرار المقطع'), findsOneWidget);
+      expect(find.text('إيقاف تكرار المقطع'), findsOneWidget);
     });
   });
 }

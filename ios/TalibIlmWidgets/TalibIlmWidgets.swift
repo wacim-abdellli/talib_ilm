@@ -201,7 +201,17 @@ struct OfflinePrayerCalculator {
             1.25 * 0.016708634 * 0.016708634 * sin(2.0 * mRad)
         )
 
-        let noonHours = 12.0 + timezoneOffsetHours - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
+        let effectiveTz: Double = {
+            if abs(timezoneOffsetHours - (longitude / 15.0)) > 2.5 {
+                if abs(latitude - 21.4) < 1.0 && abs(longitude - 39.8) < 1.0 {
+                    return 3.0
+                }
+                return (longitude / 15.0).rounded()
+            }
+            return timezoneOffsetHours
+        }()
+
+        let noonHours = 12.0 + effectiveTz - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
         let latRad = latitude * .pi / 180.0
 
         func hourAngle(forAltitude altitudeDeg: Double) -> Double? {
@@ -281,10 +291,18 @@ private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> 
     var tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
 
     let scheduleValidForDate: Bool = {
-        guard let f = fajr, dhuhr != nil, asr != nil, maghrib != nil, isha != nil else {
+        guard let f = fajr, let d = dhuhr, let a = asr, let m = maghrib, let i = isha else {
             return false
         }
-        return cal.isDate(f, inSameDayAs: date)
+        guard cal.isDate(f, inSameDayAs: date), cal.isDate(d, inSameDayAs: date) else {
+            return false
+        }
+        guard f < d && d < a && a < m && m < i else {
+            return false
+        }
+        let fajrHour = cal.component(.hour, from: f)
+        let dhuhrHour = cal.component(.hour, from: d)
+        return (2...8).contains(fajrHour) && (10...15).contains(dhuhrHour)
     }()
 
     if !scheduleValidForDate {
@@ -491,12 +509,15 @@ struct Provider: TimelineProvider {
 
         let isDarkFallback = (prefs.object(forKey: "widget_is_dark") as? Bool) ?? true
         let rawMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "auto"
+        let userSelectedAppTheme = (prefs.object(forKey: "theme_user_selected") as? Bool) ?? false
         let themePreference: String = {
             if rawMode == "dark" { return "dark" }
             if rawMode == "light" { return "light" }
-            let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
-            if appMode == "dark" { return "dark" }
-            if appMode == "light" { return "light" }
+            if userSelectedAppTheme {
+                let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
+                if appMode == "dark" { return "dark" }
+                if appMode == "light" { return "light" }
+            }
             return "system"
         }()
 

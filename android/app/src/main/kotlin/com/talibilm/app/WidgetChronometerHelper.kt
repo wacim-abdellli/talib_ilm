@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
@@ -22,10 +23,35 @@ import kotlin.math.asin
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.tan
 
 object WidgetChronometerHelper {
+
+    fun refreshAllWidgets(context: Context) {
+        try {
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val ribbonIds = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, RibbonWidgetProvider::class.java)
+            )
+            if (ribbonIds.isNotEmpty()) {
+                RibbonWidgetProvider().onUpdate(context, appWidgetManager, ribbonIds)
+            }
+            val largeIds = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, LargeWidgetProvider::class.java)
+            )
+            if (largeIds.isNotEmpty()) {
+                LargeWidgetProvider().onUpdate(context, appWidgetManager, largeIds)
+            }
+            val standardIds = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, StandardWidgetProvider::class.java)
+            )
+            if (standardIds.isNotEmpty()) {
+                StandardWidgetProvider().onUpdate(context, appWidgetManager, standardIds)
+            }
+        } catch (_: Exception) {}
+    }
 
     private data class PrayerColumnSpec(
         val key: String,
@@ -36,6 +62,7 @@ object WidgetChronometerHelper {
         val color: Int,
         val iconRes: Int,
         val pillRes: Int,
+        val colViewId: Int,
         val iconViewId: Int,
         val nameViewId: Int,
         val timeViewId: Int
@@ -52,15 +79,17 @@ object WidgetChronometerHelper {
             val isLarge = providerClass.simpleName.contains("Large") ||
                 providerClass.simpleName.contains("Standard")
 
-            // 1. Resolve theme mode & palette
-            val isDark = resolveIsDark(widgetData)
+            // 1. Resolve Light / Dark mode (supporting both in-app theme & OS Dark Mode)
+            val isDark = resolveIsDark(context, widgetData)
             val cardBgRes = if (isDark) R.drawable.widget_card_dark else R.drawable.widget_card_light
             val heroBoxBgRes = if (isDark) R.drawable.widget_hero_box_dark else R.drawable.widget_hero_box_light
             val countdownBgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
+            val activeColBgRes = if (isDark) R.drawable.widget_col_active_dark else R.drawable.widget_col_active_light
 
-            val primaryTextColor = if (isDark) 0xFFF4EFE6.toInt() else 0xFF14130F.toInt()
-            val mutedTextColor = if (isDark) 0xFFA9A59C.toInt() else 0xFF6B665B.toInt()
-            val goldColor = if (isDark) 0xFFE3B341.toInt() else 0xFF9A6700.toInt()
+            val primaryTextColor = if (isDark) 0xFFF4EFE6.toInt() else 0xFF181612.toInt()
+            val mutedTextColor = if (isDark) 0xFFA9A59C.toInt() else 0xFF5C574E.toInt()
+            val goldColor = if (isDark) 0xFFE3B341.toInt() else 0xFF8C5E00.toInt()
+            val dividerColor = if (isDark) 0xFF23232C.toInt() else 0xFFE2DACB.toInt()
 
             try {
                 views.setInt(R.id.widget_container, "setBackgroundResource", cardBgRes)
@@ -69,6 +98,11 @@ object WidgetChronometerHelper {
             if (isLarge) {
                 try {
                     views.setInt(R.id.widget_hero_box, "setBackgroundResource", heroBoxBgRes)
+                    views.setInt(R.id.widget_hero_icon_box, "setBackgroundResource", countdownBgRes)
+                } catch (_: Exception) {}
+            } else {
+                try {
+                    views.setInt(R.id.widget_divider, "setBackgroundColor", dividerColor)
                 } catch (_: Exception) {}
             }
 
@@ -81,8 +115,14 @@ object WidgetChronometerHelper {
             var ishaMs = getSafeLong(widgetData, json, "prayer_isha_epoch_ms", "isha", 0L)
             var tomorrowFajrMs = getSafeLong(widgetData, json, "prayer_tomorrow_fajr_epoch_ms", null, 0L)
 
-            val scheduleValidForToday = fajrMs > 0L && dhuhrMs > 0L && asrMs > 0L &&
-                maghribMs > 0L && ishaMs > 0L && isSameCalendarDay(fajrMs, now)
+            val scheduleValidForToday = isScheduleSaneAndValidForToday(
+                now = now,
+                fajrMs = fajrMs,
+                dhuhrMs = dhuhrMs,
+                asrMs = asrMs,
+                maghribMs = maghribMs,
+                ishaMs = ishaMs
+            )
 
             if (!scheduleValidForToday) {
                 if (fajrMs > 0L && now > fajrMs + 86_400_000L) {
@@ -95,8 +135,8 @@ object WidgetChronometerHelper {
                     } catch (_: Exception) {}
                 }
 
-                val coords = resolveCoordinates(widgetData, json)
                 val tzOffsetHours = TimeZone.getDefault().getOffset(now) / 3_600_000.0
+                val coords = resolveCoordinates(widgetData, json, tzOffsetHours)
                 val todayCalc = calculateSolarPrayers(now, coords.first, coords.second, tzOffsetHours)
                 val tomorrowCalc = calculateSolarPrayers(now + 86_400_000L, coords.first, coords.second, tzOffsetHours)
 
@@ -106,7 +146,7 @@ object WidgetChronometerHelper {
                 maghribMs = todayCalc["maghrib"] ?: maghribMs
                 ishaMs = todayCalc["isha"] ?: ishaMs
                 tomorrowFajrMs = tomorrowCalc["fajr"] ?: (fajrMs + 86_400_000L)
-            } else if (tomorrowFajrMs <= 0L) {
+            } else if (tomorrowFajrMs <= 0L || tomorrowFajrMs <= ishaMs) {
                 tomorrowFajrMs = fajrMs + 86_400_000L
             }
 
@@ -151,6 +191,7 @@ object WidgetChronometerHelper {
                 primaryTextColor = primaryTextColor,
                 mutedTextColor = mutedTextColor,
                 countdownBgRes = countdownBgRes,
+                activeColBgRes = activeColBgRes,
                 fajrMs = fajrMs,
                 dhuhrMs = dhuhrMs,
                 asrMs = asrMs,
@@ -172,6 +213,7 @@ object WidgetChronometerHelper {
         primaryTextColor: Int,
         mutedTextColor: Int,
         countdownBgRes: Int,
+        activeColBgRes: Int,
         fajrMs: Long,
         dhuhrMs: Long,
         asrMs: Long,
@@ -188,15 +230,15 @@ object WidgetChronometerHelper {
         val iqamaMaghrib = getSafeInt(widgetData, "iqama_maghrib_min", 10)
         val iqamaIsha = getSafeInt(widgetData, "iqama_isha_min", 15)
 
-        val fajrColor = if (isDark) 0xFF38BDF8.toInt() else 0xFF0284C7.toInt()
+        val fajrColor = if (isDark) 0xFF38BDF8.toInt() else 0xFF0369A1.toInt()
         val dhuhrColor = if (isFriday) {
             if (isDark) 0xFF34D399.toInt() else 0xFF047857.toInt()
         } else {
-            if (isDark) 0xFFE3B341.toInt() else 0xFF9A6700.toInt()
+            if (isDark) 0xFFE3B341.toInt() else 0xFF8C5E00.toInt()
         }
-        val asrColor = if (isDark) 0xFFFB923C.toInt() else 0xFFC2410C.toInt()
+        val asrColor = if (isDark) 0xFFFB923C.toInt() else 0xFFB45309.toInt()
         val maghribColor = if (isDark) 0xFFF43F5E.toInt() else 0xFFBE123C.toInt()
-        val ishaColor = if (isDark) 0xFFA78BFA.toInt() else 0xFF6D28D9.toInt()
+        val ishaColor = if (isDark) 0xFFA78BFA.toInt() else 0xFF5B21B6.toInt()
 
         val dhuhrLabel = if (isFriday) "الجمعة" else "الظهر"
         val dhuhrIcon = if (isFriday) R.drawable.ic_prayer_jumua else R.drawable.ic_prayer_dhuhr
@@ -212,6 +254,7 @@ object WidgetChronometerHelper {
                 color = fajrColor,
                 iconRes = R.drawable.ic_prayer_fajr,
                 pillRes = R.drawable.widget_pill_fajr,
+                colViewId = R.id.col_fajr,
                 iconViewId = R.id.icon_fajr,
                 nameViewId = R.id.name_fajr,
                 timeViewId = R.id.time_fajr
@@ -225,6 +268,7 @@ object WidgetChronometerHelper {
                 color = dhuhrColor,
                 iconRes = dhuhrIcon,
                 pillRes = dhuhrPill,
+                colViewId = R.id.col_dhuhr,
                 iconViewId = R.id.icon_dhuhr,
                 nameViewId = R.id.name_dhuhr,
                 timeViewId = R.id.time_dhuhr
@@ -238,6 +282,7 @@ object WidgetChronometerHelper {
                 color = asrColor,
                 iconRes = R.drawable.ic_prayer_asr,
                 pillRes = R.drawable.widget_pill_asr,
+                colViewId = R.id.col_asr,
                 iconViewId = R.id.icon_asr,
                 nameViewId = R.id.name_asr,
                 timeViewId = R.id.time_asr
@@ -251,6 +296,7 @@ object WidgetChronometerHelper {
                 color = maghribColor,
                 iconRes = R.drawable.ic_prayer_maghrib,
                 pillRes = R.drawable.widget_pill_maghrib,
+                colViewId = R.id.col_maghrib,
                 iconViewId = R.id.icon_maghrib,
                 nameViewId = R.id.name_maghrib,
                 timeViewId = R.id.time_maghrib
@@ -264,6 +310,7 @@ object WidgetChronometerHelper {
                 color = ishaColor,
                 iconRes = R.drawable.ic_prayer_isha,
                 pillRes = R.drawable.widget_pill_isha,
+                colViewId = R.id.col_isha,
                 iconViewId = R.id.icon_isha,
                 nameViewId = R.id.name_isha,
                 timeViewId = R.id.time_isha
@@ -376,6 +423,11 @@ object WidgetChronometerHelper {
             try {
                 views.setTextViewText(R.id.widget_active_prayer_time, activeTimeLabel)
                 views.setTextColor(R.id.widget_active_prayer_time, activeSpec.color)
+                views.setTextViewText(
+                    R.id.widget_next_label,
+                    if (countdownPrefix == "الإقامة بعد") "انتظار الإقامة •" else "الصلاة القادمة •"
+                )
+                views.setTextColor(R.id.widget_next_label, mutedTextColor)
             } catch (_: Exception) {}
         }
 
@@ -387,17 +439,17 @@ object WidgetChronometerHelper {
             views.setViewVisibility(R.id.widget_prayer_icon, View.VISIBLE)
         } catch (_: Exception) {}
 
-        // 2. Update Live Countdown Chronometer or Status Badge
+        // 2. Update Live Countdown Chronometer (pure digits, zero BiDi mixing) or Status Badge
         if (statusText != null) {
             try {
                 views.setChronometer(R.id.widget_countdown, 0L, null, false)
-                views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                views.setViewVisibility(R.id.widget_countdown_box, View.GONE)
             } catch (_: Exception) {}
 
             try {
                 views.setTextViewText(R.id.widget_status_badge, statusText)
-                views.setTextColor(R.id.widget_status_badge, primaryTextColor)
-                views.setInt(R.id.widget_status_badge, "setBackgroundResource", countdownBgRes)
+                views.setTextColor(R.id.widget_status_badge, 0xFFFFFFFF.toInt())
+                views.setInt(R.id.widget_status_badge, "setBackgroundResource", activeSpec.pillRes)
                 views.setViewVisibility(R.id.widget_status_badge, View.VISIBLE)
             } catch (_: Exception) {}
         } else if (countdownTargetMs != null && countdownTargetMs > now) {
@@ -407,25 +459,29 @@ object WidgetChronometerHelper {
 
             val remainingMs = countdownTargetMs - now
             val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
-            val formatString = if (countdownPrefix.isNotEmpty()) {
-                "\u200F$countdownPrefix \u200E%s\u200F"
+            val prefixLabel = if (isLarge) {
+                if (countdownPrefix == "الإقامة بعد") "الإقامة بعد" else "الوقت المتبقي"
             } else {
-                "%s"
+                countdownPrefix.ifEmpty { "بعد" }
             }
 
             try {
-                views.setChronometer(R.id.widget_countdown, chronometerBase, formatString, true)
+                views.setTextViewText(R.id.widget_countdown_prefix, prefixLabel)
+                views.setTextColor(R.id.widget_countdown_prefix, mutedTextColor)
+                // Pass format = null so Chronometer outputs ONLY pure timer digits (e.g. 59:58 or 1:40:05)
+                views.setChronometer(R.id.widget_countdown, chronometerBase, null, true)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     views.setChronometerCountDown(R.id.widget_countdown, true)
                 }
                 views.setTextColor(R.id.widget_countdown, primaryTextColor)
-                views.setInt(R.id.widget_countdown, "setBackgroundResource", countdownBgRes)
+                views.setInt(R.id.widget_countdown_box, "setBackgroundResource", countdownBgRes)
+                views.setViewVisibility(R.id.widget_countdown_box, View.VISIBLE)
                 views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
             } catch (_: Exception) {}
         } else {
             try {
                 views.setChronometer(R.id.widget_countdown, 0L, null, false)
-                views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                views.setViewVisibility(R.id.widget_countdown_box, View.GONE)
                 views.setViewVisibility(R.id.widget_status_badge, View.GONE)
             } catch (_: Exception) {}
         }
@@ -460,6 +516,14 @@ object WidgetChronometerHelper {
             }
 
             try {
+                views.setInt(
+                    col.colViewId,
+                    "setBackgroundResource",
+                    if (isCurrent) activeColBgRes else 0
+                )
+            } catch (_: Exception) {}
+
+            try {
                 views.setImageViewResource(col.iconViewId, col.iconRes)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     views.setInt(col.iconViewId, "setColorFilter", iconColor)
@@ -486,6 +550,31 @@ object WidgetChronometerHelper {
         if (nextAlarmMs > now) {
             schedulePrayerAlarm(context, nextAlarmMs, providerClass)
         }
+    }
+
+    private fun isScheduleSaneAndValidForToday(
+        now: Long,
+        fajrMs: Long,
+        dhuhrMs: Long,
+        asrMs: Long,
+        maghribMs: Long,
+        ishaMs: Long
+    ): Boolean {
+        if (fajrMs <= 0L || dhuhrMs <= 0L || asrMs <= 0L || maghribMs <= 0L || ishaMs <= 0L) {
+            return false
+        }
+        if (!isSameCalendarDay(fajrMs, now) || !isSameCalendarDay(dhuhrMs, now)) {
+            return false
+        }
+        // Strictly chronological order within the day
+        if (!(fajrMs < dhuhrMs && dhuhrMs < asrMs && asrMs < maghribMs && maghribMs < ishaMs)) {
+            return false
+        }
+        // Sanity check: Fajr must be in the morning (02:00..08:59) and Dhuhr around solar noon (10:00..15:59).
+        // Rejects corrupted timestamps caused by emulator California mock GPS (-122.084) in GMT timezone.
+        val fajrHour = Calendar.getInstance().apply { timeInMillis = fajrMs }.get(Calendar.HOUR_OF_DAY)
+        val dhuhrHour = Calendar.getInstance().apply { timeInMillis = dhuhrMs }.get(Calendar.HOUR_OF_DAY)
+        return fajrHour in 2..8 && dhuhrHour in 10..15
     }
 
     private fun formatTime12hCompact(epochMs: Long): String {
@@ -557,7 +646,7 @@ object WidgetChronometerHelper {
         val saved = getSafeString(prefs, "location_city", "").ifEmpty {
             json?.optString("city", "") ?: ""
         }
-        if (saved.isNotEmpty()) return saved
+        if (saved.isNotEmpty() && saved != "الموقع الحالي") return saved
         val tzId = TimeZone.getDefault().id
         return when {
             tzId.contains("Algiers", ignoreCase = true) -> "الجزائر"
@@ -568,10 +657,17 @@ object WidgetChronometerHelper {
         }
     }
 
-    private fun resolveCoordinates(prefs: SharedPreferences, json: JSONObject?): Pair<Double, Double> {
+    private fun resolveCoordinates(
+        prefs: SharedPreferences,
+        json: JSONObject?,
+        tzOffsetHours: Double
+    ): Pair<Double, Double> {
         val lat = getSafeDouble(prefs, json, "location_latitude", "latitude")
         val lon = getSafeDouble(prefs, json, "location_longitude", "longitude")
-        if (lat != 0.0 || lon != 0.0) {
+        val isEmulatorMock = abs(lat - 37.422) < 0.05 && abs(lon - (-122.084)) < 0.05 &&
+            (tzOffsetHours < -8.5 || tzOffsetHours > -6.5)
+
+        if ((lat != 0.0 || lon != 0.0) && !isEmulatorMock) {
             return Pair(lat, lon)
         }
         val tzId = TimeZone.getDefault().id
@@ -629,7 +725,15 @@ object WidgetChronometerHelper {
                 1.25 * 0.016708634 * 0.016708634 * sin(2.0 * mRad)
         )
 
-        val noonHours = 12.0 + timezoneOffsetHours - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
+        // If the coordinate's solar timezone differs by >2.5h from the device timezone (e.g. Makkah fallback on a GMT emulator),
+        // use the coordinate's natural timezone offset so prayer times align with local wall-clock hours.
+        val effectiveTz = if (abs(timezoneOffsetHours - (longitude / 15.0)) > 2.5) {
+            if (abs(latitude - 21.4) < 1.0 && abs(longitude - 39.8) < 1.0) 3.0 else round(longitude / 15.0)
+        } else {
+            timezoneOffsetHours
+        }
+
+        val noonHours = 12.0 + effectiveTz - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
         val latRad = Math.toRadians(latitude)
 
         fun hourAngle(altitudeDeg: Double): Double {
@@ -752,8 +856,21 @@ object WidgetChronometerHelper {
         for (k in keys) {
             if (prefs.contains(k)) {
                 try {
-                    val s = prefs.all[k]?.toString()?.toDoubleOrNull()
-                    if (s != null && s != 0.0) return s
+                    val raw = prefs.all[k]
+                    if (raw is Double && !raw.isNaN() && raw != 0.0) return raw
+                    if (raw is Float && !raw.isNaN() && raw != 0f) return raw.toDouble()
+                    if (raw is Long && raw != 0L) {
+                        val bitsDouble = Double.fromBits(raw)
+                        if (!bitsDouble.isNaN() && abs(bitsDouble) <= 180.0 && bitsDouble != 0.0) {
+                            return bitsDouble
+                        }
+                    }
+                    val str = raw?.toString() ?: ""
+                    val cleaned = str.replace("VGhpcyBpcyB0aGUgcHJlZml4IGZvciBEb3VibGUu", "")
+                    val parsed = cleaned.toDoubleOrNull()
+                    if (parsed != null && !parsed.isNaN() && parsed != 0.0 && abs(parsed) <= 180.0) {
+                        return parsed
+                    }
                 } catch (_: Exception) {}
             }
         }
@@ -805,15 +922,44 @@ object WidgetChronometerHelper {
         return defaultVal
     }
 
-    private fun resolveIsDark(prefs: SharedPreferences): Boolean {
-        if (prefs.contains("widget_is_dark")) return getSafeBoolean(prefs, "widget_is_dark", true)
-        if (prefs.contains("flutter.widget_is_dark")) return getSafeBoolean(prefs, "flutter.widget_is_dark", true)
-        val mode = getSafeString(prefs, "prayer_widget_theme_mode", "dark")
-        val appTheme = getSafeString(prefs, "theme_mode", "dark")
-        return when (mode) {
+    private fun resolveIsDark(context: Context, prefs: SharedPreferences): Boolean {
+        val isSystemDark = try {
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+        } catch (_: Exception) {
+            true
+        }
+
+        // If the user just toggled Android System Dark Mode in OS Settings / Quick Settings,
+        // detect the transition and follow the OS theme immediately.
+        try {
+            if (prefs.contains("last_seen_system_night")) {
+                val prevSystemDark = prefs.getBoolean("last_seen_system_night", isSystemDark)
+                if (prevSystemDark != isSystemDark) {
+                    prefs.edit()
+                        .putBoolean("last_seen_system_night", isSystemDark)
+                        .putBoolean("widget_is_dark", isSystemDark)
+                        .putString("prayer_widget_theme_mode", if (isSystemDark) "dark" else "light")
+                        .apply()
+                    return isSystemDark
+                }
+            } else {
+                prefs.edit().putBoolean("last_seen_system_night", isSystemDark).apply()
+            }
+        } catch (_: Exception) {}
+
+        val mode = getSafeString(prefs, "prayer_widget_theme_mode", "auto")
+        if (mode == "light") return false
+        if (mode == "dark") return true
+
+        if (prefs.contains("widget_is_dark")) return getSafeBoolean(prefs, "widget_is_dark", isSystemDark)
+        if (prefs.contains("flutter.widget_is_dark")) return getSafeBoolean(prefs, "flutter.widget_is_dark", isSystemDark)
+
+        val appTheme = getSafeString(prefs, "theme_mode", "system")
+        return when (appTheme) {
             "light" -> false
             "dark" -> true
-            else -> appTheme != "light"
+            else -> isSystemDark
         }
     }
 }

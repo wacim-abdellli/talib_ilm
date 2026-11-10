@@ -22,28 +22,97 @@ class HifdhCountPill extends StatelessWidget {
     final palette = context.palette;
     final textTheme = context.text;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.pillRadius,
-        child: Container(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xs,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? palette.primary : palette.surfaceRaised,
-            borderRadius: AppRadius.pillRadius,
-            border: Border.all(
-              color: isSelected ? palette.primary : palette.border,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.pillRadius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppSize.buttonSmallMinHeight,
+            ),
+            child: Container(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.xs,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected ? palette.primary : palette.surfaceRaised,
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(
+                  color: isSelected ? palette.primary : palette.border,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: textTheme.caption.copyWith(
+                      color: isSelected ? palette.onPrimary : palette.text,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Text(
-            label,
-            style: textTheme.caption.copyWith(
-              color: isSelected ? palette.surfaceRaised : palette.text,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+    );
+  }
+}
+
+/// Quick preset chip for selecting common Hifdh verse ranges in one tap.
+class HifdhScopeChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const HifdhScopeChip({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final textTheme = context.text;
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.pillRadius,
+          child: Container(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpace.sm,
+              vertical: AppSpace.xxs,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? palette.primarySoft : palette.surfaceRaised,
+              borderRadius: AppRadius.pillRadius,
+              border: Border.all(
+                color: isSelected ? palette.primary : palette.border,
+              ),
+            ),
+            child: Text(
+              label,
+              style: textTheme.caption.copyWith(
+                color: isSelected ? palette.primary : palette.textMuted,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
         ),
@@ -95,7 +164,7 @@ class HifdhAyahStepper extends StatelessWidget {
               IconButton(
                 tooltip: 'إنقاص الآية',
                 icon: const Icon(Icons.remove_circle_outline_rounded),
-                iconSize: AppIcon.sm,
+                iconSize: AppIcon.md,
                 color: value > min ? palette.primary : palette.textMuted,
                 onPressed: value > min ? () => onChanged(value - 1) : null,
               ),
@@ -114,7 +183,7 @@ class HifdhAyahStepper extends StatelessWidget {
               IconButton(
                 tooltip: 'زيادة الآية',
                 icon: const Icon(Icons.add_circle_outline_rounded),
-                iconSize: AppIcon.sm,
+                iconSize: AppIcon.md,
                 color: value < max ? palette.primary : palette.textMuted,
                 onPressed: value < max ? () => onChanged(value + 1) : null,
               ),

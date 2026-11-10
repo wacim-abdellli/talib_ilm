@@ -85,7 +85,7 @@
 
     </LinearLayout>
 
-    <!-- Section 2: Featured Hero Prayer & Live Countdown Box -->
+    <!-- Section 2: Featured Hero Prayer & Next Prayer Time Left Box -->
     <LinearLayout
         android:id="@+id/widget_hero_box"
         android:layout_width="match_parent"
@@ -101,7 +101,7 @@
         android:gravity="center_vertical"
         android:background="@drawable/widget_hero_box_dark">
 
-        <!-- Left (RTL End): Live Countdown Pill or Status Badge -->
+        <!-- Left (RTL End): Dedicated Next Prayer Time Left Box -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -113,41 +113,63 @@
                 android:id="@+id/widget_status_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFFFF"
                 android:textDirection="rtl"
                 android:fontFamily="sans-serif-medium"
                 android:includeFontPadding="false"
                 android:gravity="center"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
                 android:background="@drawable/widget_countdown_badge_dark"
                 android:visibility="gone" />
 
-            <Chronometer
-                android:id="@+id/widget_countdown"
+            <LinearLayout
+                android:id="@+id/widget_countdown_box"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:countDown="true"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFFFF"
-                android:textDirection="rtl"
-                android:fontFamily="sans-serif-medium"
-                android:includeFontPadding="false"
+                android:orientation="vertical"
                 android:gravity="center"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
+                android:paddingLeft="11dp"
+                android:paddingRight="11dp"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp"
                 android:background="@drawable/widget_countdown_badge_dark"
-                android:visibility="visible" />
+                android:visibility="visible">
+
+                <TextView
+                    android:id="@+id/widget_countdown_prefix"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="الوقت المتبقي"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFA9A59C"
+                    android:textDirection="rtl"
+                    android:includeFontPadding="false"
+                    android:singleLine="true" />
+
+                <Chronometer
+                    android:id="@+id/widget_countdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:countDown="true"
+                    android:textSize="13.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFF4EFE6"
+                    android:textDirection="ltr"
+                    android:fontFamily="sans-serif-medium"
+                    android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:singleLine="true" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Right (RTL Start): [Active Prayer Time] [Prayer Title] [Prayer Icon] -->
+        <!-- Right (RTL Start): [Stacked Next Prayer Caption + Prayer Title] + [Prayer Icon Badge] -->
         <LinearLayout
             android:id="@+id/widget_hero_row"
             android:layout_width="0dp"
@@ -158,40 +180,76 @@
             android:layoutDirection="ltr"
             android:gravity="right|center_vertical">
 
-            <TextView
-                android:id="@+id/widget_active_prayer_time"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="12:07 م"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="#FFE3B341"
-                android:textDirection="rtl"
-                android:includeFontPadding="false"
-                android:singleLine="true" />
+                android:orientation="vertical"
+                android:gravity="right|center_vertical">
 
-            <TextView
-                android:id="@+id/widget_prayer_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layoutDirection="ltr"
+                    android:gravity="right|center_vertical">
+
+                    <TextView
+                        android:id="@+id/widget_active_prayer_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="12:07 م"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="#FFE3B341"
+                        android:textDirection="rtl"
+                        android:includeFontPadding="false"
+                        android:singleLine="true" />
+
+                    <TextView
+                        android:id="@+id/widget_next_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="6dp"
+                        android:text="الصلاة القادمة •"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFA9A59C"
+                        android:textDirection="rtl"
+                        android:includeFontPadding="false"
+                        android:singleLine="true" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/widget_prayer_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="صلاة الظهر"
+                    android:textSize="14.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFF4EFE6"
+                    android:textDirection="rtl"
+                    android:includeFontPadding="false"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_hero_icon_box"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
                 android:layout_marginLeft="8dp"
-                android:layout_marginRight="6dp"
-                android:text="صلاة الظهر"
-                android:textSize="13.5sp"
-                android:textStyle="bold"
-                android:textColor="#FFF4EFE6"
-                android:textDirection="rtl"
-                android:includeFontPadding="false"
-                android:singleLine="true" />
+                android:gravity="center"
+                android:background="@drawable/widget_countdown_badge_dark">
 
-            <ImageView
-                android:id="@+id/widget_prayer_icon"
-                android:layout_width="17dp"
-                android:layout_height="17dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_prayer_dhuhr"
-                android:contentDescription="@string/large_widget_name" />
+                <ImageView
+                    android:id="@+id/widget_prayer_icon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_prayer_dhuhr"
+                    android:contentDescription="@string/large_widget_name" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
@@ -213,6 +271,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -260,6 +322,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -307,6 +373,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -354,8 +424,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:background="@drawable/widget_col_active_dark">
 
             <ImageView
                 android:id="@+id/icon_dhuhr"
@@ -402,6 +477,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
             android:gravity="center">
 

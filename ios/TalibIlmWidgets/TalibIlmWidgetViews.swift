@@ -308,24 +308,42 @@ struct LargePrayerWidgetView: View {
 
             // 2. Hero Card (Next Prayer + Live Countdown Box)
             HStack(alignment: .center, spacing: 12) {
-                // Left: Countdown Box
-                VStack(alignment: .center, spacing: 4) {
-                    Text(entry.isCallToPrayer ? "الحالة" : "الوقت المتبقي")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(palette.textSecondary)
-
-                    CountdownBadgeView(
-                        entry: entry,
-                        palette: palette,
-                        accent: heroAccent,
-                        fontSize: 16
+                // Left: Dedicated Next Prayer Time Left Box
+                VStack(alignment: .center, spacing: 3) {
+                    Text(
+                        entry.isCallToPrayer
+                            ? "الحالة"
+                            : (entry.heroStatusText == "الإقامة" ? "الإقامة بعد" : "الوقت المتبقي")
                     )
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundColor(palette.textSecondary)
+                    .lineLimit(1)
+
+                    if let targetDate = entry.heroTargetDate, !entry.isCallToPrayer {
+                        Text(targetDate, style: .timer)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(palette.textPrimary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(width: 76, alignment: .center)
+                    } else {
+                        Text(entry.heroStatusText.isEmpty ? "الآن" : entry.heroStatusText)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(heroAccent)
+                            .lineLimit(1)
+                    }
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(palette.background.opacity(palette.isDark ? 0.55 : 0.7))
+                        .fill(palette.background.opacity(palette.isDark ? 0.65 : 0.85))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(palette.divider, lineWidth: 1)
+                        )
                 )
 
                 Spacer(minLength: 4)
@@ -452,13 +470,15 @@ private struct CountdownBadgeView: View {
                     .font(.system(size: fontSize, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(palette.textPrimary)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.trailing)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.8)
+                    .frame(width: fontSize * 4.4, alignment: .trailing)
 
                 Text(entry.heroStatusText.isEmpty ? "بعد" : entry.heroStatusText)
-                    .font(.system(size: fontSize - 1, weight: .semibold))
+                    .font(.system(size: fontSize - 1, weight: .bold))
                     .foregroundColor(palette.textSecondary)
+                    .lineLimit(1)
             } else {
                 Text(entry.heroStatusText.isEmpty ? "الآن" : entry.heroStatusText)
                     .font(.system(size: fontSize, weight: .bold))

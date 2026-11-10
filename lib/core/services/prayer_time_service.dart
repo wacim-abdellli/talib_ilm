@@ -338,19 +338,44 @@ class PrayerTimeService {
     final dateComponents = DateComponents.from(current);
     final times = PrayerTimes(coordinates, dateComponents, params);
 
+    // If the target city's solar timezone differs by >2.5 hours from the device's system timezone
+    // (e.g., fallback Makkah UTC+3 on a GMT/UTC emulator, or viewing a remote city),
+    // align the returned DateTime wall-clock hours to the city's natural timezone.
+    final deviceOffsetHours = current.timeZoneOffset.inMinutes / 60.0;
+    final solarOffsetHours = safeLon / 15.0;
+    final Duration tzCorrection;
+    if ((deviceOffsetHours - solarOffsetHours).abs() > 2.5) {
+      final double cityTzHours;
+      if ((safeLat - 21.4).abs() < 1.0 && (safeLon - 39.8).abs() < 1.0) {
+        cityTzHours = 3.0; // Makkah (UTC+3)
+      } else if (country == 'TN' || country == 'DZ' || country == 'MA') {
+        cityTzHours = 1.0;
+      } else if (country == 'EG' || country == 'PS' || country == 'JO') {
+        cityTzHours = 2.0;
+      } else {
+        cityTzHours = solarOffsetHours.roundToDouble();
+      }
+      tzCorrection = Duration(
+        minutes: ((cityTzHours - deviceOffsetHours) * 60).round(),
+      );
+    } else {
+      tzCorrection = Duration.zero;
+    }
+
     // Native offline astronomical calculations via adhan
     final sunnahTimes = SunnahTimes(times);
-    final middleOfTheNight = sunnahTimes.middleOfTheNight;
-    final lastThirdOfTheNight = sunnahTimes.lastThirdOfTheNight;
-    final dhuha = times.sunrise.add(const Duration(minutes: 15));
+    final middleOfTheNight = sunnahTimes.middleOfTheNight.add(tzCorrection);
+    final lastThirdOfTheNight = sunnahTimes.lastThirdOfTheNight.add(tzCorrection);
+    final sunriseTime = times.sunrise.add(tzCorrection);
+    final dhuha = sunriseTime.add(const Duration(minutes: 15));
     final qiblaDirection = Qibla(coordinates).direction;
 
     final prayers = <String, DateTime>{
-      AppStrings.prayerFajr: times.fajr,
-      AppStrings.prayerDhuhr: times.dhuhr,
-      AppStrings.prayerAsr: times.asr,
-      AppStrings.prayerMaghrib: times.maghrib,
-      AppStrings.prayerIsha: times.isha,
+      AppStrings.prayerFajr: times.fajr.add(tzCorrection),
+      AppStrings.prayerDhuhr: times.dhuhr.add(tzCorrection),
+      AppStrings.prayerAsr: times.asr.add(tzCorrection),
+      AppStrings.prayerMaghrib: times.maghrib.add(tzCorrection),
+      AppStrings.prayerIsha: times.isha.add(tzCorrection),
     };
 
     final reference = date == null
@@ -379,7 +404,7 @@ class PrayerTimeService {
         tomorrowComponents,
         params,
       );
-      nextPrayerTime = tomorrowTimes.fajr;
+      nextPrayerTime = tomorrowTimes.fajr.add(tzCorrection);
     }
 
     return PrayerTimesDay(
@@ -388,8 +413,8 @@ class PrayerTimeService {
       prayers: prayers,
       nextPrayer: nextPrayer,
       nextPrayerTime: nextPrayerTime,
-      sunrise: times.sunrise,
-      sunset: times.maghrib,
+      sunrise: sunriseTime,
+      sunset: prayers[AppStrings.prayerMaghrib]!,
       middleOfTheNight: middleOfTheNight,
       lastThirdOfTheNight: lastThirdOfTheNight,
       dhuha: dhuha,

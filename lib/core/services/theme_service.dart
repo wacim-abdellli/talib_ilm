@@ -65,9 +65,21 @@ class ThemeService extends ChangeNotifier {
         break;
     }
     await prefs.setString(_themeKey, themeName);
+    await prefs.setBool('theme_user_selected', true);
+    final widgetModeName = switch (mode) {
+      ThemeMode.dark => 'dark',
+      ThemeMode.light => 'light',
+      ThemeMode.system => 'auto',
+    };
+    await prefs.setString(HomeWidgetSnapshot.themeModeKey, widgetModeName);
     try {
+      await HomeWidgetSnapshot.writeWidgetValue<bool>('theme_user_selected', true);
+      await HomeWidgetSnapshot.writeWidgetValue<String>(
+        HomeWidgetSnapshot.themeModeKey,
+        widgetModeName,
+      );
       HomeWidgetService.invalidateCache();
-      HomeWidgetService.updateAllWidgets(force: true);
+      await HomeWidgetService.updateAllWidgets(force: true);
     } catch (_) {}
   }
 

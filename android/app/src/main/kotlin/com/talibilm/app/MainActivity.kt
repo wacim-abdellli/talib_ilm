@@ -1,18 +1,63 @@
 package com.talibilm.app
 
+import android.content.ComponentCallbacks
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.ryanheise.audioservice.AudioServiceActivity
+import es.antonborri.home_widget.HomeWidgetPlugin
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : AudioServiceActivity() {
     private val channelName = "com.talibilm.app/dhikr_overlay"
 
+    companion object {
+        private var configCallbacksRegistered = false
+
+        fun syncSystemUiModeAndRefreshWidgets(context: Context, newConfig: Configuration) {
+            try {
+                val isNight = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                    Configuration.UI_MODE_NIGHT_YES
+                val widgetData = HomeWidgetPlugin.getData(context)
+                val prevNight = if (widgetData.contains("last_seen_system_night")) {
+                    widgetData.getBoolean("last_seen_system_night", !isNight)
+                } else {
+                    !isNight
+                }
+                if (prevNight != isNight) {
+                    widgetData.edit()
+                        .putBoolean("last_seen_system_night", isNight)
+                        .putBoolean("widget_is_dark", isNight)
+                        .putString("prayer_widget_theme_mode", if (isNight) "dark" else "light")
+                        .apply()
+                }
+            } catch (_: Exception) {}
+            WidgetChronometerHelper.refreshAllWidgets(context)
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        syncSystemUiModeAndRefreshWidgets(applicationContext, newConfig)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (!configCallbacksRegistered) {
+            configCallbacksRegistered = true
+            val appCtx = applicationContext
+            appCtx.registerComponentCallbacks(object : ComponentCallbacks {
+                override fun onConfigurationChanged(newConfig: Configuration) {
+                    syncSystemUiModeAndRefreshWidgets(appCtx, newConfig)
+                }
+
+                override fun onLowMemory() {}
+            })
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {

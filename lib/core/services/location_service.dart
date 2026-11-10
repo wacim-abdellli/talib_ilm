@@ -66,6 +66,14 @@ class LocationService {
     _lastGpsRefreshTime = null;
   }
 
+  static bool _isAndroidEmulatorMockCoordinate(double lat, double lon) {
+    final isGoogleplex =
+        (lat - 37.4219983).abs() < 0.05 && (lon - (-122.084)).abs() < 0.05;
+    if (!isGoogleplex) return false;
+    final tzHours = DateTime.now().timeZoneOffset.inMinutes / 60.0;
+    return tzHours < -8.5 || tzHours > -6.5;
+  }
+
   /// Retrieves the location strictly non-interactively by default (autoPrompt = false).
   /// 1. In-memory fast cache (zero allocation)
   /// 2. Manual user override (if user explicitly selected a city/coordinates)
@@ -75,15 +83,26 @@ class LocationService {
   Future<LocationResult> getLocation({bool autoPrompt = false}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Clean up any stale unverified IP estimates from previous app sessions
+    // Clean up any stale unverified IP estimates or Android emulator California mock fixes
     final isGpsVerified = prefs.getBool(_keyIsVerifiedGps) ?? false;
     final isManual = prefs.getBool(_keyManualEnabled) ?? false;
     final savedCity = prefs.getString(_keyCity);
-    if (!isGpsVerified && !isManual && (savedCity == 'شربان' || savedCity == 'المهدية' || savedCity == 'Chorbane')) {
+    final savedLat = prefs.getDouble(_keyLat);
+    final savedLon = prefs.getDouble(_keyLon);
+    final hasMockCoords = savedLat != null &&
+        savedLon != null &&
+        _isAndroidEmulatorMockCoordinate(savedLat, savedLon);
+    if (hasMockCoords ||
+        (!isGpsVerified &&
+            !isManual &&
+            (savedCity == 'شربان' ||
+                savedCity == 'المهدية' ||
+                savedCity == 'Chorbane'))) {
       await prefs.remove(_keyCity);
       await prefs.remove(_keyProvince);
       await prefs.remove(_keyLat);
       await prefs.remove(_keyLon);
+      await prefs.remove(_keyIsVerifiedGps);
     }
 
     // 1. Manual user choice takes priority if enabled
@@ -120,7 +139,11 @@ class LocationService {
           // 3a. Quick last known hardware position
           final lastKnown = await Geolocator.getLastKnownPosition();
           LocationResult? quickBest;
-          if (lastKnown != null) {
+          if (lastKnown != null &&
+              !_isAndroidEmulatorMockCoordinate(
+                lastKnown.latitude,
+                lastKnown.longitude,
+              )) {
             quickBest = await _resolvePosition(
               lastKnown,
               _defaultCity,
@@ -136,6 +159,15 @@ class LocationService {
                 timeLimit: AppPolicy.locationQuick,
               ),
             );
+
+            if (_isAndroidEmulatorMockCoordinate(
+              position.latitude,
+              position.longitude,
+            )) {
+              _memoryCache = saved;
+              _cacheTime = DateTime.now();
+              return saved;
+            }
 
             final resolved = await _resolvePosition(
               position,

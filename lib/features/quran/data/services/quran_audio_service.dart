@@ -11,6 +11,7 @@ export '../models/audio_playback_error.dart';
 import '../models/audio_playback_error.dart';
 export '../models/quran_reciter.dart';
 import '../models/quran_reciter.dart';
+import 'hifdh_audio_range_helper.dart';
 import 'quran_audio_downloader.dart';
 import 'quran_audio_frame_merger.dart';
 
@@ -191,11 +192,15 @@ class QuranAudioService {
       _isSingleVerseOnly = false,
       _hasExplicitEnd = false,
       _playWhenReady = false;
-  bool _isTransitioning = false, _completionArmed = false, _disposed = false;
+  bool _isTransitioning = false,
+      _completionArmed = false,
+      _disposed = false,
+      _isSeekingFullSurah = false;
   int _endAyah = 0,
       _operation = 0,
       _ayahRepeatCount = 0,
-      _verseRepeatTarget = 1;
+      _verseRepeatTarget = 1,
+      _pendingInitialSeekAyah = 1;
   QuranReciter? _playbackReciter;
 
   int get verseRepeatTarget => _verseRepeatTarget;
@@ -210,6 +215,13 @@ class QuranAudioService {
   Duration get position => _player.position;
   Duration? get duration => _player.duration;
   bool get isPlaying => _player.playing;
+  int get _safeDurationMs {
+    try {
+      return _player.duration?.inMilliseconds ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 
   Future<void> seek(Duration position) => _player.seek(position);
   Future<void> seekMilliseconds(int ms) =>
@@ -266,14 +278,159 @@ class QuranAudioService {
       },
     );
     try {
-      _positionSub = _player.positionStream.listen((_) {
+      _positionSub = _player.positionStream.listen((pos) {
         if (_disposed || player != _player) return;
         if (_sleepTimerEndTime != null &&
             DateTime.now().isAfter(_sleepTimerEndTime!)) {
           _triggerSleepTimer();
+          return;
+        }
+        if (isFullSurahMode && !_isTransitioning && !_isSeekingFullSurah) {
+          final durMs = _safeDurationMs;
+          if (durMs > 0) {
+            _handleFullSurahPositionTick(pos.inMilliseconds, durMs);
+          }
         }
       });
     } catch (_) {}
+  }
+
+  Future<void> _seekWithinFullSurah(int targetMs) async {
+    if (_disposed || _isSeekingFullSurah) return;
+    _isSeekingFullSurah = true;
+    try {
+      await seekMilliseconds(targetMs);
+      if (_playWhenReady && !_player.playing) {
+        unawaited(_player.play());
+      }
+    } catch (_) {
+    } finally {
+      _isSeekingFullSurah = false;
+    }
+  }
+
+  void _handleFullSurahPositionTick(int posMs, int durMs) {
+    final surah = activeSurahNotifier.value;
+    if (surah == null || durMs <= 0) return;
+
+    if (_pendingInitialSeekAyah > 1) {
+      final targetAyah = _pendingInitialSeekAyah;
+      _pendingInitialSeekAyah = 1;
+      final startMs = HifdhAudioRangeHelper.ayahStartMs(
+        surah,
+        targetAyah,
+        durMs,
+        includeOpeningOnFirstAyah: false,
+      );
+      activeAyahNotifier.value = targetAyah;
+      unawaited(_seekWithinFullSurah(startMs));
+      return;
+    }
+
+    final totalVerses = quran.getVerseCount(surah);
+    final rangeConfig = hifdhRangeNotifier.value;
+    final repeatTarget = _verseRepeatTarget > 1
+        ? _verseRepeatTarget
+        : (repeatModeNotifier.value == AudioRepeatMode.repeatOnce ? 2 : 1);
+    final isInfiniteVerse =
+        repeatModeNotifier.value == AudioRepeatMode.infinite &&
+        (rangeConfig == null || rangeConfig.startAyah == rangeConfig.endAyah);
+
+    if (rangeConfig != null && rangeConfig.surah == surah) {
+      final trackedAyah = (activeAyahNotifier.value ?? rangeConfig.startAyah)
+          .clamp(rangeConfig.startAyah, rangeConfig.endAyah);
+      final ayahEnd = HifdhAudioRangeHelper.ayahEndMs(surah, trackedAyah, durMs);
+
+      if (posMs >= ayahEnd - 150) {
+        if (isInfiniteVerse) {
+          final startMs = HifdhAudioRangeHelper.ayahStartMs(
+            surah,
+            trackedAyah,
+            durMs,
+            includeOpeningOnFirstAyah: false,
+          );
+          unawaited(_seekWithinFullSurah(startMs));
+          return;
+        }
+        if (repeatTarget > 1 && _ayahRepeatCount < repeatTarget - 1) {
+          _ayahRepeatCount++;
+          final startMs = HifdhAudioRangeHelper.ayahStartMs(
+            surah,
+            trackedAyah,
+            durMs,
+            includeOpeningOnFirstAyah: false,
+          );
+          unawaited(_seekWithinFullSurah(startMs));
+          return;
+        }
+
+        _ayahRepeatCount = 0;
+        if (trackedAyah < rangeConfig.endAyah) {
+          activeAyahNotifier.value = trackedAyah + 1;
+        } else {
+          // Reached end of range inside full surah recording
+          if (rangeConfig.isInfinite ||
+              rangeConfig.currentIteration + 1 < rangeConfig.repeatCount) {
+            final nextRange = rangeConfig.nextIteration();
+            hifdhRangeNotifier.value = nextRange;
+            activeAyahNotifier.value = nextRange.startAyah;
+            final startMs = HifdhAudioRangeHelper.ayahStartMs(
+              surah,
+              nextRange.startAyah,
+              durMs,
+              includeOpeningOnFirstAyah: false,
+            );
+            unawaited(_seekWithinFullSurah(startMs));
+          } else {
+            hifdhRangeNotifier.value = null;
+            unawaited(pause());
+          }
+        }
+      }
+      return;
+    }
+
+    if (isInfiniteVerse || repeatTarget > 1) {
+      final trackedAyah = (activeAyahNotifier.value ?? 1).clamp(1, totalVerses);
+      final ayahEnd = HifdhAudioRangeHelper.ayahEndMs(surah, trackedAyah, durMs);
+      if (posMs >= ayahEnd - 150) {
+        if (isInfiniteVerse) {
+          final startMs = HifdhAudioRangeHelper.ayahStartMs(
+            surah,
+            trackedAyah,
+            durMs,
+            includeOpeningOnFirstAyah: false,
+          );
+          unawaited(_seekWithinFullSurah(startMs));
+          return;
+        }
+        if (_ayahRepeatCount < repeatTarget - 1) {
+          _ayahRepeatCount++;
+          final startMs = HifdhAudioRangeHelper.ayahStartMs(
+            surah,
+            trackedAyah,
+            durMs,
+            includeOpeningOnFirstAyah: false,
+          );
+          unawaited(_seekWithinFullSurah(startMs));
+          return;
+        }
+        _ayahRepeatCount = 0;
+        if (trackedAyah < totalVerses) {
+          activeAyahNotifier.value = trackedAyah + 1;
+        }
+      }
+      return;
+    }
+
+    final detectedAyah = HifdhAudioRangeHelper.ayahAtPosition(
+      surah,
+      posMs,
+      durMs,
+    );
+    if (activeAyahNotifier.value != detectedAyah) {
+      activeAyahNotifier.value = detectedAyah;
+    }
   }
 
   static bool isValidSurah(int surah) => surah >= 1 && surah <= 114;
@@ -334,13 +491,21 @@ class QuranAudioService {
     QuranReciter? reciter,
     bool autoPlay = true,
     bool hasExplicitEnd = false,
+    int initialAyah = 1,
   }) async {
     if (!isValidSurah(surah)) return;
     final r = reciter ?? _selectedReciter;
-    final fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(
-      surah,
-      reciter: r,
-    );
+    final totalVerses = quran.getVerseCount(surah);
+    final startAyah = initialAyah.clamp(1, totalVerses);
+    File? fullFile;
+    if (_sourceResolver == null) {
+      try {
+        fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(
+          surah,
+          reciter: r,
+        );
+      } catch (_) {}
+    }
     final hasOfflineFullFile = fullFile != null && fullFile.existsSync();
 
     if (hasOfflineFullFile) {
@@ -348,7 +513,8 @@ class QuranAudioService {
       _isContinuous = true;
       _isSingleVerseOnly = false;
       _hasExplicitEnd = hasExplicitEnd;
-      _endAyah = quran.getVerseCount(surah);
+      _endAyah = totalVerses;
+      _pendingInitialSeekAyah = startAyah > 1 ? startAyah : 1;
       isFullSurahModeNotifier.value = true;
       _playbackReciter = r;
 
@@ -357,7 +523,7 @@ class QuranAudioService {
       final source = AudioSource.file(fullFile.path, tag: tag);
       await _startPlaySource(
         surah,
-        1,
+        startAyah,
         audioSource: source,
         reciter: r,
         autoPlay: autoPlay,
@@ -370,7 +536,8 @@ class QuranAudioService {
       _isContinuous = true;
       _isSingleVerseOnly = false;
       _hasExplicitEnd = hasExplicitEnd;
-      _endAyah = quran.getVerseCount(surah);
+      _endAyah = totalVerses;
+      _pendingInitialSeekAyah = startAyah > 1 ? startAyah : 1;
       isFullSurahModeNotifier.value = true;
       _playbackReciter = r;
 
@@ -381,7 +548,7 @@ class QuranAudioService {
       final source = AudioSource.uri(Uri.parse(url), tag: tag);
       await _startPlaySource(
         surah,
-        1,
+        startAyah,
         audioSource: source,
         reciter: r,
         autoPlay: autoPlay,
@@ -391,7 +558,7 @@ class QuranAudioService {
 
     await playContinuous(
       surah: surah,
-      startAyah: 1,
+      startAyah: startAyah,
       reciter: r,
       autoPlay: autoPlay,
     );
@@ -406,7 +573,7 @@ class QuranAudioService {
     bool autoPlay = true,
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, startAyah)) return;
-    var r = reciter ?? _selectedReciter;
+    final r = reciter ?? _selectedReciter;
     final totalVerses = quran.getVerseCount(surah);
     final isRangeBounded = startAyah > 1 ||
         (endAyah != null && endAyah < totalVerses) ||
@@ -414,17 +581,14 @@ class QuranAudioService {
         _verseRepeatTarget > 1;
 
     if (r.isSurahBased) {
-      if (isRangeBounded) {
-        // A surah-only recording cannot play or loop an isolated verse range.
-        // Switch to the first available verse-based reciter (e.g. Alafasy).
-        r = QuranReciter.defaultReciters.firstWhere(
-          (candidate) => !candidate.isSurahBased,
-        );
-        setSelectedReciter(r);
-      } else {
-        await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
-        return;
-      }
+      await playFullSurah(
+        surah: surah,
+        reciter: r,
+        autoPlay: autoPlay,
+        hasExplicitEnd: endAyah != null,
+        initialAyah: startAyah,
+      );
+      return;
     }
 
     // If starting from verse 1 for full surah and offline recording exists,
@@ -563,11 +727,8 @@ class QuranAudioService {
             await player.stop();
           }
           if (!_ownsOperation(operation)) return;
-          // Do not wait for the remote server to probe the entire source
-          // before starting playback. Let just_audio buffer while playing;
-          // this removes the long silent spinner on slower connections.
           await player
-              .setAudioSource(audioSource, preload: false)
+              .setAudioSource(audioSource)
               .timeout(AppPolicy.networkTimeout);
           loaded = true;
         } catch (sourceErr) {
@@ -649,10 +810,25 @@ class QuranAudioService {
         await player.stop();
       }
       await player
-          .setAudioSource(audioSource, preload: false)
+          .setAudioSource(audioSource)
           .timeout(AppPolicy.networkTimeout);
       if (!_ownsOperation(operation)) return;
       await player.setSpeed(speedNotifier.value);
+      if (!_ownsOperation(operation)) return;
+      if (_pendingInitialSeekAyah > 1) {
+        final durMs = _safeDurationMs;
+        if (durMs > 0) {
+          final targetAyah = _pendingInitialSeekAyah;
+          _pendingInitialSeekAyah = 1;
+          final startMs = HifdhAudioRangeHelper.ayahStartMs(
+            surah,
+            targetAyah,
+            durMs,
+            includeOpeningOnFirstAyah: false,
+          );
+          await seekMilliseconds(startMs);
+        }
+      }
       if (!_ownsOperation(operation)) return;
       _isTransitioning = false;
       _completionArmed = true;
@@ -686,12 +862,34 @@ class QuranAudioService {
 
     // 0. Full Surah Mode (single continuous recording of the whole surah)
     if (isFullSurahMode) {
+      final rangeConfig = hifdhRangeNotifier.value;
+      if (rangeConfig != null && rangeConfig.surah == surah) {
+        if (rangeConfig.isInfinite ||
+            rangeConfig.currentIteration + 1 < rangeConfig.repeatCount) {
+          final nextRange = rangeConfig.nextIteration();
+          hifdhRangeNotifier.value = nextRange;
+          _ayahRepeatCount = 0;
+          playFullSurah(
+            surah: surah,
+            reciter: _playbackReciter,
+            initialAyah: nextRange.startAyah,
+          );
+          return;
+        } else {
+          hifdhRangeNotifier.value = null;
+          stop();
+          return;
+        }
+      }
       if (repeatModeNotifier.value == AudioRepeatMode.infinite) {
         playFullSurah(surah: surah, reciter: _playbackReciter);
         return;
       }
-      if (repeatModeNotifier.value == AudioRepeatMode.repeatOnce) {
-        if (_ayahRepeatCount < 1) {
+      final fullRepeatTarget = _verseRepeatTarget > 1
+          ? _verseRepeatTarget
+          : (repeatModeNotifier.value == AudioRepeatMode.repeatOnce ? 2 : 1);
+      if (fullRepeatTarget > 1) {
+        if (_ayahRepeatCount < fullRepeatTarget - 1) {
           _ayahRepeatCount++;
           playFullSurah(surah: surah, reciter: _playbackReciter);
           return;
@@ -834,6 +1032,7 @@ class QuranAudioService {
 
   void setVerseRepeatCount(int count) {
     _verseRepeatTarget = count;
+    _ayahRepeatCount = 0;
     verseRepeatTargetNotifier.value = count;
     if (count == 0) {
       repeatModeNotifier.value = AudioRepeatMode.infinite;
@@ -843,20 +1042,15 @@ class QuranAudioService {
       repeatModeNotifier.value = AudioRepeatMode.repeatOnce;
     }
     if (count > 1 || count == 0) {
-      final wasContinuous = _isContinuous;
-      if (isFullSurahMode) {
-        isFullSurahModeNotifier.value = false;
-      }
-      if (_selectedReciter.isSurahBased) {
-        final r = QuranReciter.defaultReciters.firstWhere(
-          (candidate) => !candidate.isSurahBased,
-        );
-        setSelectedReciter(r);
-      }
       final s = activeSurahNotifier.value;
       final a = activeAyahNotifier.value ?? 1;
-      if (s != null && isPlayingNotifier.value) {
-        if (wasContinuous) {
+      // If a verse-based reciter was playing a merged full_surah.mp3, switch to
+      // individual verse playback so exact verse files repeat. For surah-based
+      // reciters (e.g. Ahmad Talib), keep their reciter and repeat via
+      // HifdhAudioRangeHelper timestamps inside full_surah.mp3.
+      if (!_selectedReciter.isSurahBased && isFullSurahMode) {
+        isFullSurahModeNotifier.value = false;
+        if (s != null && isPlayingNotifier.value) {
           playContinuous(
             surah: s,
             startAyah: a,
@@ -864,8 +1058,6 @@ class QuranAudioService {
             reciter: _selectedReciter,
             autoPlay: true,
           );
-        } else {
-          playVerse(s, a, reciter: _selectedReciter, autoPlay: true);
         }
       }
     }
@@ -878,11 +1070,10 @@ class QuranAudioService {
     int repeatCount = 1,
     QuranReciter? reciter,
   }) async {
+    final totalVerses = quran.getVerseCount(surah);
     final effectiveStart = startAyah.clamp(1, endAyah);
-    final effectiveEnd = endAyah.clamp(
-      effectiveStart,
-      quran.getVerseCount(surah),
-    );
+    final effectiveEnd = endAyah.clamp(effectiveStart, totalVerses);
+    _ayahRepeatCount = 0;
     hifdhRangeNotifier.value = HifdhRangeConfig(
       surah: surah,
       startAyah: effectiveStart,
@@ -890,13 +1081,40 @@ class QuranAudioService {
       repeatCount: repeatCount,
       currentIteration: 0,
     );
-    var r = reciter ?? _selectedReciter;
+    final r = reciter ?? _selectedReciter;
     if (r.isSurahBased) {
-      r = QuranReciter.defaultReciters.firstWhere(
-        (candidate) => !candidate.isSurahBased,
+      // Keep the user's chosen surah-based reciter (e.g. Ahmad Talib bin Humaid).
+      // If this surah is already loaded in full-surah mode, seek directly to
+      // effectiveStart without reloading the file.
+      final durMs = _safeDurationMs;
+      if (isFullSurahMode &&
+          activeSurahNotifier.value == surah &&
+          activeReciter.id == r.id &&
+          durMs > 0) {
+        activeAyahNotifier.value = effectiveStart;
+        final startMs = HifdhAudioRangeHelper.ayahStartMs(
+          surah,
+          effectiveStart,
+          durMs,
+          includeOpeningOnFirstAyah: effectiveStart == 1,
+        );
+        _playWhenReady = true;
+        await _seekWithinFullSurah(startMs);
+        if (!isPlayingNotifier.value) {
+          await resume();
+        }
+        return;
+      }
+      await playFullSurah(
+        surah: surah,
+        reciter: r,
+        autoPlay: true,
+        hasExplicitEnd: true,
+        initialAyah: effectiveStart,
       );
-      setSelectedReciter(r);
+      return;
     }
+
     isFullSurahModeNotifier.value = false;
     await playContinuous(
       surah: surah,
