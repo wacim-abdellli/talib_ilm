@@ -181,11 +181,11 @@ class QuranAudioPlayerBar extends StatelessWidget {
                                   if (isSelected)
                                     Icon(
                                       Icons.check_rounded,
-                                      size: AppIcon.xs,
+                                      size: AppIcon.sm,
                                       color: palette.primary,
                                     )
                                   else
-                                    const SizedBox(width: AppIcon.xs),
+                                    const SizedBox(width: AppIcon.sm),
                                   const SizedBox(width: AppSpace.xs),
                                   Text(
                                     label,
@@ -210,9 +210,9 @@ class QuranAudioPlayerBar extends StatelessWidget {
                           ];
                         },
                         child: Container(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: AppSpace.xs,
-                            vertical: AppSpace.xxs,
+                          padding: EdgeInsetsDirectional.symmetric(
+                            horizontal: isTimerActive ? AppSpace.sm : AppSpace.xs,
+                            vertical: AppSpace.xs,
                           ),
                           decoration: BoxDecoration(
                             color: isTimerActive ? palette.primarySoft : palette.surfaceMuted,
@@ -226,11 +226,11 @@ class QuranAudioPlayerBar extends StatelessWidget {
                             children: [
                               Icon(
                                 isTimerActive ? Icons.bedtime_rounded : Icons.bedtime_outlined,
-                                size: AppIcon.xs,
+                                size: AppIcon.md,
                                 color: isTimerActive ? palette.primary : palette.textMuted,
                               ),
                               if (isTimerActive) ...[
-                                const SizedBox(width: AppSpace.xxs),
+                                const SizedBox(width: AppSpace.xs),
                                 Text(
                                   stopAtEnd ? 'نهاية السورة' : (countdownLabel ?? '$sleepMinutes د'),
                                   style: textTheme.captionBold.copyWith(

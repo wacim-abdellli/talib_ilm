@@ -1,3 +1,24 @@
+## Stage R62 — Fix Audio Player 1st Ayah Skip Bug & Moon Sleep Timer Icon Sizing (10 November 2026)
+- **Branch**: `ui/r62-fix-audio-playback-and-moon-icon`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Audio Player Playing Only 1st Ayah and Skipping to Next Surah**:
+     - In `QuranAudioService._buildSurahPlaylist`, offline local file lookup checked `${baseDir.path}/${r.id}/$sStr/full_surah.mp3` with a 3-digit zero-padded string (`069`), whereas `QuranAudioStorage.getSurahDir` saves files under unpadded `${baseDir.path}/$reciterId/$surah` (`69`).
+     - As a result, even completely downloaded surahs (such as Surah Al-Haqqah, 52 verses) were deemed missing in `_buildSurahPlaylist` and fell back to `getAudioUrl(s, 1)` (first ayah only).
+     - Furthermore, `just_audio`'s 114-item `ConcatenatingAudioSource` automatically incremented to the next playlist item upon track completion without invoking `_handleTrackCompleted()`, completely bypassing repeat modes, the "stop at end of surah" sleep timer, and jumping immediately to Ayah 1 of the following surah.
+     - **Architectural Solution**: Eliminated `_surahPlaylist` and `_buildSurahPlaylist`. In `playFullSurah`, when offline full surah recording exists on disk, it loads and plays `AudioSource.file(fullFile.path)` directly, providing the true full duration (minutes, not seconds) and uninterrupted seekable playback of all verses in the Surah. For surah-based reciters, it streams the full surah URL; for verse-by-verse reciters streaming online, it delegates cleanly to `playContinuous` (verses 1 through N sequentially). Track completion now reliably handles repeat modes, advances to full playback of the next surah, or stops at the end of the surah if the sleep timer is active.
+  2. **Tiny Moon (Sleep Timer) Icon**:
+     - In `QuranAudioPlayerBar`, the moon icon was hardcoded to `AppIcon.xs` (8.0 dp), making it virtually invisible and difficult to discern in both active (`bedtime_rounded` with countdown) and inactive/non-chosen (`bedtime_outlined`) states.
+     - Upgraded the moon icon size to `AppIcon.md` (20.0 dp) for both states with comfortable padding, clean pill/circle container, min 48dp tap target, and `AppIcon.sm` (16.0 dp) for checkmarks in the sleep timer popup menu.
+  3. **Path Resilience in `QuranAudioFrameMerger`**:
+     - `getFullSurahFile` now checks both standard `${dir.path}/full_surah.mp3` and zero-padded `${base.path}/${r.id}/$sStr/full_surah.mp3` paths for seamless backward and cross-directory compatibility.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (8 allow markers used / cap 10).
+  - `flutter test test/quran_audio_full_surah_playback_test.dart test/quran_audio_service_test.dart test/quran_audio_downloads_page_player_test.dart test/app_animation_transitions_test.dart`: All 25 unit tests passed (100%).
+  - `flutter build apk --debug`: Built `build/app/outputs/flutter-apk/app-debug.apk` successfully (0 errors).
+  - `flutter build apk --target-platform android-arm64`: Built modern phones release APK (`build/app/outputs/flutter-apk/talib_ilm_modern_phones_release.apk`, 116.7MB).
+- **Status**: Complete & Verified.
+
 ## Stage R59 — Dynamic & Responsive Widgets for All Screen Dimensions (10 November 2026)
 - **Branch**: `ui/r59-dynamic-responsive-widgets`
 - **Root Cause Analysis & Problems Solved**:
