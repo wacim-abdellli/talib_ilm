@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:qcf_quran_plus/src/widgets/quran_page/parsed_quran_data.dart';
@@ -48,7 +47,6 @@ class QuranLine extends StatefulWidget {
 class _QuranLineState extends State<QuranLine> {
   List<List<TapGestureRecognizer?>> _recognizers = [];
   bool _recognizersReady = false;
-  Timer? _debounceTimer;
 
   late TextStyle _mainTextStyle;
   late TextStyle _numberTextStyle;
@@ -56,7 +54,7 @@ class _QuranLineState extends State<QuranLine> {
   @override
   void initState() {
     super.initState();
-    _buildRecognizersAsync();
+    _buildRecognizers();
   }
 
   @override
@@ -71,7 +69,7 @@ class _QuranLineState extends State<QuranLine> {
 
     if (oldWidget.parsedAyahs != widget.parsedAyahs ||
         oldWidget.onWordTap != widget.onWordTap) {
-      _buildRecognizersAsync();
+      _buildRecognizers();
     }
     if (oldWidget.isDark != widget.isDark ||
         oldWidget.isTajweed != widget.isTajweed ||
@@ -80,48 +78,36 @@ class _QuranLineState extends State<QuranLine> {
     }
   }
 
-  /// Builds the tap recognizers for word-level interactions after a brief debounce.
-  ///
-  /// This helps avoid blocking the UI while scrolling through a page containing
-  /// many ayahs and words.
-  void _buildRecognizersAsync() {
+  /// Builds the tap recognizers for word-level interactions synchronously
+  /// so the first frame renders ready for interaction with zero post-mount setState jank.
+  void _buildRecognizers() {
     if (widget.onWordTap == null) {
       _recognizersReady = false;
       return;
     }
 
-    _recognizersReady = false;
     _disposeRecognizers();
 
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 150), () {
-      if (!mounted) return;
+    _recognizers = widget.parsedAyahs.map((ayahData) {
+      return ayahData.words.map<TapGestureRecognizer?>((wordData) {
+        if (wordData.isSpace ||
+            wordData.isSymbol ||
+            wordData.wordIndex == null ||
+            wordData.logicalWord == null) {
+          return null;
+        }
+        final surah = ayahData.surahNumber;
+        final ayah = ayahData.ayahNumber;
+        final wordIndex = wordData.wordIndex!;
+        final logicalWord = wordData.logicalWord!;
 
-      _recognizers = widget.parsedAyahs.map((ayahData) {
-        return ayahData.words.map<TapGestureRecognizer?>((wordData) {
-          if (wordData.isSpace ||
-              wordData.isSymbol ||
-              wordData.wordIndex == null ||
-              wordData.logicalWord == null) {
-            return null;
-          }
-          final surah = ayahData.surahNumber;
-          final ayah = ayahData.ayahNumber;
-          final wordIndex = wordData.wordIndex!;
-          final logicalWord = wordData.logicalWord!;
-
-          return TapGestureRecognizer()
-            ..onTap = () =>
-                widget.onWordTap?.call(surah, ayah, wordIndex, logicalWord);
-        }).toList();
+        return TapGestureRecognizer()
+          ..onTap = () =>
+              widget.onWordTap?.call(surah, ayah, wordIndex, logicalWord);
       }).toList();
+    }).toList();
 
-      if (mounted) {
-        setState(() {
-          _recognizersReady = true;
-        });
-      }
-    });
+    _recognizersReady = true;
   }
 
   /// Releases all gesture recognizers created for word-level interaction.
@@ -156,7 +142,6 @@ class _QuranLineState extends State<QuranLine> {
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
     _disposeRecognizers();
     super.dispose();
   }

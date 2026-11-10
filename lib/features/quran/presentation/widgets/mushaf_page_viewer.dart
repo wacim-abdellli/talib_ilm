@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -161,8 +162,12 @@ class _MushafPageViewerState extends State<MushafPageViewer>
 
     _loadSavedSettings();
     _reloadLastReadAndBookmarks();
-    _applyWakelock(_keepScreenAwake);
-    QcfFontLoader.preloadPages(_currentPage, radius: 3);
+    // Defer wakelock and font preload to after the route transition finishes
+    // so the entrance animation runs at full framerate.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _applyWakelock(_keepScreenAwake);
+      QcfFontLoader.preloadPages(_currentPage, radius: 3);
+    });
     _audioService.errorNotifier.addListener(_onAudioError);
     _audioService.activeAyahNotifier.addListener(_onAudioAyahChanged);
   }
@@ -363,10 +368,11 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       juz: quran.getJuzNumber(_currentSurah, _currentAyah),
     );
     _preloadDebounceTimer?.cancel();
-    _preloadDebounceTimer = Timer(AppMotion.fast, () {
+    _preloadDebounceTimer = Timer(AppMotion.searchDebounce, () {
       QcfFontLoader.preloadPages(page, radius: 2);
+      // Batch the disk write with the preload so it doesn't fire on every swipe.
+      QuranReaderPreferences.saveLastPage(page);
     });
-    QuranReaderPreferences.saveLastPage(page);
   }
 
   @override
@@ -643,7 +649,7 @@ class _MushafPageViewerState extends State<MushafPageViewer>
           textDirection: TextDirection.rtl,
           child: PageView.builder(
             controller: _pageController,
-            allowImplicitScrolling: false,
+            allowImplicitScrolling: true,
             physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
             itemCount: 604,
             onPageChanged: (index) => _onPageChanged(index + 1),

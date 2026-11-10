@@ -21,7 +21,7 @@ class QuranRepository {
   Future<void>? _loadingFuture;
 
   /// Returns true once both the page collection and offset metadata are ready.
-  bool get isReady => true;
+  bool get isReady => _pages != null && _wordOffsets != null;
 
   /// Exposes the loaded Quran pages.
   List<QuranPage> get pages {

@@ -55,9 +55,8 @@ class SafeNotificationBootReceiver : BroadcastReceiver() {
                 (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M ||
                     android.provider.Settings.canDrawOverlays(context))
             ) {
-                val serviceIntent = Intent(context, DhikrOverlayService::class.java).apply {
-                    action = DhikrOverlayService.ACTION_START
-                }
+                val serviceIntent = Intent(context, DhikrOverlayService::class.java)
+                serviceIntent.action = DhikrOverlayService.ACTION_START
                 try {
                     context.startService(serviceIntent)
                 } catch (_: Exception) {

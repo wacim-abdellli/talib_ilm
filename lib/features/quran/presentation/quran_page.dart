@@ -78,6 +78,7 @@ class _QuranPageState extends State<QuranPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(QuranRepository.instance.ensureLoaded(604));
     _loadData();
     _searchController.addListener(_onSearchChanged);
   }
@@ -301,6 +302,13 @@ class _QuranPageState extends State<QuranPage> {
     final startTime = DateTime.now();
     final effectiveAyah = ayah ?? 1;
     final targetPage = quran.getPageNumber(surahNum, effectiveAyah);
+    // Ensure target page font and Quran page dataset are ready BEFORE pushing
+    // the route so the first frame renders instantly without jank or spinners.
+    await Future.wait([
+      QuranRepository.instance.ensureLoaded(604),
+      QcfFontLoader.ensureFontLoaded(targetPage),
+    ]);
+    // Fire-and-forget: preload neighbours in the background.
     QcfFontLoader.preloadPages(targetPage, radius: 2);
     ReadingHistoryService.recordReading(
       surah: surahNum,
@@ -335,6 +343,10 @@ class _QuranPageState extends State<QuranPage> {
 
   Future<void> _openPage(int pageNumber) async {
     final startTime = DateTime.now();
+    await Future.wait([
+      QuranRepository.instance.ensureLoaded(604),
+      QcfFontLoader.ensureFontLoaded(pageNumber),
+    ]);
     QcfFontLoader.preloadPages(pageNumber, radius: 2);
     ReadingHistoryService.recordReading(
       surah: _lastRead?.surah ?? 1,
@@ -373,6 +385,10 @@ class _QuranPageState extends State<QuranPage> {
   Future<void> _openAyahMatch(QuranAyahMatch match) async {
     final startTime = DateTime.now();
     final targetPage = quran.getPageNumber(match.surahNumber, match.ayahNumber);
+    await Future.wait([
+      QuranRepository.instance.ensureLoaded(604),
+      QcfFontLoader.ensureFontLoaded(targetPage),
+    ]);
     QcfFontLoader.preloadPages(targetPage, radius: 2);
     ReadingHistoryService.recordReading(
       surah: match.surahNumber,

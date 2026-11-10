@@ -5124,3 +5124,31 @@ FAILED (54 violations)
   - `flutter build apk --debug`: Built `build\app\outputs\flutter-apk\app-debug.apk`.
   - `flutter build apk --target-platform android-arm64`: Built `build\app\outputs\flutter-apk\app-release.apk` (116.7MB) and updated `build\app\outputs\flutter-apk\talib_ilm_modern_phones_release.apk`.
 - **Open Issues:** None.
+
+## Round 65 — Animation System Polish, Active Dhikr Engine & Quran Performance Overhaul (10 November 2026)
+- **Status:** Complete
+- **Branch:** `main`
+- **Tag:** `ui-r65-done`, `v1.3.0`
+- **Core Problems Solved:**
+  1. **Comprehensive App Animation System:**
+     - Created `AppSectionSwitcher` for smooth cross-fading segment transitions (180ms easeOut).
+     - Upgraded `AnimatedIndexedStack` in `app_shell.dart` with offstage child pre-warming so tab switching is 100% real-time with zero cold-mount stutter.
+     - Tuned `AppRtlPageTransitionsBuilder` to 220ms and `AppFadePageRoute` to 180ms with `Cubic(0.22, 1.0, 0.36, 1.0)` curve for buttery smooth route animations.
+  2. **Active Phone Usage Tracker for Dhikr Moment Reminders:**
+     - Replaced interval-only alarm with screen state & unlock tracker (`ACTION_USER_PRESENT`, `ACTION_SCREEN_ON`, `ACTION_SCREEN_OFF`, `ACTION_TIME_TICK`).
+     - Reminders only appear when the user actively interacts with their unlocked device.
+     - Fixed `SafeNotificationBootReceiver.kt` val clash to properly start overlay service on boot.
+  3. **Quran Page Performance & Zero-Lag Surah Opening:**
+     - Pre-warmed `QuranRepository.instance.ensureLoaded(604)` in `QuranPage.initState()` so dataset and word offsets are ready in memory.
+     - In `_openSurah`, `_openPage`, and `_openAyahMatch`, awaited target page font and repository in parallel before navigation, eliminating loading spinners and transition freezes.
+     - Fixed `QuranRepository.isReady` (was hardcoded `true`, bypassing async initialization and triggering 77,000-word regex parsing on frame 0).
+     - Eliminated 150ms `Timer` + `setState` in `QuranLine.dart`, constructing recognizers synchronously to eliminate 15 post-mount widget rebuilds per page.
+     - Enabled `allowImplicitScrolling: true` on `MushafPageViewer`'s `PageView.builder` for instant, buttery 60/120fps page swiping.
+     - Debounced `saveLastPage` (300ms) with font preloading to eliminate disk I/O on gesture frames.
+- **Verification Gate:**
+  - `flutter analyze`: 0 issues found (clean).
+  - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).
+  - `flutter test`: All 27 tests passed (100%).
+  - `flutter test test/quran_page_test.dart`: Passed in 2.0s.
+  - `flutter build apk --target-platform android-arm64`: Built `build\app\outputs\flutter-apk\app-release.apk` (116.8MB) and copied to `build\app\outputs\flutter-apk\talib_ilm_modern_phones_release.apk` (122.4MB).
+- **Open Issues:** None.
