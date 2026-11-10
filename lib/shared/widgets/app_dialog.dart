@@ -29,11 +29,28 @@ class AppDialog extends StatelessWidget {
     required WidgetBuilder builder,
     bool barrierDismissible = true,
   }) {
-    return showDialog<T>(
+    return showGeneralDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       barrierColor: context.palette.brandDark.withValues(alpha: 0.55),
-      builder: (dialogContext) => builder(dialogContext),
+      transitionDuration: AppMotion.base,
+      pageBuilder: (dialogContext, animation, secondaryAnimation) =>
+          builder(dialogContext),
+      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: AppMotion.easeOut,
+          reverseCurve: AppMotion.easeIn,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1.0).animate(curved),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
