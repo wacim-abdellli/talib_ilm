@@ -236,8 +236,7 @@ struct MediumPrayerWidgetView: View {
                             .minimumScaleFactor(0.75)
 
                         Text(col.time)
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .monospacedDigit()
+                            .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
                             .foregroundColor(
                                 isActive
                                     ? palette.pillTextColor(for: col.id, isJumua: entry.isJumua)
@@ -321,8 +320,7 @@ struct LargePrayerWidgetView: View {
 
                     if let targetDate = entry.heroTargetDate, !entry.isCallToPrayer {
                         Text(targetDate, style: .timer)
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .monospacedDigit()
+                            .font(.system(size: 16, weight: .bold, design: .rounded).monospacedDigit())
                             .foregroundColor(palette.textPrimary)
                             .multilineTextAlignment(.center)
                             .lineLimit(1)
@@ -422,8 +420,7 @@ struct LargePrayerWidgetView: View {
                             .minimumScaleFactor(0.75)
 
                         Text(col.time)
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .monospacedDigit()
+                            .font(.system(size: 12, weight: .bold, design: .rounded).monospacedDigit())
                             .foregroundColor(
                                 isActive
                                     ? palette.pillTextColor(for: col.id, isJumua: entry.isJumua)
@@ -467,8 +464,7 @@ private struct CountdownBadgeView: View {
         HStack(spacing: 4) {
             if let targetDate = entry.heroTargetDate, !entry.isCallToPrayer {
                 Text(targetDate, style: .timer)
-                    .font(.system(size: fontSize, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    .font(.system(size: fontSize, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(palette.textPrimary)
                     .multilineTextAlignment(.trailing)
                     .lineLimit(1)
