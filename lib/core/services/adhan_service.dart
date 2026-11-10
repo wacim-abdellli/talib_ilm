@@ -112,7 +112,7 @@ class AdhanService {
               : (prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة'),
           artist: isQuranAyah ? 'الشيخ ناصر القطامي' : 'طالب العلم',
           artUri: Uri.parse(
-            'android.resource://com.talibilm.app/mipmap/ic_launcher',
+            'android.resource://com.talibilm.app/drawable/quran_artwork',
           ),
         ),
       );
