@@ -260,10 +260,10 @@ struct MediumPrayerWidgetView: View {
                     )
                 }
             }
-            .frame(maxHeight: .infinity)
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
+        .frame(maxHeight: .infinity, alignment: .center)
     }
 }
 
