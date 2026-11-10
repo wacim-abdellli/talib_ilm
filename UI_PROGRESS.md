@@ -1,3 +1,35 @@
+## Stage R63 — Fix Widget Void Gap & BiDi Order, Hifdh Repeat Range Loop & Non-Repeating Dhikr Randomization (10 November 2026)
+- **Branch**: `ui/r63-fix-widget-layout-and-spacing`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Widget Layout Void Gap & BiDi Order Fixes**:
+     - Large and Ribbon widgets previously had `resizeMode="vertical"` and uncapped heights allowing launchers to stretch the widget card, creating an unsightly empty vertical void between prayer headers and rows.
+     - Changed `resizeMode="horizontal"`, clamped height to `104dp`, centered the Column contents, and aligned `PrayerStrip` centrally.
+     - In `WidgetChronometerHelper.kt`, eliminated redundant `"صلاة "` prefixes from titles (now `"الفجر"`, `"الظهر"`, etc.) and injected Unicode BiDi markers (`\u200F` and `\u200E`) into `formatString` to ensure correct Arabic RTL reading order across all launcher chronometer clocks (`[الفجر] [بعد] [02:52]`).
+  2. **Hifdh Repeat Engine "Always Plays Whole Surah" Resolution**:
+     - In `QuranAudioService`: When repeating a single verse or looping a range (e.g. verses 3-4), if a surah-based reciter (e.g. Badr al-Turki) was active or offline full-surah existed, the player previously fell back to `playFullSurah()`, which played the entire surah from 0:00.
+     - When surah playback completed, `isFullSurahMode` intercepted track completion and restarted the whole surah, ignoring verse repetition.
+     - Fixed in `playContinuous`, `playHifdhRange`, and `setVerseRepeatCount`: dynamically detects bounded ranges, heals surah-based reciters to verse-based reciters (Alafasy), forces `isFullSurahModeNotifier.value = false`, and preserves `_isContinuous` so that each verse repeats `_verseRepeatTarget` times and loops the range predictably.
+     - Extracted `hifdh_repeat_controls.dart` (`HifdhCountPill`, `HifdhAyahStepper`) keeping `hifdh_repeat_options_sheet.dart` at 536 lines (< 600 lines per Rule 8).
+  3. **Non-Consecutive Section Randomization & Content Enrichment for Dhikr Moment**:
+     - In `DhikrMomentService` and `DhikrOverlayService.kt`: previously, `mixed` mode sequentially iterated over a flattened list starting with 24 names of Allah, repeatedly showing only names back-to-back.
+     - Implemented a strict non-consecutive category randomization engine in both Dart (`pickNextItem`) and Kotlin (`currentContent()`):
+       - Strictly excludes `lastCategoryIndex` so two items from the same section never appear consecutively in `mixed` mode.
+       - Within the selected category, filters out `lastItemText` to prevent immediate back-to-back repetitions.
+       - Synchronized and persisted `dhikr_moment_last_category_index` and `dhikr_moment_last_item_text` between Flutter and Android native SharedPreferences.
+       - Guaranteed distinct daily category rotation across consecutive notification slots in `getItemForSlot`.
+     - Enriched all 5 sections with authentic, fully vocalized, classical Islamic content across 210 entries:
+       - Names of Allah: 50 names with spiritual reflections.
+       - Adhkar: 40 authentic daily/morning/evening adhkar with virtues.
+       - Duas: 40 Quranic and Sunnah supplications with profound reflections.
+       - Quran: 40 inspiring, comforting verses with Surah names and ayah numbers.
+       - Hadith: 40 prophetic hadiths with precise citations (Bukhari, Muslim, Tirmidhi).
+     - Extracted data into `lib/core/services/dhikr_moment_content_data.dart` (235 lines) and `android/app/src/main/kotlin/com/talibilm/app/DhikrMomentContent.kt`, keeping `dhikr_moment_service.dart` at 511 lines (< 600 lines per Rule 8).
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
+  - `flutter test test/dhikr_moment_service_test.dart test/hifdh_repeat_engine_test.dart test/quran_audio_player_bar_test.dart test/prayer_home_screen_widget_test.dart test/native_widget_snapshot_test.dart`: All 44 test suites passed (100%).
+- **Status**: Complete & Verified.
+
 ## Stage R62 — Fix Audio Player 1st Ayah Skip Bug & Moon Sleep Timer Icon Sizing (10 November 2026)
 - **Branch**: `ui/r62-fix-audio-playback-and-moon-icon`
 - **Root Cause Analysis & Problems Solved**:

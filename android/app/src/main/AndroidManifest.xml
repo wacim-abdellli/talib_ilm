@@ -102,7 +102,7 @@
         </receiver>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
 
-        <!-- Ribbon 4x1 Widget Provider -->
+        <!-- Medium (4x1 / 5x1) Widget Provider -->
         <receiver
             android:name=".RibbonWidgetProvider"
             android:exported="true"
@@ -115,20 +115,7 @@
                 android:resource="@xml/widget_ribbon" />
         </receiver>
 
-        <!-- Compact 2x2 Widget Provider -->
-        <receiver
-            android:name=".CompactWidgetProvider"
-            android:exported="true"
-            android:label="@string/compact_widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_compact" />
-        </receiver>
-
-        <!-- Large 4x2 Widget Provider -->
+        <!-- Large / Max (4x2 / 5x2) Widget Provider -->
         <receiver
             android:name=".LargeWidgetProvider"
             android:exported="true"

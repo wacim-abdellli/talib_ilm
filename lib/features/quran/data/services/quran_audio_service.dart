@@ -406,15 +406,31 @@ class QuranAudioService {
     bool autoPlay = true,
   }) async {
     if (!isValidSurah(surah) || !isValidVerse(surah, startAyah)) return;
-    final r = reciter ?? _selectedReciter;
-    if (r.isSurahBased) {
-      await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
-      return;
-    }
+    var r = reciter ?? _selectedReciter;
     final totalVerses = quran.getVerseCount(surah);
+    final isRangeBounded = startAyah > 1 ||
+        (endAyah != null && endAyah < totalVerses) ||
+        hifdhRangeNotifier.value != null ||
+        _verseRepeatTarget > 1;
+
+    if (r.isSurahBased) {
+      if (isRangeBounded) {
+        // A surah-only recording cannot play or loop an isolated verse range.
+        // Switch to the first available verse-based reciter (e.g. Alafasy).
+        r = QuranReciter.defaultReciters.firstWhere(
+          (candidate) => !candidate.isSurahBased,
+        );
+        setSelectedReciter(r);
+      } else {
+        await playFullSurah(surah: surah, reciter: r, autoPlay: autoPlay);
+        return;
+      }
+    }
+
     // If starting from verse 1 for full surah and offline recording exists,
-    // play the full recording directly for a single, unbroken listening experience.
-    if (_sourceResolver == null &&
+    // and no range loop or verse repeat is active, play the full recording directly.
+    if (!isRangeBounded &&
+        _sourceResolver == null &&
         startAyah == 1 &&
         (endAyah == null || endAyah >= totalVerses)) {
       final fullFile = await QuranAudioFrameMerger.getFullSurahAudioFile(
@@ -826,6 +842,33 @@ class QuranAudioService {
     } else {
       repeatModeNotifier.value = AudioRepeatMode.repeatOnce;
     }
+    if (count > 1 || count == 0) {
+      final wasContinuous = _isContinuous;
+      if (isFullSurahMode) {
+        isFullSurahModeNotifier.value = false;
+      }
+      if (_selectedReciter.isSurahBased) {
+        final r = QuranReciter.defaultReciters.firstWhere(
+          (candidate) => !candidate.isSurahBased,
+        );
+        setSelectedReciter(r);
+      }
+      final s = activeSurahNotifier.value;
+      final a = activeAyahNotifier.value ?? 1;
+      if (s != null && isPlayingNotifier.value) {
+        if (wasContinuous) {
+          playContinuous(
+            surah: s,
+            startAyah: a,
+            endAyah: _endAyah > 0 ? _endAyah : null,
+            reciter: _selectedReciter,
+            autoPlay: true,
+          );
+        } else {
+          playVerse(s, a, reciter: _selectedReciter, autoPlay: true);
+        }
+      }
+    }
   }
 
   Future<void> playHifdhRange({
@@ -847,11 +890,19 @@ class QuranAudioService {
       repeatCount: repeatCount,
       currentIteration: 0,
     );
+    var r = reciter ?? _selectedReciter;
+    if (r.isSurahBased) {
+      r = QuranReciter.defaultReciters.firstWhere(
+        (candidate) => !candidate.isSurahBased,
+      );
+      setSelectedReciter(r);
+    }
+    isFullSurahModeNotifier.value = false;
     await playContinuous(
       surah: surah,
       startAyah: effectiveStart,
       endAyah: effectiveEnd,
-      reciter: reciter,
+      reciter: r,
     );
   }
 

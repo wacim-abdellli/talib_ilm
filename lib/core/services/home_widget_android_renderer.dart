@@ -6,13 +6,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/theme/app_theme.dart';
 import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
-import '../../features/prayer/presentation/widgets/widget_compact.dart';
 import '../../features/prayer/presentation/widgets/widget_large.dart';
 import '../../features/prayer/presentation/widgets/widget_ribbon.dart';
 import '../../features/prayer/presentation/widgets/widget_standard.dart';
 import 'home_widget_snapshot.dart';
 
-/// Offscreen Android widget bitmap rendering and provider notifications.
+/// Android widget dimension resolution and native `AppWidgetProvider` notifications.
+///
+/// Android widgets (`RibbonWidgetProvider` 4x1 Medium and `LargeWidgetProvider`
+/// 4x2 Max/Large) render 100% natively via `RemoteViews` XML layouts and
+/// `WidgetChronometerHelper.kt`, eliminating offscreen bitmap scaling and
+/// aspect-ratio distortion across all launcher grid sizes.
 class HomeWidgetAndroidRenderer {
   const HomeWidgetAndroidRenderer._();
 
@@ -48,7 +52,8 @@ class HomeWidgetAndroidRenderer {
     return AppTheme.resolveTheme(ThemeMode.system);
   }
 
-  /// Resolves the actual launcher widget dimensions dynamically reported by Android.
+  /// Resolves the actual launcher widget dimensions dynamically reported by Android,
+  /// enforcing Medium (280dp) as the minimum width.
   static Future<Size> resolveDimensions({
     required String prefix,
     required double fallbackW,
@@ -58,6 +63,7 @@ class HomeWidgetAndroidRenderer {
     required double minH,
     required double maxH,
   }) async {
+    final effectiveMinW = minW < 280.0 ? 280.0 : minW;
     try {
       int? w;
       int? h;
@@ -77,15 +83,15 @@ class HomeWidgetAndroidRenderer {
       }
 
       if (w != null && h != null && w > 0 && h > 0) {
-        final clampedW = w.toDouble().clamp(minW, maxW);
+        final clampedW = w.toDouble().clamp(effectiveMinW, maxW);
         final clampedH = h.toDouble().clamp(minH, maxH);
         return Size(clampedW, clampedH);
       }
     } catch (_) {}
-    return Size(fallbackW, fallbackH);
+    return Size(fallbackW.clamp(effectiveMinW, maxW), fallbackH);
   }
 
-  /// Updates the Ribbon (4x1) Android Home Screen Widget dynamically.
+  /// Updates the Medium Ribbon (4x1 / 5x1) Android Home Screen Widget.
   static Future<void> updateRibbon({
     required PrayerTimesDay day,
     required DateTime now,
@@ -94,16 +100,15 @@ class HomeWidgetAndroidRenderer {
     bool force = false,
   }) async {
     try {
-      final all = day.prayers;
       final hijri = formatHijri(now);
 
       final resolvedSize = await resolveDimensions(
         prefix: 'ribbon',
         fallbackW: kRibbonW,
         fallbackH: kRibbonH,
-        minW: 200.0,
+        minW: 280.0,
         maxW: 600.0,
-        minH: 50.0,
+        minH: 80.0,
         maxH: 250.0,
       );
 
@@ -114,34 +119,6 @@ class HomeWidgetAndroidRenderer {
         return;
       }
       _lastRibbonRenderKey = renderKey;
-
-      await HomeWidget.renderFlutterWidget(
-        MediaQuery(
-          data: MediaQueryData(
-            size: resolvedSize,
-            devicePixelRatio: 2.5,
-            textScaler: TextScaler.noScaling,
-          ),
-          child: Theme(
-            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: WidgetRibbon(
-                eval: eval,
-                all: all,
-                hijriDate: hijri,
-                isDark: useDark,
-                forNativeWidget: true,
-                width: resolvedSize.width,
-                height: resolvedSize.height,
-              ),
-            ),
-          ),
-        ),
-        key: 'prayer_ribbon_widget',
-        logicalSize: resolvedSize,
-        pixelRatio: 2.5,
-      );
 
       await HomeWidgetSnapshot.preRenderDailyRibbonSnapshots(
         day: day,
@@ -155,13 +132,14 @@ class HomeWidgetAndroidRenderer {
       await HomeWidget.updateWidget(
         name: 'RibbonWidgetProvider',
         androidName: 'RibbonWidgetProvider',
+        qualifiedAndroidName: 'com.talibilm.app.RibbonWidgetProvider',
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
     }
   }
 
-  /// Updates the Standard (4x2) Android Home Screen Widget dynamically.
+  /// Updates the Standard (4x2) Android Home Screen Widget.
   static Future<void> updateStandard({
     required PrayerTimesDay day,
     required DateTime now,
@@ -170,15 +148,13 @@ class HomeWidgetAndroidRenderer {
     bool force = false,
   }) async {
     try {
-      final all = day.prayers;
-
       final resolvedSize = await resolveDimensions(
         prefix: 'standard',
         fallbackW: kStandardW,
         fallbackH: kStandardH,
-        minW: 200.0,
+        minW: 280.0,
         maxW: 600.0,
-        minH: 80.0,
+        minH: 135.0,
         maxH: 350.0,
       );
 
@@ -190,42 +166,17 @@ class HomeWidgetAndroidRenderer {
       }
       _lastStandardRenderKey = renderKey;
 
-      await HomeWidget.renderFlutterWidget(
-        MediaQuery(
-          data: MediaQueryData(
-            size: resolvedSize,
-            devicePixelRatio: 2.0,
-            textScaler: TextScaler.noScaling,
-          ),
-          child: Theme(
-            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: WidgetStandard(
-                eval: eval,
-                all: all,
-                isDark: useDark,
-                width: resolvedSize.width,
-                height: resolvedSize.height,
-              ),
-            ),
-          ),
-        ),
-        key: 'prayer_standard_widget',
-        logicalSize: resolvedSize,
-        pixelRatio: 2.0,
-      );
-
       await HomeWidget.updateWidget(
         name: 'StandardWidgetProvider',
         androidName: 'StandardWidgetProvider',
+        qualifiedAndroidName: 'com.talibilm.app.StandardWidgetProvider',
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
     }
   }
 
-  /// Updates the Large (4x3/4x2/4x1) Android Home Screen Widget dynamically.
+  /// Updates the Max/Large (4x2 / 5x2) Android Home Screen Widget.
   static Future<void> updateLarge({
     required PrayerTimesDay day,
     required DateTime now,
@@ -234,18 +185,16 @@ class HomeWidgetAndroidRenderer {
     bool force = false,
   }) async {
     try {
-      final all = day.prayers;
       final hijri = formatHijri(now);
-      final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
 
       final resolvedSize = await resolveDimensions(
         prefix: 'large',
         fallbackW: kLargeW,
         fallbackH: kLargeH,
-        minW: 200.0,
+        minW: 280.0,
         maxW: 600.0,
-        minH: 60.0,
-        maxH: 300.0,
+        minH: 135.0,
+        maxH: 350.0,
       );
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -255,35 +204,6 @@ class HomeWidgetAndroidRenderer {
         return;
       }
       _lastLargeRenderKey = renderKey;
-
-      await HomeWidget.renderFlutterWidget(
-        MediaQuery(
-          data: MediaQueryData(
-            size: resolvedSize,
-            devicePixelRatio: 2.0,
-            textScaler: TextScaler.noScaling,
-          ),
-          child: Theme(
-            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: WidgetLarge(
-                eval: eval,
-                all: all,
-                hijriDate: hijri,
-                cityName: city,
-                isDark: useDark,
-                forNativeWidget: true,
-                width: resolvedSize.width,
-                height: resolvedSize.height,
-              ),
-            ),
-          ),
-        ),
-        key: 'prayer_large_widget',
-        logicalSize: resolvedSize,
-        pixelRatio: 2.0,
-      );
 
       await HomeWidgetSnapshot.preRenderDailyLargeSnapshots(
         day: day,
@@ -297,13 +217,14 @@ class HomeWidgetAndroidRenderer {
       await HomeWidget.updateWidget(
         name: 'LargeWidgetProvider',
         androidName: 'LargeWidgetProvider',
+        qualifiedAndroidName: 'com.talibilm.app.LargeWidgetProvider',
       );
     } catch (_) {
       // Graceful fallback when platform channels are unavailable
     }
   }
 
-  /// Updates the Compact (2x2) Android Home Screen Widget dynamically.
+  /// Retained for legacy call sites; redirects to Medium minimum dimensions.
   static Future<void> updateCompact({
     required PrayerTimesDay day,
     required DateTime now,
@@ -314,12 +235,12 @@ class HomeWidgetAndroidRenderer {
     try {
       final resolvedSize = await resolveDimensions(
         prefix: 'compact',
-        fallbackW: kCompactW,
-        fallbackH: kCompactH,
-        minW: 100.0,
-        maxW: 300.0,
-        minH: 100.0,
-        maxH: 300.0,
+        fallbackW: kRibbonW,
+        fallbackH: kRibbonH,
+        minW: 280.0,
+        maxW: 600.0,
+        minH: 80.0,
+        maxH: 250.0,
       );
 
       final timeKey = '${now.hour}:${now.minute}';
@@ -329,38 +250,6 @@ class HomeWidgetAndroidRenderer {
         return;
       }
       _lastCompactRenderKey = renderKey;
-
-      await HomeWidget.renderFlutterWidget(
-        MediaQuery(
-          data: MediaQueryData(
-            size: resolvedSize,
-            devicePixelRatio: 2.5,
-            textScaler: TextScaler.noScaling,
-          ),
-          child: Theme(
-            data: useDark == true ? AppTheme.dark() : AppTheme.light(),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: WidgetCompact(
-                eval: eval,
-                isDark: useDark,
-                width: resolvedSize.width,
-                height: resolvedSize.height,
-              ),
-            ),
-          ),
-        ),
-        key: 'prayer_compact_widget',
-        logicalSize: resolvedSize,
-        pixelRatio: 2.5,
-      );
-
-      await HomeWidget.updateWidget(
-        name: 'CompactWidgetProvider',
-        androidName: 'CompactWidgetProvider',
-      );
-    } catch (_) {
-      // Graceful fallback when platform channels are unavailable
-    }
+    } catch (_) {}
   }
 }

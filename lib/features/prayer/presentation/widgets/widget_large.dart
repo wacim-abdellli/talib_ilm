@@ -70,7 +70,7 @@ class WidgetLarge extends StatelessWidget {
 
             return Column(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── 1. Top Bar: [Prayer • Countdown] (Start) ←→ [Hijri Date • City] (End) ──

@@ -69,7 +69,7 @@ def main():
     has_main_activity = "com.talibilm.app/.MainActivity" in out
     has_boot_receiver = "ScheduledNotificationBootReceiver" in out
     has_audio_service = "com.ryanheise.audioservice.AudioService" in out
-    has_widgets = "RibbonWidgetProvider" in out and "CompactWidgetProvider" in out and "LargeWidgetProvider" in out
+    has_widgets = "RibbonWidgetProvider" in out and "LargeWidgetProvider" in out
     
     print(f"[CHECK 2] MainActivity registered: {'PASS' if has_main_activity else 'FAIL'}")
     print(f"[CHECK 3] Boot Receiver registered: {'PASS' if has_boot_receiver else 'FAIL'}")

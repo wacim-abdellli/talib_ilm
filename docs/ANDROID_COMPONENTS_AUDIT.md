@@ -15,9 +15,8 @@ Every `<activity>`, `<service>`, and `<receiver>` in `android/app/src/main/Andro
 | `.MainActivity` | Activity | `true` | None (Public) | `android.intent.action.MAIN`<br>`android.intent.category.LAUNCHER` | Primary user entry point launched by the Android launcher. |
 | `com.ryanheise.audioservice.AudioService` | Service | `true` | System Media Session | `android.media.browse.MediaBrowserService` | Required for system lock-screen media controls, Bluetooth AVRCP metadata, and Android Auto. Bound with `foregroundServiceType="mediaPlayback"`. |
 | `com.ryanheise.audioservice.MediaButtonReceiver` | Receiver | `true` | System Key Events | `android.intent.action.MEDIA_BUTTON` | Required to receive hardware play/pause/skip key events from wired/Bluetooth headphones. |
-| `.RibbonWidgetProvider` | Receiver | `true` | AppWidget Subsystem | `android.appwidget.action.APPWIDGET_UPDATE` | Bound to launcher desktop for 4x1 ribbon prayer/tracker widget. |
-| `.CompactWidgetProvider` | Receiver | `true` | AppWidget Subsystem | `android.appwidget.action.APPWIDGET_UPDATE` | Bound to launcher desktop for 2x2 compact prayer widget. |
-| `.LargeWidgetProvider` | Receiver | `true` | AppWidget Subsystem | `android.appwidget.action.APPWIDGET_UPDATE` | Bound to launcher desktop for 4x2 detailed prayer/quran widget. |
+| `.RibbonWidgetProvider` | Receiver | `true` | AppWidget Subsystem | `android.appwidget.action.APPWIDGET_UPDATE` | Bound to launcher desktop for 4x1 medium prayer/tracker widget. |
+| `.LargeWidgetProvider` | Receiver | `true` | AppWidget Subsystem | `android.appwidget.action.APPWIDGET_UPDATE` | Bound to launcher desktop for 4x2 large detailed prayer widget. |
 | `es.antonborri.home_widget.HomeWidgetBackgroundReceiver` | Receiver | `true` | Implicit Intent Filter | `es.antonborri.home_widget.action.BACKGROUND` | Dispatches widget tap callbacks into Flutter background engine. |
 | `es.antonborri.home_widget.HomeWidgetBackgroundService` | Service | `true` | `android.permission.BIND_JOB_SERVICE` | None | System job scheduler service. Protected by `BIND_JOB_SERVICE` (signature/system permission), making it impossible for untrusted third-party apps to invoke. |
 | `com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver` | Receiver | **`false`** | Internal Only | None | Internal alarm trigger. Closed to external intent injection. |

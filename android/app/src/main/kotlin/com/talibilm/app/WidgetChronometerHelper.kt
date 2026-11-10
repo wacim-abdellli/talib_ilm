@@ -7,24 +7,38 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
-import java.io.File
+import org.json.JSONObject
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.abs
+import kotlin.math.acos
+import kotlin.math.asin
+import kotlin.math.atan
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
+import kotlin.math.tan
 
 object WidgetChronometerHelper {
 
-    private data class PrayerItem(
-        val name: String,
+    private data class PrayerColumnSpec(
+        val key: String,
+        val displayName: String,
         val adhanMs: Long,
         val iqamaMinutes: Int,
         val salahMinutes: Int,
         val color: Int,
-        val iconRes: Int
+        val iconRes: Int,
+        val pillRes: Int,
+        val iconViewId: Int,
+        val nameViewId: Int,
+        val timeViewId: Int
     )
 
     fun setupChronometer(
@@ -35,28 +49,43 @@ object WidgetChronometerHelper {
     ) {
         try {
             val now = System.currentTimeMillis()
+            val isLarge = providerClass.simpleName.contains("Large") ||
+                providerClass.simpleName.contains("Standard")
 
-            // 1. Resolve theme mode & colors
+            // 1. Resolve theme mode & palette
             val isDark = resolveIsDark(widgetData)
-            val defaultTextColor = if (isDark) 0xFFFFFFFF.toInt() else 0xFF1C1917.toInt()
-            val textColor = getSafeInt(widgetData, "widget_text_color", defaultTextColor)
-            val bgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
+            val cardBgRes = if (isDark) R.drawable.widget_card_dark else R.drawable.widget_card_light
+            val heroBoxBgRes = if (isDark) R.drawable.widget_hero_box_dark else R.drawable.widget_hero_box_light
+            val countdownBgRes = if (isDark) R.drawable.widget_countdown_badge_dark else R.drawable.widget_countdown_badge_light
 
-            // 2. Read full prayer schedule if available
-            val fajrMs = getSafeLong(widgetData, "prayer_fajr_epoch_ms", 0L)
-            val dhuhrMs = getSafeLong(widgetData, "prayer_dhuhr_epoch_ms", 0L)
-            val asrMs = getSafeLong(widgetData, "prayer_asr_epoch_ms", 0L)
-            val maghribMs = getSafeLong(widgetData, "prayer_maghrib_epoch_ms", 0L)
-            val ishaMs = getSafeLong(widgetData, "prayer_isha_epoch_ms", 0L)
+            val primaryTextColor = if (isDark) 0xFFF4EFE6.toInt() else 0xFF14130F.toInt()
+            val mutedTextColor = if (isDark) 0xFFA9A59C.toInt() else 0xFF6B665B.toInt()
+            val goldColor = if (isDark) 0xFFE3B341.toInt() else 0xFF9A6700.toInt()
 
-            val isRibbonOrLarge = providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Large")
+            try {
+                views.setInt(R.id.widget_container, "setBackgroundResource", cardBgRes)
+            } catch (_: Exception) {}
 
-            if (fajrMs > 0L && dhuhrMs > 0L && asrMs > 0L && maghribMs > 0L && ishaMs > 0L) {
-                val dayMs = 86_400_000L
-                val daysBehind = if (now > fajrMs + dayMs) (now - fajrMs) / dayMs else 0L
-                val offsetMs = daysBehind * dayMs
+            if (isLarge) {
+                try {
+                    views.setInt(R.id.widget_hero_box, "setBackgroundResource", heroBoxBgRes)
+                } catch (_: Exception) {}
+            }
 
-                if (daysBehind > 0L) {
+            // 2. Read or autonomously compute today's 5 prayer timestamps
+            val json = loadJsonPayload(widgetData)
+            var fajrMs = getSafeLong(widgetData, json, "prayer_fajr_epoch_ms", "fajr", 0L)
+            var dhuhrMs = getSafeLong(widgetData, json, "prayer_dhuhr_epoch_ms", "dhuhr", 0L)
+            var asrMs = getSafeLong(widgetData, json, "prayer_asr_epoch_ms", "asr", 0L)
+            var maghribMs = getSafeLong(widgetData, json, "prayer_maghrib_epoch_ms", "maghrib", 0L)
+            var ishaMs = getSafeLong(widgetData, json, "prayer_isha_epoch_ms", "isha", 0L)
+            var tomorrowFajrMs = getSafeLong(widgetData, json, "prayer_tomorrow_fajr_epoch_ms", null, 0L)
+
+            val scheduleValidForToday = fajrMs > 0L && dhuhrMs > 0L && asrMs > 0L &&
+                maghribMs > 0L && ishaMs > 0L && isSameCalendarDay(fajrMs, now)
+
+            if (!scheduleValidForToday) {
+                if (fajrMs > 0L && now > fajrMs + 86_400_000L) {
                     try {
                         val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
                             context,
@@ -66,41 +95,70 @@ object WidgetChronometerHelper {
                     } catch (_: Exception) {}
                 }
 
-                // Full autonomous native schedule evaluation
-                evaluateAndApplySchedule(
-                    context = context,
-                    views = views,
-                    widgetData = widgetData,
-                    now = now,
-                    providerClass = providerClass,
-                    isRibbonOrLarge = isRibbonOrLarge,
-                    textColor = textColor,
-                    bgRes = bgRes,
-                    fajrMs = fajrMs + offsetMs,
-                    dhuhrMs = dhuhrMs + offsetMs,
-                    asrMs = asrMs + offsetMs,
-                    maghribMs = maghribMs + offsetMs,
-                    ishaMs = ishaMs + offsetMs
-                )
-            } else {
-                // Fallback to single snapshot values with strict negative chronometer prevention
-                applyFallbackSnapshot(
-                    context = context,
-                    views = views,
-                    widgetData = widgetData,
-                    now = now,
-                    providerClass = providerClass,
-                    isRibbonOrLarge = isRibbonOrLarge,
-                    textColor = textColor,
-                    bgRes = bgRes
-                )
+                val coords = resolveCoordinates(widgetData, json)
+                val tzOffsetHours = TimeZone.getDefault().getOffset(now) / 3_600_000.0
+                val todayCalc = calculateSolarPrayers(now, coords.first, coords.second, tzOffsetHours)
+                val tomorrowCalc = calculateSolarPrayers(now + 86_400_000L, coords.first, coords.second, tzOffsetHours)
+
+                fajrMs = todayCalc["fajr"] ?: fajrMs
+                dhuhrMs = todayCalc["dhuhr"] ?: dhuhrMs
+                asrMs = todayCalc["asr"] ?: asrMs
+                maghribMs = todayCalc["maghrib"] ?: maghribMs
+                ishaMs = todayCalc["isha"] ?: ishaMs
+                tomorrowFajrMs = tomorrowCalc["fajr"] ?: (fajrMs + 86_400_000L)
+            } else if (tomorrowFajrMs <= 0L) {
+                tomorrowFajrMs = fajrMs + 86_400_000L
             }
-        } catch (_: Throwable) {
+
+            // 3. Populate Hijri Date & City Name
+            val fullHijri = resolveHijriDate(widgetData, json, now, scheduleValidForToday)
+            val compactHijri = fullHijri.replace(Regex("\\s*\\d{4}\\s*هـ?"), "").trim().ifEmpty { fullHijri }
+            val displayHijri = if (isLarge) fullHijri else compactHijri
+
             try {
-                views.setViewVisibility(R.id.widget_countdown, View.GONE)
-                views.setViewVisibility(R.id.widget_status_badge, View.GONE)
-            } catch (_: Throwable) {}
-        }
+                views.setTextViewText(R.id.widget_hijri_date, displayHijri)
+                views.setTextColor(R.id.widget_hijri_date, primaryTextColor)
+            } catch (_: Exception) {}
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    views.setInt(R.id.widget_calendar_icon, "setColorFilter", if (isLarge) goldColor else mutedTextColor)
+                }
+            } catch (_: Exception) {}
+
+            if (isLarge) {
+                val city = resolveCityName(widgetData, json)
+                try {
+                    views.setTextViewText(R.id.widget_city_name, city)
+                    views.setTextColor(R.id.widget_city_name, mutedTextColor)
+                } catch (_: Exception) {}
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        views.setInt(R.id.widget_location_icon, "setColorFilter", goldColor)
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // 4. Evaluate active prayer & populate all views
+            evaluateAndApplySchedule(
+                context = context,
+                views = views,
+                widgetData = widgetData,
+                now = now,
+                providerClass = providerClass,
+                isLarge = isLarge,
+                isDark = isDark,
+                primaryTextColor = primaryTextColor,
+                mutedTextColor = mutedTextColor,
+                countdownBgRes = countdownBgRes,
+                fajrMs = fajrMs,
+                dhuhrMs = dhuhrMs,
+                asrMs = asrMs,
+                maghribMs = maghribMs,
+                ishaMs = ishaMs,
+                tomorrowFajrMs = tomorrowFajrMs
+            )
+        } catch (_: Throwable) {}
     }
 
     private fun evaluateAndApplySchedule(
@@ -109,249 +167,508 @@ object WidgetChronometerHelper {
         widgetData: SharedPreferences,
         now: Long,
         providerClass: Class<*>,
-        isRibbonOrLarge: Boolean,
-        textColor: Int,
-        bgRes: Int,
+        isLarge: Boolean,
+        isDark: Boolean,
+        primaryTextColor: Int,
+        mutedTextColor: Int,
+        countdownBgRes: Int,
         fajrMs: Long,
         dhuhrMs: Long,
         asrMs: Long,
         maghribMs: Long,
-        ishaMs: Long
+        ishaMs: Long,
+        tomorrowFajrMs: Long
     ) {
-        val isFriday = getSafeBoolean(widgetData, "is_friday", false)
+        val cal = Calendar.getInstance().apply { timeInMillis = if (dhuhrMs > 0L) dhuhrMs else now }
+        val isFriday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY
+
         val iqamaFajr = getSafeInt(widgetData, "iqama_fajr_min", 25)
         val iqamaDhuhr = getSafeInt(widgetData, "iqama_dhuhr_min", if (isFriday) 25 else 20)
         val iqamaAsr = getSafeInt(widgetData, "iqama_asr_min", 20)
         val iqamaMaghrib = getSafeInt(widgetData, "iqama_maghrib_min", 10)
         val iqamaIsha = getSafeInt(widgetData, "iqama_isha_min", 15)
 
-        val fajrColor = getSafeInt(widgetData, "prayer_color_fajr", 0xFF38BDF8.toInt())
-        val dhuhrColor = if (isFriday) 0xFF10B981.toInt() else getSafeInt(widgetData, "prayer_color_dhuhr", 0xFFF59E0B.toInt())
-        val asrColor = getSafeInt(widgetData, "prayer_color_asr", 0xFFFB923C.toInt())
-        val maghribColor = getSafeInt(widgetData, "prayer_color_maghrib", 0xFFF43F5E.toInt())
-        val ishaColor = getSafeInt(widgetData, "prayer_color_isha", 0xFFA78BFA.toInt())
+        val fajrColor = if (isDark) 0xFF38BDF8.toInt() else 0xFF0284C7.toInt()
+        val dhuhrColor = if (isFriday) {
+            if (isDark) 0xFF34D399.toInt() else 0xFF047857.toInt()
+        } else {
+            if (isDark) 0xFFE3B341.toInt() else 0xFF9A6700.toInt()
+        }
+        val asrColor = if (isDark) 0xFFFB923C.toInt() else 0xFFC2410C.toInt()
+        val maghribColor = if (isDark) 0xFFF43F5E.toInt() else 0xFFBE123C.toInt()
+        val ishaColor = if (isDark) 0xFFA78BFA.toInt() else 0xFF6D28D9.toInt()
 
-        val tomorrowFajrMs = getSafeLong(widgetData, "prayer_tomorrow_fajr_epoch_ms", fajrMs + 86400000L)
+        val dhuhrLabel = if (isFriday) "الجمعة" else "الظهر"
+        val dhuhrIcon = if (isFriday) R.drawable.ic_prayer_jumua else R.drawable.ic_prayer_dhuhr
+        val dhuhrPill = if (isFriday) R.drawable.widget_pill_jumua else R.drawable.widget_pill_dhuhr
 
-        val prayers = listOf(
-            PrayerItem("الفجر", fajrMs, iqamaFajr, 15, fajrColor, R.drawable.ic_prayer_fajr),
-            PrayerItem(if (isFriday) "الجمعة" else "الظهر", dhuhrMs, iqamaDhuhr, if (isFriday) 20 else 12, dhuhrColor, if (isFriday) R.drawable.ic_prayer_jumua else R.drawable.ic_prayer_dhuhr),
-            PrayerItem("العصر", asrMs, iqamaAsr, 12, asrColor, R.drawable.ic_prayer_asr),
-            PrayerItem("المغرب", maghribMs, iqamaMaghrib, 10, maghribColor, R.drawable.ic_prayer_maghrib),
-            PrayerItem("العشاء", ishaMs, iqamaIsha, 12, ishaColor, R.drawable.ic_prayer_isha)
+        val columns = listOf(
+            PrayerColumnSpec(
+                key = "fajr",
+                displayName = "الفجر",
+                adhanMs = fajrMs,
+                iqamaMinutes = iqamaFajr,
+                salahMinutes = 15,
+                color = fajrColor,
+                iconRes = R.drawable.ic_prayer_fajr,
+                pillRes = R.drawable.widget_pill_fajr,
+                iconViewId = R.id.icon_fajr,
+                nameViewId = R.id.name_fajr,
+                timeViewId = R.id.time_fajr
+            ),
+            PrayerColumnSpec(
+                key = "dhuhr",
+                displayName = dhuhrLabel,
+                adhanMs = dhuhrMs,
+                iqamaMinutes = iqamaDhuhr,
+                salahMinutes = if (isFriday) 20 else 12,
+                color = dhuhrColor,
+                iconRes = dhuhrIcon,
+                pillRes = dhuhrPill,
+                iconViewId = R.id.icon_dhuhr,
+                nameViewId = R.id.name_dhuhr,
+                timeViewId = R.id.time_dhuhr
+            ),
+            PrayerColumnSpec(
+                key = "asr",
+                displayName = "العصر",
+                adhanMs = asrMs,
+                iqamaMinutes = iqamaAsr,
+                salahMinutes = 12,
+                color = asrColor,
+                iconRes = R.drawable.ic_prayer_asr,
+                pillRes = R.drawable.widget_pill_asr,
+                iconViewId = R.id.icon_asr,
+                nameViewId = R.id.name_asr,
+                timeViewId = R.id.time_asr
+            ),
+            PrayerColumnSpec(
+                key = "maghrib",
+                displayName = "المغرب",
+                adhanMs = maghribMs,
+                iqamaMinutes = iqamaMaghrib,
+                salahMinutes = 10,
+                color = maghribColor,
+                iconRes = R.drawable.ic_prayer_maghrib,
+                pillRes = R.drawable.widget_pill_maghrib,
+                iconViewId = R.id.icon_maghrib,
+                nameViewId = R.id.name_maghrib,
+                timeViewId = R.id.time_maghrib
+            ),
+            PrayerColumnSpec(
+                key = "isha",
+                displayName = "العشاء",
+                adhanMs = ishaMs,
+                iqamaMinutes = iqamaIsha,
+                salahMinutes = 12,
+                color = ishaColor,
+                iconRes = R.drawable.ic_prayer_isha,
+                pillRes = R.drawable.widget_pill_isha,
+                iconViewId = R.id.icon_isha,
+                nameViewId = R.id.name_isha,
+                timeViewId = R.id.time_isha
+            )
         )
-        val tomorrowFajr = PrayerItem("الفجر", tomorrowFajrMs, iqamaFajr, 15, fajrColor, R.drawable.ic_prayer_fajr)
 
-        val activeItem: PrayerItem
-        val displayTitle: String
+        val tomorrowFajrSpec = columns[0].copy(adhanMs = tomorrowFajrMs)
+
+        val activeSpec: PrayerColumnSpec
+        val activeIndex: Int
+        val allTodayCompleted: Boolean
+        val heroTitle: String
+        val activeTimeLabel: String
         val statusText: String?
         val countdownTargetMs: Long?
         val countdownPrefix: String
         val nextAlarmMs: Long
 
-        if (now < prayers[0].adhanMs) {
-            // Case 1: Before today's Fajr
-            activeItem = prayers[0]
-            displayTitle = "صلاة ${activeItem.name}"
+        if (now < columns[0].adhanMs) {
+            // Before today's Fajr
+            activeSpec = columns[0]
+            activeIndex = 0
+            allTodayCompleted = false
+            heroTitle = "صلاة ${activeSpec.displayName}"
+            activeTimeLabel = formatTime12hWithPeriod(activeSpec.adhanMs)
             statusText = null
-            countdownTargetMs = activeItem.adhanMs
-            countdownPrefix = "بعد "
-            nextAlarmMs = activeItem.adhanMs
+            countdownTargetMs = activeSpec.adhanMs
+            countdownPrefix = "بعد"
+            nextAlarmMs = activeSpec.adhanMs
         } else {
-            // Find current prayer
-            var currentIdx = -1
-            for (i in prayers.indices.reversed()) {
-                if (now >= prayers[i].adhanMs) {
+            var currentIdx = 0
+            for (i in columns.indices.reversed()) {
+                if (now >= columns[i].adhanMs) {
                     currentIdx = i
                     break
                 }
             }
 
-            val p = prayers[currentIdx]
+            val p = columns[currentIdx]
             val iqamaMs = p.adhanMs + (p.iqamaMinutes * 60_000L)
             val salahEndMs = iqamaMs + (p.salahMinutes * 60_000L)
 
             if (now < p.adhanMs + 60_000L) {
-                // Case 2: At Adhan (first 60 seconds)
-                activeItem = p
-                displayTitle = if (p.name == "الجمعة") "أذان صلاة الجمعة" else "أذان صلاة ${p.name}"
+                // Phase A: At Adhan (first 60s)
+                activeSpec = p
+                activeIndex = currentIdx
+                allTodayCompleted = false
+                heroTitle = if (p.displayName == "الجمعة") "أذان الجمعة" else "أذان ${p.displayName}"
+                activeTimeLabel = formatTime12hWithPeriod(p.adhanMs)
                 statusText = "الأذان الآن"
                 countdownTargetMs = null
                 countdownPrefix = ""
                 nextAlarmMs = p.adhanMs + 60_000L
             } else if (now < iqamaMs) {
-                // Case 3: Between Adhan and Iqama (active Iqama countdown)
-                activeItem = p
-                displayTitle = if (p.name == "الجمعة") "صلاة الجمعة" else "صلاة ${p.name}"
+                // Phase B: Between Adhan and Iqama
+                activeSpec = p
+                activeIndex = currentIdx
+                allTodayCompleted = false
+                heroTitle = "صلاة ${p.displayName}"
+                activeTimeLabel = "الإقامة ${formatTime12hWithPeriod(iqamaMs)}"
                 statusText = null
                 countdownTargetMs = iqamaMs
-                countdownPrefix = "الإقامة بعد "
+                countdownPrefix = "الإقامة بعد"
                 nextAlarmMs = iqamaMs
             } else if (now < salahEndMs) {
-                // Case 4: In Congregational Prayer
-                activeItem = p
-                displayTitle = if (p.name == "الجمعة") "صلاة الجمعة" else "صلاة ${p.name}"
+                // Phase C: In Congregational Salah
+                activeSpec = p
+                activeIndex = currentIdx
+                allTodayCompleted = false
+                heroTitle = "صلاة ${p.displayName}"
+                activeTimeLabel = "وقت الصلاة"
                 statusText = "تقام الصلاة الآن"
                 countdownTargetMs = null
                 countdownPrefix = ""
                 nextAlarmMs = salahEndMs
             } else {
-                // Case 5: Post Salah -> transitions cleanly to next upcoming prayer
-                val nextPrayer = if (currentIdx + 1 < prayers.size) {
-                    prayers[currentIdx + 1]
+                // Phase D: Post Salah -> advance to next prayer
+                if (currentIdx + 1 < columns.size) {
+                    val nextP = columns[currentIdx + 1]
+                    activeSpec = nextP
+                    activeIndex = currentIdx + 1
+                    allTodayCompleted = false
+                    heroTitle = "صلاة ${nextP.displayName}"
+                    activeTimeLabel = formatTime12hWithPeriod(nextP.adhanMs)
+                    statusText = null
+                    countdownTargetMs = nextP.adhanMs
+                    countdownPrefix = "بعد"
+                    nextAlarmMs = nextP.adhanMs
                 } else {
-                    tomorrowFajr
+                    activeSpec = tomorrowFajrSpec
+                    activeIndex = 0
+                    allTodayCompleted = true
+                    heroTitle = "صلاة الفجر"
+                    activeTimeLabel = formatTime12hWithPeriod(tomorrowFajrSpec.adhanMs)
+                    statusText = null
+                    countdownTargetMs = tomorrowFajrSpec.adhanMs
+                    countdownPrefix = "بعد"
+                    nextAlarmMs = tomorrowFajrSpec.adhanMs
                 }
-                activeItem = nextPrayer
-                displayTitle = if (nextPrayer.name == "الجمعة") "صلاة الجمعة" else "صلاة ${nextPrayer.name}"
-                statusText = null
-                countdownTargetMs = nextPrayer.adhanMs
-                countdownPrefix = "بعد "
-                nextAlarmMs = nextPrayer.adhanMs
             }
         }
 
-        if (isRibbonOrLarge) {
-            // Apply prayer title
-            views.setTextViewText(R.id.widget_prayer_title, displayTitle)
-            views.setTextColor(R.id.widget_prayer_title, activeItem.color)
+        // 1. Update Hero Prayer Title, Time & Icon
+        try {
+            views.setTextViewText(R.id.widget_prayer_title, heroTitle)
+            views.setTextColor(R.id.widget_prayer_title, if (isLarge) primaryTextColor else activeSpec.color)
+        } catch (_: Exception) {}
 
-            // Apply prayer celestial icon
+        if (isLarge) {
             try {
-                views.setImageViewResource(R.id.widget_prayer_icon, activeItem.iconRes)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    views.setInt(R.id.widget_prayer_icon, "setColorFilter", activeItem.color)
-                }
-                views.setViewVisibility(R.id.widget_prayer_icon, View.VISIBLE)
+                views.setTextViewText(R.id.widget_active_prayer_time, activeTimeLabel)
+                views.setTextColor(R.id.widget_active_prayer_time, activeSpec.color)
+            } catch (_: Exception) {}
+        }
+
+        try {
+            views.setImageViewResource(R.id.widget_prayer_icon, activeSpec.iconRes)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                views.setInt(R.id.widget_prayer_icon, "setColorFilter", activeSpec.color)
+            }
+            views.setViewVisibility(R.id.widget_prayer_icon, View.VISIBLE)
+        } catch (_: Exception) {}
+
+        // 2. Update Live Countdown Chronometer or Status Badge
+        if (statusText != null) {
+            try {
+                views.setChronometer(R.id.widget_countdown, 0L, null, false)
+                views.setViewVisibility(R.id.widget_countdown, View.GONE)
             } catch (_: Exception) {}
 
-            // Apply countdown or status badge
-            if (statusText != null) {
-                try {
-                    views.setChronometer(R.id.widget_countdown, 0L, null, false)
-                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
-                } catch (_: Exception) {}
+            try {
+                views.setTextViewText(R.id.widget_status_badge, statusText)
+                views.setTextColor(R.id.widget_status_badge, primaryTextColor)
+                views.setInt(R.id.widget_status_badge, "setBackgroundResource", countdownBgRes)
+                views.setViewVisibility(R.id.widget_status_badge, View.VISIBLE)
+            } catch (_: Exception) {}
+        } else if (countdownTargetMs != null && countdownTargetMs > now) {
+            try {
+                views.setViewVisibility(R.id.widget_status_badge, View.GONE)
+            } catch (_: Exception) {}
 
-                try {
-                    views.setTextViewText(R.id.widget_status_badge, statusText)
-                    views.setTextColor(R.id.widget_status_badge, textColor)
-                    views.setInt(R.id.widget_status_badge, "setBackgroundResource", bgRes)
-                    views.setViewVisibility(R.id.widget_status_badge, View.VISIBLE)
-                } catch (_: Exception) {}
-            } else if (countdownTargetMs != null && countdownTargetMs > now) {
-                try {
-                    views.setViewVisibility(R.id.widget_status_badge, View.GONE)
-                } catch (_: Exception) {}
+            val remainingMs = countdownTargetMs - now
+            val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
+            val formatString = if (countdownPrefix.isNotEmpty()) {
+                "\u200F$countdownPrefix \u200E%s\u200F"
+            } else {
+                "%s"
+            }
 
-                val remainingMs = countdownTargetMs - now
-                val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
-                val formatString = "$countdownPrefix%s"
-
+            try {
                 views.setChronometer(R.id.widget_countdown, chronometerBase, formatString, true)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     views.setChronometerCountDown(R.id.widget_countdown, true)
                 }
-                views.setTextColor(R.id.widget_countdown, textColor)
-                try {
-                    views.setInt(R.id.widget_countdown, "setBackgroundResource", bgRes)
-                } catch (_: Exception) {}
+                views.setTextColor(R.id.widget_countdown, primaryTextColor)
+                views.setInt(R.id.widget_countdown, "setBackgroundResource", countdownBgRes)
                 views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
-            } else {
-                try {
-                    views.setChronometer(R.id.widget_countdown, 0L, null, false)
-                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
-                    views.setViewVisibility(R.id.widget_status_badge, View.GONE)
-                } catch (_: Exception) {}
-            }
+            } catch (_: Exception) {}
+        } else {
+            try {
+                views.setChronometer(R.id.widget_countdown, 0L, null, false)
+                views.setViewVisibility(R.id.widget_countdown, View.GONE)
+                views.setViewVisibility(R.id.widget_status_badge, View.GONE)
+            } catch (_: Exception) {}
         }
 
-        applyWidgetImage(views, widgetData, providerClass, activeItem.name)
+        // 3. Populate the 5 Daily Prayer Columns (Fajr -> Dhuhr -> Asr -> Maghrib -> Isha)
+        for (i in columns.indices) {
+            val col = columns[i]
+            val isCurrent = (i == activeIndex)
+            val isPast = if (allTodayCompleted) {
+                i != 0 // After Isha, Fajr is active for tomorrow while today's other prayers are past
+            } else {
+                i < activeIndex
+            }
 
-        // Schedule exact alarm for next milestone
+            val timeMs = if (allTodayCompleted && i == 0) tomorrowFajrSpec.adhanMs else col.adhanMs
+            val timeStr = formatTime12hCompact(timeMs)
+
+            val iconColor = when {
+                isCurrent -> col.color
+                isPast -> mutedTextColor
+                else -> col.color
+            }
+            val nameColor = when {
+                isCurrent -> col.color
+                isPast -> mutedTextColor
+                else -> primaryTextColor
+            }
+            val timeColor = when {
+                isCurrent -> 0xFFFFFFFF.toInt()
+                isPast -> mutedTextColor
+                else -> primaryTextColor
+            }
+
+            try {
+                views.setImageViewResource(col.iconViewId, col.iconRes)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    views.setInt(col.iconViewId, "setColorFilter", iconColor)
+                }
+            } catch (_: Exception) {}
+
+            try {
+                views.setTextViewText(col.nameViewId, col.displayName)
+                views.setTextColor(col.nameViewId, nameColor)
+            } catch (_: Exception) {}
+
+            try {
+                views.setTextViewText(col.timeViewId, timeStr)
+                views.setTextColor(col.timeViewId, timeColor)
+                views.setInt(
+                    col.timeViewId,
+                    "setBackgroundResource",
+                    if (isCurrent) col.pillRes else 0
+                )
+            } catch (_: Exception) {}
+        }
+
+        // 4. Schedule exact alarm for the next transition milestone
         if (nextAlarmMs > now) {
             schedulePrayerAlarm(context, nextAlarmMs, providerClass)
         }
     }
 
-    private fun applyFallbackSnapshot(
-        context: Context,
-        views: RemoteViews,
-        widgetData: SharedPreferences,
-        now: Long,
-        providerClass: Class<*>,
-        isRibbonOrLarge: Boolean,
-        textColor: Int,
-        bgRes: Int
-    ) {
-        val epochMs = getSafeLong(widgetData, "next_prayer_epoch_ms", 0L)
-        val isPrayerActive = getSafeBoolean(widgetData, "is_prayer_active", false)
-        val rawPrayerTitle = getSafeString(widgetData, "prayer_display_title", "صلاة الفجر")
-        val effectiveTitle = if (rawPrayerTitle.startsWith("صلاة ")) rawPrayerTitle.substring(5) else rawPrayerTitle
-        val prayerColor = getSafeInt(widgetData, "prayer_color_value", 0xFF38BDF8.toInt())
-        val countdownPrefix = getSafeString(widgetData, "countdown_prefix", "بعد ")
-        val prayerName = getSafeString(widgetData, "next_prayer_name", "")
+    private fun formatTime12hCompact(epochMs: Long): String {
+        if (epochMs <= 0L) return "--:--"
+        val cal = Calendar.getInstance().apply { timeInMillis = epochMs }
+        val hour24 = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        val hour12 = if (hour24 % 12 == 0) 12 else hour24 % 12
+        return String.format(Locale.US, "%02d:%02d", hour12, minute)
+    }
 
-        if (isRibbonOrLarge) {
-            views.setTextViewText(R.id.widget_prayer_title, effectiveTitle)
-            views.setTextColor(R.id.widget_prayer_title, prayerColor)
+    private fun formatTime12hWithPeriod(epochMs: Long): String {
+        if (epochMs <= 0L) return "--:--"
+        val cal = Calendar.getInstance().apply { timeInMillis = epochMs }
+        val hour24 = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        val hour12 = if (hour24 % 12 == 0) 12 else hour24 % 12
+        val period = if (hour24 >= 12) "م" else "ص"
+        return String.format(Locale.US, "%02d:%02d %s", hour12, minute, period)
+    }
 
-            try {
-                val iconRes = resolvePrayerIconRes(prayerName, effectiveTitle)
-                views.setImageViewResource(R.id.widget_prayer_icon, iconRes)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    views.setInt(R.id.widget_prayer_icon, "setColorFilter", prayerColor)
-                }
-                views.setViewVisibility(R.id.widget_prayer_icon, View.VISIBLE)
-            } catch (_: Exception) {}
+    private fun isSameCalendarDay(ms1: Long, ms2: Long): Boolean {
+        val c1 = Calendar.getInstance().apply { timeInMillis = ms1 }
+        val c2 = Calendar.getInstance().apply { timeInMillis = ms2 }
+        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
+            c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
+    }
 
-            val statusLabel = getSafeString(widgetData, "prayer_status_label", "")
-
-            if (isPrayerActive || epochMs == 0L || epochMs <= now) {
-                // Never show negative chronometer!
-                val displayLabel = when {
-                    statusLabel.isNotEmpty() -> statusLabel
-                    now - epochMs < 60_000L -> "الأذان الآن"
-                    now - epochMs < 20 * 60_000L -> "تقام الصلاة الآن"
-                    else -> "الصلاة القادمة"
-                }
-
-                try {
-                    views.setChronometer(R.id.widget_countdown, 0L, null, false)
-                    views.setViewVisibility(R.id.widget_countdown, View.GONE)
-                } catch (_: Exception) {}
-
-                try {
-                    views.setTextViewText(R.id.widget_status_badge, displayLabel)
-                    views.setTextColor(R.id.widget_status_badge, textColor)
-                    views.setInt(R.id.widget_status_badge, "setBackgroundResource", bgRes)
-                    views.setViewVisibility(R.id.widget_status_badge, View.VISIBLE)
-                } catch (_: Exception) {}
-            } else {
-                try {
-                    views.setViewVisibility(R.id.widget_status_badge, View.GONE)
-                } catch (_: Exception) {}
-
-                val remainingMs = epochMs - now
-                val chronometerBase = SystemClock.elapsedRealtime() + remainingMs
-                val formatString = if (countdownPrefix.isNotEmpty()) "$countdownPrefix%s" else "%s"
-
-                views.setChronometer(R.id.widget_countdown, chronometerBase, formatString, true)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    views.setChronometerCountDown(R.id.widget_countdown, true)
-                }
-                views.setTextColor(R.id.widget_countdown, textColor)
-                try {
-                    views.setInt(R.id.widget_countdown, "setBackgroundResource", bgRes)
-                } catch (_: Exception) {}
-                views.setViewVisibility(R.id.widget_countdown, View.VISIBLE)
+    private fun resolveHijriDate(
+        prefs: SharedPreferences,
+        json: JSONObject?,
+        nowMs: Long,
+        scheduleValidForToday: Boolean
+    ): String {
+        if (scheduleValidForToday) {
+            val saved = getSafeString(prefs, "hijri_date", "").ifEmpty {
+                json?.optString("hijri", "") ?: ""
+            }
+            if (saved.isNotEmpty() && saved != "طالب العلم") {
+                return saved
             }
         }
 
-        applyWidgetImage(views, widgetData, providerClass, prayerName)
-
-        if (epochMs > now) {
-            schedulePrayerAlarm(context, epochMs, providerClass)
+        // Autonomous ICU Umm al-Qura Hijri formatting (API 24+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                val uLocale = android.icu.util.ULocale("ar@calendar=islamic-umalqura")
+                val cal = android.icu.util.Calendar.getInstance(uLocale)
+                cal.timeInMillis = nowMs
+                val day = cal.get(android.icu.util.Calendar.DAY_OF_MONTH)
+                val month = cal.get(android.icu.util.Calendar.MONTH)
+                val year = cal.get(android.icu.util.Calendar.YEAR)
+                val months = arrayOf(
+                    "محرم", "صفر", "ربيع الأول", "ربيع الآخر",
+                    "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+                    "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+                )
+                if (month in 0..11) {
+                    return "$day ${months[month]} $year هـ"
+                }
+            } catch (_: Throwable) {}
         }
+
+        val fallbackSaved = getSafeString(prefs, "hijri_date", "")
+        return if (fallbackSaved.isNotEmpty()) fallbackSaved else "طالب العلم"
+    }
+
+    private fun resolveCityName(prefs: SharedPreferences, json: JSONObject?): String {
+        val saved = getSafeString(prefs, "location_city", "").ifEmpty {
+            json?.optString("city", "") ?: ""
+        }
+        if (saved.isNotEmpty()) return saved
+        val tzId = TimeZone.getDefault().id
+        return when {
+            tzId.contains("Algiers", ignoreCase = true) -> "الجزائر"
+            tzId.contains("Tunis", ignoreCase = true) -> "تونس"
+            tzId.contains("Casablanca", ignoreCase = true) -> "الدار البيضاء"
+            tzId.contains("Cairo", ignoreCase = true) -> "القاهرة"
+            else -> "مكة المكرمة"
+        }
+    }
+
+    private fun resolveCoordinates(prefs: SharedPreferences, json: JSONObject?): Pair<Double, Double> {
+        val lat = getSafeDouble(prefs, json, "location_latitude", "latitude")
+        val lon = getSafeDouble(prefs, json, "location_longitude", "longitude")
+        if (lat != 0.0 || lon != 0.0) {
+            return Pair(lat, lon)
+        }
+        val tzId = TimeZone.getDefault().id
+        return when {
+            tzId.contains("Algiers", ignoreCase = true) -> Pair(36.7538, 3.0588)
+            tzId.contains("Tunis", ignoreCase = true) -> Pair(36.8065, 10.1815)
+            tzId.contains("Casablanca", ignoreCase = true) -> Pair(33.5731, -7.5898)
+            tzId.contains("Cairo", ignoreCase = true) -> Pair(30.0444, 31.2357)
+            else -> Pair(21.4225, 39.8262)
+        }
+    }
+
+    /**
+     * Autonomous Jean Meeus Astronomical Solar Prayer Calculator.
+     * Guarantees accurate prayer times even before the Flutter app is ever opened or days later.
+     */
+    private fun calculateSolarPrayers(
+        dateMs: Long,
+        latitude: Double,
+        longitude: Double,
+        timezoneOffsetHours: Double
+    ): Map<String, Long> {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMs }
+        var y = cal.get(Calendar.YEAR).toDouble()
+        var m = (cal.get(Calendar.MONTH) + 1).toDouble()
+        val d = cal.get(Calendar.DAY_OF_MONTH).toDouble()
+
+        if (m <= 2.0) {
+            y -= 1.0
+            m += 12.0
+        }
+        val a = floor(y / 100.0)
+        val b = 2.0 - a + floor(a / 4.0)
+        val jd = floor(365.25 * (y + 4716.0)) + floor(30.6001 * (m + 1.0)) + d + b - 1524.5
+
+        val t = (jd - 2451545.0) / 36525.0
+        val l0 = (280.46646 + 36000.76983 * t) % 360.0
+        val mSun = (357.52911 + 35999.05029 * t) % 360.0
+        val mRad = Math.toRadians(mSun)
+        val c = (1.914602 - 0.004817 * t) * sin(mRad) +
+            0.019993 * sin(2.0 * mRad) +
+            0.000289 * sin(3.0 * mRad)
+        val trueLong = l0 + c
+        val lambdaRad = Math.toRadians(trueLong)
+
+        val eps = Math.toRadians(23.439291 - 0.0130042 * t)
+        val declination = asin(sin(eps) * sin(lambdaRad))
+
+        val yTan = tan(eps / 2.0) * tan(eps / 2.0)
+        val eotMinutes = 4.0 * Math.toDegrees(
+            yTan * sin(2.0 * lambdaRad) -
+                2.0 * 0.016708634 * sin(mRad) +
+                4.0 * 0.016708634 * yTan * sin(mRad) * cos(2.0 * lambdaRad) -
+                0.5 * yTan * yTan * sin(4.0 * lambdaRad) -
+                1.25 * 0.016708634 * 0.016708634 * sin(2.0 * mRad)
+        )
+
+        val noonHours = 12.0 + timezoneOffsetHours - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
+        val latRad = Math.toRadians(latitude)
+
+        fun hourAngle(altitudeDeg: Double): Double {
+            val altRad = Math.toRadians(altitudeDeg)
+            val cosH = (sin(altRad) - sin(latRad) * sin(declination)) / (cos(latRad) * cos(declination))
+            val clamped = cosH.coerceIn(-1.0, 1.0)
+            return Math.toDegrees(acos(clamped))
+        }
+
+        fun msFromHours(hours: Double): Long {
+            var adj = hours % 24.0
+            if (adj < 0) adj += 24.0
+            val h = floor(adj).toInt()
+            val mFloat = (adj - h) * 60.0
+            val min = floor(mFloat).toInt()
+            val sec = floor((mFloat - min) * 60.0).toInt()
+            val cObj = Calendar.getInstance().apply {
+                timeInMillis = dateMs
+                set(Calendar.HOUR_OF_DAY, h)
+                set(Calendar.MINUTE, min)
+                set(Calendar.SECOND, sec)
+                set(Calendar.MILLISECOND, 0)
+            }
+            return cObj.timeInMillis
+        }
+
+        val hSunrise = hourAngle(-0.8333)
+        val hFajr = hourAngle(-18.0)
+        val hIsha = hourAngle(-17.5)
+        val asrAltDeg = Math.toDegrees(atan(1.0 / (1.0 + tan(abs(latRad - declination)))))
+        val hAsr = hourAngle(asrAltDeg)
+
+        return mapOf(
+            "fajr" to msFromHours(noonHours - (hFajr / 15.0)),
+            "dhuhr" to msFromHours(noonHours),
+            "asr" to msFromHours(noonHours + (hAsr / 15.0)),
+            "maghrib" to msFromHours(noonHours + (hSunrise / 15.0) + (2.0 / 60.0)),
+            "isha" to msFromHours(noonHours + (hIsha / 15.0))
+        )
     }
 
     private fun schedulePrayerAlarm(
@@ -382,101 +699,69 @@ object WidgetChronometerHelper {
         } catch (_: Exception) {}
     }
 
-    fun getPrayerSlug(name: String): String {
-        val lower = name.lowercase()
-        return when {
-            lower.contains("فجر") || lower.contains("fajr") -> "fajr"
-            lower.contains("ظهر") || lower.contains("dhuhr") || lower.contains("جمعة") || lower.contains("jumu") -> "dhuhr"
-            lower.contains("عصر") || lower.contains("asr") -> "asr"
-            lower.contains("مغرب") || lower.contains("maghrib") -> "maghrib"
-            lower.contains("عشاء") || lower.contains("isha") -> "isha"
-            else -> "fajr"
+    private fun loadJsonPayload(prefs: SharedPreferences): JSONObject? {
+        val raw = getSafeString(prefs, "prayer_data_json", "")
+        if (raw.isEmpty()) return null
+        return try {
+            JSONObject(raw)
+        } catch (_: Exception) {
+            null
         }
     }
 
-    fun applyWidgetImage(
-        views: RemoteViews,
-        widgetData: SharedPreferences,
-        providerClass: Class<*>,
-        prayerName: String?
-    ) {
-        try {
-            val baseKey = when {
-                providerClass.simpleName.contains("Ribbon") -> "prayer_ribbon_widget"
-                providerClass.simpleName.contains("Large") -> "prayer_large_widget"
-                providerClass.simpleName.contains("Standard") -> "prayer_standard_widget"
-                providerClass.simpleName.contains("Compact") -> "prayer_compact_widget"
-                else -> "prayer_widget_image"
-            }
-
-            val slug = prayerName?.let { getPrayerSlug(it) }
-            val specificKey = if (slug != null) "${baseKey}_$slug" else null
-            val specificPath = specificKey?.let { getSafeString(widgetData, it, "") }?.takeIf { it.isNotEmpty() }
-            val basePath = getSafeString(widgetData, baseKey, "").takeIf { it.isNotEmpty() }
-
-            val resolvedPath = if (specificPath != null && File(specificPath).let { it.exists() && it.length() > 0 }) {
-                specificPath
-            } else if (basePath != null && File(basePath).let { it.exists() && it.length() > 0 }) {
-                basePath
-            } else {
-                null
-            }
-
-            if (resolvedPath != null) {
-                val boundsOptions = BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
-                BitmapFactory.decodeFile(resolvedPath, boundsOptions)
-
-                var sampleSize = 1
-                val maxBytes = if (providerClass.simpleName.contains("Ribbon") || providerClass.simpleName.contains("Compact")) {
-                    2_000_000
-                } else {
-                    750_000
-                }
-                while ((boundsOptions.outWidth / sampleSize) * (boundsOptions.outHeight / sampleSize) * 4 > maxBytes) {
-                    sampleSize *= 2
-                }
-
-                val decodeOptions = BitmapFactory.Options().apply {
-                    inSampleSize = sampleSize
-                    inPreferredConfig = Bitmap.Config.ARGB_8888
-                }
-                val bitmap = BitmapFactory.decodeFile(resolvedPath, decodeOptions)
-                if (bitmap != null) {
-                    views.setImageViewBitmap(R.id.widget_image, bitmap)
-                }
-            }
-        } catch (_: Throwable) {}
-    }
-
-    fun resolvePrayerIconRes(prayerName: String, title: String): Int {
-        val text = "$prayerName $title".lowercase()
-        return when {
-            text.contains("جمعة") || text.contains("jumu") -> R.drawable.ic_prayer_jumua
-            text.contains("فجر") || text.contains("fajr") -> R.drawable.ic_prayer_fajr
-            text.contains("ظهر") || text.contains("dhuhr") -> R.drawable.ic_prayer_dhuhr
-            text.contains("عصر") || text.contains("asr") -> R.drawable.ic_prayer_asr
-            text.contains("مغرب") || text.contains("maghrib") -> R.drawable.ic_prayer_maghrib
-            text.contains("عشاء") || text.contains("isha") -> R.drawable.ic_prayer_isha
-            else -> R.drawable.ic_prayer_fajr
-        }
-    }
-
-    private fun getSafeLong(prefs: SharedPreferences, key: String, defaultVal: Long): Long {
+    private fun getSafeLong(
+        prefs: SharedPreferences,
+        json: JSONObject?,
+        key: String,
+        prayerSlug: String?,
+        defaultVal: Long
+    ): Long {
         val keys = listOf(key, "flutter.$key")
         for (k in keys) {
             if (prefs.contains(k)) {
                 try {
-                    return prefs.getLong(k, defaultVal)
+                    val v = prefs.getLong(k, defaultVal)
+                    if (v > 0L) return v
                 } catch (_: ClassCastException) {
                     try {
-                        return prefs.getInt(k, defaultVal.toInt()).toLong()
+                        val v = prefs.getInt(k, defaultVal.toInt()).toLong()
+                        if (v > 0L) return v
                     } catch (_: Exception) {}
                 }
             }
         }
+        if (json != null) {
+            if (prayerSlug != null) {
+                val pObj = json.optJSONObject("prayers")?.optJSONObject(prayerSlug)
+                val v = pObj?.optLong("epoch_ms", 0L) ?: 0L
+                if (v > 0L) return v
+            }
+            val direct = json.optLong(key, 0L)
+            if (direct > 0L) return direct
+        }
         return defaultVal
+    }
+
+    private fun getSafeDouble(
+        prefs: SharedPreferences,
+        json: JSONObject?,
+        key: String,
+        jsonKey: String
+    ): Double {
+        val keys = listOf(key, "flutter.$key")
+        for (k in keys) {
+            if (prefs.contains(k)) {
+                try {
+                    val s = prefs.all[k]?.toString()?.toDoubleOrNull()
+                    if (s != null && s != 0.0) return s
+                } catch (_: Exception) {}
+            }
+        }
+        if (json != null && json.has(jsonKey)) {
+            val d = json.optDouble(jsonKey, 0.0)
+            if (!d.isNaN() && d != 0.0) return d
+        }
+        return 0.0
     }
 
     private fun getSafeInt(prefs: SharedPreferences, key: String, defaultVal: Int): Int {
@@ -521,8 +806,8 @@ object WidgetChronometerHelper {
     }
 
     private fun resolveIsDark(prefs: SharedPreferences): Boolean {
-        if (prefs.contains("widget_is_dark")) return prefs.getBoolean("widget_is_dark", true)
-        if (prefs.contains("flutter.widget_is_dark")) return prefs.getBoolean("flutter.widget_is_dark", true)
+        if (prefs.contains("widget_is_dark")) return getSafeBoolean(prefs, "widget_is_dark", true)
+        if (prefs.contains("flutter.widget_is_dark")) return getSafeBoolean(prefs, "flutter.widget_is_dark", true)
         val mode = getSafeString(prefs, "prayer_widget_theme_mode", "dark")
         val appTheme = getSafeString(prefs, "theme_mode", "dark")
         return when (mode) {

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/theme/app_palette.dart';
+import 'dhikr_moment_content_data.dart';
 import 'notification_service.dart';
 
 enum DhikrMomentContent { names, adhkar, mixed, duas, quran, hadith }
@@ -81,146 +83,114 @@ class DhikrMomentService {
   static const _endKey = 'dhikr_moment_end_minutes';
   static const _contentKey = 'dhikr_moment_content';
   static const _notificationBaseId = 8300;
+  static const _lastCategoryKey = 'dhikr_moment_last_category_index';
+  static const _lastItemTextKey = 'dhikr_moment_last_item_text';
 
-  static const List<DhikrMomentItem> _names = [
-    DhikrMomentItem(text: 'الرَّحْمَنُ', meaning: 'واسع الرحمة بجميع خلقه في الدنيا والآخرة', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الرَّحِيمُ', meaning: 'ذو الرحمة الخاصة بعباده المؤمنين إحسانًا وتوفيقًا', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْمَلِكُ', meaning: 'المتصرّف في ملكه بلا منازع، المالك لكل شيء', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْقُدُّوسُ', meaning: 'المنزَّه عن كل عيب ونقص، الطاهر المبارك', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'السَّلَامُ', meaning: 'السالم من كل آفة، وواهب الأمان والسلام لعباده', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْمُؤْمِنُ', meaning: 'المصدّق لوعده، الذي يؤمّن عباده من الخوف والظلم', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْمُهَيْمِنُ', meaning: 'الرقيب الحافظ لكل شيء، الشاهد المطلع على خلقه', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْعَزِيزُ', meaning: 'القوي الغالب الذي لا يُعجزه شيءٌ في الأرض ولا في السماء', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْجَبَّارُ', meaning: 'العليّ القاهر، وجابر قلوب المنكسرين بلطفه ورحمته', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْغَفَّارُ', meaning: 'السَّتّار لذنوب عباده، المتجاوز عن خطاياهم تكرارًا', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْوَهَّابُ', meaning: 'كثير النعم والمنح بلا مقابل ولا عوض', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الرَّزَّاقُ', meaning: 'المتكفّل بأرزاق خلقه، المفيض عليهم بالخيرات', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْفَتَّاحُ', meaning: 'يفتح أبواب رحمته وخزائن رزقه، ويحكم بين خلقه بالعدل', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْعَلِيمُ', meaning: 'المحيط بكل شيء ظاهرًا وباطنًا، دقيقًا وجليلاً', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْحَكِيمُ', meaning: 'الذي يضع الأشياء في مواضعها بعدل تام وحكمة بالغة', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْوَدُودُ', meaning: 'المحب لأوليائه، والمحبوب في قلوب عباده الصالحين', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْغَفُورُ', meaning: 'عظيم المغفرة والستر، يغفر الذنب ويعفو عن العقوبة', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الشَّكُورُ', meaning: 'الذي يزكو عنده القليل من العمل فيضاعف الجزاء عليه', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْقَرِيبُ الْمُجِيبُ', meaning: 'القريب بعلمه، يجيب دعوة المضطر إذا دعاه', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْحَيُّ الْقَيُّومُ', meaning: 'الدائم الباقي، القائم بنفسه المقيم لكل ما سواه', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْكَرِيمُ', meaning: 'الذي يعطي بلا سؤال، ويجود بأفضل مما يؤمّل السائل', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'اللَّطِيفُ', meaning: 'البارّ بعباده، الموصل للخيرات برفق وإحسان خفي', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'التَّوَّابُ', meaning: 'الذي يقبل توبة التائبين ويفرح بأوبتهم واستغفارهم', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-    DhikrMomentItem(text: 'الْوَكِيلُ', meaning: 'الكافي لمن توكل عليه، القائم بمصالح خلقه', categoryLabel: 'مِنْ أَسْمَاءِ اللَّهِ'),
-  ];
+  static int? _lastCategoryIndex;
+  static String? _lastItemText;
+  static final math.Random _random = math.Random();
 
-  static const List<DhikrMomentItem> _adhkar = [
-    DhikrMomentItem(text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', meaning: 'تُحَطُّ خطاياه وإن كانت مثل زبد البحر', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'سُبْحَانَ اللَّهِ الْعَظِيمِ وَبِحَمْدِهِ', meaning: 'غُرست له بها نخلةٌ في الجنة', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ', meaning: 'أحبُّ الكلام إلى الله، وهنّ الباقيات الصالحات', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ', meaning: 'تعدل عتق رقاب، وحرزٌ تام من الشيطان', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', meaning: 'كنزٌ من كنوز الجنة، وباب عظيم لدفع الهم', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ وَأَتُوبُ إِلَيْهِ', meaning: 'مغفرةٌ للذنوب وسعةٌ في الرزق وتفريجٌ للكروب', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ', meaning: 'من صلّى عليه صلاةً صلّى الله عليه بها عشرًا', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ', meaning: 'دعوة ذي النون، لم يدعُ بها مكروب إلا فرّج الله عنه', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ ﷺ نَبِيًّا', meaning: 'وجبت له الجنة وذاق حلاوة الإيمان', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ', meaning: 'صلاح الشأن كله وتمام التوكل والافتقار', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ', meaning: 'أمانٌ من كل خوف وكفايةٌ من كل هم', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'أَسْتَغْفِرُ اللَّهَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيَّ الْقَيُّومَ وَأَتُوبُ إِلَيْهِ', meaning: 'غُفرت ذنوبه وإن كان فرّ من الزحف', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'الْحَمْدُ لِلَّهِ حَمْدًا كَثِيرًا طَيِّبًا مُبَارَكًا فِيهِ', meaning: 'ثقل في الميزان وأجر عظيم تتسابق الملائكة لكتابته', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ', meaning: 'حفظٌ وحرزٌ تام لا يضره شيء معه', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'سُبْحَانَ اللَّهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ', meaning: 'تسبيحٌ مضاعف يزن عبادة ساعات طويلة', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ', meaning: 'سيد الاستغفار، من قاله موقنًا به دخل الجنة', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ', meaning: 'أفضل الدعاء، تملأ ميزان العبد يوم القيامة', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ', meaning: 'كفارة للمجلس ومحوٌ لما سواه', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'تَوَكَّلْتُ عَلَى اللَّهِ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', meaning: 'يُقال له: كُفيتَ ووُقيتَ وهُديتَ وتنحى عنه الشيطان', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-    DhikrMomentItem(text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ', meaning: 'السلامة التامة في الدين والنفس والأهل والمال', categoryLabel: 'ذِكْرٌ مَأْثُور'),
-  ];
-
-  static const List<DhikrMomentItem> _duas = [
-    DhikrMomentItem(text: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ', meaning: 'دعاءٌ جامع لخيري الدنيا والآخرة والوقاية من النار', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ', meaning: 'طلب معونة الله وتوفيقه على دوام الطاعة', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ', meaning: 'طلب المغفرة والتوبة الصادقة', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي', meaning: 'سؤال الله المحو التام للذنوب والصفح الجميل', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبِّ زِدْنِي عِلْمًا', meaning: 'سؤال البركة والزيادة في العلم النافع', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي', meaning: 'انشراح الصدر وتيسير الأمور وزوال العسر', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى', meaning: 'جوامع الخير في الدين والدنيا وغنى النفس', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبِّ إِنِّي لِمَا أَنْزَلْتَ إِلَيَّ مِنْ خَيْرٍ فَقِيرٌ', meaning: 'استجلاب فضل الله والافتقار إلى جوده', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْجُبْنِ وَالْبُخْلِ', meaning: 'استعاذة جامعة من آفات النفس وثقل الحياة', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِنْ لَدُنْكَ رَحْمَةً', meaning: 'الثبات على الإيمان والهدى حتى الممات', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا', meaning: 'دعاء الصباح المبارك لبركة اليوم ورزقه', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ', meaning: 'سؤال الثبات والاستقامة في زمن الفتن', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي', meaning: 'سؤال الله السداد في القول والعمل والهدى', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ آتِ نَفْسِي تَقْوَاهَا، وَزَكِّهَا أَنْتَ خَيْرُ مَنْ زَكَّاهَا', meaning: 'تزكية النفس وصلاح السريرة والأخلاق', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا', meaning: 'صلاح الأهل والذرية والقدوة في الخير', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-    DhikrMomentItem(text: 'اللَّهُمَّ اجْعَلْ فِي قَلْبِي نُورًا، وَفِي سَمْعِي نُورًا، وَفِي بَصَرِي نُورًا', meaning: 'سؤال النور والبركة في الحواس والأركان', categoryLabel: 'دُعَاءٌ مُبَارَك'),
-  ];
-
-  static const List<DhikrMomentItem> _quran = [
-    DhikrMomentItem(text: '﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾', meaning: 'سورة الرعد • ٢٨', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ﴾', meaning: 'سورة البقرة • ١٥٢', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ﴾', meaning: 'سورة البقرة • ١٨٦', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿إِنَّ مَعَ الْعُسْرِ يُسْرًا﴾', meaning: 'سورة الشرح • ٦', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَمَنْ يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ﴾', meaning: 'سورة الطلاق • ٣', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا • وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ﴾', meaning: 'سورة الطلاق • ٢-٣', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾', meaning: 'سورة الزمر • ٥٣', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَهُوَ مَعَكُمْ أَيْنَ مَا كُنْتُمْ﴾', meaning: 'سورة الحديد • ٤', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَاصْبِرْ لِحُكْمِ رَبِّكَ فَإِنَّكَ بِأَعْيُنِنَا﴾', meaning: 'سورة الطور • ٤٨', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿إِنَّ اللَّهَ مَعَ الصَّابِرِينَ﴾', meaning: 'سورة البقرة • ١٥٣', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَتَوَكَّلْ عَلَى الْحَيِّ الَّذِي لَا يَمُوتُ وَسَبِّحْ بِحَمْدِهِ﴾', meaning: 'سورة الفرقان • ٥٨', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ﴾', meaning: 'سورة غافر • ٦٠', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَرَحْمَتِي وَسِعَتْ كُلَّ شَيْءٍ﴾', meaning: 'سورة الأعراف • ١٥٦', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿فَصَبْرٌ جَمِيلٌ وَاللَّهُ الْمُسْتَعَانُ﴾', meaning: 'سورة يوسف • ١٨', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿إِنَّ رَبِّي قَرِيبٌ مُجِيبٌ﴾', meaning: 'سورة هود • ٦١', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-    DhikrMomentItem(text: '﴿وَمَا كَانَ اللَّهُ لِيُعْجِزَهُ مِنْ شَيْءٍ فِي السَّمَاوَاتِ وَلَا فِي الْأَرْضِ﴾', meaning: 'سورة فاطر • ٤٤', categoryLabel: 'آيَةٌ قُرْآنِيَّة'),
-  ];
-
-  static const List<DhikrMomentItem> _hadith = [
-    DhikrMomentItem(text: '«إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»', meaning: 'صحيح البخاري • ١', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«الدِّينُ النَّصِيحَةُ: لِلَّهِ، وَلِكِتَابِهِ، وَلِرَسُولِهِ، وَلِأَئِمَّةِ الْمُسْلِمِينَ وَعَامَّتِهِمْ»', meaning: 'صحيح مسلم • ٥٥', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»', meaning: 'متفق عليه', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ»', meaning: 'متفق عليه', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ، ثَقِيلَتَانِ فِي الْمِيزَانِ: سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ»', meaning: 'متفق عليه', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»', meaning: 'صحيح مسلم', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا، وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ»', meaning: 'سنن الترمذي', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ»', meaning: 'متفق عليه', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«احْفَظِ اللَّهَ يَحْفَظْكَ، احْفَظِ اللَّهَ تَجِدْهُ تُجَاهَكَ، إِذَا سَأَلْتَ فَاسْأَلِ اللَّهَ»', meaning: 'سنن الترمذي', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«مَنْ صَلَّى عَلَيَّ صَلَاةً صَلَّى اللَّهُ عَلَيْهِ بِهَا عَشْرًا»', meaning: 'صحيح مسلم', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ»', meaning: 'صحيح البخاري', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
-    DhikrMomentItem(text: '«عَجَبًا لِأَمْرِ الْمُؤْمِنِ، إِنَّ أَمْرَهُ كُلَّهُ خَيْرٌ؛ إِنْ أَصَابَتْهُ سَرَّاءُ شَكَرَ فَكَانَ خَيْرًا لَهُ، وَإِنْ أَصَابَتْهُ ضَرَّاءُ صَبَرَ فَكَانَ خَيْرًا لَهُ»', meaning: 'صحيح مسلم', categoryLabel: 'حَدِيثٌ نَبَوِيّ'),
+  static const List<DhikrMomentContent> _concreteCategories = [
+    DhikrMomentContent.names,
+    DhikrMomentContent.adhkar,
+    DhikrMomentContent.duas,
+    DhikrMomentContent.quran,
+    DhikrMomentContent.hadith,
   ];
 
   static List<DhikrMomentItem> itemsFor(DhikrMomentContent content) => switch (content) {
-    DhikrMomentContent.names => _names,
-    DhikrMomentContent.adhkar => _adhkar,
-    DhikrMomentContent.duas => _duas,
-    DhikrMomentContent.quran => _quran,
-    DhikrMomentContent.hadith => _hadith,
+    DhikrMomentContent.names => DhikrMomentContentData.names,
+    DhikrMomentContent.adhkar => DhikrMomentContentData.adhkar,
+    DhikrMomentContent.duas => DhikrMomentContentData.duas,
+    DhikrMomentContent.quran => DhikrMomentContentData.quran,
+    DhikrMomentContent.hadith => DhikrMomentContentData.hadith,
     DhikrMomentContent.mixed => [
-      ..._names,
-      ..._adhkar,
-      ..._duas,
-      ..._quran,
-      ..._hadith,
+      ...DhikrMomentContentData.names,
+      ...DhikrMomentContentData.adhkar,
+      ...DhikrMomentContentData.duas,
+      ...DhikrMomentContentData.quran,
+      ...DhikrMomentContentData.hadith,
     ],
   };
 
   static final ValueNotifier<DhikrMomentSettings> settingsNotifier =
       ValueNotifier(const DhikrMomentSettings());
   static final ValueNotifier<DhikrMomentItem> cardItemNotifier = ValueNotifier(
-    _adhkar[0],
+    DhikrMomentContentData.adhkar[0],
   );
   static final ValueNotifier<String> cardTextNotifier = ValueNotifier(
-    _adhkar[0].text,
+    DhikrMomentContentData.adhkar[0].text,
   );
-  static int _rotation = 0;
   static Future<bool>? _inFlightSchedule;
 
+  /// Deterministic day slot rotation where consecutive slots are mathematically
+  /// guaranteed to belong to different categories when in [DhikrMomentContent.mixed].
   static DhikrMomentItem getItemForSlot(
     DhikrMomentContent content,
     int slotIndex,
   ) {
-    final list = itemsFor(content);
-    if (list.isEmpty) return _adhkar[0];
     final now = DateTime.now();
     final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
-    final index = (dayOfYear * 7 + slotIndex) % list.length;
+
+    if (content != DhikrMomentContent.mixed) {
+      final list = itemsFor(content);
+      if (list.isEmpty) return DhikrMomentContentData.adhkar[0];
+      final index = (dayOfYear * 13 + slotIndex * 7) % list.length;
+      return list[index];
+    }
+
+    const categorySequence = [
+      DhikrMomentContent.adhkar,
+      DhikrMomentContent.quran,
+      DhikrMomentContent.duas,
+      DhikrMomentContent.hadith,
+      DhikrMomentContent.names,
+    ];
+    final cat = categorySequence[(dayOfYear + slotIndex) % categorySequence.length];
+    final list = itemsFor(cat);
+    final index = (dayOfYear * 11 + slotIndex * 5) % list.length;
     return list[index];
+  }
+
+  /// Picks the next random dhikr item ensuring:
+  /// 1. In `mixed` mode: The section NEVER matches the previous section consecutively.
+  /// 2. In any mode: The item text NEVER matches the previous item text consecutively.
+  static DhikrMomentItem pickNextItem(DhikrMomentContent content) {
+    DhikrMomentContent chosenCategory;
+    if (content == DhikrMomentContent.mixed) {
+      final candidates = _concreteCategories
+          .where((c) => c.index != _lastCategoryIndex)
+          .toList();
+      chosenCategory = candidates.isNotEmpty
+          ? candidates[_random.nextInt(candidates.length)]
+          : _concreteCategories[_random.nextInt(_concreteCategories.length)];
+    } else {
+      chosenCategory = content;
+    }
+
+    final pool = itemsFor(chosenCategory);
+    final itemCandidates = pool.where((i) => i.text != _lastItemText).toList();
+    final item = (itemCandidates.isNotEmpty ? itemCandidates : pool)[
+        _random.nextInt(itemCandidates.isNotEmpty ? itemCandidates.length : pool.length)];
+
+    _lastCategoryIndex = chosenCategory.index;
+    _lastItemText = item.text;
+    _persistLastState(chosenCategory.index, item.text);
+
+    return item;
+  }
+
+  static void _persistLastState(int categoryIndex, String itemText) {
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt(_lastCategoryKey, categoryIndex);
+      prefs.setString(_lastItemTextKey, itemText);
+    }).catchError((_) {});
+  }
+
+  static void rotate(DhikrMomentContent content) {
+    final item = pickNextItem(content);
+    cardItemNotifier.value = item;
+    cardTextNotifier.value = item.text;
   }
 
   static Future<bool> scheduleTestNotification() async {
@@ -238,6 +208,8 @@ class DhikrMomentService {
 
   static Future<DhikrMomentSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
+    _lastCategoryIndex = prefs.getInt(_lastCategoryKey);
+    _lastItemText = prefs.getString(_lastItemTextKey);
     final rawContent =
         prefs.getInt(_contentKey) ?? DhikrMomentContent.mixed.index;
     final content =
@@ -257,13 +229,6 @@ class DhikrMomentService {
     settingsNotifier.value = settings;
     rotate(settings.content);
     return settings;
-  }
-
-  static void rotate(DhikrMomentContent content) {
-    final source = itemsFor(content);
-    final item = source[_rotation++ % source.length];
-    cardItemNotifier.value = item;
-    cardTextNotifier.value = item.text;
   }
 
   static List<int> scheduledMinutes(DhikrMomentSettings settings) {

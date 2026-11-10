@@ -78,17 +78,46 @@ void main() {
       final hadith = DhikrMomentService.itemsFor(DhikrMomentContent.hadith);
       final mixed = DhikrMomentService.itemsFor(DhikrMomentContent.mixed);
 
-      expect(names.length, greaterThanOrEqualTo(20));
-      expect(adhkar.length, greaterThanOrEqualTo(20));
-      expect(duas.length, greaterThanOrEqualTo(15));
-      expect(quran.length, greaterThanOrEqualTo(15));
-      expect(hadith.length, greaterThanOrEqualTo(10));
+      expect(names.length, greaterThanOrEqualTo(40));
+      expect(adhkar.length, greaterThanOrEqualTo(35));
+      expect(duas.length, greaterThanOrEqualTo(35));
+      expect(quran.length, greaterThanOrEqualTo(35));
+      expect(hadith.length, greaterThanOrEqualTo(35));
       expect(mixed.length, equals(names.length + adhkar.length + duas.length + quran.length + hadith.length));
 
       for (final item in mixed) {
         expect(item.text.trim().isNotEmpty, isTrue);
         expect(item.meaning.trim().isNotEmpty, isTrue);
         expect(item.notificationBody.contains(item.text), isTrue);
+      }
+    });
+
+    test('pickNextItem in mixed mode NEVER returns the same category twice consecutively', () {
+      String? lastCategory;
+      for (var i = 0; i < 60; i++) {
+        final item = DhikrMomentService.pickNextItem(DhikrMomentContent.mixed);
+        expect(item.text.isNotEmpty, isTrue);
+        if (lastCategory != null) {
+          expect(
+            item.categoryLabel,
+            isNot(equals(lastCategory)),
+            reason: 'Consecutive pick $i repeated category $lastCategory',
+          );
+        }
+        lastCategory = item.categoryLabel;
+      }
+    });
+
+    test('getItemForSlot in mixed mode guarantees consecutive slots have different categories', () {
+      for (var slot = 0; slot < 30; slot++) {
+        final current = DhikrMomentService.getItemForSlot(DhikrMomentContent.mixed, slot);
+        final next = DhikrMomentService.getItemForSlot(DhikrMomentContent.mixed, slot + 1);
+
+        expect(
+          current.categoryLabel,
+          isNot(equals(next.categoryLabel)),
+          reason: 'Slot $slot and slot ${slot + 1} shared category ${current.categoryLabel}',
+        );
       }
     });
 

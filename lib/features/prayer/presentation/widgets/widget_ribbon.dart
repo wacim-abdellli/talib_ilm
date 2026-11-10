@@ -65,7 +65,7 @@ class WidgetRibbon extends StatelessWidget {
 
             return Column(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // ── Row 1: Hero title/countdown + Hijri date ──
                 SizedBox(
@@ -143,10 +143,12 @@ class WidgetRibbon extends StatelessWidget {
                   ),
                 ),
 
+                const SizedBox(height: AppSpace.xxs),
+
                 // ── Row 2: 5-Prayer Station Strip with Celestial Icons ──
                 Expanded(
                   child: Align(
-                    alignment: Alignment.bottomCenter,
+                    alignment: Alignment.center,
                     child: PrayerStrip(
                       totalWidth: contentW,
                       eval: eval,
