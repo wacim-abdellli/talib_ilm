@@ -48,7 +48,44 @@ class HomeWidgetAndroidRenderer {
     return AppTheme.resolveTheme(ThemeMode.system);
   }
 
-  /// Updates the Ribbon (4x1, 360x80) Android Home Screen Widget.
+  /// Resolves the actual launcher widget dimensions dynamically reported by Android.
+  static Future<Size> resolveDimensions({
+    required String prefix,
+    required double fallbackW,
+    required double fallbackH,
+    required double minW,
+    required double maxW,
+    required double minH,
+    required double maxH,
+  }) async {
+    try {
+      int? w;
+      int? h;
+      try {
+        w = await HomeWidget.getWidgetData<int>('${prefix}_widget_width');
+        h = await HomeWidget.getWidgetData<int>('${prefix}_widget_height');
+      } catch (_) {}
+
+      if (w == null || h == null) {
+        final prefs = await SharedPreferences.getInstance();
+        w ??= prefs.getInt('${prefix}_widget_width') ??
+            prefs.getInt('widget_${prefix}_width') ??
+            prefs.getInt('widget_width');
+        h ??= prefs.getInt('${prefix}_widget_height') ??
+            prefs.getInt('widget_${prefix}_height') ??
+            prefs.getInt('widget_height');
+      }
+
+      if (w != null && h != null && w > 0 && h > 0) {
+        final clampedW = w.toDouble().clamp(minW, maxW);
+        final clampedH = h.toDouble().clamp(minH, maxH);
+        return Size(clampedW, clampedH);
+      }
+    } catch (_) {}
+    return Size(fallbackW, fallbackH);
+  }
+
+  /// Updates the Ribbon (4x1) Android Home Screen Widget dynamically.
   static Future<void> updateRibbon({
     required PrayerTimesDay day,
     required DateTime now,
@@ -60,19 +97,27 @@ class HomeWidgetAndroidRenderer {
       final all = day.prayers;
       final hijri = formatHijri(now);
 
+      final resolvedSize = await resolveDimensions(
+        prefix: 'ribbon',
+        fallbackW: kRibbonW,
+        fallbackH: kRibbonH,
+        minW: 200.0,
+        maxW: 600.0,
+        minH: 50.0,
+        maxH: 250.0,
+      );
+
       final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
-          'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+          'ribbon_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${resolvedSize.width.toInt()}x${resolvedSize.height.toInt()}';
       if (!force && renderKey == _lastRibbonRenderKey) {
         return;
       }
       _lastRibbonRenderKey = renderKey;
 
-      const resolvedSize = Size(kRibbonW, kRibbonH);
-
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
@@ -87,6 +132,8 @@ class HomeWidgetAndroidRenderer {
                 hijriDate: hijri,
                 isDark: useDark,
                 forNativeWidget: true,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
               ),
             ),
           ),
@@ -101,6 +148,8 @@ class HomeWidgetAndroidRenderer {
         useDark: useDark,
         hijriDate: hijri,
         force: force,
+        width: resolvedSize.width,
+        height: resolvedSize.height,
       );
 
       await HomeWidget.updateWidget(
@@ -112,7 +161,7 @@ class HomeWidgetAndroidRenderer {
     }
   }
 
-  /// Updates the Standard (4x2, 360x160) Android Home Screen Widget.
+  /// Updates the Standard (4x2) Android Home Screen Widget dynamically.
   static Future<void> updateStandard({
     required PrayerTimesDay day,
     required DateTime now,
@@ -123,19 +172,27 @@ class HomeWidgetAndroidRenderer {
     try {
       final all = day.prayers;
 
+      final resolvedSize = await resolveDimensions(
+        prefix: 'standard',
+        fallbackW: kStandardW,
+        fallbackH: kStandardH,
+        minW: 200.0,
+        maxW: 600.0,
+        minH: 80.0,
+        maxH: 350.0,
+      );
+
       final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
-          'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+          'standard_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${resolvedSize.width.toInt()}x${resolvedSize.height.toInt()}';
       if (!force && renderKey == _lastStandardRenderKey) {
         return;
       }
       _lastStandardRenderKey = renderKey;
 
-      const resolvedSize = Size(kStandardW, kStandardH);
-
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.0,
             textScaler: TextScaler.noScaling,
@@ -144,7 +201,13 @@ class HomeWidgetAndroidRenderer {
             data: useDark == true ? AppTheme.dark() : AppTheme.light(),
             child: Directionality(
               textDirection: TextDirection.rtl,
-              child: WidgetStandard(eval: eval, all: all, isDark: useDark),
+              child: WidgetStandard(
+                eval: eval,
+                all: all,
+                isDark: useDark,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
+              ),
             ),
           ),
         ),
@@ -162,7 +225,7 @@ class HomeWidgetAndroidRenderer {
     }
   }
 
-  /// Updates the Large (4x3, 360x240) Android Home Screen Widget.
+  /// Updates the Large (4x3/4x2/4x1) Android Home Screen Widget dynamically.
   static Future<void> updateLarge({
     required PrayerTimesDay day,
     required DateTime now,
@@ -175,19 +238,27 @@ class HomeWidgetAndroidRenderer {
       final hijri = formatHijri(now);
       final city = day.city.isNotEmpty ? day.city : 'طالب العلم';
 
+      final resolvedSize = await resolveDimensions(
+        prefix: 'large',
+        fallbackW: kLargeW,
+        fallbackH: kLargeH,
+        minW: 200.0,
+        maxW: 600.0,
+        minH: 60.0,
+        maxH: 300.0,
+      );
+
       final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
-          'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+          'large_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${resolvedSize.width.toInt()}x${resolvedSize.height.toInt()}';
       if (!force && renderKey == _lastLargeRenderKey) {
         return;
       }
       _lastLargeRenderKey = renderKey;
 
-      const resolvedSize = Size(kLargeW, kLargeH);
-
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.0,
             textScaler: TextScaler.noScaling,
@@ -203,6 +274,8 @@ class HomeWidgetAndroidRenderer {
                 cityName: city,
                 isDark: useDark,
                 forNativeWidget: true,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
               ),
             ),
           ),
@@ -217,6 +290,8 @@ class HomeWidgetAndroidRenderer {
         useDark: useDark,
         hijriDate: hijri,
         force: force,
+        width: resolvedSize.width,
+        height: resolvedSize.height,
       );
 
       await HomeWidget.updateWidget(
@@ -228,7 +303,7 @@ class HomeWidgetAndroidRenderer {
     }
   }
 
-  /// Updates the Compact (2x2, 160x160) Android Home Screen Widget.
+  /// Updates the Compact (2x2) Android Home Screen Widget dynamically.
   static Future<void> updateCompact({
     required PrayerTimesDay day,
     required DateTime now,
@@ -237,19 +312,27 @@ class HomeWidgetAndroidRenderer {
     bool force = false,
   }) async {
     try {
+      final resolvedSize = await resolveDimensions(
+        prefix: 'compact',
+        fallbackW: kCompactW,
+        fallbackH: kCompactH,
+        minW: 100.0,
+        maxW: 300.0,
+        minH: 100.0,
+        maxH: 300.0,
+      );
+
       final timeKey = '${now.hour}:${now.minute}';
       final renderKey =
-          'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_$useDark';
+          'compact_${day.city}_${timeKey}_${eval.activePrayerName}_${eval.phase}_${useDark}_${resolvedSize.width.toInt()}x${resolvedSize.height.toInt()}';
       if (!force && renderKey == _lastCompactRenderKey) {
         return;
       }
       _lastCompactRenderKey = renderKey;
 
-      const resolvedSize = Size(kCompactW, kCompactH);
-
       await HomeWidget.renderFlutterWidget(
         MediaQuery(
-          data: const MediaQueryData(
+          data: MediaQueryData(
             size: resolvedSize,
             devicePixelRatio: 2.5,
             textScaler: TextScaler.noScaling,
@@ -258,7 +341,12 @@ class HomeWidgetAndroidRenderer {
             data: useDark == true ? AppTheme.dark() : AppTheme.light(),
             child: Directionality(
               textDirection: TextDirection.rtl,
-              child: WidgetCompact(eval: eval, isDark: useDark),
+              child: WidgetCompact(
+                eval: eval,
+                isDark: useDark,
+                width: resolvedSize.width,
+                height: resolvedSize.height,
+              ),
             ),
           ),
         ),

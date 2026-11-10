@@ -406,12 +406,16 @@ class HomeWidgetSnapshot {
     required bool useDark,
     required String hijriDate,
     bool force = false,
+    double? width,
+    double? height,
   }) =>
       HomeWidgetPreRender.preRenderDailyRibbonSnapshots(
         day: day,
         useDark: useDark,
         hijriDate: hijriDate,
         force: force,
+        width: width,
+        height: height,
       );
 
   /// Pre-renders daily prayer state variations for Large widget.
@@ -420,11 +424,15 @@ class HomeWidgetSnapshot {
     required bool useDark,
     required String hijriDate,
     bool force = false,
+    double? width,
+    double? height,
   }) =>
       HomeWidgetPreRender.preRenderDailyLargeSnapshots(
         day: day,
         useDark: useDark,
         hijriDate: hijriDate,
         force: force,
+        width: width,
+        height: height,
       );
 }

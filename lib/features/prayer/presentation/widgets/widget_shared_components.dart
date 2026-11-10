@@ -292,19 +292,19 @@ class FixedTimePill extends StatelessWidget {
 }
 
 /// WidgetCard — the outer container shell.
-/// [width], [height] — canvas dimensions.
+/// [width], [height] — canvas dimensions (optional for dynamic responsiveness).
 /// [isDark] — dark or light background.
 class WidgetCard extends StatelessWidget {
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
   final bool isDark;
   final EdgeInsetsDirectional? padding;
   final Widget child;
 
   const WidgetCard({
     super.key,
-    required this.width,
-    required this.height,
+    this.width,
+    this.height,
     this.isDark = false,
     this.padding,
     required this.child,

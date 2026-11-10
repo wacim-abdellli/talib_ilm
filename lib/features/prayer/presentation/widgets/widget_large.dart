@@ -21,6 +21,8 @@ class WidgetLarge extends StatelessWidget {
   final String cityName;
   final bool isDark;
   final bool forNativeWidget;
+  final double? width;
+  final double? height;
 
   const WidgetLarge({
     super.key,
@@ -30,6 +32,8 @@ class WidgetLarge extends StatelessWidget {
     required this.cityName,
     this.isDark = false,
     this.forNativeWidget = false,
+    this.width,
+    this.height,
   });
 
   static String _formatTime12h(DateTime time) {
@@ -44,8 +48,8 @@ class WidgetLarge extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: WidgetCard(
-        width: kLargeW,
-        height: kLargeH,
+        width: width ?? kLargeW,
+        height: height ?? kLargeH,
         isDark: isDark,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: kLargePadH,
@@ -66,7 +70,7 @@ class WidgetLarge extends StatelessWidget {
 
             return Column(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── 1. Top Bar: [Prayer • Countdown] (Start) ←→ [Hijri Date • City] (End) ──
