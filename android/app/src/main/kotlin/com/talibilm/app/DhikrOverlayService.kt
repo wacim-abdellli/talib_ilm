@@ -77,11 +77,11 @@ class DhikrOverlayService : Service() {
                     }
                 }
                 Intent.ACTION_USER_PRESENT -> {
-                    scheduleUnlockEvaluation(delayMs = 2400L)
+                    scheduleUnlockEvaluation(delayMs = 1200L)
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     if (isDeviceActivelyUsed()) {
-                        scheduleUnlockEvaluation(delayMs = 2600L)
+                        scheduleUnlockEvaluation(delayMs = 1400L)
                     }
                 }
                 Intent.ACTION_TIME_TICK -> {
@@ -98,7 +98,6 @@ class DhikrOverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createChannel()
         startForegroundSafe()
-        clearForegroundNotification()
         registerUsageReceiver()
     }
 
@@ -123,7 +122,6 @@ class DhikrOverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForegroundSafe()
-        clearForegroundNotification()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             stopAndCleanupService()
@@ -164,14 +162,14 @@ class DhikrOverlayService : Service() {
             ACTION_START -> {
                 val kickOffFast = intent?.getBooleanExtra(EXTRA_KICKOFF_FAST, false) == true
                 if (kickOffFast && isDeviceActivelyUsed()) {
-                    scheduleNextActiveCheck(delayMs = 10_000L)
-                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 12_000L)
+                    scheduleNextActiveCheck(delayMs = 6_000L)
+                    DhikrOverlayScheduler.scheduleNext(this, delayMsOverride = 8_000L)
                 } else {
                     evaluateAndShowIfDue(isUnlockEvent = false)
                 }
             }
             ACTION_USER_UNLOCKED -> {
-                scheduleUnlockEvaluation(delayMs = 2400L)
+                scheduleUnlockEvaluation(delayMs = 1200L)
             }
             ACTION_ALARM_CHECK, ACTION_SHOW_NOW -> {
                 evaluateAndShowIfDue(isUnlockEvent = false)
@@ -184,7 +182,7 @@ class DhikrOverlayService : Service() {
         return START_STICKY
     }
 
-    private fun scheduleUnlockEvaluation(delayMs: Long) {
+    private fun scheduleUnlockEvaluation(delayMs: Long = 1200L) {
         if (!isEnabled()) return
         handler.removeCallbacks(unlockTriggerRunnable)
         handler.postDelayed(unlockTriggerRunnable, delayMs)
@@ -214,12 +212,11 @@ class DhikrOverlayService : Service() {
             return
         }
 
-        if (!isDeviceActivelyUsed()) {
+        val activelyUsed = isDeviceActivelyUsed()
+        if (!activelyUsed) {
             // Phone is locked or screen is off: never show on a locked screen!
-            // Instead, if a dhikr is due now, mark it pending so it shows right after unlock.
-            if (DhikrOverlayScheduler.isDueNow(prefs, isUnlockEvent = false)) {
-                DhikrOverlayScheduler.markPendingOnUnlock(prefs)
-            }
+            // Instead, mark pending so it immediately greets the user upon unlocking.
+            DhikrOverlayScheduler.markPendingOnUnlock(prefs)
             DhikrOverlayScheduler.scheduleNext(this)
             return
         }
@@ -229,7 +226,7 @@ class DhikrOverlayService : Service() {
             return
         }
 
-        if (DhikrOverlayScheduler.isDueNow(prefs, isUnlockEvent = isUnlockEvent)) {
+        if (DhikrOverlayScheduler.isDueNow(prefs, isUnlockEvent = isUnlockEvent, isInteractiveActiveUse = true)) {
             val entry = currentContent()
             DhikrOverlayScheduler.recordShownNow(prefs)
             showCard(entry, isTestRun = false)
@@ -450,9 +447,8 @@ class DhikrOverlayService : Service() {
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.TOP or Gravity.RIGHT
-            y = dp(48)
-            x = dp(12)
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = dp(52)
         }
 
         try {
@@ -491,7 +487,6 @@ class DhikrOverlayService : Service() {
 
     private fun finishCardDisplay() {
         cleanupCardView()
-        clearForegroundNotification()
         if (isEnabled()) {
             val prefs = DhikrOverlayScheduler.prefs(this)
             val nextDelay = DhikrOverlayScheduler.computeNextDelayMs(prefs)

@@ -5148,6 +5148,11 @@ FAILED (54 violations)
   4. **Surah Objectives Sheet Direct Navigation:**
      - Connected the "قراءة السورة (ص X)" bottom button and all thematic sections in `SurahObjectivesSheet` so tapping either directly navigates to the target page and ayah.
      - Added direct fallback navigation to `MushafPageViewer` when opened without an explicit callback, and wired `onOpenSurahWithAyah` through `quran_index_slivers.dart`, `surah_card.dart`, and `quran_search_results_view.dart`.
+  5. **Dhikr Moment Overlay Reliability & Night Pacing Fix:**
+     - Removed artificial 10:00 PM cutoff (`isWithinTimeWindow` now prioritizes interactive active use: if the user is awake and using their unlocked phone, cards are never silenced).
+     - Fixed foreground service notification lifecycle: stopped premature `stopForeground(REMOVE)` demoting the service, keeping it alive as a silent background foreground service.
+     - Accelerated pacing for 50/day (active interval ~80s, unlock cooldown ~20s, first kickoff 6s).
+     - Centered overlay card with `Gravity.TOP or Gravity.CENTER_HORIZONTAL` and `y = 52dp` for clean notch-safe floating presentation.
 - **Verification Gate:**
   - `flutter analyze`: 0 issues found (clean).
   - `python tool/ui_lint_v2.py --strict`: OK (0 violations, 8/10 allow markers).

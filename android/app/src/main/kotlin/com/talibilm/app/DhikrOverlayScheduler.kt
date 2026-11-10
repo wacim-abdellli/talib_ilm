@@ -34,35 +34,44 @@ object DhikrOverlayScheduler {
      */
     fun computeActiveIntervalMs(prefs: SharedPreferences): Long {
         val count = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 50)
-        val start = readInt(prefs, "dhikr_moment_start_minutes", 480).coerceIn(0, 1439)
-        val end = readInt(prefs, "dhikr_moment_end_minutes", 1320).coerceIn(1, 1440)
-        val windowSpanMinutes = if (end > start) {
-            end - start
-        } else {
-            (1440 - start + end).coerceAtLeast(60)
+        val intervalSeconds = when {
+            count >= 50 -> 80L      // ~1.3 min of active use
+            count >= 40 -> 110L     // ~1.8 min
+            count >= 30 -> 150L     // 2.5 min
+            count >= 20 -> 240L     // 4 min
+            count >= 10 -> 420L     // 7 min
+            else -> 600L            // 10 min
         }
-        val effectiveActiveMinutes = windowSpanMinutes.coerceAtMost(250).coerceAtLeast(30)
-        val intervalMinutes = (effectiveActiveMinutes.toDouble() / count.toDouble())
-            .roundToInt()
-            .coerceIn(4, 120)
-        return intervalMinutes * 60_000L
+        return intervalSeconds * 1000L
     }
 
     /**
      * Minimum cooldown before showing a Dhikr card right as the user unlocks their phone.
-     * For 50/day (5 min active interval), unlocking after >= 2.5 minutes greets the user.
      */
     fun computeUnlockCooldownMs(prefs: SharedPreferences): Long {
-        val activeInterval = computeActiveIntervalMs(prefs)
-        return (activeInterval * 55L / 100L).coerceIn(150_000L, 1_800_000L)
+        val count = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 50)
+        val seconds = when {
+            count >= 50 -> 20L
+            count >= 30 -> 35L
+            count >= 20 -> 50L
+            else -> 90L
+        }
+        return seconds * 1000L
     }
 
     fun isWithinTimeWindow(
         prefs: SharedPreferences,
         now: Calendar = Calendar.getInstance(),
+        isInteractiveActiveUse: Boolean = false,
     ): Boolean {
-        val start = readInt(prefs, "dhikr_moment_start_minutes", 480).coerceIn(0, 1439)
-        val end = readInt(prefs, "dhikr_moment_end_minutes", 1320).coerceIn(1, 1440)
+        // Active interactive phone usage ALWAYS takes priority over quiet hours.
+        // A user actively interacting with their unlocked phone is awake.
+        if (isInteractiveActiveUse) return true
+
+        val start = readInt(prefs, "dhikr_moment_start_minutes", 0).coerceIn(0, 1439)
+        val end = readInt(prefs, "dhikr_moment_end_minutes", 1440).coerceIn(1, 1440)
+        if (start == 0 && end >= 1440) return true
+
         val nowMinute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         return if (end > start) {
             nowMinute in start..end
@@ -88,7 +97,7 @@ object DhikrOverlayScheduler {
             0
         }
         val maxPerDay = readInt(prefs, "dhikr_moment_times_per_day", 20).coerceIn(1, 50)
-        return shownToday < maxPerDay
+        return shownToday < (maxPerDay * 3)
     }
 
     fun recordShownNow(
@@ -128,9 +137,10 @@ object DhikrOverlayScheduler {
     fun isDueNow(
         prefs: SharedPreferences,
         isUnlockEvent: Boolean = false,
+        isInteractiveActiveUse: Boolean = false,
     ): Boolean {
         if (!isEnabled(prefs)) return false
-        if (!isWithinTimeWindow(prefs)) return false
+        if (!isWithinTimeWindow(prefs, isInteractiveActiveUse = isInteractiveActiveUse)) return false
         if (!canShowMoreToday(prefs)) return false
 
         val lastShownMs = readLong(prefs, "dhikr_moment_last_shown_epoch_ms", 0L)
@@ -149,29 +159,13 @@ object DhikrOverlayScheduler {
     }
 
     fun computeNextDelayMs(prefs: SharedPreferences): Long {
-        val now = Calendar.getInstance()
-        if (!isWithinTimeWindow(prefs, now) || !canShowMoreToday(prefs, now)) {
-            val start = readInt(prefs, "dhikr_moment_start_minutes", 480).coerceIn(0, 1439)
-            val nowMinute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-            val target = Calendar.getInstance().apply {
-                if (nowMinute >= start) {
-                    add(Calendar.DAY_OF_YEAR, 1)
-                }
-                set(Calendar.HOUR_OF_DAY, start / 60)
-                set(Calendar.MINUTE, start % 60)
-                set(Calendar.SECOND, 5)
-                set(Calendar.MILLISECOND, 0)
-            }
-            return (target.timeInMillis - System.currentTimeMillis()).coerceAtLeast(60_000L)
-        }
-
         val lastShownMs = readLong(prefs, "dhikr_moment_last_shown_epoch_ms", 0L)
         val intervalMs = computeActiveIntervalMs(prefs)
         if (lastShownMs <= 0L) {
-            return 12_000L
+            return 8_000L
         }
         val elapsed = (System.currentTimeMillis() - lastShownMs).coerceAtLeast(0L)
-        return (intervalMs - elapsed).coerceAtLeast(5_000L)
+        return (intervalMs - elapsed).coerceIn(8_000L, intervalMs)
     }
 
     fun scheduleNext(context: Context, delayMsOverride: Long? = null) {

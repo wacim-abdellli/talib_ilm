@@ -37,8 +37,8 @@ class DhikrMomentSettings {
   const DhikrMomentSettings({
     this.enabled = false,
     this.timesPerDay = 20,
-    this.startMinutes = 8 * 60,
-    this.endMinutes = 22 * 60,
+    this.startMinutes = 0,
+    this.endMinutes = 24 * 60,
     this.content = DhikrMomentContent.mixed,
     int? intervalHours,
   });
@@ -222,8 +222,8 @@ class DhikrMomentService {
         1,
         maxAppearancesPerDay,
       ),
-      startMinutes: (prefs.getInt(_startKey) ?? 480).clamp(0, 1439),
-      endMinutes: (prefs.getInt(_endKey) ?? 1320).clamp(1, 1440),
+      startMinutes: (prefs.getInt(_startKey) ?? 0).clamp(0, 1439),
+      endMinutes: (prefs.getInt(_endKey) ?? 1440).clamp(1, 1440),
       content: content,
     );
     settingsNotifier.value = settings;
