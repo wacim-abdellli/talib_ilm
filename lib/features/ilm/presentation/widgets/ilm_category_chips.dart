@@ -105,7 +105,7 @@ class IlmCategoryChips extends StatelessWidget {
               selected: isSelected,
               label: 'قسم ${cat.label}',
               child: Material(
-                color: isSelected ? palette.primary : palette.surfaceRaised,
+                color: Colors.transparent,
                 borderRadius: AppRadius.pillRadius,
                 child: InkWell(
                   borderRadius: AppRadius.pillRadius,
@@ -113,13 +113,18 @@ class IlmCategoryChips extends StatelessWidget {
                     HapticFeedback.selectionClick();
                     onCategorySelected(cat.id);
                   },
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: AppMotion.fast,
+                    curve: AppMotion.easeOut,
                     constraints: const BoxConstraints(minHeight: AppSize.tap),
                     padding: const EdgeInsetsDirectional.symmetric(
                       horizontal: AppSpace.md,
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
+                      color: isSelected
+                          ? palette.primary
+                          : palette.surfaceRaised,
                       borderRadius: AppRadius.pillRadius,
                       border: Border.all(
                         color: isSelected ? palette.primary : palette.border,

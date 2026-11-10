@@ -80,6 +80,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   late int _currentIndex;
   final Set<int> _loadedTabs = <int>{};
+  Timer? _prewarmTimer;
 
   @override
   void initState() {
@@ -94,7 +95,29 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       if (mounted) {
         NotificationOnboardingDialog.checkAndShow(context);
         NotificationRouter.consumePendingPayload(context);
+        _scheduleIdleTabPrewarm();
       }
+    });
+  }
+
+  /// Pre-warms remaining bottom navigation tabs during idle frames after startup
+  /// so the first tap on any tab switches at 120fps with zero inflation stutter.
+  void _scheduleIdleTabPrewarm() {
+    _prewarmTimer?.cancel();
+    _prewarmTimer = Timer.periodic(AppMotion.fast, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      for (int i = 0; i < 5; i++) {
+        if (!_loadedTabs.contains(i)) {
+          setState(() {
+            _loadedTabs.add(i);
+          });
+          return;
+        }
+      }
+      timer.cancel();
     });
   }
 
@@ -158,6 +181,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _prewarmTimer?.cancel();
     if (AppShell._activeState == this) {
       AppShell._activeState = null;
     }
@@ -374,7 +398,7 @@ class AnimatedIndexedStack extends StatefulWidget {
     super.key,
     required this.index,
     required this.children,
-    this.duration = AppMotion.fast,
+    this.duration = AppMotion.sectionSwitch,
   });
 
   @override
@@ -407,12 +431,14 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
       parent: _controller,
       curve: AppMotion.easeOut,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
+    _fadeAnimation = Tween<double>(begin: 0.42, end: 1.0).animate(curved);
+    // In Arabic RTL, higher tab indices sit to the physical left, so moving to a
+    // higher index glides naturally from left (-dx) into center.
     _slideAnimation = Tween<Offset>(
-      begin: Offset(0.035 * _slideDirection, 0.0),
+      begin: Offset(-0.022 * _slideDirection, 0.0),
       end: Offset.zero,
     ).animate(curved);
-    _scaleAnimation = Tween<double>(begin: 0.985, end: 1.0).animate(curved);
+    _scaleAnimation = Tween<double>(begin: 0.992, end: 1.0).animate(curved);
   }
 
   @override
@@ -434,15 +460,17 @@ class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: IndexedStack(
-            index: _currentIndex,
-            children: widget.children,
+    return RepaintBoundary(
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: IndexedStack(
+              index: _currentIndex,
+              children: widget.children,
+            ),
           ),
         ),
       ),

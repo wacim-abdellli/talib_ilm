@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:talib_ilm/app/theme/app_page_transitions.dart';
 import 'package:talib_ilm/app/theme/app_palette.dart';
 import 'package:talib_ilm/app/theme/app_theme.dart';
+import 'package:talib_ilm/shared/animations/fade_scale_animation.dart';
 import 'package:talib_ilm/shared/navigation/app_shell.dart';
 import 'package:talib_ilm/shared/navigation/fade_page_route.dart';
 import 'package:talib_ilm/shared/widgets/app_dialog.dart';
@@ -181,6 +182,40 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.text('تأكيد الحذف'), findsOneWidget);
+    });
+
+    testWidgets('AppSectionSwitcher smoothly transitions between in-page sections',
+        (tester) async {
+      String section = 'all';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              return Scaffold(
+                body: AppSectionSwitcher(
+                  sectionKey: ValueKey('section_$section'),
+                  child: Text('Section: $section'),
+                ),
+                floatingActionButton: FloatingActionButton(
+                  onPressed: () => setState(() => section = 'mutun'),
+                  child: const Icon(Icons.swap_horiz),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      expect(find.text('Section: all'), findsOneWidget);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      expect(find.byType(SlideTransition), findsWidgets);
+      expect(find.byType(ScaleTransition), findsWidgets);
+
+      await tester.pumpAndSettle();
+      expect(find.text('Section: mutun'), findsOneWidget);
     });
   });
 }

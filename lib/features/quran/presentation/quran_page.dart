@@ -8,6 +8,7 @@ import 'package:quran/quran.dart' as quran;
 import '../../../app/theme/app_palette.dart';
 import '../../../app/theme/app_ui.dart';
 import '../../../core/utils/arabic_search_utils.dart';
+import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/primary_app_bar.dart';
 import '../data/models/hizb_catalog.dart';
@@ -311,8 +312,8 @@ class _QuranPageState extends State<QuranPage> {
 
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => MushafPageViewer(
+      buildFadeRoute(
+        page: MushafPageViewer(
           initialPage: targetPage,
           initialSurah: surahNum,
           initialAyah: ayah,
@@ -345,8 +346,8 @@ class _QuranPageState extends State<QuranPage> {
 
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => MushafPageViewer(initialPage: pageNumber),
+      buildFadeRoute(
+        page: MushafPageViewer(initialPage: pageNumber),
       ),
     );
 
@@ -383,8 +384,8 @@ class _QuranPageState extends State<QuranPage> {
 
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => MushafPageViewer(
+      buildFadeRoute(
+        page: MushafPageViewer(
           initialPage: targetPage,
           initialSurah: match.surahNumber,
           initialAyah: match.ayahNumber,
@@ -441,7 +442,7 @@ class _QuranPageState extends State<QuranPage> {
               HapticFeedback.lightImpact();
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const BookmarksPage()),
+                buildFadeRoute(page: const BookmarksPage()),
               ).then((_) => _loadData());
             },
           ),
@@ -456,8 +457,8 @@ class _QuranPageState extends State<QuranPage> {
                 SliverToBoxAdapter(
                   key: const ValueKey('quran_stats_banner'),
                   child: AnimatedSize(
-                    duration: AppMotion.base,
-                    curve: Curves.easeInOut,
+                    duration: AppMotion.sectionSwitch,
+                    curve: AppMotion.easeOut,
                     child: isSearching
                         ? const SizedBox.shrink()
                         : Column(
@@ -505,9 +506,8 @@ class _QuranPageState extends State<QuranPage> {
                                           HapticFeedback.lightImpact();
                                           Navigator.push(
                                             context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const BookmarksPage(),
+                                            buildFadeRoute(
+                                              page: const BookmarksPage(),
                                             ),
                                           ).then((_) => _loadData());
                                         },

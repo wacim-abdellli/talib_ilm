@@ -1,3 +1,23 @@
+## Stage R65 — App-Wide Silky-Smooth Animation System (Tabs, Pages & Sections) & Luxury/Vercel Native Widgets (10 November 2026)
+- **Branch**: `ui/r63-fix-widget-layout-and-spacing`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Zero-Jank Bottom Tab Switching (`AppShell` & `AnimatedIndexedStack`)**:
+     - **Root Cause of First-Tap Hitch & Blank Flash**: Previously, `AppShell` only mounted tab `0` initially (`_loadedTabs = {0}`), causing the first tap on any of tabs `1..4` to synchronously inflate large widget trees and fire `initState` services on frame 0 of the transition. Furthermore, `AnimatedIndexedStack` faded from `0.0` to `1.0` while immediately swapping the `IndexedStack` child, creating a brief blank flash on every tab switch.
+     - **Architectural Fix**: Added `_scheduleIdleTabPrewarm()` in `AppShell` to progressively pre-warm inactive tabs in the background (`140ms` idle steps after startup, with `TickerMode` disabled for off-stage tabs), raised the `AnimatedIndexedStack` initial fade floor to `0.42` over `AppMotion.sectionSwitch` (`180ms`) with `AppMotion.easeOut` (`Cubic(0.16, 1.0, 0.3, 1.0)`), corrected the physical RTL horizontal slide direction (`-0.022 * _slideDirection`), and isolated the transitioning subtree in a `RepaintBoundary`.
+  2. **Unified In-Page Section & Category Transitions (`AppSectionSwitcher`)**:
+     - Created `AppSectionSwitcher` in `lib/shared/animations/fade_scale_animation.dart` (`180ms` switch-in, `140ms` reverse, `AppMotion.easeOut`, top-aligned stack layout, `0.016` upward micro-glide + `0.992 -> 1.0` scale + fade inside a `RepaintBoundary`) and integrated it into `IlmPage` (all/mutun/durus/shuruh/levels/search), `AdhkarPage` (category filtering), `IlmCategoryChips`, and `QuranPinnedHeaderDelegate` (`AnimatedContainer` pill morphing).
+  3. **Fast, Pre-Allocated Page Route Transitions (`AppRtlPageTransitionsBuilder` & `AppFadePageRoute`)**:
+     - Overrode `transitionDuration => AppMotion.base` (`220ms` vs Flutter's sluggish `300ms` default) and `reverseTransitionDuration => AppMotion.sectionSwitch` (`180ms` crisp back-navigation), pre-allocated static `Animatable` tween chains to eliminate per-frame allocations, wrapped route children in `RepaintBoundary`, and upgraded all remaining raw `MaterialPageRoute` pushes in `QuranPage` to `buildFadeRoute`.
+  4. **iOS & Android Widget Polish (Zero `...` Ellipsis & Luxury/Vercel Dark Mode)**:
+     - Eliminated `...` text truncation across iOS Medium and Large widgets (`TalibIlmWidgetViews.swift`) using `fixedSize(horizontal: true, vertical: false)`, decoupled `HStack` layout priorities for `"موعد الأذان"`, and `Font.monospacedDigit()` (iOS 13+ compatible).
+     - Upgraded both Android (`widget_large.xml`, `widget_ribbon.xml`) and iOS (`TalibIlmWidgetViews.swift`) dark themes to a deep obsidian Luxury/Vercel palette (`#070707`–`#0B0B0B` card canvas, `#0F0F0F`–`#111111` raised pill surfaces, crisp 1dp hairline borders).
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found.
+  - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
+  - `flutter test test/app_animation_transitions_test.dart test/navigation_transition_test.dart test/ios_fixes_test.dart`: All tests passed (100%).
+  - `flutter build apk --target-platform android-arm64`: Built `talib_ilm_modern_phones_release.apk` (0 errors).
+- **Status**: Complete & Verified.
+
 ## Stage R63 — Native Android & iOS WidgetKit Overhaul (Medium & Max Only, Light & Dark Modes, Countdown & Timezone Guard) & Hifdh Audio Range Engine (10 November 2026)
 - **Branch**: `ui/r63-fix-widget-layout-and-spacing`
 - **Root Cause Analysis & Problems Solved**:
@@ -4497,52 +4517,7 @@ FAILED (54 violations)
      - In `PrayerWidgetProvider.kt`, implemented `onAppWidgetOptionsChanged` to capture launcher resize events and persist user dimensions (`widget_width`, `widget_height`).
      - In `HomeWidgetService`, dynamically reads launcher-allocated dimensions or defaults to responsive `380x145` aspect ratio with crisp `3.0` pixel ratio.
   2. **Frozen Seconds Elimination & Real-time Background Updates:**
-     - Android Home Screen AppWidgets render static bitmaps; re-rendering 60 frames/sec causes OS throttling/battery kills. Displaying `: 53` seconds gave the illusion of being frozen.
-     - Formatted countdown as `HH : MM` for > 1 hour and `MM : SS` for < 1 hour, paired with a 30-second background refresh in `ForegroundPrayerService._check()`.
-  3. **Complete 5-Phase Liturgical State Machine (`PrayerWidgetStateEvaluator`):**
-     - Handled all prayer states:
-       - `beforeAdhan`: Countdown to upcoming prayer.
-       - `atAdhan` (First 2 min): Glowing adhan alert banner («حان الآن موعد أذان ...»).
-       - `betweenAdhanAndIqama`: Dynamic Iqama countdown («بقي على الإقامة: MM:SS») with exact Iqama time pill.
-       - `inSalah`: Active congregational prayer badge («تقام الآن صلاة ... مع الجماعة»).
-       - `postSalah`: Post-prayer dhikr & reminder («انقضت صلاة ... تقبل الله»).
-       - Friday Jumu'ah special handling: Displays «صلاة الجمعة» instead of Dhuhr with 25-minute Khutbah/Iqama interval.
-       - Qiyam al-Layl late-night phase after Isha.
-  4. **Dark Reader Velvet Obsidian Theme (`0419f6c`):**
-     - Removed bluish slate cast (`#101114`, `#181A1F`) in dark reader mode, replacing with deep velvet obsidian black (`#090807`), warm charcoal raised surfaces (`#141210`), and warm dark borders (`#262018`).
-  5. **Verification Gate:**
-     - `flutter analyze`: **0 issues found** (clean in 8.4s).
-     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
-     - `flutter test`: **100% pass** (29/29 tests passed across reader, audio, and prayer widget test suites).
-- **Open Issues:** None.
-
----
-
-## Notification Router, Discipline Multi-Level Filters & Hadith Sharing Cleanup
-- **Status:** Complete
-- **Branch:** `main` (merged from `feat/quran-word-search`)
-- **Commit:** `38d9b2c`
-- **Deliverables & Verification:**
-  1. **Notification Router & Deep Linking Engine (`NotificationRouter`):**
-     - Centralized routing for notification payloads across Morning, Evening, and Sleeping Athkar, After-Prayer Athkar, Tasbeeh, Istighfar, Duas, and Friday Surah Al-Kahf deep links.
-     - Handles cold-start launches seamlessly by caching `pendingPayload` until `AppShell` completes mounting.
-     - Dispatches through `rootNavigatorKey` with animated fade transitions.
-     - Verified with comprehensive test suite in `test/notification_router_test.dart` (100% pass across cold-start and runtime scenarios).
-  2. **Ilm Disciplines Multi-Level Filters (`IlmDisciplineSection`):**
-     - Added horizontal level selector filters (`جميع المستويات`, `تمهيدي (مبتدئ)`, `تأصيلي (متوسط)`, `مطولات (متقدم)`) inside focused discipline views.
-     - Dynamic book count indicators per level with tokenized pill styling and haptic feedback.
-     - Preserved text-scale resilience and zero UI lint violations.
-  3. **Hadith Data Sanitization & Unified Sharing:**
-     - Sanitized legacy HTML break tags (`<br>`, `</p>`) from `hadith_collection.json`.
-     - Built `GradedHadith.cleanText()` and `toShareText()` with structured attribution and scholarly citation.
-  4. **Verification Gate:**
-     - `flutter analyze`: **0 issues found** (clean in 98.4s).
-     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
-     - `flutter test test/notification_router_test.dart test/hadith_explorer_test.dart`: **100% pass** (23/23 tests).
-- **Open Issues:** None.
-
-
----
+     - Android Home Screen AppWidgets render static bitmaps; re-rendering 60 frames/sec causes OS throttling/battery kills. Displaying `: 53` 
 
 ## Round 13 — Android Home Screen Widget Persistent Live Chronometer Countdown
 - **Status:** Complete

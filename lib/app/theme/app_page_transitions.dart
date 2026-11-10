@@ -14,6 +14,24 @@ class AppRtlPageTransitionsBuilder extends PageTransitionsBuilder {
   const AppRtlPageTransitionsBuilder();
 
   @override
+  Duration get transitionDuration => AppMotion.base;
+
+  static final Animatable<Offset> _slideTween = Tween<Offset>(
+    begin: const Offset(0.0, 0.024),
+    end: Offset.zero,
+  );
+
+  static final Animatable<double> _scaleTween = Tween<double>(
+    begin: 0.988,
+    end: 1.0,
+  );
+
+  static final Animatable<double> _secondaryScaleTween = Tween<double>(
+    begin: 1.0,
+    end: 0.988,
+  );
+
+  @override
   Widget buildTransitions<T>(
     PageRoute<T> route,
     BuildContext context,
@@ -27,35 +45,21 @@ class AppRtlPageTransitionsBuilder extends PageTransitionsBuilder {
       reverseCurve: AppMotion.easeIn,
     );
 
-    final slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.035),
-      end: Offset.zero,
-    ).animate(curved);
-
-    final scaleAnimation = Tween<double>(
-      begin: 0.98,
-      end: 1.0,
-    ).animate(curved);
-
     final secondaryCurved = CurvedAnimation(
       parent: secondaryAnimation,
       curve: AppMotion.easeOut,
       reverseCurve: AppMotion.easeIn,
     );
-    final secondaryScale = Tween<double>(
-      begin: 1.0,
-      end: 0.98,
-    ).animate(secondaryCurved);
 
     return FadeTransition(
       opacity: curved,
       child: SlideTransition(
-        position: slideAnimation,
+        position: _slideTween.animate(curved),
         child: ScaleTransition(
-          scale: scaleAnimation,
+          scale: _scaleTween.animate(curved),
           child: ScaleTransition(
-            scale: secondaryScale,
-            child: child,
+            scale: _secondaryScaleTween.animate(secondaryCurved),
+            child: RepaintBoundary(child: child),
           ),
         ),
       ),

@@ -90,22 +90,22 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
     super.initState();
     _bounceController = AnimationController(
       vsync: this,
-      duration: AppMotion.base,
+      duration: AppMotion.sectionSwitch,
     );
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.88)
-            .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 25,
+        tween: Tween<double>(begin: 1.0, end: 0.92)
+            .chain(CurveTween(curve: AppMotion.easeIn)),
+        weight: 22,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.88, end: 1.15)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 45,
+        tween: Tween<double>(begin: 0.92, end: 1.10)
+            .chain(CurveTween(curve: AppMotion.easeOut)),
+        weight: 48,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.15, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        tween: Tween<double>(begin: 1.10, end: 1.0)
+            .chain(CurveTween(curve: AppMotion.smoothOut)),
         weight: 30,
       ),
     ]).animate(_bounceController);
@@ -150,9 +150,9 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedContainer(
-                  duration: AppMotion.fast,
+                  duration: AppMotion.sectionSwitch,
                   curve: AppMotion.easeOut,
-                  width: 56,
+                  width: isSelected ? 56 : 44,
                   height: 32,
                   decoration: BoxDecoration(
                     color: isSelected
@@ -176,14 +176,18 @@ class _NavBarItemWidgetState extends State<_NavBarItemWidget>
                 const SizedBox(height: AppSpace.xxs),
                 FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(
-                    item.label,
+                  child: AnimatedDefaultTextStyle(
+                    duration: AppMotion.fast,
+                    curve: AppMotion.easeOut,
                     style: (isSelected ? textTheme.captionHeavy : textTheme.caption).copyWith(
                       color: isSelected
                           ? palette.primary
                           : palette.textSubtle,
                     ),
-                    maxLines: 1,
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
               ],

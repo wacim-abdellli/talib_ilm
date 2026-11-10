@@ -34,7 +34,17 @@ class AppFadePageRoute<T> extends PageRoute<T>
   Duration get transitionDuration => duration;
 
   @override
-  Duration get reverseTransitionDuration => duration;
+  Duration get reverseTransitionDuration => AppMotion.sectionSwitch;
+
+  static final Animatable<Offset> _offsetTween = Tween<Offset>(
+    begin: const Offset(0.0, 0.024),
+    end: Offset.zero,
+  );
+
+  static final Animatable<double> _scaleTween = Tween<double>(
+    begin: 0.988,
+    end: 1.0,
+  );
 
   @override
   Widget buildContent(BuildContext context) => builder(context);
@@ -59,7 +69,7 @@ class AppFadePageRoute<T> extends PageRoute<T>
         context,
         animation,
         secondaryAnimation,
-        child,
+        RepaintBoundary(child: child),
       );
     }
     final curved = CurvedAnimation(
@@ -67,21 +77,13 @@ class AppFadePageRoute<T> extends PageRoute<T>
       curve: AppMotion.easeOut,
       reverseCurve: AppMotion.easeIn,
     );
-    final offsetTween = Tween<Offset>(
-      begin: const Offset(0, 0.035),
-      end: Offset.zero,
-    );
-    final scaleTween = Tween<double>(
-      begin: 0.98,
-      end: 1.0,
-    );
     return FadeTransition(
       opacity: curved,
       child: SlideTransition(
-        position: curved.drive(offsetTween),
+        position: _offsetTween.animate(curved),
         child: ScaleTransition(
-          scale: curved.drive(scaleTween),
-          child: child,
+          scale: _scaleTween.animate(curved),
+          child: RepaintBoundary(child: child),
         ),
       ),
     );

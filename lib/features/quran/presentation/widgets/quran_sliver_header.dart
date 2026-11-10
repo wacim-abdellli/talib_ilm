@@ -248,17 +248,18 @@ class QuranPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
         onTap: onTap,
         borderRadius: AppRadius.pillRadius,
         child: AnimatedContainer(
-          duration: AppMotion.base,
+          duration: AppMotion.fast,
+          curve: AppMotion.easeOut,
           padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpace.sm),
           decoration: BoxDecoration(
             color: isSelected ? palette.surfaceRaised : Colors.transparent,
             borderRadius: AppRadius.pillRadius,
-            border: isSelected
-                ? Border.all(
-                    color: palette.gold.withValues(alpha: 0.35),
-                    width: 1,
-                  )
-                : null,
+            border: Border.all(
+              color: isSelected
+                  ? palette.gold.withValues(alpha: 0.35)
+                  : Colors.transparent,
+              width: 1,
+            ),
             boxShadow: isSelected ? palette.shadow : null,
           ),
           child: Center(

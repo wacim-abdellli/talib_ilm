@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_strings.dart';
 import '../../../app/theme/app_palette.dart';
+import '../../../shared/animations/fade_scale_animation.dart';
 import '../../../shared/animations/staggered_entrance.dart';
 import '../../../shared/navigation/fade_page_route.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -268,59 +269,62 @@ class _AdhkarPageState extends State<AdhkarPage> {
                 final allItems = _dashboardItems(context, catalog);
                 final items = _filteredItems(allItems);
 
-                return RefreshIndicator(
-                  onRefresh: _reload,
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    slivers: [
-                      // Contextual Hero Recommendation (Visible on 'all' tab)
-                      if (_selectedCategory == 'all')
-                        SliverToBoxAdapter(
-                          child: StaggeredEntrance(
-                            index: 0,
-                            child: AdhkarContextualHero(
-                              catalog: catalog,
-                              onOpenCategory: _openCategory,
+                return AppSectionSwitcher(
+                  sectionKey: ValueKey('adhkar_cat_$_selectedCategory'),
+                  child: RefreshIndicator(
+                    onRefresh: _reload,
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      slivers: [
+                        // Contextual Hero Recommendation (Visible on 'all' tab)
+                        if (_selectedCategory == 'all')
+                          SliverToBoxAdapter(
+                            child: StaggeredEntrance(
+                              index: 0,
+                              child: AdhkarContextualHero(
+                                catalog: catalog,
+                                onOpenCategory: _openCategory,
+                              ),
+                            ),
+                          ),
+
+                        // Grid of Adhkar Categories
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpace.lg,
+                            AppSpace.sm,
+                            AppSpace.lg,
+                            AppSize.navClearance(context),
+                          ),
+                          sliver: SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: AppSpace.md,
+                              mainAxisSpacing: AppSpace.md,
+                              childAspectRatio: 0.86,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final rowIndex = (index ~/ 2) + (_selectedCategory == 'all' ? 1 : 0);
+                                return StaggeredEntrance(
+                                  key: ValueKey('adhkar_tile_${items[index].id}'),
+                                  index: rowIndex,
+                                  child: CategoryTile(
+                                    data: items[index],
+                                    progressLoader: items[index].showProgress
+                                        ? () => _progressFor(items[index])
+                                        : null,
+                                  ),
+                                );
+                              },
+                              childCount: items.length,
                             ),
                           ),
                         ),
-
-                      // Grid of Adhkar Categories
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpace.lg,
-                          AppSpace.sm,
-                          AppSpace.lg,
-                          AppSize.navClearance(context),
-                        ),
-                        sliver: SliverGrid(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: AppSpace.md,
-                            mainAxisSpacing: AppSpace.md,
-                            childAspectRatio: 0.86,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final rowIndex = (index ~/ 2) + (_selectedCategory == 'all' ? 1 : 0);
-                              return StaggeredEntrance(
-                                key: ValueKey('adhkar_tile_${items[index].id}'),
-                                index: rowIndex,
-                                child: CategoryTile(
-                                  data: items[index],
-                                  progressLoader: items[index].showProgress
-                                      ? () => _progressFor(items[index])
-                                      : null,
-                                ),
-                              );
-                            },
-                            childCount: items.length,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },

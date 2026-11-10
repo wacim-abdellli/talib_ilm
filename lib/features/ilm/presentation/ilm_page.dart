@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/theme/app_palette.dart';
 import '../../../core/models/favorite_item.dart';
+import '../../../shared/animations/fade_scale_animation.dart';
 import '../../../shared/animations/staggered_entrance.dart';
 import '../../../core/services/asset_service.dart';
 import '../../../core/services/favorites_service.dart';
@@ -471,9 +472,14 @@ class _IlmPageState extends State<IlmPage> {
 
             // ── 4. Partitioned Content Body ─────────────────────────
             Expanded(
-              child: _selectedCategory == 'shamela'
-                  ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
-                  : _buildScrollablePartitions(context, palette),
+              child: AppSectionSwitcher(
+                sectionKey: ValueKey(
+                  'ilm_${_selectedCategory}_${_selectedMutunLevel}_${_selectedDisciplineLevel}_${_searchQuery.isNotEmpty}',
+                ),
+                child: _selectedCategory == 'shamela'
+                    ? const MaktabaShamelaView(key: ValueKey('maktaba_section'))
+                    : _buildScrollablePartitions(context, palette),
+              ),
             ),
           ],
         ),

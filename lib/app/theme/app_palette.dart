@@ -1083,9 +1083,10 @@ class AppMotion {
   AppMotion._();
 
   static const Duration zero = Duration.zero;
-  static const Duration fast = Duration(milliseconds: 120);
-  static const Duration base = Duration(milliseconds: 200);
-  static const Duration slow = Duration(milliseconds: 320);
+  static const Duration fast = Duration(milliseconds: 140);
+  static const Duration sectionSwitch = Duration(milliseconds: 180);
+  static const Duration base = Duration(milliseconds: 220);
+  static const Duration slow = Duration(milliseconds: 300);
   static const Duration splash = Duration(milliseconds: 650);
   static const Duration toast = Duration(milliseconds: 2500);
   static const Duration toastShort = Duration(milliseconds: 1600);
@@ -1152,8 +1153,9 @@ class AppMotion {
   /// Construct a dynamic Duration from milliseconds
   static Duration fromMilliseconds(int ms) => Duration(milliseconds: ms);
 
-  static const Curve easeIn = Curves.easeInCubic;
-  static const Curve easeOut = Curves.easeOutCubic;
+  static const Curve easeIn = Cubic(0.32, 0.0, 0.67, 0.0);
+  static const Curve easeOut = Cubic(0.16, 1.0, 0.3, 1.0);
+  static const Curve smoothOut = Cubic(0.22, 1.0, 0.36, 1.0);
 }
 
 /// Size & touch targets

@@ -57,3 +57,63 @@ class _FadeScaleAnimationState extends State<FadeScaleAnimation>
     );
   }
 }
+
+/// Fast, silky-smooth section & category switcher for in-page partition tabs.
+/// Uses exponential ease-out micro-glide + fade without blocking scroll gestures.
+class AppSectionSwitcher extends StatelessWidget {
+  final Key sectionKey;
+  final Widget child;
+  final Duration duration;
+
+  const AppSectionSwitcher({
+    super.key,
+    required this.sectionKey,
+    required this.child,
+    this.duration = AppMotion.sectionSwitch,
+  });
+
+  static final Animatable<Offset> _slideInTween = Tween<Offset>(
+    begin: const Offset(0.0, 0.016),
+    end: Offset.zero,
+  );
+
+  static final Animatable<double> _scaleInTween = Tween<double>(
+    begin: 0.992,
+    end: 1.0,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: duration,
+      reverseDuration: AppMotion.fast,
+      switchInCurve: AppMotion.easeOut,
+      switchOutCurve: AppMotion.easeIn,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: AlignmentDirectional.topStart,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: _slideInTween.animate(animation),
+            child: ScaleTransition(
+              scale: _scaleInTween.animate(animation),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: sectionKey,
+        child: RepaintBoundary(child: child),
+      ),
+    );
+  }
+}
