@@ -7,31 +7,31 @@ struct WidgetPalette {
 
     var background: Color {
         isDark
-            ? Color(red: 0.055, green: 0.055, blue: 0.071) // #0E0E12
+            ? Color(red: 0.027, green: 0.027, blue: 0.027) // #070707
             : Color(red: 0.980, green: 0.973, blue: 0.961) // #FAF8F5
     }
 
     var surface: Color {
         isDark
-            ? Color(red: 0.090, green: 0.090, blue: 0.118) // #17171E
+            ? Color(red: 0.059, green: 0.059, blue: 0.059) // #0F0F0F
             : Color(red: 0.941, green: 0.925, blue: 0.882) // #F0ECE1
     }
 
     var textPrimary: Color {
         isDark
-            ? Color(red: 0.957, green: 0.945, blue: 0.918) // #F4F1EA
+            ? Color(red: 0.929, green: 0.929, blue: 0.929) // #EDEDED
             : Color(red: 0.110, green: 0.106, blue: 0.094) // #1C1B18
     }
 
     var textSecondary: Color {
         isDark
-            ? Color(red: 0.620, green: 0.620, blue: 0.682) // #9E9EAE
+            ? Color(red: 0.631, green: 0.631, blue: 0.631) // #A1A1A1
             : Color(red: 0.431, green: 0.416, blue: 0.388) // #6E6A63
     }
 
     var textMuted: Color {
         isDark
-            ? Color(red: 0.431, green: 0.431, blue: 0.490) // #6E6E7D
+            ? Color(red: 0.541, green: 0.541, blue: 0.541) // #8A8A8A
             : Color(red: 0.549, green: 0.529, blue: 0.494) // #8C877E
     }
 
@@ -43,7 +43,7 @@ struct WidgetPalette {
 
     var divider: Color {
         isDark
-            ? Color.white.opacity(0.08)
+            ? Color.white.opacity(0.11)
             : Color.black.opacity(0.07)
     }
 
@@ -184,14 +184,15 @@ struct MediumPrayerWidgetView: View {
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(palette.textSecondary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(0.55)
 
                     Image(systemName: "calendar")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(palette.textSecondary)
                 }
+                .layoutPriority(-1)
 
-                Spacer(minLength: 6)
+                Spacer(minLength: 4)
 
                 HStack(spacing: 6) {
                     CountdownBadgeView(
@@ -205,12 +206,14 @@ struct MediumPrayerWidgetView: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(heroAccent)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(0.7)
+                        .fixedSize(horizontal: true, vertical: false)
 
                     Image(systemName: heroSymbol)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(heroAccent)
                 }
+                .layoutPriority(2)
             }
 
             Rectangle()
@@ -306,7 +309,7 @@ struct LargePrayerWidgetView: View {
             }
 
             // 2. Hero Card (Next Prayer + Live Countdown Box)
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: 8) {
                 // Left: Dedicated Next Prayer Time Left Box
                 VStack(alignment: .center, spacing: 3) {
                     Text(
@@ -325,7 +328,7 @@ struct LargePrayerWidgetView: View {
                             .multilineTextAlignment(.center)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
-                            .frame(width: 76, alignment: .center)
+                            .frame(width: 64, alignment: .center)
                     } else {
                         Text(entry.heroStatusText.isEmpty ? "الآن" : entry.heroStatusText)
                             .font(.system(size: 15, weight: .bold))
@@ -333,8 +336,9 @@ struct LargePrayerWidgetView: View {
                             .lineLimit(1)
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 8)
+                .fixedSize(horizontal: true, vertical: false)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(palette.background.opacity(palette.isDark ? 0.65 : 0.85))
@@ -357,13 +361,26 @@ struct LargePrayerWidgetView: View {
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(heroAccent)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .minimumScaleFactor(0.6)
+                            .fixedSize(horizontal: true, vertical: false)
 
-                        Text("موعد الأذان  \(entry.activePrayerTimePeriod)")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(palette.textSecondary)
-                            .lineLimit(1)
+                        HStack(spacing: 4) {
+                            Text(entry.activePrayerTimePeriod)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(palette.textSecondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                                .fixedSize(horizontal: true, vertical: false)
+
+                            Text("موعد الأذان")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(palette.textSecondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
                     }
+                    .layoutPriority(2)
 
                     ZStack {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -475,6 +492,8 @@ private struct CountdownBadgeView: View {
                     .font(.system(size: fontSize - 1, weight: .bold))
                     .foregroundColor(palette.textSecondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: true, vertical: false)
             } else {
                 Text(entry.heroStatusText.isEmpty ? "الآن" : entry.heroStatusText)
                     .font(.system(size: fontSize, weight: .bold))
@@ -484,6 +503,7 @@ private struct CountdownBadgeView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
+        .fixedSize(horizontal: true, vertical: false)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(palette.surface)
