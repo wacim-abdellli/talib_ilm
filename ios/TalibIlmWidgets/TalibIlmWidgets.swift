@@ -1,7 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Safe Data Extraction & Formatters
+// MARK: - Safe Data Extraction & App Group Discovery
 
 private let appGroupId = "group.com.talibilm.app"
 
@@ -22,7 +22,8 @@ private func getProvisionedAppGroup() -> String? {
             let substring = string[range.upperBound...]
             if let stringStart = substring.range(of: "<string>"),
                let stringEnd = substring[stringStart.upperBound...].range(of: "</string>") {
-                let group = String(substring[stringStart.upperBound..<stringEnd.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let group = String(substring[stringStart.upperBound..<stringEnd.lowerBound])
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
                 if group.starts(with: "group.") {
                     return group
                 }
@@ -39,14 +40,15 @@ private func getPreferences() -> UserDefaults {
         candidateGroups.insert(provisioned, at: 0)
     }
     if let bundleId = Bundle.main.bundleIdentifier {
-        let baseApp = bundleId.replacingOccurrences(of: ".widgets", with: "").replacingOccurrences(of: ".Widgets", with: "")
+        let baseApp = bundleId
+            .replacingOccurrences(of: ".widgets", with: "")
+            .replacingOccurrences(of: ".Widgets", with: "")
         let dynamicGroup = "group." + baseApp
         if !candidateGroups.contains(dynamicGroup) {
             candidateGroups.append(dynamicGroup)
         }
     }
 
-    // Return the first candidate suite that holds shared prayer data
     for group in candidateGroups {
         if let userDefaults = UserDefaults(suiteName: group) {
             if userDefaults.object(forKey: "prayer_data_json") != nil ||
@@ -57,7 +59,6 @@ private func getPreferences() -> UserDefaults {
         }
     }
 
-    // Fall back to first valid suite or standard
     for group in candidateGroups {
         if let userDefaults = UserDefaults(suiteName: group) {
             return userDefaults
@@ -76,7 +77,7 @@ private func loadJsonPayload(from prefs: UserDefaults) -> [String: Any]? {
     return dict
 }
 
-private func getInt64(from prefs: UserDefaults, json: [String: Any]?, key: String) -> Int64? {
+private func getInt64(from prefs: UserDefaults, json: [String: Any]?, key: String, prayerSlug: String? = nil) -> Int64? {
     if let num = prefs.object(forKey: key) as? NSNumber {
         let val = num.int64Value
         if val > 0 { return val }
@@ -88,29 +89,41 @@ private func getInt64(from prefs: UserDefaults, json: [String: Any]?, key: Strin
     if val > 0 { return Int64(val) }
 
     if let json = json {
-        if let num = json[key] as? NSNumber {
-            let val = num.int64Value
-            if val > 0 { return val }
+        if let num = json[key] as? NSNumber, num.int64Value > 0 {
+            return num.int64Value
         }
-        if let str = json[key] as? String, let val = Int64(str), val > 0 {
-            return val
+        if let str = json[key] as? String, let v = Int64(str), v > 0 {
+            return v
+        }
+        if let slug = prayerSlug,
+           let prayers = json["prayers"] as? [String: Any],
+           let pDict = prayers[slug] as? [String: Any],
+           let num = pDict["epoch_ms"] as? NSNumber,
+           num.int64Value > 0 {
+            return num.int64Value
         }
     }
     return nil
 }
 
-private func getString(from prefs: UserDefaults, json: [String: Any]?, key: String) -> String? {
-    if let s = prefs.string(forKey: key), !s.isEmpty {
+private func getString(from prefs: UserDefaults, json: [String: Any]?, key: String, jsonFallbackKey: String? = nil) -> String? {
+    if let s = prefs.string(forKey: key)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
         return s
     }
-    if let json = json, let s = json[key] as? String, !s.isEmpty {
-        return s
+    if let json = json {
+        if let s = (json[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
+            return s
+        }
+        if let fb = jsonFallbackKey,
+           let s = (json[fb] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
+            return s
+        }
     }
     return nil
 }
 
-private func getDate(from prefs: UserDefaults, json: [String: Any]?, key: String) -> Date? {
-    guard let ms = getInt64(from: prefs, json: json, key: key) else { return nil }
+private func getDate(from prefs: UserDefaults, json: [String: Any]?, key: String, prayerSlug: String? = nil) -> Date? {
+    guard let ms = getInt64(from: prefs, json: json, key: key, prayerSlug: prayerSlug) else { return nil }
     if ms > 10_000_000_000 {
         return Date(timeIntervalSince1970: Double(ms) / 1000.0)
     } else {
@@ -118,20 +131,37 @@ private func getDate(from prefs: UserDefaults, json: [String: Any]?, key: String
     }
 }
 
-private func formatTime(date: Date?) -> String {
+private func formatCompactTime(date: Date?) -> String {
+    guard let d = date else { return "--:--" }
+    let calendar = Calendar.current
+    let hour = calendar.component(.hour, from: d)
+    let minute = calendar.component(.minute, from: d)
+    let hour12 = (hour % 12 == 0) ? 12 : (hour % 12)
+    return String(format: "%02d:%02d", hour12, minute)
+}
+
+private func formatTimeWithPeriod(date: Date?) -> String {
     guard let d = date else { return "--:--" }
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: d)
     let minute = calendar.component(.minute, from: d)
     let hour12 = (hour % 12 == 0) ? 12 : (hour % 12)
     let period = (hour >= 12) ? "م" : "ص"
-    return String(format: "%d:%02d %@", hour12, minute, period)
+    return String(format: "%02d:%02d %@", hour12, minute, period)
+}
+
+private func formatUmmAlQuraHijri(for date: Date, includeYear: Bool = false) -> String {
+    var cal = Calendar(identifier: .islamicUmmAlQura)
+    cal.locale = Locale(identifier: "ar")
+    let formatter = DateFormatter()
+    formatter.calendar = cal
+    formatter.locale = Locale(identifier: "ar_SA@numbers=latn")
+    formatter.dateFormat = includeYear ? "d MMMM yyyy هـ" : "d MMMM"
+    return formatter.string(from: date)
 }
 
 // MARK: - Autonomous Offline Astronomical Prayer Calculator Fallback
 
-/// Mathematical solar position and Islamic prayer time calculator.
-/// Guarantees that the widget never shows '--:--' even on fresh installs or stripped App Groups.
 struct OfflinePrayerCalculator {
     static func calculate(date: Date, latitude: Double, longitude: Double, timezoneOffsetHours: Double) -> [String: Date] {
         let calendar = Calendar(identifier: .gregorian)
@@ -140,7 +170,6 @@ struct OfflinePrayerCalculator {
             return [:]
         }
 
-        // Astronomical Julian Day
         var y = Double(year)
         var m = Double(month)
         let d = Double(day)
@@ -163,7 +192,6 @@ struct OfflinePrayerCalculator {
         let eps = (23.439291 - 0.0130042 * t) * .pi / 180.0
         let declination = asin(sin(eps) * sin(lambdaRad))
 
-        // Equation of Time in minutes
         let yTan = tan(eps / 2.0) * tan(eps / 2.0)
         let eotMinutes = 4.0 * (180.0 / .pi) * (
             yTan * sin(2.0 * lambdaRad) -
@@ -173,7 +201,6 @@ struct OfflinePrayerCalculator {
             1.25 * 0.016708634 * 0.016708634 * sin(2.0 * mRad)
         )
 
-        // Solar Noon (Dhuhr) in local hours with 2-minute standard precaution
         let noonHours = 12.0 + timezoneOffsetHours - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
         let latRad = latitude * .pi / 180.0
 
@@ -204,8 +231,6 @@ struct OfflinePrayerCalculator {
         }
 
         let hIsha = hourAngle(forAltitude: -18.0) ?? hSunrise
-
-        // Asr: Shafi'i / Hanbali / Maliki standard shadow factor = 1
         let asrAltRad = atan(1.0 / (1.0 + tan(abs(latRad - declination))))
         let asrAltDeg = asrAltRad * 180.0 / .pi
         let hAsr = hourAngle(forAltitude: asrAltDeg) ?? 45.0
@@ -229,38 +254,40 @@ struct OfflinePrayerCalculator {
 // MARK: - Schedule & Evaluation Models
 
 struct PrayerSchedule {
-    let fajr: Date?
-    let dhuhr: Date?
-    let asr: Date?
-    let maghrib: Date?
-    let isha: Date?
-    let tomorrowFajr: Date?
+    let fajr: Date
+    let dhuhr: Date
+    let asr: Date
+    let maghrib: Date
+    let isha: Date
+    let tomorrowFajr: Date
     let isFriday: Bool
     let iqamaFajr: Int
     let iqamaDhuhr: Int
     let iqamaAsr: Int
     let iqamaMaghrib: Int
     let iqamaIsha: Int
-
-    let fajrStr: String
-    let dhuhrStr: String
-    let asrStr: String
-    let maghribStr: String
-    let ishaStr: String
+    let isFromTodayPrefs: Bool
 }
 
-private func loadSchedule(from prefs: UserDefaults) -> PrayerSchedule {
+private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> PrayerSchedule {
     let json = loadJsonPayload(from: prefs)
+    let cal = Calendar.current
 
-    var fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms")
-    var dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms")
-    var asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms")
-    var maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms")
-    var isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms")
+    var fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms", prayerSlug: "fajr")
+    var dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms", prayerSlug: "dhuhr")
+    var asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms", prayerSlug: "asr")
+    var maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms", prayerSlug: "maghrib")
+    var isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms", prayerSlug: "isha")
     var tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
 
-    // If prayer times are missing from shared preferences, compute astronomical times
-    if fajr == nil || dhuhr == nil || asr == nil || maghrib == nil || isha == nil {
+    let scheduleValidForDate: Bool = {
+        guard let f = fajr, dhuhr != nil, asr != nil, maghrib != nil, isha != nil else {
+            return false
+        }
+        return cal.isDate(f, inSameDayAs: date)
+    }()
+
+    if !scheduleValidForDate {
         var lat = prefs.double(forKey: "location_latitude")
         var lon = prefs.double(forKey: "location_longitude")
         if let json = json {
@@ -277,326 +304,290 @@ private func loadSchedule(from prefs: UserDefaults) -> PrayerSchedule {
                 lon = 39.8262
             }
         }
-        let tzOffset = Double(TimeZone.current.secondsFromGMT()) / 3600.0
-        let calcToday = OfflinePrayerCalculator.calculate(date: Date(), latitude: lat, longitude: lon, timezoneOffsetHours: tzOffset)
-        let calcTomorrow = OfflinePrayerCalculator.calculate(date: Date().addingTimeInterval(86400), latitude: lat, longitude: lon, timezoneOffsetHours: tzOffset)
+        let tzOffset = Double(TimeZone.current.secondsFromGMT(for: date)) / 3600.0
+        let calcToday = OfflinePrayerCalculator.calculate(
+            date: date,
+            latitude: lat,
+            longitude: lon,
+            timezoneOffsetHours: tzOffset
+        )
+        let nextDay = cal.date(byAdding: .day, value: 1, to: date) ?? date.addingTimeInterval(86400)
+        let calcTomorrow = OfflinePrayerCalculator.calculate(
+            date: nextDay,
+            latitude: lat,
+            longitude: lon,
+            timezoneOffsetHours: tzOffset
+        )
 
-        fajr = fajr ?? calcToday["fajr"]
-        dhuhr = dhuhr ?? calcToday["dhuhr"]
-        asr = asr ?? calcToday["asr"]
-        maghrib = maghrib ?? calcToday["maghrib"]
-        isha = isha ?? calcToday["isha"]
-        tomorrowFajr = tomorrowFajr ?? calcTomorrow["fajr"]
+        fajr = calcToday["fajr"] ?? fajr ?? date
+        dhuhr = calcToday["dhuhr"] ?? dhuhr ?? date
+        asr = calcToday["asr"] ?? asr ?? date
+        maghrib = calcToday["maghrib"] ?? maghrib ?? date
+        isha = calcToday["isha"] ?? isha ?? date
+        tomorrowFajr = calcTomorrow["fajr"] ?? fajr!.addingTimeInterval(86400)
     }
 
-    let isFriday = prefs.object(forKey: "is_friday") as? Bool ?? (Calendar.current.component(.weekday, from: dhuhr ?? Date()) == 6)
+    let safeFajr = fajr ?? date
+    let safeDhuhr = dhuhr ?? date
+    let safeAsr = asr ?? date
+    let safeMaghrib = maghrib ?? date
+    let safeIsha = isha ?? date
+    let safeTomorrowFajr = tomorrowFajr ?? safeFajr.addingTimeInterval(86400)
+
+    let isFriday: Bool = {
+        if scheduleValidForDate, let prefFriday = prefs.object(forKey: "is_friday") as? Bool {
+            return prefFriday
+        }
+        return cal.component(.weekday, from: safeDhuhr) == 6
+    }()
 
     let iqamaFajr = prefs.integer(forKey: "iqama_fajr_min") > 0 ? prefs.integer(forKey: "iqama_fajr_min") : 25
-    let iqamaDhuhr = prefs.integer(forKey: "iqama_dhuhr_min") > 0 ? prefs.integer(forKey: "iqama_dhuhr_min") : 20
+    let iqamaDhuhr = prefs.integer(forKey: "iqama_dhuhr_min") > 0 ? prefs.integer(forKey: "iqama_dhuhr_min") : (isFriday ? 25 : 20)
     let iqamaAsr = prefs.integer(forKey: "iqama_asr_min") > 0 ? prefs.integer(forKey: "iqama_asr_min") : 20
     let iqamaMaghrib = prefs.integer(forKey: "iqama_maghrib_min") > 0 ? prefs.integer(forKey: "iqama_maghrib_min") : 10
-    let iqamaIsha = prefs.integer(forKey: "iqama_isha_min") > 0 ? prefs.integer(forKey: "iqama_isha_min") : 20
-
-    let fajrStr = getString(from: prefs, json: json, key: "prayer_fajr_time_str") ?? formatTime(date: fajr)
-    let dhuhrStr = getString(from: prefs, json: json, key: "prayer_dhuhr_time_str") ?? formatTime(date: dhuhr)
-    let asrStr = getString(from: prefs, json: json, key: "prayer_asr_time_str") ?? formatTime(date: asr)
-    let maghribStr = getString(from: prefs, json: json, key: "prayer_maghrib_time_str") ?? formatTime(date: maghrib)
-    let ishaStr = getString(from: prefs, json: json, key: "prayer_isha_time_str") ?? formatTime(date: isha)
+    let iqamaIsha = prefs.integer(forKey: "iqama_isha_min") > 0 ? prefs.integer(forKey: "iqama_isha_min") : 15
 
     return PrayerSchedule(
-        fajr: fajr,
-        dhuhr: dhuhr,
-        asr: asr,
-        maghrib: maghrib,
-        isha: isha,
-        tomorrowFajr: tomorrowFajr,
+        fajr: safeFajr,
+        dhuhr: safeDhuhr,
+        asr: safeAsr,
+        maghrib: safeMaghrib,
+        isha: safeIsha,
+        tomorrowFajr: safeTomorrowFajr,
         isFriday: isFriday,
         iqamaFajr: iqamaFajr,
         iqamaDhuhr: iqamaDhuhr,
         iqamaAsr: iqamaAsr,
         iqamaMaghrib: iqamaMaghrib,
         iqamaIsha: iqamaIsha,
-        fajrStr: fajrStr,
-        dhuhrStr: dhuhrStr,
-        asrStr: asrStr,
-        maghribStr: maghribStr,
-        ishaStr: ishaStr
+        isFromTodayPrefs: scheduleValidForDate
     )
 }
 
-struct EvaluatedPrayer {
-    let activePrayerName: String
-    let displayTitle: String
-    let countdownPrefix: String
-    let targetTime: Date?
-    let isPrayerActive: Bool
-}
-
-private func evaluatePrayer(at date: Date, schedule: PrayerSchedule, prefs: UserDefaults) -> EvaluatedPrayer {
-    guard let fajr = schedule.fajr,
-          let dhuhr = schedule.dhuhr,
-          let asr = schedule.asr,
-          let maghrib = schedule.maghrib,
-          let isha = schedule.isha else {
-        let json = loadJsonPayload(from: prefs)
-        let nextName = getString(from: prefs, json: json, key: "next_prayer_name") ?? "الظهر"
-        let displayTitle = getString(from: prefs, json: json, key: "prayer_display_title") ?? "صلاة الظهر"
-        let countdownPrefix = getString(from: prefs, json: json, key: "countdown_prefix") ?? "بقي على الأذان"
-        let nextDate = getDate(from: prefs, json: json, key: "next_prayer_epoch_ms")
-        return EvaluatedPrayer(
-            activePrayerName: nextName,
-            displayTitle: displayTitle,
-            countdownPrefix: countdownPrefix,
-            targetTime: nextDate,
-            isPrayerActive: false
-        )
-    }
-
-    let dhuhrTitle = schedule.isFriday ? "صلاة الجمعة" : "صلاة الظهر"
-    let dhuhrName = schedule.isFriday ? "الجمعة" : "الظهر"
-
-    if date < fajr {
-        return EvaluatedPrayer(
-            activePrayerName: "الفجر",
-            displayTitle: "صلاة الفجر",
-            countdownPrefix: "بقي على الأذان",
-            targetTime: fajr,
-            isPrayerActive: false
-        )
-    } else if date < dhuhr {
-        let iqamaDate = fajr.addingTimeInterval(Double(schedule.iqamaFajr * 60))
-        if date < iqamaDate {
-            return EvaluatedPrayer(
-                activePrayerName: "الفجر",
-                displayTitle: "صلاة الفجر",
-                countdownPrefix: "الإقامة بعد ",
-                targetTime: iqamaDate,
-                isPrayerActive: true
-            )
-        }
-        return EvaluatedPrayer(
-            activePrayerName: dhuhrName,
-            displayTitle: dhuhrTitle,
-            countdownPrefix: "بقي على الأذان",
-            targetTime: dhuhr,
-            isPrayerActive: false
-        )
-    } else if date < asr {
-        let iqamaDate = dhuhr.addingTimeInterval(Double(schedule.iqamaDhuhr * 60))
-        if date < iqamaDate {
-            return EvaluatedPrayer(
-                activePrayerName: dhuhrName,
-                displayTitle: dhuhrTitle,
-                countdownPrefix: "الإقامة بعد ",
-                targetTime: iqamaDate,
-                isPrayerActive: true
-            )
-        }
-        return EvaluatedPrayer(
-            activePrayerName: "العصر",
-            displayTitle: "صلاة العصر",
-            countdownPrefix: "بقي على الأذان",
-            targetTime: asr,
-            isPrayerActive: false
-        )
-    } else if date < maghrib {
-        let iqamaDate = asr.addingTimeInterval(Double(schedule.iqamaAsr * 60))
-        if date < iqamaDate {
-            return EvaluatedPrayer(
-                activePrayerName: "العصر",
-                displayTitle: "صلاة العصر",
-                countdownPrefix: "الإقامة بعد ",
-                targetTime: iqamaDate,
-                isPrayerActive: true
-            )
-        }
-        return EvaluatedPrayer(
-            activePrayerName: "المغرب",
-            displayTitle: "صلاة المغرب",
-            countdownPrefix: "بقي على الأذان",
-            targetTime: maghrib,
-            isPrayerActive: false
-        )
-    } else if date < isha {
-        let iqamaDate = maghrib.addingTimeInterval(Double(schedule.iqamaMaghrib * 60))
-        if date < iqamaDate {
-            return EvaluatedPrayer(
-                activePrayerName: "المغرب",
-                displayTitle: "صلاة المغرب",
-                countdownPrefix: "الإقامة بعد ",
-                targetTime: iqamaDate,
-                isPrayerActive: true
-            )
-        }
-        return EvaluatedPrayer(
-            activePrayerName: "العشاء",
-            displayTitle: "صلاة العشاء",
-            countdownPrefix: "بقي على الأذان",
-            targetTime: isha,
-            isPrayerActive: false
-        )
-    } else {
-        let tomorrowFajr = schedule.tomorrowFajr ?? fajr.addingTimeInterval(86400)
-        let iqamaDate = isha.addingTimeInterval(Double(schedule.iqamaIsha * 60))
-        if date < iqamaDate {
-            return EvaluatedPrayer(
-                activePrayerName: "العشاء",
-                displayTitle: "صلاة العشاء",
-                countdownPrefix: "الإقامة بعد ",
-                targetTime: iqamaDate,
-                isPrayerActive: true
-            )
-        }
-        return EvaluatedPrayer(
-            activePrayerName: "الفجر",
-            displayTitle: "صلاة الفجر",
-            countdownPrefix: "بقي على الأذان",
-            targetTime: tomorrowFajr,
-            isPrayerActive: false
-        )
-    }
-}
-
-// MARK: - Timeline Entry & Provider
-
-struct PrayerWidgetEntry: TimelineEntry {
+struct PrayerEntry: TimelineEntry {
     let date: Date
-    let nextPrayerName: String
-    let prayerDisplayTitle: String
-    let countdownPrefix: String
-    let nextPrayerDate: Date?
+    let hijriDate: String
+    let locationName: String
+    let heroTitle: String
+    // Target date is rendered live via Text(targetDate, style: .timer) in TalibIlmWidgetViews
+    let heroTargetDate: Date?
+    let heroStatusText: String
+    let isCallToPrayer: Bool
+    let activePrayerKey: String
+    let activePrayerTimePeriod: String
+    let isJumua: Bool
     let fajrTime: String
     let dhuhrTime: String
     let asrTime: String
     let maghribTime: String
     let ishaTime: String
-    let hijriDate: String
-    let cityName: String
-    let dailyGem: String
-    let dailyGemAuthor: String
-    let isDark: Bool
-    let widgetThemeMode: String
-    let appThemeMode: String
-    let isPrayerActive: Bool
+    let themePreference: String
+    let isDarkFallback: Bool
 }
 
-struct PrayerTimelineProvider: TimelineProvider {
-    typealias Entry = PrayerWidgetEntry
+struct Provider: TimelineProvider {
+    typealias Entry = PrayerEntry
 
-    private func buildEntry(date: Date, prefs: UserDefaults, schedule: PrayerSchedule) -> PrayerWidgetEntry {
-        let evaluated = evaluatePrayer(at: date, schedule: schedule, prefs: prefs)
+    func placeholder(in context: Context) -> PrayerEntry {
+        let now = Date()
+        let prefs = getPreferences()
+        let schedule = loadSchedule(from: prefs, for: now)
+        return buildEntry(for: now, schedule: schedule, prefs: prefs)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (PrayerEntry) -> Void) {
+        let now = Date()
+        let prefs = getPreferences()
+        let schedule = loadSchedule(from: prefs, for: now)
+        completion(buildEntry(for: now, schedule: schedule, prefs: prefs))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<PrayerEntry>) -> Void) {
+        let now = Date()
+        let prefs = getPreferences()
+        let schedule = loadSchedule(from: prefs, for: now)
+
+        var transitionDates = Set<Date>()
+        transitionDates.insert(now)
+
+        let prayersWithIqama: [(time: Date, iqamaMin: Int)] = [
+            (schedule.fajr, schedule.iqamaFajr),
+            (schedule.dhuhr, schedule.iqamaDhuhr),
+            (schedule.asr, schedule.iqamaAsr),
+            (schedule.maghrib, schedule.iqamaMaghrib),
+            (schedule.isha, schedule.iqamaIsha),
+            (schedule.tomorrowFajr, schedule.iqamaFajr)
+        ]
+
+        for item in prayersWithIqama {
+            let adhanEnd = item.time.addingTimeInterval(2 * 60)
+            let iqamaEnd = item.time.addingTimeInterval(Double(item.iqamaMin) * 60)
+            let salahEnd = iqamaEnd.addingTimeInterval(12 * 60)
+            if item.time > now { transitionDates.insert(item.time.addingTimeInterval(1)) }
+            if adhanEnd > now { transitionDates.insert(adhanEnd.addingTimeInterval(1)) }
+            if iqamaEnd > now { transitionDates.insert(iqamaEnd.addingTimeInterval(1)) }
+            if salahEnd > now { transitionDates.insert(salahEnd.addingTimeInterval(1)) }
+        }
+
+        // Midnight rollover so Hijri date & tomorrow's schedule refresh cleanly
+        if let nextMidnight = Calendar.current.nextDate(
+            after: now,
+            matching: DateComponents(hour: 0, minute: 0, second: 5),
+            matchingPolicy: .nextTime
+        ) {
+            transitionDates.insert(nextMidnight)
+        }
+
+        // Periodic 15-minute checkpoints up to 6 hours ahead
+        for step in 1...24 {
+            transitionDates.insert(now.addingTimeInterval(Double(step) * 15 * 60))
+        }
+
+        let sortedDates = transitionDates.sorted().filter {
+            $0 >= now && $0 <= schedule.tomorrowFajr.addingTimeInterval(3600)
+        }
+
+        var entries: [PrayerEntry] = []
+        for entryDate in sortedDates {
+            let entrySchedule = Calendar.current.isDate(entryDate, inSameDayAs: now)
+                ? schedule
+                : loadSchedule(from: prefs, for: entryDate)
+            entries.append(buildEntry(for: entryDate, schedule: entrySchedule, prefs: prefs))
+        }
+
+        if entries.isEmpty {
+            entries.append(buildEntry(for: now, schedule: schedule, prefs: prefs))
+        }
+
+        let nextRefresh = min(
+            now.addingTimeInterval(30 * 60),
+            schedule.tomorrowFajr.addingTimeInterval(60)
+        )
+        completion(Timeline(entries: entries, policy: .after(nextRefresh)))
+    }
+
+    private func buildEntry(
+        for date: Date,
+        schedule: PrayerSchedule,
+        prefs: UserDefaults
+    ) -> PrayerEntry {
         let json = loadJsonPayload(from: prefs)
+        let dhuhrLabel = schedule.isFriday ? "الجمعة" : "الظهر"
 
-        let hijri = getString(from: prefs, json: json, key: "hijri_date") ?? "طالب العلم"
-        let city = getString(from: prefs, json: json, key: "location_city") ?? "مكة المكرمة"
-        let gem = getString(from: prefs, json: json, key: "daily_gem_text") ?? "من سلك طريقاً يلتمس فيه علماً سهل الله له به طريقاً إلى الجنة"
-        let author = getString(from: prefs, json: json, key: "daily_gem_author") ?? "حديث نبوي شريف"
-        let isDark = prefs.object(forKey: "widget_is_dark") as? Bool ?? true
-        let widgetThemeMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "dark"
-        let appThemeMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
+        let rawHijri = schedule.isFromTodayPrefs
+            ? (getString(from: prefs, json: json, key: "hijri_date", jsonFallbackKey: "hijri") ?? "")
+            : ""
+        let cleanHijri = rawHijri
+            .replacingOccurrences(of: #"\s*\d{4}\s*هـ?"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let hijriDate = cleanHijri.isEmpty ? formatUmmAlQuraHijri(for: date) : cleanHijri
 
-        return PrayerWidgetEntry(
+        let locationName = getString(
+            from: prefs,
+            json: json,
+            key: "location_city",
+            jsonFallbackKey: "city"
+        ) ?? "مكة المكرمة"
+
+        let isDarkFallback = (prefs.object(forKey: "widget_is_dark") as? Bool) ?? true
+        let rawMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "auto"
+        let themePreference: String = {
+            if rawMode == "dark" { return "dark" }
+            if rawMode == "light" { return "light" }
+            let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
+            if appMode == "dark" { return "dark" }
+            if appMode == "light" { return "light" }
+            return "system"
+        }()
+
+        let state = resolveState(at: date, schedule: schedule, dhuhrLabel: dhuhrLabel)
+        let activeDate: Date = {
+            switch state.activeKey {
+            case "fajr": return date > schedule.isha ? schedule.tomorrowFajr : schedule.fajr
+            case "dhuhr": return schedule.dhuhr
+            case "asr": return schedule.asr
+            case "maghrib": return schedule.maghrib
+            case "isha": return schedule.isha
+            default: return schedule.fajr
+            }
+        }()
+
+        return PrayerEntry(
             date: date,
-            nextPrayerName: evaluated.activePrayerName,
-            prayerDisplayTitle: evaluated.displayTitle,
-            countdownPrefix: evaluated.countdownPrefix,
-            nextPrayerDate: evaluated.targetTime,
-            fajrTime: schedule.fajrStr,
-            dhuhrTime: schedule.dhuhrStr,
-            asrTime: schedule.asrStr,
-            maghribTime: schedule.maghribStr,
-            ishaTime: schedule.ishaStr,
-            hijriDate: hijri,
-            cityName: city,
-            dailyGem: gem,
-            dailyGemAuthor: author,
-            isDark: isDark,
-            widgetThemeMode: widgetThemeMode,
-            appThemeMode: appThemeMode,
-            isPrayerActive: evaluated.isPrayerActive
+            hijriDate: hijriDate,
+            locationName: locationName,
+            heroTitle: state.title,
+            heroTargetDate: state.targetDate,
+            heroStatusText: state.statusText,
+            isCallToPrayer: state.isCallToPrayer,
+            activePrayerKey: state.activeKey,
+            activePrayerTimePeriod: formatTimeWithPeriod(date: activeDate),
+            isJumua: schedule.isFriday,
+            fajrTime: formatCompactTime(date: schedule.fajr),
+            dhuhrTime: formatCompactTime(date: schedule.dhuhr),
+            asrTime: formatCompactTime(date: schedule.asr),
+            maghribTime: formatCompactTime(date: schedule.maghrib),
+            ishaTime: formatCompactTime(date: schedule.isha),
+            themePreference: themePreference,
+            isDarkFallback: isDarkFallback
         )
     }
 
-    func placeholder(in context: Context) -> PrayerWidgetEntry {
-        let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs)
-        return buildEntry(date: Date(), prefs: prefs, schedule: schedule)
-    }
+    private func resolveState(
+        at date: Date,
+        schedule: PrayerSchedule,
+        dhuhrLabel: String
+    ) -> (title: String, targetDate: Date?, statusText: String, isCallToPrayer: Bool, activeKey: String) {
+        let ordered: [(key: String, name: String, time: Date, iqamaMin: Int)] = [
+            ("fajr", "الفجر", schedule.fajr, schedule.iqamaFajr),
+            ("dhuhr", dhuhrLabel, schedule.dhuhr, schedule.iqamaDhuhr),
+            ("asr", "العصر", schedule.asr, schedule.iqamaAsr),
+            ("maghrib", "المغرب", schedule.maghrib, schedule.iqamaMaghrib),
+            ("isha", "العشاء", schedule.isha, schedule.iqamaIsha),
+            ("fajr", "الفجر", schedule.tomorrowFajr, schedule.iqamaFajr)
+        ]
 
-    func getSnapshot(in context: Context, completion: @escaping (PrayerWidgetEntry) -> Void) {
-        let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs)
-        completion(buildEntry(date: Date(), prefs: prefs, schedule: schedule))
-    }
+        for p in ordered {
+            let adhanEnd = p.time.addingTimeInterval(2 * 60)
+            let iqamaEnd = p.time.addingTimeInterval(Double(p.iqamaMin) * 60)
+            let salahEnd = iqamaEnd.addingTimeInterval(12 * 60)
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PrayerWidgetEntry>) -> Void) {
-        let now = Date()
-        let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs)
-
-        var entries: [PrayerWidgetEntry] = []
-
-        // Entry 1: Current live state
-        entries.append(buildEntry(date: now, prefs: prefs, schedule: schedule))
-
-        // Collect upcoming prayer transition points
-        var transitionDates: [Date] = []
-        if let fajr = schedule.fajr, fajr > now { transitionDates.append(fajr) }
-        if let dhuhr = schedule.dhuhr, dhuhr > now { transitionDates.append(dhuhr) }
-        if let asr = schedule.asr, asr > now { transitionDates.append(asr) }
-        if let maghrib = schedule.maghrib, maghrib > now { transitionDates.append(maghrib) }
-        if let isha = schedule.isha, isha > now { transitionDates.append(isha) }
-        if let tomorrowFajr = schedule.tomorrowFajr, tomorrowFajr > now { transitionDates.append(tomorrowFajr) }
-
-        // Also add Iqama transition points
-        if let fajr = schedule.fajr {
-            let iqama = fajr.addingTimeInterval(Double(schedule.iqamaFajr * 60))
-            if iqama > now { transitionDates.append(iqama) }
-        }
-        if let dhuhr = schedule.dhuhr {
-            let iqama = dhuhr.addingTimeInterval(Double(schedule.iqamaDhuhr * 60))
-            if iqama > now { transitionDates.append(iqama) }
-        }
-        if let asr = schedule.asr {
-            let iqama = asr.addingTimeInterval(Double(schedule.iqamaAsr * 60))
-            if iqama > now { transitionDates.append(iqama) }
-        }
-        if let maghrib = schedule.maghrib {
-            let iqama = maghrib.addingTimeInterval(Double(schedule.iqamaMaghrib * 60))
-            if iqama > now { transitionDates.append(iqama) }
-        }
-        if let isha = schedule.isha {
-            let iqama = isha.addingTimeInterval(Double(schedule.iqamaIsha * 60))
-            if iqama > now { transitionDates.append(iqama) }
+            if date < p.time {
+                return ("صلاة \(p.name)", p.time, "بعد", false, p.key)
+            } else if date < adhanEnd {
+                return ("أذان \(p.name)", nil, "الآن", true, p.key)
+            } else if date < iqamaEnd {
+                return ("صلاة \(p.name)", iqamaEnd, "الإقامة", false, p.key)
+            } else if date < salahEnd {
+                return ("\(p.name) الآن", nil, "الصلاة", true, p.key)
+            }
         }
 
-        transitionDates.sort()
-
-        // Settle 1 second after each transition so the widget state advances accurately
-        for transition in transitionDates {
-            let entryDate = transition.addingTimeInterval(1)
-            entries.append(buildEntry(date: entryDate, prefs: prefs, schedule: schedule))
-        }
-
-        // Timeline reload policy
-        let reloadDate = transitionDates.first ?? Calendar.current.date(byAdding: .minute, value: 30, to: now) ?? now.addingTimeInterval(1800)
-        let timeline = Timeline(entries: entries, policy: .after(reloadDate))
-        completion(timeline)
+        return ("صلاة الفجر", schedule.tomorrowFajr, "بعد", false, "fajr")
     }
 }
 
-// MARK: - Main Widget Declaration
+extension WidgetConfiguration {
+    func disableContentMarginsIfNeeded() -> some WidgetConfiguration {
+        if #available(iOSApplicationExtension 17.0, *) {
+            return self.contentMarginsDisabled()
+        } else {
+            return self
+        }
+    }
+}
 
 @main
 struct TalibIlmWidgets: Widget {
     let kind: String = "TalibIlmWidgets"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PrayerTimelineProvider()) { entry in
-            TalibIlmWidgetsEntryView(entry: entry)
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            TalibIlmWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("مواقيت الصلاة والأذكار")
-        .description("عرض مواقيت الصلاة والعد التنازلي ودرر السلف اليومية.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .configurationDisplayName("مواقيت الصلاة")
+        .description("متابعة الصلاة القادمة والعد التنازلي وجدول الصلوات الخمس")
+        .supportedFamilies([.systemMedium, .systemLarge])
+        .disableContentMarginsIfNeeded()
     }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talib_ilm/app/constants/app_strings.dart';
@@ -225,6 +226,40 @@ void main() {
         prayerWidgetBackgroundCallback(Uri.parse('talibilm://rollover')),
         completes,
       );
+    });
+
+    test('Native Android and iOS WidgetKit configurations enforce Medium & Max sizes and 100% native layouts', () {
+      final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+      expect(manifest, contains('.RibbonWidgetProvider'));
+      expect(manifest, contains('.LargeWidgetProvider'));
+      expect(manifest, isNot(contains('.CompactWidgetProvider')));
+
+      final ribbonXml = File('android/app/src/main/res/xml/widget_ribbon.xml').readAsStringSync();
+      expect(ribbonXml, contains('android:minWidth="280dp"'));
+      expect(ribbonXml, contains('android:minResizeWidth="280dp"'));
+
+      final largeXml = File('android/app/src/main/res/xml/widget_large.xml').readAsStringSync();
+      expect(largeXml, contains('android:minWidth="280dp"'));
+      expect(largeXml, contains('android:minResizeWidth="280dp"'));
+
+      final ribbonLayout = File('android/app/src/main/res/layout/widget_ribbon_layout.xml').readAsStringSync();
+      expect(ribbonLayout, contains('@+id/widget_prayers_row'));
+      expect(ribbonLayout, isNot(contains('@+id/widget_image')));
+
+      final largeLayout = File('android/app/src/main/res/layout/widget_large_layout.xml').readAsStringSync();
+      expect(largeLayout, contains('@+id/widget_hero_box'));
+      expect(largeLayout, contains('@+id/widget_prayers_row'));
+      expect(largeLayout, isNot(contains('@+id/widget_image')));
+
+      final iosWidgets = File('ios/TalibIlmWidgets/TalibIlmWidgets.swift').readAsStringSync();
+      expect(iosWidgets, contains('.supportedFamilies([.systemMedium, .systemLarge])'));
+      expect(iosWidgets, isNot(contains('.systemSmall')));
+      expect(iosWidgets, contains('contentMarginsDisabled()'));
+      expect(iosWidgets, contains('inSameDayAs: date'));
+
+      final iosViews = File('ios/TalibIlmWidgets/TalibIlmWidgetViews.swift').readAsStringSync();
+      expect(iosViews, contains('.environment(\\.layoutDirection, .leftToRight)'));
+      expect(iosViews, contains('style: .timer'));
     });
   });
 }

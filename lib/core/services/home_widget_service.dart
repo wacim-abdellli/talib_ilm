@@ -459,42 +459,20 @@ class HomeWidgetService {
         );
         if (op < _latestOperation) return;
 
-        await Future.wait([
-          updateRibbon(
-            prayerDay: day,
-            referenceTime: now,
-            force: force,
-            preResolvedEval: eval,
-            preResolvedDark: useDark,
-          ),
-          updateCompact(
-            prayerDay: day,
-            referenceTime: now,
-            force: force,
-            preResolvedEval: eval,
-            preResolvedDark: useDark,
-          ),
-          updateLarge(
-            prayerDay: day,
-            referenceTime: now,
-            force: force,
-            preResolvedEval: eval,
-            preResolvedDark: useDark,
-          ),
-          updateStandard(
-            prayerDay: day,
-            referenceTime: now,
-            force: force,
-            preResolvedEval: eval,
-            preResolvedDark: useDark,
-          ),
-          updatePrayerWidget(
-            prayerDay: day,
-            referenceTime: now,
-            force: force,
-            preResolvedEval: eval,
-          ),
-        ]);
+        await updateRibbon(
+          prayerDay: day,
+          referenceTime: now,
+          force: force,
+          preResolvedEval: eval,
+          preResolvedDark: useDark,
+        );
+        await updateLarge(
+          prayerDay: day,
+          referenceTime: now,
+          force: force,
+          preResolvedEval: eval,
+          preResolvedDark: useDark,
+        );
       } catch (error) {
         // Keep the current widget contents when an update cannot be completed.
         HomeWidgetSnapshot.lastSyncError ??= error.toString();
