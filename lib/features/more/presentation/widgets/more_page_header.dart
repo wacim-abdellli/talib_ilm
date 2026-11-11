@@ -111,9 +111,10 @@ class MorePageHeader extends StatelessWidget {
                       onLongPress: () => onThemeLongPress(),
                       borderRadius: AppRadius.pillRadius,
                       child: Container(
-                        height: 36,
+                        constraints: const BoxConstraints(minHeight: 36),
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpace.md,
+                          vertical: AppSpace.xs,
                         ),
                         decoration: BoxDecoration(
                           color: palette.surfaceMuted,

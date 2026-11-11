@@ -111,7 +111,7 @@ class ThemeService extends ChangeNotifier {
   String get themeDisplayName {
     switch (_themeMode) {
       case ThemeMode.system:
-        return 'تلقائي (حسب النظام)';
+        return 'تلقائي';
       case ThemeMode.light:
         return 'الوضع الفاتح';
       case ThemeMode.dark:

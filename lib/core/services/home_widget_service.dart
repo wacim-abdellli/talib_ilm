@@ -471,12 +471,32 @@ class HomeWidgetService {
           preResolvedEval: eval,
           preResolvedDark: useDark,
         );
+        await updateStandard(
+          prayerDay: day,
+          referenceTime: now,
+          force: force,
+          preResolvedEval: eval,
+          preResolvedDark: useDark,
+        );
         await updateLarge(
           prayerDay: day,
           referenceTime: now,
           force: force,
           preResolvedEval: eval,
           preResolvedDark: useDark,
+        );
+        await updateCompact(
+          prayerDay: day,
+          referenceTime: now,
+          force: force,
+          preResolvedEval: eval,
+          preResolvedDark: useDark,
+        );
+        await updatePrayerWidget(
+          prayerDay: day,
+          referenceTime: now,
+          force: force,
+          preResolvedEval: eval,
         );
       } catch (error) {
         // Keep the current widget contents when an update cannot be completed.

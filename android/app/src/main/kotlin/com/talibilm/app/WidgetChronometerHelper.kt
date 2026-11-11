@@ -927,33 +927,17 @@ object WidgetChronometerHelper {
             (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
                 Configuration.UI_MODE_NIGHT_YES
         } catch (_: Exception) {
-            true
+            false
         }
-
-        // If the user just toggled Android System Dark Mode in OS Settings / Quick Settings,
-        // detect the transition and follow the OS theme immediately.
-        try {
-            if (prefs.contains("last_seen_system_night")) {
-                val prevSystemDark = prefs.getBoolean("last_seen_system_night", isSystemDark)
-                if (prevSystemDark != isSystemDark) {
-                    prefs.edit()
-                        .putBoolean("last_seen_system_night", isSystemDark)
-                        .putBoolean("widget_is_dark", isSystemDark)
-                        .putString("prayer_widget_theme_mode", if (isSystemDark) "dark" else "light")
-                        .apply()
-                    return isSystemDark
-                }
-            } else {
-                prefs.edit().putBoolean("last_seen_system_night", isSystemDark).apply()
-            }
-        } catch (_: Exception) {}
 
         val mode = getSafeString(prefs, "prayer_widget_theme_mode", "auto")
         if (mode == "light") return false
         if (mode == "dark") return true
 
-        if (prefs.contains("widget_is_dark")) return getSafeBoolean(prefs, "widget_is_dark", isSystemDark)
-        if (prefs.contains("flutter.widget_is_dark")) return getSafeBoolean(prefs, "flutter.widget_is_dark", isSystemDark)
+        // When mode is "auto", track system night mode transitions
+        try {
+            prefs.edit().putBoolean("last_seen_system_night", isSystemDark).apply()
+        } catch (_: Exception) {}
 
         val appTheme = getSafeString(prefs, "theme_mode", "system")
         return when (appTheme) {

@@ -445,7 +445,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
           ),
           const SizedBox(height: AppSpace.sm),
           _buildWidgetThemeOption(
-            title: 'تلقائي (حسب النظام)',
+            title: 'تلقائي',
             subtitle: 'يتغير المظهر تلقائياً وفق وضع الهاتف النهاري والليلي',
             icon: Icons.brightness_auto_rounded,
             mode: WidgetThemeMode.auto,
