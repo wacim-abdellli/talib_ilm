@@ -174,6 +174,27 @@ class ShamelaCuratedFihrisCatalog {
       ShamelaChapter(pageNumber: 2, title: 'الناقض العاشر: الإعراض عن دين الله والخاتمة'),
     ],
 
+    // ── منظومة أبي إسحاق الإلبيري (تائية الإلبيري - الشاملة 6869) ──
+    6869: const [
+      ShamelaChapter(pageNumber: 1, title: 'مطلع المنظومة والدعوة لطلب العلم (تفت فؤادك الأيام فتا)'),
+      ShamelaChapter(pageNumber: 3, title: 'فضل العلم ومقارنته بنفائس الأموال والدنيا'),
+      ShamelaChapter(pageNumber: 6, title: 'التحذير من فتنة الدنيا والغرور بزخرفها الفاني'),
+      ShamelaChapter(pageNumber: 9, title: 'التذكير بالموت ومنازل القبور وأهوال الحشر'),
+      ShamelaChapter(pageNumber: 12, title: 'محاسبة النفس والدعوة إلى التوبة النصوح والاستغفار'),
+      ShamelaChapter(pageNumber: 15, title: 'الحث على قيام الليل وملازمة الطاعات وأعمال البر'),
+      ShamelaChapter(pageNumber: 18, title: 'وصايا الشاعر الجامعة وخاتمة المنظومة'),
+    ],
+
+    // ── قصيدة عنوان الحكم للبستي (الشاملة 6873) ──
+    6873: const [
+      ShamelaChapter(pageNumber: 1, title: 'مطلع القصيدة وحقيقة الربح والخسران (زيادة المرء في دنياه نقصان)'),
+      ShamelaChapter(pageNumber: 3, title: 'الإحسان إلى الناس وحفظ المروءة ومكارم الأخلاق'),
+      ShamelaChapter(pageNumber: 5, title: 'حفظ اللسان والترفع عن آفات الكلام والنميمة'),
+      ShamelaChapter(pageNumber: 7, title: 'فضيلة القناعة وعزة النفس والرضا بالمقسوم'),
+      ShamelaChapter(pageNumber: 9, title: 'صحبة الأخيار والحذر من بطانة السوء'),
+      ShamelaChapter(pageNumber: 10, title: 'درر الحكمة وخاتمة القصيدة'),
+    ],
+
     // ── المنظومة البيقونية في مصطلح الحديث (الشاملة 8567) ──
     8567: const [
       ShamelaChapter(pageNumber: 1, title: 'المقدمة وبداية النظم'),

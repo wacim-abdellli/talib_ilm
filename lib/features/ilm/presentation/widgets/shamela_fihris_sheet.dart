@@ -133,10 +133,14 @@ class _ShamelaFihrisSheetState extends State<ShamelaFihrisSheet> {
               child: widget.isLoading
                   ? Center(child: CircularProgressIndicator(color: palette.gold))
                   : list.isEmpty
-                      ? const EmptyState(
+                      ? EmptyState(
                           icon: Icons.menu_book_rounded,
-                          title: 'لا يتوفر موضوع مطابق',
-                          subtitle: 'جرب البحث بكلمة أخرى أو تصفح الصفحات مباشرة.',
+                          title: _search.trim().isEmpty
+                              ? 'لا يتوفر فهرس موضوعات مسجل'
+                              : 'لا يتوفر موضوع مطابق',
+                          subtitle: _search.trim().isEmpty
+                              ? 'يمكنك تصفح الكتاب والتنقل بين صفحاته مباشرة.'
+                              : 'جرب البحث بكلمة أخرى أو تصفح الصفحات مباشرة.',
                         )
                       : ListView.separated(
                           padding: EdgeInsetsDirectional.fromSTEB(
