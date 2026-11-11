@@ -1,208 +1,202 @@
 <div align="center">
 
-  <img src="assets/images/logo.png" alt="Talib Ilm Logo" width="120" height="120" style="border-radius: 20%;" />
+  <a href="https://github.com/wacim-abdellli/talib_ilm">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/branding/lockup_on_dark.png" />
+      <source media="(prefers-color-scheme: light)" srcset="assets/branding/lockup_on_light.png" />
+      <img src="assets/branding/ios_icon_1024.png" alt="طالب العلم | Talib Ilm" width="340" />
+    </picture>
+  </a>
 
-  # طالب العلم | Talib Ilm
+  <h1>طالب العلم — Talib Ilm</h1>
 
-  **الرفيق الرقمي المتكامل لطالب العلم الشرعي والمسلم المعاصر**  
-  *A Comprehensive Flutter & Swift Application for Students of Islamic Knowledge*
+  <p>
+    <strong>منظومة علمية إسلامية متكاملة لطالب العلم الشرعي والمسلم المعاصر</strong><br />
+    <em>An Offline-First, High-Contrast Arabic Islamic Knowledge Suite built with Flutter, SwiftUI WidgetKit &amp; Kotlin</em>
+  </p>
 
-  [![Flutter](https://img.shields.io/badge/Flutter-v3.10%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-  [![Dart](https://img.shields.io/badge/Dart-v3.10%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-  [![Swift](https://img.shields.io/badge/Swift-WidgetKit%20%7C%20SwiftUI-F05138?logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
-  [![Tests](https://img.shields.io/badge/Tests-812%2F812%20Passed%20(100%25)-success)](https://github.com/wacim-abdellli/talib_ilm)
-  [![Code Quality](https://img.shields.io/badge/Analyze-0%20Issues-brightgreen)](https://github.com/wacim-abdellli/talib_ilm)
-  [![UI Lint](https://img.shields.io/badge/UI%20Tokens-100%25%20Strict-blue)](https://github.com/wacim-abdellli/talib_ilm)
-  [![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20Web-4CAF50)](#منصات-التشغيل)
-  [![License](https://img.shields.io/badge/License-Open%20Source-amber)](#)
+  <p>
+    <a href="https://github.com/wacim-abdellli/talib_ilm/actions/workflows/verify.yml">
+      <img src="https://github.com/wacim-abdellli/talib_ilm/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify Release Readiness" />
+    </a>
+    <a href="https://github.com/wacim-abdellli/talib_ilm/actions/workflows/build_ios.yml">
+      <img src="https://github.com/wacim-abdellli/talib_ilm/actions/workflows/build_ios.yml/badge.svg?branch=main" alt="Build iOS IPA" />
+    </a>
+    <a href="https://github.com/wacim-abdellli/talib_ilm/releases">
+      <img src="https://img.shields.io/github/v/release/wacim-abdellli/talib_ilm?label=Release&color=B45309&style=flat" alt="Latest Release" />
+    </a>
+  </p>
+
+  <p>
+    <img src="https://img.shields.io/badge/Flutter-3.38.7%20(Stable)-02569B?logo=flutter&logoColor=white" alt="Flutter" />
+    <img src="https://img.shields.io/badge/Dart-%5E3.10.4-0175C2?logo=dart&logoColor=white" alt="Dart" />
+    <img src="https://img.shields.io/badge/iOS-SwiftUI%20WidgetKit-F05138?logo=swift&logoColor=white" alt="SwiftUI WidgetKit" />
+    <img src="https://img.shields.io/badge/Android-Kotlin%20RemoteViews-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin" />
+    <img src="https://img.shields.io/badge/RTL-Arabic--First%20WCAG%20AA-0F766E" alt="Arabic RTL WCAG AA" />
+  </p>
+
+  <p>
+    <a href="#-وصف-التطبيق--description">الوصف (Description)</a> •
+    <a href="#-القدرات-والميزات-الأساسية--core-capabilities">الميزات</a> •
+    <a href="#-المعمارية-التقنية--architecture">المعمارية</a> •
+    <a href="#-التحميل-والتثبيت--downloads--installation">التحميل والتثبيت (APK / IPA)</a> •
+    <a href="#-بوابة-الجودة-وبناء-الإنتاج--ci-gates--development">بناء المطورين</a>
+  </p>
 
 </div>
 
 ---
 
-## 📌 نبذة عن التطبيق | About The App
+## 📌 وصف التطبيق | Description
 
-**تطبيق "طالب العلم"** هو صرح إسلامي رقمي رصين مبني بأحدث تقنيات **Flutter** ولغة **Swift** الأصلية، صُمم خصيصاً لخدمة طلاب العلم والمسلمين حول العالم. يجمع التطبيق بين الأصالة المنهجية لطلب العلم الشرعي وفق سُلم المستويات المعتمدة، وبين الفخامة التقنية وتجربة المستخدم الحديثة وفق نظام تصميم "Calm Scholar" المريح للعينين، مع دعم كامل وشامل للعمل دون اتصال بالإنترنت (Offline First).
+### العربية
+**تطبيق «طالب العلم»** هو بيئة علمية وعبادية رقمية شاملة ومستقلة تعمل بمنهجية **العمل دون إنترنت أولاً (Offline-First)**، صُمّمت خصيصاً لطالب العلم الشرعي والقارئ المسلم باللغة العربية الكاملة (`RTL-First`). يجمع التطبيق بين التأصيل العلمي المنهجي — عبر سُلّم متون طالب العلم، والمكتبة الشاملة، وموسوعة **12,075+** درة من أقوال السلف وأئمة الإسلام، و**4,608+** أحاديث نبوية مخرّجة، وبنك **1,180** سؤالاً تأصيلياً — وبين مصحف المدينة النبوية المتكامل بالخط العثماني (QCF)، ومنظومة مواقيت الصلاة والأذان الدقيقة المزوّدة بودجات أصلية تفاعلية لنظامي **iOS (`WidgetKit`)** و**Android (`RemoteViews`)** في المظهرين الفاتح والداكن.
 
-> قال رسول الله ﷺ: **«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»** [صحيح مسلم]
+تم بناء الواجهة بالكامل فوق نظام التصميم التراثي الهادئ **«Calm Scholar»**، الذي يوازن بين وضوح النصوص وتباينها المعياري الصارم (`WCAG AA ≥ 4.5:1`)، وبين أداء **60 إطاراً في الثانية** في تصفح المصحف والتنقل والبحث الصوتي والنصي دون تعقيد أو إعلانات أو تشتيت.
 
----
+### English
+**Talib Ilm (طالب العلم)** is a production-grade, Arabic-first (`RTL`) Islamic scholarship and daily worship suite engineered with **Flutter**, native **SwiftUI (`WidgetKit`)**, and **Kotlin (`RemoteViews` & `WindowManager`)**. Built around an **Offline-First** architecture and the **Calm Scholar** design system, it unifies a 60fps 604-page Madinah Mushaf, Hifdh repetition tooling, a tiered Islamic curriculum (11 disciplines with 1,180 sourced questions), 12,075+ attributed Salaf scholarly quotes, 4,608+ verified Hadiths, 159 live Quran radio streams, an astrolabe Qibla compass, autonomous native iOS & Android home screen prayer widgets (full Light & Dark mode parity), and a transient active-usage Dhikr overlay engine with zero persistent notification clutter.
 
-## ✨ المميزات الرئيسية | Key Features
-
-### 📖 1. القرآن الكريم ومصحف المدينة الرقمي (The Holy Quran)
-- **مصحف المدينة الأصيل 60fps:** قراءة سلسة وسريعة لكافة صفحات المصحف الشريف الـ 604 بدقة عالية وتصفح فوري أوفلاين.
-- **تلوين أحكام التجويد المتقن:** محرك ذكي لتظليل أحكام التجويد (المدود، الغنة، الإخفاء، الإدغام، الإقلاب، القلقلة).
-- **نمطا القراءة التفاعليان:** التبديل بسلاسة بين نمط صفحات المصحف التقليدية ونمط السرد التمريري المستمر للآيات.
-- **التفاسير المعتمدة ومعاني الكلمات:** التفسير الميسر، تفسير السعدي، وتفسير ابن كثير مع خدمة بيان معاني المفردات كلمة بكلمة.
-- **مكتبة كبار القراء (43 قارئاً):** استماع وتنزيل تلاوات كاملة بأصوات نخبة قراء العالم الإسلامي (مثل: أحمد طالب بن حميد، الحصري، المنشاوي، عبد الباسط، المعيقلي، العفاسي، الغامدي، الشريم، السديس، القطامي، وغيرهم).
-- **مشغل صوتي حديث فائق التطور:**
-  - واجهة تحكم متناسقة عالمياً تمنع تعارض اتجاهات مؤشرات التخطي (`+-10s`).
-  - أوضاع تكرار متعددة (تكرار السورة، تكرار القائمة، أو تشغيل متتابع).
-  - مؤقت نوم ذكي (Sleep Timer) مع إيقاف تلقائي (15، 30، 45، 60 دقيقة أو عند نهاية السورة).
-  - تنقل مباشر وتلقائي بين السور مع دعم التقديم والترجيع السريع.
-  - دعم كامل للتحكم عبر إشعارات النظام ومركز تحكم شاشة القفل (`just_audio_background`).
-
-### 📚 2. المتون العلمية والمكتبة الشاملة وحقيبة الأوفلاين (Ilm, Mutun & Offline Hub)
-- **سُلم العلوم والتأصيل المنهجي:** تدرج علمي منهجي يبدأ من التمهيدي والتأصيلي وحتى المطولات عبر 11 فناً وعلماً شرعياً (العقيدة، الفقه، أصول الفقه، الحديث، مصطلح الحديث، التفسير، النحو، السيرة، الفرائض، الآداب، والرقائق).
-- **18 متناً مؤصلاً مدمجاً مسبقاً:** متون طالب العلم الأساسية جاهزة ومحملة بالكامل مع التطبيق للوصول الفوري.
-- **أكثر من 284 كتاباً ومخطوطاً تراثياً:** فهرسة موسعة لأمهات كتب التراث مع محرك بحث عربي ذكي يتجاهل علامات التشكيل والهمزات (`ArabicSearchUtils`).
-- **حقيبة المحتوى بدون إنترنت (Offline Hub):**
-  - إدارة مركزية متطورة للكتب والسور الصوتية المحملة.
-  - فلترة فورية للكتب المحملة بدون تداخل مع فلاتر الأقسام والمستويات.
-  - إمكانية حذف الكتب والملفات المحملة محلياً بضغطة زر واحدة لتحرير مساحة الهاتف.
-- **قارئ المتون الرقمي الذكي وتتبع القراءة:**
-  - واجهة قراءة مريحة تدعم الخطوط التراثية الأصيلة (`Cairo`, `Amiri`, `ScheherazadeNew`).
-  - حفظ تلقائي للعلامات المرجعية، ونسب إنجاز القراءة، والموضع الدقيق لكل كتاب.
-
-### 🎙️ 3. مشغل الصوتيات المستمر ومساعد الاستئناف الفوري (Persistent Audio Mini Player)
-- **مشغل مصغر دائم (Mini Player):** شريط صوتي عائم يرسو بانسيابية فوق شريط التنقل السفلي، يعرض اسم المتن والمجلس، الشيخ القارئ، ميكرو-أنيميشن لموجات الصوت، وأزرار التحكم السريع.
-- **الاستئناف الفوري بلمسة واحدة:** النقر على المشغل ينقل الطالب مباشرة إلى الكتاب والصفحة والموضع الدقيق الذي كان يقرؤه مع استمرار الصوت متزامناً دون أي انقطاع.
-
-### 💎 4. موسوعة درر السلف وأقوال أئمة الإسلام (8,773+ Salaf Gems)
-- **قاعدة بيانات ضخمة ومحققة:** أكثر من **8,773 أثراً ودرة علمية** موثقة بالعزو إلى المصادر الأصلية (حلية الأولياء، سير أعلام النبلاء، وغيرها).
-- **أبواب مستقلة لكبار أئمة وعلماء الإسلام:**
-  - **الصحابة والتابعون:** الخلفاء الراشدون، عبد الله بن مسعود، عبد الله بن عباس، الحسن البصري، عمر بن عبد العزيز.
-  - **أئمة السلف ومحققي الأمة:** الإمام أحمد، الشافعي، مالك، أبو حنيفة، شيخ الإسلام ابن تيمية، ابن القيم، ابن رجب.
-  - **علماء العصر الراسخون:** الشيخ عبد العزيز بن باز، الشيخ محمد بن صالح العثيمين، الشيخ محمد ناصر الدين الألباني، الشيخ عبد العزيز الطريفي، الشيخ عبد الرزاق البدر، الشيخ صالح الفوزان، الشيخ محمد المختار الشنقيطي، والشيخ بكر أبو زيد.
-- **مشاركة وبطاقات اقتباس راقية:** تصميم بطاقات أنيقة قابلة للنسخ والمشاركة المباشرة عبر منسق المشاركة الآمن `AppShare`.
-
-### 🕌 5. مواقيت الصلاة والودجات الأصلية لنظامي Android و iOS (Prayer Times & Widgets)
-- **ودجات أندرويد المتطورة (AppWidget):** 5 أحجام ودجات تفاعلية (2x2, 4x1, 4x2, 4x4) تدعم الثيم الفاتح والداكن وإعادة التحجيم والتحديث الآلي.
-- **ودجات آيفون الأصلية بلغة Swift (iOS WidgetKit):** دعم كامل للشاشة الرئيسية لنظام iOS 14+ عبر `WidgetKit` و `SwiftUI` بـ 3 أحجام (صغير، متوسط، كبير) مع ربط البيانات عبر App Group.
-- **محرك الأذان الدقيق وجلسة الصوت (Audio Session):** صوت أذان وتكبيرات شيوخ الحرمين الشريفين، مع ضبط خاص لجلسة الصوت لتجاوز زر الصامت الفيزيائي في هواتف الآيفون والأندرويد.
-- **محرك الحالات الخمس المتزامن (5-Phase State Machine):** تنبيهات ما قبل الأذان، وقت الأذان، الإقامة، ووقت صلاة الجمعة.
-
-### 🧭 6. بوصلة القبلة الأسطرلابية المباشرة (Direct Instant Qibla)
-- **تحديد فوري دون تعقيدات الأذونات:** تعمل البوصلة فورياً بمجرد فتح الشاشة بحساب زاوية القبلة الدقيقة والمسافة إلى مكة المكرمة استناداً إلى عاصمة/مدينة المستخدم المحددة بالتطبيق.
-- **تصميم أسطرلابي بديع:** مستوحى من أدوات الفلكيين المسلمين القدماء مع اهتزاز لمسي هادئ عند محاذاة اتجاه الكعبة المشرفة.
-
-### 📿 7. الأذكار النبوية المحققة والسبحة الرقمية (Adhkar & Tasbeeh)
-- **أذكار المسلم اليومية بدون اقتطاع:** بطاقات واضحة لكافة الأذكار (الصباح، المساء، النوم، ما بعد الصلاة، والاستيقاظ) مكتملة العناوين بدون نقاط اقتطاع (`...`).
-- **السبحة الرقمية المتطورة:** تسبيح واستغفار تفاعلي مع استجابة لمسية (Haptic Feedback) وإحصائيات الاستغفار وحفظ التقدم التلقائي.
-
-### 📜 8. واحة الحديث النبوي الشريف (2,358+ Hadith Hub)
-- **أكثر من 2,358 حديثاً نبوياً شريفاً:** مصنفة وفق الأبواب الفقهية والإيمانية مع بيان الرواة ودرجة الحديث وصحته وتخريجه المعتمد.
-
-### 📻 9. البث المباشر لإذاعات القرآن الكريم (Live Quran Radios)
-- **أكثر من 60 إذاعة قرآنية عالمية:** بث حي ومباشر على مدار 24 ساعة من شبكة MP3Quran لكبار القراء مع استمرار التشغيل في الخلفية.
-
-### 🏆 10. بنك الأسئلة والمسابقات الشرعية (Islamic Quiz System)
-- **أكثر من 1,100 سؤال منهجي:** موزعة على 11 علماً و33 مستوى مع شروحات علمية وأدلة شرعية مستفادة من كل سؤال، وتحدٍ يومي متجدد.
+> قال رسول الله ﷺ: **«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»** — *رواه مسلم*
 
 ---
 
-## 🎨 فلسفة التصميم "Calm Scholar" (UI Architecture)
+## ✨ القدرات والميزات الأساسية | Core Capabilities
 
-- **الواجهات التراثية المريحة:** ثيم الأوبسيديان المخملي الداكن (`#090807`) المتناغم مع الذهب العتيق، وثيم الرق العاجي الدافئ (`#FAF8F5`).
-- **إمكانية الوصول والتباين الصارم (WCAG AA):** نسب تباين تتجاوز 4.5:1 للنصوص و 3:1 للأيقونات، واجتياز اختبارات تكبير الخطوط 1.0x و 1.5x و 2.0x دون أي خطأ في البكسل (Zero Pixel Overflow).
-- **التوافق التام مع اللغة العربية (RTL First):** جميع الحواف والإزاحات مصممة بصيغة `Directional` ومحاذاة تامة من اليمين لليسار.
-- **إيماءات السحب الأصلية للآيفون (Native iOS Pop Gesture):** دعم كامل للسحب من حافة الشاشة للرجوع للخلف في كافة شاشات التطبيق بفضل ترقية `FadePageRoute` ودمج `CupertinoRouteTransitionMixin`.
+| القسم | الوصف المنهجي والمعماري | أبرز الأرقام |
+| :--- | :--- | :--- |
+| **📖 القرآن الكريم ومصحف المدينة** | مصحف المدينة الأصيل بخطوط QCF المحمّلة مسبقاً، تلوين أحكام التجويد، التفاسير (الميسر، السعدي، ابن كثير)، تبويب **المتشابهات والضوابط الحفظية**، ومقاصد السور مع القفز الفوري للآيات. | `604` صفحة · `43+` قارئ · `3` ثيمات مصحف |
+| **🔁 محرك التحفيظ والتلاوة** | تحكّم متكامل بالتكرار للآيات والمقاطع (`HifdhAudioRangeHelper`) حتى للقراء ذوي السور الكاملة، مؤقّت نوم ذكي، تحكم شاشة القفل (`just_audio_background`)، وتنزيل أوفلاين للسور. | دعم التلاوة المفصلة والكاملة أوفلاين |
+| **📚 سُلّم المتون والمكتبة العلمية** | تأصيل منهجي متدرج عبر **11 فنّاً شرعياً**، قارئ متون وشروح بخطوط عربية تراثية مع حفظ تلقائي للموضع، مشغل صوتي مصغر مستمر (`Mini Player`)، وحقيبة لإدارة المحتوى المحمّل. | `11` فنّاً · `18+` متناً مدمجاً · بحث متجاهل للتشكيل |
+| **💎 موسوعة درر السلف** | قاعدة آثار وأقوال محققة ومعزوة لمصادرها (حلية الأولياء، سير أعلام النبلاء، وغيرها) عبر طبقات الصحابة والتابعين وأئمة السلف وعلماء العصر مع بطاقات مشاركة منسّقة. | `12,075` درة وأثر موثق |
+| **📜 واحة الحديث النبوي** | موسوعة أحاديث مصنّفة موضوعياً مع بيان الراوي والحكم والتخريج العلمي الدقيق وإمكانية البحث والنسخ والمشاركة. | `4,608` حديثاً مصنّفاً |
+| **🕌 مواقيت الصلاة والودجات** | حساب فلكي دقيق (`adhan` + `geolocator`) مع **آلة حالات خماسية (5-Phase State Machine)** للإقامة والأذان والجمعة، وودجات أصلية في **SwiftUI** و**Kotlin** للمظهرين الفاتح والداكن. | أحجام `Medium 4×1` و`Large 4×2` |
+| **🔔 لحظة ذكر الذكية (Android)** | بطاقة ذكر عائمة تظهر فقط أثناء الاستخدام الفعلي للهاتف أو بعد فتح القفل عبر خدمة عابرة (`Transient Foreground + AlarmManager`) دون تثبيت أي إشعار دائم مزعج. | `5` أقسام منوعة بتدوير غير متكرر |
+| **🏆 بنك الأسئلة والتحدي اليومي** | اختبارات علمية مؤصلة بمستويات متدرجة وتحدٍ يومي، مدعومة بالتعليل العلمي والشرح والدليل من الكتاب والسنة لكل مسألة. | `1,180` سؤالاً شرعياً (`v2.0.0`) |
+| **🧭 القبلة والأذكار والإذاعات** | بوصلة قبلة أسطرلابية فورية بالمدينة أو الموقع، أذكار الصباح والمساء وما بعد الصلاة، سبحة رقمية بحفظ التقدم، وبث حي لإذاعات القرآن الكريم. | `159` إذاعة قرآنية مباشرة |
+
+<details>
+<summary><strong>🔍 تفاصيل هندسية متقدمة للمطورين (Deep-Dive Engineering Highlights)</strong></summary>
+
+1. **Zero-Jank 60fps Mushaf Navigation (`lib/features/quran/`)**:
+   - Pre-warms `QuranRepository` word offsets and `QcfFontLoader` target page glyphs *before* route transitions complete, eliminating frame-0 spinner flicker.
+   - Replaces async debounced recognizer allocation inside `QuranLine` with single-pass synchronous recognizer construction paired with `PageView` implicit scrolling and `SchedulerBinding` post-frame callbacks.
+   - Decoupled Mushaf reading modes (**Classic White**, **Warm Sepia**, **Warm AMOLED Obsidian `#080706`**) persisted independently of global app appearance.
+2. **Cross-Platform Widget Synchronization (`HomeWidgetSnapshot` ↔ `TalibIlmWidgets.appex` & `RemoteViews`)**:
+   - Atomically snapshots prayer epoch timestamps, active phase (`preAdhan`, `atAdhan`, `betweenAdhanAndIqama`, `inSalah`, `postSalah`), custom mosque Iqama intervals, Hijri dates, city coordinates, and theme resolution keys into JSON payloads (`prayer_data_json`) + App Group `UserDefaults` (`group.com.talibilm.app` with provisioning-profile discovery for AltStore/Sideloadly).
+   - Native SwiftUI widget (`TalibIlmWidgetEntryView`, `MediumPrayerWidgetView`, `LargePrayerWidgetView`) enforces physical LTR-ordered prayer columns for correct Arabic visual reading order, live `.timer` countdowns, dynamic `@Environment(\.colorScheme)` + explicit full-bleed `ZStack` / `.containerBackground(for: .widget)` Light & Dark rendering, plus a full **MEEUS offline astronomical fallback calculator** when App Group snapshots age past midnight.
+3. **Resilient Background Notifications & Native Sound Routing**:
+   - Dedicated iOS `.caf` audio assets (`ios/Runner/NotificationSounds/`) copied across root, `Library/Sounds/`, and `NotificationSounds/` in CI for Time-Sensitive notifications even with hardware silent toggles evaluated.
+   - Android `SafeNotificationBootReceiver`, `DhikrOverlayScheduler`, and transient `DhikrOverlayService` decouple unlock/screen-on broadcasts from permanent notification clutter.
+4. **Arabic Diacritic-Insensitive Indexing (`ArabicSearchUtils`)**:
+   - Normalizes Tashkeel, Tatweel, Alef/Ya/Ta-Marbuta variants in real time across Quran ayahs, Hadiths, Salaf gems, and Mutun books.
+
+</details>
 
 ---
 
-## 🛠️ البنية التقنية والمكتبات | Tech Stack
+## 🏗️ المعمارية التقنية | Architecture
 
-| المجال | التقنيات والمكتبات المستخدمة |
-| :--- | :--- |
-| **لغات البرمجة** | Dart 3.10+ / Swift 5.0+ |
-| **إطار العمل** | Flutter 3.10+ (Stable Channel) |
-| **ودجات الآيفون** | Apple WidgetKit, SwiftUI, App Group (`group.com.talibilm.app`) |
-| **ودجات أندرويد** | Android AppWidgetProvider, Kotlin, RemoteViews |
-| **المصاحف والقرآن** | `quran`, `quran_library` |
-| **الحسابات والمواقيت** | `adhan`, `geolocator`, `geocoding`, `hijri` |
-| **مشغلات الصوت** | `just_audio`, `just_audio_background`, `audio_session` |
-| **الإشعارات النظامية** | `flutter_local_notifications`, `timezone`, `flutter_timezone` |
-| **التخزين وقواعد البيانات** | `sqflite`, `shared_preferences`, `path_provider` |
-| **الخطوط المعتمدة** | `Cairo`, `Amiri`, `ScheherazadeNew`, `Vazirmatn` |
+```mermaid
+flowchart LR
+    UI["Flutter UI Layer\n(Calm Scholar Tokens · RTL)"] --> Core["Domain & Sync Services\nQuranRepository · PrayerTimeService · ThemeService"]
+    Core --> Persist["Local Storage\nSQLite · SharedPreferences · Offline MP3/JSON"]
+    Core --> Snapshot["HomeWidgetSnapshot\nAtomic JSON + Keys"]
+    Snapshot -->|"App Group UserDefaults\n(group.com.talibilm.app)"| iOSW["iOS WidgetKit Extension\nTalibIlmWidgets.swift (SwiftUI)\nOffline Astronomical Fallback"]
+    Snapshot -->|"SharedPreferences\n& Broadcasts"| AndW["Android Native Bridge (Kotlin)\nRemoteViews (Medium & Large)\nDhikrOverlayService & Scheduler"]
+```
 
----
-
-## 📂 هيكل المشروع المنهجي | Directory Structure
+### هيكل المشروع | Directory Layout
 
 ```text
-lib/
-├── app/                        # إعدادات التطبيق وثوابت التصميم ونظام الألوان
-│   ├── constants/              # نصوص التطبيق، المسارات، والأصول
-│   └── theme/                  # لوحات الألوان والخطوط والمسافات والحركات
-├── core/                       # الخدمات المشتركة المركزية
-│   ├── models/                 # نماذج البيانات المشتركة
-│   ├── services/               # خدمات الأذان، الجدولة، الإشعارات، والودجات
-│   └── utils/                  # معالج المشاركة، الأقفال اللاتزامنية، وعمليات البحث
-├── features/                   # الميزات المستقلة (Feature-First Architecture)
-│   ├── home/                   # الشاشة الرئيسية ولوحة الطالب اليومية
-│   ├── quran/                  # قارئ المصحف، التفاسير، 43 قارئاً، والمشغل الصوتي الحديث
-│   ├── ilm/                    # سُلم العلوم، قارئ المتون، الشاملة، وحقيبة الأوفلاين
-│   ├── prayer/                 # مواقيت الصلاة، الأذان، القبلة، والإعدادات
-│   ├── salaf_gems/             # موسوعة درر السلف وأقوال العلماء (8,773+ درة)
-│   ├── hadith/                 # واحة الأحاديث النبوية المخرجة (2,358+ حديث)
-│   ├── adhkar/                 # الأذكار النبوية، الأدعية، والسبحة الرقمية
-│   └── favorites/              # المفضلة الشاملة وإدارة المحفوظات
-└── shared/                     # المكونات والعناصر العامة المشتركة
-    ├── navigation/             # شل التطبيق، النافبار، وانتقالات الصفحات (FadePageRoute)
-    └── widgets/                # الأزرار، الكروت، الحوارات، والقوائم
+talib_ilm/
+├── .github/workflows/
+│   ├── verify.yml                  # 7-Gate release readiness CI (analyze, strict lint, tests, APK, AAB, signing)
+│   └── build_ios.yml               # macOS runner: IPA + embedded TalibIlmWidgets.appex + .caf sounds + Releases
+├── android/                        # Kotlin native widgets, BootReceiver, DhikrOverlayService & WindowManager UI
+├── ios/
+│   ├── Runner/                     # AppDelegate, Info.plist, NotificationSounds (*.caf), entitlements
+│   └── TalibIlmWidgets/            # Native SwiftUI WidgetKit extension (TalibIlmWidgets.swift, TalibIlmWidgetViews.swift)
+├── assets/
+│   ├── branding/                   # Light/dark lockups, monochrome icons, iOS 1024px & adaptive badges
+│   ├── data/                       # Hadith, Salaf gems, Quiz bank v2, Adhkar, Radios, Mutun & Quran metadata
+│   ├── fonts/                      # Cairo (400-800), Amiri (400/700), ScheherazadeNew (400/700)
+│   └── audio/                      # Bundled local audio & Adhan assets
+├── lib/
+│   ├── app/                        # Design tokens (AppPalette, AppTextTheme, AppSpacing, AppRadius, AppMotion), constants
+│   ├── core/                       # Audio, Adhan scheduling, HomeWidget sync, Location, Dhikr Moment, Search utils
+│   ├── features/                   # Feature modules (home, quran, ilm, prayer, adhkar, hadith, salaf_gems, radio, favorites...)
+│   └── shared/                     # Shared RTL navigation (FadePageRoute + iOS edge-swipe), animations, UI primitives
+├── packages/qcf_quran_plus/        # Vendored Madinah Mushaf glyph package tuned for Dart 3.10+
+└── tool/                           # ui_lint_v2.py, contrast.py, fail-closed signing & readiness verification scripts
 ```
 
 ---
 
-## 🚀 البدء والتشغيل | Getting Started
+## 🎨 نظام التصميم وجودة الوصول | Design System ("Calm Scholar")
 
-### 📋 المتطلبات
-- تثبيت [Flutter SDK](https://docs.flutter.dev/get-started/install) (الإصدار المستقر `3.10+`).
-- تثبيت بيئة التطوير (VS Code أو Android Studio أو Xcode لنظام macOS).
+| المعيار | التطبيق الفعلي في الكود |
+| :--- | :--- |
+| **لوحة الألوان المزدوجة** | **الوضع الفاتح**: رق عاجي دافئ (`#FAF8F5`) وأسطح نقية (`#FFFFFF` / `#F0ECE1`) مع كهرمان ذهبي عتيق.<br>**الوضع الداكن (AMOLED)**: أوبسيديان دافئ (`#090807`) في التطبيق و(`#070707`) في الودجات لراحة العين ليلاً. |
+| **التباين القياسي (WCAG AA)** | مُتحقّق آلياً عبر `tool/contrast.py`: تباين النصوص `≥ 4.5:1` والأيقونات/الحدود `≥ 3.0:1`. |
+| **انضباط التوكنز (UI Lint v2)** | فحص آلي صارم (`python tool/ui_lint_v2.py --strict`) يمنع الألوان أو الخطوط أو المسافات العشوائية خارج `lib/app/theme/`. |
+| **الخطوط والوصول** | خطوط `Cairo` و`Amiri` و`ScheherazadeNew`، حد أدنى للمس `48dp`، حجم خط أدنى `12sp`، واجتياز تكبير الخطوط حتى `2.0x` دون Overflow. |
+| **سلاسة السحب والانتقال** | دعم أصلي لإيماءة الرجوع بسحب حافة الشاشة في iOS (`CupertinoRouteTransitionMixin`) وحركات موحدة عبر `AppSectionSwitcher`. |
 
-### ⚙️ خطوات التثبيت والتشغيل المحلي
+---
+
+## 📦 التحميل والتثبيت | Downloads & Installation
+
+### 🍎 iOS (`.ipa` لنظام آيفون — يدعم الودجات والأذان)
+تُبنى حزمة iOS تلقائياً عبر **GitHub Actions** (`build_ios.yml`) متضمنةً امتداد الودجت `TalibIlmWidgets.appex` وملفات الصوت `.caf` الجاهزة للإشعارات الحساسة للوقت:
+1. حمّل أحدث ملف `talib_ilm_ios.ipa` من صفحة **[GitHub Releases](https://github.com/wacim-abdellli/talib_ilm/releases)** (أو من قسم Artifacts داخل أحدث تشغيل ناجح لـ **[Build iOS App](https://github.com/wacim-abdellli/talib_ilm/actions/workflows/build_ios.yml)**).
+2. ثبّت التطبيق على جهازك عبر **AltStore** أو **SideStore** أو **Sideloadly** (يدعم التطبيق اكتشاف معرف App Group ديناميكياً من ملف الـ Provisioning لضمان عمل الودجت حتى عند التثبيت الجانبي).
+
+### 🤖 Android (`.apk` و `.aab`)
+يمكن تحميل الإصدارات المبنية أو توليدها محلياً لكل فئات الأجهزة:
+- **للهواتف الحديثة (`64-bit arm64-v8a`)**: حجم أخف وأداء أمثل (`flutter build apk --release --split-per-abi` أو `--target-platform android-arm64`).
+- **للهواتف القديمة (`32-bit armeabi-v7a`)**: دعم مخصص للمعالجات القديمة عبر `--target-platform android-arm`.
+- **الحزمة الشاملة (`Universal APK`) / حزمة المتجر (`AAB`)**: عبر `flutter build apk --release` و `flutter build appbundle --release`.
+
+---
+
+## 🚀 التطوير وبوابة التحقق الآلي | CI Gates & Development
+
+### المتطلبات والتشغيل المحلي
 ```bash
 # 1. استنساخ المستودع
 git clone https://github.com/wacim-abdellli/talib_ilm.git
 cd talib_ilm
 
-# 2. جلب الحزم والمكتبات
+# 2. تثبيت التبعيات
 flutter pub get
 
-# 3. تشغيل التطبيق في بيئة التطوير
+# 3. التشغيل المحلي
 flutter run
 ```
 
-### 📦 بناء النسخ النهائية للإنتاج (Production Builds)
+### بوابات التحقق السبع في CI (`.github/workflows/verify.yml`)
+يفرض خط التكامل المستمر سبع بوابات آلية متتالية قبل اعتماد أي إصدار:
 
-- **بناء تطبيق أندرويد للهواتف الحديثة (64-bit arm64-v8a):**
-  ```bash
-  flutter build apk --release --split-per-abi
-  # الناتج: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk (حجم مخفف: ~138 ميغابايت)
-  ```
-- **بناء النسخة الشاملة (Universal APK):**
-  ```bash
-  flutter build apk --release
-  # الناتج: build/app/outputs/flutter-apk/app-release.apk (~251 ميغابايت لكافة المعالجات)
-  ```
-- **بناء حزمة متجر جوجل بلاي (Android App Bundle):**
-  ```bash
-  flutter build appbundle --release
-  ```
-- **بناء تطبيق آيفون (iOS IPA):**
-  يتم البناء تلقائياً وبأعلى دقة عبر **GitHub Actions** السحابية عند دفع التحديثات، مع تجميع هدف الودجات `TalibIlmWidgets.appex` وتضمينه داخل حزمة `talib_ilm_ios.ipa` الجاهزة للتثبيت المباشر عبر **Sideloadly** أو **AltStore** أو **TestFlight**.
+| البوابة | الأمر المنفّذ | الغرض الهندسي |
+| :--- | :--- | :--- |
+| **Gate 1 — Static Analysis** | `flutter analyze --no-pub` | ضمان خلو المشروع من أي أخطاء أو تحذيرات ساكنة |
+| **Gate 2 — UI Strict Lint** | `python tool/ui_lint_v2.py --strict` | منع كسر نظام التوكنز واستخدام قيم خام خارج `lib/app/theme/` |
+| **Gate 3 — Test Suite** | `flutter test --no-pub` | التحقق من المنطق الصوتي، المصحف، المواقيت، الأسئلة، والودجات |
+| **Gate 4 — Tool Regressions** | `python tool/test_release_readiness_checks.py` | اختبارات انحدار لأدوات التحقق والسكربتات |
+| **Gate 5 — Debug APK Build** | `flutter build apk --debug --no-pub` | التأكد من سلامة تجميع Android وGradle |
+| **Gate 6 — Release AAB Check** | `python tool/run_release_readiness_checks.py --only-bundle` | فحص بناء حزمة الإصدار وتوافق التوقيع |
+| **Gate 7 — Fail-Closed Signing** | `python tool/verify_android_signing_fail_closed.py` | منع بناء Release بمفاتيح اختبارية أو إعدادات غير آمنة |
 
 ---
 
-## 🧪 معايير الجودة والتحقق الآلي | Quality & Verification
+## 🤝 المساهمة والترخيص | Contributing & License
 
-يخضع المشروع لفحوصات واختبارات آلية صارمة تضمن استقرار وجودة الكود بنسبة 100%:
-- **حزمة الاختبارات الآلية (Automated Test Suite):** اجتياز **812 من أصل 812 اختباراً بنجاح كامل (100% Green)** تغطي كافة الخدمات والواجهات والودجات.
-- **التحليل الساكن للكود (Static Analysis):** تحقيق **0 أخطاء و 0 تحذيرات (`No issues found`)** عبر `flutter analyze`.
-- **الفحص البصري الصارم (UI Lint v2):** خلو تام من أي ألوان أو أبعاد أو استايلات مجهولة خارج نظام الـ Tokens المحدد (`tool/ui_lint_v2.py`).
-- **تدقيق البيانات التام (Data Audit):** فحص آلي لـ 8,773 درة و 2,358 حديثاً وملايين الكلمات بنتائج `0 Errors`.
-- **أمان الإطلاق (Fail-Closed Signing):** بنية إطلاق آمنة تمنع بناء حزم الإنتاج ببيانات أو مفاتيح وهمية أو مكشوفة.
-
----
-
-## 📄 الترخيص | License
-
-هذا المشروع متاح للاستخدام وفق رخصة مفتوحة ومجانية، صدقة جارية ونفعاً لطلاب العلم والمسلمين جميعاً في مشارق الأرض ومغاربها.
-
----
+- **المساهمة**: نرحب بمساهمات المطورين والمصححين في التحسينات المنهجية أو البصرية مع الالتزام التام بقواعد `AGENTS.md` و`DESIGN_SYSTEM.md` واجتياز البوابات السبع في CI.
+- **الترخيص**: متاح كوقفٍ ومشروعٍ مفتوح المصدر لنفع طلاب العلم والمسلمين حول العالم.
 
 <div align="center">
-  <sub>نسأل الله أن ينفع بهذا العمل وأن يجعله خالصاً لوجهه الكريم</sub><br>
-  <sub>صنع بـ ❤️ لخدمة الإسلام وطلاب العلم</sub>
+  <br />
+  <sub><strong>نسأل الله أن ينفع بهذا العمل وأن يجعله خالصاً لوجهه الكريم</strong></sub><br />
+  <sub>Built with care for students of Sacred Knowledge</sub>
 </div>
