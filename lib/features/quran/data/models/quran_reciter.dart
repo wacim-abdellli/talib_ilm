@@ -3,15 +3,21 @@ class QuranReciter {
   final String name;
   final String subfolder;
   final String? surahBaseUrl;
+  final Set<int>? availableSurahs;
 
   const QuranReciter({
     required this.id,
     required this.name,
     this.subfolder = '',
     this.surahBaseUrl,
+    this.availableSurahs,
   });
 
   bool get isSurahBased => surahBaseUrl != null && surahBaseUrl!.isNotEmpty;
+  bool get isCompleteMushaf => availableSurahs == null;
+  bool hasSurah(int surah) =>
+      availableSurahs == null || availableSurahs!.contains(surah);
+  int get surahCount => availableSurahs?.length ?? 114;
 
   @override
   bool operator ==(Object other) =>
@@ -36,6 +42,10 @@ class QuranReciter {
       id: 'omar_diaa',
       name: 'عمر بن ضياء الدين',
       surahBaseUrl: 'https://archive.org/download/omar-ben-diya-al-din/',
+      availableSurahs: {
+        2, 3, 4, 5, 6, 9, 10, 15, 17, 18, 19, 20, 23, 25, 35, 40, 44, 47, 49,
+        50, 55, 56, 57, 67, 76,
+      },
     ),
     QuranReciter(
       id: 'badr_turki',

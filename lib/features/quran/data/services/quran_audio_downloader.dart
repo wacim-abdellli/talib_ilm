@@ -505,6 +505,20 @@ class QuranAudioDownloader {
       return;
     }
 
+    if (!reciter.hasSurah(surah)) {
+      _setProg(
+        key,
+        surah,
+        reciter.id,
+        0,
+        totalVerses,
+        0,
+        SurahDownloadStatus.failed,
+        'هذه السورة غير متوفرة بصوت القارئ',
+      );
+      return;
+    }
+
     _setProg(
       key,
       surah,

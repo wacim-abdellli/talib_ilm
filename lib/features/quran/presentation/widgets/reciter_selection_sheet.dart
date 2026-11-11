@@ -298,9 +298,11 @@ class _ReciterSelectionSheetState extends State<ReciterSelectionSheet> {
                                   Row(
                                     children: [
                                       Text(
-                                        reciter.isSurahBased
-                                            ? 'المصحف المرتل الكامل'
-                                            : 'تلاوة آية بآية • مرتل',
+                                        reciter.isCompleteMushaf
+                                            ? (reciter.isSurahBased
+                                                ? 'المصحف المرتل الكامل'
+                                                : 'تلاوة آية بآية • مرتل')
+                                            : 'تلاوات وسور مختارة (${reciter.surahCount} سورة)',
                                         style: textTheme.caption.copyWith(
                                           color: palette.textMuted,
                                         ),

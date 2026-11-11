@@ -450,12 +450,15 @@ class QuranAudioService {
       throw ArgumentError('Invalid ayah number: $ayah for surah $surah');
     }
     final r = reciter ?? _selectedReciter;
+    final effectiveReciter = (r.isSurahBased && !r.hasSurah(surah))
+        ? QuranReciter.defaultReciters.first
+        : r;
     final sStr = _formatNumber(surah);
-    if (r.isSurahBased) {
-      return '${r.surahBaseUrl}$sStr.mp3';
+    if (effectiveReciter.isSurahBased) {
+      return '${effectiveReciter.surahBaseUrl}$sStr.mp3';
     }
     final aStr = _formatNumber(ayah);
-    return 'https://everyayah.com/data/${r.subfolder}/$sStr$aStr.mp3';
+    return 'https://everyayah.com/data/${effectiveReciter.subfolder}/$sStr$aStr.mp3';
   }
 
   /// Play a single verse
@@ -532,6 +535,17 @@ class QuranAudioService {
     }
 
     if (r.isSurahBased) {
+      if (!r.hasSurah(surah)) {
+        final fallback = QuranReciter.defaultReciters.first;
+        await playFullSurah(
+          surah: surah,
+          reciter: fallback,
+          autoPlay: autoPlay,
+          hasExplicitEnd: hasExplicitEnd,
+          initialAyah: initialAyah,
+        );
+        return;
+      }
       _ayahRepeatCount = 0;
       _isContinuous = true;
       _isSingleVerseOnly = false;

@@ -98,9 +98,11 @@ class QuranAudioStorageHeader extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    currentReciter.isSurahBased
-                                        ? 'المصحف المرتل الكامل'
-                                        : 'تلاوة آية بآية • مرتل',
+                                    currentReciter.isCompleteMushaf
+                                        ? (currentReciter.isSurahBased
+                                            ? 'المصحف المرتل الكامل'
+                                            : 'تلاوة آية بآية • مرتل')
+                                        : 'تلاوات وسور مختارة (${currentReciter.surahCount} سورة)',
                                     style: textTheme.caption.copyWith(
                                       color: palette.textMuted,
                                     ),

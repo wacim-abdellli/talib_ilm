@@ -227,7 +227,9 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
       (sum, list) => sum + list.length,
     );
 
-    final List<int> displaySurahs = List.generate(114, (i) => i + 1);
+    final List<int> displaySurahs = _currentReciter.availableSurahs != null
+        ? (_currentReciter.availableSurahs!.toList()..sort())
+        : List.generate(114, (i) => i + 1);
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -325,7 +327,9 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'جميع السور',
+                                    _currentReciter.isCompleteMushaf
+                                        ? 'جميع السور'
+                                        : 'السور المتوفرة',
                                     style: textTheme.label.copyWith(
                                       color: !_showOnlyDownloaded
                                           ? palette.primary
@@ -349,7 +353,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                       borderRadius: AppRadius.pillRadius,
                                     ),
                                     child: Text(
-                                      '114',
+                                      '${_currentReciter.surahCount}',
                                       style: textTheme.caption.copyWith(
                                         color: !_showOnlyDownloaded
                                             ? palette.primary
