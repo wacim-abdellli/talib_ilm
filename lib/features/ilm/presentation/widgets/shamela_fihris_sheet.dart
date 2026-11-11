@@ -26,6 +26,14 @@ class ShamelaFihrisSheet extends StatefulWidget {
 class _ShamelaFihrisSheetState extends State<ShamelaFihrisSheet> {
   String _search = '';
 
+  String _formatChapterCount(int n) {
+    if (n == 0) return 'لا توجد فصول';
+    if (n == 1) return 'باب واحد';
+    if (n == 2) return 'بابان';
+    if (n <= 10) return '$n أبواب';
+    return '$n باباً';
+  }
+
   List<ShamelaChapter> get _filtered {
     if (_search.trim().isEmpty) return widget.chapters;
     final q = _search.trim().toLowerCase();
@@ -82,7 +90,7 @@ class _ShamelaFihrisSheetState extends State<ShamelaFihrisSheet> {
                   ),
                   const Spacer(),
                   Text(
-                    '${widget.chapters.length} أبواب',
+                    _formatChapterCount(widget.chapters.length),
                     style: textTheme.caption.copyWith(color: palette.textMuted),
                   ),
                 ],

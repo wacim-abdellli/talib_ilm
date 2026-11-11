@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../catalogs/shamela_curated_fihris_catalog.dart';
 import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
 import 'shamela_download_manager.dart';
@@ -301,9 +302,25 @@ class ShamelaService {
     int bookId, {
     bool forceRefresh = false,
   }) async {
+    // 0. Curated catalog check (highest authority for verified syllabus mutun)
+    if (ShamelaCuratedFihrisCatalog.hasCuratedFihris(bookId)) {
+      final curated = ShamelaCuratedFihrisCatalog.getCuratedFihris(bookId);
+      if (curated.isNotEmpty) {
+        final totalP = curated.fold<int>(
+          0,
+          (m, c) => c.pageNumber > m ? c.pageNumber : m,
+        );
+        if (totalP > 0) {
+          _knownTotalPages[bookId] = totalP;
+          unawaited(saveDiscoveredTotalPages(bookId, totalP));
+        }
+        return curated;
+      }
+    }
+
     final db = await _getDatabase();
 
-    // 1. Check local cache
+    // 1. Check local cache (ignore trivial <= 1 entry fihris that Shamela sometimes serves)
     if (!forceRefresh) {
       final localRows = await db.query(
         _tableNameFihris,
@@ -312,7 +329,7 @@ class ShamelaService {
         orderBy: 'page_num ASC',
       );
 
-      if (localRows.isNotEmpty) {
+      if (localRows.length > 1) {
         return localRows
             .map((r) => ShamelaChapter(
                   title: r['title'] as String,
