@@ -177,6 +177,10 @@ class PrayerTimeCard extends StatelessWidget {
                         modeIcon = Icons.volume_up_rounded;
                         shortLabel = 'أذان';
                         break;
+                      case PrayerNotificationMode.maryamAyah:
+                        modeIcon = Icons.auto_stories_rounded;
+                        shortLabel = 'آية مريم';
+                        break;
                       case PrayerNotificationMode.takbeer:
                         modeIcon = Icons.campaign_rounded;
                         shortLabel = 'تكبيرات';
@@ -226,6 +230,15 @@ class PrayerTimeCard extends StatelessWidget {
                             title: 'أذان كامل',
                             subtitle: 'صوت الأذان كاملاً',
                             isSelected: mode == PrayerNotificationMode.adhan,
+                          ),
+                          _buildPopupOption(
+                            menuContext,
+                            palette: palette,
+                            mode: PrayerNotificationMode.maryamAyah,
+                            icon: Icons.auto_stories_rounded,
+                            title: 'آية الصلاة (سورة مريم: 59)',
+                            subtitle: 'تلاوة خاشعة بصوت ناصر القطامي',
+                            isSelected: mode == PrayerNotificationMode.maryamAyah,
                           ),
                           _buildPopupOption(
                             menuContext,

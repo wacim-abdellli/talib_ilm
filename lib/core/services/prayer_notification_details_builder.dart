@@ -16,6 +16,8 @@ class PrayerNotificationDetailsBuilder {
     switch (mode) {
       case PrayerNotificationMode.adhan:
         return 'أذان كامل';
+      case PrayerNotificationMode.maryamAyah:
+        return 'آية الصلاة (مريم: 59)';
       case PrayerNotificationMode.takbeer:
         return 'تكبيرات فقط';
       case PrayerNotificationMode.announcement:
@@ -90,6 +92,35 @@ class PrayerNotificationDetailsBuilder {
             AndroidNotificationAction(
               'stop_adhan',
               'إيقاف الأذان',
+              cancelNotification: true,
+              showsUserInterface: false,
+            ),
+          ],
+        );
+      case PrayerNotificationMode.maryamAyah:
+        return AndroidNotificationDetails(
+          channelIdForAdhan(AdhanSound.maryamAyah),
+          channelNameForAdhan(AdhanSound.maryamAyah),
+          channelDescription: 'تنبيه قرآني بصوت ناصر القطامي عند دخول وقت الصلاة',
+          importance: Importance.max,
+          priority: Priority.max,
+          sound: RawResourceAndroidNotificationSound(soundName(AdhanSound.maryamAyah)),
+          playSound: true,
+          visibility: NotificationVisibility.public,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          category: AndroidNotificationCategory.alarm,
+          channelShowBadge: true,
+          enableVibration: true,
+          enableLights: true,
+          icon: '@drawable/ic_notification',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: AppColors.notificationAccent,
+          ticker: 'صلاة $prayerName',
+          timeoutAfter: prayerNotificationTimeoutMs,
+          actions: const <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'stop_adhan',
+              'إيقاف التنبيه',
               cancelNotification: true,
               showsUserInterface: false,
             ),
@@ -209,6 +240,14 @@ class PrayerNotificationDetailsBuilder {
             : sound;
         return DarwinNotificationDetails(
           sound: '${soundName(effectiveSound)}.caf',
+          presentSound: true,
+          presentAlert: true,
+          presentBadge: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        );
+      case PrayerNotificationMode.maryamAyah:
+        return const DarwinNotificationDetails(
+          sound: 'adhan_maryam_ayah.caf',
           presentSound: true,
           presentAlert: true,
           presentBadge: true,

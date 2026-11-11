@@ -103,7 +103,8 @@ class PrayerNotificationModePill extends StatelessWidget {
                 ),
               ),
               if (mode == PrayerNotificationMode.takbeer ||
-                  mode == PrayerNotificationMode.announcement) ...[
+                  mode == PrayerNotificationMode.announcement ||
+                  mode == PrayerNotificationMode.maryamAyah) ...[
                 const SizedBox(width: AppSpace.xs),
                 StreamBuilder<PlayerState>(
                   stream: adhanService.playerStateStream,

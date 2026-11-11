@@ -242,6 +242,10 @@ class NotificationService {
             PrayerNotificationDetailsBuilder.channelIdForAdhan(
               settings.effectiveMuezzinSound,
             ),
+          PrayerNotificationMode.maryamAyah =>
+            PrayerNotificationDetailsBuilder.channelIdForAdhan(
+              AdhanSound.maryamAyah,
+            ),
           PrayerNotificationMode.takbeer => 'talib_prayer_takbeer_v4',
           PrayerNotificationMode.announcement =>
             PrayerNotificationDetailsBuilder.announcementChannelIdFor(

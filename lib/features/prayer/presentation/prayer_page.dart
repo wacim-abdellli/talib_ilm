@@ -446,6 +446,7 @@ class _PrayerPageState extends State<PrayerPage> {
     HapticFeedback.selectionClick();
     final modeLabel = switch (newMode) {
       PrayerNotificationMode.adhan => 'أذان كامل',
+      PrayerNotificationMode.maryamAyah => 'آية الصلاة (سورة مريم: 59)',
       PrayerNotificationMode.takbeer => 'تكبيرات فقط',
       PrayerNotificationMode.announcement => 'نداء وقت الصلاة',
       PrayerNotificationMode.tone => 'نغمة تنبيه هادئة',
@@ -491,9 +492,10 @@ class _PrayerPageState extends State<PrayerPage> {
         );
     final currentMode = currentSettings.modeForPrayer(prayerName);
 
-    // Cycle: adhan -> takbeer -> announcement -> tone -> silent -> off -> adhan
+    // Cycle: adhan -> maryamAyah -> takbeer -> announcement -> tone -> silent -> off -> adhan
     final PrayerNotificationMode nextMode = switch (currentMode) {
-      PrayerNotificationMode.adhan => PrayerNotificationMode.takbeer,
+      PrayerNotificationMode.adhan => PrayerNotificationMode.maryamAyah,
+      PrayerNotificationMode.maryamAyah => PrayerNotificationMode.takbeer,
       PrayerNotificationMode.takbeer => PrayerNotificationMode.announcement,
       PrayerNotificationMode.announcement => PrayerNotificationMode.tone,
       PrayerNotificationMode.tone => PrayerNotificationMode.silent,
@@ -526,6 +528,7 @@ class _PrayerPageState extends State<PrayerPage> {
     if (mounted) {
       final String modeName = switch (nextMode) {
         PrayerNotificationMode.adhan => 'أذان كامل',
+        PrayerNotificationMode.maryamAyah => 'آية مريم (59)',
         PrayerNotificationMode.takbeer => 'تكبيرات فقط',
         PrayerNotificationMode.announcement => 'نداء وقت الصلاة',
         PrayerNotificationMode.tone => 'نغمة هادئة',

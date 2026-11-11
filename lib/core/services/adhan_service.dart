@@ -90,10 +90,11 @@ class AdhanService {
       await AudioCoordinator.acquireFocus(AudioStreamType.adhan);
 
       // Ensure Full Adhan mode strictly plays a full muezzin sound
-      final effectiveSound =
-          (mode == PrayerNotificationMode.adhan && sound == AdhanSound.takbeer)
-          ? AdhanSound.qatami
-          : sound;
+      final effectiveSound = (mode == PrayerNotificationMode.maryamAyah)
+          ? AdhanSound.maryamAyah
+          : ((mode == PrayerNotificationMode.adhan && sound == AdhanSound.takbeer)
+              ? AdhanSound.qatami
+              : sound);
 
       final assetPath = _assetFor(
         sound: effectiveSound,
@@ -101,7 +102,8 @@ class AdhanService {
         prayerName: prayerName,
       );
 
-      final isQuranAyah = effectiveSound == AdhanSound.maryamAyah;
+      final isQuranAyah = effectiveSound == AdhanSound.maryamAyah ||
+          mode == PrayerNotificationMode.maryamAyah;
       final source = AudioSource.asset(
         assetPath,
         tag: MediaItem(
@@ -193,6 +195,9 @@ class AdhanService {
     }
     if (mode == PrayerNotificationMode.takbeer) {
       return AppAssets.adhanTakbeer;
+    }
+    if (mode == PrayerNotificationMode.maryamAyah) {
+      return AppAssets.adhanMaryamAyah;
     }
 
     // For Full Adhan mode, strictly ensure a full muezzin asset is used

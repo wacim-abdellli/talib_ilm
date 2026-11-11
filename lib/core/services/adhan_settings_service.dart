@@ -25,6 +25,7 @@ enum PrayerNotificationMode {
   tone,         // نغمة تنبيه هادئة
   silent,       // إشعار مرئي فقط بدون صوت
   off,          // إيقاف التنبيه
+  maryamAyah,   // تلاوة آية الصلاة (سورة مريم: 59)
 }
 
 class AdhanSettings {

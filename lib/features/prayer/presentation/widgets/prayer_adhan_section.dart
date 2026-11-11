@@ -303,6 +303,15 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                 _buildModePill(
                   palette: palette,
                   textTheme: textTheme,
+                  mode: PrayerNotificationMode.maryamAyah,
+                  title: 'آية الصلاة (سورة مريم: 59)',
+                  subtitle: 'تلاوة خاشعة بصوت القارئ ناصر القطامي عند دخول الوقت',
+                  icon: Icons.auto_stories_rounded,
+                ),
+                const SizedBox(height: AppSpace.xs),
+                _buildModePill(
+                  palette: palette,
+                  textTheme: textTheme,
                   mode: PrayerNotificationMode.takbeer,
                   title: 'تكبيرات فقط',
                   subtitle: 'تكبيرات الأذان فقط (الله أكبر، الله أكبر)',
@@ -412,6 +421,10 @@ class _PrayerAdhanSectionState extends State<PrayerAdhanSection> {
                               DropdownMenuItem(
                                 value: PrayerNotificationMode.adhan,
                                 child: Text('أذان كامل'),
+                              ),
+                              DropdownMenuItem(
+                                value: PrayerNotificationMode.maryamAyah,
+                                child: Text('آية مريم (59)'),
                               ),
                               DropdownMenuItem(
                                 value: PrayerNotificationMode.takbeer,
