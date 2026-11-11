@@ -8,10 +8,11 @@ void main() {
     final service = QuranAudioService();
 
     test('reciters list contains official reciters including Ahmad Talib and Nasser Al-Qatami', () {
-      expect(QuranAudioService.reciters.length, 43);
+      expect(QuranAudioService.reciters.length, 44);
       expect(service.selectedReciter.id, 'alafasy');
       expect(QuranAudioService.reciters.any((r) => r.id == 'ahmad_talib'), isTrue);
       expect(QuranAudioService.reciters.any((r) => r.id == 'qatami'), isTrue);
+      expect(QuranAudioService.reciters.any((r) => r.id == 'omar_diaa'), isTrue);
     });
 
     test('getAudioUrl formats surah and ayah with 3 digits padding', () {
@@ -118,6 +119,19 @@ void main() {
     test('isContinuous reflects continuous playback mode vs single verse', () async {
       await service.stop();
       expect(service.isContinuous, isFalse);
+    });
+
+    test('surah playback queue sets, retrieves, and clears correctly', () {
+      expect(service.surahPlaybackQueue, isNull);
+      expect(service.isDownloadedQueueOnly, isFalse);
+
+      service.setSurahPlaybackQueue([1, 53, 64], downloadedOnly: true);
+      expect(service.surahPlaybackQueue, [1, 53, 64]);
+      expect(service.isDownloadedQueueOnly, isTrue);
+
+      service.clearSurahPlaybackQueue();
+      expect(service.surahPlaybackQueue, isNull);
+      expect(service.isDownloadedQueueOnly, isFalse);
     });
   });
 }

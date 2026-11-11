@@ -288,6 +288,34 @@ class QuranAudioStorage {
     }
   }
 
+  /// Returns a sorted list of all surah numbers downloaded and verified on disk for [reciter].
+  static Future<List<int>> getDownloadedSurahNumbers(QuranReciter reciter) async {
+    final base = await getAudioBaseDir();
+    final reciterDir = Directory('${base.path}/${reciter.id}');
+    if (!await reciterDir.exists()) return const [];
+
+    final List<FileSystemEntity> surahEntities;
+    try {
+      surahEntities = reciterDir.listSync();
+    } catch (_) {
+      return const [];
+    }
+
+    final numbers = <int>[];
+    for (final entity in surahEntities) {
+      if (entity is! Directory) continue;
+      final dirName = entity.uri.pathSegments.reversed.where((s) => s.isNotEmpty).firstOrNull ??
+          entity.path.split(RegExp(r'[\\/]')).last;
+      final num = int.tryParse(dirName);
+      if (num == null || num < 1 || num > 114) continue;
+      if (await isSurahDownloaded(num, reciter: reciter)) {
+        numbers.add(num);
+      }
+    }
+    numbers.sort();
+    return numbers;
+  }
+
   /// Scans and returns all downloaded surahs grouped by reciter.
   /// High-performance implementation: Scans ONLY directories that actually exist on disk!
   static Future<Map<QuranReciter, List<DownloadedSurahItem>>> getDownloadedSurahsByReciter() async {
