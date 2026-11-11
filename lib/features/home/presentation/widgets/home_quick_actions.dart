@@ -53,7 +53,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.spa_rounded,
                 label: 'الأذكار',
-                accentColor: palette.prayer('الفجر'),
+                accentColor: palette.success,
                 onTap: onOpenAdhkar,
               ),
             ),
@@ -62,7 +62,7 @@ class HomeQuickActions extends StatelessWidget {
               child: QuickActionButton(
                 icon: Icons.explore_rounded,
                 label: 'القبلة',
-                accentColor: palette.prayer('المغرب'),
+                accentColor: palette.category('لغة').fg,
                 onTap: onOpenQibla,
               ),
             ),

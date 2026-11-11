@@ -524,10 +524,8 @@ struct Provider: TimelineProvider {
                 }
                 return "dark"
             }
-            if userSelectedAppTheme {
-                if appMode == "light" { return "light" }
-                if appMode == "dark" { return "dark" }
-            }
+            if appMode == "light" { return "light" }
+            if appMode == "dark" { return "dark" }
             return "system"
         }()
 
