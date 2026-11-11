@@ -26,13 +26,13 @@ struct WidgetPalette {
     var textSecondary: Color {
         isDark
             ? Color(red: 0.631, green: 0.631, blue: 0.631) // #A1A1A1
-            : Color(red: 0.431, green: 0.416, blue: 0.388) // #6E6A63
+            : Color(red: 0.369, green: 0.345, blue: 0.314) // #5E5850
     }
 
     var textMuted: Color {
         isDark
             ? Color(red: 0.541, green: 0.541, blue: 0.541) // #8A8A8A
-            : Color(red: 0.549, green: 0.529, blue: 0.494) // #8C877E
+            : Color(red: 0.471, green: 0.443, blue: 0.408) // #787168
     }
 
     var accent: Color {
@@ -44,7 +44,7 @@ struct WidgetPalette {
     var divider: Color {
         isDark
             ? Color.white.opacity(0.11)
-            : Color.black.opacity(0.07)
+            : Color(red: 0.110, green: 0.106, blue: 0.094).opacity(0.10)
     }
 
     func prayerAccent(for key: String, isJumua: Bool = false) -> Color {
@@ -130,18 +130,22 @@ struct TalibIlmWidgetEntryView: View {
     }
 
     var body: some View {
-        Group {
-            switch family {
-            case .systemLarge:
-                LargePrayerWidgetView(entry: entry, palette: palette)
-            default:
-                MediumPrayerWidgetView(entry: entry, palette: palette)
+        ZStack {
+            palette.background
+                .ignoresSafeArea()
+
+            Group {
+                switch family {
+                case .systemLarge:
+                    LargePrayerWidgetView(entry: entry, palette: palette)
+                default:
+                    MediumPrayerWidgetView(entry: entry, palette: palette)
+                }
             }
+            .environment(\.layoutDirection, .leftToRight)
         }
-        // Use explicit physical Left-to-Right layout direction so Arabic RTL order
-        // ([Isha][Maghrib][Asr][Dhuhr][Fajr] from left to right) is 100% deterministic
-        // regardless of whether the iPhone OS language is English or Arabic.
-        .environment(\.layoutDirection, .leftToRight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(palette.background)
         .widgetBackground(palette.background)
     }
 }
@@ -265,7 +269,8 @@ struct MediumPrayerWidgetView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .frame(maxHeight: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(palette.background)
     }
 }
 
@@ -467,6 +472,8 @@ struct LargePrayerWidgetView: View {
             .frame(maxHeight: .infinity)
         }
         .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(palette.background)
     }
 }
 

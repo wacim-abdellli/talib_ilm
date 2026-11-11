@@ -103,7 +103,7 @@ class HomeWidgetSnapshot {
         return AppTheme.isSystemDark();
       }
     } catch (_) {}
-    return true;
+    return AppTheme.isSystemDark();
   }
 
   /// Saves the target prayer epoch timestamp and all visual attributes for the
@@ -160,7 +160,9 @@ class HomeWidgetSnapshot {
         'dark' => 'dark',
         'light' => 'light',
         'auto' => 'auto',
-        _ => useDark ? 'dark' : 'light',
+        _ => preResolvedDark != null
+            ? (preResolvedDark ? 'dark' : 'light')
+            : 'auto',
       };
       final appThemeMode = prefs.getString('theme_mode') ?? 'system';
       final resolvedCity = cityName?.trim().isNotEmpty == true
@@ -382,6 +384,11 @@ class HomeWidgetSnapshot {
         'countdown_prefix': countdownPrefix,
         'is_prayer_active': isPrayerActive,
         'widget_is_dark': useDark,
+        'prayer_widget_theme_mode': widgetMode,
+        'theme_mode': appThemeMode,
+        'theme_user_selected': prefs.getBool('theme_user_selected') ?? false,
+        'widget_theme_user_selected':
+            prefs.getBool('widget_theme_user_selected') ?? false,
         'daily_gem_text': gemText,
         'daily_gem_author': gemAuthor,
         'prayers': prayersPayload,

@@ -14,6 +14,11 @@
   5. **Smart Active-Phone-Usage Dhikr Moment Engine (`DhikrOverlayService.kt`, `DhikrOverlayScheduler.kt`, `DhikrOverlayReceiver.kt`)**:
      - **Root Cause**: Previously, `DhikrOverlayScheduler` only set fixed clock-minute alarms, `DhikrOverlayService` discarded any slot that fired while the screen was locked (`!isInteractive || isLocked`) or while the user was inside the app (`isAppForeground`), and `stopSelf()` terminated the service so it never listened for `ACTION_USER_PRESENT` (screen unlock) or active screen-on sessions.
      - **Fix**: Rebuilt `DhikrOverlayService` and `DhikrOverlayScheduler` to track active phone usage (`ACTION_USER_PRESENT`, `ACTION_SCREEN_ON`, `ACTION_SCREEN_OFF`, `ACTION_TIME_TICK` + active session loop): never renders on a locked screen, queues missed slots via `pending_on_unlock` to display `2.4s` after the user unlocks their phone, paces reminders against realistic active screen-on time (`~5 min` for `50/day`), and kicks off the first live reminder within `10–12s` after saving settings.
+  6. **iOS Widget Light Mode Fix (`TalibIlmWidgets.swift`, `TalibIlmWidgetViews.swift`, `HomeWidgetSnapshot`, `HomeWidgetService`)**:
+     - **Root Cause**: `HomeWidgetSnapshot.savePrayerSnapshot` previously fell back to `useDark ? 'dark' : 'light'` and permanently persisted `'dark'` into `prayer_widget_theme_mode` when no widget theme was selected, while `HomeWidgetService.getThemeMode()` and `resolveWidgetIsDark()` defaulted to dark mode even though `ThemeService` defaults to Light. Furthermore, `TalibIlmWidgetEntryView` applied `.widgetBackground` only onto a `Group`, which can fall back to black/transparent container backgrounds in WidgetKit light mode, making dark ink text invisible.
+     - **Fix**: Default `getThemeMode()` and unconfigured `widgetMode` to `'auto'`, default `resolveWidgetIsDark()` to `AppTheme.isSystemDark()`, embed theme keys in `prayer_data_json`, track `widget_theme_user_selected` explicitly so app light mode isn't overridden by stale defaults, and wrap `TalibIlmWidgetEntryView`, `MediumPrayerWidgetView`, and `LargePrayerWidgetView` in explicit `ZStack` + `.background(palette.background)` + `.widgetBackground(palette.background)` with crisp parchment light-mode text contrast.
+  7. **32-bit Old Phones Release APK**:
+     - Built `build/app/outputs/flutter-apk/talib_ilm_old_phones_release.apk` (`flutter build apk --target-platform android-arm`, 117.8 MB).
 - **Verification Commands & Results**:
   - `flutter analyze`: 0 issues found.
   - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
@@ -4493,29 +4498,7 @@ FAILED (54 violations)
      - Redesigned `IslamicQuizCatalog.getDailyChallengeQuestions` with a deterministic rolling sliding window step across all 1,113 questions permuted by a fixed scholarly seed.
      - Mathematically guarantees that questions never repeat within a rolling timeline of over 111 days.
   3. **Removal of Lifelines (50:50 & Hint):**
-     - Completely removed `QuizLifelinesBar` ("تلميح" and "حذف إجابتين") from `QuizSessionPage` along with all lifeline states and handlers, delivering a focused, dignified assessment.
-  4. **Removal of Gamified "XP" & "*2" Multipliers:**
-     - Removed `XP` pill and progress bar from `QuizHeroStatsBanner` to preserve a serene scholarly environment.
-     - Removed `مضاعفة النقاط 2x ⚡` from `_buildDailyChallengeCard` in `IslamicQuizHubPage`, fixing the 13px right overflow bug permanently.
-     - Replaced `+XP` in `QuizResultPage` with clear scholarly mastery status (`متقن ✓` / `مستمر`).
-  5. **Clean, Calm Question Card UI & Ergonomics:**
-     - Elevated `QuizSessionPage` question card background, typography, and contrast. Kept line count at 521 lines (strictly < 600 lines).
-  6. **Verification Gate:**
-     - `flutter analyze`: **0 issues found** (clean in 11.6s).
-     - `python tool/ui_lint_v2.py`: **OK** (0 FAILs, 9 allow markers / cap 10).
-     - `flutter test`: **100% pass** (19/19 core quiz and ilm tests passed).
-- **Open Issues:** None.
-
-
----
-
-## Android Home Screen Prayer Widget Overhaul («ودجت مواقيت الصلاة للشاشة الرئيسية»)
-- **Status:** Complete
-- **Branch:** `feat/quran-word-search`
-- **Commit:** `39d320b`
-- **Root Cause Diagnosed & Fixed:**
-  1. **Launcher Resize & True Responsive Filling (scaleType="fitXY"):**
-     - Diagnosed why resizing made the
+     - Completely removed `QuizLifelinesBar` ("تلميح" and "حذ
 
 ## Round 13 — Android Home Screen Widget Persistent Live Chronometer Countdown
 - **Status:** Complete

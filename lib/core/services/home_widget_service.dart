@@ -61,16 +61,16 @@ class HomeWidgetService {
     return fetched;
   }
 
-  /// Retrieves the user-selected widget theme mode (defaults to dark AMOLED card)
+  /// Retrieves the user-selected widget theme mode (defaults to automatic system matching)
   static Future<WidgetThemeMode> getThemeMode() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final modeStr = prefs.getString(themeModeKey);
       if (modeStr == 'light') return WidgetThemeMode.light;
-      if (modeStr == 'auto') return WidgetThemeMode.auto;
-      return WidgetThemeMode.dark;
+      if (modeStr == 'dark') return WidgetThemeMode.dark;
+      return WidgetThemeMode.auto;
     } catch (_) {
-      return WidgetThemeMode.dark;
+      return WidgetThemeMode.auto;
     }
   }
 
@@ -79,10 +79,15 @@ class HomeWidgetService {
     final prefs = await SharedPreferences.getInstance();
     try {
       await prefs.setString(themeModeKey, mode.name);
+      await prefs.setBool('widget_theme_user_selected', true);
       if (Platform.isIOS && !_appGroupReady) await initBackground();
       await HomeWidgetSnapshot.writeWidgetValue<String>(
         themeModeKey,
         mode.name,
+      );
+      await HomeWidgetSnapshot.writeWidgetValue<bool>(
+        'widget_theme_user_selected',
+        true,
       );
       invalidateCache();
       await updateAllWidgets(force: true);

@@ -507,16 +507,26 @@ struct Provider: TimelineProvider {
             jsonFallbackKey: "city"
         ) ?? "مكة المكرمة"
 
-        let isDarkFallback = (prefs.object(forKey: "widget_is_dark") as? Bool) ?? true
+        let isDarkFallback = (prefs.object(forKey: "widget_is_dark") as? Bool)
+            ?? ((json?["widget_is_dark"] as? Bool) ?? false)
         let rawMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "auto"
-        let userSelectedAppTheme = (prefs.object(forKey: "theme_user_selected") as? Bool) ?? false
+        let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
+        let userSelectedWidget = (prefs.object(forKey: "widget_theme_user_selected") as? Bool)
+            ?? ((json?["widget_theme_user_selected"] as? Bool) ?? false)
+        let userSelectedAppTheme = (prefs.object(forKey: "theme_user_selected") as? Bool)
+            ?? ((json?["theme_user_selected"] as? Bool) ?? false)
+
         let themePreference: String = {
-            if rawMode == "dark" { return "dark" }
             if rawMode == "light" { return "light" }
+            if rawMode == "dark" {
+                if !userSelectedWidget && appMode == "light" {
+                    return "light"
+                }
+                return "dark"
+            }
             if userSelectedAppTheme {
-                let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
-                if appMode == "dark" { return "dark" }
                 if appMode == "light" { return "light" }
+                if appMode == "dark" { return "dark" }
             }
             return "system"
         }()
