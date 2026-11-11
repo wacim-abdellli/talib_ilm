@@ -113,9 +113,9 @@ class ThemeService extends ChangeNotifier {
       case ThemeMode.system:
         return 'تلقائي';
       case ThemeMode.light:
-        return 'الوضع الفاتح';
+        return 'فاتح';
       case ThemeMode.dark:
-        return 'الوضع الداكن';
+        return 'داكن';
     }
   }
 

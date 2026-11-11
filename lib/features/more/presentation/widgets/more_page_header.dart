@@ -70,6 +70,8 @@ class MorePageHeader extends StatelessWidget {
                   children: [
                     Text(
                       'الإعدادات والمزيد',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: textTheme.title.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
@@ -78,6 +80,8 @@ class MorePageHeader extends StatelessWidget {
                     const SizedBox(height: AppSpace.xs / 2),
                     Text(
                       'طالب علم • سائر في الطلب 🌿',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: textTheme.caption.copyWith(
                         color: palette.textMuted,
                       ),

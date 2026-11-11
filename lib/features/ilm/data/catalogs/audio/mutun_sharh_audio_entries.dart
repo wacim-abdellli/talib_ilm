@@ -206,6 +206,17 @@ class MutunSharhAudioEntries {
     // ── العقيدة الواسطية ──────────────────────────────────────
     'bk_wasitiyyah': [
       MatnAudioSource(
+        reciter: MutunReciterDefaults.fawzan,
+        audioUrl: 'https://archive.org/download/Sharh_Wasitiya_1432H/01.mp3',
+        edition: BookAudioEdition.sharh,
+        chapters: BookAudioChapter.numbered(
+          baseUrl: 'https://archive.org/download/Sharh_Wasitiya_1432H',
+          count: 50,
+          titlePrefix: 'شرح الواسطية مجلس',
+          padWidth: 2,
+        ),
+      ),
+      MatnAudioSource(
         reciter: MutunReciterDefaults.uthaymin,
         audioUrl: 'https://archive.org/download/wasiteyyah/01a.mp3',
         edition: BookAudioEdition.sharh,

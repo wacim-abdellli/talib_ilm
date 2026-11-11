@@ -33,6 +33,11 @@ class QuranReciter {
       surahBaseUrl: 'https://cdn.mp3quran.net/audio/ahmad-humaid/r1/',
     ),
     QuranReciter(
+      id: 'omar_diaa',
+      name: 'عمر بن ضياء الدين',
+      surahBaseUrl: 'https://archive.org/download/omar-ben-diya-al-din/',
+    ),
+    QuranReciter(
       id: 'badr_turki',
       name: 'بدر بن محمد التركي',
       surahBaseUrl: 'https://cdn.mp3quran.net/audio/badr-turki/r1/',
