@@ -454,11 +454,11 @@ class _ToastWidgetState extends State<_ToastWidget>
                       ),
                       constraints: const BoxConstraints(maxWidth: 440),
                       decoration: BoxDecoration(
-                        borderRadius: AppRadius.pillRadius,
+                        borderRadius: AppRadius.lgRadius,
                         boxShadow: palette.shadow,
                       ),
                       child: ClipRRect(
-                        borderRadius: AppRadius.pillRadius,
+                        borderRadius: AppRadius.lgRadius,
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                           child: Material(
@@ -473,7 +473,7 @@ class _ToastWidgetState extends State<_ToastWidget>
                                   AppSpace.sm,
                                 ),
                                 decoration: BoxDecoration(
-                                  borderRadius: AppRadius.pillRadius,
+                                  borderRadius: AppRadius.lgRadius,
                                   border: Border.all(
                                     color: borderColor,
                                     width: 1.2,
@@ -507,7 +507,8 @@ class _ToastWidgetState extends State<_ToastWidget>
                                           style: textTheme.label.copyWith(
                                             color: palette.text,
                                           ),
-                                          maxLines: 2,
+                                          softWrap: true,
+                                          maxLines: 4,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),

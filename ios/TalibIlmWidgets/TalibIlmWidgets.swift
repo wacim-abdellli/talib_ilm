@@ -1,9 +1,10 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+import CoreLocation
 import Security
 
-// MARK: - AppIntents Widget Configuration (Edit Widget Directly on iOS Home Screen)
+// MARK: - AppIntents Widget Configuration (Theme Selector)
 
 enum WidgetThemeChoice: String, AppEnum {
     case auto
@@ -12,124 +13,172 @@ enum WidgetThemeChoice: String, AppEnum {
 
     static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "المظهر")
     static var caseDisplayRepresentations: [WidgetThemeChoice: DisplayRepresentation] = [
-        .auto: DisplayRepresentation(title: "تلقائي (من التطبيق والنظام)"),
+        .auto: DisplayRepresentation(title: "تلقائي (حسب التطبيق والنظام)"),
         .light: DisplayRepresentation(title: "فاتح (أبيض)"),
         .dark: DisplayRepresentation(title: "داكن (أسود)")
     ]
 }
 
-enum WidgetCityChoice: String, AppEnum {
-    case auto
-    case sfax
-    case tunis
-    case sousse
-    case kairouan
-    case bizerte
-    case gabes
-    case makkah
-    case madinah
-    case riyadh
-    case jeddah
-    case cairo
-    case alexandria
-    case algiers
-    case oran
-    case rabat
-    case casablanca
-    case amman
-    case jerusalem
-    case doha
-    case dubai
-    case kuwait
-    case baghdad
-    case damascus
-    case beirut
-    case istanbul
-    case paris
-    case london
-
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "المدينة")
-    static var caseDisplayRepresentations: [WidgetCityChoice: DisplayRepresentation] = [
-        .auto: DisplayRepresentation(title: "تلقائي (من التطبيق)"),
-        .sfax: DisplayRepresentation(title: "صفاقس"),
-        .tunis: DisplayRepresentation(title: "تونس"),
-        .sousse: DisplayRepresentation(title: "سوسة"),
-        .kairouan: DisplayRepresentation(title: "القيروان"),
-        .bizerte: DisplayRepresentation(title: "بنزرت"),
-        .gabes: DisplayRepresentation(title: "قابس"),
-        .makkah: DisplayRepresentation(title: "مكة المكرمة"),
-        .madinah: DisplayRepresentation(title: "المدينة المنورة"),
-        .riyadh: DisplayRepresentation(title: "الرياض"),
-        .jeddah: DisplayRepresentation(title: "جدة"),
-        .cairo: DisplayRepresentation(title: "القاهرة"),
-        .alexandria: DisplayRepresentation(title: "الإسكندرية"),
-        .algiers: DisplayRepresentation(title: "الجزائر العاصمة"),
-        .oran: DisplayRepresentation(title: "وهران"),
-        .rabat: DisplayRepresentation(title: "الرباط"),
-        .casablanca: DisplayRepresentation(title: "الدار البيضاء"),
-        .amman: DisplayRepresentation(title: "عمّان"),
-        .jerusalem: DisplayRepresentation(title: "القدس"),
-        .doha: DisplayRepresentation(title: "الدوحة"),
-        .dubai: DisplayRepresentation(title: "دبي"),
-        .kuwait: DisplayRepresentation(title: "الكويت"),
-        .baghdad: DisplayRepresentation(title: "بغداد"),
-        .damascus: DisplayRepresentation(title: "دمشق"),
-        .beirut: DisplayRepresentation(title: "بيروت"),
-        .istanbul: DisplayRepresentation(title: "إسطنبول"),
-        .paris: DisplayRepresentation(title: "باريس"),
-        .london: DisplayRepresentation(title: "لندن")
-    ]
-
-    var metadata: (name: String, lat: Double, lon: Double, country: String, tz: Double)? {
-        switch self {
-        case .auto: return nil
-        case .sfax: return ("صفاقس", 34.7406, 10.7603, "TN", 1.0)
-        case .tunis: return ("تونس", 36.8065, 10.1815, "TN", 1.0)
-        case .sousse: return ("سوسة", 35.8256, 10.6369, "TN", 1.0)
-        case .kairouan: return ("القيروان", 35.6781, 10.0963, "TN", 1.0)
-        case .bizerte: return ("بنزرت", 37.2744, 9.8739, "TN", 1.0)
-        case .gabes: return ("قابس", 33.8815, 10.0982, "TN", 1.0)
-        case .makkah: return ("مكة المكرمة", 21.4225, 39.8262, "SA", 3.0)
-        case .madinah: return ("المدينة المنورة", 24.4672, 39.6112, "SA", 3.0)
-        case .riyadh: return ("الرياض", 24.7136, 46.6753, "SA", 3.0)
-        case .jeddah: return ("جدة", 21.4858, 39.1925, "SA", 3.0)
-        case .cairo: return ("القاهرة", 30.0444, 31.2357, "EG", 2.0)
-        case .alexandria: return ("الإسكندرية", 31.2001, 29.9187, "EG", 2.0)
-        case .algiers: return ("الجزائر العاصمة", 36.7538, 3.0588, "DZ", 1.0)
-        case .oran: return ("وهران", 35.6971, -0.6308, "DZ", 1.0)
-        case .rabat: return ("الرباط", 34.0209, -6.8416, "MA", 1.0)
-        case .casablanca: return ("الدار البيضاء", 33.5731, -7.5898, "MA", 1.0)
-        case .amman: return ("عمّان", 31.9454, 35.9284, "JO", 3.0)
-        case .jerusalem: return ("القدس", 31.7683, 35.2137, "PS", 2.0)
-        case .doha: return ("الدوحة", 25.2854, 51.5310, "QA", 3.0)
-        case .dubai: return ("دبي", 25.2048, 55.2708, "AE", 4.0)
-        case .kuwait: return ("الكويت", 29.3759, 47.9774, "KW", 3.0)
-        case .baghdad: return ("بغداد", 33.3152, 44.3661, "IQ", 3.0)
-        case .damascus: return ("دمشق", 33.5138, 36.2765, "SY", 3.0)
-        case .beirut: return ("بيروت", 33.8938, 35.5018, "LB", 2.0)
-        case .istanbul: return ("إسطنبول", 41.0082, 28.9784, "TR", 3.0)
-        case .paris: return ("باريس", 48.8566, 2.3522, "FR", 1.0)
-        case .london: return ("لندن", 51.5072, -0.1276, "GB", 0.0)
-        }
-    }
-}
-
 struct TalibPrayerWidgetIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "تخصيص ودجت الصلاة"
-    static var description = IntentDescription("تحكم في المظهر والمدينة مباشرة من الويدجت أو اتركهما تلقائيين للمزامنة مع التطبيق")
+    static var description = IntentDescription("تحكم في مظهر الأداة (فاتح، داكن، أو تلقائي حسب النظام والتطبيق).")
 
     @Parameter(title: "المظهر", default: .auto)
     var themeMode: WidgetThemeChoice
 
-    @Parameter(title: "المدينة", default: .auto)
-    var cityOverride: WidgetCityChoice
-
     init() {}
 
-    init(themeMode: WidgetThemeChoice, cityOverride: WidgetCityChoice) {
+    init(themeMode: WidgetThemeChoice) {
         self.themeMode = themeMode
-        self.cityOverride = cityOverride
     }
+}
+
+// MARK: - System GPS & Reverse Geocoding Fallback (When App Groups Are Restricted)
+
+struct ResolvedGeoContext {
+    let latitude: Double
+    let longitude: Double
+    let cityName: String
+    let countryCode: String
+}
+
+@MainActor
+private final class WidgetLocationFetcher: NSObject, CLLocationManagerDelegate {
+    private var manager: CLLocationManager?
+    private var continuation: CheckedContinuation<CLLocation?, Never>?
+
+    func fetchIfAuthorized() async -> CLLocation? {
+        let mgr = CLLocationManager()
+        let status = mgr.authorizationStatus
+        let authorized = mgr.isAuthorizedForWidgetUpdates
+            || status == .authorizedAlways
+            || status == .authorizedWhenInUse
+        guard authorized else { return nil }
+
+        if let cached = mgr.location,
+           abs(cached.timestamp.timeIntervalSinceNow) < 6 * 3600 {
+            return cached
+        }
+
+        return await withCheckedContinuation { cont in
+            self.continuation = cont
+            self.manager = mgr
+            mgr.desiredAccuracy = kCLLocationAccuracyKilometer
+            mgr.delegate = self
+            mgr.requestLocation()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                guard let self = self, let pending = self.continuation else { return }
+                self.continuation = nil
+                self.manager?.delegate = nil
+                self.manager = nil
+                pending.resume(returning: mgr.location)
+            }
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        Task { @MainActor in
+            guard let pending = self.continuation else { return }
+            self.continuation = nil
+            manager.delegate = nil
+            self.manager = nil
+            pending.resume(returning: locations.last)
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            guard let pending = self.continuation else { return }
+            self.continuation = nil
+            manager.delegate = nil
+            self.manager = nil
+            pending.resume(returning: manager.location)
+        }
+    }
+}
+
+private func resolveSystemGeoContext(prefs: UserDefaults, json: [String: Any]?) async -> ResolvedGeoContext? {
+    // 1. If synced coordinates from app are present, prefer them (skip GPS)
+    var syncedLat = prefs.double(forKey: "location_latitude")
+    var syncedLon = prefs.double(forKey: "location_longitude")
+    if let json = json {
+        if syncedLat == 0, let jLat = json["latitude"] as? Double { syncedLat = jLat }
+        if syncedLon == 0, let jLon = json["longitude"] as? Double { syncedLon = jLon }
+    }
+    if syncedLat != 0 || syncedLon != 0 {
+        let syncedCity = getString(from: prefs, json: json, key: "location_city", jsonFallbackKey: "city") ?? ""
+        let syncedCountry = getString(from: prefs, json: json, key: "country_code")?.uppercased() ?? ""
+        return ResolvedGeoContext(
+            latitude: syncedLat,
+            longitude: syncedLon,
+            cityName: syncedCity,
+            countryCode: syncedCountry
+        )
+    }
+
+    // 2. Ask WidgetKit's authorized system CoreLocation directly (works across all countries without App Groups)
+    let localDefaults = UserDefaults.standard
+    let fetchedLocation = await WidgetLocationFetcher().fetchIfAuthorized()
+    let cachedLat = localDefaults.double(forKey: "widget_geo_lat")
+    let cachedLon = localDefaults.double(forKey: "widget_geo_lon")
+    let cachedCity = localDefaults.string(forKey: "widget_geo_city") ?? ""
+    let cachedCountry = localDefaults.string(forKey: "widget_geo_country") ?? ""
+    let cachedGeoAt = localDefaults.double(forKey: "widget_geo_updated_at")
+
+    if let loc = fetchedLocation {
+        let lat = loc.coordinate.latitude
+        let lon = loc.coordinate.longitude
+        let movedFar = abs(lat - cachedLat) > 0.04 || abs(lon - cachedLon) > 0.04
+        let isStale = abs(Date().timeIntervalSince1970 - cachedGeoAt) > 12 * 3600
+
+        if !movedFar && !isStale && !cachedCity.isEmpty {
+            return ResolvedGeoContext(
+                latitude: lat,
+                longitude: lon,
+                cityName: cachedCity,
+                countryCode: cachedCountry
+            )
+        }
+
+        if let placemarks = try? await CLGeocoder().reverseGeocodeLocation(
+            loc,
+            preferredLocale: Locale(identifier: "ar")
+        ), let pm = placemarks.first {
+            let city = (pm.locality ?? pm.subAdministrativeArea ?? pm.administrativeArea ?? pm.country ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let country = (pm.isoCountryCode ?? "").uppercased()
+            localDefaults.set(lat, forKey: "widget_geo_lat")
+            localDefaults.set(lon, forKey: "widget_geo_lon")
+            if !city.isEmpty { localDefaults.set(city, forKey: "widget_geo_city") }
+            if !country.isEmpty { localDefaults.set(country, forKey: "widget_geo_country") }
+            localDefaults.set(Date().timeIntervalSince1970, forKey: "widget_geo_updated_at")
+            return ResolvedGeoContext(
+                latitude: lat,
+                longitude: lon,
+                cityName: city.isEmpty ? cachedCity : city,
+                countryCode: country.isEmpty ? cachedCountry : country
+            )
+        }
+
+        return ResolvedGeoContext(
+            latitude: lat,
+            longitude: lon,
+            cityName: cachedCity,
+            countryCode: cachedCountry
+        )
+    }
+
+    if cachedLat != 0 || cachedLon != 0 {
+        return ResolvedGeoContext(
+            latitude: cachedLat,
+            longitude: cachedLon,
+            cityName: cachedCity,
+            countryCode: cachedCountry
+        )
+    }
+
+    return nil
 }
 
 // MARK: - Safe Data Extraction, App Group Discovery & Keychain Bridge
@@ -471,7 +520,7 @@ private func formatUmmAlQuraHijri(for date: Date, includeYear: Bool = false) -> 
     return formatter.string(from: date)
 }
 
-// MARK: - Autonomous Offline Astronomical Prayer Calculator Fallback
+// MARK: - Autonomous Offline Astronomical Prayer Calculator (Matches adhan-dart Worldwide)
 
 struct OfflinePrayerCalculator {
     static func calculate(
@@ -540,7 +589,6 @@ struct OfflinePrayerCalculator {
             return acos(cosH) * 180.0 / .pi
         }
 
-        // Round to nearest minute cleanly, matching adhan-dart PrayerTimes behavior
         func dateFromHours(_ hours: Double) -> Date {
             var adjustedHours = hours.truncatingRemainder(dividingBy: 24.0)
             if adjustedHours < 0 { adjustedHours += 24.0 }
@@ -551,44 +599,55 @@ struct OfflinePrayerCalculator {
             return calendar.date(from: comp) ?? date
         }
 
-        let (fajrAngle, ishaAngle): (Double, Double) = {
+        // Exact adhan-dart method angles & regional adjustments
+        let params: (fajr: Double, isha: Double, ishaIntervalMin: Double?, dhuhrAdj: Double, asrAdj: Double, maghribAdj: Double, ishaAdj: Double) = {
+            if isTunisia {
+                return (-18.0, -18.0, nil, 6.0, 1.0, 3.0, 1.0)
+            }
             switch countryCode {
-            case "EG", "SD", "LY", "SY", "LB", "JO", "PS":
-                return (-19.5, -17.5)
             case "SA", "YE":
-                return (-18.5, -18.5)
-            case "AE", "QA", "KW":
-                return (-18.2, -18.2)
+                return (-18.5, -18.5, 90.0, 0.0, 0.0, 0.0, 0.0)
+            case "EG", "SD", "LY", "SY", "LB", "JO", "PS":
+                return (-19.5, -17.5, nil, 1.0, 0.0, 0.0, 0.0)
+            case "AE":
+                return (-18.2, -18.2, nil, 3.0, 3.0, 3.0, 0.0)
+            case "QA":
+                return (-18.0, -18.0, 90.0, 0.0, 0.0, 0.0, 0.0)
+            case "KW":
+                return (-18.0, -17.5, nil, 0.0, 0.0, 0.0, 0.0)
+            case "TR":
+                return (-18.0, -17.0, nil, 5.0, 4.0, 7.0, 0.0)
+            case "US", "CA":
+                return (-15.0, -15.0, nil, 1.0, 0.0, 0.0, 0.0)
+            case "PK", "IN", "BD", "AF":
+                return (-18.0, -18.0, nil, 1.0, 0.0, 0.0, 0.0)
+            case "SG", "MY", "ID":
+                return (-20.0, -18.0, nil, 1.0, 0.0, 0.0, 0.0)
             default:
-                return (-18.0, -18.0)
+                return (-18.0, -17.0, nil, 1.0, 0.0, 0.0, 0.0)
             }
         }()
 
         guard let hSunrise = hourAngle(forAltitude: -0.8333),
-              let hFajr = hourAngle(forAltitude: fajrAngle) else {
+              let hFajr = hourAngle(forAltitude: params.fajr) else {
             return [:]
         }
 
-        let hIsha = hourAngle(forAltitude: ishaAngle) ?? hSunrise
+        let hIsha = hourAngle(forAltitude: params.isha) ?? hSunrise
         let shadowFactor = isHanafi ? 2.0 : 1.0
         let asrAltRad = atan(1.0 / (shadowFactor + tan(abs(latRad - declination))))
         let asrAltDeg = asrAltRad * 180.0 / .pi
         let hAsr = hourAngle(forAltitude: asrAltDeg) ?? 45.0
 
-        let dhuhrPrecautionMin = isTunisia ? 6.0 : 2.0
-        let asrPrecautionMin = isTunisia ? 1.0 : 0.0
-        let maghribPrecautionMin = isTunisia ? 3.0 : 2.0
-        let ishaPrecautionMin = isTunisia ? 1.0 : 1.0
-
         let fajrDate = dateFromHours(solarNoonHours - (hFajr / 15.0))
-        let dhuhrDate = dateFromHours(solarNoonHours + (dhuhrPrecautionMin / 60.0))
-        let asrDate = dateFromHours(solarNoonHours + (hAsr / 15.0) + (asrPrecautionMin / 60.0))
-        let maghribDate = dateFromHours(solarNoonHours + (hSunrise / 15.0) + (maghribPrecautionMin / 60.0))
+        let dhuhrDate = dateFromHours(solarNoonHours + (params.dhuhrAdj / 60.0))
+        let asrDate = dateFromHours(solarNoonHours + (hAsr / 15.0) + (params.asrAdj / 60.0))
+        let maghribDate = dateFromHours(solarNoonHours + (hSunrise / 15.0) + (params.maghribAdj / 60.0))
         let ishaDate: Date = {
-            if countryCode == "SA" || countryCode == "YE" || countryCode == "QA" {
-                return maghribDate.addingTimeInterval(90 * 60)
+            if let intervalMin = params.ishaIntervalMin {
+                return maghribDate.addingTimeInterval(intervalMin * 60.0)
             }
-            return dateFromHours(solarNoonHours + (hIsha / 15.0) + (ishaPrecautionMin / 60.0))
+            return dateFromHours(solarNoonHours + (hIsha / 15.0) + (params.ishaAdj / 60.0))
         }()
 
         return [
@@ -645,7 +704,7 @@ private func epochDate(in dict: [String: Any]?, key: String) -> Date? {
 private func loadSchedule(
     from prefs: UserDefaults,
     json: [String: Any]?,
-    cityOverride: WidgetCityChoice = .auto,
+    geoContext: ResolvedGeoContext? = nil,
     for date: Date = Date()
 ) -> PrayerSchedule {
     let cal = Calendar.current
@@ -660,38 +719,33 @@ private func loadSchedule(
     var dayHijri: String?
     var dayIsFriday: Bool?
 
-    let forcedCityMeta = cityOverride.metadata
+    if let dayEntry = findScheduledDay(in: json, for: date) {
+        fajr = epochDate(in: dayEntry, key: "fajr_epoch_ms")
+        dhuhr = epochDate(in: dayEntry, key: "dhuhr_epoch_ms")
+        asr = epochDate(in: dayEntry, key: "asr_epoch_ms")
+        maghrib = epochDate(in: dayEntry, key: "maghrib_epoch_ms")
+        isha = epochDate(in: dayEntry, key: "isha_epoch_ms")
+        dayHijri = dayEntry["hijri"] as? String
+        dayIsFriday = dayEntry["is_friday"] as? Bool
+    }
 
-    if forcedCityMeta == nil {
-        if let dayEntry = findScheduledDay(in: json, for: date) {
-            fajr = epochDate(in: dayEntry, key: "fajr_epoch_ms")
-            dhuhr = epochDate(in: dayEntry, key: "dhuhr_epoch_ms")
-            asr = epochDate(in: dayEntry, key: "asr_epoch_ms")
-            maghrib = epochDate(in: dayEntry, key: "maghrib_epoch_ms")
-            isha = epochDate(in: dayEntry, key: "isha_epoch_ms")
-            dayHijri = dayEntry["hijri"] as? String
-            dayIsFriday = dayEntry["is_friday"] as? Bool
-        }
+    if let nextEntry = findScheduledDay(in: json, for: nextDay) {
+        tomorrowFajr = epochDate(in: nextEntry, key: "fajr_epoch_ms")
+    }
 
-        if let nextEntry = findScheduledDay(in: json, for: nextDay) {
-            tomorrowFajr = epochDate(in: nextEntry, key: "fajr_epoch_ms")
-        }
+    if fajr == nil || dhuhr == nil || asr == nil || maghrib == nil || isha == nil {
+        fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms", prayerSlug: "fajr")
+        dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms", prayerSlug: "dhuhr")
+        asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms", prayerSlug: "asr")
+        maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms", prayerSlug: "maghrib")
+        isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms", prayerSlug: "isha")
+    }
 
-        if fajr == nil || dhuhr == nil || asr == nil || maghrib == nil || isha == nil {
-            fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms", prayerSlug: "fajr")
-            dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms", prayerSlug: "dhuhr")
-            asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms", prayerSlug: "asr")
-            maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms", prayerSlug: "maghrib")
-            isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms", prayerSlug: "isha")
-        }
-
-        if tomorrowFajr == nil {
-            tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
-        }
+    if tomorrowFajr == nil {
+        tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
     }
 
     let scheduleValidForDate: Bool = {
-        if forcedCityMeta != nil { return false }
         guard let f = fajr, let d = dhuhr, let a = asr, let m = maghrib, let i = isha else {
             return false
         }
@@ -707,9 +761,9 @@ private func loadSchedule(
     }()
 
     if !scheduleValidForDate {
-        var lat = forcedCityMeta?.lat ?? prefs.double(forKey: "location_latitude")
-        var lon = forcedCityMeta?.lon ?? prefs.double(forKey: "location_longitude")
-        if forcedCityMeta == nil, let json = json {
+        var lat = geoContext?.latitude ?? prefs.double(forKey: "location_latitude")
+        var lon = geoContext?.longitude ?? prefs.double(forKey: "location_longitude")
+        if let json = json {
             if lat == 0, let jLat = json["latitude"] as? Double { lat = jLat }
             if lon == 0, let jLon = json["longitude"] as? Double { lon = jLon }
         }
@@ -723,24 +777,24 @@ private func loadSchedule(
                 lon = 39.8262
             }
         }
-        let countryCode = forcedCityMeta?.country
-            ?? (getString(from: prefs, json: json, key: "country_code")?.uppercased() ?? "")
-        let city = forcedCityMeta?.name
+        let countryCode: String = {
+            if let gc = geoContext?.countryCode, !gc.isEmpty { return gc }
+            if let sc = getString(from: prefs, json: json, key: "country_code"), !sc.isEmpty { return sc.uppercased() }
+            if let reg = Locale.current.region?.identifier { return reg.uppercased() }
+            return ""
+        }()
+        let city = geoContext?.cityName
             ?? (getString(from: prefs, json: json, key: "location_city", jsonFallbackKey: "city") ?? "")
         let calcMethod = getString(from: prefs, json: json, key: "calculation_method") ?? ""
         let madhab = getString(from: prefs, json: json, key: "madhab") ?? ""
-        let localeStr = Locale.current.identifier
-        let isTunisia = countryCode == "TN" || (forcedCityMeta == nil && (calcMethod == "tunisia" || city.contains("تونس") || city.contains("صفاقس") || (countryCode.isEmpty && localeStr.contains("TN"))))
+        let isTunisia = calcMethod == "tunisia"
+            || countryCode == "TN"
+            || city.contains("تونس")
+            || city.contains("صفاقس")
+            || (countryCode.isEmpty && Locale.current.identifier.contains("TN"))
         let isHanafi = madhab == "hanafi"
 
-        let systemTz = Double(TimeZone.current.secondsFromGMT(for: date)) / 3600.0
-        let tzOffset: Double = {
-            if let meta = forcedCityMeta, abs(systemTz - meta.tz) > 1.5 {
-                return meta.tz
-            }
-            return systemTz
-        }()
-
+        let tzOffset = Double(TimeZone.current.secondsFromGMT(for: date)) / 3600.0
         let calcToday = OfflinePrayerCalculator.calculate(
             date: date,
             latitude: lat,
@@ -837,22 +891,24 @@ struct Provider: AppIntentTimelineProvider {
         let prefs = getPreferences()
         let json = loadJsonPayload(from: prefs)
         let schedule = loadSchedule(from: prefs, json: json, for: now)
-        return buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, config: TalibPrayerWidgetIntent())
+        return buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, geoContext: nil, config: TalibPrayerWidgetIntent())
     }
 
     func snapshot(for configuration: TalibPrayerWidgetIntent, in context: Context) async -> PrayerEntry {
         let now = Date()
         let prefs = getPreferences()
         let json = loadJsonPayload(from: prefs)
-        let schedule = loadSchedule(from: prefs, json: json, cityOverride: configuration.cityOverride, for: now)
-        return buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, config: configuration)
+        let geo = await resolveSystemGeoContext(prefs: prefs, json: json)
+        let schedule = loadSchedule(from: prefs, json: json, geoContext: geo, for: now)
+        return buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, geoContext: geo, config: configuration)
     }
 
     func timeline(for configuration: TalibPrayerWidgetIntent, in context: Context) async -> Timeline<PrayerEntry> {
         let now = Date()
         let prefs = getPreferences()
         let json = loadJsonPayload(from: prefs)
-        let schedule = loadSchedule(from: prefs, json: json, cityOverride: configuration.cityOverride, for: now)
+        let geo = await resolveSystemGeoContext(prefs: prefs, json: json)
+        let schedule = loadSchedule(from: prefs, json: json, geoContext: geo, for: now)
 
         var transitionDates = Set<Date>()
         transitionDates.insert(now)
@@ -898,20 +954,21 @@ struct Provider: AppIntentTimelineProvider {
         for entryDate in sortedDates {
             let entrySchedule = Calendar.current.isDate(entryDate, inSameDayAs: now)
                 ? schedule
-                : loadSchedule(from: prefs, json: json, cityOverride: configuration.cityOverride, for: entryDate)
+                : loadSchedule(from: prefs, json: json, geoContext: geo, for: entryDate)
             entries.append(
                 buildEntry(
                     for: entryDate,
                     schedule: entrySchedule,
                     prefs: prefs,
                     json: json,
+                    geoContext: geo,
                     config: configuration
                 )
             )
         }
 
         if entries.isEmpty {
-            entries.append(buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, config: configuration))
+            entries.append(buildEntry(for: now, schedule: schedule, prefs: prefs, json: json, geoContext: geo, config: configuration))
         }
 
         let nextRefresh = min(
@@ -926,6 +983,7 @@ struct Provider: AppIntentTimelineProvider {
         schedule: PrayerSchedule,
         prefs: UserDefaults,
         json: [String: Any]?,
+        geoContext: ResolvedGeoContext?,
         config: TalibPrayerWidgetIntent
     ) -> PrayerEntry {
         let dhuhrLabel = schedule.isFriday ? "الجمعة" : "الظهر"
@@ -944,9 +1002,16 @@ struct Provider: AppIntentTimelineProvider {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let hijriDate = cleanHijri.isEmpty ? formatUmmAlQuraHijri(for: date) : cleanHijri
 
-        let locationName = config.cityOverride.metadata?.name
-            ?? getString(from: prefs, json: json, key: "location_city", jsonFallbackKey: "city")
-            ?? "مكة المكرمة"
+        let locationName: String = {
+            if let synced = getString(from: prefs, json: json, key: "location_city", jsonFallbackKey: "city"),
+               !synced.isEmpty {
+                return synced
+            }
+            if let gc = geoContext?.cityName, !gc.isEmpty {
+                return gc
+            }
+            return "مكة المكرمة"
+        }()
 
         let isDarkFallback = getBool(from: prefs, json: json, key: "widget_is_dark") ?? false
         let rawMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "auto"

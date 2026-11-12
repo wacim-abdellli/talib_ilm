@@ -4,6 +4,7 @@ import '../../../../app/app.dart';
 import '../../../../app/theme/app_palette.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../core/services/home_widget_service.dart';
+import '../../../prayer/presentation/widgets/ios_widget_sync_notice.dart';
 import '../../../../shared/animations/theme_switcher.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_sheet.dart';
@@ -100,6 +101,7 @@ class ThemeSelectorSheet extends StatefulWidget {
 
 class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
   WidgetThemeMode _widgetTheme = WidgetThemeMode.dark;
+  bool _iosSyncSupported = true;
 
   @override
   void initState() {
@@ -109,8 +111,12 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
 
   Future<void> _loadWidgetTheme() async {
     final mode = await HomeWidgetService.getThemeMode();
+    final syncSupported = await HomeWidgetService.isIosSyncSupported();
     if (mounted) {
-      setState(() => _widgetTheme = mode);
+      setState(() {
+        _widgetTheme = mode;
+        _iosSyncSupported = syncSupported;
+      });
     }
   }
 
@@ -201,36 +207,40 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
               'مظهر أداة الشاشة الرئيسية',
               style: textTheme.labelBold.copyWith(color: palette.textMuted),
             ),
-            const SizedBox(height: AppSpace.xxs),
-            Text(
-              'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
-              style: textTheme.caption.copyWith(color: palette.textMuted),
-            ),
             const SizedBox(height: AppSpace.sm),
-            Row(
-              children: [
-                _buildWidgetThemeChip(
-                  context: context,
-                  label: 'داكن (أسود)',
-                  icon: Icons.dark_mode_rounded,
-                  mode: WidgetThemeMode.dark,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                _buildWidgetThemeChip(
-                  context: context,
-                  label: 'فاتح (أبيض)',
-                  icon: Icons.light_mode_rounded,
-                  mode: WidgetThemeMode.light,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                _buildWidgetThemeChip(
-                  context: context,
-                  label: 'تلقائي',
-                  icon: Icons.brightness_auto_rounded,
-                  mode: WidgetThemeMode.auto,
-                ),
-              ],
-            ),
+            if (!_iosSyncSupported)
+              const IosWidgetSyncNotice()
+            else ...[
+              Text(
+                'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن أو ناصع البياض)',
+                style: textTheme.caption.copyWith(color: palette.textMuted),
+              ),
+              const SizedBox(height: AppSpace.sm),
+              Row(
+                children: [
+                  _buildWidgetThemeChip(
+                    context: context,
+                    label: 'داكن (أسود)',
+                    icon: Icons.dark_mode_rounded,
+                    mode: WidgetThemeMode.dark,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  _buildWidgetThemeChip(
+                    context: context,
+                    label: 'فاتح (أبيض)',
+                    icon: Icons.light_mode_rounded,
+                    mode: WidgetThemeMode.light,
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  _buildWidgetThemeChip(
+                    context: context,
+                    label: 'تلقائي',
+                    icon: Icons.brightness_auto_rounded,
+                    mode: WidgetThemeMode.auto,
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

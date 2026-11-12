@@ -18,6 +18,7 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/icon_badge.dart';
 import '../../../shared/widgets/section_header.dart';
+import 'widgets/ios_widget_sync_notice.dart';
 import 'widgets/prayer_adhan_section.dart';
 import 'widgets/prayer_adjustments_section.dart';
 import 'widgets/prayer_calc_section.dart';
@@ -61,6 +62,7 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
   late final TabController _tabController;
   AdhanSettings? _settings;
   WidgetThemeMode _widgetThemeMode = WidgetThemeMode.dark;
+  bool _iosSyncSupported = true;
   bool _loading = true;
   bool _saving = false;
 
@@ -86,10 +88,12 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
   Future<void> _load() async {
     final settings = await _settingsService.getSettings();
     final mode = await HomeWidgetService.getThemeMode();
+    final syncSupported = await HomeWidgetService.isIosSyncSupported();
     if (!mounted) return;
     setState(() {
       _settings = settings;
       _widgetThemeMode = mode;
+      _iosSyncSupported = syncSupported;
       _loading = false;
     });
   }
@@ -425,31 +429,35 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
             padding: EdgeInsets.zero,
           ),
           const SizedBox(height: AppSpace.xs),
-          Text(
-            'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن موفر للبطارية أو ناصع البياض)',
-            style: context.text.caption.copyWith(color: palette.textMuted),
-          ),
-          const SizedBox(height: AppSpace.md),
-          _buildWidgetThemeOption(
-            title: 'داكن (أسود فاخر)',
-            subtitle: 'بطاقة سوداء أنيقة وموفرة لاستهلاك شاشات AMOLED',
-            icon: Icons.dark_mode_rounded,
-            mode: WidgetThemeMode.dark,
-          ),
-          const SizedBox(height: AppSpace.sm),
-          _buildWidgetThemeOption(
-            title: 'فاتح (أبيض ناصع)',
-            subtitle: 'بطاقة بيضاء ناصعة بتصميم عصري وأنيق',
-            icon: Icons.light_mode_rounded,
-            mode: WidgetThemeMode.light,
-          ),
-          const SizedBox(height: AppSpace.sm),
-          _buildWidgetThemeOption(
-            title: 'تلقائي',
-            subtitle: 'يتغير المظهر تلقائياً وفق وضع الهاتف النهاري والليلي',
-            icon: Icons.brightness_auto_rounded,
-            mode: WidgetThemeMode.auto,
-          ),
+          if (!_iosSyncSupported)
+            const IosWidgetSyncNotice()
+          else ...[
+            Text(
+              'اختر مظهر بطاقة الصلاة على شاشة هاتفك (داكن موفر للبطارية أو ناصع البياض)',
+              style: context.text.caption.copyWith(color: palette.textMuted),
+            ),
+            const SizedBox(height: AppSpace.md),
+            _buildWidgetThemeOption(
+              title: 'داكن (أسود فاخر)',
+              subtitle: 'بطاقة سوداء أنيقة وموفرة لاستهلاك شاشات AMOLED',
+              icon: Icons.dark_mode_rounded,
+              mode: WidgetThemeMode.dark,
+            ),
+            const SizedBox(height: AppSpace.sm),
+            _buildWidgetThemeOption(
+              title: 'فاتح (أبيض ناصع)',
+              subtitle: 'بطاقة بيضاء ناصعة بتصميم عصري وأنيق',
+              icon: Icons.light_mode_rounded,
+              mode: WidgetThemeMode.light,
+            ),
+            const SizedBox(height: AppSpace.sm),
+            _buildWidgetThemeOption(
+              title: 'تلقائي',
+              subtitle: 'يتغير المظهر تلقائياً وفق وضع الهاتف النهاري والليلي',
+              icon: Icons.brightness_auto_rounded,
+              mode: WidgetThemeMode.auto,
+            ),
+          ],
         ],
       ),
     );

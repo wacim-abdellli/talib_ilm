@@ -263,6 +263,11 @@ void main() {
       expect(iosWidgets, contains('TalibPrayerWidgetIntent'));
       expect(iosWidgets, contains('AppIntentConfiguration'));
       expect(iosWidgets, contains('SecItemCopyMatching'));
+      expect(iosWidgets, contains('WidgetLocationFetcher'));
+      expect(iosWidgets, contains('CLGeocoder'));
+
+      final widgetInfoPlist = File('ios/TalibIlmWidgets/Info.plist').readAsStringSync();
+      expect(widgetInfoPlist, contains('NSWidgetWantsLocation'));
 
       final iosViews = File('ios/TalibIlmWidgets/TalibIlmWidgetViews.swift').readAsStringSync();
       expect(iosViews, contains('.environment(\\.layoutDirection, .leftToRight)'));
