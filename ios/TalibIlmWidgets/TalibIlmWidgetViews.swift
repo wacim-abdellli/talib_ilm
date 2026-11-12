@@ -144,6 +144,7 @@ struct TalibIlmWidgetEntryView: View {
             }
             .environment(\.layoutDirection, .leftToRight)
         }
+        .environment(\.colorScheme, effectiveIsDark ? .dark : .light)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.background)
         .widgetBackground(palette.background)

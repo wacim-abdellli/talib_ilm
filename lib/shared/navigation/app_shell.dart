@@ -122,7 +122,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   void _onThemeChanged() {
-    unawaited(HomeWidgetService.updateAllWidgets());
+    HomeWidgetService.invalidateCache();
+    unawaited(HomeWidgetService.updateAllWidgets(force: true));
   }
 
   @override

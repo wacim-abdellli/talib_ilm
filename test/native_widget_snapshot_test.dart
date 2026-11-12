@@ -256,10 +256,20 @@ void main() {
       expect(iosWidgets, isNot(contains('.systemSmall')));
       expect(iosWidgets, contains('contentMarginsDisabled()'));
       expect(iosWidgets, contains('inSameDayAs: date'));
+      expect(iosWidgets, contains('talib_widget_snapshot.json'));
+      expect(iosWidgets, contains('containerURL(forSecurityApplicationGroupIdentifier:'));
+      expect(iosWidgets, contains('String(decoding: data, as: UTF8.self)'));
+      expect(iosWidgets, contains('schedule_days'));
 
       final iosViews = File('ios/TalibIlmWidgets/TalibIlmWidgetViews.swift').readAsStringSync();
       expect(iosViews, contains('.environment(\\.layoutDirection, .leftToRight)'));
+      expect(iosViews, contains('.environment(\\.colorScheme, effectiveIsDark ? .dark : .light)'));
       expect(iosViews, contains('style: .timer'));
+
+      final iosAppDelegate = File('ios/Runner/AppDelegate.swift').readAsStringSync();
+      expect(iosAppDelegate, contains('com.talibilm.app/widget_bridge'));
+      expect(iosAppDelegate, contains('talib_widget_snapshot.json'));
+      expect(iosAppDelegate, contains('WidgetCenter.shared.reloadTimelines'));
     });
   });
 }

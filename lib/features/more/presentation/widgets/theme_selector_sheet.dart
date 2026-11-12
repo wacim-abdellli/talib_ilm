@@ -260,9 +260,13 @@ class _ThemeSelectorSheetState extends State<ThemeSelectorSheet> {
               final savedMode = await HomeWidgetService.getThemeMode();
               if (!context.mounted) return;
               setState(() => _widgetTheme = savedMode);
+              final isIosGroupMissing =
+                  HomeWidgetSnapshot.iosContainerAccessible == false;
               AppSnackbar.error(
                 context,
-                'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
+                isIosGroupMissing
+                    ? 'شهادة التثبيت الحالية في iOS لا تدعم App Groups. لمزامنة الويدجت والمظهر استخدم AltStore أو SideStore أو شهادة مطور.'
+                    : 'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
               );
             }
           },

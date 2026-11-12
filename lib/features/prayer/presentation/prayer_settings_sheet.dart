@@ -476,9 +476,13 @@ class _PrayerSettingsSheetState extends State<PrayerSettingsSheet>
             final savedMode = await HomeWidgetService.getThemeMode();
             if (!mounted) return;
             setState(() => _widgetThemeMode = savedMode);
+            final isIosGroupMissing =
+                HomeWidgetSnapshot.iosContainerAccessible == false;
             AppSnackbar.error(
               context,
-              'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
+              isIosGroupMissing
+                  ? 'شهادة التثبيت الحالية في iOS لا تدعم App Groups. لمزامنة الويدجت والمظهر استخدم AltStore أو SideStore أو شهادة مطور.'
+                  : 'تعذر تحديث أداة الصلاة. أعد فتح التطبيق وحاول مرة أخرى.',
             );
           }
         },

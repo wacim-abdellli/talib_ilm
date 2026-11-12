@@ -10,6 +10,7 @@ import '../../../core/services/last_sharh_service.dart';
 import '../../../core/services/progress_service.dart';
 import '../../../core/services/prayer_time_service.dart';
 import '../../../core/services/adhan_settings_service.dart';
+import '../../../core/services/home_widget_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../shared/navigation/app_shell.dart';
 import '../../../shared/navigation/fade_page_route.dart';
@@ -177,6 +178,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       setState(() {
         _prayerDay = prayerDay;
       });
+      if (forceRefresh || _isLoading) {
+        HomeWidgetService.invalidateCache();
+        unawaited(
+          HomeWidgetService.updateAllWidgets(prayerDay: prayerDay, force: true),
+        );
+      }
 
       final stateFuture = _stateController.initialize(preloadedPrayerDay: prayerDay);
 

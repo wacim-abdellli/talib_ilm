@@ -421,4 +421,60 @@ class PrayerTimeService {
       qiblaDirection: qiblaDirection,
     );
   }
+
+  /// Last resolved country code (if available).
+  static String? get lastCountryCode => _lastCountryCode;
+
+  /// Last resolved calculation method identifier (if available).
+  static String? get lastCalculationMethod => _lastSavedMethodStr;
+
+  /// Last resolved madhab identifier (if available).
+  static String? get lastMadhab => _lastMadhab;
+
+  /// Synchronously builds upcoming days from cached location & calculation settings
+  /// without blocking on GPS or network. Returns an empty list if cache is cold.
+  List<PrayerTimesDay> getCachedUpcomingDays({
+    int count = 7,
+    DateTime? startDate,
+    PrayerTimesDay? fallbackToday,
+  }) {
+    final base = (startDate ?? now()).toLocal();
+    final today = DateTime(base.year, base.month, base.day);
+    final loc = LocationService.cachedLocation;
+    final lat = _lastLatitude ?? loc?.latitude;
+    final lon = _lastLongitude ?? loc?.longitude;
+    final city = _lastCity ?? loc?.city ?? fallbackToday?.city;
+    final country = _lastCountryCode ?? loc?.countryCode;
+
+    if (lat == null || lon == null || city == null) {
+      return fallbackToday != null ? [fallbackToday] : const [];
+    }
+
+    final method = _lastMethod ??
+        _resolveMethod(
+          _lastSavedMethodStr ?? loc?.calculationMethod,
+          countryCode: country,
+          latitude: lat,
+        );
+
+    final days = <PrayerTimesDay>[];
+    for (var i = 0; i < count; i++) {
+      final targetDate = today.add(Duration(days: i));
+      days.add(
+        _buildDay(
+          targetDate,
+          city: city,
+          latitude: lat,
+          longitude: lon,
+          countryCode: country,
+          savedMethod: _lastSavedMethodStr,
+          savedMadhab: _lastMadhab,
+          date: targetDate,
+          method: method,
+          adjustments: _lastAdjustments,
+        ),
+      );
+    }
+    return days;
+  }
 }

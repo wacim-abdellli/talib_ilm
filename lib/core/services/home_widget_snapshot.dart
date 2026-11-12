@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'location_service.dart';
 import 'package:home_widget/home_widget.dart';
@@ -11,6 +14,7 @@ import '../../features/prayer/data/models/prayer_models.dart';
 import '../../features/prayer/presentation/widgets/prayer_home_screen_widget.dart';
 import '../../features/salaf_gems/data/repositories/salaf_gems_repository.dart';
 import 'adhan_settings_service.dart';
+import 'prayer_time_service.dart';
 
 import 'home_widget_pre_render.dart';
 export 'home_widget_pre_render.dart';
@@ -25,9 +29,41 @@ class HomeWidgetSnapshot {
 
   static const String themeModeKey = 'prayer_widget_theme_mode';
   static const String appGroupId = 'group.com.talibilm.app';
+  static const MethodChannel _iosBridgeChannel = MethodChannel(
+    'com.talibilm.app/widget_bridge',
+  );
+  static String? _resolvedIosAppGroup;
+  static bool? _iosContainerAccessible;
   static int _snapshotVersion = 0;
   static int get snapshotVersion => _snapshotVersion;
   static String? lastSyncError;
+
+  static String get activeAppGroupId => _resolvedIosAppGroup ?? appGroupId;
+  static bool? get iosContainerAccessible => _iosContainerAccessible;
+
+  /// Queries the native iOS host app for the kernel-verified provisioned App Group ID.
+  /// Returns [appGroupId] on non-iOS platforms or if discovery is unavailable.
+  static Future<String> resolveActiveAppGroupId() async {
+    if (kIsWeb || !Platform.isIOS) return appGroupId;
+    try {
+      final info = await _iosBridgeChannel
+          .invokeMapMethod<String, dynamic>('getWidgetBridgeInfo');
+      if (info != null) {
+        final active = info['activeAppGroup'] as String?;
+        final accessible = info['containerAccessible'] as bool? ?? false;
+        _iosContainerAccessible = accessible;
+        if (active != null && active.trim().isNotEmpty) {
+          _resolvedIosAppGroup = active.trim();
+          return _resolvedIosAppGroup!;
+        }
+        if (!accessible) {
+          lastSyncError =
+              'iOS shared App Group container unavailable for this provisioning profile';
+        }
+      }
+    } catch (_) {}
+    return activeAppGroupId;
+  }
 
   /// Writes a value to both the shared App Group and standard storage to ensure
   /// seamless data delivery across normal, sideloaded, and test environments.
@@ -45,11 +81,12 @@ class HomeWidgetSnapshot {
       }
     } catch (_) {}
 
+    final targetGroup = activeAppGroupId;
     try {
       await HomeWidget.saveWidgetData<T>(
         key,
         value,
-        appGroupId: appGroupId,
+        appGroupId: targetGroup,
       );
       try {
         await HomeWidget.saveWidgetData<T>(key, value);
@@ -64,17 +101,24 @@ class HomeWidgetSnapshot {
   }
 
   static Future<bool> verifyAppGroup() async {
+    if (!kIsWeb && Platform.isIOS) {
+      await resolveActiveAppGroupId();
+      if (_iosContainerAccessible == false) {
+        return false;
+      }
+    }
+    final targetGroup = activeAppGroupId;
     final probe = DateTime.now().microsecondsSinceEpoch.toString();
     try {
       final saved = await HomeWidget.saveWidgetData<String>(
         'widget_app_group_probe',
         probe,
-        appGroupId: appGroupId,
+        appGroupId: targetGroup,
       );
       if (saved == true) {
         final readBack = await HomeWidget.getWidgetData<String>(
           'widget_app_group_probe',
-          appGroupId: appGroupId,
+          appGroupId: targetGroup,
         );
         if (readBack == probe) {
           lastSyncError = null;
@@ -233,6 +277,30 @@ class HomeWidgetSnapshot {
       }
 
       final prayersPayload = <String, dynamic>{};
+      bool resolvedIsFriday = nowDt.weekday == DateTime.friday;
+      int resolvedIqamaFajr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerFajr,
+        iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+      );
+      int resolvedIqamaDhuhr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerDhuhr,
+        isJumua: resolvedIsFriday,
+        iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+      );
+      int resolvedIqamaAsr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerAsr,
+        iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+      );
+      int resolvedIqamaMaghrib = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerMaghrib,
+        iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+      );
+      int resolvedIqamaIsha = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        AppStrings.prayerIsha,
+        iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
+      );
+      int? tomorrowFajrEpochMs;
+
       // Persist full 24-hour prayer schedule for autonomous native widget evaluation
       if (allPrayers != null && allPrayers.isNotEmpty) {
         final fajrTime = allPrayers[AppStrings.prayerFajr];
@@ -252,33 +320,17 @@ class HomeWidgetSnapshot {
             : null;
 
         final refTime = dhuhrTime ?? DateTime.now();
-        final isFriday = refTime.weekday == DateTime.friday;
+        resolvedIsFriday = refTime.weekday == DateTime.friday;
 
-        final iqamaFajr = PrayerWidgetStateEvaluator.getIqamaMinutes(
-          AppStrings.prayerFajr,
-          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
-        );
-        final iqamaDhuhr = PrayerWidgetStateEvaluator.getIqamaMinutes(
+        resolvedIqamaDhuhr = PrayerWidgetStateEvaluator.getIqamaMinutes(
           AppStrings.prayerDhuhr,
-          isJumua: isFriday,
-          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
-        );
-        final iqamaAsr = PrayerWidgetStateEvaluator.getIqamaMinutes(
-          AppStrings.prayerAsr,
-          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
-        );
-        final iqamaMaghrib = PrayerWidgetStateEvaluator.getIqamaMinutes(
-          AppStrings.prayerMaghrib,
-          iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
-        );
-        final iqamaIsha = PrayerWidgetStateEvaluator.getIqamaMinutes(
-          AppStrings.prayerIsha,
+          isJumua: resolvedIsFriday,
           iqamaOverrides: adhanSettings.iqamaMinutesAfterAdhan,
         );
 
         final fajrColor = palette.prayer(AppStrings.prayerFajr).toARGB32();
         final dhuhrColor =
-            (isFriday
+            (resolvedIsFriday
                     ? palette.success
                     : palette.prayer(AppStrings.prayerDhuhr))
                 .toARGB32();
@@ -349,20 +401,20 @@ class HomeWidgetSnapshot {
           };
         }
         if (tomorrowFajrTime != null) {
+          tomorrowFajrEpochMs = tomorrowFajrTime.millisecondsSinceEpoch;
           await writeWidgetValue<int>(
             'prayer_tomorrow_fajr_epoch_ms',
-            tomorrowFajrTime.millisecondsSinceEpoch,
+            tomorrowFajrEpochMs,
           );
-          prayersPayload['tomorrow_fajr_epoch_ms'] =
-              tomorrowFajrTime.millisecondsSinceEpoch;
+          prayersPayload['tomorrow_fajr_epoch_ms'] = tomorrowFajrEpochMs;
         }
 
-        await writeWidgetValue<bool>('is_friday', isFriday);
-        await writeWidgetValue<int>('iqama_fajr_min', iqamaFajr);
-        await writeWidgetValue<int>('iqama_dhuhr_min', iqamaDhuhr);
-        await writeWidgetValue<int>('iqama_asr_min', iqamaAsr);
-        await writeWidgetValue<int>('iqama_maghrib_min', iqamaMaghrib);
-        await writeWidgetValue<int>('iqama_isha_min', iqamaIsha);
+        await writeWidgetValue<bool>('is_friday', resolvedIsFriday);
+        await writeWidgetValue<int>('iqama_fajr_min', resolvedIqamaFajr);
+        await writeWidgetValue<int>('iqama_dhuhr_min', resolvedIqamaDhuhr);
+        await writeWidgetValue<int>('iqama_asr_min', resolvedIqamaAsr);
+        await writeWidgetValue<int>('iqama_maghrib_min', resolvedIqamaMaghrib);
+        await writeWidgetValue<int>('iqama_isha_min', resolvedIqamaIsha);
 
         await writeWidgetValue<int>('prayer_color_fajr', fajrColor);
         await writeWidgetValue<int>('prayer_color_dhuhr', dhuhrColor);
@@ -371,13 +423,47 @@ class HomeWidgetSnapshot {
         await writeWidgetValue<int>('prayer_color_isha', ishaColor);
       }
 
+      // Include a 7-day pre-calculated schedule so native widgets keep exact times
+      // (including regional precautions & user offsets) for an entire week offline.
+      final scheduleDays = <String, dynamic>{};
+      try {
+        final upcoming = PrayerTimeService().getCachedUpcomingDays(count: 7);
+        for (final d in upcoming) {
+          final key =
+              '${d.date.year.toString().padLeft(4, '0')}-${d.date.month.toString().padLeft(2, '0')}-${d.date.day.toString().padLeft(2, '0')}';
+          final dayHijri = HijriCalendar.fromDate(d.date);
+          scheduleDays[key] = {
+            'fajr_epoch_ms': d.prayers[AppStrings.prayerFajr]?.millisecondsSinceEpoch,
+            'dhuhr_epoch_ms': d.prayers[AppStrings.prayerDhuhr]?.millisecondsSinceEpoch,
+            'asr_epoch_ms': d.prayers[AppStrings.prayerAsr]?.millisecondsSinceEpoch,
+            'maghrib_epoch_ms': d.prayers[AppStrings.prayerMaghrib]?.millisecondsSinceEpoch,
+            'isha_epoch_ms': d.prayers[AppStrings.prayerIsha]?.millisecondsSinceEpoch,
+            'is_friday': d.date.weekday == DateTime.friday,
+            'hijri': '${dayHijri.hDay} ${dayHijri.longMonthName} ${dayHijri.hYear} هـ',
+          };
+        }
+      } catch (_) {}
+
+      final nowEpochMs = DateTime.now().millisecondsSinceEpoch;
+      final countryCode =
+          cachedLoc?.countryCode ?? PrayerTimeService.lastCountryCode ?? '';
+      final calcMethod =
+          PrayerTimeService.lastCalculationMethod ?? cachedLoc?.calculationMethod ?? '';
+      final madhab = PrayerTimeService.lastMadhab ?? 'shafi';
+
       // Write complete JSON snapshot for unified native Swift/Kotlin consumption
       final fullPayload = <String, dynamic>{
         'version': version,
+        'updated_at_epoch_ms': nowEpochMs,
         'city': resolvedCity ?? '',
+        'location_city': resolvedCity ?? '',
+        'country_code': countryCode,
+        'calculation_method': calcMethod,
+        'madhab': madhab,
         'latitude': cachedLoc?.latitude,
         'longitude': cachedLoc?.longitude,
         'hijri': hijriStr,
+        'hijri_date': hijriStr,
         'next_prayer_epoch_ms': epochMs,
         'next_prayer_name': eval.activePrayerName,
         'prayer_display_title': eval.displayTitle,
@@ -389,14 +475,94 @@ class HomeWidgetSnapshot {
         'theme_user_selected': prefs.getBool('theme_user_selected') ?? false,
         'widget_theme_user_selected':
             prefs.getBool('widget_theme_user_selected') ?? false,
+        'is_friday': resolvedIsFriday,
+        'iqama_fajr_min': resolvedIqamaFajr,
+        'iqama_dhuhr_min': resolvedIqamaDhuhr,
+        'iqama_asr_min': resolvedIqamaAsr,
+        'iqama_maghrib_min': resolvedIqamaMaghrib,
+        'iqama_isha_min': resolvedIqamaIsha,
+        if (tomorrowFajrEpochMs != null)
+          'prayer_tomorrow_fajr_epoch_ms': tomorrowFajrEpochMs,
+        if (prayersPayload['fajr'] is Map)
+          'prayer_fajr_epoch_ms': (prayersPayload['fajr'] as Map)['epoch_ms'],
+        if (prayersPayload['dhuhr'] is Map)
+          'prayer_dhuhr_epoch_ms': (prayersPayload['dhuhr'] as Map)['epoch_ms'],
+        if (prayersPayload['asr'] is Map)
+          'prayer_asr_epoch_ms': (prayersPayload['asr'] as Map)['epoch_ms'],
+        if (prayersPayload['maghrib'] is Map)
+          'prayer_maghrib_epoch_ms':
+              (prayersPayload['maghrib'] as Map)['epoch_ms'],
+        if (prayersPayload['isha'] is Map)
+          'prayer_isha_epoch_ms': (prayersPayload['isha'] as Map)['epoch_ms'],
         'daily_gem_text': gemText,
         'daily_gem_author': gemAuthor,
         'prayers': prayersPayload,
+        if (scheduleDays.isNotEmpty) 'schedule_days': scheduleDays,
       };
-      await writeWidgetValue<String>(
-        'prayer_data_json',
-        jsonEncode(fullPayload),
-      );
+      final encodedJson = jsonEncode(fullPayload);
+      await writeWidgetValue<String>('prayer_data_json', encodedJson);
+
+      if (!kIsWeb && Platform.isIOS) {
+        try {
+          final bridgeRes = await _iosBridgeChannel.invokeMapMethod<String, dynamic>(
+            'syncSnapshot',
+            {
+              'json': encodedJson,
+              'prefs': {
+                'prayer_widget_theme_mode': widgetMode,
+                'theme_mode': appThemeMode,
+                'widget_is_dark': useDark,
+                'theme_user_selected':
+                    prefs.getBool('theme_user_selected') ?? false,
+                'widget_theme_user_selected':
+                    prefs.getBool('widget_theme_user_selected') ?? false,
+                if (resolvedCity != null && resolvedCity.isNotEmpty)
+                  'location_city': resolvedCity,
+                if (cachedLoc != null) 'location_latitude': cachedLoc.latitude,
+                if (cachedLoc != null)
+                  'location_longitude': cachedLoc.longitude,
+                'hijri_date': hijriStr,
+                'is_friday': resolvedIsFriday,
+                'iqama_fajr_min': resolvedIqamaFajr,
+                'iqama_dhuhr_min': resolvedIqamaDhuhr,
+                'iqama_asr_min': resolvedIqamaAsr,
+                'iqama_maghrib_min': resolvedIqamaMaghrib,
+                'iqama_isha_min': resolvedIqamaIsha,
+                if (prayersPayload['fajr'] is Map)
+                  'prayer_fajr_epoch_ms':
+                      (prayersPayload['fajr'] as Map)['epoch_ms'],
+                if (prayersPayload['dhuhr'] is Map)
+                  'prayer_dhuhr_epoch_ms':
+                      (prayersPayload['dhuhr'] as Map)['epoch_ms'],
+                if (prayersPayload['asr'] is Map)
+                  'prayer_asr_epoch_ms':
+                      (prayersPayload['asr'] as Map)['epoch_ms'],
+                if (prayersPayload['maghrib'] is Map)
+                  'prayer_maghrib_epoch_ms':
+                      (prayersPayload['maghrib'] as Map)['epoch_ms'],
+                if (prayersPayload['isha'] is Map)
+                  'prayer_isha_epoch_ms':
+                      (prayersPayload['isha'] as Map)['epoch_ms'],
+                if (tomorrowFajrEpochMs != null)
+                  'prayer_tomorrow_fajr_epoch_ms': tomorrowFajrEpochMs,
+                'widget_snapshot_version': version,
+              },
+            },
+          );
+          if (bridgeRes != null) {
+            final accessible = bridgeRes['containerAccessible'] as bool? ?? false;
+            _iosContainerAccessible = accessible;
+            final active = bridgeRes['activeAppGroup'] as String?;
+            if (active != null && active.isNotEmpty) {
+              _resolvedIosAppGroup = active;
+            }
+            if (!accessible) {
+              lastSyncError =
+                  'iOS App Group container unavailable in current signing profile';
+            }
+          }
+        } catch (_) {}
+      }
     } catch (error) {
       lastSyncError = error.toString();
       debugPrint('Home widget snapshot sync failed: $error');

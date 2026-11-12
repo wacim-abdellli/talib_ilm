@@ -4,52 +4,79 @@ import SwiftUI
 // MARK: - Safe Data Extraction & App Group Discovery
 
 private let appGroupId = "group.com.talibilm.app"
+private let sharedSnapshotFileName = "talib_widget_snapshot.json"
 
-/// Inspects embedded provisioning profile to dynamically resolve the active App Group
-/// when apps are sideloaded via AltStore, Sideloadly, or signed with custom team IDs.
-private func getProvisionedAppGroup() -> String? {
+/// Parses embedded.mobileprovision safely using UTF-8 + PropertyListSerialization
+/// to discover all provisioned App Groups (handles AltStore, SideStore, Xcode, and paid certs).
+private func getProvisionedAppGroups() -> [String] {
+    var groups: [String] = []
     let bundle = Bundle.main
     let possiblePaths = [
         bundle.path(forResource: "embedded", ofType: "mobileprovision"),
+        bundle.bundleURL.appendingPathComponent("embedded.mobileprovision").path,
         bundle.bundleURL.deletingLastPathComponent().appendingPathComponent("embedded.mobileprovision").path,
         bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("embedded.mobileprovision").path
     ]
-    for path in possiblePaths {
-        guard let p = path,
-              let data = try? Data(contentsOf: URL(fileURLWithPath: p)),
-              let string = String(data: data, encoding: .ascii) else { continue }
-        if let range = string.range(of: "com.apple.security.application-groups") {
-            let substring = string[range.upperBound...]
-            if let stringStart = substring.range(of: "<string>"),
-               let stringEnd = substring[stringStart.upperBound...].range(of: "</string>") {
-                let group = String(substring[stringStart.upperBound..<stringEnd.lowerBound])
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                if group.starts(with: "group.") {
-                    return group
-                }
+    for pathOpt in possiblePaths {
+        guard let p = pathOpt,
+              let data = try? Data(contentsOf: URL(fileURLWithPath: p)) else { continue }
+        let decoded = String(decoding: data, as: UTF8.self)
+        guard let plistStart = decoded.range(of: "<plist"),
+              let plistEnd = decoded.range(of: "</plist>") else { continue }
+        let xmlString = String(decoded[plistStart.lowerBound..<plistEnd.upperBound])
+        guard let xmlData = xmlString.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(
+                from: xmlData,
+                options: [],
+                format: nil
+              ) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any],
+              let appGroups = entitlements["com.apple.security.application-groups"] as? [String] else {
+            continue
+        }
+        for group in appGroups {
+            let trimmed = group.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && !groups.contains(trimmed) {
+                groups.append(trimmed)
             }
         }
     }
-    return nil
+    return groups
 }
 
-/// Discovers the active shared UserDefaults suite across standard, provisioned, and dynamic groups.
-private func getPreferences() -> UserDefaults {
-    var candidateGroups: [String] = [appGroupId]
-    if let provisioned = getProvisionedAppGroup(), !candidateGroups.contains(provisioned) {
-        candidateGroups.insert(provisioned, at: 0)
+private func candidateAppGroups() -> [String] {
+    var candidates = getProvisionedAppGroups()
+    if !candidates.contains(appGroupId) {
+        candidates.append(appGroupId)
     }
     if let bundleId = Bundle.main.bundleIdentifier {
         let baseApp = bundleId
             .replacingOccurrences(of: ".widgets", with: "")
             .replacingOccurrences(of: ".Widgets", with: "")
-        let dynamicGroup = "group." + baseApp
-        if !candidateGroups.contains(dynamicGroup) {
-            candidateGroups.append(dynamicGroup)
+        let dynamicGroup = "group.\(baseApp)"
+        if !candidates.contains(dynamicGroup) {
+            candidates.append(dynamicGroup)
+        }
+    }
+    return candidates
+}
+
+/// Discovers the active shared UserDefaults suite across provisioned and standard groups.
+private func getPreferences() -> UserDefaults {
+    let candidates = candidateAppGroups()
+
+    for group in candidates {
+        if FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) != nil,
+           let userDefaults = UserDefaults(suiteName: group) {
+            if userDefaults.object(forKey: "prayer_data_json") != nil ||
+               userDefaults.object(forKey: "prayer_fajr_epoch_ms") != nil ||
+               userDefaults.object(forKey: "prayer_widget_theme_mode") != nil {
+                return userDefaults
+            }
         }
     }
 
-    for group in candidateGroups {
+    for group in candidates {
         if let userDefaults = UserDefaults(suiteName: group) {
             if userDefaults.object(forKey: "prayer_data_json") != nil ||
                userDefaults.object(forKey: "prayer_fajr_epoch_ms") != nil ||
@@ -59,7 +86,14 @@ private func getPreferences() -> UserDefaults {
         }
     }
 
-    for group in candidateGroups {
+    for group in candidates {
+        if FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) != nil,
+           let userDefaults = UserDefaults(suiteName: group) {
+            return userDefaults
+        }
+    }
+
+    for group in candidates {
         if let userDefaults = UserDefaults(suiteName: group) {
             return userDefaults
         }
@@ -68,16 +102,85 @@ private func getPreferences() -> UserDefaults {
     return UserDefaults.standard
 }
 
-private func loadJsonPayload(from prefs: UserDefaults) -> [String: Any]? {
-    guard let jsonStr = prefs.string(forKey: "prayer_data_json"),
-          let data = jsonStr.data(using: .utf8),
-          let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-        return nil
+private func snapshotTimestamp(_ dict: [String: Any]?) -> Int64 {
+    guard let dict = dict else { return 0 }
+    if let updated = dict["updated_at_epoch_ms"] as? NSNumber {
+        return updated.int64Value
     }
-    return dict
+    if let ver = dict["version"] as? NSNumber {
+        return ver.int64Value
+    }
+    return 1
+}
+
+/// Loads the newest JSON payload across the shared container JSON file and UserDefaults.
+private func loadJsonPayload(from prefs: UserDefaults) -> [String: Any]? {
+    var bestDict: [String: Any]? = nil
+    var bestScore: Int64 = -1
+
+    for group in candidateAppGroups() {
+        if let containerUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) {
+            let fileUrl = containerUrl.appendingPathComponent(sharedSnapshotFileName)
+            if let data = try? Data(contentsOf: fileUrl),
+               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let score = snapshotTimestamp(dict)
+                if score > bestScore {
+                    bestScore = score
+                    bestDict = dict
+                }
+            }
+        }
+
+        if let groupDefaults = UserDefaults(suiteName: group),
+           let jsonStr = groupDefaults.string(forKey: "prayer_data_json"),
+           let data = jsonStr.data(using: .utf8),
+           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let score = snapshotTimestamp(dict)
+            if score > bestScore {
+                bestScore = score
+                bestDict = dict
+            }
+        }
+    }
+
+    if let jsonStr = prefs.string(forKey: "prayer_data_json"),
+       let data = jsonStr.data(using: .utf8),
+       let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        let score = snapshotTimestamp(dict)
+        if score > bestScore {
+            bestDict = dict
+        }
+    }
+
+    return bestDict
 }
 
 private func getInt64(from prefs: UserDefaults, json: [String: Any]?, key: String, prayerSlug: String? = nil) -> Int64? {
+    if let json = json {
+        if let num = json[key] as? NSNumber, num.int64Value > 0 {
+            return num.int64Value
+        }
+        if let str = json[key] as? String, let v = Int64(str), v > 0 {
+            return v
+        }
+        if let prayers = json["prayers"] as? [String: Any] {
+            if let num = prayers[key] as? NSNumber, num.int64Value > 0 {
+                return num.int64Value
+            }
+            if key == "prayer_tomorrow_fajr_epoch_ms",
+               let num = prayers["tomorrow_fajr_epoch_ms"] as? NSNumber,
+               num.int64Value > 0 {
+                return num.int64Value
+            }
+            if let slug = prayerSlug,
+               let pDict = prayers[slug] as? [String: Any],
+               let num = pDict["epoch_ms"] as? NSNumber,
+               num.int64Value > 0 {
+                return num.int64Value
+            }
+        }
+    }
+
     if let num = prefs.object(forKey: key) as? NSNumber {
         let val = num.int64Value
         if val > 0 { return val }
@@ -88,28 +191,31 @@ private func getInt64(from prefs: UserDefaults, json: [String: Any]?, key: Strin
     let val = prefs.integer(forKey: key)
     if val > 0 { return Int64(val) }
 
+    return nil
+}
+
+private func getInt(from prefs: UserDefaults, json: [String: Any]?, key: String) -> Int? {
     if let json = json {
-        if let num = json[key] as? NSNumber, num.int64Value > 0 {
-            return num.int64Value
-        }
-        if let str = json[key] as? String, let v = Int64(str), v > 0 {
-            return v
-        }
-        if let slug = prayerSlug,
-           let prayers = json["prayers"] as? [String: Any],
-           let pDict = prayers[slug] as? [String: Any],
-           let num = pDict["epoch_ms"] as? NSNumber,
-           num.int64Value > 0 {
-            return num.int64Value
-        }
+        if let num = json[key] as? NSNumber { return num.intValue }
+        if let str = json[key] as? String, let v = Int(str) { return v }
+    }
+    if let num = prefs.object(forKey: key) as? NSNumber {
+        return num.intValue
+    }
+    return nil
+}
+
+private func getBool(from prefs: UserDefaults, json: [String: Any]?, key: String) -> Bool? {
+    if let json = json, let b = json[key] as? Bool {
+        return b
+    }
+    if let num = prefs.object(forKey: key) as? NSNumber {
+        return num.boolValue
     }
     return nil
 }
 
 private func getString(from prefs: UserDefaults, json: [String: Any]?, key: String, jsonFallbackKey: String? = nil) -> String? {
-    if let s = prefs.string(forKey: key)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
-        return s
-    }
     if let json = json {
         if let s = (json[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
             return s
@@ -119,16 +225,32 @@ private func getString(from prefs: UserDefaults, json: [String: Any]?, key: Stri
             return s
         }
     }
+    if let s = prefs.string(forKey: key)?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
+        return s
+    }
     return nil
 }
 
 private func getDate(from prefs: UserDefaults, json: [String: Any]?, key: String, prayerSlug: String? = nil) -> Date? {
     guard let ms = getInt64(from: prefs, json: json, key: key, prayerSlug: prayerSlug) else { return nil }
+    return dateFromEpoch(ms)
+}
+
+private func dateFromEpoch(_ ms: Int64) -> Date {
     if ms > 10_000_000_000 {
         return Date(timeIntervalSince1970: Double(ms) / 1000.0)
     } else {
         return Date(timeIntervalSince1970: Double(ms))
     }
+}
+
+private func dateKeyString(for date: Date) -> String {
+    let cal = Calendar(identifier: .gregorian)
+    let comps = cal.dateComponents([.year, .month, .day], from: date)
+    let y = comps.year ?? 2026
+    let m = comps.month ?? 1
+    let d = comps.day ?? 1
+    return String(format: "%04d-%02d-%02d", y, m, d)
 }
 
 private func formatCompactTime(date: Date?) -> String {
@@ -163,7 +285,14 @@ private func formatUmmAlQuraHijri(for date: Date, includeYear: Bool = false) -> 
 // MARK: - Autonomous Offline Astronomical Prayer Calculator Fallback
 
 struct OfflinePrayerCalculator {
-    static func calculate(date: Date, latitude: Double, longitude: Double, timezoneOffsetHours: Double) -> [String: Date] {
+    static func calculate(
+        date: Date,
+        latitude: Double,
+        longitude: Double,
+        timezoneOffsetHours: Double,
+        isTunisia: Bool = false,
+        isHanafi: Bool = false
+    ) -> [String: Date] {
         let calendar = Calendar(identifier: .gregorian)
         var comp = calendar.dateComponents(in: TimeZone.current, from: date)
         guard let year = comp.year, let month = comp.month, let day = comp.day else {
@@ -211,7 +340,7 @@ struct OfflinePrayerCalculator {
             return timezoneOffsetHours
         }()
 
-        let noonHours = 12.0 + effectiveTz - (longitude / 15.0) - (eotMinutes / 60.0) + (2.0 / 60.0)
+        let solarNoonHours = 12.0 + effectiveTz - (longitude / 15.0) - (eotMinutes / 60.0)
         let latRad = latitude * .pi / 180.0
 
         func hourAngle(forAltitude altitudeDeg: Double) -> Double? {
@@ -241,15 +370,21 @@ struct OfflinePrayerCalculator {
         }
 
         let hIsha = hourAngle(forAltitude: -18.0) ?? hSunrise
-        let asrAltRad = atan(1.0 / (1.0 + tan(abs(latRad - declination))))
+        let shadowFactor = isHanafi ? 2.0 : 1.0
+        let asrAltRad = atan(1.0 / (shadowFactor + tan(abs(latRad - declination))))
         let asrAltDeg = asrAltRad * 180.0 / .pi
         let hAsr = hourAngle(forAltitude: asrAltDeg) ?? 45.0
 
-        let fajrDate = dateFromHours(noonHours - (hFajr / 15.0))
-        let dhuhrDate = dateFromHours(noonHours)
-        let asrDate = dateFromHours(noonHours + (hAsr / 15.0))
-        let maghribDate = dateFromHours(noonHours + (hSunrise / 15.0) + (2.0 / 60.0))
-        let ishaDate = dateFromHours(noonHours + (hIsha / 15.0) + (1.0 / 60.0))
+        let dhuhrPrecautionMin = isTunisia ? 6.0 : 2.0
+        let asrPrecautionMin = isTunisia ? 1.0 : 0.0
+        let maghribPrecautionMin = isTunisia ? 3.0 : 2.0
+        let ishaPrecautionMin = isTunisia ? 1.0 : 1.0
+
+        let fajrDate = dateFromHours(solarNoonHours - (hFajr / 15.0))
+        let dhuhrDate = dateFromHours(solarNoonHours + (dhuhrPrecautionMin / 60.0))
+        let asrDate = dateFromHours(solarNoonHours + (hAsr / 15.0) + (asrPrecautionMin / 60.0))
+        let maghribDate = dateFromHours(solarNoonHours + (hSunrise / 15.0) + (maghribPrecautionMin / 60.0))
+        let ishaDate = dateFromHours(solarNoonHours + (hIsha / 15.0) + (ishaPrecautionMin / 60.0))
 
         return [
             "fajr": fajrDate,
@@ -277,18 +412,73 @@ struct PrayerSchedule {
     let iqamaMaghrib: Int
     let iqamaIsha: Int
     let isFromTodayPrefs: Bool
+    let dayHijriDate: String?
 }
 
-private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> PrayerSchedule {
-    let json = loadJsonPayload(from: prefs)
-    let cal = Calendar.current
+private func findScheduledDay(
+    in json: [String: Any]?,
+    for date: Date
+) -> [String: Any]? {
+    guard let daysMap = json?["schedule_days"] as? [String: Any] else {
+        return nil
+    }
+    let key = dateKeyString(for: date)
+    return daysMap[key] as? [String: Any]
+}
 
-    var fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms", prayerSlug: "fajr")
-    var dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms", prayerSlug: "dhuhr")
-    var asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms", prayerSlug: "asr")
-    var maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms", prayerSlug: "maghrib")
-    var isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms", prayerSlug: "isha")
-    var tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
+private func epochDate(in dict: [String: Any]?, key: String) -> Date? {
+    guard let dict = dict else { return nil }
+    if let num = dict[key] as? NSNumber, num.int64Value > 0 {
+        return dateFromEpoch(num.int64Value)
+    }
+    if let str = dict[key] as? String, let val = Int64(str), val > 0 {
+        return dateFromEpoch(val)
+    }
+    return nil
+}
+
+private func loadSchedule(
+    from prefs: UserDefaults,
+    json: [String: Any]?,
+    for date: Date = Date()
+) -> PrayerSchedule {
+    let cal = Calendar.current
+    let nextDay = cal.date(byAdding: .day, value: 1, to: date) ?? date.addingTimeInterval(86400)
+
+    var fajr: Date?
+    var dhuhr: Date?
+    var asr: Date?
+    var maghrib: Date?
+    var isha: Date?
+    var tomorrowFajr: Date?
+    var dayHijri: String?
+    var dayIsFriday: Bool?
+
+    if let dayEntry = findScheduledDay(in: json, for: date) {
+        fajr = epochDate(in: dayEntry, key: "fajr_epoch_ms")
+        dhuhr = epochDate(in: dayEntry, key: "dhuhr_epoch_ms")
+        asr = epochDate(in: dayEntry, key: "asr_epoch_ms")
+        maghrib = epochDate(in: dayEntry, key: "maghrib_epoch_ms")
+        isha = epochDate(in: dayEntry, key: "isha_epoch_ms")
+        dayHijri = dayEntry["hijri"] as? String
+        dayIsFriday = dayEntry["is_friday"] as? Bool
+    }
+
+    if let nextEntry = findScheduledDay(in: json, for: nextDay) {
+        tomorrowFajr = epochDate(in: nextEntry, key: "fajr_epoch_ms")
+    }
+
+    if fajr == nil || dhuhr == nil || asr == nil || maghrib == nil || isha == nil {
+        fajr = getDate(from: prefs, json: json, key: "prayer_fajr_epoch_ms", prayerSlug: "fajr")
+        dhuhr = getDate(from: prefs, json: json, key: "prayer_dhuhr_epoch_ms", prayerSlug: "dhuhr")
+        asr = getDate(from: prefs, json: json, key: "prayer_asr_epoch_ms", prayerSlug: "asr")
+        maghrib = getDate(from: prefs, json: json, key: "prayer_maghrib_epoch_ms", prayerSlug: "maghrib")
+        isha = getDate(from: prefs, json: json, key: "prayer_isha_epoch_ms", prayerSlug: "isha")
+    }
+
+    if tomorrowFajr == nil {
+        tomorrowFajr = getDate(from: prefs, json: json, key: "prayer_tomorrow_fajr_epoch_ms")
+    }
 
     let scheduleValidForDate: Bool = {
         guard let f = fajr, let d = dhuhr, let a = asr, let m = maghrib, let i = isha else {
@@ -322,19 +512,30 @@ private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> 
                 lon = 39.8262
             }
         }
+        let countryCode = getString(from: prefs, json: json, key: "country_code")?.uppercased() ?? ""
+        let city = getString(from: prefs, json: json, key: "location_city", jsonFallbackKey: "city") ?? ""
+        let calcMethod = getString(from: prefs, json: json, key: "calculation_method") ?? ""
+        let madhab = getString(from: prefs, json: json, key: "madhab") ?? ""
+        let localeStr = Locale.current.identifier
+        let isTunisia = calcMethod == "tunisia" || countryCode == "TN" || city.contains("تونس") || city.contains("صفاقس") || (countryCode.isEmpty && localeStr.contains("TN"))
+        let isHanafi = madhab == "hanafi"
+
         let tzOffset = Double(TimeZone.current.secondsFromGMT(for: date)) / 3600.0
         let calcToday = OfflinePrayerCalculator.calculate(
             date: date,
             latitude: lat,
             longitude: lon,
-            timezoneOffsetHours: tzOffset
+            timezoneOffsetHours: tzOffset,
+            isTunisia: isTunisia,
+            isHanafi: isHanafi
         )
-        let nextDay = cal.date(byAdding: .day, value: 1, to: date) ?? date.addingTimeInterval(86400)
         let calcTomorrow = OfflinePrayerCalculator.calculate(
             date: nextDay,
             latitude: lat,
             longitude: lon,
-            timezoneOffsetHours: tzOffset
+            timezoneOffsetHours: tzOffset,
+            isTunisia: isTunisia,
+            isHanafi: isHanafi
         )
 
         fajr = calcToday["fajr"] ?? fajr ?? date
@@ -353,17 +554,18 @@ private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> 
     let safeTomorrowFajr = tomorrowFajr ?? safeFajr.addingTimeInterval(86400)
 
     let isFriday: Bool = {
-        if scheduleValidForDate, let prefFriday = prefs.object(forKey: "is_friday") as? Bool {
+        if let f = dayIsFriday { return f }
+        if scheduleValidForDate, let prefFriday = getBool(from: prefs, json: json, key: "is_friday") {
             return prefFriday
         }
         return cal.component(.weekday, from: safeDhuhr) == 6
     }()
 
-    let iqamaFajr = prefs.integer(forKey: "iqama_fajr_min") > 0 ? prefs.integer(forKey: "iqama_fajr_min") : 25
-    let iqamaDhuhr = prefs.integer(forKey: "iqama_dhuhr_min") > 0 ? prefs.integer(forKey: "iqama_dhuhr_min") : (isFriday ? 25 : 20)
-    let iqamaAsr = prefs.integer(forKey: "iqama_asr_min") > 0 ? prefs.integer(forKey: "iqama_asr_min") : 20
-    let iqamaMaghrib = prefs.integer(forKey: "iqama_maghrib_min") > 0 ? prefs.integer(forKey: "iqama_maghrib_min") : 10
-    let iqamaIsha = prefs.integer(forKey: "iqama_isha_min") > 0 ? prefs.integer(forKey: "iqama_isha_min") : 15
+    let iqamaFajr = getInt(from: prefs, json: json, key: "iqama_fajr_min").flatMap { $0 > 0 ? $0 : nil } ?? 25
+    let iqamaDhuhr = getInt(from: prefs, json: json, key: "iqama_dhuhr_min").flatMap { $0 > 0 ? $0 : nil } ?? (isFriday ? 25 : 20)
+    let iqamaAsr = getInt(from: prefs, json: json, key: "iqama_asr_min").flatMap { $0 > 0 ? $0 : nil } ?? 20
+    let iqamaMaghrib = getInt(from: prefs, json: json, key: "iqama_maghrib_min").flatMap { $0 > 0 ? $0 : nil } ?? 10
+    let iqamaIsha = getInt(from: prefs, json: json, key: "iqama_isha_min").flatMap { $0 > 0 ? $0 : nil } ?? 15
 
     return PrayerSchedule(
         fajr: safeFajr,
@@ -378,7 +580,8 @@ private func loadSchedule(from prefs: UserDefaults, for date: Date = Date()) -> 
         iqamaAsr: iqamaAsr,
         iqamaMaghrib: iqamaMaghrib,
         iqamaIsha: iqamaIsha,
-        isFromTodayPrefs: scheduleValidForDate
+        isFromTodayPrefs: scheduleValidForDate,
+        dayHijriDate: dayHijri
     )
 }
 
@@ -409,21 +612,24 @@ struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> PrayerEntry {
         let now = Date()
         let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs, for: now)
-        return buildEntry(for: now, schedule: schedule, prefs: prefs)
+        let json = loadJsonPayload(from: prefs)
+        let schedule = loadSchedule(from: prefs, json: json, for: now)
+        return buildEntry(for: now, schedule: schedule, prefs: prefs, json: json)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PrayerEntry) -> Void) {
         let now = Date()
         let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs, for: now)
-        completion(buildEntry(for: now, schedule: schedule, prefs: prefs))
+        let json = loadJsonPayload(from: prefs)
+        let schedule = loadSchedule(from: prefs, json: json, for: now)
+        completion(buildEntry(for: now, schedule: schedule, prefs: prefs, json: json))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PrayerEntry>) -> Void) {
         let now = Date()
         let prefs = getPreferences()
-        let schedule = loadSchedule(from: prefs, for: now)
+        let json = loadJsonPayload(from: prefs)
+        let schedule = loadSchedule(from: prefs, json: json, for: now)
 
         var transitionDates = Set<Date>()
         transitionDates.insert(now)
@@ -469,12 +675,12 @@ struct Provider: TimelineProvider {
         for entryDate in sortedDates {
             let entrySchedule = Calendar.current.isDate(entryDate, inSameDayAs: now)
                 ? schedule
-                : loadSchedule(from: prefs, for: entryDate)
-            entries.append(buildEntry(for: entryDate, schedule: entrySchedule, prefs: prefs))
+                : loadSchedule(from: prefs, json: json, for: entryDate)
+            entries.append(buildEntry(for: entryDate, schedule: entrySchedule, prefs: prefs, json: json))
         }
 
         if entries.isEmpty {
-            entries.append(buildEntry(for: now, schedule: schedule, prefs: prefs))
+            entries.append(buildEntry(for: now, schedule: schedule, prefs: prefs, json: json))
         }
 
         let nextRefresh = min(
@@ -487,14 +693,20 @@ struct Provider: TimelineProvider {
     private func buildEntry(
         for date: Date,
         schedule: PrayerSchedule,
-        prefs: UserDefaults
+        prefs: UserDefaults,
+        json: [String: Any]?
     ) -> PrayerEntry {
-        let json = loadJsonPayload(from: prefs)
         let dhuhrLabel = schedule.isFriday ? "الجمعة" : "الظهر"
 
-        let rawHijri = schedule.isFromTodayPrefs
-            ? (getString(from: prefs, json: json, key: "hijri_date", jsonFallbackKey: "hijri") ?? "")
-            : ""
+        let rawHijri: String = {
+            if let dayH = schedule.dayHijriDate, !dayH.isEmpty {
+                return dayH
+            }
+            if schedule.isFromTodayPrefs {
+                return getString(from: prefs, json: json, key: "hijri_date", jsonFallbackKey: "hijri") ?? ""
+            }
+            return ""
+        }()
         let cleanHijri = rawHijri
             .replacingOccurrences(of: #"\s*\d{4}\s*هـ?"#, with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -507,14 +719,10 @@ struct Provider: TimelineProvider {
             jsonFallbackKey: "city"
         ) ?? "مكة المكرمة"
 
-        let isDarkFallback = (prefs.object(forKey: "widget_is_dark") as? Bool)
-            ?? ((json?["widget_is_dark"] as? Bool) ?? false)
+        let isDarkFallback = getBool(from: prefs, json: json, key: "widget_is_dark") ?? false
         let rawMode = getString(from: prefs, json: json, key: "prayer_widget_theme_mode") ?? "auto"
         let appMode = getString(from: prefs, json: json, key: "theme_mode") ?? "system"
-        let userSelectedWidget = (prefs.object(forKey: "widget_theme_user_selected") as? Bool)
-            ?? ((json?["widget_theme_user_selected"] as? Bool) ?? false)
-        let userSelectedAppTheme = (prefs.object(forKey: "theme_user_selected") as? Bool)
-            ?? ((json?["theme_user_selected"] as? Bool) ?? false)
+        let userSelectedWidget = getBool(from: prefs, json: json, key: "widget_theme_user_selected") ?? false
 
         let themePreference: String = {
             if rawMode == "light" { return "light" }

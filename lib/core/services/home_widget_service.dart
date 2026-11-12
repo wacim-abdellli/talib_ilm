@@ -91,12 +91,22 @@ class HomeWidgetService {
       );
       invalidateCache();
       await updateAllWidgets(force: true);
+      if (Platform.isIOS && HomeWidgetSnapshot.iosContainerAccessible == false) {
+        return false;
+      }
       return true;
     } catch (error) {
       invalidateCache();
       debugPrint('Home widget theme sync warning: $error');
-      return true;
+      return !Platform.isIOS || HomeWidgetSnapshot.iosContainerAccessible != false;
     }
+  }
+
+  /// Checks whether iOS shared App Group storage is accessible in the current build.
+  static Future<bool> isIosSyncSupported() async {
+    if (!Platform.isIOS) return true;
+    await HomeWidgetSnapshot.resolveActiveAppGroupId();
+    return HomeWidgetSnapshot.iosContainerAccessible ?? false;
   }
 
   static Future<ThemeData> _resolveAutoTheme() async {
@@ -112,9 +122,8 @@ class HomeWidgetService {
   /// Registers background callback for interactive widget resizing
   static Future<void> initBackground() async {
     try {
-      final configured = await HomeWidget.setAppGroupId(
-        HomeWidgetSnapshot.appGroupId,
-      );
+      final activeGroup = await HomeWidgetSnapshot.resolveActiveAppGroupId();
+      final configured = await HomeWidget.setAppGroupId(activeGroup);
       _appGroupReady = !Platform.isIOS || configured == true;
       if (Platform.isIOS) {
         _appGroupReady = await HomeWidgetSnapshot.verifyAppGroup();
@@ -463,6 +472,9 @@ class HomeWidgetService {
           cityName: day.city,
         );
         if (op < _latestOperation) return;
+
+        // iOS uses WidgetKit + App Group snapshot directly without Android PNG rendering
+        if (Platform.isIOS) return;
 
         await updateRibbon(
           prayerDay: day,
