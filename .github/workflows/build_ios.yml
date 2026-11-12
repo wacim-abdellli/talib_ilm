@@ -44,6 +44,22 @@ jobs:
       - name: Precache iOS Artifacts
         run: flutter precache --ios
 
+      - name: Prepare and Generate iOS Notification Sounds
+        run: |
+          echo "=== Ensuring all notification sounds are converted to .caf format ==="
+          mkdir -p ios/Runner/NotificationSounds
+          for mp3 in android/app/src/main/res/raw/*.mp3; do
+            [ -f "$mp3" ] || continue
+            base=$(basename "$mp3" .mp3)
+            caf="ios/Runner/NotificationSounds/${base}.caf"
+            if [ ! -f "$caf" ]; then
+              echo "Converting $mp3 -> $caf"
+              /usr/bin/afconvert -f caff -d ima4 -c 1 "$mp3" "$caf" || echo "Skipping $mp3 conversion on error"
+            fi
+          done
+          echo "=== Available notification sounds in ios/Runner/NotificationSounds: ==="
+          ls -la ios/Runner/NotificationSounds/
+
       - name: Configure Production Apple Signing (if secrets present)
         id: apple-signing
         env:
