@@ -260,6 +260,9 @@ void main() {
       expect(iosWidgets, contains('containerURL(forSecurityApplicationGroupIdentifier:'));
       expect(iosWidgets, contains('String(decoding: data, as: UTF8.self)'));
       expect(iosWidgets, contains('schedule_days'));
+      expect(iosWidgets, contains('TalibPrayerWidgetIntent'));
+      expect(iosWidgets, contains('AppIntentConfiguration'));
+      expect(iosWidgets, contains('SecItemCopyMatching'));
 
       final iosViews = File('ios/TalibIlmWidgets/TalibIlmWidgetViews.swift').readAsStringSync();
       expect(iosViews, contains('.environment(\\.layoutDirection, .leftToRight)'));
@@ -270,6 +273,7 @@ void main() {
       expect(iosAppDelegate, contains('com.talibilm.app/widget_bridge'));
       expect(iosAppDelegate, contains('talib_widget_snapshot.json'));
       expect(iosAppDelegate, contains('WidgetCenter.shared.reloadTimelines'));
+      expect(iosAppDelegate, contains('SecItemAdd'));
     });
   });
 }

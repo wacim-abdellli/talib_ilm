@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import UserNotifications
 import AVFoundation
+import Security
 #if canImport(WidgetKit)
 import WidgetKit
 #endif
@@ -10,6 +11,8 @@ import WidgetKit
 @objc class AppDelegate: FlutterAppDelegate {
   private let widgetBridgeChannelName = "com.talibilm.app/widget_bridge"
   private let snapshotFileName = "talib_widget_snapshot.json"
+  private let keychainService = "com.talibilm.app.widgetSnapshot"
+  private let keychainAccount = "snapshot_v1"
 
   override func application(
     _ application: UIApplication,
@@ -48,15 +51,14 @@ import WidgetKit
         let args = call.arguments as? [String: Any]
         let jsonStr = args?["json"] as? String
         let prefsMap = args?["prefs"] as? [String: Any]
-        result(self.syncSnapshotToAppGroup(jsonString: jsonStr, prefsMap: prefsMap))
+        result(self.syncSnapshot(jsonString: jsonStr, prefsMap: prefsMap))
       default:
         result(FlutterMethodNotImplemented)
       }
     }
   }
 
-  private func discoverProvisionedAppGroups() -> [String] {
-    var groups: [String] = []
+  private func readEmbeddedProvisionPlist() -> [String: Any]? {
     let candidates = [
       Bundle.main.path(forResource: "embedded", ofType: "mobileprovision"),
       Bundle.main.bundleURL.appendingPathComponent("embedded.mobileprovision").path
@@ -73,16 +75,59 @@ import WidgetKit
               from: xmlData,
               options: [],
               format: nil
-            ) as? [String: Any],
-            let entitlements = plistObj["Entitlements"] as? [String: Any] else { continue }
-      if let appGroups = entitlements["com.apple.security.application-groups"] as? [String] {
-        for g in appGroups {
+            ) as? [String: Any] else { continue }
+      return plistObj
+    }
+    return nil
+  }
+
+  private func discoverProvisionedAppGroups() -> [String] {
+    guard let plist = readEmbeddedProvisionPlist(),
+          let entitlements = plist["Entitlements"] as? [String: Any],
+          let appGroups = entitlements["com.apple.security.application-groups"] as? [String] else {
+      return []
+    }
+    var groups: [String] = []
+    for g in appGroups {
+      let trimmed = g.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty && !groups.contains(trimmed) {
+        groups.append(trimmed)
+      }
+    }
+    return groups
+  }
+
+  private func discoverKeychainAccessGroups() -> [String] {
+    var groups: [String] = []
+    if let plist = readEmbeddedProvisionPlist() {
+      let entitlements = plist["Entitlements"] as? [String: Any]
+      if let kcGroups = entitlements?["keychain-access-groups"] as? [String] {
+        for g in kcGroups {
           let trimmed = g.trimmingCharacters(in: .whitespacesAndNewlines)
-          if !trimmed.isEmpty && !groups.contains(trimmed) {
+          if trimmed.hasSuffix(".*") {
+            let prefix = String(trimmed.dropLast(1))
+            let explicit = "\(prefix)com.talibilm.app.shared"
+            if !groups.contains(explicit) { groups.append(explicit) }
+          } else if !trimmed.isEmpty && !groups.contains(trimmed) {
             groups.append(trimmed)
           }
         }
       }
+      if let prefixes = plist["ApplicationIdentifierPrefix"] as? [String],
+         let teamPrefix = prefixes.first, !teamPrefix.isEmpty {
+        let explicit = "\(teamPrefix).com.talibilm.app.shared"
+        if !groups.contains(explicit) { groups.append(explicit) }
+      }
+      if let appId = entitlements?["application-identifier"] as? String,
+         let dotIdx = appId.firstIndex(of: ".") {
+        let teamPrefix = String(appId[..<dotIdx])
+        let explicit = "\(teamPrefix).com.talibilm.app.shared"
+        if !groups.contains(explicit) { groups.append(explicit) }
+      }
+    }
+    let fallbackTeam = "V3N9W8G24A.com.talibilm.app.shared"
+    if !groups.contains(fallbackTeam) {
+      groups.append(fallbackTeam)
     }
     return groups
   }
@@ -112,25 +157,67 @@ import WidgetKit
     return accessible
   }
 
+  private func testKeychainWrite(data: Data, accessGroup: String) -> Bool {
+    let baseQuery: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: keychainService,
+      kSecAttrAccount as String: keychainAccount,
+      kSecAttrAccessGroup as String: accessGroup
+    ]
+    SecItemDelete(baseQuery as CFDictionary)
+    var addQuery = baseQuery
+    addQuery[kSecValueData as String] = data
+    addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+    let status = SecItemAdd(addQuery as CFDictionary, nil)
+    return status == errSecSuccess
+  }
+
+  private func probeKeychainAccess() -> String? {
+    let probeData = Data("{}".utf8)
+    for kcGroup in discoverKeychainAccessGroups() {
+      let probeQuery: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: "\(keychainService).probe",
+        kSecAttrAccount as String: "probe",
+        kSecAttrAccessGroup as String: kcGroup
+      ]
+      SecItemDelete(probeQuery as CFDictionary)
+      var addQuery = probeQuery
+      addQuery[kSecValueData as String] = probeData
+      addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+      let status = SecItemAdd(addQuery as CFDictionary, nil)
+      if status == errSecSuccess {
+        SecItemDelete(probeQuery as CFDictionary)
+        return kcGroup
+      }
+    }
+    return nil
+  }
+
   private func buildBridgeInfo() -> [String: Any] {
     let candidates = candidateAppGroups()
     let accessible = accessibleAppGroups()
     let activeGroup = accessible.first?.groupId
+    let activeKcGroup = probeKeychainAccess()
     return [
       "activeAppGroup": activeGroup.map { $0 as Any } ?? NSNull(),
       "containerAccessible": activeGroup != nil,
+      "keychainAccessible": activeKcGroup != nil,
+      "activeKeychainGroup": activeKcGroup.map { $0 as Any } ?? NSNull(),
       "candidateGroups": candidates,
       "accessibleGroups": accessible.map { $0.groupId },
       "bundleId": Bundle.main.bundleIdentifier ?? ""
     ]
   }
 
-  private func syncSnapshotToAppGroup(
+  private func syncSnapshot(
     jsonString: String?,
     prefsMap: [String: Any]?
   ) -> [String: Any] {
     let accessible = accessibleAppGroups()
     var fileWritten = false
+    var keychainWritten = false
+    var activeKcGroup: String?
 
     for (groupId, containerUrl) in accessible {
       if let jsonStr = jsonString, let data = jsonStr.data(using: .utf8) {
@@ -160,6 +247,17 @@ import WidgetKit
       }
     }
 
+    if let jsonStr = jsonString, let data = jsonStr.data(using: .utf8) {
+      for kcGroup in discoverKeychainAccessGroups() {
+        if testKeychainWrite(data: data, accessGroup: kcGroup) {
+          keychainWritten = true
+          if activeKcGroup == nil {
+            activeKcGroup = kcGroup
+          }
+        }
+      }
+    }
+
     #if canImport(WidgetKit)
     if #available(iOS 14.0, *) {
       WidgetCenter.shared.reloadTimelines(ofKind: "TalibIlmWidgets")
@@ -168,10 +266,13 @@ import WidgetKit
     #endif
 
     let activeGroup = accessible.first?.groupId
+    let anySyncOk = (activeGroup != nil && fileWritten) || keychainWritten
     return [
-      "ok": activeGroup != nil && (jsonString == nil || fileWritten),
+      "ok": anySyncOk,
       "activeAppGroup": activeGroup.map { $0 as Any } ?? NSNull(),
       "containerAccessible": activeGroup != nil,
+      "keychainAccessible": keychainWritten,
+      "activeKeychainGroup": activeKcGroup.map { $0 as Any } ?? NSNull(),
       "fileWritten": fileWritten
     ]
   }

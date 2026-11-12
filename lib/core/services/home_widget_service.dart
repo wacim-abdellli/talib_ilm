@@ -91,22 +91,22 @@ class HomeWidgetService {
       );
       invalidateCache();
       await updateAllWidgets(force: true);
-      if (Platform.isIOS && HomeWidgetSnapshot.iosContainerAccessible == false) {
+      if (HomeWidgetSnapshot.iosSyncBlocked) {
         return false;
       }
       return true;
     } catch (error) {
       invalidateCache();
       debugPrint('Home widget theme sync warning: $error');
-      return !Platform.isIOS || HomeWidgetSnapshot.iosContainerAccessible != false;
+      return !HomeWidgetSnapshot.iosSyncBlocked;
     }
   }
 
-  /// Checks whether iOS shared App Group storage is accessible in the current build.
+  /// Checks whether iOS shared storage (App Group or Keychain) is accessible in the current build.
   static Future<bool> isIosSyncSupported() async {
     if (!Platform.isIOS) return true;
     await HomeWidgetSnapshot.resolveActiveAppGroupId();
-    return HomeWidgetSnapshot.iosContainerAccessible ?? false;
+    return !HomeWidgetSnapshot.iosSyncBlocked;
   }
 
   static Future<ThemeData> _resolveAutoTheme() async {

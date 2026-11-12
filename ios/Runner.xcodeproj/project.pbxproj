@@ -499,7 +499,7 @@
 				DEVELOPMENT_TEAM = V3N9W8G24A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TalibIlmWidgets/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -830,7 +830,7 @@
 				DEVELOPMENT_TEAM = V3N9W8G24A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TalibIlmWidgets/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -860,7 +860,7 @@
 				DEVELOPMENT_TEAM = V3N9W8G24A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TalibIlmWidgets/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

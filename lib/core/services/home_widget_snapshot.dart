@@ -34,15 +34,22 @@ class HomeWidgetSnapshot {
   );
   static String? _resolvedIosAppGroup;
   static bool? _iosContainerAccessible;
+  static bool? _iosKeychainAccessible;
   static int _snapshotVersion = 0;
   static int get snapshotVersion => _snapshotVersion;
   static String? lastSyncError;
 
   static String get activeAppGroupId => _resolvedIosAppGroup ?? appGroupId;
   static bool? get iosContainerAccessible => _iosContainerAccessible;
+  static bool? get iosKeychainAccessible => _iosKeychainAccessible;
+  static bool get iosSyncBlocked =>
+      !kIsWeb &&
+      Platform.isIOS &&
+      _iosContainerAccessible == false &&
+      _iosKeychainAccessible == false;
 
-  /// Queries the native iOS host app for the kernel-verified provisioned App Group ID.
-  /// Returns [appGroupId] on non-iOS platforms or if discovery is unavailable.
+  /// Queries the native iOS host app for the kernel-verified provisioned App Group
+  /// and Keychain sharing state. Returns [appGroupId] on non-iOS platforms.
   static Future<String> resolveActiveAppGroupId() async {
     if (kIsWeb || !Platform.isIOS) return appGroupId;
     try {
@@ -51,14 +58,16 @@ class HomeWidgetSnapshot {
       if (info != null) {
         final active = info['activeAppGroup'] as String?;
         final accessible = info['containerAccessible'] as bool? ?? false;
+        final kcAccessible = info['keychainAccessible'] as bool? ?? false;
         _iosContainerAccessible = accessible;
+        _iosKeychainAccessible = kcAccessible;
         if (active != null && active.trim().isNotEmpty) {
           _resolvedIosAppGroup = active.trim();
           return _resolvedIosAppGroup!;
         }
-        if (!accessible) {
+        if (!accessible && !kcAccessible) {
           lastSyncError =
-              'iOS shared App Group container unavailable for this provisioning profile';
+              'iOS App Group & Keychain sharing unavailable for this provisioning profile';
         }
       }
     } catch (_) {}
@@ -103,7 +112,7 @@ class HomeWidgetSnapshot {
   static Future<bool> verifyAppGroup() async {
     if (!kIsWeb && Platform.isIOS) {
       await resolveActiveAppGroupId();
-      if (_iosContainerAccessible == false) {
+      if (_iosContainerAccessible == false && _iosKeychainAccessible == false) {
         return false;
       }
     }
@@ -551,14 +560,19 @@ class HomeWidgetSnapshot {
           );
           if (bridgeRes != null) {
             final accessible = bridgeRes['containerAccessible'] as bool? ?? false;
+            final kcAccessible =
+                bridgeRes['keychainAccessible'] as bool? ?? false;
             _iosContainerAccessible = accessible;
+            _iosKeychainAccessible = kcAccessible;
             final active = bridgeRes['activeAppGroup'] as String?;
             if (active != null && active.isNotEmpty) {
               _resolvedIosAppGroup = active;
             }
-            if (!accessible) {
+            if (!accessible && !kcAccessible) {
               lastSyncError =
-                  'iOS App Group container unavailable in current signing profile';
+                  'iOS App Group & Keychain unavailable in current signing profile';
+            } else {
+              lastSyncError = null;
             }
           }
         } catch (_) {}
