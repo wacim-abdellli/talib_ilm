@@ -142,7 +142,7 @@ private let keychainAccount = "snapshot_v1"
 private func readProvisionPlists() -> [[String: Any]] {
     var result: [[String: Any]] = []
     let bundle = Bundle.main
-    let possiblePaths = [
+    let possiblePaths: [String?] = [
         bundle.path(forResource: "embedded", ofType: "mobileprovision"),
         bundle.bundleURL.appendingPathComponent("embedded.mobileprovision").path,
         bundle.bundleURL.deletingLastPathComponent().appendingPathComponent("embedded.mobileprovision").path,
@@ -765,7 +765,7 @@ private func loadSchedule(
         asr = calcToday["asr"] ?? asr ?? date
         maghrib = calcToday["maghrib"] ?? maghrib ?? date
         isha = calcToday["isha"] ?? isha ?? date
-        tomorrowFajr = calcTomorrow["fajr"] ?? fajr!.addingTimeInterval(86400)
+        tomorrowFajr = calcTomorrow["fajr"] ?? (fajr ?? date).addingTimeInterval(86400)
     }
 
     let safeFajr = fajr ?? date

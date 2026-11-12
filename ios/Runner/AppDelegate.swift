@@ -59,7 +59,7 @@ import WidgetKit
   }
 
   private func readEmbeddedProvisionPlist() -> [String: Any]? {
-    let candidates = [
+    let candidates: [String?] = [
       Bundle.main.path(forResource: "embedded", ofType: "mobileprovision"),
       Bundle.main.bundleURL.appendingPathComponent("embedded.mobileprovision").path
     ]
