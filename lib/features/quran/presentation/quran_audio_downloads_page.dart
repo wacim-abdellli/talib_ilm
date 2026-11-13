@@ -526,7 +526,7 @@ class _QuranAudioDownloadsPageState extends State<QuranAudioDownloadsPage> {
                                     final isCurrentPlaying = _audioService
                                                 .activeSurahNotifier.value ==
                                             surah &&
-                                        _audioService.selectedReciter ==
+                                        _audioService.activeReciter ==
                                             _currentReciter &&
                                         _audioService.isPlayingNotifier.value;
 

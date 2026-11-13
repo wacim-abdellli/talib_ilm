@@ -185,12 +185,16 @@ class MushafReaderBottomBar extends StatelessWidget {
               ? null
               : () {
                   HapticFeedback.selectionClick();
-                  HifdhRepeatOptionsSheet.show(
-                    context,
-                    audioService: audioService,
-                    surahNumber: surah,
-                    currentAyah: ayah,
-                  );
+                  if (isFullSurah) {
+                    audioService.cycleRepeatMode();
+                  } else {
+                    HifdhRepeatOptionsSheet.show(
+                      context,
+                      audioService: audioService,
+                      surahNumber: surah,
+                      currentAyah: ayah,
+                    );
+                  }
                 },
         );
       },
@@ -201,7 +205,7 @@ class MushafReaderBottomBar extends StatelessWidget {
       color: textColor,
       onPressed: isLoading
           ? null
-          : isFullSurah || audioService.selectedReciter.isSurahBased
+          : isFullSurah || audioService.activeReciter.isSurahBased
           ? audioService.previousSurah
           : audioService.previousAyah,
     );
@@ -211,7 +215,7 @@ class MushafReaderBottomBar extends StatelessWidget {
       color: textColor,
       onPressed: isLoading
           ? null
-          : isFullSurah || audioService.selectedReciter.isSurahBased
+          : isFullSurah || audioService.activeReciter.isSurahBased
           ? audioService.nextSurah
           : audioService.nextAyah,
     );
@@ -291,28 +295,39 @@ class MushafReaderBottomBar extends StatelessWidget {
       ),
     );
     final details = Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            isFullSurah
-                ? 'سورة ${getVocalizedSurahName(surah, fallback: playingSurahName)} كاملة'
-                : '${getVocalizedSurahName(surah, fallback: playingSurahName)} • الآية $ayah',
-            style: textTheme.bodySmall.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            final targetPage = quran.getPageNumber(surah, ayah);
+            onPageChanged(targetPage);
+          },
+          borderRadius: AppRadius.smRadius,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isFullSurah
+                    ? 'سورة ${getVocalizedSurahName(surah, fallback: playingSurahName)} كاملة'
+                    : '${getVocalizedSurahName(surah, fallback: playingSurahName)} • الآية $ayah',
+                style: textTheme.bodySmall.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                audioService.activeReciter.name,
+                style: textTheme.caption.copyWith(color: textMutedColor),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          Text(
-            audioService.activeReciter.name,
-            style: textTheme.caption.copyWith(color: textMutedColor),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
       ),
     );
 

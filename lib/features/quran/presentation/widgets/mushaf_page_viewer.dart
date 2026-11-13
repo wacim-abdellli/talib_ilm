@@ -173,6 +173,10 @@ class _MushafPageViewerState extends State<MushafPageViewer>
   }
 
   void _onAudioAyahChanged() {
+    if (_audioService.isFullSurahModeNotifier.value ||
+        _audioService.isDownloadedQueueOnly) {
+      return;
+    }
     final surah = _audioService.activeSurahNotifier.value;
     final ayah = _audioService.activeAyahNotifier.value;
     if (surah == null || ayah == null || !mounted) return;
@@ -262,7 +266,10 @@ class _MushafPageViewerState extends State<MushafPageViewer>
       _defaultTafsir = snapshot.defaultTafsir;
     });
 
-    unawaited(_audioService.switchReciter(snapshot.reciter));
+    if (!_audioService.isPlayingNotifier.value &&
+        _audioService.activeSurahNotifier.value == null) {
+      _audioService.setSelectedReciter(snapshot.reciter);
+    }
     _applyWakelock(snapshot.keepScreenAwake);
   }
 
@@ -487,10 +494,13 @@ class _MushafPageViewerState extends State<MushafPageViewer>
         },
         onReciterChanged: (r) {
           unawaited(() async {
-            await _audioService.switchReciter(r);
-            await QuranReaderPreferences.saveReciter(
-              _audioService.selectedReciter,
-            );
+            await QuranReaderPreferences.saveReciter(r);
+            if (!_audioService.isFullSurahModeNotifier.value &&
+                !_audioService.isDownloadedQueueOnly) {
+              await _audioService.switchReciter(r);
+            } else {
+              _audioService.setSelectedReciter(r);
+            }
           }());
         },
         onTafsirChanged: (scholar) {

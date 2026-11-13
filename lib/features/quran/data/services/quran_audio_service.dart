@@ -142,7 +142,13 @@ class QuranAudioService {
     }
 
     if (wasFullSurah || reciter.isSurahBased) {
-      await playFullSurah(surah: surah, reciter: reciter, autoPlay: shouldPlay);
+      await playFullSurah(
+        surah: surah,
+        reciter: reciter,
+        autoPlay: shouldPlay,
+        initialAyah: ayah,
+        queue: _surahPlaybackQueue,
+      );
     } else if (wasContinuous) {
       await playContinuous(
         surah: surah,
@@ -1256,7 +1262,16 @@ class QuranAudioService {
     if (_isTransitioning) return;
     if (activeSurahNotifier.value != null && activeAyahNotifier.value != null) {
       if (_player.processingState == ProcessingState.idle) {
-        await _startPlay(activeSurahNotifier.value!, activeAyahNotifier.value!);
+        if (isFullSurahMode) {
+          await playFullSurah(
+            surah: activeSurahNotifier.value!,
+            reciter: _playbackReciter,
+            initialAyah: activeAyahNotifier.value ?? 1,
+            autoPlay: true,
+          );
+        } else {
+          await _startPlay(activeSurahNotifier.value!, activeAyahNotifier.value!);
+        }
         return;
       }
     }

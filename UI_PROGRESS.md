@@ -1,3 +1,23 @@
+## Stage R67 — Downloaded Quran Audio & Mushaf Reader Decoupling and Conflict Resolution (13 November 2026)
+- **Branch**: `main`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Unilateral `switchReciter` on Reader Mount (`mushaf_page_viewer.dart`)**:
+     - **Root Cause**: `MushafPageViewer._loadSavedSettings()` previously called `unawaited(_audioService.switchReciter(snapshot.reciter))` unconditionally on reader initialization. If the user was listening to a downloaded full surah (e.g. Omar Diya Al-Din), opening the Mushaf reader forced `switchReciter` to the reader's saved reciter (e.g. Alafasy). Because Alafasy is verse-based with no single full-surah file, `playFullSurah` fell back to `playContinuous`, downgrading playback to verse-by-verse mode (6–7s progress bar) and changing the reciter without user consent.
+     - **Architectural Fix**: In `_loadSavedSettings()`, only set `_audioService.setSelectedReciter(snapshot.reciter)` when audio is NOT actively playing and no surah is active (`!_audioService.isPlayingNotifier.value && _audioService.activeSurahNotifier.value == null`). In `_openSettings()`, only invoke `switchReciter` if full surah / downloaded queue mode is not active.
+  2. **Page Auto-Sync Hijacking Reader (`mushaf_page_viewer.dart`)**:
+     - **Root Cause**: `_onAudioAyahChanged()` listened to `activeAyahNotifier` and called `_jumpToPage(targetPage)` whenever the detected ayah changed. In full surah mode, position ticks continuously estimate ayahs, causing the reader to repeatedly force-jump back to the audio's surah page, preventing the user from reading other Quran pages.
+     - **Architectural Fix**: `_onAudioAyahChanged()` now immediately returns if `isFullSurahModeNotifier.value` or `isDownloadedQueueOnly` is `true`. Reader pages are never hijacked during full surah playback.
+  3. **Reader Bottom Bar & Downloaded Player Synchronization (`mushaf_reader_bottom_bar.dart`, `quran_audio_player_bar.dart`, `quran_audio_downloads_page.dart`)**:
+     - Wrapped the mini-player details title in `mushaf_reader_bottom_bar.dart` with an `InkWell` so the user can explicitly tap to jump to the playing page on demand.
+     - Updated bottom bar controls to check `audioService.activeReciter.isSurahBased` instead of `selectedReciter.isSurahBased`, and cycle full-surah repeat mode on tap instead of opening the verse repetition sheet.
+     - Updated `quran_audio_player_bar.dart` and `quran_audio_downloads_page.dart` to reference `activeReciter` so the displayed reciter and active playing indicator accurately reflect the audio stream.
+     - In `QuranAudioService.resume()`, added idle state guard to call `playFullSurah` if `isFullSurahMode` is active, preventing accidental fallback to verse mode.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found (ran in 13.2s).
+  - `python tool/ui_lint_v2.py --strict`: OK (allow markers: 8 / cap 10).
+  - `flutter test test/quran_audio_mushaf_conflict_test.dart test/quran_audio_surah_repeat_test.dart test/hifdh_repeat_engine_test.dart`: All 17 tests passed (100%).
+- **Status**: Complete & Verified.
+
 ## Stage R65 — App-Wide Silky-Smooth Animation System (Tabs, Pages & Sections) & Luxury/Vercel Native Widgets (10 November 2026)
 - **Branch**: `ui/r63-fix-widget-layout-and-spacing`
 - **Root Cause Analysis & Problems Solved**:

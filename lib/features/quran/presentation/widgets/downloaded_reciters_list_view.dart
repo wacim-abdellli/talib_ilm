@@ -533,7 +533,7 @@ class _DownloadedRecitersListViewState
                                       final isCurrentSurah = _audioService
                                                   .activeSurahNotifier.value ==
                                               item.surah &&
-                                          _audioService.selectedReciter.id ==
+                                          _audioService.activeReciter.id ==
                                               reciter.id;
                                       final isAudioPlaying = isCurrentSurah &&
                                           _audioService.isPlayingNotifier.value;

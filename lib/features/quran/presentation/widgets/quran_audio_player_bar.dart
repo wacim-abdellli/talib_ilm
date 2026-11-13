@@ -57,7 +57,7 @@ class QuranAudioPlayerBar extends StatelessWidget {
         final isLoading = audioService.isLoadingNotifier.value;
         final isFullSurah = audioService.isFullSurahModeNotifier.value;
         final surahName = quran.getSurahNameArabic(surah);
-        final reciter = audioService.selectedReciter;
+        final reciter = audioService.activeReciter;
         final currentAyah = audioService.activeAyahNotifier.value ?? 1;
         final totalAyahs = quran.getVerseCount(surah);
         final activeRange = audioService.hifdhRangeNotifier.value;
