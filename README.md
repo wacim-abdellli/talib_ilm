@@ -66,11 +66,11 @@
 | القسم | الوصف المنهجي والمعماري | أبرز الأرقام |
 | :--- | :--- | :--- |
 | **📖 القرآن الكريم ومصحف المدينة** | مصحف المدينة الأصيل بخطوط QCF المحمّلة مسبقاً، تلوين أحكام التجويد، التفاسير (الميسر، السعدي، ابن كثير)، تبويب **المتشابهات والضوابط الحفظية**، ومقاصد السور مع القفز الفوري للآيات. | `604` صفحة · `43+` قارئ · `3` ثيمات مصحف |
-| **🔁 محرك التحفيظ والتلاوة** | تحكّم متكامل بالتكرار للآيات والمقاطع (`HifdhAudioRangeHelper`) حتى للقراء ذوي السور الكاملة، مؤقّت نوم ذكي، تحكم شاشة القفل (`just_audio_background`)، وتنزيل أوفلاين للسور. | دعم التلاوة المفصلة والكاملة أوفلاين |
+| **🔁 محرك التحفيظ والتلاوة المستقل** | معمارية صوتية مفصولة بالكامل (`QuranAudioService`): تلاوة السور المحمّلة والمستمرة دون تشويش أو قطع لقراءة المصحف، تكرار كامل للسورة من البداية (`0:00`) مع منع الارتداد، وتكرار الآيات والمقاطع (`HifdhAudioRangeHelper`). | تلاوة كاملة ومفصلة · `Offline Hub` · حفظ الموضع |
 | **📚 سُلّم المتون والمكتبة العلمية** | تأصيل منهجي متدرج عبر **11 فنّاً شرعياً**، قارئ متون وشروح بخطوط عربية تراثية مع حفظ تلقائي للموضع، مشغل صوتي مصغر مستمر (`Mini Player`)، وحقيبة لإدارة المحتوى المحمّل. | `11` فنّاً · `18+` متناً مدمجاً · بحث متجاهل للتشكيل |
 | **💎 موسوعة درر السلف** | قاعدة آثار وأقوال محققة ومعزوة لمصادرها (حلية الأولياء، سير أعلام النبلاء، وغيرها) عبر طبقات الصحابة والتابعين وأئمة السلف وعلماء العصر مع بطاقات مشاركة منسّقة. | `12,075` درة وأثر موثق |
 | **📜 واحة الحديث النبوي** | موسوعة أحاديث مصنّفة موضوعياً مع بيان الراوي والحكم والتخريج العلمي الدقيق وإمكانية البحث والنسخ والمشاركة. | `4,608` حديثاً مصنّفاً |
-| **🕌 مواقيت الصلاة والودجات** | حساب فلكي دقيق (`adhan` + `geolocator`) مع **آلة حالات خماسية (5-Phase State Machine)** للإقامة والأذان والجمعة، وودجات أصلية في **SwiftUI** و**Kotlin** للمظهرين الفاتح والداكن. | أحجام `Medium 4×1` و`Large 4×2` |
+| **🕌 مواقيت الصلاة والودجات التفاعلية** | حساب فلكي دقيق (`adhan` + `geolocator`) مع **آلة حالات خماسية** للإقامة والأذان والجمعة، وودجات أصلية في **SwiftUI** (`WidgetKit` مع اختيار الثيم ومزامنة الموقع عربياً عبر `CLGeocoder`) و**Kotlin** للمظهرين الفاتح والداكن. | أحجام `Medium 4×1` و`Large 4×2` |
 | **🔔 لحظة ذكر الذكية (Android)** | بطاقة ذكر عائمة تظهر فقط أثناء الاستخدام الفعلي للهاتف أو بعد فتح القفل عبر خدمة عابرة (`Transient Foreground + AlarmManager`) دون تثبيت أي إشعار دائم مزعج. | `5` أقسام منوعة بتدوير غير متكرر |
 | **🏆 بنك الأسئلة والتحدي اليومي** | اختبارات علمية مؤصلة بمستويات متدرجة وتحدٍ يومي، مدعومة بالتعليل العلمي والشرح والدليل من الكتاب والسنة لكل مسألة. | `1,180` سؤالاً شرعياً (`v2.0.0`) |
 | **🧭 القبلة والأذكار والإذاعات** | بوصلة قبلة أسطرلابية فورية بالمدينة أو الموقع، أذكار الصباح والمساء وما بعد الصلاة، سبحة رقمية بحفظ التقدم، وبث حي لإذاعات القرآن الكريم. | `159` إذاعة قرآنية مباشرة |
@@ -90,6 +90,10 @@
    - Android `SafeNotificationBootReceiver`, `DhikrOverlayScheduler`, and transient `DhikrOverlayService` decouple unlock/screen-on broadcasts from permanent notification clutter.
 4. **Arabic Diacritic-Insensitive Indexing (`ArabicSearchUtils`)**:
    - Normalizes Tashkeel, Tatweel, Alef/Ya/Ta-Marbuta variants in real time across Quran ayahs, Hadiths, Salaf gems, and Mutun books.
+5. **Decoupled Audio & Full-Surah Repetition Engine (`QuranAudioService`)**:
+   - Isolates downloaded full-surah audio playback (`isFullSurahMode`) from interactive Mushaf reading so entering reading mode never interrupts ongoing recitations or forces unilateral reciter overrides.
+   - Suppresses intrusive page jumping during full-surah listening while providing tap-to-sync on the mini-player.
+   - Enforces clean 0:00 full-surah restart cycles under single/infinite repeat modes, eliminating 15-second end-of-track rewind glitches.
 
 </details>
 
@@ -147,14 +151,20 @@ talib_ilm/
 
 ## 📦 التحميل والتثبيت | Downloads & Installation
 
-### 🍎 iOS (`.ipa` لنظام آيفون — يدعم الودجات والأذان)
+| المنصة | نوع الحزمة | رابط التحميل المباشر (أحدث إصدار v1.3.10) |
+| :--- | :--- | :--- |
+| **🤖 Android (هواتف حديثة)** | `APK (arm64-v8a)` | 📥 **[تحميل talib_ilm_modern_phones_release.apk](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.10/talib_ilm_modern_phones_release.apk)** (116.8 MB) |
+| **🍎 iOS (آيفون)** | `IPA (Sideload / AltStore)` | 📥 **[تحميل talib_ilm_ios.ipa](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.10/talib_ilm_ios.ipa)** |
+| **💻 iOS Simulator** | `Runner.app.zip` | 📥 **[تحميل Runner.app.zip](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.10/Runner.app.zip)** |
+
+### 🍎 تثبيت حزمة iOS (`.ipa` لنظام آيفون — يدعم الودجات والأذان)
 تُبنى حزمة iOS تلقائياً عبر **GitHub Actions** (`build_ios.yml`) متضمنةً امتداد الودجت `TalibIlmWidgets.appex` وملفات الصوت `.caf` الجاهزة للإشعارات الحساسة للوقت:
-1. حمّل أحدث ملف `talib_ilm_ios.ipa` من صفحة **[GitHub Releases](https://github.com/wacim-abdellli/talib_ilm/releases)** (أو من قسم Artifacts داخل أحدث تشغيل ناجح لـ **[Build iOS App](https://github.com/wacim-abdellli/talib_ilm/actions/workflows/build_ios.yml)**).
+1. حمّل ملف `talib_ilm_ios.ipa` مباشرةً من الجدول أعلاه أو من صفحة **[GitHub Releases](https://github.com/wacim-abdellli/talib_ilm/releases)**.
 2. ثبّت التطبيق على جهازك عبر **AltStore** أو **SideStore** أو **Sideloadly** (يدعم التطبيق اكتشاف معرف App Group ديناميكياً من ملف الـ Provisioning لضمان عمل الودجت حتى عند التثبيت الجانبي).
 
-### 🤖 Android (`.apk` و `.aab`)
-يمكن تحميل الإصدارات المبنية أو توليدها محلياً لكل فئات الأجهزة:
-- **للهواتف الحديثة (`64-bit arm64-v8a`)**: حجم أخف وأداء أمثل (`flutter build apk --release --split-per-abi` أو `--target-platform android-arm64`).
+### 🤖 تثبيت وبناء Android (`.apk` و `.aab`)
+يمكن تحميل حزمة الهواتف الحديثة مباشرةً من الجدول أعلاه، أو بناء الحزم محلياً:
+- **للهواتف الحديثة (`64-bit arm64-v8a`)**: حجم أخف وأداء أمثل (`flutter build apk --release --target-platform android-arm64`).
 - **للهواتف القديمة (`32-bit armeabi-v7a`)**: دعم مخصص للمعالجات القديمة عبر `--target-platform android-arm`.
 - **الحزمة الشاملة (`Universal APK`) / حزمة المتجر (`AAB`)**: عبر `flutter build apk --release` و `flutter build appbundle --release`.
 
